@@ -55,6 +55,7 @@ import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
+import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
@@ -343,12 +344,23 @@ public class PhotoRenderer {
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
           exportAppearance(appearance, appearanceName, mirror, noConstantShader);
         }
-  
+
+        int cullFace = PolygonAttributes.CULL_BACK;
+        boolean backFaceNormalFlip = false;
+        if (appearance != null) {
+          PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+          if (polygonAttributes != null) {
+            cullFace = polygonAttributes.getCullFace();
+            backFaceNormalFlip = polygonAttributes.getBackFaceNormalFlip();
+          }
+        }
+
         // Export object geometries
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           String objectName = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, objectName);
+          exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, objectName, 
+              cullFace, backFaceNormalFlip);
           if (appearanceName != null) {
             this.sunflow.parameter("shaders", new String [] {appearanceName});
           }
@@ -364,43 +376,46 @@ public class PhotoRenderer {
   private void exportNodeGeometry(Geometry geometry, 
                                   Transform3D parentTransformations, 
                                   TexCoordGeneration texCoordGeneration, 
-                                  String objectName) {
+                                  String objectName, 
+                                  int cullFace, 
+                                  boolean backFaceNormalFlip) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;
       
       // Create vertices indices array depending on geometry class
       int [] verticesIndices = null;
       int [] stripVertexCount = null;
+      int cullFaceMultiplier = cullFace == PolygonAttributes.CULL_NONE ? 2 : 1;
       if (geometryArray instanceof IndexedGeometryArray) {
         if (geometryArray instanceof IndexedLineArray
             || geometryArray instanceof IndexedTriangleArray) {
-          verticesIndices = new int [((IndexedGeometryArray)geometryArray).getIndexCount()];
+          verticesIndices = new int [((IndexedGeometryArray)geometryArray).getIndexCount() * cullFaceMultiplier];
         } else if (geometryArray instanceof IndexedQuadArray) {
-          verticesIndices = new int [((IndexedQuadArray)geometryArray).getIndexCount() * 3 / 2];
+          verticesIndices = new int [((IndexedQuadArray)geometryArray).getIndexCount() * 3 / 2 * cullFaceMultiplier];
         } else if (geometryArray instanceof IndexedGeometryStripArray) {
           IndexedTriangleStripArray geometryStripArray = (IndexedTriangleStripArray)geometryArray;
           stripVertexCount = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripIndexCounts(stripVertexCount);          
           if (geometryArray instanceof IndexedLineStripArray) {
-            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2 * cullFaceMultiplier];
           } else {
-            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3 * cullFaceMultiplier];
           } 
         }
       } else {
         if (geometryArray instanceof LineArray
             || geometryArray instanceof TriangleArray) {
-          verticesIndices = new int [((GeometryArray)geometryArray).getVertexCount()];
+          verticesIndices = new int [((GeometryArray)geometryArray).getVertexCount() * cullFaceMultiplier];
         } else if (geometryArray instanceof QuadArray) {
-          verticesIndices = new int [((QuadArray)geometryArray).getVertexCount() * 3 / 2];
+          verticesIndices = new int [((QuadArray)geometryArray).getVertexCount() * 3 / 2 * cullFaceMultiplier];
         } else if (geometryArray instanceof GeometryStripArray) {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
-          stripVertexCount = new int [geometryStripArray.getNumStrips()];
+          stripVertexCount = new int [geometryStripArray.getNumStrips() * cullFaceMultiplier];
           geometryStripArray.getStripVertexCounts(stripVertexCount);
           if (geometryArray instanceof LineStripArray) {
-            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2 * cullFaceMultiplier];
           } else {
-            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3 * cullFaceMultiplier];
           }       
         }
       }
@@ -411,10 +426,9 @@ public class PhotoRenderer {
             || geometryArray instanceof LineArray
             || geometryArray instanceof LineStripArray;
         float [] vertices = new float [geometryArray.getVertexCount() * 3];
-        
         float [] normals = !line && (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
-            ? new float [geometryArray.getVertexCount() * 3]
-            : null;
+            ? new float [geometryArray.getVertexCount() * 3 * cullFaceMultiplier]
+            : null;        
         
         boolean uvsGenerated = false;
         Vector4f planeS = null;
@@ -453,7 +467,7 @@ public class PhotoRenderer {
               for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                    index < n; index++, i += vertexSize) {
                 Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-                exportNormal(parentTransformations, normal, index, normals);
+                exportNormal(parentTransformations, normal, index, normals, cullFace, backFaceNormalFlip);
               }
             }
             // Export texture coordinates
@@ -485,7 +499,7 @@ public class PhotoRenderer {
               float [] normalCoordinates = geometryArray.getNormalRefFloat();
               for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
                 Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-                exportNormal(parentTransformations, normal, index, normals);
+                exportNormal(parentTransformations, normal, index, normals, cullFace, backFaceNormalFlip);
               }
             }
             // Export texture coordinates
@@ -517,7 +531,7 @@ public class PhotoRenderer {
             for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
               Vector3f normal = new Vector3f();
               geometryArray.getNormal(index, normal);
-              exportNormal(parentTransformations, normal, index, normals);
+              exportNormal(parentTransformations, normal, index, normals, cullFace, backFaceNormalFlip);
             }
           }
           // Export texture coordinates
@@ -558,15 +572,15 @@ public class PhotoRenderer {
             IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
             for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
               exportIndexedTriangle(triangleArray, i, i + 1, i + 2, 
-                  verticesIndices, normalsIndices, uvsIndices, i);
+                  verticesIndices, normalsIndices, uvsIndices, i, 0, cullFace);
             }
           } else if (geometryArray instanceof IndexedQuadArray) {
             IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
             for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
               exportIndexedTriangle(quadArray, i, i + 1, i + 2, 
-                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2);
+                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2, 0, cullFace);
               exportIndexedTriangle(quadArray, i, i + 2, i + 3, 
-                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2 + 3);
+                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2 + 3, 0, cullFace);
             }
           } else if (geometryArray instanceof IndexedLineStripArray) {
             IndexedLineStripArray lineStripArray = (IndexedLineStripArray)geometryArray;
@@ -584,10 +598,10 @@ public class PhotoRenderer {
                    i < n; i++, j++, triangleIndex += 3) {
                 if (j % 2 == 0) {
                   exportIndexedTriangle(triangleStripArray, i, i + 1, i + 2, 
-                      verticesIndices, normalsIndices, uvsIndices, triangleIndex);
+                      verticesIndices, normalsIndices, uvsIndices, triangleIndex, 0, cullFace);
                 } else { // Vertices of odd triangles are in reverse order               
                   exportIndexedTriangle(triangleStripArray, i, i + 2, i + 1, 
-                      verticesIndices, normalsIndices, uvsIndices, triangleIndex);
+                      verticesIndices, normalsIndices, uvsIndices, triangleIndex, 0, cullFace);
                 }
               }
               initialIndex += stripVertexCount [strip];
@@ -598,7 +612,7 @@ public class PhotoRenderer {
               for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
                    i < n; i++, triangleIndex += 3) {
                 exportIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2, 
-                    verticesIndices, normalsIndices, uvsIndices, triangleIndex);
+                    verticesIndices, normalsIndices, uvsIndices, triangleIndex, 0, cullFace);
               }
               initialIndex += stripVertexCount [strip];
             }
@@ -649,13 +663,13 @@ public class PhotoRenderer {
           } else if (geometryArray instanceof TriangleArray) {
             TriangleArray triangleArray = (TriangleArray)geometryArray;
             for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
-              exportTriangle(triangleArray, i, i + 1, i + 2, verticesIndices, i);
+              exportTriangle(triangleArray, i, i + 1, i + 2, verticesIndices, i, cullFace);
             }
           } else if (geometryArray instanceof QuadArray) {
             QuadArray quadArray = (QuadArray)geometryArray;
             for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
-              exportTriangle(quadArray, i, i + 1, i + 2, verticesIndices, i * 3 / 2);
-              exportTriangle(quadArray, i + 2, i + 3, i, verticesIndices, i * 3 / 2 + 3);
+              exportTriangle(quadArray, i, i + 1, i + 2, verticesIndices, i * 3 / 2, cullFace);
+              exportTriangle(quadArray, i + 2, i + 3, i, verticesIndices, i * 3 / 2 + 3, cullFace);
             }
           } else if (geometryArray instanceof LineStripArray) {
             LineStripArray lineStripArray = (LineStripArray)geometryArray;
@@ -672,9 +686,9 @@ public class PhotoRenderer {
               for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
                    i < n; i++, j++, triangleIndex += 3) {
                 if (j % 2 == 0) {
-                  exportTriangle(triangleStripArray, i, i + 1, i + 2, verticesIndices, triangleIndex);
+                  exportTriangle(triangleStripArray, i, i + 1, i + 2, verticesIndices, triangleIndex, cullFace);
                 } else { // Vertices of odd triangles are in reverse order               
-                  exportTriangle(triangleStripArray, i, i + 2, i + 1, verticesIndices, triangleIndex);
+                  exportTriangle(triangleStripArray, i, i + 2, i + 1, verticesIndices, triangleIndex, cullFace);
                 }
               }
               initialIndex += stripVertexCount [strip];
@@ -684,7 +698,7 @@ public class PhotoRenderer {
             for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
                    i < n; i++, triangleIndex += 3) {
-                exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, verticesIndices, triangleIndex);
+                exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, verticesIndices, triangleIndex, cullFace);
               }
               initialIndex += stripVertexCount [strip];
             }
@@ -771,12 +785,25 @@ public class PhotoRenderer {
    */
   private void exportNormal(Transform3D transformationToParent,
                             Vector3f normal, int index,
-                            float [] normals) {
+                            float [] normals, 
+                            int cullFace, 
+                            boolean backFaceNormalFlip) {
+    if (backFaceNormalFlip) {
+      normal.negate();
+    }
+    
     transformationToParent.transform(normal);
-    index *= 3;
-    normals [index++] = normal.x;
-    normals [index++] = normal.y;
-    normals [index] = normal.z;
+    int i = index * 3;
+    normals [i++] = normal.x;
+    normals [i++] = normal.y;
+    normals [i] = normal.z;
+    
+    if (cullFace == PolygonAttributes.CULL_NONE) {
+      Vector3f oppositeNormal = new Vector3f(); 
+      oppositeNormal.negate(normal);
+      exportNormal(transformationToParent, oppositeNormal, index + normals.length / 6, normals, 
+          PolygonAttributes.CULL_FRONT, false);
+    }
   }
 
   /**
@@ -806,19 +833,35 @@ public class PhotoRenderer {
   private void exportIndexedTriangle(IndexedGeometryArray geometryArray, 
                                      int vertexIndex1, int vertexIndex2, int vertexIndex3,
                                      int [] verticesIndices, int [] normalsIndices, int [] textureCoordinatesIndices, 
-                                     int index) {
+                                     int index,
+                                     int normalIndexOffset,
+                                     int cullFace) {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex3;
+      vertexIndex3 = tmp;
+    }
+    
     verticesIndices [index] = geometryArray.getCoordinateIndex(vertexIndex1);
     verticesIndices [index + 1] = geometryArray.getCoordinateIndex(vertexIndex2);
     verticesIndices [index + 2] = geometryArray.getCoordinateIndex(vertexIndex3);
     if (normalsIndices != null) {
-      normalsIndices [index] = geometryArray.getNormalIndex(vertexIndex1);
-      normalsIndices [index + 1] = geometryArray.getNormalIndex(vertexIndex2);
-      normalsIndices [index + 2] = geometryArray.getNormalIndex(vertexIndex3);
+      normalsIndices [index] = normalIndexOffset + geometryArray.getNormalIndex(vertexIndex1);
+      normalsIndices [index + 1] = normalIndexOffset + geometryArray.getNormalIndex(vertexIndex2);
+      normalsIndices [index + 2] = normalIndexOffset + geometryArray.getNormalIndex(vertexIndex3);
     }
     if (textureCoordinatesIndices != null) {
       textureCoordinatesIndices [index] = geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
       textureCoordinatesIndices [index + 1] = geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
       textureCoordinatesIndices [index + 2] = geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
+    }
+    
+    if (cullFace == PolygonAttributes.CULL_NONE) {   
+      exportIndexedTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
+          verticesIndices, normalsIndices, textureCoordinatesIndices,  
+          index + verticesIndices.length / 2, normalsIndices != null ? normalsIndices.length / 2 : 0, 
+          PolygonAttributes.CULL_FRONT);
     }
   }
     
@@ -837,10 +880,23 @@ public class PhotoRenderer {
    */
   private void exportTriangle(GeometryArray geometryArray, 
                               int vertexIndex1, int vertexIndex2, int vertexIndex3,
-                              int [] verticesIndices, int index) {
-    verticesIndices [index++] = vertexIndex1;
-    verticesIndices [index++] = vertexIndex2;
-    verticesIndices [index] = vertexIndex3;
+                              int [] verticesIndices, int index,
+                              int cullFace) {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex3;
+      vertexIndex3 = tmp;
+    }
+    
+    verticesIndices [index] = vertexIndex1;
+    verticesIndices [index + 1] = vertexIndex2;
+    verticesIndices [index + 2] = vertexIndex3;
+    
+    if (cullFace == PolygonAttributes.CULL_NONE) {   
+      exportTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
+          verticesIndices, index + verticesIndices.length / 2, PolygonAttributes.CULL_FRONT);
+    }
   }
     
   /**
