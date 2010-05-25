@@ -1954,6 +1954,7 @@ public class HomePane extends JRootPane implements HomeView {
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         catalogView, furnitureView);
     catalogFurniturePane.setBorder(null);
+    catalogFurniturePane.setMinimumSize(new Dimension());
     configureSplitPane(catalogFurniturePane, home, 
         CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
     return catalogFurniturePane;
@@ -2121,6 +2122,7 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, component3D);
+    planView3DPane.setMinimumSize(new Dimension());
     configureSplitPane(planView3DPane, home, 
         PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
     
@@ -3124,6 +3126,7 @@ public class HomePane extends JRootPane implements HomeView {
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
       SwingTools.installFocusBorder(view);
+      setMinimumSize(new Dimension());
     }
   }
   
