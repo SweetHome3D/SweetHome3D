@@ -84,23 +84,25 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class AppletApplication extends HomeApplication {
-  private static final String   FURNITURE_CATALOG_URLS_PARAMETER = "furnitureCatalogURLs";
-  private static final String   TEXTURES_CATALOG_URLS_PARAMETER  = "texturesCatalogURLs";
-  private static final String   PLUGIN_URLS_PARAMETER            = "pluginURLs";
-  private static final String   WRITE_HOME_URL_PARAMETER         = "writeHomeURL";
-  private static final String   READ_HOME_URL_PARAMETER          = "readHomeURL";
-  private static final String   LIST_HOMES_URL_PARAMETER         = "listHomesURL";
-  private static final String   READ_PREFERENCES_URL_PARAMETER   = "readPreferencesURL";
-  private static final String   WRITE_PREFERENCES_URL_PARAMETER  = "writePreferencesURL";
-  private static final String   DEFAULT_HOME_PARAMETER           = "defaultHome";
-  private static final String   ENABLE_EXPORT_TO_SH3D            = "enableExportToSH3D";
-  private static final String   ENABLE_EXPORT_TO_SVG             = "enableExportToSVG";
-  private static final String   ENABLE_EXPORT_TO_OBJ             = "enableExportToOBJ";
-  private static final String   ENABLE_PRINT_TO_PDF              = "enablePrintToPDF";
-  private static final String   ENABLE_CREATE_PHOTO              = "enableCreatePhoto";
-  private static final String   ENABLE_CREATE_VIDEO              = "enableCreateVideo";
-  private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
-  private static final String   USER_LANGUAGE                    = "userLanguage";
+  private static final String FURNITURE_CATALOG_URLS_PARAMETER       = "furnitureCatalogURLs";
+  private static final String FURNITURE_RESOURCES_URL_BASE_PARAMETER = "furnitureResourcesURLBase";
+  private static final String TEXTURES_CATALOG_URLS_PARAMETER        = "texturesCatalogURLs";
+  private static final String TEXTURES_RESOURCES_URL_BASE_PARAMETER  = "texturesResourcesURLBase";
+  private static final String PLUGIN_URLS_PARAMETER                  = "pluginURLs";
+  private static final String WRITE_HOME_URL_PARAMETER               = "writeHomeURL";
+  private static final String READ_HOME_URL_PARAMETER                = "readHomeURL";
+  private static final String LIST_HOMES_URL_PARAMETER               = "listHomesURL";
+  private static final String READ_PREFERENCES_URL_PARAMETER         = "readPreferencesURL";
+  private static final String WRITE_PREFERENCES_URL_PARAMETER        = "writePreferencesURL";
+  private static final String DEFAULT_HOME_PARAMETER                 = "defaultHome";
+  private static final String ENABLE_EXPORT_TO_SH3D                  = "enableExportToSH3D";
+  private static final String ENABLE_EXPORT_TO_SVG                   = "enableExportToSVG";
+  private static final String ENABLE_EXPORT_TO_OBJ                   = "enableExportToOBJ";
+  private static final String ENABLE_PRINT_TO_PDF                    = "enablePrintToPDF";
+  private static final String ENABLE_CREATE_PHOTO                    = "enableCreatePhoto";
+  private static final String ENABLE_CREATE_VIDEO                    = "enableCreateVideo";
+  private static final String SHOW_MEMORY_STATUS_PARAMETER           = "showMemoryStatus";
+  private static final String USER_LANGUAGE                          = "userLanguage";
   
   private JApplet         applet;
   private final String    name;
@@ -255,7 +257,8 @@ public class AppletApplication extends HomeApplication {
    * Returns the URL object matching the given <code>url</code> eventually relative to <code>codeBase</code>.
    */
   private URL getURLWithCodeBase(URL codeBase, String url) {
-    if (url.length() > 0) {
+    if (url != null 
+        && url.length() > 0) {
       try {
         return new URL(codeBase, url);
       } catch (MalformedURLException ex) {
@@ -511,13 +514,17 @@ public class AppletApplication extends HomeApplication {
     if (this.userPreferences == null) {
       URL codeBase = this.applet.getCodeBase();
       final String furnitureCatalogURLs = getAppletParameter(this.applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
+      final String furnitureResourcesUrlBase = getAppletParameter(this.applet, FURNITURE_RESOURCES_URL_BASE_PARAMETER, null);
       final String texturesCatalogURLs = getAppletParameter(this.applet, TEXTURES_CATALOG_URLS_PARAMETER, "catalog.zip");
+      final String texturesResourcesUrlBase = getAppletParameter(this.applet, TEXTURES_RESOURCES_URL_BASE_PARAMETER, null);
       final String readPreferencesURL = getAppletParameter(this.applet, READ_PREFERENCES_URL_PARAMETER, "");    
       final String writePreferencesURL = getAppletParameter(this.applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
       final String userLanguage = getAppletParameter(this.applet, USER_LANGUAGE, null);    
       this.userPreferences = new AppletUserPreferences(
           getURLs(codeBase, furnitureCatalogURLs), 
+          getURLWithCodeBase(codeBase, furnitureResourcesUrlBase), 
           getURLs(codeBase, texturesCatalogURLs),
+          getURLWithCodeBase(codeBase, texturesResourcesUrlBase), 
           getURLWithCodeBase(codeBase, writePreferencesURL), 
           getURLWithCodeBase(codeBase, readPreferencesURL),
           userLanguage);

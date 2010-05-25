@@ -152,11 +152,11 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
             throw new UnsupportedOperationException();
           }
         };
-      readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
+      readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
     } else {
       try {
         ResourceBundle resource = ResourceBundle.getBundle(defaultTexturesCatalogFamily);
-        readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
+        readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
       } catch (MissingResourceException ex) {
         // Ignore texture catalog
       }
@@ -180,7 +180,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
             URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
             readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
                                                   new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
-                pluginTexturesCatalogUrl, textureHomonymsCounter, identifiedTextures);
+                pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
@@ -197,6 +197,15 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * Creates a default textures catalog read only from resources in the given URLs.
    */
   public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls) {
+    this(pluginTexturesCatalogUrls, null);
+  }
+  
+  /**
+   * Creates a default textures catalog read only from resources in the given URLs.
+   * Texture image URLs will built from <code>texturesResourcesUrlBase</code> if it isn't <code>null</code>.
+   */
+  public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls,
+                                URL    texturesResourcesUrlBase) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
@@ -206,7 +215,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         // Try do load the properties file describing textures catalog from current file  
         readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
             new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
-            pluginTexturesCatalogUrl, textureHomonymsCounter, identifiedTextures);
+            pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
       } catch (MissingResourceException ex) {
         // Ignore malformed textures catalog
       } catch (IllegalArgumentException ex) {
@@ -222,6 +231,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   private void readTextures(ResourceBundle resource, 
                             URL texturesUrl,
+                            URL texturesResourcesUrlBase,
                             Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
                             List<String> identifiedTextures) {
     for (int index = 1;; index++) {
@@ -233,7 +243,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         break;
       }
       String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
-      Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), texturesUrl);
+      Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), 
+          texturesUrl, texturesResourcesUrlBase);
       float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
       float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
       String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
@@ -289,15 +300,29 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle
    * @param contentKey the key of a resource file
+   * @param texturesUrl the URL of the file containing the target resource if it's not <code>null</code> 
+   * @param resourceUrlBase the URL used as a base to build the URL to content file  
+   *            or <code>null</code> if it's read from current classpath or <code>texturesUrl</code>.
    * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
   private Content getContent(ResourceBundle resource, 
                              String         contentKey,
-                             URL            texturesUrl) {
+                             URL            texturesUrl,
+                             URL            resourceUrlBase) {
     String contentFile = resource.getString(contentKey);
     try {
-      // Try first to interpret contentFile as a URL
-      return new URLContent(new URL(contentFile));
+      // Try first to interpret contentFile as an absolute URL 
+      // or an URL relative to resourceUrlBase if it's not null
+      
+      System.out.println(texturesUrl+ " "+ resourceUrlBase+ " "+contentFile);
+      
+      URL url;
+      if (resourceUrlBase != null) {
+        url = new URL(resourceUrlBase, contentFile);
+      } else {
+        url = new URL(contentFile);
+      }
+      return new URLContent(url);
     } catch (MalformedURLException ex) {
       if (texturesUrl == null) {
         // Otherwise find if it's a resource

@@ -293,7 +293,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
             readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
                                                    new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
-                pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
+                pluginFurnitureCatalogUrl, null, furnitureHomonymsCounter, identifiedFurniture);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
@@ -310,6 +310,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Creates a default furniture catalog read only from resources in the given URLs.
    */
   public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls) {
+    this(pluginFurnitureCatalogUrls, null);
+  }
+  
+  /**
+   * Creates a default furniture catalog read only from resources in the given URLs.
+   * Model and icon URLs will built from <code>furnitureResourcesUrlBase</code> if it isn't <code>null</code>.
+   */
+  public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls,
+                                 URL    furnitureResourcesUrlBase) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
@@ -319,7 +328,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         // Try do load the properties file describing furniture catalog from current file  
         readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
                 new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
-            pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
+            pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
       } catch (MissingResourceException ex) {
         // Ignore malformed furniture catalog
       } catch (IllegalArgumentException ex) {
@@ -362,20 +371,21 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         return;
       }
     }
-    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
+    readFurniture(resource, null, null, furnitureHomonymsCounter, identifiedFurniture);
   }
   
   /**
    * Reads each piece of furniture described in <code>resource</code> bundle.
    * Resources described in piece properties will be loaded from <code>furnitureUrl</code> 
-   * if it isn't <code>null</code>. 
+   * if it isn't <code>null</code> or relative to <code>furnitureResourcesUrlBase</code>. 
    */
   private void readFurniture(ResourceBundle resource, 
                              URL furnitureCatalogUrl,
+                             URL furnitureResourcesUrlBase,
                              Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
     CatalogPieceOfFurniture piece;
-    for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl)) != null; i++) {
+    for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl, furnitureResourcesUrlBase)) != null; i++) {
       if (piece.getId() != null) {
         // Take into account only furniture that have an ID
         if (identifiedFurniture.contains(piece.getId())) {
@@ -399,12 +409,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * @param index                the index of the read piece
    * @param furnitureCatalogUrl  the URL from which piece resources will be loaded 
    *            or <code>null</code> if it's read from current classpath.
+   * @param furnitureResourcesUrlBase the URL used as a base to build the URL to piece resources  
+   *            or <code>null</code> if it's read from current classpath or <code>furnitureCatalogUrl</code>
    * @return the read piece of furniture or <code>null</code> if the piece at the given index doesn't exist.
    * @throws MissingResourceException if mandatory keys are not defined.
    */
   protected CatalogPieceOfFurniture readPieceOfFurniture(ResourceBundle resource, 
                                                          int index, 
-                                                         URL furnitureCatalogUrl) {
+                                                         URL furnitureCatalogUrl,
+                                                         URL furnitureResourcesUrlBase) {
     String name = null;
     try {
       name = resource.getString(PropertyKey.NAME.getKey(index));
@@ -413,15 +426,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return null;
     }
     String description = getOptionalString(resource, PropertyKey.DESCRIPTION.getKey(index), null);
-    Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), furnitureCatalogUrl, false, false);
-    Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), furnitureCatalogUrl, false, true);
+    Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), 
+        furnitureCatalogUrl, furnitureResourcesUrlBase, false, false);
+    Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), 
+        furnitureCatalogUrl, furnitureResourcesUrlBase, false, true);
     boolean multiPartModel = false;
     try {
       multiPartModel = Boolean.parseBoolean(resource.getString(PropertyKey.MULTI_PART_MODEL.getKey(index)));
     } catch (MissingResourceException ex) {
       // By default inDirectory is false
     }
-    Content model = getContent(resource, PropertyKey.MODEL.getKey(index), furnitureCatalogUrl, multiPartModel, false);
+    Content model = getContent(resource, PropertyKey.MODEL.getKey(index), 
+        furnitureCatalogUrl, furnitureResourcesUrlBase, multiPartModel, false);
     float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
     float depth = Float.parseFloat(resource.getString(PropertyKey.DEPTH.getKey(index)));
     float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
@@ -542,13 +558,16 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * @param resource a resource bundle
    * @param contentKey  the key of a resource content file
    * @param furnitureUrl the URL of the file containing the target resource if it's not <code>null</code> 
+   * @param resourceUrlBase the URL used as a base to build the URL to content file  
+   *            or <code>null</code> if it's read from current classpath or <code>furnitureCatalogUrl</code>.
    * @param multiPartModel if <code>true</code> the resource is a multi part resource stored 
    *                 in a directory with other required resources
    * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
   private Content getContent(ResourceBundle resource, 
                              String contentKey, 
-                             URL furnitureUrl, 
+                             URL furnitureUrl,
+                             URL resourceUrlBase, 
                              boolean multiPartModel,
                              boolean optional) {
     String contentFile = optional
@@ -558,8 +577,19 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return null;
     }
     try {
-      // Try first to interpret contentFile as a URL
-      return new URLContent(new URL(contentFile));
+      // Try first to interpret contentFile as an absolute URL 
+      // or an URL relative to resourceUrlBase if it's not null
+      URL url;
+      if (resourceUrlBase != null) {
+        if (contentFile.indexOf('!') < 0) {
+          url = new URL(resourceUrlBase, contentFile);
+        } else {
+          url = new URL("jar:" + new URL(resourceUrlBase, contentFile));
+        }
+      } else {
+        url = new URL(contentFile);
+      }
+      return new URLContent(url);
     } catch (MalformedURLException ex) {
       if (furnitureUrl == null) {
         // Otherwise find if it's a resource

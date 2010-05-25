@@ -54,6 +54,13 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>By default, the value of this parameter is <code>catalog.zip</code>. If this file
  *     or one of the URLs specified by this parameter doesn't exist, it will be ignored.</li>
  *     
+ *     <li><code>furnitureResourcesURLBase</code> specifies the URL used as a base to build the URLs of 
+ *     the 3D models and icons cited in the <code>PluginFurnitureCatalog.properties</code> file of a 
+ *     furniture catalog. If this URL isn't an absolute URL it will be considered relative to 
+ *     applet codebase. If this URL base should the applet code base itself, use a value equal to ".".
+ *     <br>If this parameter isn't defined, the URLs of 3D model and icons will be relative to their 
+ *     furniture catalog file or absolute.</li>
+ * 
  *     <li><code>texturesCatalogURLs</code> specifies the URLs of the textures libraries available 
  *     in Sweet Home 3D catalog. These URLs are comma or space separated, and if they are not 
  *     absolute URLs, they will be considered as relative to applet codebase. Each URL is a ZIP file 
@@ -62,7 +69,14 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>By default, the value of this parameter is <code>catalog.zip</code>, meaning that the 
  *     furniture and textures can be stored in the same file. If this file
  *     or one of the URLs specified by this parameter doesn't exist, it will be ignored.</li>
- *     
+ *
+ *     <li><code>texturesResourcesURLBase</code> specifies the URL used as a base to build the URLs of
+ *     the texture images cited in the <code>PluginTexturesCatalog.properties</code> file of a 
+ *     textures catalog. If this URL isn't an absolute URL it will be considered relative to 
+ *     applet codebase. If this URL base should the applet code base itself, use a value equal to ".".
+ *     <br>If this parameter isn't defined, the URLs of texture images will be relative to their 
+ *     textures catalog file or absolute.</li>
+ *
  *     <li><code>pluginURLs</code> specifies the URLs of the actions available to users through 
  *     {@link com.eteks.sweethome3d.plugin.Plugin plugins}.These URLs are comma or space separated, 
  *     and if they are not absolute URLs, they will be considered as relative to applet codebase. 
