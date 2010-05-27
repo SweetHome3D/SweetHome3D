@@ -981,7 +981,7 @@ public class OBJWriter extends FilterWriter {
           + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) + "\n");
     } else {
       this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
-          + " "  + (this.vertexOffset + vertexIndex2) + "\n");
+          + " "  + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex2]) + "\n");
     }
   }
   
@@ -1034,8 +1034,8 @@ public class OBJWriter extends FilterWriter {
             + "//" + (this.normalOffset + normalIndexSubstitutes [vertexIndex3]) + "\n");
       } else {
         this.out.write("f " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
-            + " "  + (this.vertexOffset + vertexIndex2) 
-            + " "  + (this.vertexOffset + vertexIndex3) + "\n");
+            + " "  + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + " "  + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex3]) + "\n");
       }
     }
 
