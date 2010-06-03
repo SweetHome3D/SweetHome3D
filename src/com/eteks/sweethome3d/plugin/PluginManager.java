@@ -32,6 +32,7 @@ import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,7 +138,8 @@ public class PluginManager {
             applicationPluginFamily += APPLICATION_PLUGIN_FAMILY;
             ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
             readPlugin(ResourceBundle.getBundle(applicationPluginFamily, Locale.getDefault(), classLoader), 
-                "jar:" + pluginUrl.toString() + "!/" + zipEntryName, classLoader);
+                "jar:" + pluginUrl.toString() + "!/" + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20"), 
+                classLoader);
           } catch (MissingResourceException ex) {
             // Ignore malformed plugins
           }
