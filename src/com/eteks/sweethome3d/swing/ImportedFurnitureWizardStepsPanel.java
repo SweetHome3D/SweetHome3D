@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -995,7 +996,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                     int slashIndex = entryName.lastIndexOf('/');
                     String entryFileName = entryName.substring(++slashIndex);
                     if (!entryFileName.startsWith(".")) {
-                      URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
+                      URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" 
+                          + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20"));
                       modelContent = new TemporaryURLContent(entryUrl);
                       model = readModel(modelContent);
                       modelSize = ModelManager.getInstance().getSize(model);
@@ -1086,7 +1088,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       }
       File tempZipFile = File.createTempFile("urlContent", "tmp");
       OBJWriter.writeNodeInZIPFile(model, tempZipFile, 0, objFile, "3D model import " + modelName);
-      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" + objFile));
+      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" 
+          + URLEncoder.encode(objFile, "UTF-8").replace("+", "%20")));
     } finally {
       setDefaultState();
     }

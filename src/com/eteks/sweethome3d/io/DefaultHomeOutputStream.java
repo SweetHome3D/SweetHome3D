@@ -27,6 +27,7 @@ import java.io.InterruptedIOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -142,7 +143,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         // Write in home stream each zipped stream entry that is stored in the same directory  
         for (String zipEntryName : getZipUrlEntries(zipUrl)) {
           if (zipEntryName.startsWith(entryDirectory)) {
-            Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" + zipEntryName));
+            Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+                + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
             writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
           }
         }
@@ -204,7 +206,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       // Write in home stream each zipped stream entry that is stored in the same directory  
       for (String zipEntryName : getZipUrlEntries(zipUrl)) {
         if (zipEntryName.startsWith(entryDirectory)) {
-          Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" + zipEntryName));
+          Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+              + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
           writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(slashIndex), siblingContent);
         }
       }
@@ -227,7 +230,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       // Write each zipped stream entry in home stream 
       for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
         String zipEntryName = entry.getName();
-        Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
+        Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
+            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
         writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);
       }
     } finally {
