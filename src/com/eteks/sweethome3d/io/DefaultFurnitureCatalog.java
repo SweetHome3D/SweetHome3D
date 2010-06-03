@@ -81,19 +81,22 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     /**
      * The key for the icon file of a piece of furniture (mandatory). 
      * This icon file can be either the path to an image relative to classpath
-     * or an absolute URL. 
+     * or an absolute URL. It should be encoded in application/x-www-form-urlencoded  
+     * format if needed. 
      */
     ICON("icon"),
     /**
      * The key for the plan icon file of a piece of furniture (optional).
      * This icon file can be either the path to an image relative to classpath
-     * or an absolute URL. 
+     * or an absolute URL. It should be encoded in application/x-www-form-urlencoded  
+     * format if needed.
      */
     PLAN_ICON("planIcon"),
     /**
      * The key for the 3D model file of a piece of furniture (mandatory).
      * The 3D model file can be either a path relative to classpath
-     * or an absolute URL. 
+     * or an absolute URL.  It should be encoded in application/x-www-form-urlencoded  
+     * format if needed.
      */
     MODEL("model"),
     /**

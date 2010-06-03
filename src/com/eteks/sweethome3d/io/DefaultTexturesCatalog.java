@@ -71,7 +71,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     /**
      * The key for the image file of a texture (mandatory). 
      * This image file can be either the path to an image relative to classpath
-     * or an absolute URL. 
+     * or an absolute URL. It should be encoded in application/x-www-form-urlencoded format 
+     * if needed.
      */
     IMAGE("image"),
     /**
