@@ -997,7 +997,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                     String entryFileName = entryName.substring(++slashIndex);
                     if (!entryFileName.startsWith(".")) {
                       URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" 
-                          + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20"));
+                          + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20").replace("%2F", "/"));
                       modelContent = new TemporaryURLContent(entryUrl);
                       model = readModel(modelContent);
                       modelSize = ModelManager.getInstance().getSize(model);
