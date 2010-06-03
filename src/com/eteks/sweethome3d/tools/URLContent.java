@@ -80,7 +80,9 @@ public class URLContent implements Content {
   }
 
   /**
-   * Returns the name of a JAR entry.
+   * Returns the name of a JAR entry. 
+   * If the JAR entry in the URL given at creation time was encoded in application/x-www-form-urlencoded format,
+   * this method will return it unchanged and not decoded.
    * @throws IllegalStateException if the URL of this content 
    *                    doesn't reference an entry in a JAR URL.
    */
