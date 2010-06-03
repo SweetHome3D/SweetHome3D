@@ -541,7 +541,9 @@ public class ModelManager {
       }
     }
     
-    if (lastException instanceof IncorrectFormatException) {
+    if (lastException instanceof IOException) {
+      throw (IOException)lastException;
+    } else if (lastException instanceof IncorrectFormatException) {
       IOException incorrectFormatException = new IOException("Incorrect format");
       incorrectFormatException.initCause(lastException);
       throw incorrectFormatException;
@@ -550,7 +552,7 @@ public class ModelManager {
       incorrectFormatException.initCause(lastException);
       throw incorrectFormatException;
     } else {
-      throw (IOException)lastException;
+      throw new IOException(lastException);
     } 
   }  
   
