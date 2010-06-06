@@ -449,7 +449,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     float elevation = getOptionalFloat(resource, PropertyKey.ELEVATION.getKey(index), 0);
     float [][] modelRotation = getModelRotation(resource, PropertyKey.MODEL_ROTATION.getKey(index));
     // By default creator is eTeks
-    String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), "eTeks");
+    String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), null);
     String id = getOptionalString(resource, PropertyKey.ID.getKey(index), null);
     boolean resizable = true;
     try {
