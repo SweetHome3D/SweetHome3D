@@ -584,7 +584,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       // or an URL relative to resourceUrlBase if it's not null
       URL url;
       if (resourceUrlBase != null) {
-        if (contentFile.indexOf('!') < 0) {
+        if (contentFile.indexOf('!') < 0 || contentFile.startsWith("jar:")) {
           url = new URL(resourceUrlBase, contentFile);
         } else {
           url = new URL("jar:" + new URL(resourceUrlBase, contentFile));
