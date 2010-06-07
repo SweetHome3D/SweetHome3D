@@ -530,7 +530,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     Insets componentInsets = new Insets(0, 0, 10, 15);
     add(this.nameTextField, new GridBagConstraints(
         1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 5), 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.nameVisibleCheckBox, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
