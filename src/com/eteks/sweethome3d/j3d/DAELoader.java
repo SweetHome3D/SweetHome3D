@@ -184,7 +184,9 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Map<String, String> sampler2DIds = new HashMap<String, String>();
     private final Map<String, List<Geometry>> geometries = new HashMap<String, List<Geometry>>();
     private final Map<String, float []> sources = new HashMap<String, float []>();
-    private final Map<String, float []> vertices = new HashMap<String, float []>();
+    private final Map<String, float []> positions = new HashMap<String, float []>();
+    private final Map<String, float []> normals = new HashMap<String, float []>();
+    private final Map<String, float []> textureCoordinates = new HashMap<String, float []>();
     private final Map<Geometry, String> geometryAppearances = new HashMap<Geometry, String>();
     private final List<int []> facesAndLinesPrimitives = new ArrayList<int[]>();
     private final List<int []> polygonsPrimitives = new ArrayList<int[]>();
@@ -294,20 +296,36 @@ public class DAELoader extends LoaderBase implements Loader {
           this.meshSourceId = attributes.getValue("id");
         } else if ("mesh".equals(parent) && "vertices".equals(name)) {
           this.verticesId = attributes.getValue("id");
-        } else if (this.verticesId != null && "input".equals(name) 
-                   && "POSITION".equals(attributes.getValue("semantic"))) {
-          this.vertices.put(this.verticesId, this.sources.get(attributes.getValue("source").substring(1)));
+        } else if (this.verticesId != null && "input".equals(name)) {
+          String sourceAnchor = attributes.getValue("source").substring(1);
+          if ("POSITION".equals(attributes.getValue("semantic"))) {
+            this.positions.put(this.verticesId, this.sources.get(sourceAnchor));
+          } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
+            this.normals.put(this.verticesId, this.sources.get(sourceAnchor));
+          } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
+            this.textureCoordinates.put(this.verticesId, this.sources.get(sourceAnchor));
+          }
         } else if (this.verticesId == null && "input".equals(name)) {
           this.inputCount++;
+          String sourceAnchor = attributes.getValue("source").substring(1);
+          int offset = Integer.parseInt(attributes.getValue("offset"));
           if ("VERTEX".equals(attributes.getValue("semantic"))) {
-            this.geometryVertices = this.vertices.get(attributes.getValue("source").substring(1));
-            this.geometryVertexOffset = Integer.parseInt(attributes.getValue("offset"));
+            this.geometryVertices = this.positions.get(sourceAnchor);
+            this.geometryVertexOffset = offset;
+            if (this.geometryNormals == null) {
+              this.geometryNormals = this.normals.get(sourceAnchor);
+              this.geometryNormalOffset = offset;
+            }
+            if (this.geometryTextureCoordinates == null) {
+              this.geometryTextureCoordinates = this.textureCoordinates.get(sourceAnchor);
+              this.geometryTextureCoordinatesOffset = offset;
+            }
           } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
-            this.geometryNormals = this.sources.get(attributes.getValue("source").substring(1));
-            this.geometryNormalOffset = Integer.parseInt(attributes.getValue("offset"));
-          } else if ("input".equals(name) && "TEXCOORD".equals(attributes.getValue("semantic"))) {
-            this.geometryTextureCoordinates = this.sources.get(attributes.getValue("source").substring(1));
-            this.geometryTextureCoordinatesOffset = Integer.parseInt(attributes.getValue("offset"));
+            this.geometryNormals = this.sources.get(sourceAnchor);
+            this.geometryNormalOffset = offset;
+          } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
+            this.geometryTextureCoordinates = this.sources.get(sourceAnchor);
+            this.geometryTextureCoordinatesOffset = offset;
           }
         } else if ("triangles".equals(name)
                    || "trifans".equals(name)
