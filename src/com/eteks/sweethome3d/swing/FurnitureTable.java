@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Currency;
@@ -51,6 +52,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -154,23 +156,51 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Updates selected furniture in table from <code>selectedItems</code>. 
    */
   private void updateTableSelectedFurniture(List<Selectable> selectedItems) {
-    getSelectionModel().removeListSelectionListener(this.tableSelectionListener);
-    clearSelection();
+    ListSelectionModel selectionModel = getSelectionModel();
+    selectionModel.removeListSelectionListener(this.tableSelectionListener);
+
     FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
     int minIndex = Integer.MAX_VALUE;
     int maxIndex = Integer.MIN_VALUE;
+    int [] furnitureIndices = new int [selectedItems.size()];
+    int selectedFurnitureCount = 0;
     for (Selectable item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
         // Search index of piece in sorted table model
         int index = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
         // If the piece was found (during the addition of a piece to home, the model may not be updated yet) 
         if (index != -1) {
-          addRowSelectionInterval(index, index);
+          furnitureIndices [selectedFurnitureCount++] = index;
           minIndex = Math.min(minIndex, index);
           maxIndex = Math.max(maxIndex, index);
         }
       }
     }
+
+    if (selectedFurnitureCount < furnitureIndices.length) {
+      // Reduce furnitureIndices array size to selectedRowCount
+      int [] tmp = new int [selectedFurnitureCount];
+      System.arraycopy(furnitureIndices, 0, tmp, 0, selectedFurnitureCount);
+      furnitureIndices = tmp;
+    }
+    Arrays.sort(furnitureIndices);
+    
+    if (getSelectedRowCount() != selectedFurnitureCount
+        || !Arrays.equals(getSelectedRows(), furnitureIndices)) {
+      // Update table selection if it differs from selected furniture 
+      clearSelection();
+      for (int min = 0; min < furnitureIndices.length; ) {
+        // Search the interval of following indices
+        int max = min;
+        while (max + 1 < furnitureIndices.length
+            && furnitureIndices [max] + 1 == furnitureIndices [max + 1]) {
+          max++;
+        }
+        addRowSelectionInterval(furnitureIndices [min], furnitureIndices [max]);
+        min = max + 1;
+      }
+    }
+
     if (!this.selectionByUser && minIndex != Integer.MIN_VALUE) {
       makeRowsVisible(minIndex, maxIndex);
     }
