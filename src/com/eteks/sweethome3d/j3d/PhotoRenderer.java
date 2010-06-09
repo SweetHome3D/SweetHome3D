@@ -105,7 +105,9 @@ public class PhotoRenderer {
   
   private final Quality quality;
   private final SunflowAPI sunflow;
-  private final Map<Texture, File> textureImageFilesCache = new HashMap<Texture, File>();
+  // Store texture image paths in strings to ensure their life will be as long  
+  // as a PhotoRenderer instance (SunFlow stores its textures in a cache map with string keys)
+  private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
   private Thread renderingThread;
 
   static {
@@ -920,19 +922,20 @@ public class PhotoRenderer {
       }
       this.sunflow.shader(appearanceName, "mirror");
     } else if (texture != null) {
-      File imageFile = this.textureImageFilesCache.get(texture);
-      if (imageFile == null) {
+      String imagePath = this.textureImagesCache.get(texture);
+      if (imagePath == null) {
         ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
         RenderedImage image = imageComponent.getRenderedImage();
         String fileFormat = texture.getFormat() == Texture.RGBA 
             ? "png"
             : "jpg";
-        imageFile = File.createTempFile("texture", "." + fileFormat);
+        File imageFile = File.createTempFile("texture", "." + fileFormat);
         imageFile.deleteOnExit();
         ImageIO.write(image, fileFormat, imageFile);
-        this.textureImageFilesCache.put(texture, imageFile);
+        imagePath = imageFile.getAbsolutePath();
+        this.textureImagesCache.put(texture, imagePath);
       }
-      this.sunflow.parameter("texture", imageFile.getAbsolutePath());
+      this.sunflow.parameter("texture", imagePath);
         
       Material material = appearance.getMaterial();
       if (material != null
@@ -1132,7 +1135,5 @@ public class PhotoRenderer {
       }
       return false;
     }
-    
-    
   }
 }
