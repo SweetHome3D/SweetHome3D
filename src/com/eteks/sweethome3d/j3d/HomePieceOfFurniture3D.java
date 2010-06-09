@@ -577,10 +577,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Texture texture = appearance.getTexture();
     if (texture != null && !texture.isLive()) {
       texture.setCapability(Texture.ALLOW_FORMAT_READ);
-      texture.setCapability(Texture.ALLOW_FORMAT_READ);
+      texture.setCapability(Texture.ALLOW_IMAGE_READ);
       for (ImageComponent image : texture.getImages()) {
         if (!image.isLive()) {
           image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
+          image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
         }
       }
     }
