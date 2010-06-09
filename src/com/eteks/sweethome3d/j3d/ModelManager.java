@@ -552,7 +552,9 @@ public class ModelManager {
       incorrectFormatException.initCause(lastException);
       throw incorrectFormatException;
     } else {
-      throw new IOException(lastException);
+      IOException otherException = new IOException();
+      otherException.initCause(lastException);
+      throw otherException;
     } 
   }  
   
