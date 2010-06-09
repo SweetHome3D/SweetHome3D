@@ -519,7 +519,7 @@ public class ModelManager {
         updateShapeNamesAndWindowPanesTransparency(scene);
         
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
-        turnOffLightsAndModulateTextures(modelNode);
+        turnOffLightsShareAndModulateTextures(modelNode);
 
         return modelNode;
       } catch (IllegalArgumentException ex) {
@@ -586,15 +586,15 @@ public class ModelManager {
    * Turns off light nodes of <code>node</code> children, 
    * and modulates textures if needed.
    */
-  private void turnOffLightsAndModulateTextures(Node node) {
+  private void turnOffLightsShareAndModulateTextures(Node node) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        turnOffLightsAndModulateTextures((Node)enumeration.nextElement());
+        turnOffLightsShareAndModulateTextures((Node)enumeration.nextElement());
       }
     } else if (node instanceof Link) {
-      turnOffLightsAndModulateTextures(((Link)node).getSharedGroup());
+      turnOffLightsShareAndModulateTextures(((Link)node).getSharedGroup());
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
@@ -602,36 +602,42 @@ public class ModelManager {
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          // Use nicest rendering
-          texture.setMinFilter(Texture.NICEST);
-          texture.setMagFilter(Texture.NICEST);
-          
-          TextureAttributes textureAttributes = appearance.getTextureAttributes();
-          if (textureAttributes == null) {
-            // Mix texture and shape color
-            textureAttributes = new TextureAttributes();
-            textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-            appearance.setTextureAttributes(textureAttributes);
-            // Check shape color is white
-            Material material = appearance.getMaterial();
-            if (material == null) {
-              appearance.setMaterial((Material)DEFAULT_MATERIAL.cloneNodeComponent(true));
-            } else {
-              Color3f color = new Color3f();
-              DEFAULT_MATERIAL.getDiffuseColor(color);
-              material.setDiffuseColor(color);
-              DEFAULT_MATERIAL.getAmbientColor(color);
-              material.setAmbientColor(color);
+          // Share textures data as much as possible
+          Texture sharedTexture = TextureManager.getInstance().shareTexture(texture);
+          if (sharedTexture != texture) {
+            appearance.setTexture(sharedTexture);
+          } else {
+            // Use nicest rendering
+            texture.setMinFilter(Texture.NICEST);
+            texture.setMagFilter(Texture.NICEST);
+            
+            TextureAttributes textureAttributes = appearance.getTextureAttributes();
+            if (textureAttributes == null) {
+              // Mix texture and shape color
+              textureAttributes = new TextureAttributes();
+              textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+              appearance.setTextureAttributes(textureAttributes);
+              // Check shape color is white
+              Material material = appearance.getMaterial();
+              if (material == null) {
+                appearance.setMaterial((Material)DEFAULT_MATERIAL.cloneNodeComponent(true));
+              } else {
+                Color3f color = new Color3f();
+                DEFAULT_MATERIAL.getDiffuseColor(color);
+                material.setDiffuseColor(color);
+                DEFAULT_MATERIAL.getAmbientColor(color);
+                material.setAmbientColor(color);
+              }
             }
-          }
-          
-          // If texture image supports transparency
-          if (texture.getFormat() == Texture.RGBA) {
-            if (appearance.getTransparencyAttributes() == null) {
-              // Add transparency attributes to ensure transparency works
-              appearance.setTransparencyAttributes(
-                  new TransparencyAttributes(TransparencyAttributes.NICEST, 0));
-            }             
+            
+            // If texture image supports transparency
+            if (texture.getFormat() == Texture.RGBA) {
+              if (appearance.getTransparencyAttributes() == null) {
+                // Add transparency attributes to ensure transparency works
+                appearance.setTransparencyAttributes(
+                    new TransparencyAttributes(TransparencyAttributes.NICEST, 0));
+              }             
+            }
           }
         }
       }

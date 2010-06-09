@@ -102,6 +102,7 @@ public class OBJWriter extends FilterWriter {
   private int textureCoordinatesOffset = 1;
   private Map<ComparableAppearance, String> appearances = 
       new LinkedHashMap<ComparableAppearance, String>();
+  private Map<Texture, File> textures = new HashMap<Texture, File>();
   
   /**
    * Create an OBJ writer for the given file, with no header and default precision.
@@ -363,6 +364,20 @@ public class OBJWriter extends FilterWriter {
             // Store appearance
             appearanceName = objectName;
             this.appearances.put(comparableAppearance, appearanceName);
+            
+            Texture texture = appearance.getTexture();
+            if (texture != null) {
+              File textureFile = this.textures.get(texture);
+              if (textureFile == null) {
+                // Store texture
+                String fileFormat = texture.getFormat() == Texture.RGBA 
+                    ? "png"
+                    : "jpg";
+                textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
+                    + "_" + appearanceName + "." + fileFormat);
+                this.textures.put(texture, textureFile);
+              }
+            }
           } 
           this.out.write("usemtl " + appearanceName + "\n");
         }
@@ -1200,16 +1215,19 @@ public class OBJWriter extends FilterWriter {
         }
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
-          RenderedImage image = imageComponent.getRenderedImage();
-          String fileFormat = texture.getFormat() == Texture.RGBA 
-              ? "png"
-              : "jpg";
-          File imageFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) + "_" + appearanceName + "." + fileFormat);
-          ImageIO.write(image, fileFormat, imageFile);
-          writer.write("map_Kd " + imageFile.getName() + "\n");
+          writer.write("map_Kd " + this.textures.get(texture).getName() + "\n");
         }
-      }      
+      }
+      
+      for (Map.Entry<Texture, File> textureEntry : this.textures.entrySet()) {
+        Texture texture = textureEntry.getKey();
+        ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
+        RenderedImage image = imageComponent.getRenderedImage();
+        String fileFormat = texture.getFormat() == Texture.RGBA 
+            ? "png"
+            : "jpg";
+        ImageIO.write(image, fileFormat, textureEntry.getValue());        
+      }
     } finally {
       if (writer != null) {
         writer.close();

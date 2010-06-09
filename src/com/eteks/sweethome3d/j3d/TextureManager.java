@@ -22,10 +22,12 @@ package com.eteks.sweethome3d.j3d;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
@@ -43,20 +45,23 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author Emmanuel Puybaret
  */
 public class TextureManager {
-  private static TextureManager       instance;
+  private static TextureManager          instance;
   // Image used if an image content couldn't be loaded
-  private final Texture               errorTexture;
+  private final Texture                  errorTexture;
   // Image used while an image content is loaded
-  private final Texture               waitTexture;
-  // Map storing loaded images
-  private final Map<Content, Texture> textures;
+  private final Texture                  waitTexture;
+  // Map storing loaded texture contents
+  private final Map<Content, TextureKey> contentTextureKeys;
+  // Map storing loaded textures
+  private final Map<TextureKey, Texture> textures;
   // Executor used to load images
-  private ExecutorService             texturesLoader;
+  private ExecutorService                texturesLoader;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.textures = Collections.synchronizedMap(new WeakHashMap<Content, Texture>());
+    this.contentTextureKeys = new WeakHashMap<Content, TextureKey>();
+    this.textures = new WeakHashMap<TextureKey, Texture>();
   }
 
   /**
@@ -123,11 +128,19 @@ public class TextureManager {
   public void loadTexture(final Content content,
                           boolean synchronous,
                           final TextureObserver textureObserver) {
-    Texture texture = this.textures.get(content);
+    Texture texture;
+    TextureKey textureKey;
+    synchronized (this.textures) { // Use one mutex for both maps
+      textureKey = this.contentTextureKeys.get(content);
+      if (textureKey == null) {
+        texture = this.textures.get(textureKey);
+      } else {
+        texture = null;
+      }
+    }
     if (texture == null) {
       if (synchronous) {
-        texture = readTexture(content);
-        this.textures.put(content, texture);
+        texture = shareTexture(readTexture(content), content);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
       } else {
@@ -139,10 +152,9 @@ public class TextureManager {
         // Load the image in a different thread
         this.texturesLoader.execute(new Runnable () {
             public void run() {
-              final Texture texture = readTexture(content);
+              final Texture texture = shareTexture(readTexture(content), content);
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    textures.put(content, texture);
                     // Notify loaded or error texture to observer
                     textureObserver.textureUpdated(texture);
                   }
@@ -155,7 +167,7 @@ public class TextureManager {
       textureObserver.textureUpdated(texture);
     }
   }
-
+  
   /**
    * Returns a texture created from the image from <code>content</code>. 
    */
@@ -186,9 +198,120 @@ public class TextureManager {
   }
 
   /**
+   * Returns the texture matching <code>content</code>, either 
+   * the <code>texture</code> in parameter or a shared texture if the 
+   * same texture as the one in parameter is already shared.
+   */
+  private Texture shareTexture(final Texture texture,
+                               final Content content) {
+    TextureKey textureKey = new TextureKey(texture);
+    Texture sharedTexture;
+    synchronized (this.textures) { // Use one mutex for both maps
+      sharedTexture = this.textures.get(textureKey);
+      if (sharedTexture == null) {
+        sharedTexture = texture;
+        this.textures.put(textureKey, sharedTexture);
+      } else {
+        // Search which key matches sharedTexture to keep unique keys
+        for (TextureKey key : textures.keySet()) {
+          if (key.getTexture() == sharedTexture) {
+            textureKey = key;
+            break;
+          }
+        }
+      }
+      if (content != null) {
+        this.contentTextureKeys.put(content, textureKey);
+      }
+    }
+    return sharedTexture;
+  }
+ 
+  /**
+   * Returns either the <code>texture</code> in parameter or a shared texture 
+   * if the same texture as the one in parameter is already shared.
+   */
+  public Texture shareTexture(Texture texture) {
+    return shareTexture(texture, null);
+  }
+  
+  /**
    * An observer that receives texture loading notifications. 
    */
   public static interface TextureObserver {
     public void textureUpdated(Texture texture); 
+  }
+  
+  /**
+   * Key used to ensure texture uniqueness in textures map.
+   * Image bits of the texture are stored in a weak reference to avoid grabbing memory uselessly.
+   */
+  public static class TextureKey {
+    private Texture               texture;
+    private WeakReference<int []> imageBits; 
+    private int                   hashCodeCache;
+    private boolean               hashCodeSet;
+
+    public TextureKey(Texture texture) {
+      this.texture = texture;      
+    }
+    
+    public Texture getTexture() {
+      return this.texture;
+    }
+    
+    /**
+     * Returns the pixels of the given <code>image</code>.
+     */
+    private int [] getImagePixels() {
+      int [] imageBits = null;
+      if (this.imageBits != null) {
+        imageBits = this.imageBits.get();
+      }
+      if (imageBits == null) {
+        BufferedImage image = ((ImageComponent2D)this.texture.getImage(0)).getImage();
+        if (image.getType() != BufferedImage.TYPE_INT_RGB
+            && image.getType() != BufferedImage.TYPE_INT_ARGB) {
+          // Transform as TYPE_INT_ARGB or TYPE_INT_RGB (much faster than calling image.getRGB())
+          BufferedImage tmp = new BufferedImage(image.getWidth(), image.getHeight(), 
+              this.texture.getFormat() == Texture.RGBA ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+          Graphics2D g = (Graphics2D)tmp.getGraphics();
+          g.drawImage(image, null, 0, 0);
+          g.dispose();
+          image = tmp;
+        }
+        imageBits = (int [])image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+        this.imageBits = new WeakReference<int[]>(imageBits);
+      }
+      return imageBits;
+    }
+
+    /**
+     * Returns <code>true</code> if the image of this texture and 
+     * the image of the object in parameter are the same. 
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (obj instanceof TextureKey) {
+        TextureKey textureKey = (TextureKey)obj;
+        if (this.texture == textureKey.texture) {
+          return true;
+        } else if (hashCode() == textureKey.hashCode()){
+          return Arrays.equals(getImagePixels(), textureKey.getImagePixels());
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      if (!this.hashCodeSet) {
+        this.hashCodeCache = Arrays.hashCode(getImagePixels());
+        this.hashCodeSet = true;
+      }
+      return this.hashCodeCache;
+    }
   }
 }
