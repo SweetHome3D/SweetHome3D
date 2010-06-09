@@ -400,7 +400,7 @@ public class ModelManager {
         Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          clonedAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+          clonedAppearance.setTexture(texture);
         }
         clonedShape.setAppearance(clonedAppearance);
       }
