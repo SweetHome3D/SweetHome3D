@@ -28,11 +28,14 @@ import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
@@ -215,16 +218,25 @@ public class FurnitureCatalogTree extends JTree implements View {
         && path != null
         && path.getPathCount() == 3) {
       CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
-      String tooltip = "<html><center>&nbsp;<b>" + piece.getName() + "</b>&nbsp;";
+      String tooltip = "<html><table><tr><td align='center'><b>" + piece.getName() + "</b>";
       if (piece.getCreator() != null) {
-        tooltip += "<br>&nbsp;" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
-            "tooltipCreator", piece.getCreator() + "&nbsp;");
+        tooltip += "<br>" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
+            "tooltipCreator", piece.getCreator() + "</td></tr>");
       }
       if (piece.getIcon() instanceof URLContent) {
-        tooltip += "<br><img width='128' height='128' src='" 
-          + ((URLContent)piece.getIcon()).getURL() + "'>"; 
+        try {
+          // Ensure image will always be viewed in a 128x128 pixels cell
+          BufferedImage image = ImageIO.read(((URLContent)piece.getIcon()).getURL());
+          int width = Math.round(128f * Math.min(1, image.getWidth() / image.getHeight()));
+          int height = Math.round((float)width * image.getHeight() / image.getWidth());
+          tooltip += "<tr><td width='128' height='128' align='center' valign='middle'><img width='" + width 
+              + "' height='" + height + "' src='" 
+              + ((URLContent)piece.getIcon()).getURL() + "'></td></tr>";
+        } catch (IOException ex) {
+          return null;
+        }
       }
-      return tooltip;
+      return tooltip + "</table>";
     } else {
       return null;
     }
