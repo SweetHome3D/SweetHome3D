@@ -30,11 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
@@ -105,9 +105,7 @@ public class PhotoRenderer {
   
   private final Quality quality;
   private final SunflowAPI sunflow;
-  // Store texture image paths in strings to ensure their life will be as long  
-  // as a PhotoRenderer instance (SunFlow stores its textures in a cache map with string keys)
-  private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
+  private final static Map<Texture, String> textureImagesCache = new WeakHashMap<Texture, String>();
   private Thread renderingThread;
 
   static {
