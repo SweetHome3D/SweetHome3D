@@ -80,6 +80,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -1052,32 +1053,47 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Create custom rotation cursor with a hot spot point at center of cursor.
+   * Returns a custom cursor with a hot spot point at center of cursor.
    */ 
   private Cursor createCustomCursor(String smallCursorImageResource, 
                                     String largeCursorImageResource,
                                     String cursorName,
                                     int    defaultCursor) {
+    return createCustomCursor(PlanComponent.class.getResource(smallCursorImageResource), 
+        PlanComponent.class.getResource(largeCursorImageResource), 
+        0.5f, 0.5f, cursorName, 
+        Cursor.getPredefinedCursor(defaultCursor));
+  }
+
+  /**
+   * Returns a custom cursor created from images in parameters.
+   */ 
+  protected Cursor createCustomCursor(URL smallCursorImageUrl, 
+                                      URL largeCursorImageUrl,
+                                      float yCursorHotSpot,
+                                      float xCursorHotSpot,
+                                      String cursorName,
+                                      Cursor defaultCursor) {
     // Retrieve system cursor size
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
-    String cursorImageResource;
+    URL cursorImageResource;
     // If returned cursor size is 0, system doesn't support custom cursor  
     if (cursorSize.width == 0) {      
-      return Cursor.getPredefinedCursor(defaultCursor);      
+      return defaultCursor;      
     } else {
       // Use a different cursor image depending on system cursor size 
       if (cursorSize.width > 16) {
-        cursorImageResource = largeCursorImageResource;
+        cursorImageResource = largeCursorImageUrl;
       } else {
-        cursorImageResource = smallCursorImageResource;
+        cursorImageResource = smallCursorImageUrl;
       }
       try {
         // Read cursor image
-        BufferedImage cursorImage = 
-            ImageIO.read(PlanComponent.class.getResource(cursorImageResource));
+        BufferedImage cursorImage = ImageIO.read(cursorImageResource);
         // Create custom cursor from image
         return getToolkit().createCustomCursor(cursorImage, 
-            new Point(cursorSize.width / 2, cursorSize.height / 2),
+            new Point(Math.round(cursorSize.width * xCursorHotSpot), 
+                      Math.round(cursorSize.height * yCursorHotSpot)),
             cursorName);
       } catch (IOException ex) {
         throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
