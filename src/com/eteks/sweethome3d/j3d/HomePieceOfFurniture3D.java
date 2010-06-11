@@ -243,13 +243,18 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   private void updatePieceOfFurnitureVisibility() {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
-    HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    Node outlineModelNode = getOutlineModelNode();
+    HomeEnvironment.DrawingMode drawingMode;
+    if (outlineModelNode != null) {
+      drawingMode = this.home.getEnvironment().getDrawingMode(); 
+    } else {
+      drawingMode = null; 
+    }
     // Update visibility of filled model shapes
     setVisible(getFilledModelNode(), piece.isVisible()
         && (drawingMode == null
             || drawingMode == HomeEnvironment.DrawingMode.FILL 
             || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
-    Node outlineModelNode = getOutlineModelNode();
     if (outlineModelNode != null) {
       // Update visibility of outline model shapes
       setVisible(outlineModelNode, piece.isVisible()
@@ -411,9 +416,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         // Use appearance user data to store shape default material
         DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
         if (defaultMaterialAndTexture == null) {
-          defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance.getMaterial(), 
-              appearance.getTransparencyAttributes(), appearance.getTexCoordGeneration(), 
-              appearance.getTexture(), appearance.getTextureAttributes());
+          defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
           appearance.setUserData(defaultMaterialAndTexture);
         }
         if (material != null && defaultMaterialAndTexture.getTexture() == null) {
@@ -618,16 +621,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     private final Texture                texture;
     private final TextureAttributes      textureAttributes;
 
-    public DefaultMaterialAndTexture(Material material, 
-                                     TransparencyAttributes transparencyAttributes, 
-                                     TexCoordGeneration texCoordGeneration, 
-                                     Texture texture, 
-                                     TextureAttributes textureAttributes) {
-      this.material = material;
-      this.transparencyAttributes = transparencyAttributes;
-      this.texCoordGeneration = texCoordGeneration;
-      this.texture = texture;
-      this.textureAttributes = textureAttributes;      
+    public DefaultMaterialAndTexture(Appearance appearance) {
+      this.material = appearance.getMaterial();
+      this.transparencyAttributes = appearance.getTransparencyAttributes();
+      this.texCoordGeneration = appearance.getTexCoordGeneration();
+      this.texture = appearance.getTexture();
+      this.textureAttributes = appearance.getTextureAttributes();      
     }
     
     public Material getMaterial() {
