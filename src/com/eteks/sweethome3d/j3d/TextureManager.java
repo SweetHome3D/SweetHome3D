@@ -82,7 +82,9 @@ public class TextureManager {
       this.texturesLoader.shutdownNow();
       this.texturesLoader = null;
     }
-    this.textures.clear();
+    synchronized (this.textures) {
+      this.textures.clear();
+    }
   }
   
   /**
@@ -106,7 +108,7 @@ public class TextureManager {
    * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>
    * If the texture isn't loaded in cache yet, a one pixel white image texture will be notified 
    * immediately to the given <code>textureObserver</code>, then a second notification will 
-   * be given once the image texture is loaded in Event Dispatch Thread. If the texture is in cache, 
+   * be given in Event Dispatch Thread once the image texture is loaded. If the texture is in cache, 
    * it will be notified immediately to the given <code>textureObserver</code>.
    * @param content an object containing an image
    * @param textureObserver the observer that will be notified once the texture is available
@@ -119,7 +121,7 @@ public class TextureManager {
    * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>. 
    * If the texture isn't loaded in cache yet and <code>synchronous</code> is false, a one pixel 
    * white image texture will be notified immediately to the given <code>textureObserver</code>, 
-   * then a second notification will be given once the image texture is loaded in Event Dispatch Thread. 
+   * then a second notification will be given in Event Dispatch Thread once the image texture is loaded. 
    * If the texture is in cache, it will be notified immediately to the given <code>textureObserver</code>.
    * @param content an object containing an image
    * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
