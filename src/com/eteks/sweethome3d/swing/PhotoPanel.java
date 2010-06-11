@@ -541,6 +541,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Last row
+    // Force minimum size to avoid resizing effect
+    this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -572,21 +574,29 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
       
-      dialog.setLocationByPlatform(true);
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);
       if (homeRoot != null) {
         int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
         Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
         int screenRightBorder = screenSize.width - screenInsets.right;
+        // Check dialog isn't too high
+        int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+        if (dialog.getHeight() > screenHeight) {
+          dialog.setSize(dialog.getWidth(), screenHeight);
+        }
         int dialogWidth = dialog.getWidth();
         // If there some space left at the right of the window
-        if (screenRightBorder - windowRightBorder > dialogWidth / 2) {
+        if (screenRightBorder - windowRightBorder > dialogWidth / 2
+            || dialog.getHeight() == screenHeight) {
           // Move the dialog to the right of window
-          dialog.setLocationByPlatform(false);
           dialog.setLocation(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
               Math.max(Math.min(homeRoot.getY(), screenSize.height - dialog.getHeight() - screenInsets.bottom), screenInsets.top));
+        } else {
+          dialog.setLocationByPlatform(true);
         }
+      } else {
+        dialog.setLocationByPlatform(true);
       }
       
       // Add a listener on 3D view to be notified when its size changes 

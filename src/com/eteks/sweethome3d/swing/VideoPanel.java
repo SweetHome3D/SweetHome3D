@@ -690,6 +690,7 @@ public class VideoPanel extends JPanel implements DialogView {
     this.statusLayout = new CardLayout();
     this.statusPanel = new JPanel(this.statusLayout);
     this.statusPanel.add(this.tipLabel, TIP_CARD);
+    this.tipLabel.setMinimumSize(this.tipLabel.getPreferredSize());
     JPanel progressPanel = new JPanel(new BorderLayout(5, 2));
     progressPanel.add(this.progressBar, BorderLayout.NORTH);
     progressPanel.add(this.progressLabel);
@@ -730,6 +731,8 @@ public class VideoPanel extends JPanel implements DialogView {
         2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Last row
+    // Force minimum size to avoid resizing effect
+    this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -761,23 +764,33 @@ public class VideoPanel extends JPanel implements DialogView {
           }
         });
       
-      dialog.setLocationByPlatform(true);
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);
       if (homeRoot != null) {
         int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
         Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
         int screenRightBorder = screenSize.width - screenInsets.right;
+        // Check dialog isn't too high
+        int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+        if (dialog.getHeight() > screenHeight) {
+          dialog.setSize(dialog.getWidth(), screenHeight);
+        }
         int dialogWidth = dialog.getWidth();
         // If there some space left at the right of the window
-        if (screenRightBorder - windowRightBorder > dialogWidth / 2) {
+        if (screenRightBorder - windowRightBorder > dialogWidth / 2
+            || dialog.getHeight() == screenHeight) {
           // Move the dialog to the right of window
           dialog.setLocationByPlatform(false);
           dialog.setLocation(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
               Math.max(Math.min(homeRoot.getY() + dialog.getInsets().top, 
                   screenSize.height - dialog.getHeight() - screenInsets.bottom), screenInsets.top));
+        } else {
+          dialog.setLocationByPlatform(true);
         }
+      } else {
+        dialog.setLocationByPlatform(true);
       }
+      
       dialog.addWindowListener(new WindowAdapter() {
         public void windowClosed(WindowEvent ev) {
           stopVideoCreation();
