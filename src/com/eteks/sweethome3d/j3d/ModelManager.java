@@ -300,6 +300,7 @@ public class ModelManager {
    * @param content an object containing a model
    * @param modelObserver the observer that will be notified once the model is available
    *    or if an error happens
+   * @throws IllegalStateException if the current thread isn't the Event Dispatch Thread.  
    */
   public void loadModel(Content content,
                         ModelObserver modelObserver) {
@@ -312,9 +313,11 @@ public class ModelManager {
    * @param content an object containing a model
    * @param synchronous if <code>true</code>, this method will return only once model content is loaded
    * @param modelObserver the observer that will be notified once the model is available
-   *    or if an error happens. When the model is loaded asynchronously, this method should be called
-   *    in Event Dispatch Thread and observer will be notified in EDT, otherwise it will be notified 
-   *    in the same thread as the caller.
+   *    or if an error happens. When the model is loaded synchronously, the observer will be notified
+   *    in the same thread as the caller, otherwise the observer will be notified in the Event 
+   *    Dispatch Thread and this method must be called in Event Dispatch Thread too.
+   * @throws IllegalStateException if synchronous is <code>false</code> and the current thread isn't 
+   *    the Event Dispatch Thread.  
    */
   public void loadModel(final Content content,
                         boolean synchronous,
@@ -329,7 +332,9 @@ public class ModelManager {
         }
         // Store in cache a model node for future copies 
         this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
-      } else {
+      } else if (!EventQueue.isDispatchThread()) {
+        throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
+      } else {  
         if (this.modelsLoader == null) {
           this.modelsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
@@ -360,15 +365,13 @@ public class ModelManager {
                     }
                   });
               } catch (final IOException ex) {
-                synchronized (loadedModelNodes) {
-                  EventQueue.invokeLater(new Runnable() {
-                      public void run() {
-                        for (final ModelObserver observer : loadingModelObservers.remove(content)) {
-                          observer.modelError(ex);
-                        }
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      for (final ModelObserver observer : loadingModelObservers.remove(content)) {
+                        observer.modelError(ex);
                       }
-                    });
-                }                  
+                    }
+                  });
               }
             }
           });
