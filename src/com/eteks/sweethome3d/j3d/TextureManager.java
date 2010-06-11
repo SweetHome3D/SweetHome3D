@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.ImageComponent;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Texture;
 
@@ -188,17 +189,19 @@ public class TextureManager {
       texture = errorTexture;
     } else {
       texture = new TextureLoader(image).getTexture();
-      texture.setMinFilter(Texture.NICEST);
-      texture.setMagFilter(Texture.NICEST);
-      texture.setCapability(Texture.ALLOW_IMAGE_READ);
-      texture.setCapability(Texture.ALLOW_FORMAT_READ);
-      texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-      texture.getImage(0).setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
       texture.setUserData(content);
     }
     return texture;
   }
 
+  /**
+   * Returns either the <code>texture</code> in parameter or a shared texture 
+   * if the same texture as the one in parameter is already shared.
+   */
+  public Texture shareTexture(Texture texture) {
+    return shareTexture(texture, null);
+  }
+  
   /**
    * Returns the texture matching <code>content</code>, either 
    * the <code>texture</code> in parameter or a shared texture if the 
@@ -212,6 +215,7 @@ public class TextureManager {
       sharedTexture = this.textures.get(textureKey);
       if (sharedTexture == null) {
         sharedTexture = texture;
+        setSharedTextureAttributesAndCapabilities(sharedTexture);
         this.textures.put(textureKey, sharedTexture);
       } else {
         // Search which key matches sharedTexture to keep unique keys
@@ -228,15 +232,23 @@ public class TextureManager {
     }
     return sharedTexture;
   }
- 
+
   /**
-   * Returns either the <code>texture</code> in parameter or a shared texture 
-   * if the same texture as the one in parameter is already shared.
+   * Sets the attributes and capabilities of a shared <code>texture</code>.
    */
-  public Texture shareTexture(Texture texture) {
-    return shareTexture(texture, null);
+  private void setSharedTextureAttributesAndCapabilities(Texture texture) {
+    texture.setMinFilter(Texture.NICEST);
+    texture.setMagFilter(Texture.NICEST);
+    texture.setCapability(Texture.ALLOW_FORMAT_READ);
+    texture.setCapability(Texture.ALLOW_IMAGE_READ);
+    for (ImageComponent image : texture.getImages()) {
+      if (!image.isLive()) {
+        image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
+        image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
+      }
+    }
   }
-  
+ 
   /**
    * An observer that receives texture loading notifications. 
    */

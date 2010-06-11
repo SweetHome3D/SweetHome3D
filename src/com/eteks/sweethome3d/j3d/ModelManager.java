@@ -610,10 +610,6 @@ public class ModelManager {
           if (sharedTexture != texture) {
             appearance.setTexture(sharedTexture);
           } else {
-            // Use nicest rendering
-            texture.setMinFilter(Texture.NICEST);
-            texture.setMagFilter(Texture.NICEST);
-            
             TextureAttributes textureAttributes = appearance.getTextureAttributes();
             if (textureAttributes == null) {
               // Mix texture and shape color

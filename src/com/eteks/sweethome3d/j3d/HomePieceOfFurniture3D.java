@@ -578,17 +578,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
-    Texture texture = appearance.getTexture();
-    if (texture != null && !texture.isLive()) {
-      texture.setCapability(Texture.ALLOW_FORMAT_READ);
-      texture.setCapability(Texture.ALLOW_IMAGE_READ);
-      for (ImageComponent image : texture.getImages()) {
-        if (!image.isLive()) {
-          image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
-          image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
-        }
-      }
-    }
     appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
     PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
