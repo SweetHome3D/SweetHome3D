@@ -89,7 +89,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -101,21 +100,13 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
-import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
-import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
-import javax.media.j3d.Link;
-import javax.media.j3d.Material;
-import javax.media.j3d.Node;
-import javax.media.j3d.PolygonAttributes;
-import javax.media.j3d.Shape3D;
-import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -149,14 +140,15 @@ import javax.swing.text.InternationalFormatter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import javax.vecmath.Color3f;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
-import javax.vecmath.Vector4f;
 
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 import org.freehep.util.UserProperties;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
+import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.BackgroundImage;
@@ -4555,26 +4547,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
             public void modelUpdated(final BranchGroup modelNode) {
-              // Extract piece data used by iconsCreationExecutor tasks
-              final float [][] modelRotation = piece.getModelRotation();
-              final boolean backFaceShown = piece.isBackFaceShown();
-              final float pieceWidth = piece.getWidth();
-              final float pieceDepth = piece.getDepth();
-              final float pieceHeight = piece.getHeight();
-              final Integer pieceColor = piece.getColor();
-              final HomeTexture pieceTexture = piece.getTexture();
+              // Now that it's sure that 3D model exists
+              // work on a clone of the piece centered at the origin
+              // with the same size to get a correct texture mapping
+              final HomePieceOfFurniture normalizedPiece = piece.clone();
+              normalizedPiece.setModelMirrored(false);
+              normalizedPiece.setX(0);
+              normalizedPiece.setY(0);
+              normalizedPiece.setElevation(-normalizedPiece.getHeight() / 2);
+              normalizedPiece.setAngle(0);
+              final float pieceWidth = normalizedPiece.getWidth();
+              final float pieceDepth = normalizedPiece.getDepth();
+              final float pieceHeight = normalizedPiece.getHeight();
               if (waitingComponent != null) {
                 // Generate icons in an other thread to avoid blocking EDT during offscreen rendering
                 iconsCreationExecutor.execute(new Runnable() {
                     public void run() {
-                      setIcon(createIcon(modelNode, modelRotation, backFaceShown, 
-                          pieceWidth, pieceDepth, pieceHeight, pieceColor, pieceTexture));
+                      setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
+                          pieceWidth, pieceDepth, pieceHeight));
                       waitingComponent.repaint();
                     }
                   });
               } else {
-                setIcon(createIcon(modelNode, modelRotation, backFaceShown,
-                    pieceWidth, pieceDepth, pieceHeight, pieceColor, pieceTexture));
+                setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
+                    pieceWidth, pieceDepth, pieceHeight));
               }
             }
         
@@ -4591,32 +4587,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     /**
      * Returns an icon created and scaled from piece model content.
      */
-    private Icon createIcon(BranchGroup modelNode, float [][] modelRotation, boolean backFaceShown, 
-                            float pieceWidth, float pieceDepth, float pieceHeight, 
-                            Integer pieceColor, HomeTexture pieceTexture) {
+    private Icon createIcon(BranchGroup modelNode,  
+                            float pieceWidth, float pieceDepth, float pieceHeight) {
       // Add piece model scene to a normalized transform group
-      TransformGroup modelTransformGroup = 
-          ModelManager.getInstance().getNormalizedTransformGroup(modelNode, modelRotation, 2);
+      Transform3D scaleTransform = new Transform3D();
+      scaleTransform.setScale(new Vector3d(2 / pieceWidth, 2 / pieceHeight, 2 / pieceDepth));
+      TransformGroup modelTransformGroup = new TransformGroup();
+      modelTransformGroup.setTransform(scaleTransform);
       modelTransformGroup.addChild(modelNode);
 
-      // Update model color
-      if (pieceColor != null) {
-        Color3f materialColor = new Color3f(new Color(pieceColor));
-        Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 32);
-        setMaterialAndTexture(modelNode, material, null, pieceWidth, pieceDepth, pieceHeight, null);
-      } else if (pieceTexture != null) { 
-        Vector3f modelSize = ModelManager.getInstance().getSize(modelNode);
-        setMaterialAndTexture(modelNode, null, pieceTexture, pieceWidth, pieceDepth, pieceHeight, modelSize);
-      }
-      // Update back face flip
-      if (backFaceShown) {
-        setBackFaceNormalFlip(modelNode);
-      }
-      
       BranchGroup model = new BranchGroup();
       model.setCapability(BranchGroup.ALLOW_DETACH);
       model.addChild(modelTransformGroup);
-      
       sceneRoot.addChild(model);
       
       // Render scene with a white background
@@ -4660,85 +4642,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       } else {
         return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null,
             0, image.getWidth());
-      }
-    }
-
-    /**
-     * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
-     * with a given <code>material</code>. 
-     */
-    private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, 
-                             float pieceWidth, float pieceDepth, float pieceHeight, Vector3f modelSize) {
-      if (node instanceof Group) {
-        // Set material of all children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, 
-              pieceWidth, pieceDepth, pieceHeight, modelSize);
-        }
-      } else if (node instanceof Link) {
-        setMaterialAndTexture(((Link)node).getSharedGroup(), material, texture, 
-            pieceWidth, pieceDepth, pieceHeight, modelSize);
-      } else if (node instanceof Shape3D) {
-        final Shape3D shape = (Shape3D)node;
-        String shapeName = (String)shape.getUserData();
-        // Change material of all shape that are not window panes
-        if (shapeName == null
-            || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
-          Appearance appearance = shape.getAppearance();
-          if (appearance == null) {
-            appearance = new Appearance();
-            ((Shape3D)node).setAppearance(appearance);
-          }
-          if (material != null) {
-            // Change material
-            appearance.setMaterial(material);
-          } else if (texture != null) {
-            // Change texture
-            appearance.setMaterial(null);
-            TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                TexCoordGeneration.TEXTURE_COORDINATE_2,
-                new Vector4f(-pieceWidth / modelSize.x / texture.getWidth(), 0, 0, 0), 
-                new Vector4f(0, pieceHeight / modelSize.y / texture.getHeight(), pieceDepth / modelSize.z / texture.getHeight(), 0));
-            appearance.setTexCoordGeneration(texCoordGeneration);
-            TextureManager.getInstance().loadTexture(texture.getImage(), true,
-                new TextureManager.TextureObserver() {
-                    public void textureUpdated(Texture texture) {
-                      shape.getAppearance().setTexture(texture);
-                    }
-                  });
-          } 
-        }
-      }
-    }
-
-    /**
-     * Sets flipped normals on all <code>Shape3D</code> children nodes of <code>node</code>.
-     */
-    private void setBackFaceNormalFlip(Node node) {
-      if (node instanceof Group) {
-        // Set back face normal flip of all children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          setBackFaceNormalFlip((Node)enumeration.nextElement());
-        }
-      } else if (node instanceof Link) {
-        setBackFaceNormalFlip(((Link)node).getSharedGroup());
-      } else if (node instanceof Shape3D) {
-        Appearance appearance = ((Shape3D)node).getAppearance();
-        if (appearance == null) {
-          appearance = new Appearance();
-          ((Shape3D)node).setAppearance(appearance);
-        }
-        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-        if (polygonAttributes == null) {
-          polygonAttributes = new PolygonAttributes();
-          appearance.setPolygonAttributes(polygonAttributes);
-        }
-        
-        // Change back face normal flip
-        polygonAttributes.setBackFaceNormalFlip(true);
-        polygonAttributes.setCullFace(PolygonAttributes.CULL_FRONT);
       }
     }
   }
