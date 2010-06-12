@@ -49,6 +49,7 @@ import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
+import javax.media.j3d.Texture;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
@@ -1671,17 +1672,21 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       
       if (imageFileName != null) {
+        URL textureImageUrl = baseUrl != null
+            ? new URL(baseUrl, imageFileName)
+            : new File(imageFileName).toURI().toURL();
         BufferedImage textureImage = null;
         try {
-          textureImage = baseUrl != null
-               ? ImageIO.read(new URL(baseUrl, imageFileName))
-               : ImageIO.read(new File(imageFileName));
+          textureImage = ImageIO.read(textureImageUrl);
         } catch (IOException ex) {
           // Ignore images at other format
         }
         if (textureImage != null) {
           TextureLoader textureLoader = new TextureLoader(textureImage);
-          currentAppearance.setTexture(textureLoader.getTexture());
+          Texture texture = textureLoader.getTexture();
+          // Keep in user data the URL of the texture image
+          texture.setUserData(textureImageUrl);
+          currentAppearance.setTexture(texture);
         }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());

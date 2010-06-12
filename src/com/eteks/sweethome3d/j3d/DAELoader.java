@@ -561,10 +561,14 @@ public class DAELoader extends LoaderBase implements Loader {
     private void handleImageElementsEnd(String name) throws SAXException {
       if ("init_from".equals(name)) {
         try {
-          BufferedImage textureImage = ImageIO.read(new URL(baseUrl, getCharacters()));
+          URL textureImageUrl = new URL(baseUrl, getCharacters());
+          BufferedImage textureImage = ImageIO.read(textureImageUrl);
           if (textureImage != null) {
             TextureLoader textureLoader = new TextureLoader(textureImage);
-            this.textures.put(this.imageId, textureLoader.getTexture());
+            Texture texture = textureLoader.getTexture();
+            // Keep in user data the URL of the texture image
+            texture.setUserData(textureImageUrl);
+            this.textures.put(this.imageId, texture);
           }
         } catch (IOException ex) {
           // Ignore images at other format or not found

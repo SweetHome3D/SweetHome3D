@@ -39,6 +39,7 @@ import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -189,7 +190,10 @@ public class TextureManager {
       texture = errorTexture;
     } else {
       texture = new TextureLoader(image).getTexture();
-      texture.setUserData(content);
+      // Keep in user data the URL of the texture image
+      if (content instanceof URLContent) {
+        texture.setUserData(((URLContent)content).getURL());
+      }
     }
     return texture;
   }
