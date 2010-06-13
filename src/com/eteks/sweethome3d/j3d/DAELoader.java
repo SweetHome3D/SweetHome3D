@@ -57,6 +57,7 @@ import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
@@ -172,7 +173,7 @@ public class DAELoader extends LoaderBase implements Loader {
   private static class DAEHandler extends DefaultHandler {
     private final SceneBase scene;
     private final URL       baseUrl;
-    private final Stack<TransformGroup> parentTransformGroups = new Stack<TransformGroup>();
+    private final Stack<Group>   parentGroups = new Stack<Group>();
     private final Stack<String>  parentElements = new Stack<String>();
     private final StringBuilder  buffer = new StringBuilder();
     private final List<Runnable> postProcessingBinders = new ArrayList<Runnable>();
@@ -343,15 +344,15 @@ public class DAELoader extends LoaderBase implements Loader {
         } 
       } else if ("visual_scene".equals(name)) {
         TransformGroup visualSceneGroup = new TransformGroup();
-        this.parentTransformGroups.push(visualSceneGroup);
+        this.parentGroups.push(visualSceneGroup);
         this.visualScenes.put(attributes.getValue("id"), visualSceneGroup);
       } else if ("node".equals(name)) {
         TransformGroup nodeGroup = new TransformGroup();
-        if (this.parentTransformGroups.size() > 0) {
+        if (this.parentGroups.size() > 0) {
           // Add node to parent node only for children nodes
-          this.parentTransformGroups.peek().addChild(nodeGroup);
+          this.parentGroups.peek().addChild(nodeGroup);
         }
-        this.parentTransformGroups.push(nodeGroup);
+        this.parentGroups.push(nodeGroup);
         this.nodes.put(attributes.getValue("id"), nodeGroup);
         String nodeName = attributes.getValue("name");
         if (nodeName != null) {
@@ -361,13 +362,15 @@ public class DAELoader extends LoaderBase implements Loader {
         String geometryInstanceUrl = attributes.getValue("url");
         if (geometryInstanceUrl.startsWith("#")) {
           final String geometryInstanceAnchor = geometryInstanceUrl.substring(1);
-          final TransformGroup parentTransformGroup = (TransformGroup)this.parentTransformGroups.peek();
+          final Group parentGroup = new Group();
+          this.parentGroups.peek().addChild(parentGroup);
+          this.parentGroups.push(parentGroup);
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 // Resolve URL at the end of the document
                 for (Geometry geometry : geometries.get(geometryInstanceAnchor)) {
                   Shape3D shape = new Shape3D(geometry);
-                  parentTransformGroup.addChild(shape);
+                  parentGroup.addChild(shape);
                 }
               }
             });
@@ -376,7 +379,7 @@ public class DAELoader extends LoaderBase implements Loader {
         String nodeInstanceUrl = attributes.getValue("url");
         if (nodeInstanceUrl.startsWith("#")) {
           final String nodeInstanceAnchor = nodeInstanceUrl.substring(1);
-          final TransformGroup parentTransformGroup = (TransformGroup)this.parentTransformGroups.peek();
+          final Group parentTransformGroup = this.parentGroups.peek();
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 // Resolve URL at the end of the document
@@ -395,7 +398,7 @@ public class DAELoader extends LoaderBase implements Loader {
         if (materialInstanceTarget.startsWith("#")) {
           final String materialInstanceAnchor = materialInstanceTarget.substring(1);
           final String materialInstanceSymbol = attributes.getValue("symbol");
-          final Group group = this.parentTransformGroups.peek();
+          final Group group = this.parentGroups.peek();
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 updateShapeAppearance(group, 
@@ -484,10 +487,10 @@ public class DAELoader extends LoaderBase implements Loader {
         this.geometryId = null;
       } if (this.geometryId != null) {
         handleGeometryElementsEnd(name, parent);
-      } else if ("visual_scene".equals(name)) {
-        this.parentTransformGroups.pop();
-      } else if ("node".equals(name)) {
-        this.parentTransformGroups.pop();
+      } else if ("visual_scene".equals(name)
+              || "node".equals(name)
+              || "node".equals(parent) && "instance_geometry".equals(name)) {
+        this.parentGroups.pop();
       } else if ("matrix".equals(name)) {
         mulTransformGroup(new Transform3D(this.floats));
       } else if ("node".equals(parent) && "rotate".equals(name)) {
@@ -618,9 +621,17 @@ public class DAELoader extends LoaderBase implements Loader {
         } else {
           transparencyValue = 0;
         }
+        Appearance appearance = this.effectAppearances.get(this.effectId);
         if (transparencyValue > 0) {
-          this.effectAppearances.get(this.effectId).setTransparencyAttributes(new TransparencyAttributes(
+          appearance.setTransparencyAttributes(new TransparencyAttributes(
               TransparencyAttributes.NICEST, transparencyValue)); // 0 means opaque in Java 3D
+        } else {
+          // Set default color if it doesn't exist yet
+          Color3f black = new Color3f();
+          if (appearance.getMaterial() == null) {
+            appearance.setMaterial(new Material(black, black, black, black, 1));
+            appearance.setColoringAttributes(new ColoringAttributes(black, ColoringAttributes.SHADE_GOURAUD));
+          }
         }
         this.transparentColor = null;
         this.transparency = null;
@@ -905,7 +916,7 @@ public class DAELoader extends LoaderBase implements Loader {
      * given <code>transformMultiplier</code>.
      */
     private void mulTransformGroup(Transform3D transformMultiplier) {
-      TransformGroup transformGroup = this.parentTransformGroups.peek();
+      TransformGroup transformGroup = (TransformGroup)this.parentGroups.peek();
       Transform3D transform = new Transform3D();
       transformGroup.getTransform(transform);
       transform.mul(transformMultiplier);
