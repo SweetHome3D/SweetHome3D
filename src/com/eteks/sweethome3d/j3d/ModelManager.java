@@ -609,34 +609,33 @@ public class ModelManager {
           Texture sharedTexture = TextureManager.getInstance().shareTexture(texture);
           if (sharedTexture != texture) {
             appearance.setTexture(sharedTexture);
-          } else {
-            TextureAttributes textureAttributes = appearance.getTextureAttributes();
-            if (textureAttributes == null) {
-              // Mix texture and shape color
-              textureAttributes = new TextureAttributes();
-              textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-              appearance.setTextureAttributes(textureAttributes);
-              // Check shape color is white
-              Material material = appearance.getMaterial();
-              if (material == null) {
-                appearance.setMaterial((Material)DEFAULT_MATERIAL.cloneNodeComponent(true));
-              } else {
-                Color3f color = new Color3f();
-                DEFAULT_MATERIAL.getDiffuseColor(color);
-                material.setDiffuseColor(color);
-                DEFAULT_MATERIAL.getAmbientColor(color);
-                material.setAmbientColor(color);
-              }
+          }
+          TextureAttributes textureAttributes = appearance.getTextureAttributes();
+          if (textureAttributes == null) {
+            // Mix texture and shape color
+            textureAttributes = new TextureAttributes();
+            textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+            appearance.setTextureAttributes(textureAttributes);
+            // Check shape color is white
+            Material material = appearance.getMaterial();
+            if (material == null) {
+              appearance.setMaterial((Material)DEFAULT_MATERIAL.cloneNodeComponent(true));
+            } else {
+              Color3f color = new Color3f();
+              DEFAULT_MATERIAL.getDiffuseColor(color);
+              material.setDiffuseColor(color);
+              DEFAULT_MATERIAL.getAmbientColor(color);
+              material.setAmbientColor(color);
             }
-            
-            // If texture image supports transparency
-            if (texture.getFormat() == Texture.RGBA) {
-              if (appearance.getTransparencyAttributes() == null) {
-                // Add transparency attributes to ensure transparency works
-                appearance.setTransparencyAttributes(
-                    new TransparencyAttributes(TransparencyAttributes.NICEST, 0));
-              }             
-            }
+          }
+          
+          // If texture image supports transparency
+          if (texture.getFormat() == Texture.RGBA) {
+            if (appearance.getTransparencyAttributes() == null) {
+              // Add transparency attributes to ensure transparency works
+              appearance.setTransparencyAttributes(
+                  new TransparencyAttributes(TransparencyAttributes.NICEST, 0));
+            }             
           }
         }
       }
