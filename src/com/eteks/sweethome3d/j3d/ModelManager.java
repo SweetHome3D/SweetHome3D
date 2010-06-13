@@ -427,7 +427,7 @@ public class ModelManager {
         Group group = (Group)node;
         Group clonedGroup = (Group)clonedNode;
         for (int i = 0, n = group.numChildren(); i < n; i++) {
-          Node clonedChild = cloneNode(group.getChild(i));
+          Node clonedChild = cloneNode(group.getChild(i), clonedSharedGroups);
           clonedGroup.addChild(clonedChild);
         }
       }
