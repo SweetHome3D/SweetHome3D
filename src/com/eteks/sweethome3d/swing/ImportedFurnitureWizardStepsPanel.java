@@ -1521,7 +1521,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(128, 128);
+      Insets insets = getInsets();
+      return new Dimension(128 + insets.left + insets.right, 128  + insets.top + insets.bottom);
     }
 
     /**
