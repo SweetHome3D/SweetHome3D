@@ -144,6 +144,9 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
               try {
                 // Ensure image will always be viewed in a 128x128 pixels cell
                 BufferedImage image = ImageIO.read(((URLContent)piece.getIcon()).getURL());
+                if (image == null) {
+                  return null;
+                }
                 int width = Math.round(128f * Math.min(1, image.getWidth() / image.getHeight()));
                 int height = Math.round((float)width * image.getHeight() / image.getWidth());
                 tooltip += "<tr><td width='128' height='128' align='center' valign='middle'><img width='" + width 
