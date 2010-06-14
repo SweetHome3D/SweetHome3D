@@ -177,13 +177,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         // from most recent to least recent
         Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
         for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
-          try {
-            // Try to load the properties file describing textures catalog from current file  
-            URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
-            readPluginTexturesCatalog(pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
-          } catch (MalformedURLException ex) {
-            // Ignore file
-          }
+          // Try to load the properties file describing textures catalog from current file  
+          readPluginTexturesCatalog(pluginTexturesCatalogFile, textureHomonymsCounter, identifiedTextures);
         }
       }
     }
@@ -218,31 +213,32 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     }
   }
 
-  private static final Map<String,URL> pluginTexturesCatalogUrlUpdates = new HashMap<String,URL>(); 
+  private static final Map<File,URL> pluginTexturesCatalogUrlUpdates = new HashMap<File,URL>(); 
   
   /**
-   * Reads plug-in textures catalog from the <code>pluginTexturesCatalogUrl</code> URL. 
+   * Reads plug-in textures catalog from the <code>pluginTexturesCatalogFile</code> file. 
    */
-  private void readPluginTexturesCatalog(URL pluginTexturesCatalogUrl,
-                                         URL texturesResourcesUrlBase,
+  private void readPluginTexturesCatalog(File pluginTexturesCatalogFile,
                                          Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter, 
                                          List<String> identifiedTextures) {
     try {
+      URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
       if (IOTools.isResourceBundleURL(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY)) {
-        long urlModificationDate = pluginTexturesCatalogUrl.openConnection().getLastModified();
+        long urlModificationDate = pluginTexturesCatalogFile.lastModified();
         URL urlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogUrl.toString());
-        if (urlUpdate == null || urlUpdate.openConnection().getLastModified() < urlModificationDate) {
+        if (pluginTexturesCatalogFile.canWrite()
+            && (urlUpdate == null 
+                || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
           // Copy updated resource URL content to a temporary file to ensure textures used in home can safely 
-          // reference any file of the catalog URL even if its content is changed afterwards
+          // reference any file of the catalog file even if its content is changed afterwards
           TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogUrl));
           URL temporaryTexturesCatalogUrl = contentCopy.getURL();
-          pluginTexturesCatalogUrlUpdates.put(pluginTexturesCatalogUrl.toString(), temporaryTexturesCatalogUrl);
+          pluginTexturesCatalogUrlUpdates.put(pluginTexturesCatalogFile, temporaryTexturesCatalogUrl);
           pluginTexturesCatalogUrl = temporaryTexturesCatalogUrl;
         }
         
         ResourceBundle resourceBundle = IOTools.getUpdatedResourceBundle(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY);      
-        readTextures(resourceBundle, pluginTexturesCatalogUrl, texturesResourcesUrlBase, 
-            textureHomonymsCounter, identifiedTextures);
+        readTextures(resourceBundle, pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
       }
     } catch (MissingResourceException ex) {
       // Ignore malformed textures catalog

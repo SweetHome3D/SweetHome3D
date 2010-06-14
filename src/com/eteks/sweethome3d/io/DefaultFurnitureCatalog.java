@@ -292,13 +292,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         // from most recent to least recent
         Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
         for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
-          try {
-            // Try to load the properties file describing furniture catalog from current file  
-            readPluginFurnitureCatalog(pluginFurnitureCatalogFile.toURI().toURL(),
-                null, furnitureHomonymsCounter, identifiedFurniture);
-          } catch (MalformedURLException ex) {
-            // Ignore file
-          }
+          // Try to load the properties file describing furniture catalog from current file  
+          readPluginFurnitureCatalog(pluginFurnitureCatalogFile, furnitureHomonymsCounter, identifiedFurniture);
         }
       }
     }
@@ -333,30 +328,32 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     }
   }
 
-  private static final Map<String,URL> pluginFurnitureCatalogUrlUpdates = new HashMap<String,URL>(); 
+  private static final Map<File,URL> pluginFurnitureCatalogUrlUpdates = new HashMap<File,URL>(); 
   
   /**
-   * Reads plug-in furniture catalog from the <code>pluginFurnitureCatalogUrl</code> URL. 
+   * Reads plug-in furniture catalog from the <code>pluginFurnitureCatalogFile</code> file. 
    */
-  private void readPluginFurnitureCatalog(URL pluginFurnitureCatalogUrl,
-                                          URL furnitureResourcesUrlBase,
+  private void readPluginFurnitureCatalog(File pluginFurnitureCatalogFile,
                                           Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter, 
                                           List<String> identifiedFurniture) {
     try {
+      URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
       if (IOTools.isResourceBundleURL(pluginFurnitureCatalogUrl, PLUGIN_FURNITURE_CATALOG_FAMILY)) {
-        long urlModificationDate = pluginFurnitureCatalogUrl.openConnection().getLastModified();
+        long urlModificationDate = pluginFurnitureCatalogFile.lastModified();
         URL urlUpdate = pluginFurnitureCatalogUrlUpdates.get(pluginFurnitureCatalogUrl.toString());
-        if (urlUpdate == null || urlUpdate.openConnection().getLastModified() < urlModificationDate) {
+        if (pluginFurnitureCatalogFile.canWrite()
+            && (urlUpdate == null 
+                || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
           // Copy updated resource URL content to a temporary file to ensure furniture added to home can safely 
-          // reference any file of the catalog URL even if its content is changed afterwards
+          // reference any file of the catalog file even if its content is changed afterwards
           TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginFurnitureCatalogUrl));
           URL temporaryFurnitureCatalogUrl = contentCopy.getURL();
-          pluginFurnitureCatalogUrlUpdates.put(pluginFurnitureCatalogUrl.toString(), temporaryFurnitureCatalogUrl);
+          pluginFurnitureCatalogUrlUpdates.put(pluginFurnitureCatalogFile, temporaryFurnitureCatalogUrl);
           pluginFurnitureCatalogUrl = temporaryFurnitureCatalogUrl;
         }
         
         ResourceBundle resourceBundle = IOTools.getUpdatedResourceBundle(pluginFurnitureCatalogUrl, PLUGIN_FURNITURE_CATALOG_FAMILY);      
-        readFurniture(resourceBundle, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, 
+        readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, 
             furnitureHomonymsCounter, identifiedFurniture);
       }
     } catch (MissingResourceException ex) {
