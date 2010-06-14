@@ -1343,6 +1343,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                 boolean waitForLoading) {
     final Ground3D ground3D = new Ground3D(this.home, 
         groundOriginX, groundOriginY, groundWidth, groundDepth, waitForLoading);
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(new Vector3f(0, -0.2f, 0));
+    TransformGroup transformGroup = new TransformGroup(translation);
+    transformGroup.addChild(ground3D);
     
     if (listenToHomeUpdates) {
       // Add a listener on ground color and texture properties change 
@@ -1359,7 +1363,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
     }
     
-    return ground3D;
+    return transformGroup;
   }
   
   /**
