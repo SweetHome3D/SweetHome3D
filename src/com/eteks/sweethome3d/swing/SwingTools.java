@@ -470,23 +470,23 @@ public class SwingTools {
               while (splashScreenWindow.isVisible()) {
                 Thread.sleep(500);
                 // If an other frame is created, dispose splash window
-                  EventQueue.invokeLater(new Runnable() {
+                EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       if (Frame.getFrames().length > 1) {
                         splashScreenWindow.dispose();
                       }
                     }
                   });
+              }
+            } catch (InterruptedException ex) {
+              EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  splashScreenWindow.dispose();
                 }
-              } catch (InterruptedException ex) {
-                EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    splashScreenWindow.dispose();
-                  }
-                });
-              };
-            }
-          });
+              });
+            };
+          }
+        });
     } catch (IOException ex) {
       // Ignore splash screen
     }
