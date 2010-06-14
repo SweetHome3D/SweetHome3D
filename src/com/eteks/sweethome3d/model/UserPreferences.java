@@ -317,9 +317,9 @@ public abstract class UserPreferences {
    */
   private ResourceBundle getResourceBundle(String resourceFamily) throws IOException {
     resourceFamily = resourceFamily.replace('.', '/');
-    ResourceBundle localizedResourceBundle = this.resourceBundles.get(resourceFamily);
-    if (localizedResourceBundle != null) {
-      return localizedResourceBundle;
+    ResourceBundle resourceBundle = this.resourceBundles.get(resourceFamily);
+    if (resourceBundle != null) {
+      return resourceBundle;
     }
     Locale defaultLocale = Locale.getDefault();
     String language = defaultLocale.getLanguage();
@@ -327,7 +327,6 @@ public abstract class UserPreferences {
     String [] suffixes = {".properties",
                           "_" + language + ".properties",
                           "_" + language + "_" + country + ".properties"};
-    ResourceBundle resourceBundle = null;
     for (String suffix : suffixes) {
       for (ClassLoader classLoader : getResourceClassLoaders()) {
         InputStream in = classLoader.getResourceAsStream(resourceFamily + suffix);
@@ -349,7 +348,7 @@ public abstract class UserPreferences {
     if (resourceBundle == null) {
       throw new IOException("No available resource bundle for " + resourceFamily);
     }
-    this.resourceBundles.put(resourceFamily, localizedResourceBundle);
+    this.resourceBundles.put(resourceFamily, resourceBundle);
     return resourceBundle;
   }
 
