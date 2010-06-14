@@ -289,22 +289,24 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.searchTextField.putClientProperty("JTextField.variant", "search");
     } 
     
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, new LanguageChangeListener(this));
+    PreferencesChangeListener preferencesChangeListener = new PreferencesChangeListener(this);
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesChangeListener);
+    catalog.addFurnitureListener(preferencesChangeListener);
   }
   
   /**
-   * Preferences property listener bound to this component with a weak reference to avoid
+   * Language and catalog listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  
    */
-  public static class LanguageChangeListener implements PropertyChangeListener {
+  public static class PreferencesChangeListener implements PropertyChangeListener, CollectionListener<CatalogPieceOfFurniture> {
     private final WeakReference<FurnitureCatalogListPanel> furnitureCatalogPanel;
 
-    public LanguageChangeListener(FurnitureCatalogListPanel furnitureCatalogPanel) {
+    public PreferencesChangeListener(FurnitureCatalogListPanel furnitureCatalogPanel) {
       this.furnitureCatalogPanel = new WeakReference<FurnitureCatalogListPanel>(furnitureCatalogPanel);
     }
 
     public void propertyChange(PropertyChangeEvent ev) {
-      // If furniture table was garbage collected, remove this listener from preferences
+      // If panel was garbage collected, remove this listener from preferences
       FurnitureCatalogListPanel furnitureCatalogPanel = this.furnitureCatalogPanel.get();
       UserPreferences preferences = (UserPreferences)ev.getSource();
       if (furnitureCatalogPanel == null) {
@@ -320,6 +322,26 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         categories.add(null);
         categories.addAll(preferences.getFurnitureCatalog().getCategories());
         furnitureCatalogPanel.categoryFilterComboBox.setModel(new DefaultComboBoxModel(categories.toArray()));    
+      }
+    }
+    
+    public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
+      // If panel was garbage collected, remove this listener from catalog
+      FurnitureCatalogListPanel furnitureCatalogPanel = this.furnitureCatalogPanel.get();
+      FurnitureCatalog catalog = (FurnitureCatalog)ev.getSource();
+      if (furnitureCatalogPanel == null) {
+        catalog.removeFurnitureListener(this);
+      } else {
+        DefaultComboBoxModel model = 
+            (DefaultComboBoxModel)furnitureCatalogPanel.categoryFilterComboBox.getModel();
+        FurnitureCategory category = ev.getItem().getCategory();
+        List<FurnitureCategory> categories = catalog.getCategories();
+        if (!categories.contains(category)) {
+          model.removeElement(category);
+          furnitureCatalogPanel.categoryFilterComboBox.setSelectedIndex(0);
+        } else if (model.getIndexOf(category) == -1) {
+          model.insertElementAt(category, categories.indexOf(category) + 1);
+        }
       }
     }
   }
@@ -611,7 +633,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       for (FurnitureCategory category : this.catalog.getCategories()) {
         for (CatalogPieceOfFurniture piece : category.getFurniture()) {
           if ((this.filterCategory == null
-               || piece.getCategory() == this.filterCategory)
+               || piece.getCategory().equals(this.filterCategory))
                && (this.filterNamePattern.matcher(piece.getName()).matches()
                    || this.filterNamePattern.matcher(piece.getCategory().getName()).matches()                   
                    || (piece.getCreator() != null && this.filterNamePattern.matcher(piece.getCreator()).matches())
