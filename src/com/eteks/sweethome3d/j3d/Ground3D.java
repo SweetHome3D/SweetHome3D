@@ -113,13 +113,12 @@ public class Ground3D extends Object3DBranch {
     }
     
     // Create ground geometry
-    float groundOffset = -0.05f;
     List<Point3f> coords = new ArrayList<Point3f>();
     // First add the coordinates of the ground rectangle
-    coords.add(new Point3f(this.originX, groundOffset, this.originY)); 
-    coords.add(new Point3f(this.originX, groundOffset, this.originY + this.depth));
-    coords.add(new Point3f(this.originX + this.width, groundOffset, this.originY + this.depth));
-    coords.add(new Point3f(this.originX + this.width, groundOffset, this.originY));
+    coords.add(new Point3f(this.originX, 0, this.originY)); 
+    coords.add(new Point3f(this.originX, 0, this.originY + this.depth));
+    coords.add(new Point3f(this.originX + this.width, 0, this.originY + this.depth));
+    coords.add(new Point3f(this.originX + this.width, 0, this.originY));
     // Compute ground texture coordinates if necessary
     List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
     if (groundTexture != null) {
