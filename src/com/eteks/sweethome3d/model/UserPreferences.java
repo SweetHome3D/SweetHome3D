@@ -324,62 +324,33 @@ public abstract class UserPreferences {
     Locale defaultLocale = Locale.getDefault();
     String language = defaultLocale.getLanguage();
     String country = defaultLocale.getCountry();
-    ReparentableResourceBundle childResourceBundle = null;
-    // First search resource bundle for language + country
-    for (ClassLoader classLoader : getResourceClassLoaders()) {
-      InputStream languageCountryProperties = 
-          classLoader.getResourceAsStream(resourceFamily + "_" + language + "_" + country + ".properties");
-      if (languageCountryProperties != null) {
-        try {
-          localizedResourceBundle =
-          childResourceBundle = new ReparentableResourceBundle(languageCountryProperties);
-          break;
-        } finally {
-          languageCountryProperties.close();
-        }
-      }
-    }
-    // Second search resource bundle for language
-    for (ClassLoader classLoader : getResourceClassLoaders()) {
-      InputStream languageProperties = 
-          classLoader.getResourceAsStream(resourceFamily + "_" + language  + ".properties");
-      if (languageProperties != null) {
-        try {
-          ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(languageProperties);
-          if (childResourceBundle != null) {
-            childResourceBundle.setParent(resourceBundle);
-          } else {
-            localizedResourceBundle = resourceBundle;
-          }
-          childResourceBundle = resourceBundle;
-          break;
-        } finally {
-          languageProperties.close();
-        }
-      }
-    }
-    // Last search resource bundle for default language 
-    for (ClassLoader classLoader : getResourceClassLoaders()) {
-      InputStream defaultProperties = classLoader.getResourceAsStream(resourceFamily + ".properties");
-      if (defaultProperties != null) {
-        try {
-          ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(defaultProperties);
-          if (childResourceBundle != null) {
-            childResourceBundle.setParent(resourceBundle);
-          } else {
-            localizedResourceBundle = resourceBundle;
+    String [] suffixes = {".properties",
+                          "_" + language + ".properties",
+                          "_" + language + "_" + country + ".properties"};
+    ResourceBundle resourceBundle = null;
+    for (String suffix : suffixes) {
+      for (ClassLoader classLoader : getResourceClassLoaders()) {
+        InputStream in = classLoader.getResourceAsStream(resourceFamily + suffix);
+        if (in != null) {
+          final ResourceBundle parentResourceBundle = resourceBundle;
+          try {
+            resourceBundle = new PropertyResourceBundle(in) {
+              {
+                setParent(parentResourceBundle);
+              }
+            };
+          } finally {
+            in.close();
           }
           break;
-        } finally {
-          defaultProperties.close();
         }
       }
     }
-    if (localizedResourceBundle == null) {
+    if (resourceBundle == null) {
       throw new IOException("No available resource bundle for " + resourceFamily);
     }
     this.resourceBundles.put(resourceFamily, localizedResourceBundle);
-    return localizedResourceBundle;
+    return resourceBundle;
   }
 
   /**
@@ -739,21 +710,6 @@ public abstract class UserPreferences {
    * @since 2.3 
    */
   public abstract boolean texturesLibraryExists(String texturesLibraryName) throws RecorderException;
-
-  /**
-   * A reparentable resource bundle.
-   */
-  private static class ReparentableResourceBundle extends PropertyResourceBundle {
-    public ReparentableResourceBundle(InputStream inputStream) throws IOException {
-      super(inputStream);
-    }
-    
-    // Increase <code>setParent</code> visibility. 
-    @Override
-    public void setParent(ResourceBundle parent) {
-      super.setParent(parent);
-    }    
-  }
 
   /**
    * A resource bundle with a prefix added to resource key.
