@@ -21,10 +21,10 @@ package com.eteks.sweethome3d.io;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -258,7 +259,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Creates a default furniture catalog read from resources and   
    * furniture plugin folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
-  public DefaultFurnitureCatalog(final UserPreferences preferences, 
+;  public DefaultFurnitureCatalog(final UserPreferences preferences, 
                                  File furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
@@ -293,16 +294,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
           try {
             // Try to load the properties file describing furniture catalog from current file  
-            URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
-            readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                                                   new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
-                pluginFurnitureCatalogUrl, null, furnitureHomonymsCounter, identifiedFurniture);
+            readPluginFurnitureCatalog(pluginFurnitureCatalogFile.toURI().toURL(),
+                null, furnitureHomonymsCounter, identifiedFurniture);
           } catch (MalformedURLException ex) {
             // Ignore file
-          } catch (MissingResourceException ex) {
-            // Ignore malformed furniture catalog
-          } catch (IllegalArgumentException ex) {
-            // Ignore malformed furniture catalog
           }
         }
       }
@@ -327,16 +322,43 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     List<String> identifiedFurniture = new ArrayList<String>();
 
     for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
-      try {
-        // Try do load the properties file describing furniture catalog from current file  
-        readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
-            pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
-      } catch (MissingResourceException ex) {
-        // Ignore malformed furniture catalog
-      } catch (IllegalArgumentException ex) {
-        // Ignore malformed furniture catalog
+      readPluginFurnitureCatalog(pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter,
+          identifiedFurniture);
+    }
+  }
+
+  private static final Map<String,Long> pluginFurnitureCatalogUrlUpdates = new HashMap<String,Long>(); 
+  
+  /**
+   * Reads plug-in furniture catalog from the <code>pluginFurnitureCatalogUrl</code> URL. 
+   */
+  private void readPluginFurnitureCatalog(URL pluginFurnitureCatalogUrl,
+                                          URL furnitureResourcesUrlBase,
+                                          Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter, 
+                                          List<String> identifiedFurniture) {
+    try {
+      long urlUpdate = pluginFurnitureCatalogUrl.openConnection().getLastModified();
+      URL originalPluginFurnitureCatalogUrl = pluginFurnitureCatalogUrl;
+      Long resourceUrlUpdate = pluginFurnitureCatalogUrlUpdates.get(pluginFurnitureCatalogUrl.toString());
+      if (resourceUrlUpdate != null && resourceUrlUpdate.longValue() < urlUpdate) {
+        // Copy resource URL content to a temporary file 
+        // to ensure the JVM will take into account the updated content
+        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginFurnitureCatalogUrl));
+        pluginFurnitureCatalogUrl = contentCopy.getURL();
       }
+      
+      ResourceBundle resourceBundle = IOTools.getUpdatedResourceBundle(pluginFurnitureCatalogUrl, PLUGIN_FURNITURE_CATALOG_FAMILY);      
+      if (resourceUrlUpdate == null) {
+        pluginFurnitureCatalogUrlUpdates.put(originalPluginFurnitureCatalogUrl.toString(), urlUpdate);
+      }
+      readFurniture(resourceBundle, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, 
+          furnitureHomonymsCounter, identifiedFurniture);
+    } catch (MissingResourceException ex) {
+      // Ignore malformed furniture catalog
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed furniture catalog
+    } catch (IOException ex) {
+      // Ignore unaccessible catalog
     }
   }
   

@@ -21,9 +21,9 @@ package com.eteks.sweethome3d.io;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +42,7 @@ import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -179,15 +180,9 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
           try {
             // Try to load the properties file describing textures catalog from current file  
             URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
-            readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
-                                                  new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
-                pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
+            readPluginTexturesCatalog(pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
           } catch (MalformedURLException ex) {
             // Ignore file
-          } catch (MissingResourceException ex) {
-            // Ignore malformed textures catalog
-          } catch (IllegalArgumentException ex) {
-            // Ignore malformed textures catalog
           }
         }
       }
@@ -212,19 +207,46 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     List<String> identifiedTextures = new ArrayList<String>();
 
     for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
-      try {
-        // Try do load the properties file describing textures catalog from current file  
-        readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
-            new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
-            pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
-      } catch (MissingResourceException ex) {
-        // Ignore malformed textures catalog
-      } catch (IllegalArgumentException ex) {
-        // Ignore malformed textures catalog
-      }
+      // Try do load the properties file describing textures catalog from current file  
+      readPluginTexturesCatalog(pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
     }
   }
 
+  private static final Map<String,Long> pluginTexturesCatalogUrlUpdates = new HashMap<String,Long>(); 
+  
+  /**
+   * Reads plug-in textures catalog from the <code>pluginTexturesCatalogUrl</code> URL. 
+   */
+  private void readPluginTexturesCatalog(URL pluginTexturesCatalogUrl,
+                                         URL texturesResourcesUrlBase,
+                                         Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter, 
+                                         List<String> identifiedTextures) {
+    try {
+      long urlUpdate = pluginTexturesCatalogUrl.openConnection().getLastModified();
+      URL originalPluginTexturesCatalogUrl = pluginTexturesCatalogUrl;
+      Long resourceUrlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogUrl.toString());
+      if (resourceUrlUpdate != null && resourceUrlUpdate.longValue() < urlUpdate) {
+        // Copy resource URL content to a temporary file 
+        // to ensure the JVM will take into account the updated content
+        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogUrl));
+        pluginTexturesCatalogUrl = contentCopy.getURL();
+      }
+      
+      ResourceBundle resourceBundle = IOTools.getUpdatedResourceBundle(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY);      
+      if (resourceUrlUpdate == null) {
+        pluginTexturesCatalogUrlUpdates.put(originalPluginTexturesCatalogUrl.toString(), urlUpdate);
+      }
+      readTextures(resourceBundle, pluginTexturesCatalogUrl, texturesResourcesUrlBase, 
+          textureHomonymsCounter, identifiedTextures);
+    } catch (MissingResourceException ex) {
+      // Ignore malformed textures catalog
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed textures catalog
+    } catch (IOException ex) {
+      // Ignore unaccessible catalog
+    }
+  }
+  
   /**
    * Reads each texture described in <code>resource</code> bundle.
    * Resources described in texture properties will be loaded from <code>texturesUrl</code> 

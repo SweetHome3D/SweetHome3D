@@ -228,7 +228,8 @@ public class FileUserPreferences extends UserPreferences {
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
-          updateDefaultCatalogs();
+          updateFurnitureDefaultCatalog();
+          updateTexturesDefaultCatalog();
         }
       });
   }
@@ -331,9 +332,9 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Reloads furniture and textures default catalogs.
+   * Reloads furniture default catalogs.
    */
-  private void updateDefaultCatalogs() {
+  private void updateFurnitureDefaultCatalog() {
     // Delete default pieces of current furniture catalog          
     FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -356,7 +357,12 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    
+  }
+
+  /**
+   * Reloads textures default catalog.
+   */
+  private void updateTexturesDefaultCatalog() {
     // Delete default textures of current textures catalog          
     TexturesCatalog texturesCatalog = getTexturesCatalog();
     for (TexturesCategory category : texturesCatalog.getCategories()) {
@@ -948,7 +954,7 @@ public class FileUserPreferences extends UserPreferences {
         throw new RecorderException("Can't access to furniture libraries plugin folder");
       }
       copyToLibraryFolder(new File(furnitureLibraryName), furnitureLibrariesPluginFolder);
-      updateDefaultCatalogs();
+      updateFurnitureDefaultCatalog();
     } catch (IOException ex) {
       throw new RecorderException(
           "Can't write " + furnitureLibraryName +  " in furniture libraries plugin folder", ex);
@@ -982,7 +988,7 @@ public class FileUserPreferences extends UserPreferences {
         throw new RecorderException("Can't access to textures libraries plugin folder");
       }
       copyToLibraryFolder(new File(texturesLibraryName), texturesLibrariesPluginFolder);
-      updateDefaultCatalogs();
+      updateTexturesDefaultCatalog();
     } catch (IOException ex) {
       throw new RecorderException(
           "Can't write " + texturesLibraryName +  " in textures libraries plugin folder", ex);
