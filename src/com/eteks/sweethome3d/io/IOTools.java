@@ -45,15 +45,7 @@ public class IOTools {
    */
   public static ResourceBundle getUpdatedResourceBundle(URL resourceUrl,
                                                         String propertiesFamily) {
-    URLClassLoader classLoader = new URLClassLoader(new URL [] {resourceUrl});
-    Locale locale = Locale.getDefault();
-    String country = locale.getCountry();
-    String language = locale.getLanguage();
-    String propertiesPath = propertiesFamily.replace('.', '/');
-    URL [] propertiesUrls = { 
-        classLoader.getResource(propertiesPath + ".properties"),
-        classLoader.getResource(propertiesPath + "_" + language + ".properties"),
-        classLoader.getResource(propertiesPath + "_" + language + "_" + country + ".properties")};
+    URL [] propertiesUrls = getResourceBundlePropertiesURLs(resourceUrl, propertiesFamily);
     ResourceBundle resourceBundle = null;
     for (URL url : propertiesUrls) {
       if (url != null) {
@@ -77,6 +69,36 @@ public class IOTools {
       throw new MissingResourceException("No properties files found for " + propertiesFamily, propertiesFamily, "");
     }
   }
-  
 
+  /**
+   * Returns <code>true</code> if properties files of the given <code>propertiesFamily</code> exist 
+   * in the <code>resourceUrl</code> content.
+   */
+  public static boolean isResourceBundleURL(URL resourceUrl,
+                                            String propertiesFamily) {
+    URL [] propertiesUrls = getResourceBundlePropertiesURLs(resourceUrl, propertiesFamily);
+    for (URL url : propertiesUrls) {
+      if (url != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Returns the URLs of the properties files of the given <code>propertiesFamily</code> stored 
+   * in the <code>resourceUrl</code> content.
+   */
+  private static URL [] getResourceBundlePropertiesURLs(URL resourceUrl, String propertiesFamily) {
+    URLClassLoader classLoader = new URLClassLoader(new URL [] {resourceUrl});
+    Locale locale = Locale.getDefault();
+    String country = locale.getCountry();
+    String language = locale.getLanguage();
+    String propertiesPath = propertiesFamily.replace('.', '/');
+    URL [] propertiesUrls = { 
+        classLoader.getResource(propertiesPath + ".properties"),
+        classLoader.getResource(propertiesPath + "_" + language + ".properties"),
+        classLoader.getResource(propertiesPath + "_" + language + "_" + country + ".properties")};
+    return propertiesUrls;
+  }
 }
