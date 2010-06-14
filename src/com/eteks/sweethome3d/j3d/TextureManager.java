@@ -85,6 +85,7 @@ public class TextureManager {
       this.texturesLoader = null;
     }
     synchronized (this.textures) {
+      this.contentTextureKeys.clear();
       this.textures.clear();
     }
   }
