@@ -351,6 +351,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         URL temporaryFurnitureCatalogUrl = contentCopy.getURL();
         pluginFurnitureCatalogUrlUpdates.put(pluginFurnitureCatalogFile, temporaryFurnitureCatalogUrl);
         pluginFurnitureCatalogUrl = temporaryFurnitureCatalogUrl;
+      } else if (urlUpdate != null) {
+        pluginFurnitureCatalogUrl = urlUpdate;
       }
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
