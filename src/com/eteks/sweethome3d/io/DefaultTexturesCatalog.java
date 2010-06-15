@@ -24,6 +24,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -203,7 +204,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
 
     for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
       try {
-        readTextures(IOTools.getUpdatedResourceBundle(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY),
+        readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
+                new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})),
             pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
       } catch (MissingResourceException ex) {
         // Ignore malformed textures catalog
@@ -223,23 +225,25 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
                                          List<String> identifiedTextures) {
     try {
       URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
-      if (IOTools.isResourceBundleURL(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY)) {
-        long urlModificationDate = pluginTexturesCatalogFile.lastModified();
-        URL urlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogUrl.toString());
-        if (pluginTexturesCatalogFile.canWrite()
-            && (urlUpdate == null 
-                || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
-          // Copy updated resource URL content to a temporary file to ensure textures used in home can safely 
-          // reference any file of the catalog file even if its content is changed afterwards
-          TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogUrl));
-          URL temporaryTexturesCatalogUrl = contentCopy.getURL();
-          pluginTexturesCatalogUrlUpdates.put(pluginTexturesCatalogFile, temporaryTexturesCatalogUrl);
-          pluginTexturesCatalogUrl = temporaryTexturesCatalogUrl;
-        }
-        
-        ResourceBundle resourceBundle = IOTools.getUpdatedResourceBundle(pluginTexturesCatalogUrl, PLUGIN_TEXTURES_CATALOG_FAMILY);      
-        readTextures(resourceBundle, pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
+      long urlModificationDate = pluginTexturesCatalogFile.lastModified();
+      URL urlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogFile);
+      boolean modifiableUrl = pluginTexturesCatalogFile.canWrite();
+      if (modifiableUrl
+          && (urlUpdate == null 
+              || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
+        // Copy updated resource URL content to a temporary file to ensure textures used in home can safely 
+        // reference any file of the catalog file even if its content is changed afterwards
+        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogUrl));
+        URL temporaryTexturesCatalogUrl = contentCopy.getURL();
+        pluginTexturesCatalogUrlUpdates.put(pluginTexturesCatalogFile, temporaryTexturesCatalogUrl);
+        pluginTexturesCatalogUrl = temporaryTexturesCatalogUrl;
+      } else if (urlUpdate != null) {
+        pluginTexturesCatalogUrl = urlUpdate;
       }
+      
+      ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
+          new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));      
+      readTextures(resourceBundle, pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
     } catch (MissingResourceException ex) {
       // Ignore malformed textures catalog
     } catch (IllegalArgumentException ex) {
