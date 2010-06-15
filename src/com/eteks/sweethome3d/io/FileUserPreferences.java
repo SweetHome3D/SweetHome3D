@@ -829,11 +829,10 @@ public class FileUserPreferences extends UserPreferences {
           }
         });
     if (obsoleteContentFiles != null) {
-      // Remove obsolete contents
+      // Delete obsolete contents at program exit to ensure removed contents 
+      // can still be saved in homes that reference them
       for (File file : obsoleteContentFiles) {
-        if (!file.delete()) {
-          throw new RecorderException("Couldn't delete file " + file);
-        }
+        file.deleteOnExit();
       }
     }
   }
@@ -1001,7 +1000,10 @@ public class FileUserPreferences extends UserPreferences {
   private void copyToLibraryFolder(File libraryFile, File folder) throws IOException {
     String libraryFileName = libraryFile.getName();
     File destinationFile = new File(folder, libraryFileName);
-    
+    if (destinationFile.exists()) {
+      // Delete file to reinitialize handlers
+      destinationFile.delete();
+    }    
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {
