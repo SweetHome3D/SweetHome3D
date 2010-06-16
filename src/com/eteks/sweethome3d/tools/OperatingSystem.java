@@ -148,7 +148,7 @@ public class OperatingSystem {
               public void run() {
                 long now = System.currentTimeMillis();
                 for (File siblingTemporaryFolder : siblingTemporaryFolders) {
-                  if (now - siblingTemporaryFolder.lastModified() > delay) {
+                  if (now - siblingTemporaryFolder.lastModified() > 2 * delay) {
                     for (File temporaryFile : siblingTemporaryFolder.listFiles()) {
                       temporaryFile.delete();
                     }
