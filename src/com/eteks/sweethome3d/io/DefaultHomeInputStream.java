@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.zip.ZipInputStream;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -66,7 +67,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
    */
   public Home readHome() throws IOException, ClassNotFoundException {
     // Copy home stream in a temporary file 
-    this.tempFile = File.createTempFile("open", ".sweethome3d");
+    this.tempFile = File.createTempFile("open", ".sweethome3d", OperatingSystem.getDefaultTemporaryFolder());
     this.tempFile.deleteOnExit();
     checkCurrentThreadIsntInterrupted();
     OutputStream tempOut = null;

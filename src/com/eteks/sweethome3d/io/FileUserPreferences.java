@@ -41,7 +41,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map.Entry;
@@ -50,7 +49,6 @@ import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.apple.eio.FileManager;
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
@@ -122,9 +120,6 @@ public class FileUserPreferences extends UserPreferences {
 
   private static final Content DUMMY_CONTENT;
   
-  private static final String EDITOR_SUB_FOLDER; 
-  private static final String APPLICATION_SUB_FOLDER;
-  
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   private List<ClassLoader>          resourceClassLoaders;
   private String []                  supportedLanguages;
@@ -136,19 +131,6 @@ public class FileUserPreferences extends UserPreferences {
     } catch (MalformedURLException ex) {
     }
     DUMMY_CONTENT = dummyURLContent;
-
-    // Retrieve sub folders where is stored application data
-    ResourceBundle resource = ResourceBundle.getBundle(FileUserPreferences.class.getName());
-    if (OperatingSystem.isMacOSX()) {
-      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Mac OS X");
-      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Mac OS X");
-    } else if (OperatingSystem.isWindows()) {
-      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Windows");
-      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Windows");
-    } else {
-      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder");
-      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder");
-    }
   }
  
   /**
@@ -786,21 +768,7 @@ public class FileUserPreferences extends UserPreferences {
    * Returns Sweet Home 3D application folder. 
    */
   public File getApplicationFolder() throws IOException {
-    File userApplicationFolder; 
-    if (OperatingSystem.isMacOSX()) {
-      userApplicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder());
-    } else if (OperatingSystem.isWindows()) {
-      userApplicationFolder = new File(System.getProperty("user.home"), "Application Data");
-      // If user Application Data directory doesn't exist, use user home
-      if (!userApplicationFolder.exists()) {
-        userApplicationFolder = new File(System.getProperty("user.home"));
-      }
-    } else { 
-      // Unix
-      userApplicationFolder = new File(System.getProperty("user.home"));
-    }
-    return new File(userApplicationFolder, 
-        EDITOR_SUB_FOLDER + File.separator + APPLICATION_SUB_FOLDER);
+    return OperatingSystem.getDefaultApplicationFolder();
   }
 
   /**
@@ -834,20 +802,6 @@ public class FileUserPreferences extends UserPreferences {
       for (File file : obsoleteContentFiles) {
         file.deleteOnExit();
       }
-    }
-  }
-  
-  /**
-   * File manager class that accesses to Mac OS X specifics.
-   * Do not invoke methods of this class without checking first if 
-   * <code>os.name</code> System property is <code>Mac OS X</code>.
-   * This class requires some classes of <code>com.apple.eio</code> package  
-   * to compile.
-   */
-  private static class MacOSXFileManager {
-    public static String getApplicationSupportFolder() throws IOException {
-      // Find application support folder (0x61737570) for user domain (-32763)
-      return FileManager.findFolder((short)-32763, 0x61737570);
     }
   }
   

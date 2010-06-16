@@ -32,6 +32,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Recorder that stores homes in files with {@link DefaultHomeOutputStream} and
@@ -88,7 +89,7 @@ public class HomeFileRecorder implements HomeRecorder {
     File tempFile = null;
     try {
       // Open a stream on a temporary file 
-      tempFile = File.createTempFile("save", ".sweethome3d");
+      tempFile = File.createTempFile("save", ".sweethome3d", OperatingSystem.getDefaultTemporaryFolder());
       tempFile.deleteOnExit();
       homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
           this.compressionLevel, this.includeOnlyTemporaryContent);

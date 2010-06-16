@@ -93,6 +93,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * A renderer able to create a photo realistic image of a home.
@@ -163,7 +164,7 @@ public class PhotoRenderer {
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
       g2D.drawRenderedImage(skyImage, null);
       g2D.dispose();
-      File imageFile = File.createTempFile("ibl", ".jpg");
+      File imageFile = File.createTempFile("ibl", ".jpg", OperatingSystem.getDefaultTemporaryFolder());
       imageFile.deleteOnExit();
       ImageIO.write(imageBaseLightImage, "JPEG", imageFile);
       
@@ -920,18 +921,18 @@ public class PhotoRenderer {
       }
       this.sunflow.shader(appearanceName, "mirror");
     } else if (texture != null) {
-      String imagePath = this.textureImagesCache.get(texture);
+      String imagePath = textureImagesCache.get(texture);
       if (imagePath == null) {
         ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
         RenderedImage image = imageComponent.getRenderedImage();
         String fileFormat = texture.getFormat() == Texture.RGBA 
             ? "png"
             : "jpg";
-        File imageFile = File.createTempFile("texture", "." + fileFormat);
+        File imageFile = File.createTempFile("texture", "." + fileFormat, OperatingSystem.getDefaultTemporaryFolder());
         imageFile.deleteOnExit();
         ImageIO.write(image, fileFormat, imageFile);
         imagePath = imageFile.getAbsolutePath();
-        this.textureImagesCache.put(texture, imagePath);
+        textureImagesCache.put(texture, imagePath);
       }
       this.sunflow.parameter("texture", imagePath);
         

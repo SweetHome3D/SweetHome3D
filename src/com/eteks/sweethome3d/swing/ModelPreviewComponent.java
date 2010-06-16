@@ -818,7 +818,7 @@ public class ModelPreviewComponent extends JComponent {
    * Returns the icon content matching the displayed view.
    */
   public Content getIcon(int maxWaitingDelay) throws IOException {
-    File tempIconFile = File.createTempFile("icon", ".png");
+    File tempIconFile = File.createTempFile("icon", ".png", OperatingSystem.getDefaultTemporaryFolder());
     tempIconFile.deleteOnExit();
     ImageIO.write(getIconImage(maxWaitingDelay), "png", tempIconFile);
     return new TemporaryURLContent(tempIconFile.toURI().toURL());
