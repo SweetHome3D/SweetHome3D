@@ -38,8 +38,8 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param id    the id of the new door or window, or <code>null</code>
    * @param name  the name of the new door or window
    * @param description the description of the new door or window 
-   * @param icon an URL to the icon file of the new door or window
-   * @param model an URL to the 3D model file of the new door or window
+   * @param icon content of the icon of the new door or window
+   * @param model content of the 3D model of the new door or window
    * @param width  the width in centimeters of the new door or window
    * @param depth  the depth in centimeters of the new door or window
    * @param height  the height in centimeters of the new door or window
@@ -69,9 +69,9 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param id    the id of the new door or window, or <code>null</code>
    * @param name  the name of the new door or window
    * @param description the description of the new door or window 
-   * @param icon an URL to the icon file of the new door or window
-   * @param planIcon an URL to the icon file of the new piece displayed in plan
-   * @param model an URL to the 3D model file of the new door or window
+   * @param icon content of the icon of the new door or window
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new door or window
    * @param width  the width in centimeters of the new door or window
    * @param depth  the depth in centimeters of the new door or window
    * @param height  the height in centimeters of the new door or window
@@ -104,8 +104,8 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
   /**
    * Creates a modifiable catalog door or window with all its values.
    * @param name  the name of the new door or window
-   * @param icon an URL to the icon file of the new door or window
-   * @param model an URL to the 3D model file of the new door or window
+   * @param icon content of the icon of the new door or window
+   * @param model content of the 3D model of the new door or window
    * @param width  the width in centimeters of the new door or window
    * @param depth  the depth in centimeters of the new door or window
    * @param height  the height in centimeters of the new door or window
