@@ -1097,10 +1097,10 @@ public class VideoPanel extends JPanel implements DialogView {
     }
     File file = null;
     try {
-      file = File.createTempFile("video", ".mov", OperatingSystem.getDefaultTemporaryFolder()); 
+      file = OperatingSystem.createTemporaryFile("video", ".mov"); 
       if (quality >= 2) {
         frameGenerator = new PhotoImageGenerator(home, width, height, quality == 2 
-              ? PhotoRenderer.Quality.LOW 
+              ? PhotoRenderer.Quality.LOW
               : PhotoRenderer.Quality.HIGH);        
       } else {
         frameGenerator = new Image3DGenerator(home, width, height, quality == 1); 

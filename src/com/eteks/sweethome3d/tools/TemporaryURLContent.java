@@ -52,8 +52,7 @@ public class TemporaryURLContent extends URLContent {
         extension = file.substring(lastIndex);
       }
     }
-    File tempFile = File.createTempFile("temp", extension, OperatingSystem.getDefaultTemporaryFolder());
-    tempFile.deleteOnExit();
+    File tempFile = OperatingSystem.createTemporaryFile("temp", extension);
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {

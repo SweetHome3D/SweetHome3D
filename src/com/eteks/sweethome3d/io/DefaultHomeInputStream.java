@@ -67,8 +67,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
    */
   public Home readHome() throws IOException, ClassNotFoundException {
     // Copy home stream in a temporary file 
-    this.tempFile = File.createTempFile("open", ".sweethome3d", OperatingSystem.getDefaultTemporaryFolder());
-    this.tempFile.deleteOnExit();
+    this.tempFile = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
     checkCurrentThreadIsntInterrupted();
     OutputStream tempOut = null;
     try {

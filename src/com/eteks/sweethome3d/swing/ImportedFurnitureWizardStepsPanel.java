@@ -1086,7 +1086,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       if (!objFile.toLowerCase().endsWith(".obj")) {
         objFile += ".obj";
       }
-      File tempZipFile = File.createTempFile("import", ".zip", OperatingSystem.getDefaultTemporaryFolder());
+      File tempZipFile = OperatingSystem.createTemporaryFile("import", ".zip");
       OBJWriter.writeNodeInZIPFile(model, tempZipFile, 0, objFile, "3D model import " + modelName);
       return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" 
           + URLEncoder.encode(objFile, "UTF-8").replace("+", "%20")));

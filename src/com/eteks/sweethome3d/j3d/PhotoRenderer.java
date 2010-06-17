@@ -164,8 +164,7 @@ public class PhotoRenderer {
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
       g2D.drawRenderedImage(skyImage, null);
       g2D.dispose();
-      File imageFile = File.createTempFile("ibl", ".jpg", OperatingSystem.getDefaultTemporaryFolder());
-      imageFile.deleteOnExit();
+      File imageFile = OperatingSystem.createTemporaryFile("ibl", ".jpg");
       ImageIO.write(imageBaseLightImage, "JPEG", imageFile);
       
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
@@ -928,8 +927,7 @@ public class PhotoRenderer {
         String fileFormat = texture.getFormat() == Texture.RGBA 
             ? "png"
             : "jpg";
-        File imageFile = File.createTempFile("texture", "." + fileFormat, OperatingSystem.getDefaultTemporaryFolder());
-        imageFile.deleteOnExit();
+        File imageFile = OperatingSystem.createTemporaryFile("texture", "." + fileFormat);
         ImageIO.write(image, fileFormat, imageFile);
         imagePath = imageFile.getAbsolutePath();
         textureImagesCache.put(texture, imagePath);

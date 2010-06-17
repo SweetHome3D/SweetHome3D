@@ -89,8 +89,7 @@ public class HomeFileRecorder implements HomeRecorder {
     File tempFile = null;
     try {
       // Open a stream on a temporary file 
-      tempFile = File.createTempFile("save", ".sweethome3d", OperatingSystem.getDefaultTemporaryFolder());
-      tempFile.deleteOnExit();
+      tempFile = OperatingSystem.createTemporaryFile("save", ".sweethome3d");
       homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
           this.compressionLevel, this.includeOnlyTemporaryContent);
       // Write home with HomeOuputStream
