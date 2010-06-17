@@ -20,12 +20,16 @@
 package com.eteks.sweethome3d.tools;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import com.apple.eio.FileManager;
+import com.eteks.sweethome3d.model.Home;
 
 /**
  * Tools used to test current user operating system.
@@ -60,6 +64,8 @@ public class OperatingSystem {
     } catch (MissingResourceException ex) {
       temporarySubFolder = "work";
     }
+    temporarySubFolder = System.getProperty(
+        "com.eteks.sweethome3d.tools.OperatingSystem.TemporarySubFolder", temporarySubFolder);
     TEMPORARY_SUB_FOLDER = temporarySubFolder;
     TEMPORARY_SESSION_SUB_FOLDER = UUID.randomUUID().toString();
   }
@@ -107,9 +113,7 @@ public class OperatingSystem {
   public static File createTemporaryFile(String prefix, String suffix) throws IOException {
     File temporaryFolder = getDefaultTemporaryFolder();
     File temporaryFile = File.createTempFile(prefix, suffix, temporaryFolder);
-    if (temporaryFolder == null) {
-      temporaryFile.deleteOnExit();
-    }
+    temporaryFile.deleteOnExit();
     return temporaryFile;
   }
   
@@ -119,22 +123,53 @@ public class OperatingSystem {
   private synchronized static File getDefaultTemporaryFolder() throws IOException {
     if (TEMPORARY_SUB_FOLDER != null) {
       File temporaryFolder = new File(getDefaultApplicationFolder(), TEMPORARY_SUB_FOLDER);
-      final File sessionTemporaryFolder = new File(temporaryFolder, TEMPORARY_SESSION_SUB_FOLDER);      
+      final String versionPrefix = Home.CURRENT_VERSION + "-";
+      final File sessionTemporaryFolder = new File(temporaryFolder, 
+          versionPrefix + TEMPORARY_SESSION_SUB_FOLDER);      
       if (!sessionTemporaryFolder.exists()) {
+        // Retrieve existing folders working with same Sweet Home 3D version in temporary folder
+        final File [] siblingTemporaryFolders = temporaryFolder.listFiles(new FileFilter() {
+            public boolean accept(File file) {
+              return file.isDirectory() 
+                  && file.getName().startsWith(versionPrefix);
+            }
+          });
+        
         // Create temporary folder  
         if (!sessionTemporaryFolder.mkdirs()) {
           throw new IOException("Can't create temporary folder " + sessionTemporaryFolder);
         } else {
-          // Add a hook to delete temporary folder at shutdown
-          Runtime.getRuntime().addShutdownHook(new Thread() {
+          sessionTemporaryFolder.deleteOnExit();
+        }
+        
+        // Launch a timer that updates modification date of the temporary folder each 10 s
+        final long delay = 10000;
+        new Timer(true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+              // Ensure modification date is always growing in case system time was adjusted
+              sessionTemporaryFolder.setLastModified(Math.max(System.currentTimeMillis(),
+                  sessionTemporaryFolder.lastModified() + delay));
+            }
+          }, delay, delay);
+        
+        if (siblingTemporaryFolders != null
+            && siblingTemporaryFolders.length > 0) {
+          // Launch a timer that will delete out dated temporary folders in 20 s
+          new Timer(true).schedule(new TimerTask() {
               @Override
               public void run() {
-                for (File temporaryFile : sessionTemporaryFolder.listFiles()) {
-                  temporaryFile.delete();
+                long now = System.currentTimeMillis();
+                for (File siblingTemporaryFolder : siblingTemporaryFolders) {
+                  if (now - siblingTemporaryFolder.lastModified() > 2 * delay) {
+                    for (File temporaryFile : siblingTemporaryFolder.listFiles()) {
+                      temporaryFile.delete();
+                    }
+                    siblingTemporaryFolder.delete();
+                  }
                 }
-                sessionTemporaryFolder.delete();
               }
-            });
+            }, 2 * delay);
         }
       }
       return sessionTemporaryFolder;
