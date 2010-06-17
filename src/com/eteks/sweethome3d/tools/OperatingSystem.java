@@ -26,7 +26,6 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.apple.eio.FileManager;
-import com.eteks.sweethome3d.model.Home;
 
 /**
  * Tools used to test current user operating system.
