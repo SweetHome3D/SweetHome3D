@@ -224,6 +224,8 @@ public class AppletApplication extends HomeApplication {
     IconManager.getInstance().clear();
     TextureManager.getInstance().clear();
     ModelManager.getInstance().clear();
+    // Delete temporary files
+    OperatingSystem.deleteTemporaryFiles();
   }
 
   /**
