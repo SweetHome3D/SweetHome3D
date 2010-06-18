@@ -134,7 +134,10 @@ public class OperatingSystem {
    * Returns the default folder used to store temporary files created in the program.
    */
   private synchronized static File getDefaultTemporaryFolder(boolean create) throws IOException {
-    if (TEMPORARY_SUB_FOLDER != null) {
+    if (TEMPORARY_SUB_FOLDER != null
+        && !isWindows()) {
+      // Under Windows, always use system temporary folder until the bug #6962458 is fixed 
+      // See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962458 for more information
       File temporaryFolder = new File(getDefaultApplicationFolder(), TEMPORARY_SUB_FOLDER);
       final File sessionTemporaryFolder = new File(temporaryFolder, TEMPORARY_SESSION_SUB_FOLDER);      
       if (!sessionTemporaryFolder.exists()) {

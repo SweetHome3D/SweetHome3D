@@ -304,8 +304,6 @@ public class SweetHome3D extends HomeApplication {
                 if (singleInstanceService != null) {
                   singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
                 }
-                // Delete temporary files
-                OperatingSystem.deleteTemporaryFiles();
                 // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
                 System.exit(0);
               }

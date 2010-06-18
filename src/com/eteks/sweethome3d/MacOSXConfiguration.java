@@ -44,7 +44,6 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
@@ -103,8 +102,6 @@ class MacOSXConfiguration {
             }
           });
         if (homeApplication.getHomes().isEmpty()) {
-          // Delete temporary files
-          OperatingSystem.deleteTemporaryFiles();
           System.exit(0);
         }
       }
