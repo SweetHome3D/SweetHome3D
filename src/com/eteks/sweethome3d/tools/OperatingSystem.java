@@ -26,6 +26,7 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 import com.apple.eio.FileManager;
+import com.eteks.sweethome3d.model.Home;
 
 /**
  * Tools used to test current user operating system.
@@ -139,7 +140,9 @@ public class OperatingSystem {
       // Under Windows, always use system temporary folder until the bug #6962458 is fixed 
       // See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962458 for more information
       File temporaryFolder = new File(getDefaultApplicationFolder(), TEMPORARY_SUB_FOLDER);
-      final File sessionTemporaryFolder = new File(temporaryFolder, TEMPORARY_SESSION_SUB_FOLDER);      
+      String versionPrefix = Home.CURRENT_VERSION + "-";
+      File sessionTemporaryFolder = new File(temporaryFolder, 
+          versionPrefix + TEMPORARY_SESSION_SUB_FOLDER);      
       if (!sessionTemporaryFolder.exists()) {
         if (create) {
           // Create temporary folder  
