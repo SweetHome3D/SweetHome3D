@@ -328,7 +328,7 @@
         <!-- No Print to PDF, Export to SVG, Export to PNG and Create video in viewer -->
         <exclude name="iText-2.1.7.jar"/>
         <exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
-        <exclude name="sunflow-0.07.3c.jar"/>
+        <exclude name="sunflow-0.07.3d.jar"/>
         <exclude name="jmf.jar"/>
       </fileset>
     </copy>

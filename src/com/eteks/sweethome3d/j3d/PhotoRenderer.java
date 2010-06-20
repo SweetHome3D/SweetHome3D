@@ -28,13 +28,14 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
@@ -106,7 +107,7 @@ public class PhotoRenderer {
   
   private final Quality quality;
   private final SunflowAPI sunflow;
-  private final static Map<Texture, String> textureImagesCache = new WeakHashMap<Texture, String>();
+  private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
   private Thread renderingThread;
 
   static {
@@ -141,7 +142,7 @@ public class PhotoRenderer {
     Home groundHome = new Home();
     groundHome.getEnvironment().setGroundColor(home.getEnvironment().getGroundColor());
     groundHome.getEnvironment().setGroundTexture(home.getEnvironment().getGroundTexture());
-    Ground3D ground = new Ground3D(groundHome, -1E8f / 2, -1E8f / 2, 1E8f, 1E8f, true);
+    Ground3D ground = new Ground3D(groundHome, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
     Transform3D translation = new Transform3D();
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
@@ -930,7 +931,9 @@ public class PhotoRenderer {
       }
       this.sunflow.shader(appearanceName, "mirror");
     } else if (texture != null) {
-      String imagePath = textureImagesCache.get(texture);
+      String imagePath = texture.getUserData() instanceof URL
+          ? texture.getUserData().toString()
+          : this.textureImagesCache.get(texture);
       if (imagePath == null) {
         ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
         RenderedImage image = imageComponent.getRenderedImage();
@@ -940,10 +943,10 @@ public class PhotoRenderer {
         File imageFile = OperatingSystem.createTemporaryFile("texture", "." + fileFormat);
         ImageIO.write(image, fileFormat, imageFile);
         imagePath = imageFile.getAbsolutePath();
-        textureImagesCache.put(texture, imagePath);
+        this.textureImagesCache.put(texture, imagePath);
       }
       this.sunflow.parameter("texture", imagePath);
-        
+      
       Material material = appearance.getMaterial();
       if (material != null
           && material.getShininess() > 64) {
