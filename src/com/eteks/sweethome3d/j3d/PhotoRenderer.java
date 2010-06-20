@@ -749,7 +749,17 @@ public class PhotoRenderer {
           this.sunflow.parameter("triangles", verticesIndices);
           this.sunflow.parameter("points", "point", "vertex", vertices);
           if (normals != null) {
-            this.sunflow.parameter("normals", "vector", "vertex", normals);
+            // Check there's no NaN values in normals to avoid endless loop in SunFlow
+            boolean noNaN = true;
+            for (float val : normals) {
+              if (Float.isNaN(val)) {
+                noNaN = false;
+                break;
+              }
+            }
+            if (noNaN)  {
+              this.sunflow.parameter("normals", "vector", "vertex", normals);
+            }
           }
           if (uvs != null) {
             this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
