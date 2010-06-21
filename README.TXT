@@ -24,7 +24,7 @@ with Eclipse, please follow the next steps:
 3. in Eclipse, select File > Import... menu
 4. In "Select an import source" list of Import dialog box, 
    choose "Existing project into Workspace" option
-5. click on Next buton
+5. click on Next button
 6. in "Select root directory" text field, 
    type or select the path to the root of this archive
 7. click on Finish 
