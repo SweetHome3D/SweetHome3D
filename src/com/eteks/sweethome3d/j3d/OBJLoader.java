@@ -71,7 +71,7 @@ import com.sun.j3d.utils.image.TextureLoader;
  * It supports the same features as {@link com.sun.j3d.loaders.objectfile.ObjectFile ObjectFile}
  * Java 3D class, expected for texture images format (supports only BMP, WBMP, GIF, JPEG and PNG format).
  * Compared to <code>ObjectFile</code>, this class supports transparency as defined in
- * <a href="http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/">MTL file format</code> 
+ * <a href="http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/">MTL file format</a> 
  * specifications, and doesn't oblige to define texture coordinate on all vertices 
  * when only one face needs such coordinates. Material description is stored in 
  * {@link OBJMaterial OBJMaterial} instances to be able to use additional OBJ information
