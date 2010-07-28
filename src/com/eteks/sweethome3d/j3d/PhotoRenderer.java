@@ -763,7 +763,17 @@ public class PhotoRenderer {
             }
           }
           if (uvs != null) {
-            this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
+            // Check there's no huge values in uvs to avoid problems in SunFlow
+            boolean noHugeValues = true;
+            for (float val : uvs) {
+              if (Math.abs(val) > 1E9) {
+                noHugeValues = false;
+                break;
+              }
+            }
+            if (noHugeValues)  {
+              this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
+            }
           }
           this.sunflow.geometry(objectNameBase, "triangle_mesh");
           return new String [] {objectNameBase};
