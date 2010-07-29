@@ -188,6 +188,8 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Map<String, float []> positions = new HashMap<String, float []>();
     private final Map<String, float []> normals = new HashMap<String, float []>();
     private final Map<String, float []> textureCoordinates = new HashMap<String, float []>();
+    private final Map<String, float []> floatArrays = new HashMap<String, float []>();
+    private final Map<float [], Integer> sourceAccessorStrides = new HashMap<float [], Integer>();
     private final Map<Geometry, String> geometryAppearances = new HashMap<Geometry, String>();
     private final List<int []> facesAndLinesPrimitives = new ArrayList<int[]>();
     private final List<int []> polygonsPrimitives = new ArrayList<int[]>();
@@ -217,6 +219,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private String  geometryId;
     private String  meshSourceId;
     private String  verticesId;
+    private String  floatArrayId;
     private String  geometryAppearance;
     private int     geometryVertexOffset;
     private int     geometryNormalOffset;
@@ -297,6 +300,15 @@ public class DAELoader extends LoaderBase implements Loader {
           this.meshSourceId = attributes.getValue("id");
         } else if ("mesh".equals(parent) && "vertices".equals(name)) {
           this.verticesId = attributes.getValue("id");
+        } else if (this.meshSourceId != null) {
+          if ("float_array".equals(name)) {
+            this.floatArrayId = attributes.getValue("id");
+          } else if ("technique_common".equals(parent) && "accessor".equals(name)) {
+            String floatArrayAnchor = attributes.getValue("source").substring(1);
+            String stride = attributes.getValue("stride");
+            this.sourceAccessorStrides.put(this.floatArrays.get(floatArrayAnchor), 
+                stride != null ? Integer.valueOf(stride) : 1);
+          } 
         } else if (this.verticesId != null && "input".equals(name)) {
           String sourceAnchor = attributes.getValue("source").substring(1);
           if ("POSITION".equals(attributes.getValue("semantic"))) {
@@ -393,7 +405,7 @@ public class DAELoader extends LoaderBase implements Loader {
               }
             });
         }
-      } else if ("instance_material".equals(name)) {
+      } else if ("instance_material".equals(name) && !this.parentGroups.empty()) {
         String materialInstanceTarget = attributes.getValue("target");
         if (materialInstanceTarget.startsWith("#")) {
           final String materialInstanceAnchor = materialInstanceTarget.substring(1);
@@ -466,6 +478,10 @@ public class DAELoader extends LoaderBase implements Loader {
           float [] floats = new float [floatCount];
           System.arraycopy(this.floats, 0, floats, 0, floatCount);
           this.floats = floats;        
+        }
+        if (this.floatArrayId != null) {
+          this.floatArrays.put(this.floatArrayId, this.floats);
+          this.floatArrayId = null;
         }
       } else if ("float".equals(name)) {
         this.floatValue = Float.parseFloat(getCharacters());
@@ -700,6 +716,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private void handleGeometryElementsEnd(String name, String parent) {
       if ("mesh".equals(parent) && "source".equals(name)) {
         this.sources.put(this.meshSourceId, this.floats);
+        this.meshSourceId = null;
       } else if ("mesh".equals(parent) && "vertices".equals(name)) {
         this.verticesId = null;
       } else if ("p".equals(name)
@@ -786,8 +803,20 @@ public class DAELoader extends LoaderBase implements Loader {
         geometryInfo.setNormalIndices(getIndices(this.geometryNormalOffset));
       }
       if (this.geometryTextureCoordinates != null) {
+        Integer stride = this.sourceAccessorStrides.get(this.geometryTextureCoordinates);
+        // Support only UV texture coordinates
+        float [] textureCoordinates;
+        if (stride > 2) {
+          textureCoordinates = new float [this.geometryTextureCoordinates.length / stride * 2];
+          for (int i = 0, j = 0; j < textureCoordinates.length; j += stride) {
+            textureCoordinates [i++] = this.geometryTextureCoordinates [j];
+            textureCoordinates [i++] = this.geometryTextureCoordinates [j + 1];
+          }
+        } else {
+          textureCoordinates = this.geometryTextureCoordinates;
+        }
         geometryInfo.setTextureCoordinateParams(1, 2);
-        geometryInfo.setTextureCoordinates(0, this.geometryTextureCoordinates);
+        geometryInfo.setTextureCoordinates(0, textureCoordinates);
         geometryInfo.setTextureCoordinateIndices(0, getIndices(this.geometryTextureCoordinatesOffset));
       }
       
