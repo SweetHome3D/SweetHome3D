@@ -148,8 +148,9 @@ public class JPEGImagesToVideo {
       }
 
       // Now, we'll need to create a DataSink.
+      // Caution: do not use file.toURI().toURL() with JMF
       dataSink = Manager.createDataSink(processor.getDataOutput(), 
-          new MediaLocator(file.toURI().toURL()));
+          new MediaLocator(file.toURL()));
       dataSink.open();
       dataSink.addDataSinkListener(dataSinkListener);
       this.fileDone = false;
