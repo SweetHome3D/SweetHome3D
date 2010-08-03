@@ -86,7 +86,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
      */
     HEIGHT("height"),
     /**
-     * The key for the creator of a piece of furniture (optional).
+     * The key for the creator of a texture (optional).
      * By default, creator is <code>null</code>.
      */
     CREATOR("creator");
@@ -106,6 +106,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   }
 
   private static final String PLUGIN_TEXTURES_CATALOG_FAMILY = "PluginTexturesCatalog";
+
+  private static final String ADDITIONAL_TEXTURES_CATALOG_FAMILY  = "AdditionalTexturesCatalog";
 
   private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
 
@@ -136,35 +138,14 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     
     // Try to load com.eteks.sweethome3d.io.DefaultTexturesCatalog property file from classpath 
     final String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
-    if (preferences != null) {
-      // Adapt getLocalizedString to ResourceBundle
-      ResourceBundle resource = new ResourceBundle() {
-          @Override
-          protected Object handleGetObject(String key) {
-            try {
-              return preferences.getLocalizedString(defaultTexturesCatalogFamily, key);
-            } catch (IllegalArgumentException ex) {
-              throw new MissingResourceException("Unknown key " + key, 
-                  defaultTexturesCatalogFamily + "_" + Locale.getDefault(), key);
-            }
-          }
-          
-          @Override
-          public Enumeration<String> getKeys() {
-            // Not needed
-            throw new UnsupportedOperationException();
-          }
-        };
-      readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
-    } else {
-      try {
-        ResourceBundle resource = ResourceBundle.getBundle(defaultTexturesCatalogFamily);
-        readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
-      } catch (MissingResourceException ex) {
-        // Ignore texture catalog
-      }
-    }
-    
+    readTexturesCatalog(defaultTexturesCatalogFamily, 
+        preferences, textureHomonymsCounter, identifiedTextures);
+
+    // Try to load com.eteks.sweethome3d.io.AdditionalTexturesCatalog property file from classpath 
+    String classPackage = defaultTexturesCatalogFamily.substring(0, defaultTexturesCatalogFamily.lastIndexOf("."));
+    readTexturesCatalog(classPackage + "." + ADDITIONAL_TEXTURES_CATALOG_FAMILY, 
+        preferences, textureHomonymsCounter, identifiedTextures);
+
     if (texturesPluginFolder != null) {
       // Try to load sh3t files from textures plugin folder
       File [] pluginTexturesCatalogFiles = texturesPluginFolder.listFiles(new FileFilter () {
@@ -251,6 +232,43 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     } catch (IOException ex) {
       // Ignore unaccessible catalog
     }
+  }
+  
+  /**
+   * Reads textures of a given catalog family from resources.
+   */
+  private void readTexturesCatalog(final String texturesCatalogFamily,
+                                   final UserPreferences preferences,
+                                   Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
+                                   List<String> identifiedTextures) {
+    ResourceBundle resource;
+    if (preferences != null) {
+      // Adapt getLocalizedString to ResourceBundle
+      resource = new ResourceBundle() {
+          @Override
+          protected Object handleGetObject(String key) {
+            try {
+              return preferences.getLocalizedString(texturesCatalogFamily, key);
+            } catch (IllegalArgumentException ex) {
+              throw new MissingResourceException("Unknown key " + key, 
+                  texturesCatalogFamily + "_" + Locale.getDefault(), key);
+            }
+          }
+          
+          @Override
+          public Enumeration<String> getKeys() {
+            // Not needed
+            throw new UnsupportedOperationException();
+          }
+        };
+    } else {
+      try {
+        resource = ResourceBundle.getBundle(texturesCatalogFamily);
+      } catch (MissingResourceException ex) {
+        return;
+      }
+    }
+    readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
   }
   
   /**
@@ -352,7 +370,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     } catch (MalformedURLException ex) {
       if (texturesUrl == null) {
         // Otherwise find if it's a resource
-        return new ResourceURLContent(DefaultFurnitureCatalog.class, contentFile);
+        return new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
       } else {
         try {
           return new URLContent(new URL("jar:" + texturesUrl + "!" + contentFile));
