@@ -501,8 +501,8 @@
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
 
-    <!-- Change executable permission of JavaApplicationStub lost during copy task -->
-    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/>
+    <!-- Change executable permission of SweetHome3D lost during copy task -->
+    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java -->
