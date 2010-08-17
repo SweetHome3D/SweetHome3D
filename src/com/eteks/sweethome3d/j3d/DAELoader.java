@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -57,6 +58,7 @@ import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -82,8 +84,8 @@ import com.sun.j3d.utils.image.TextureLoader;
 /**
  * A loader for DAE Collada 1.4.1 format as specified by
  * <a href="http://www.khronos.org/files/collada_spec_1_4.pdf">http://www.khronos.org/files/collada_spec_1_4.pdf</a>.
- * All texture coordinates are considered to belong to the same set (for example UVSET0).
  * @author Emmanuel Puybaret
+ * @author apptaro (bug fixes)
  */
 public class DAELoader extends LoaderBase implements Loader {
   /**
@@ -197,11 +199,12 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Map<String, TransformGroup> nodes = new HashMap<String, TransformGroup>();
     private final Map<String, SharedGroup> instantiatedNodes = new HashMap<String, SharedGroup>();
     private final Map<String, TransformGroup> visualScenes = new HashMap<String, TransformGroup>();
+    private final Map<String, float[]> geometryTextureCoordinatesSets = new LinkedHashMap<String, float[]>();
+    private final Map<String, Integer> geometryTextureCoordinatesOffsets = new HashMap<String, Integer>();
     private TransformGroup visualScene;
     private float [] floats;
     private float [] geometryVertices;
     private float [] geometryNormals;
-    private float [] geometryTextureCoordinates;
     private int   [] vcount;
     private float [] transparentColor;
     private Float    transparency;
@@ -223,7 +226,6 @@ public class DAELoader extends LoaderBase implements Loader {
     private String  geometryAppearance;
     private int     geometryVertexOffset;
     private int     geometryNormalOffset;
-    private int     geometryTextureCoordinatesOffset;
     private String  axis;
     private float   floatValue;
     private String  opaque;
@@ -319,9 +321,11 @@ public class DAELoader extends LoaderBase implements Loader {
             this.textureCoordinates.put(this.verticesId, this.sources.get(sourceAnchor));
           }
         } else if (this.verticesId == null && "input".equals(name)) {
-          this.inputCount++;
           String sourceAnchor = attributes.getValue("source").substring(1);
           int offset = Integer.parseInt(attributes.getValue("offset"));
+          if (this.inputCount < offset + 1) {
+            this.inputCount = offset + 1;
+          }
           if ("VERTEX".equals(attributes.getValue("semantic"))) {
             this.geometryVertices = this.positions.get(sourceAnchor);
             this.geometryVertexOffset = offset;
@@ -329,16 +333,18 @@ public class DAELoader extends LoaderBase implements Loader {
               this.geometryNormals = this.normals.get(sourceAnchor);
               this.geometryNormalOffset = offset;
             }
-            if (this.geometryTextureCoordinates == null) {
-              this.geometryTextureCoordinates = this.textureCoordinates.get(sourceAnchor);
-              this.geometryTextureCoordinatesOffset = offset;
+            float [] textureCoordinates = this.textureCoordinates.get(sourceAnchor);
+            if (this.geometryTextureCoordinatesSets.size() == 0 && textureCoordinates != null) {
+              this.geometryTextureCoordinatesSets.put(null, textureCoordinates);
+              this.geometryTextureCoordinatesOffsets.put(null, offset);
             }
           } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
             this.geometryNormals = this.sources.get(sourceAnchor);
             this.geometryNormalOffset = offset;
           } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
-            this.geometryTextureCoordinates = this.sources.get(sourceAnchor);
-            this.geometryTextureCoordinatesOffset = offset;
+            String set = attributes.getValue("set");
+            this.geometryTextureCoordinatesSets.put(set, this.sources.get(sourceAnchor));
+            this.geometryTextureCoordinatesOffsets.put(set, offset);
           }
         } else if ("triangles".equals(name)
                    || "trifans".equals(name)
@@ -471,7 +477,14 @@ public class DAELoader extends LoaderBase implements Loader {
         int floatCount = 0;
         for (int i = 0; i < floatValues.length; i++) {
           if (floatValues [i].length() > 0) {
-            this.floats [floatCount++] = Float.parseFloat(floatValues [i]);
+            float floatValue;
+            try {
+              floatValue = Float.parseFloat(floatValues [i]);
+            } catch (NumberFormatException e) {
+              // This may happen with some bad DAE files
+              floatValue = 0f;
+            }
+            this.floats [floatCount++] = floatValue;
           }
         }
         if (floatCount != floatValues.length) {
@@ -511,13 +524,7 @@ public class DAELoader extends LoaderBase implements Loader {
         mulTransformGroup(new Transform3D(this.floats));
       } else if ("node".equals(parent) && "rotate".equals(name)) {
         Transform3D rotation = new Transform3D();
-        if (floats [0] > 0) {
-          rotation.rotX(Math.toRadians(floats [3]));
-        } else if (floats [1] > 0) {
-          rotation.rotY(Math.toRadians(floats [3]));
-        } else if (floats [2] > 0) {
-          rotation.rotZ(Math.toRadians(floats [3]));
-        }
+        rotation.setRotation(new AxisAngle4f(floats[0], floats[1], floats[2], (float)Math.toRadians(floats[3])));
         mulTransformGroup(rotation);
       } else if ("scale".equals(name)) {
         Transform3D scale = new Transform3D();
@@ -772,7 +779,8 @@ public class DAELoader extends LoaderBase implements Loader {
         this.geometryAppearance = null;
         this.geometryVertices = null;
         this.geometryNormals = null;
-        this.geometryTextureCoordinates = null;
+        this.geometryTextureCoordinatesSets.clear();
+        this.geometryTextureCoordinatesOffsets.clear();
         this.facesAndLinesPrimitives.clear();
         this.polygonsPrimitives.clear();
         this.polygonsHoles.clear();
@@ -802,22 +810,29 @@ public class DAELoader extends LoaderBase implements Loader {
         geometryInfo.setNormals(this.geometryNormals);
         geometryInfo.setNormalIndices(getIndices(this.geometryNormalOffset));
       }
-      if (this.geometryTextureCoordinates != null) {
-        Integer stride = this.sourceAccessorStrides.get(this.geometryTextureCoordinates);
-        // Support only UV texture coordinates
-        float [] textureCoordinates;
-        if (stride > 2) {
-          textureCoordinates = new float [this.geometryTextureCoordinates.length / stride * 2];
-          for (int i = 0, j = 0; j < textureCoordinates.length; j += stride) {
-            textureCoordinates [i++] = this.geometryTextureCoordinates [j];
-            textureCoordinates [i++] = this.geometryTextureCoordinates [j + 1];
+      int textureCoordinatesSetCount = this.geometryTextureCoordinatesSets.size();
+      if (textureCoordinatesSetCount != 0) {
+        geometryInfo.setTextureCoordinateParams(textureCoordinatesSetCount, 2);
+        int setIndex = 0;
+        for (String set : this.geometryTextureCoordinatesSets.keySet()) {
+          float [] geometryTextureCoordinates = this.geometryTextureCoordinatesSets.get(set);
+          int geometryTextureCoordinatesOffset = this.geometryTextureCoordinatesOffsets.get(set);
+          
+          // Support only UV texture coordinates
+          Integer stride = this.sourceAccessorStrides.get(geometryTextureCoordinates);
+          if (stride > 2) {
+            float [] uvTextureCoordinates = new float [geometryTextureCoordinates.length / stride * 2];
+            for (int i = 0, j = 0; j < geometryTextureCoordinates.length; j += stride) {
+              uvTextureCoordinates [i++] = geometryTextureCoordinates [j];
+              uvTextureCoordinates [i++] = geometryTextureCoordinates [j + 1];
+            }
+            geometryTextureCoordinates = uvTextureCoordinates;
           }
-        } else {
-          textureCoordinates = this.geometryTextureCoordinates;
+
+          geometryInfo.setTextureCoordinates(setIndex, geometryTextureCoordinates);
+          geometryInfo.setTextureCoordinateIndices(setIndex, getIndices(geometryTextureCoordinatesOffset));
+          setIndex++;
         }
-        geometryInfo.setTextureCoordinateParams(1, 2);
-        geometryInfo.setTextureCoordinates(0, textureCoordinates);
-        geometryInfo.setTextureCoordinateIndices(0, getIndices(this.geometryTextureCoordinatesOffset));
       }
       
       if ("trifans".equals(name)
@@ -865,7 +880,7 @@ public class DAELoader extends LoaderBase implements Loader {
       if (this.geometryNormals != null) {
         format |= IndexedGeometryArray.NORMALS;
       }
-      if (this.geometryTextureCoordinates != null) {
+      if (this.geometryTextureCoordinatesSets.size() != 0) {
         format |= IndexedGeometryArray.TEXTURE_COORDINATE_2;
       }
       
@@ -887,9 +902,10 @@ public class DAELoader extends LoaderBase implements Loader {
         geometry.setNormals(0, this.geometryNormals);
         geometry.setNormalIndices(0, getIndices(this.geometryNormalOffset));
       }
-      if (this.geometryTextureCoordinates != null) {
-        geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinates);
-        geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffset));
+      if (this.geometryTextureCoordinatesSets.size() != 0) {
+        String set = this.geometryTextureCoordinatesSets.keySet().iterator().next();
+        geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinatesSets.get(set));
+        geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffsets.get(set)));
       }
       return geometry;
     }
@@ -973,7 +989,7 @@ public class DAELoader extends LoaderBase implements Loader {
           axisTransform.rotX(-Math.PI / 2);
         } else if ("X_UP".equals(axis)) {
           axisTransform.rotZ(Math.PI / 2);
-        } 
+        }
         rootTransform.mul(axisTransform);
         // Translate model to its center
         Point3d lower = new Point3d();
