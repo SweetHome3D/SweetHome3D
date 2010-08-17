@@ -21,6 +21,8 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
@@ -201,14 +203,14 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                                            ((color >>> 8) & 0xFF) / 256f,
                                                    (color & 0xFF) / 256f);
       Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
-      setMaterialAndTexture(filledModelNode, material, null, false, null, null);
+      setMaterialAndTexture(filledModelNode, material, null, false, null, null, new HashSet<Appearance>());
     } else if (piece.getTexture() != null) {
       setMaterialAndTexture(filledModelNode, null, piece.getTexture(), waitTextureLoadingEnd, 
           new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()),
-          ModelManager.getInstance().getSize(((Group)filledModelNode).getChild(0)));
+          ModelManager.getInstance().getSize(((Group)filledModelNode).getChild(0)), new HashSet<Appearance>());
     } else {
       // Set default material and texture of model
-      setMaterialAndTexture(filledModelNode, null, null, false, null, null);
+      setMaterialAndTexture(filledModelNode, null, null, false, null, null, new HashSet<Appearance>());
     }
   }
 
@@ -391,21 +393,21 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * with a given <code>material</code>. 
    */
   private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, boolean waitTextureLoadingEnd,
-                                     Vector3f pieceSize, Vector3f modelSize) {
+                                     Vector3f pieceSize, Vector3f modelSize, Set<Appearance> modifiedAppearances) {
     if (node instanceof Group) {
       // Set material and texture of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
-            pieceSize, modelSize);
+            pieceSize, modelSize, modifiedAppearances);
       }
     } else if (node instanceof Link) {
       setMaterialAndTexture(((Link)node).getSharedGroup(), material, texture, waitTextureLoadingEnd,
-          pieceSize, modelSize);
+          pieceSize, modelSize, modifiedAppearances);
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
-      // Change material and texture of all shape that are not window panes 
+      // Change material and texture of all shapes that are not window panes 
       if (shapeName == null
           || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
         Appearance appearance = shape.getAppearance();
@@ -413,44 +415,50 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           appearance = createAppearanceWithChangeCapabilities();
           ((Shape3D)node).setAppearance(appearance);
         }
-        // Use appearance user data to store shape default material
-        DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
-        if (defaultMaterialAndTexture == null) {
-          defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
-          appearance.setUserData(defaultMaterialAndTexture);
-        }
-        if (material != null && defaultMaterialAndTexture.getTexture() == null) {
-          // Change material if no default texture is displayed on the shape
-          // (textures always keep the colors of their image file)
-          appearance.setMaterial(material);
-          appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-          appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
-          appearance.setTexture(null);
-        } else if (material == null && texture != null) {
-          // Change material to white then texture
-          appearance.setMaterial((Material)DEFAULT_TEXTURED_SHAPE_MATERIAL);
-          TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-              TexCoordGeneration.TEXTURE_COORDINATE_2,
-              new Vector4f(-pieceSize.x / modelSize.x / texture.getWidth(), 0, 0, 0), 
-              new Vector4f(0, pieceSize.y / modelSize.y / texture.getHeight(), pieceSize.z / modelSize.z / texture.getHeight(), 0));
-          appearance.setTexCoordGeneration(texCoordGeneration);
-          appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-          TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
-              new TextureManager.TextureObserver() {
-                  public void textureUpdated(Texture texture) {
-                    if (texture.getFormat() == Texture.RGBA) {
-                      shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
+        
+        // Check appearance wasn't already changed
+        if (!modifiedAppearances.contains(appearance)) {
+          // Use appearance user data to store shape default material
+          DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+          if (defaultMaterialAndTexture == null) {
+            defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
+            appearance.setUserData(defaultMaterialAndTexture);
+          }
+          if (material != null && defaultMaterialAndTexture.getTexture() == null) {
+            // Change material if no default texture is displayed on the shape
+            // (textures always keep the colors of their image file)
+            appearance.setMaterial(material);
+            appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+            appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
+            appearance.setTexture(null);
+          } else if (material == null && texture != null) {
+            // Change material to white then texture
+            appearance.setMaterial((Material)DEFAULT_TEXTURED_SHAPE_MATERIAL);
+            TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+                TexCoordGeneration.TEXTURE_COORDINATE_2,
+                new Vector4f(-pieceSize.x / modelSize.x / texture.getWidth(), 0, 0, 0), 
+                new Vector4f(0, pieceSize.y / modelSize.y / texture.getHeight(), pieceSize.z / modelSize.z / texture.getHeight(), 0));
+            appearance.setTexCoordGeneration(texCoordGeneration);
+            appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+            TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
+                new TextureManager.TextureObserver() {
+                    public void textureUpdated(Texture texture) {
+                      if (texture.getFormat() == Texture.RGBA) {
+                        shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
+                      }
+                      shape.getAppearance().setTexture(texture);
                     }
-                    shape.getAppearance().setTexture(texture);
-                  }
-                });
-        } else {
-          // Restore default material and texture
-          appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
-          appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-          appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-          appearance.setTexture(defaultMaterialAndTexture.getTexture());
-          appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
+                  });
+          } else {
+            // Restore default material and texture
+            appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
+            appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+            appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+            appearance.setTexture(defaultMaterialAndTexture.getTexture());
+            appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
+          }
+          // Store modified appearances to avoid changing their values more than once
+          modifiedAppearances.add(appearance);
         }
       }
     }
