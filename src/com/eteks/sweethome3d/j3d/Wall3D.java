@@ -65,7 +65,7 @@ public class Wall3D extends Object3DBranch {
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
     DEFAULT_MATERIAL.setShininess(1);
-    DEFAULT_MATERIAL.setSpecularColor(new Color3f());
+    DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   

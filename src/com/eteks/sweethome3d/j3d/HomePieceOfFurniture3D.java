@@ -66,7 +66,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private final Home home;
   
   static {
-    DEFAULT_TEXTURED_SHAPE_MATERIAL.setShininess(0);
+    DEFAULT_TEXTURED_SHAPE_MATERIAL.setShininess(1);
     DEFAULT_TEXTURED_SHAPE_MATERIAL.setSpecularColor(0, 0, 0);
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
