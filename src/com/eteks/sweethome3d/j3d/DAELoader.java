@@ -32,7 +32,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -84,6 +83,7 @@ import com.sun.j3d.utils.image.TextureLoader;
 /**
  * A loader for DAE Collada 1.4.1 format as specified by
  * <a href="http://www.khronos.org/files/collada_spec_1_4.pdf">http://www.khronos.org/files/collada_spec_1_4.pdf</a>.
+ * All texture coordinates are considered to belong to the same set (for example UVSET0).
  * @author Emmanuel Puybaret
  * @author apptaro (bug fixes)
  */
@@ -199,12 +199,11 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Map<String, TransformGroup> nodes = new HashMap<String, TransformGroup>();
     private final Map<String, SharedGroup> instantiatedNodes = new HashMap<String, SharedGroup>();
     private final Map<String, TransformGroup> visualScenes = new HashMap<String, TransformGroup>();
-    private final Map<String, float[]> geometryTextureCoordinatesSets = new LinkedHashMap<String, float[]>();
-    private final Map<String, Integer> geometryTextureCoordinatesOffsets = new HashMap<String, Integer>();
     private TransformGroup visualScene;
     private float [] floats;
     private float [] geometryVertices;
     private float [] geometryNormals;
+    private float [] geometryTextureCoordinates;
     private int   [] vcount;
     private float [] transparentColor;
     private Float    transparency;
@@ -226,6 +225,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private String  geometryAppearance;
     private int     geometryVertexOffset;
     private int     geometryNormalOffset;
+    private int     geometryTextureCoordinatesOffset;
     private String  axis;
     private float   floatValue;
     private String  opaque;
@@ -333,18 +333,16 @@ public class DAELoader extends LoaderBase implements Loader {
               this.geometryNormals = this.normals.get(sourceAnchor);
               this.geometryNormalOffset = offset;
             }
-            float [] textureCoordinates = this.textureCoordinates.get(sourceAnchor);
-            if (this.geometryTextureCoordinatesSets.size() == 0 && textureCoordinates != null) {
-              this.geometryTextureCoordinatesSets.put(null, textureCoordinates);
-              this.geometryTextureCoordinatesOffsets.put(null, offset);
+            if (this.geometryTextureCoordinates == null) {
+              this.geometryTextureCoordinates = this.textureCoordinates.get(sourceAnchor);
+              this.geometryTextureCoordinatesOffset = offset;
             }
           } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
             this.geometryNormals = this.sources.get(sourceAnchor);
             this.geometryNormalOffset = offset;
           } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
-            String set = attributes.getValue("set");
-            this.geometryTextureCoordinatesSets.put(set, this.sources.get(sourceAnchor));
-            this.geometryTextureCoordinatesOffsets.put(set, offset);
+            this.geometryTextureCoordinates = this.sources.get(sourceAnchor);
+            this.geometryTextureCoordinatesOffset = offset;
           }
         } else if ("triangles".equals(name)
                    || "trifans".equals(name)
@@ -779,8 +777,7 @@ public class DAELoader extends LoaderBase implements Loader {
         this.geometryAppearance = null;
         this.geometryVertices = null;
         this.geometryNormals = null;
-        this.geometryTextureCoordinatesSets.clear();
-        this.geometryTextureCoordinatesOffsets.clear();
+        this.geometryTextureCoordinates = null;
         this.facesAndLinesPrimitives.clear();
         this.polygonsPrimitives.clear();
         this.polygonsHoles.clear();
@@ -810,29 +807,22 @@ public class DAELoader extends LoaderBase implements Loader {
         geometryInfo.setNormals(this.geometryNormals);
         geometryInfo.setNormalIndices(getIndices(this.geometryNormalOffset));
       }
-      int textureCoordinatesSetCount = this.geometryTextureCoordinatesSets.size();
-      if (textureCoordinatesSetCount != 0) {
-        geometryInfo.setTextureCoordinateParams(textureCoordinatesSetCount, 2);
-        int setIndex = 0;
-        for (String set : this.geometryTextureCoordinatesSets.keySet()) {
-          float [] geometryTextureCoordinates = this.geometryTextureCoordinatesSets.get(set);
-          int geometryTextureCoordinatesOffset = this.geometryTextureCoordinatesOffsets.get(set);
-          
-          // Support only UV texture coordinates
-          Integer stride = this.sourceAccessorStrides.get(geometryTextureCoordinates);
-          if (stride > 2) {
-            float [] uvTextureCoordinates = new float [geometryTextureCoordinates.length / stride * 2];
-            for (int i = 0, j = 0; j < geometryTextureCoordinates.length; j += stride) {
-              uvTextureCoordinates [i++] = geometryTextureCoordinates [j];
-              uvTextureCoordinates [i++] = geometryTextureCoordinates [j + 1];
-            }
-            geometryTextureCoordinates = uvTextureCoordinates;
+      if (this.geometryTextureCoordinates != null) {
+        Integer stride = this.sourceAccessorStrides.get(this.geometryTextureCoordinates);
+        // Support only UV texture coordinates
+        float [] textureCoordinates;
+        if (stride > 2) {
+          textureCoordinates = new float [this.geometryTextureCoordinates.length / stride * 2];
+          for (int i = 0, j = 0; j < this.geometryTextureCoordinates.length; j += stride) {
+            textureCoordinates [i++] = this.geometryTextureCoordinates [j];
+            textureCoordinates [i++] = this.geometryTextureCoordinates [j + 1];
           }
-
-          geometryInfo.setTextureCoordinates(setIndex, geometryTextureCoordinates);
-          geometryInfo.setTextureCoordinateIndices(setIndex, getIndices(geometryTextureCoordinatesOffset));
-          setIndex++;
+        } else {
+          textureCoordinates = this.geometryTextureCoordinates;
         }
+        geometryInfo.setTextureCoordinateParams(1, 2);
+        geometryInfo.setTextureCoordinates(0, textureCoordinates);
+        geometryInfo.setTextureCoordinateIndices(0, getIndices(this.geometryTextureCoordinatesOffset));
       }
       
       if ("trifans".equals(name)
@@ -880,7 +870,7 @@ public class DAELoader extends LoaderBase implements Loader {
       if (this.geometryNormals != null) {
         format |= IndexedGeometryArray.NORMALS;
       }
-      if (this.geometryTextureCoordinatesSets.size() != 0) {
+      if (this.geometryTextureCoordinates != null) {
         format |= IndexedGeometryArray.TEXTURE_COORDINATE_2;
       }
       
@@ -902,10 +892,9 @@ public class DAELoader extends LoaderBase implements Loader {
         geometry.setNormals(0, this.geometryNormals);
         geometry.setNormalIndices(0, getIndices(this.geometryNormalOffset));
       }
-      if (this.geometryTextureCoordinatesSets.size() != 0) {
-        String set = this.geometryTextureCoordinatesSets.keySet().iterator().next();
-        geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinatesSets.get(set));
-        geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffsets.get(set)));
+      if (this.geometryTextureCoordinates != null) {
+        geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinates);
+        geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffset));
       }
       return geometry;
     }
