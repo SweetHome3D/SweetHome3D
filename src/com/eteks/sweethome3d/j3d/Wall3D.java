@@ -64,6 +64,8 @@ public class Wall3D extends Object3DBranch {
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    DEFAULT_MATERIAL.setShininess(1);
+    DEFAULT_MATERIAL.setSpecularColor(new Color3f());
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
@@ -607,7 +609,7 @@ public class Wall3D extends Object3DBranch {
         Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
                                             ((color >>> 8) & 0xFF) / 256f,
                                                     (color & 0xFF) / 256f);
-        material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+        material = new Material(materialColor, new Color3f(), materialColor, new Color3f(), 1);
         material.setCapability(Material.ALLOW_COMPONENT_READ);
         // Store created materials in cache
         materials.put(color, material);
