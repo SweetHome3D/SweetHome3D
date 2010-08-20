@@ -1023,7 +1023,8 @@ public class PhotoRenderer {
   private static final class BufferedImageDisplay implements Display {
     private static final int BASE_INFO_FLAGS = ImageObserver.WIDTH | ImageObserver.HEIGHT | ImageObserver.PROPERTIES;
     private static final int [] BORDERS = {Color.RED.toRGB(), Color.GREEN.toRGB(), Color.BLUE.toRGB(), 
-                                           Color.YELLOW.toRGB(), Color.CYAN.toRGB(), Color.MAGENTA.toRGB()};
+                                           Color.YELLOW.toRGB(), Color.CYAN.toRGB(), Color.MAGENTA.toRGB(),
+                                           new Color(1, 0.5f, 0).toRGB(), new Color(0.5f, 1, 0).toRGB()};
     
     private final ImageObserver observer;
     private final BufferedImage image;
