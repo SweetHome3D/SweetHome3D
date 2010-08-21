@@ -233,13 +233,14 @@ public class Wall3D extends Object3DBranch {
     // Refine intersections in case some doors or windows are superimposed
     if (windowIntersections.size() > 1) {
       // Search superimposed windows
-      int windowIndex = 0;
-      for (DoorOrWindowArea windowIntersection : windowIntersections.toArray(new DoorOrWindowArea [windowIntersections.size()])) {
-        HomePieceOfFurniture window = windowIntersection.getDoorsOrWindows().get(0);
+      for (int windowIndex = 0; windowIndex < windowIntersections.size(); windowIndex++) {
+        DoorOrWindowArea windowIntersection = windowIntersections.get(windowIndex);
         List<DoorOrWindowArea> otherWindowIntersections = new ArrayList<DoorOrWindowArea>();
         int otherWindowIndex = 0;
         for (DoorOrWindowArea otherWindowIntersection : windowIntersections) {          
-          if (otherWindowIndex > windowIndex) { // Avoid search twice the intersection between two items
+          if (windowIntersection.getArea().isEmpty()) {
+            break;
+          } else if (otherWindowIndex > windowIndex) { // Avoid search twice the intersection between two items
             Area windowsIntersectionArea = new Area(otherWindowIntersection.getArea());
             windowsIntersectionArea.intersect(windowIntersection.getArea());
             if (!windowsIntersectionArea.isEmpty()) {
@@ -247,15 +248,14 @@ public class Wall3D extends Object3DBranch {
               otherWindowIntersection.getArea().subtract(windowsIntersectionArea);              
               windowIntersection.getArea().subtract(windowsIntersectionArea);
               // Create a new area for the intersection 
-              List<HomePieceOfFurniture> doorsOrWindows = new ArrayList<HomePieceOfFurniture>(otherWindowIntersection.getDoorsOrWindows());
-              doorsOrWindows.add(window);
+              List<HomePieceOfFurniture> doorsOrWindows = new ArrayList<HomePieceOfFurniture>(windowIntersection.getDoorsOrWindows());
+              doorsOrWindows.addAll(otherWindowIntersection.getDoorsOrWindows());
               otherWindowIntersections.add(new DoorOrWindowArea(windowsIntersectionArea, doorsOrWindows));
             }
           }
           otherWindowIndex++;
         }
         windowIntersections.addAll(otherWindowIntersections);
-        windowIndex++;
       }
     }    
     List<Geometry> wallGeometries = new ArrayList<Geometry>();
