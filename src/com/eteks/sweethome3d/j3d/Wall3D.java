@@ -26,6 +26,8 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -214,7 +216,7 @@ public class Wall3D extends Object3DBranch {
     }
     
     // Search which doors or windows intersect with this wall side
-    Map<HomePieceOfFurniture, Area> windowIntersections = new HashMap<HomePieceOfFurniture, Area>();
+    List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(this.home.getFurniture())) {
       if (piece.getElevation() < maxWallHeight) {
         Shape pieceShape = getShape(piece.getPoints());
@@ -222,12 +224,40 @@ public class Wall3D extends Object3DBranch {
         Area intersectionArea = new Area(wallShape);
         intersectionArea.intersect(pieceArea);
         if (!intersectionArea.isEmpty()) {
-          windowIntersections.put(piece, intersectionArea);
+          windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
           // Remove from wall area the piece shape
           wallArea.subtract(pieceArea);
         }
       }
     }
+    // Refine intersections in case some doors or windows are superimposed
+    if (windowIntersections.size() > 1) {
+      // Search superimposed windows
+      int windowIndex = 0;
+      for (DoorOrWindowArea windowIntersection : windowIntersections.toArray(new DoorOrWindowArea [windowIntersections.size()])) {
+        HomePieceOfFurniture window = windowIntersection.getDoorsOrWindows().get(0);
+        List<DoorOrWindowArea> otherWindowIntersections = new ArrayList<DoorOrWindowArea>();
+        int otherWindowIndex = 0;
+        for (DoorOrWindowArea otherWindowIntersection : windowIntersections) {          
+          if (otherWindowIndex > windowIndex) { // Avoid search twice the intersection between two items
+            Area windowsIntersectionArea = new Area(otherWindowIntersection.getArea());
+            windowsIntersectionArea.intersect(windowIntersection.getArea());
+            if (!windowsIntersectionArea.isEmpty()) {
+              // Remove intersection from wall area              
+              otherWindowIntersection.getArea().subtract(windowsIntersectionArea);              
+              windowIntersection.getArea().subtract(windowsIntersectionArea);
+              // Create a new area for the intersection 
+              List<HomePieceOfFurniture> doorsOrWindows = new ArrayList<HomePieceOfFurniture>(otherWindowIntersection.getDoorsOrWindows());
+              doorsOrWindows.add(window);
+              otherWindowIntersections.add(new DoorOrWindowArea(windowsIntersectionArea, doorsOrWindows));
+            }
+          }
+          otherWindowIndex++;
+        }
+        windowIntersections.addAll(otherWindowIntersections);
+        windowIndex++;
+      }
+    }    
     List<Geometry> wallGeometries = new ArrayList<Geometry>();
     List<float[]> wallPoints = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
@@ -264,54 +294,97 @@ public class Wall3D extends Object3DBranch {
     
     // Generate geometry for each wall part above and below a window
     previousWallPoint = null;
-    for (Map.Entry<HomePieceOfFurniture, Area> windowIntersection : windowIntersections.entrySet()) {
-      for (PathIterator it = windowIntersection.getValue().getPathIterator(null, 0.1f); !it.isDone(); ) {
-        float [] wallPoint = new float[2];
-        if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
-          // Remove last point if it's equal to first point
-          if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
-            wallPoints.remove(wallPoints.size() - 1);
-          }
-          if (wallPoints.size() > 2) {
-            float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
-            HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
-            float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
-            // Compute the minimum vertical position of wallPartPoints
-            double minTopY = maxWallHeight;
-            for (int i = 0; i < wallPartPoints.length; i++) {
-              double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
-              minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-            }            
-            // Generate geometry for wall part above window
-            if (doorOrWindowTop < minTopY) {
-              wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
-                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
-              wallGeometries.add(createWallHorizontalPartGeometry(
-                  wallPartPoints, doorOrWindowTop));
-              wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+    for (DoorOrWindowArea windowIntersection : windowIntersections) {
+      if (!windowIntersection.getArea().isEmpty()) {
+        for (PathIterator it = windowIntersection.getArea().getPathIterator(null, 0.1f); !it.isDone(); ) {
+          float [] wallPoint = new float[2];
+          if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
+            // Remove last point if it's equal to first point
+            if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
+              wallPoints.remove(wallPoints.size() - 1);
             }
-            // Generate geometry for wall part below window
-            if (doorOrWindow.getElevation() > 0) {
-              wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
-                  cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture, textureReferencePoint));
-              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
-              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
+            if (wallPoints.size() > 2) {
+              float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+              List<HomePieceOfFurniture> doorsOrWindows = windowIntersection.getDoorsOrWindows();
+              if (doorsOrWindows.size() > 1) {
+                // Sort superimposed doors and windows 
+                Collections.sort(doorsOrWindows, 
+                    new Comparator<HomePieceOfFurniture>() {
+                      public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+                        if (piece1.getElevation() < piece2.getElevation()) {
+                          return -1;
+                        } else if (piece1.getElevation() == piece2.getElevation()) {
+                          return 0;
+                        } else {
+                          return 1;
+                        }
+                      }
+                    });
+              }
+              HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);            
+              // Generate geometry for wall part below window
+              if (lowestDoorOrWindow.getElevation() > 0) {
+                wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
+                    cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindow.getElevation(), texture, textureReferencePoint));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowestDoorOrWindow.getElevation()));
+              }
+              
+              // Generate geometry for wall parts between superimposed windows
+              for (int i = 0; i < doorsOrWindows.size() - 1; ) {
+                HomePieceOfFurniture lowerDoorOrWindow = doorsOrWindows.get(i);            
+                HomePieceOfFurniture higherDoorOrWindow = doorsOrWindows.get(++i);
+                // Ignore higher windows smaller than lower window
+                while (lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() > higherDoorOrWindow.getElevation() + higherDoorOrWindow.getHeight()
+                    && ++i < doorsOrWindows.size()) {
+                  higherDoorOrWindow = doorsOrWindows.get(i);
+                }
+                if (i < doorsOrWindows.size()) {
+                  wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), 
+                      cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindow.getElevation(), texture, textureReferencePoint));
+                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight()));
+                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, higherDoorOrWindow.getElevation()));
+                }
+              }
+                
+              HomePieceOfFurniture highestDoorOrWindow = doorsOrWindows.get(doorsOrWindows.size() - 1);            
+              for (int i = doorsOrWindows.size() - 2; i >= 0; i--) {
+                HomePieceOfFurniture doorOrWindow = doorsOrWindows.get(i);            
+                if (doorOrWindow.getElevation() + doorOrWindow.getHeight() > highestDoorOrWindow.getElevation() + highestDoorOrWindow.getHeight()) {
+                  highestDoorOrWindow = doorOrWindow;
+                }
+              }
+              float doorOrWindowTop = highestDoorOrWindow.getElevation() + highestDoorOrWindow.getHeight();
+              // Compute the minimum vertical position of wallPartPoints
+              double minTopY = maxWallHeight;
+              for (int i = 0; i < wallPartPoints.length; i++) {
+                double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
+                minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+              }            
+              // Generate geometry for wall part above window
+              if (doorOrWindowTop < minTopY) {
+                wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
+                wallGeometries.add(createWallHorizontalPartGeometry(
+                    wallPartPoints, doorOrWindowTop));
+                wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+              }
             }
+            wallPoints.clear();
+            previousWallPoint = null;
+          } else if (previousWallPoint == null
+                     || !Arrays.equals(wallPoint, previousWallPoint)) {
+            wallPoints.add(wallPoint);
+            previousWallPoint = wallPoint;
           }
-          wallPoints.clear();
-          previousWallPoint = null;
-        } else if (previousWallPoint == null
-                   || !Arrays.equals(wallPoint, previousWallPoint)) {
-          wallPoints.add(wallPoint);
-          previousWallPoint = wallPoint;
+          it.next();
         }
-        it.next();
-      }
+      } 
     }
     return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
   }
-  
+
   /**
    * Returns all the visible doors and windows in the given <code>furniture</code>.  
    */
@@ -617,6 +690,27 @@ public class Wall3D extends Object3DBranch {
       return material;
     } else {
       return DEFAULT_MATERIAL;
+    }
+  }
+  
+  /**
+   * An area used to compute holes in walls. 
+   */
+  private static class DoorOrWindowArea {
+    private final Area area;
+    private final List<HomePieceOfFurniture> doorsOrWindows;
+    
+    public DoorOrWindowArea(Area area, List<HomePieceOfFurniture> doorsOrWindows) {
+      this.area = area;
+      this.doorsOrWindows = doorsOrWindows;      
+    }
+    
+    public Area getArea() {
+      return this.area;
+    }
+    
+    public List<HomePieceOfFurniture> getDoorsOrWindows() {
+      return this.doorsOrWindows;
     }
   }
 }
