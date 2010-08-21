@@ -316,10 +316,6 @@ public class Wall3D extends Object3DBranch {
                           return -1;
                         } else if (piece1.getElevation() > piece2.getElevation()) {
                           return 1;
-                        } else if (piece1.getHeight() < piece2.getHeight()) {
-                          return 1;
-                        } else if (piece1.getHeight() > piece2.getHeight()) {
-                          return -1;
                         } else {
                           return 0;
                         }
@@ -344,7 +340,8 @@ public class Wall3D extends Object3DBranch {
                     && ++i < doorsOrWindows.size()) {
                   higherDoorOrWindow = doorsOrWindows.get(i);
                 }
-                if (i < doorsOrWindows.size()) {
+                if (i < doorsOrWindows.size()
+                    && lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() < higherDoorOrWindow.getElevation()) {
                   wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), 
                       cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindow.getElevation(), texture, textureReferencePoint));
                   wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight()));
