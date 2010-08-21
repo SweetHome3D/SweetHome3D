@@ -303,20 +303,25 @@ public class Wall3D extends Object3DBranch {
             if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
               wallPoints.remove(wallPoints.size() - 1);
             }
+
             if (wallPoints.size() > 2) {
               float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
               List<HomePieceOfFurniture> doorsOrWindows = windowIntersection.getDoorsOrWindows();
               if (doorsOrWindows.size() > 1) {
-                // Sort superimposed doors and windows 
+                // Sort superimposed doors and windows by elevation and height
                 Collections.sort(doorsOrWindows, 
                     new Comparator<HomePieceOfFurniture>() {
                       public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
                         if (piece1.getElevation() < piece2.getElevation()) {
                           return -1;
-                        } else if (piece1.getElevation() == piece2.getElevation()) {
-                          return 0;
-                        } else {
+                        } else if (piece1.getElevation() > piece2.getElevation()) {
                           return 1;
+                        } else if (piece1.getHeight() < piece2.getHeight()) {
+                          return 1;
+                        } else if (piece1.getHeight() > piece2.getHeight()) {
+                          return -1;
+                        } else {
+                          return 0;
                         }
                       }
                     });
@@ -335,7 +340,7 @@ public class Wall3D extends Object3DBranch {
                 HomePieceOfFurniture lowerDoorOrWindow = doorsOrWindows.get(i);            
                 HomePieceOfFurniture higherDoorOrWindow = doorsOrWindows.get(++i);
                 // Ignore higher windows smaller than lower window
-                while (lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() > higherDoorOrWindow.getElevation() + higherDoorOrWindow.getHeight()
+                while (lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() >= higherDoorOrWindow.getElevation() + higherDoorOrWindow.getHeight()
                     && ++i < doorsOrWindows.size()) {
                   higherDoorOrWindow = doorsOrWindows.get(i);
                 }
