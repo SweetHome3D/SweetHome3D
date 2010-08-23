@@ -43,9 +43,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.ChangedCharSetException;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTML.Tag;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.HTML.Tag;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -245,7 +245,7 @@ public class HelpController implements Controller {
    * Controls the display of the given <code>page</code>.
    */
   public void showPage(URL page) {
-    if (page.getProtocol().equals("http")) {
+    if (isBrowserPage(page)) {
       setBrowserPage(page);
     } else if (this.historyIndex == -1
             || !this.history.get(this.historyIndex).equals(page)) {
@@ -260,12 +260,27 @@ public class HelpController implements Controller {
   }
   
   /**
+   * Returns <code>true</code> if the given <code>page</code> should be displayed 
+   * by the system browser rather than by the help view.
+   * By default, it returns <code>true</code> if the <code>page</code> protocol is http or https.
+   */
+  protected boolean isBrowserPage(URL page) {
+    String protocol = page.getProtocol();
+    return protocol.equals("http") || protocol.equals("https");
+  }
+  
+  /**
    * Returns the URL of the help index page.
    */
   private URL getHelpIndexPageURL() {
     String helpIndex = this.preferences.getLocalizedString(HelpController.class, "helpIndex");
-    // Build URL of index page with ResourceURLContent because of bug #6746185 
-    return new ResourceURLContent(HelpController.class, helpIndex).getURL();
+    try {
+      // Try first to interpret contentFile as an absolute URL 
+      return new URL(helpIndex);
+    } catch (MalformedURLException ex) {
+      // Build URL of index page with ResourceURLContent because of Java bug #6746185 
+      return new ResourceURLContent(HelpController.class, helpIndex).getURL();
+    }
   }
   
   /**
@@ -293,7 +308,7 @@ public class HelpController implements Controller {
         + "    <tr valign='bottom' height='32'>"
         + "      <td width='3' height='32'>&nbsp;</td>"
         + "      <td width='32' height='32'><img src='"  
-        + new ResourceURLContent(HelpController.class, "resources/help/images/sweethome3dIcon32.png").getURL() 
+        + new ResourceURLContent(HelpController.class, "resources/help/images/applicationIcon32.png").getURL() 
         + "' height='32' width='32'></td>"
         + "      <td width='8' height='32'>&nbsp;&nbsp;</td>"
         + "      <td valign='bottom' height='32'><font id='topic'>" 
