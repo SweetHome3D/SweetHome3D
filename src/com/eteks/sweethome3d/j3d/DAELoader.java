@@ -478,7 +478,7 @@ public class DAELoader extends LoaderBase implements Loader {
             float floatValue;
             try {
               floatValue = Float.parseFloat(floatValues [i]);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ex) {
               // This may happen with some bad DAE files
               floatValue = 0f;
             }
@@ -522,7 +522,8 @@ public class DAELoader extends LoaderBase implements Loader {
         mulTransformGroup(new Transform3D(this.floats));
       } else if ("node".equals(parent) && "rotate".equals(name)) {
         Transform3D rotation = new Transform3D();
-        rotation.setRotation(new AxisAngle4f(floats[0], floats[1], floats[2], (float)Math.toRadians(floats[3])));
+        rotation.setRotation(new AxisAngle4f(this.floats [0], this.floats [1], this.floats [2], 
+            (float)Math.toRadians(floats[3])));
         mulTransformGroup(rotation);
       } else if ("scale".equals(name)) {
         Transform3D scale = new Transform3D();
