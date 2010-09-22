@@ -130,6 +130,12 @@ public interface ViewFactory {
   public abstract DialogView createLabelView(boolean modification,
                                              UserPreferences preferences,
                                              LabelController labelController);
+
+  /**
+   * Returns a new view that edits compass values.
+   */
+  public abstract DialogView createCompassView(UserPreferences preferences, 
+                                               CompassController compassController);
   
   /**
    * Returns a new view that edits 3D attributes.

@@ -48,15 +48,16 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
@@ -265,6 +266,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, true);
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
+    homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, true);
     BackgroundImage backgroundImage = this.home.getBackgroundImage();
     boolean homeHasBackgroundImage = backgroundImage != null;
@@ -631,6 +633,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOneLabel = false;
     boolean homeSelectionContainsItemsWithText = false;
+    boolean homeSelectionContainsCompass = false;
     FurnitureController furnitureController = getFurnitureController();
     if (!modificationState) {
       for (Selectable item : selectedItems) {
@@ -670,11 +673,12 @@ public class HomeController implements Controller {
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
       final List<Label> selectedLabels = Home.getLabelsSubList(selectedItems);
       boolean homeSelectionContainsLabels = !selectedLabels.isEmpty();
+      homeSelectionContainsCompass = selectedItems.contains(this.home.getCompass());
       homeSelectionContainsOneLabel = selectedLabels.size() == 1;
       homeSelectionContainsOneCopiableItemOrMore = 
           homeSelectionContainsFurniture || homeSelectionContainsWalls 
           || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
-          || homeSelectionContainsLabels; 
+          || homeSelectionContainsLabels || homeSelectionContainsCompass; 
       homeSelectionContainsItemsWithText = 
           homeSelectionContainsFurniture || homeSelectionContainsRooms 
           || homeSelectionContainsDimensionLines || homeSelectionContainsLabels;
@@ -783,8 +787,10 @@ public class HomeController implements Controller {
           && this.home.getFurniture().size() > 0);
     } else if (this.focusedView == getPlanController().getView()
                || this.focusedView == getHomeController3D().getView()) {
+      boolean homeContainsOneSelectableItemOrMore = !this.home.isEmpty()
+          || this.home.getCompass().isVisible();
       view.setEnabled(HomeView.ActionType.SELECT_ALL,
-          !modificationState && !this.home.isEmpty());
+          !modificationState && homeContainsOneSelectableItemOrMore);
     } else {
       view.setEnabled(HomeView.ActionType.SELECT_ALL, false);
     }
@@ -838,6 +844,13 @@ public class HomeController implements Controller {
     this.home.addRoomsListener((CollectionListener<Room>)homeItemsListener);
     this.home.addDimensionLinesListener((CollectionListener<DimensionLine>)homeItemsListener);
     this.home.addLabelsListener((CollectionListener<Label>)homeItemsListener);
+    this.home.getCompass().addPropertyChangeListener(new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Compass.Property.VISIBLE.equals(ev.getPropertyName())) {
+            enableSelectAllAction();
+          }
+        }
+      });
   }
 
   /**
@@ -1136,7 +1149,9 @@ public class HomeController implements Controller {
   private void addItems(final List<? extends Selectable> items, 
                         float dx, float dy, final boolean isDropInPlanView, 
                         final String presentationNameKey) {
-    if (!items.isEmpty()) {
+    if (items.size() > 1
+        || (items.size() == 1
+            && !(items.get(0) instanceof Compass))) {
       // Always use selection mode after a drop or a paste operation
       getPlanController().setMode(PlanController.Mode.SELECTION);
       // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home

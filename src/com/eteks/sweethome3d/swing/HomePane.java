@@ -429,10 +429,14 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getPlanController(), "lockBasePlan");
     createAction(ActionType.UNLOCK_BASE_PLAN, preferences, 
         controller.getPlanController(), "unlockBasePlan");
+    createAction(ActionType.MODIFY_COMPASS, preferences, 
+        controller.getPlanController(), "modifyCompass");
     createAction(ActionType.MODIFY_WALL, preferences, 
         controller.getPlanController(), "modifySelectedWalls");
     createAction(ActionType.MODIFY_ROOM, preferences, 
         controller.getPlanController(), "modifySelectedRooms");
+    createAction(ActionType.MODIFY_LABEL, preferences, 
+        controller.getPlanController(), "modifySelectedLabels");
     createAction(ActionType.INCREASE_TEXT_SIZE, preferences, 
         controller.getPlanController(), "increaseTextSize");
     createAction(ActionType.DECREASE_TEXT_SIZE, preferences, 
@@ -441,8 +445,6 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getPlanController(), "toggleBoldStyle");
     createAction(ActionType.TOGGLE_ITALIC_STYLE, preferences, 
         controller.getPlanController(), "toggleItalicStyle");
-    createAction(ActionType.MODIFY_LABEL, preferences, 
-        controller.getPlanController(), "modifySelectedLabels");
     createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, 
         controller.getPlanController(), "reverseSelectedWallsDirection");
     createAction(ActionType.SPLIT_WALL, preferences, 
@@ -920,6 +922,7 @@ public class HomePane extends JRootPane implements HomeView {
     if (lockUnlockBasePlanMenuItem != null) {
       planMenu.add(lockUnlockBasePlanMenuItem);
     }
+    addActionToMenu(ActionType.MODIFY_COMPASS, planMenu);
     addActionToMenu(ActionType.MODIFY_WALL, planMenu);
     addActionToMenu(ActionType.REVERSE_WALL_DIRECTION, planMenu);
     addActionToMenu(ActionType.SPLIT_WALL, planMenu);
@@ -2038,6 +2041,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
     addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
     addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);
+    addActionToPopupMenu(ActionType.MODIFY_COMPASS, planViewPopup);
     addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
     addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
     addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);

@@ -155,6 +155,7 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
@@ -198,7 +199,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
   
   private static final float    MARGIN = 40;
-  
+
   private final Home            home;
   private final UserPreferences preferences;
   private float                 scale  = 0.5f;
@@ -265,6 +266,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       CAMERA_HEAD;  
   private static final GeneralPath DIMENSION_LINE_END;  
   private static final GeneralPath TEXT_LOCATION_INDICATOR;
+  private static final Shape       COMPASS_DISC;
+  private static final GeneralPath COMPASS_CARDINAL_DIRECTIONS;
+  private static final GeneralPath COMPASS_NEEDLE;
+  private static final GeneralPath COMPASS_NORTH_CARDINAL_DIRECTION;
+  private static final GeneralPath COMPASS_ROTATION_INDICATOR;
+  private static final GeneralPath COMPASS_RESIZE_INDICATOR;
   
   private static final Stroke      INDICATOR_STROKE = new BasicStroke(1.5f);
   private static final Stroke      POINT_STROKE = new BasicStroke(2f);
@@ -315,7 +322,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_HEIGHT_INDICATOR.lineTo(0f, 5.5f);
     FURNITURE_HEIGHT_INDICATOR.lineTo(1.2f, 2.5f);
     
-    // Create a path used as a size indicator 
+    // Create a path used as a resize indicator 
     // at bottom right point of a piece of furniture
     FURNITURE_RESIZE_INDICATOR = new GeneralPath();
     FURNITURE_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
@@ -418,6 +425,46 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     TEXT_LOCATION_INDICATOR.moveTo(-6, 6.5f);    // Left arrow
     TEXT_LOCATION_INDICATOR.lineTo(-10, 7);
     TEXT_LOCATION_INDICATOR.lineTo(-7.5f, 3.5f);
+    
+    // Create the path used to draw the compass
+    COMPASS_DISC = new Ellipse2D.Float(-0.5f, -0.5f, 1, 1);
+    COMPASS_CARDINAL_DIRECTIONS = new GeneralPath();
+    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(-0.6f, 0, -0.5f, 0), false);
+    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(0.6f, 0, 0.5f, 0), false);
+    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(0, 0.6f, 0, 0.5f), false);
+    COMPASS_NEEDLE = new GeneralPath();
+    COMPASS_NEEDLE.moveTo(0, -0.47f);
+    COMPASS_NEEDLE.lineTo(0.15f, 0.46f);
+    COMPASS_NEEDLE.lineTo(0, 0.32f);
+    COMPASS_NEEDLE.lineTo(-0.15f, 0.46f);
+    COMPASS_NEEDLE.closePath();
+    COMPASS_NEEDLE.append(new Ellipse2D.Float(-0.01f, -0.01f, 0.02f, 0.02f), false);
+    COMPASS_NORTH_CARDINAL_DIRECTION = new GeneralPath();
+    COMPASS_NORTH_CARDINAL_DIRECTION.moveTo(-0.07f, -0.55f); // Draws the N letter
+    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(-0.07f, -0.69f);
+    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(0.07f, -0.56f);
+    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(0.07f, -0.7f);
+
+    // Create a path used as rotation indicator for the compass
+    COMPASS_ROTATION_INDICATOR = new GeneralPath();
+    COMPASS_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
+    COMPASS_ROTATION_INDICATOR.append(new Arc2D.Float(-8, -7, 16, 16, 210, 120, Arc2D.OPEN), false);
+    COMPASS_ROTATION_INDICATOR.moveTo(4f, 5.66f);
+    COMPASS_ROTATION_INDICATOR.lineTo(7f, 5.66f);
+    COMPASS_ROTATION_INDICATOR.lineTo(5.6f, 8.3f);
+    
+    // Create a path used as a resize indicator for the compass 
+    COMPASS_RESIZE_INDICATOR = new GeneralPath();
+    COMPASS_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
+    COMPASS_RESIZE_INDICATOR.moveTo(4, -6);
+    COMPASS_RESIZE_INDICATOR.lineTo(6, -6);
+    COMPASS_RESIZE_INDICATOR.lineTo(6, 6);
+    COMPASS_RESIZE_INDICATOR.lineTo(4, 6);
+    COMPASS_RESIZE_INDICATOR.moveTo(5, 0);
+    COMPASS_RESIZE_INDICATOR.lineTo(9, 0);
+    COMPASS_RESIZE_INDICATOR.moveTo(9, -1.5f);
+    COMPASS_RESIZE_INDICATOR.lineTo(12, 0);
+    COMPASS_RESIZE_INDICATOR.lineTo(9, 1.5f);
   }
 
   /**
@@ -619,7 +666,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       });
-
+    home.getCompass().addPropertyChangeListener(new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          String propertyName = ev.getPropertyName();
+          if (Compass.Property.X.name().equals(propertyName)
+              || Compass.Property.Y.name().equals(propertyName) 
+              || Compass.Property.NORTH_DIRECTION.name().equals(propertyName)
+              || Compass.Property.DIAMETER.name().equals(propertyName)
+              || Compass.Property.VISIBLE.name().equals(propertyName)) {
+            revalidate();
+          }
+        }
+      });
     home.addSelectionListener(new SelectionListener () {
         public void selectionChanged(SelectionEvent ev) {
           repaint();
@@ -1154,6 +1212,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     homeItems.addAll(this.home.getRooms());
     homeItems.addAll(this.home.getDimensionLines());
     homeItems.addAll(this.home.getLabels());
+    Compass compass = this.home.getCompass();
+    if (compass.isVisible()) {
+      homeItems.add(compass);
+    }
     return homeItems;
   }
   
@@ -1326,6 +1388,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           yLabel - labelFontMetrics.getAscent());
       itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
           yLabel + labelFontMetrics.getDescent());
+    } else if (item instanceof Compass) {
+      // Add to bounds the N letter height indicating north 
+      Compass compass = (Compass)item;
+      float northDirection = compass.getNorthDirection();
+      double sin = Math.sin(northDirection);
+      double cos = Math.cos(northDirection);
+      float letterHeight = compass.getDiameter() * 0.2f;
+      float deltaX = (float)(sin * letterHeight);
+      float deltaY = (float)(-cos * letterHeight);
+      itemBounds.add(points [0][0] + deltaX, points [0][1] + deltaY);
+      itemBounds.add(points [1][0] + deltaX, points [1][1] + deltaY);
+      // Add to bounds the three lines at cardinal point
+      float cardinalPointHeight = compass.getDiameter() * 0.1f;
+      deltaX = (float)(cos * cardinalPointHeight);
+      deltaY = (float)(sin * cardinalPointHeight);
+      itemBounds.add((points [1][0] + points [2][0]) / 2 + deltaX, (points [1][1] + points [2][1]) / 2 + deltaY);
+      itemBounds.add((points [3][0] + points [0][0]) / 2 - deltaX, (points [3][1] + points [0][1]) / 2 + deltaY);
+      itemBounds.add((points [2][0] + points [3][0]) / 2 + deltaY, (points [2][1] + points [3][1]) / 2 + deltaX);
     } 
     return itemBounds;
   }
@@ -1944,7 +2024,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Stroke locationFeedbackStroke = new BasicStroke(
         1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
-    
+
+    paintCompass(g2D, selectedItems, planScale, foregroundColor, paintMode);
+
     checkCurrentThreadIsntInterrupted(paintMode);
     paintRooms(g2D, selectedItems, planScale, foregroundColor, paintMode);
 
@@ -1973,6 +2055,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     if (paintMode == PaintMode.PAINT
         && this.selectedItemsOutlinePainted) {
+      paintCompassOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+          planScale, foregroundColor);
       paintRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
       paintWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
@@ -3036,6 +3120,92 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     }
     g2D.setFont(previousFont);
+  }
+
+  /**
+   * Paints the compass. 
+   */
+  private void paintCompass(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+                            Color foregroundColor, PaintMode paintMode) {
+    Compass compass = this.home.getCompass();
+    if (compass.isVisible() 
+        && (paintMode != PaintMode.CLIPBOARD
+            || selectedItems.contains(compass))) {
+      AffineTransform previousTransform = g2D.getTransform();
+      g2D.translate(compass.getX(), compass.getY());
+      g2D.rotate(compass.getNorthDirection());
+      float diameter = compass.getDiameter();
+      g2D.scale(diameter, diameter);
+  
+      g2D.setColor(foregroundColor);
+      g2D.setStroke(new BasicStroke(0.5f / diameter));
+      g2D.draw(COMPASS_DISC);
+      g2D.draw(COMPASS_CARDINAL_DIRECTIONS);
+      g2D.setStroke(new BasicStroke(3 / diameter));
+      g2D.draw(COMPASS_NEEDLE);
+      g2D.draw(COMPASS_NORTH_CARDINAL_DIRECTION);
+      g2D.setTransform(previousTransform);
+    }
+  }
+
+  /**
+   * Paints the outline of the compass when it's belongs to <code>items</code>. 
+   */
+  private void paintCompassOutline(Graphics2D g2D, List<Selectable> items,
+                                   Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                                   Paint indicatorPaint, float planScale, Color foregroundColor) {
+    Compass compass = this.home.getCompass();
+    if (items.contains(compass) 
+        && compass.isVisible()) {
+      AffineTransform previousTransform = g2D.getTransform();
+      g2D.translate(compass.getX(), compass.getY());
+      g2D.rotate(compass.getNorthDirection());
+      float diameter = compass.getDiameter();
+      g2D.scale(diameter, diameter);
+  
+      g2D.setPaint(selectionOutlinePaint);
+      g2D.setStroke(new BasicStroke(6f / diameter / planScale));
+      g2D.draw(COMPASS_DISC);
+      g2D.setColor(foregroundColor);
+      g2D.setStroke(new BasicStroke(1f / diameter / planScale));
+      g2D.draw(COMPASS_DISC);
+      g2D.setTransform(previousTransform);
+
+      // Paint indicators of the compass 
+      if (items.size() == 1 
+          && items.get(0) == compass) {
+        g2D.setPaint(indicatorPaint);         
+        paintCompassIndicators(g2D, compass, indicatorPaint, planScale);
+      }
+    }
+  }
+
+  private void paintCompassIndicators(Graphics2D g2D, 
+                                      Compass compass, Paint indicatorPaint,
+                                      float planScale) {
+    if (this.resizeIndicatorVisible) {
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(INDICATOR_STROKE);
+      
+      AffineTransform previousTransform = g2D.getTransform();
+      // Draw rotation indicator at middle of second and third point of compass 
+      float [][] compassPoints = compass.getPoints();
+      float scaleInverse = 1 / planScale;
+      g2D.translate((compassPoints [2][0] + compassPoints [3][0]) / 2, 
+          (compassPoints [2][1] + compassPoints [3][1]) / 2);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(compass.getNorthDirection());
+      g2D.draw(COMPASS_ROTATION_INDICATOR);
+      g2D.setTransform(previousTransform);
+
+      // Draw resize indicator at middle of second and third point of compass
+      g2D.translate((compassPoints [1][0] + compassPoints [2][0]) / 2, 
+          (compassPoints [1][1] + compassPoints [2][1]) / 2);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(compass.getNorthDirection());
+      g2D.draw(COMPASS_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+    }
   }
 
   /**

@@ -57,6 +57,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.swing.ThreadedTaskPanel;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
+import com.eteks.sweethome3d.viewcontroller.CompassController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
@@ -269,6 +270,10 @@ public final class ViewerHelper {
         }
 
         public DialogView createVideoView(Home home, UserPreferences preferences, VideoController videoController) {
+          throw new UnsupportedOperationException();
+        }
+
+        public DialogView createCompassView(UserPreferences preferences, CompassController compassController) {
           throw new UnsupportedOperationException();
         }
       };

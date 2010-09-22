@@ -44,6 +44,7 @@ import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.UserPreferencesPanel;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
+import com.eteks.sweethome3d.viewcontroller.CompassController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HelpController;
@@ -332,6 +333,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new WallController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new RoomController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();
+      new CompassController(home, preferences, viewFactory, undoableEditSupport).getView();
       new Home3DAttributesController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new PhotoController(home, preferences, homeController.getHomeController3D().getView(), viewFactory, contentManager).getView();
       new VideoController(home, preferences, viewFactory, contentManager).getView();

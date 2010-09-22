@@ -44,7 +44,7 @@ public class Home implements Serializable, Cloneable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 2600;
+  public static final long CURRENT_VERSION = 3000;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
@@ -84,6 +84,7 @@ public class Home implements Serializable, Cloneable {
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
   private boolean                                     basePlanLocked; 
+  private Compass                                     compass;
   // The 5 following environment fields are still declared for compatibility reasons
   private int                                         skyColor;
   private int                                         groundColor;
@@ -134,7 +135,7 @@ public class Home implements Serializable, Cloneable {
         HomePieceOfFurniture.SortableProperty.HEIGHT,
         HomePieceOfFurniture.SortableProperty.VISIBLE});
     // Init transient lists and other fields
-    init();
+    init(true);
   }
 
   /**
@@ -142,7 +143,7 @@ public class Home implements Serializable, Cloneable {
    * and reads home from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    init();
+    init(false);
     in.defaultReadObject();
     
     if (KEEP_BACKWARD_COMPATIBLITY) {
@@ -193,7 +194,7 @@ public class Home implements Serializable, Cloneable {
     }
   }
 
-  private void init() {
+  private void init(boolean newHome) {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
     this.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(this);
@@ -227,6 +228,9 @@ public class Home implements Serializable, Cloneable {
     this.rooms = new ArrayList<Room>();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.labels = new ArrayList<Label>();
+    this.compass = new Compass(900, 50, 100);
+    // Let compass be visible only on new homes
+    this.compass.setVisible(newHome);
     this.visualProperties = new HashMap<String, Object>();
     
     this.version = CURRENT_VERSION;
@@ -900,6 +904,14 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
+   * Returns the compass associated to this home.
+   * @since 3.0
+   */
+  public Compass getCompass() {
+    return this.compass;
+  }
+  
+  /**
    * Returns the print attributes of this home.
    */
   public HomePrint getPrint() {
@@ -1005,6 +1017,7 @@ public class Home implements Serializable, Cloneable {
       }
       // Clone other mutable objects
       clone.environment = this.environment.clone();
+      clone.compass = this.compass.clone();
       clone.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
           this.furnitureVisibleProperties);
       clone.visualProperties = new HashMap<String, Object>(this.visualProperties);
@@ -1049,7 +1062,8 @@ public class Home implements Serializable, Cloneable {
     List<Selectable> list = new ArrayList<Selectable>();
     for (Selectable item : items) {
       if (!(item instanceof Wall)         // Walls are copied further
-          && !(item instanceof Camera)) { // Cameras can't be duplicated
+          && !(item instanceof Camera)    // Cameras and compass can't be duplicated
+          && !(item instanceof Compass)) { 
         list.add(item.clone());
       }
     }

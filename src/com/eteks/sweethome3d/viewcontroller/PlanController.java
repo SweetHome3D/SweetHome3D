@@ -48,6 +48,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
@@ -145,6 +146,8 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       roomAreaOffsetState;
   private final ControllerState       roomNameOffsetState;
   private final ControllerState       labelCreationState;
+  private final ControllerState       compassRotationState;
+  private final ControllerState       compassResizeState;
   // Current state
   private ControllerState             state;
   private ControllerState             previousState;
@@ -207,6 +210,8 @@ public class PlanController extends FurnitureController implements Controller {
     this.roomAreaOffsetState = new RoomAreaOffsetState();
     this.roomNameOffsetState = new RoomNameOffsetState();
     this.labelCreationState = new LabelCreationState();
+    this.compassRotationState = new CompassRotationState();
+    this.compassResizeState = new CompassResizeState();
     // Set default state to selectionState
     setState(this.selectionState);
     
@@ -511,14 +516,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the dimension line resize state.
    */
-  private ControllerState getDimensionLineResizeState() {
+  protected ControllerState getDimensionLineResizeState() {
     return this.dimensionLineResizeState;
   }
 
   /**
    * Returns the dimension line offset state.
    */
-  private ControllerState getDimensionLineOffsetState() {
+  protected ControllerState getDimensionLineOffsetState() {
     return this.dimensionLineOffsetState;
   }
   
@@ -562,6 +567,20 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getLabelCreationState() {
     return this.labelCreationState;
+  }
+
+  /**
+   * Returns the compass rotation state.
+   */
+  protected ControllerState getCompassRotationState() {
+    return this.compassRotationState;
+  }
+
+  /**
+   * Returns the compass resize state.
+   */
+  protected ControllerState getCompassResizeState() {
+    return this.compassResizeState;
   }
 
   /**
@@ -743,13 +762,15 @@ public class PlanController extends FurnitureController implements Controller {
   
   /**
    * Returns <code>true</code> if the given <code>item</code> may be deleted.
-   * Default implementation returns <code>true</code>. 
+   * Default implementation returns <code>true</code> except if the given <code>item</code>
+   * is a camera or a compass or if the given <code>item</code> isn't a 
+   * {@linkplain #isPieceOfFurnitureDeletable(HomePieceOfFurniture) deletable piece of furniture}. 
    */
   protected boolean isItemDeletable(Selectable item) {
     if (item instanceof HomePieceOfFurniture) {
       return isPieceOfFurnitureDeletable((HomePieceOfFurniture)item);
     } else {
-      return true;
+      return !(item instanceof Compass || item instanceof Camera);
     }
   }
 
@@ -996,6 +1017,14 @@ public class PlanController extends FurnitureController implements Controller {
       new LabelController(this.home, this.preferences, this.viewFactory,
           this.undoSupport).displayView(getView());
     }
+  }
+  
+  /**
+   * Controls the modification of the compass.
+   */
+  public void modifyCompass() {
+    new CompassController(this.home, this.preferences, this.viewFactory,
+        this.undoSupport).displayView(getView());
   }
   
   /**
@@ -1334,6 +1363,9 @@ public class PlanController extends FurnitureController implements Controller {
       if (piece.isVisible()) {
         all.add(piece);
       }
+    }
+    if (this.home.getCompass().isVisible()) {
+      all.add(this.home.getCompass());
     }
     if (this.home.isBasePlanLocked()) {
       this.home.setSelectedItems(getItemsNotPartOfBasePlan(all));
@@ -2246,6 +2278,12 @@ public class PlanController extends FurnitureController implements Controller {
           && stopAtFirstItem) {
         return Arrays.asList(new Selectable [] {foundRoom});
       } else {
+        Compass compass = this.home.getCompass();
+        if ((!basePlanLocked 
+              || !isItemPartOfBasePlan(compass))
+            && compass.containsPoint(x, y, textMargin)) {
+          items.add(compass);
+        }
         return items;
       }
     }
@@ -2274,6 +2312,7 @@ public class PlanController extends FurnitureController implements Controller {
     updateRectangleItems(items, this.home.getRooms(), x0, y0, x1, y1);
     updateRectangleItems(items, this.home.getWalls(), x0, y0, x1, y1);
     updateRectangleItems(items, this.home.getLabels(), x0, y0, x1, y1);
+    updateRectangleItems(items, Arrays.asList(new Selectable [] {this.home.getCompass()}), x0, y0, x1, y1);
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
@@ -2417,7 +2456,7 @@ public class PlanController extends FurnitureController implements Controller {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
-      // Check if (x,y) matches the point between the first and the last point 
+      // Check if (x,y) matches the point between the first and the last points 
       // of the rectangle surrounding camera
       float xMiddleFirstAndLastPoint = (cameraPoints [0][0] + cameraPoints [3][0]) / 2; 
       float yMiddleFirstAndLastPoint = (cameraPoints [0][1] + cameraPoints [3][1]) / 2;      
@@ -2441,7 +2480,7 @@ public class PlanController extends FurnitureController implements Controller {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
-      // Check if (x,y) matches the point between the second and the third point 
+      // Check if (x,y) matches the point between the second and the third points
       // of the rectangle surrounding camera
       float xMiddleFirstAndLastPoint = (cameraPoints [1][0] + cameraPoints [2][0]) / 2; 
       float yMiddleFirstAndLastPoint = (cameraPoints [1][1] + cameraPoints [2][1]) / 2;      
@@ -2465,7 +2504,7 @@ public class PlanController extends FurnitureController implements Controller {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
-      // Check if (x,y) matches the point between the first and the second point 
+      // Check if (x,y) matches the point between the first and the second points 
       // of the rectangle surrounding camera
       float xMiddleFirstAndSecondPoint = (cameraPoints [0][0] + cameraPoints [1][0]) / 2; 
       float yMiddleFirstAndSecondPoint = (cameraPoints [0][1] + cameraPoints [1][1]) / 2;      
@@ -2477,6 +2516,54 @@ public class PlanController extends FurnitureController implements Controller {
     return null;
   }
 
+  /**
+   * Returns the selected compass with a point 
+   * at (<code>x</code>, <code>y</code>) that can be used to rotate it.
+   */
+  private Compass getRotatedCompassAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Compass
+        && isItemMovable(selectedItems.get(0))) {
+      Compass compass = (Compass)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getScale();
+      float [][] compassPoints = compass.getPoints();
+      // Check if (x,y) matches the point between the third and the fourth points (South point) 
+      // of the rectangle surrounding compass
+      float xMiddleThirdAndFourthPoint = (compassPoints [2][0] + compassPoints [3][0]) / 2; 
+      float yMiddleThirdAndFourthPoint = (compassPoints [2][1] + compassPoints [3][1]) / 2;      
+      if (Math.abs(x - xMiddleThirdAndFourthPoint) <= margin 
+          && Math.abs(y - yMiddleThirdAndFourthPoint) <= margin) {
+        return compass;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected compass with a point 
+   * at (<code>x</code>, <code>y</code>) that can be used to resize it.
+   */
+  private Compass getResizedCompassAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Compass
+        && isItemMovable(selectedItems.get(0))) {
+      Compass compass = (Compass)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getScale();
+      float [][] compassPoints = compass.getPoints();
+      // Check if (x,y) matches the point between the second and the third points (East point) 
+      // of the rectangle surrounding compass
+      float xMiddleSecondAndThirdPoint = (compassPoints [1][0] + compassPoints [2][0]) / 2; 
+      float yMiddleSecondAndThirdPoint = (compassPoints [1][1] + compassPoints [2][1]) / 2;      
+      if (Math.abs(x - xMiddleSecondAndThirdPoint) <= margin 
+          && Math.abs(y - yMiddleSecondAndThirdPoint) <= margin) {
+        return compass;
+      }
+    } 
+    return null;
+  }
+  
   /**
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
@@ -3702,6 +3789,70 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Post to undo support a north direction change on <code>compass</code>. 
+   */
+  private void postCompassRotation(final Compass compass, 
+                                   final float oldNorthDirection) {
+    final float newNorthDirection = compass.getNorthDirection();
+    if (newNorthDirection != oldNorthDirection) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          compass.setNorthDirection(oldNorthDirection);
+          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          compass.setNorthDirection(newNorthDirection);
+          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCompassRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Post to undo support a size change on <code>compass</code>. 
+   */
+  private void postCompassResize(final Compass compass, 
+                                 final float oldDiameter) {
+    final float newDiameter = compass.getDiameter();
+    if (newDiameter != oldDiameter) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          compass.setDiameter(oldDiameter);
+          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          compass.setDiameter(newDiameter);
+          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCompassResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Returns the points of a general path which contains only one path.
    */
   private float [][] getPathPoints(GeneralPath path, 
@@ -4339,6 +4490,10 @@ public class PlanController extends FurnitureController implements Controller {
         getView().setCursor(PlanView.CursorType.ELEVATION);
       } else if (getPieceOfFurnitureNameAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
+      } else if (getRotatedCompassAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.ROTATION);
+      } else if (getResizedCompassAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.RESIZE);
       } else {
         getView().setCursor(PlanView.CursorType.SELECTION);
       }
@@ -4378,6 +4533,10 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getPieceOfFurnitureElevationState());
         } else if (getPieceOfFurnitureNameAt(x, y) != null) {
           setState(getPieceOfFurnitureNameOffsetState());
+        } else if (getRotatedCompassAt(x, y) != null) {
+          setState(getCompassRotationState());
+        } else if (getResizedCompassAt(x, y) != null) {
+          setState(getCompassResizeState());
         } else {
           Selectable item = getSelectableItemAt(x, y);
           // If shift isn't pressed, and an item is under cursor position
@@ -4402,6 +4561,8 @@ public class PlanController extends FurnitureController implements Controller {
             modifySelectedRooms();
           } else if (item instanceof Label) {
             modifySelectedLabels();
+          } else if (item instanceof Compass) {
+            modifyCompass();
           } 
         }
       }
@@ -4600,7 +4761,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void setDuplicationActivated(boolean duplicationActivated) {
       if (this.movedItems.size() > 0
-          && !(this.movedItems.get(0) instanceof Camera)) {
+          && !(this.movedItems.get(0) instanceof Camera)
+          && !(this.movedItems.get(0) instanceof Compass)) {
         if (duplicationActivated
             && this.duplicatedItems == null) {
           // Duplicate original items and add them to home
@@ -5919,7 +6081,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.widthResizeToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "widthResizeToolTipFeedback");
+          PlanController.class, "resizeToolTipFeedback");
       this.depthResizeToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "depthResizeToolTipFeedback");
       HomePieceOfFurniture selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
@@ -7864,6 +8026,162 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       createLabel(x, y);
+    }
+  }
+
+  /**
+   * Compass rotation state. This states manages the rotation of the compass.
+   */
+  private class CompassRotationState extends ControllerState {
+    private Compass selectedCompass;
+    private float   angleMousePress;
+    private float   oldNorthDirection;
+    private String  rotationToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.rotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "rotationToolTipFeedback");
+      this.selectedCompass = (Compass)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedCompass.getY() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedCompass.getX()); 
+      this.oldNorthDirection = this.selectedCompass.getNorthDirection();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldNorthDirection), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedCompass.getX() || y != this.selectedCompass.getY()) {
+        // Compute the new north direction of the compass      
+        float angleMouseMove = (float)Math.atan2(this.selectedCompass.getY() - y, 
+            x - this.selectedCompass.getX()); 
+        float newNorthDirection = this.oldNorthDirection - angleMouseMove + this.angleMousePress;
+        float angleStep = (float)Math.PI / 180; 
+        // Compute angles closest to a degree with a value between 0 and 2 PI
+        newNorthDirection = Math.round(newNorthDirection / angleStep) * angleStep;
+        newNorthDirection = (float)((newNorthDirection +  2 * Math.PI) % (2 * Math.PI));        
+        // Update compass new north direction
+        this.selectedCompass.setNorthDirection(newNorthDirection); 
+        // Ensure point at (x,y) is visible
+        PlanView planView = getView();
+        planView.makePointVisible(x, y);
+        planView.setToolTipFeedback(getToolTipFeedbackText(newNorthDirection), x, y);
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postCompassRotation(this.selectedCompass, this.oldNorthDirection);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedCompass.setNorthDirection(this.oldNorthDirection);
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedCompass = null;
+    }  
+
+    private String getToolTipFeedbackText(float angle) {
+      return String.format(this.rotationToolTipFeedback, Math.round(Math.toDegrees(angle)));
+    }
+  }
+
+  /**
+   * Compass resize state. This states manages the resizing of the compass.
+   */
+  private class CompassResizeState extends ControllerState {
+    private Compass  selectedCompass;
+    private float    oldDiameter;
+    private float    deltaXToResizePoint;
+    private float    deltaYToResizePoint;
+    private String   resizeToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.resizeToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "diameterToolTipFeedback");
+      this.selectedCompass = (Compass)home.getSelectedItems().get(0);
+      float [][] compassPoints = this.selectedCompass.getPoints();
+      float xMiddleSecondAndThirdPoint = (compassPoints [1][0] + compassPoints [2][0]) / 2; 
+      float yMiddleSecondAndThirdPoint = (compassPoints [1][1] + compassPoints [2][1]) / 2;      
+      this.deltaXToResizePoint = getXLastMousePress() - xMiddleSecondAndThirdPoint;
+      this.deltaYToResizePoint = getYLastMousePress() - yMiddleSecondAndThirdPoint;
+      this.oldDiameter = this.selectedCompass.getDiameter();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldDiameter), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new diameter of the compass  
+      PlanView planView = getView();
+      float newDiameter = (float)Point2D.distance(this.selectedCompass.getX(), this.selectedCompass.getY(), 
+          x - this.deltaXToResizePoint, y - this.deltaYToResizePoint) * 2;
+      newDiameter = preferences.getLengthUnit().getMagnetizedLength(newDiameter, planView.getPixelLength());
+      newDiameter = Math.max(newDiameter, preferences.getLengthUnit().getMinimumLength());
+      // Update piece size
+      this.selectedCompass.setDiameter(newDiameter);
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newDiameter), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postCompassResize(this.selectedCompass, this.oldDiameter);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedCompass.setDiameter(this.oldDiameter);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedCompass = null;
+    }  
+    
+    private String getToolTipFeedbackText(float diameter) {
+      return String.format(this.resizeToolTipFeedback,  
+          preferences.getLengthUnit().getFormatWithUnit().format(diameter));
     }
   }
 }
