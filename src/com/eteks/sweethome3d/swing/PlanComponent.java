@@ -3138,7 +3138,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.scale(diameter, diameter);
   
       g2D.setColor(foregroundColor);
-      g2D.setStroke(new BasicStroke(0.5f / diameter));
+      g2D.setStroke(new BasicStroke(1f / diameter));
       g2D.draw(COMPASS_DISC);
       g2D.draw(COMPASS_CARDINAL_DIRECTIONS);
       g2D.setStroke(new BasicStroke(3 / diameter));
