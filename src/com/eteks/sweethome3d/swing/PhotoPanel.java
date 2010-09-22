@@ -295,7 +295,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         AspectRatio.SQUARE_RATIO,
         AspectRatio.RATIO_4_3,
         AspectRatio.RATIO_3_2,
-        AspectRatio.RATIO_16_9});
+        AspectRatio.RATIO_16_9,
+        AspectRatio.RATIO_1_2});
     this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, 
@@ -320,6 +321,9 @@ public class PhotoPanel extends JPanel implements DialogView {
                 break;
               case RATIO_16_9 :
                 displayedValue = "16/9";
+                break;
+              case RATIO_1_2 :
+                displayedValue = "1/2";
                 break;
             }
           } 
