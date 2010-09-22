@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BasicStroke;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -438,14 +437,12 @@ public class CompassPanel extends JPanel implements DialogView {
     geographicLocationPanel.add(this.northDirectionLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    JPanel northDirectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    northDirectionPanel.setOpaque(false);
-    northDirectionPanel.add(this.northDirectionSpinner);
-    northDirectionPanel.add(new JLabel(" "));
-    northDirectionPanel.add(this.northDirectionComponent);
-    geographicLocationPanel.add(northDirectionPanel, new GridBagConstraints(
+    geographicLocationPanel.add(this.northDirectionSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 5, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    geographicLocationPanel.add(this.northDirectionComponent, new GridBagConstraints(
+        4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     geographicLocationPanel.add(this.longitudeLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
@@ -456,9 +453,10 @@ public class CompassPanel extends JPanel implements DialogView {
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     geographicLocationPanel.add(this.timeZoneComboBox, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 40, 0));
-    this.timeZoneComboBox.setPreferredSize(this.latitudeSpinner.getPreferredSize());
+    this.timeZoneComboBox.setPreferredSize(new Dimension(this.latitudeSpinner.getPreferredSize().width, 
+        this.timeZoneComboBox.getPreferredSize().height));
     add(geographicLocationPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
