@@ -30,11 +30,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -88,6 +91,7 @@ import org.sunflow.system.UI;
 import org.sunflow.system.ui.SilentInterface;
 
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -99,6 +103,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 /**
  * A renderer able to create a photo realistic image of a home.
  * @author Emmanuel Puybaret
+ * @author Frédéric Mantegazza (Sun location algorithm)
  */
 public class PhotoRenderer {
   public enum Quality {LOW, HIGH}
@@ -149,6 +154,19 @@ public class PhotoRenderer {
     groundTransformGroup.addChild(ground);
     exportNode(groundTransformGroup, true);
 
+    // Compute sun position today at midday (by Frédéric Mantegazza)  
+    Compass compass = home.getCompass();
+    Calendar midday = new GregorianCalendar(TimeZone.getTimeZone(compass.getTimeZone()));
+    midday.set(Calendar.HOUR_OF_DAY, 12);
+    midday.set(Calendar.MINUTE, 0);
+    midday.set(Calendar.SECOND, 0);
+    float elevation = compass.getSunElevation(midday.getTimeInMillis());
+    float azimuth = compass.getSunAzimuth(midday.getTimeInMillis());
+    azimuth += compass.getNorthDirection() - Math.PI / 2f;
+    float xSunDirection = (float)(Math.cos(azimuth) * Math.cos(elevation));
+    float ySunDirection = (float)Math.sin(elevation);
+    float zSunDirection = (float)(Math.sin(azimuth) * Math.cos(elevation));
+    
     // Set light settings 
     boolean observerCamera = home.getCamera() instanceof ObserverCamera;
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
@@ -177,8 +195,9 @@ public class PhotoRenderer {
     } else {
       // Use sun sky light
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
-      this.sunflow.parameter("east", new Vector3(0, 0, 1));
-      this.sunflow.parameter("sundir", new Vector3(1, 1, 1));
+      this.sunflow.parameter("east", 
+          new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
+      this.sunflow.parameter("sundir", new Vector3(xSunDirection, ySunDirection, zSunDirection));
       this.sunflow.parameter("turbidity", 6f);
       this.sunflow.parameter("samples", samples * 3 / 2);
       this.sunflow.light(UUID.randomUUID().toString(), "sunsky");
