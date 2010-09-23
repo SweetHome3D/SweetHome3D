@@ -196,12 +196,12 @@ public class CompassPanel extends JPanel implements DialogView {
       });
 
     this.latitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "latitudeLabel.text"));
-    final SpinnerNumberModel latitudeSpinnerModel = new SpinnerNumberModel(0., -90., 90., 10);
+    final SpinnerNumberModel latitudeSpinnerModel = new SpinnerNumberModel(0., -90., 90., 5);
     this.latitudeSpinner = new JSpinner(latitudeSpinnerModel);
     // Change positive / negative notation by North / South
     JFormattedTextField textField = ((DefaultEditor)this.latitudeSpinner.getEditor()).getTextField();
     NumberFormatter numberFormatter = (NumberFormatter)((DefaultFormatterFactory)textField.getFormatterFactory()).getDefaultFormatter();
-    numberFormatter.setFormat(new DecimalFormat("N ###.000;S ###.000"));
+    numberFormatter.setFormat(new DecimalFormat("N ##0.000;S ##0.000"));
     textField.setFormatterFactory(new DefaultFormatterFactory(numberFormatter));
     SwingTools.addAutoSelectionOnFocusGain(textField);
     latitudeSpinnerModel.setValue(controller.getLatitudeInDegrees());
@@ -220,12 +220,12 @@ public class CompassPanel extends JPanel implements DialogView {
       });
     
     this.longitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "longitudeLabel.text"));
-    final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(0., -180., 180., 10);
+    final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(0., -180., 180., 5);
     this.longitudeSpinner = new JSpinner(longitudeSpinnerModel);
     // Change positive / negative notation by East / West
     textField = ((DefaultEditor)this.longitudeSpinner.getEditor()).getTextField();
     numberFormatter = (NumberFormatter)((DefaultFormatterFactory)textField.getFormatterFactory()).getDefaultFormatter();
-    numberFormatter.setFormat(new DecimalFormat("E ###.000;W ###.000"));
+    numberFormatter.setFormat(new DecimalFormat("E ##0.000;W ##0.000"));
     textField.setFormatterFactory(new DefaultFormatterFactory(numberFormatter));
     SwingTools.addAutoSelectionOnFocusGain(textField);
     longitudeSpinnerModel.setValue(controller.getLongitudeInDegrees());
@@ -275,7 +275,7 @@ public class CompassPanel extends JPanel implements DialogView {
     
     this.northDirectionLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "northDirectionLabel.text"));
     // Create a spinner model able to choose an angle modulo 360
-    final SpinnerNumberModel northDirectionSpinnerModel = new SpinnerNumberModel(0, 0, 360, 10) {
+    final SpinnerNumberModel northDirectionSpinnerModel = new SpinnerNumberModel(0, 0, 360, 5) {
         @Override
         public Object getNextValue() {
           if (((Number)getValue()).intValue() + ((Number)getStepSize()).intValue() < ((Number)getMaximum()).intValue()) {
