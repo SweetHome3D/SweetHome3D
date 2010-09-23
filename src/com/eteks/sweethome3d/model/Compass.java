@@ -60,10 +60,10 @@ public class Compass implements Serializable, Selectable {
   private TimeZone timeZone;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-  private transient float [][] compassPoints;
-  private transient float sunElevation;
-  private transient float sunAzimuth;
-  private transient Calendar calendar;
+  private transient float [][] pointsCache;
+  private transient Calendar   dateCache;
+  private transient float      sunElevationCache;
+  private transient float      sunAzimuthCache;
 
 
   private static WeakReference<Map<String, GeographicPoint>> timeZoneGeographicPointsReference;
@@ -121,7 +121,7 @@ public class Compass implements Serializable, Selectable {
     if (x != this.x) {
       float oldX = this.x;
       this.x = x;
-      this.compassPoints = null;
+      this.pointsCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
@@ -141,7 +141,7 @@ public class Compass implements Serializable, Selectable {
     if (y != this.y) {
       float oldY = this.y;
       this.y = y;
-      this.compassPoints = null;
+      this.pointsCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
@@ -161,7 +161,7 @@ public class Compass implements Serializable, Selectable {
     if (diameter != this.diameter) {
       float oldDiameter = this.diameter;
       this.diameter = diameter;
-      this.compassPoints = null;
+      this.pointsCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.DIAMETER.name(), oldDiameter, diameter);
     }
   }
@@ -199,7 +199,7 @@ public class Compass implements Serializable, Selectable {
     if (northDirection != this.northDirection) {
       float oldNorthDirection = this.northDirection;
       this.northDirection = northDirection;
-      this.compassPoints = null;
+      this.pointsCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.NORTH_DIRECTION.name(), oldNorthDirection, northDirection);
     }
   }
@@ -219,6 +219,7 @@ public class Compass implements Serializable, Selectable {
     if (latitude != this.latitude) {
       float oldLatitude = this.latitude;
       this.latitude = latitude;
+      this.dateCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.LATITUDE.name(), oldLatitude, latitude);
     }
   }
@@ -238,6 +239,7 @@ public class Compass implements Serializable, Selectable {
     if (longitude != this.longitude) {
       float oldLongitude = this.longitude;
       this.longitude = longitude;
+      this.dateCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.LONGITUDE.name(), oldLongitude, longitude);
     }
   }
@@ -263,6 +265,7 @@ public class Compass implements Serializable, Selectable {
       }
       String oldTimeZone = this.timeZone.getID();
       this.timeZone = TimeZone.getTimeZone(timeZone);
+      this.dateCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.TIME_ZONE.name(), oldTimeZone, timeZone);
     }
   }
@@ -271,7 +274,7 @@ public class Compass implements Serializable, Selectable {
    * Returns the corner points of the square that contains compass disc.  
    */
   public float [][] getPoints() {
-    if (this.compassPoints == null) {
+    if (this.pointsCache == null) {
       // Create the rectangle that matches piece bounds
       Rectangle2D pieceRectangle = new Rectangle2D.Float(
           getX() - getDiameter() / 2,
@@ -280,15 +283,15 @@ public class Compass implements Serializable, Selectable {
       // Apply rotation to the rectangle
       AffineTransform rotation = new AffineTransform();
       rotation.setToRotation(getNorthDirection(), getX(), getY());
-      this.compassPoints = new float[4][2];
+      this.pointsCache = new float[4][2];
       PathIterator it = pieceRectangle.getPathIterator(rotation);
-      for (int i = 0; i < this.compassPoints.length; i++) {
-        it.currentSegment(this.compassPoints [i]);
+      for (int i = 0; i < this.pointsCache.length; i++) {
+        it.currentSegment(this.pointsCache [i]);
         it.next();
       }
     }
-    return new float [][] {this.compassPoints [0].clone(), this.compassPoints [1].clone(), 
-                           this.compassPoints [2].clone(), this.compassPoints [3].clone()};
+    return new float [][] {this.pointsCache [0].clone(), this.pointsCache [1].clone(), 
+                           this.pointsCache [2].clone(), this.pointsCache [3].clone()};
   }
 
   /**
@@ -347,7 +350,7 @@ public class Compass implements Serializable, Selectable {
    */
   public float getSunElevation(long date) {
     updateSunLocation(date);
-    return this.sunElevation;
+    return this.sunElevationCache;
   }
   
   /**
@@ -358,26 +361,26 @@ public class Compass implements Serializable, Selectable {
    */
   public float getSunAzimuth(long date) {
     updateSunLocation(date);
-    return this.sunAzimuth;
+    return this.sunAzimuthCache;
   }
 
   /**
    * Computes the Sun's location in the sky at a given <code>date</code>.
    */
   private void updateSunLocation(long date) {
-    if (this.calendar == null
-        || !this.calendar.getTime().equals(date)) {
-      this.calendar = new GregorianCalendar(this.timeZone);
-      this.calendar.setTimeInMillis(date);
+    if (this.dateCache == null
+        || !this.dateCache.getTime().equals(date)) {
+      this.dateCache = new GregorianCalendar(this.timeZone);
+      this.dateCache.setTimeInMillis(date);
   
-      int year = this.calendar.get(Calendar.YEAR);
-      int month = this.calendar.get(Calendar.MONTH) + 1; // Based on 1 for January
-      int day = this.calendar.get(Calendar.DAY_OF_MONTH);
-      int hour = this.calendar.get(Calendar.HOUR_OF_DAY);
-      int minute = this.calendar.get(Calendar.MINUTE);
-      int second = this.calendar.get(Calendar.SECOND);
-      int timeZone = this.calendar.getTimeZone().getRawOffset() / 3600000;
-      int savingTime = this.calendar.get(Calendar.DST_OFFSET) / 3600000;
+      int year = this.dateCache.get(Calendar.YEAR);
+      int month = this.dateCache.get(Calendar.MONTH) + 1; // Based on 1 for January
+      int day = this.dateCache.get(Calendar.DAY_OF_MONTH);
+      int hour = this.dateCache.get(Calendar.HOUR_OF_DAY);
+      int minute = this.dateCache.get(Calendar.MINUTE);
+      int second = this.dateCache.get(Calendar.SECOND);
+      int timeZone = this.dateCache.getTimeZone().getRawOffset() / 3600000;
+      int savingTime = this.dateCache.get(Calendar.DST_OFFSET) / 3600000;
       
       double julianDay = computeJulianDay(year, month, day, hour, minute, second, timeZone, savingTime);
       double siderealTime = toSiderealTime(julianDay);
@@ -407,8 +410,8 @@ public class Compass implements Serializable, Selectable {
         azimuth = Math.PI * 2 - azimuth;
       }
   
-      this.sunElevation = (float)elevation;
-      this.sunAzimuth = (float)azimuth;
+      this.sunElevationCache = (float)elevation;
+      this.sunAzimuthCache = (float)azimuth;
     }
   }  
   
