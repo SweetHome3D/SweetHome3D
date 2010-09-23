@@ -369,7 +369,7 @@ public class Compass implements Serializable, Selectable {
    */
   private void updateSunLocation(long date) {
     if (this.dateCache == null
-        || !this.dateCache.getTime().equals(date)) {
+        || this.dateCache.getTimeInMillis() != date) {
       this.dateCache = new GregorianCalendar(this.timeZone);
       this.dateCache.setTimeInMillis(date);
   
