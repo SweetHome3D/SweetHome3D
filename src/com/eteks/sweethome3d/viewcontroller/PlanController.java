@@ -6081,7 +6081,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.widthResizeToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "resizeToolTipFeedback");
+          PlanController.class, "widthResizeToolTipFeedback");
       this.depthResizeToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "depthResizeToolTipFeedback");
       HomePieceOfFurniture selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
