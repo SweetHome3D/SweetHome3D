@@ -202,6 +202,6 @@ public class ObserverCamera extends Camera implements Selectable {
    */
   @Override
   public ObserverCamera clone() {
-    return new ObserverCamera(getX(), getY(), getZ(), getYaw(), getPitch(), getFieldOfView());
+    return (ObserverCamera)super.clone();
   }
 }

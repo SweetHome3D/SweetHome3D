@@ -24,6 +24,9 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  * Camera characteristics in home.
@@ -31,19 +34,32 @@ import java.io.Serializable;
  */
 public class Camera implements Serializable, Cloneable {
   /**
+   * The kind of lens that can be used with a camera.
+   * @author Emmanuel Puybaret
+   * @since 3.0
+   */
+  public enum Lens {PINHOLE, NORMAL, FISHEYE, SPHERICAL} 
+
+  /**
    * The properties of a camera that may change. <code>PropertyChangeListener</code>s added 
    * to a camera will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {X, Y, Z, YAW, PITCH, FIELD_OF_VIEW}
+  public enum Property {X, Y, Z, YAW, PITCH, FIELD_OF_VIEW, TIME, LENS}
   
   private static final long serialVersionUID = 1L;
   
-  private float       x;
-  private float       y;
-  private float       z;
-  private float       yaw;
-  private float       pitch;
-  private float       fieldOfView;
+  private float          x;
+  private float          y;
+  private float          z;
+  private float          yaw;
+  private float          pitch;
+  private float          fieldOfView;
+  private long           time;
+  private transient Lens lens;
+  // Lens is saved as a string to be able to keep backward compatibility 
+  // if new constants are added to Lens enum in future versions
+  private String         lensName;
+
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -57,17 +73,47 @@ public class Camera implements Serializable, Cloneable {
     this.yaw = yaw;
     this.pitch = pitch;
     this.fieldOfView = fieldOfView;
+    this.time = midday();
+    this.lens = Lens.PINHOLE;
   }
 
+  /**
+   * Returns the time of midday today in milliseconds since the Epoch in UTC time zone.
+   */
+  private long midday() {
+    Calendar midday = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+    midday.set(Calendar.HOUR_OF_DAY, 12);
+    midday.set(Calendar.MINUTE, 0);
+    midday.set(Calendar.SECOND, 0);
+    return midday.getTimeInMillis();
+  }
+  
   /**
    * Initializes new camera transient fields  
    * and reads its properties from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.time = midday();
+    this.lens = Lens.PINHOLE;
     in.defaultReadObject();
+    try {
+      // Read lens from a string 
+      if (this.lensName != null) {
+        this.lens = Lens.valueOf(this.lensName);
+      }
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed enum constant 
+    }
   }
 
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+    // Write lens as a string to be able to read lens later 
+    // even if enum changed in later versions
+    this.lensName = this.lens.name();
+    out.defaultWriteObject();
+  }
+  
   /**
    * Adds the property change <code>listener</code> in parameter to this camera.
    */
@@ -163,8 +209,6 @@ public class Camera implements Serializable, Cloneable {
 
   /**
    * Sets the ordinate of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
   public void setY(float y) {
     if (y != this.y) {
@@ -183,14 +227,73 @@ public class Camera implements Serializable, Cloneable {
   
   /**
    * Sets the elevation of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
   public void setZ(float z) {
     if (z != this.z) {
       float oldZ = this.z;
       this.z = z;
       this.propertyChangeSupport.firePropertyChange(Property.Z.name(), oldZ, z);
+    }
+  }
+
+  /**
+   * Returns the time in milliseconds when this camera is used.
+   * @returns a time in milliseconds since the Epoch in UTC time zone
+   * @since 3.0
+   */
+  public long getTime() {
+    return this.time;
+  }
+
+  /**
+   * Sets the use time in milliseconds since the Epoch in UTC time zone, 
+   * and notifies listeners of this change. 
+   * @since 3.0
+   */
+  public void setTime(long time) {
+    if (this.time != time) {
+      long oldTime = this.time;
+      this.time = time;
+      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(), 
+          oldTime, time);
+    }
+  }
+
+  /**
+   * Returns a time expressed in UTC time zone converted to the given time zone. 
+   * @since 3.0
+   */
+  public static long convertTimeToTimeZone(long utcTime, String timeZone) { 
+    Calendar utcCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+    utcCalendar.setTimeInMillis(utcTime);
+    Calendar convertedCalendar = new GregorianCalendar(TimeZone.getTimeZone(timeZone));
+    convertedCalendar.set(Calendar.YEAR, utcCalendar.get(Calendar.YEAR));
+    convertedCalendar.set(Calendar.MONTH, utcCalendar.get(Calendar.MONTH));
+    convertedCalendar.set(Calendar.DAY_OF_MONTH, utcCalendar.get(Calendar.DAY_OF_MONTH));
+    convertedCalendar.set(Calendar.HOUR_OF_DAY, utcCalendar.get(Calendar.HOUR_OF_DAY));
+    convertedCalendar.set(Calendar.MINUTE, utcCalendar.get(Calendar.MINUTE));
+    convertedCalendar.set(Calendar.SECOND, utcCalendar.get(Calendar.SECOND));
+    convertedCalendar.set(Calendar.MILLISECOND, utcCalendar.get(Calendar.MILLISECOND));
+    return convertedCalendar.getTimeInMillis();
+  }
+
+  /**
+   * Returns the lens of this camera.
+   * @since 3.0
+   */
+  public Lens getLens() {
+    return this.lens;
+  }
+  
+  /**
+   * Sets the lens of this camera.
+   * @since 3.0
+   */
+  public void setLens(Lens lens) {
+    if (lens != this.lens) {
+      Lens oldLens = this.lens;
+      this.lens = lens;
+      this.propertyChangeSupport.firePropertyChange(Property.LENS.name(), oldLens, lens);
     }
   }
 
@@ -205,6 +308,8 @@ public class Camera implements Serializable, Cloneable {
     setYaw(camera.getYaw());
     setPitch(camera.getPitch());
     setFieldOfView(camera.getFieldOfView());
+    setTime(camera.getTime());
+    setLens(camera.getLens());
   }
   
   /**
@@ -213,6 +318,10 @@ public class Camera implements Serializable, Cloneable {
    */
   @Override
   public Camera clone() {
-    return new Camera(getX(), getY(), getZ(), getYaw(), getPitch(), getFieldOfView());
+    try {
+      return (Camera)super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
   }
 }

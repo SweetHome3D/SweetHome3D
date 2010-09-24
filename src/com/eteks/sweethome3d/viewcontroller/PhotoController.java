@@ -19,10 +19,13 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 
 import com.eteks.sweethome3d.model.AspectRatio;
+import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -35,7 +38,7 @@ public class PhotoController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {ASPECT_RATIO, WIDTH, HEIGHT, QUALITY, VIEW_3D_ASPECT_RATIO}
+  public enum Property {ASPECT_RATIO, WIDTH, HEIGHT, QUALITY, VIEW_3D_ASPECT_RATIO, TIME, LENS, CEILING_LIGHT_COLOR}
   
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -50,6 +53,9 @@ public class PhotoController implements Controller {
   private int                         height;
   private int                         quality;
   private float                       view3DAspectRatio;
+  private long                        time;
+  private Camera.Lens                 lens;  
+  private int                         ceilingLightColor;
 
   public PhotoController(Home home,
                          UserPreferences preferences, 
@@ -62,7 +68,30 @@ public class PhotoController implements Controller {
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
+    home.addPropertyChangeListener(Home.Property.CAMERA, new CameraChangeListener(this));
     updateProperties();
+  }
+
+  /**
+   * Camera listener that updates properties when camera changes. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between home and this controller.  
+   */
+  private static class CameraChangeListener implements PropertyChangeListener {
+    private WeakReference<PhotoController> photoController;
+    
+    public CameraChangeListener(PhotoController photoController) {
+      this.photoController = new WeakReference<PhotoController>(photoController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If controller was garbage collected, remove this listener from home
+      final PhotoController controller = this.photoController.get();
+      if (controller == null) {
+        ((Home)ev.getSource()).removePropertyChangeListener(Home.Property.CAMERA, this);
+      } else {
+        controller.updateProperties();
+      }
+    }
   }
 
   /**
@@ -113,6 +142,9 @@ public class PhotoController implements Controller {
     setWidth(homeEnvironment.getPhotoWidth(), false);
     setHeight(homeEnvironment.getPhotoHeight(), false);
     setQuality(homeEnvironment.getPhotoQuality());
+    setTime(this.home.getCamera().getTime());
+    setLens(this.home.getCamera().getLens());
+    setCeilingLightColor(homeEnvironment.getCeillingLightColor());
     this.view3DAspectRatio = 1;
   }
   
@@ -226,6 +258,69 @@ public class PhotoController implements Controller {
     return 4;
   }
   
+  
+  /**
+   * Sets the edited time in UTC time zone.
+   */
+  public void setTime(long time) {
+    if (this.time != time) {
+      long oldTime = this.time;
+      this.time = time;
+      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(), oldTime, time);
+      this.home.getCamera().setTime(time);
+    }
+  }
+  
+  /**
+   * Returns the edited time in UTC time zone.
+   */
+  public long getTime() {
+    return this.time;
+  }
+
+  /**
+   * Sets the edited camera lens.
+   */
+  public void setLens(Camera.Lens lens) {
+    if (this.lens != lens) {
+      Camera.Lens oldLens = this.lens;
+      this.lens = lens;
+      this.propertyChangeSupport.firePropertyChange(Property.LENS.name(), oldLens, lens);
+      if (lens == Camera.Lens.SPHERICAL) {
+        setAspectRatio(AspectRatio.RATIO_2_1);
+      } else if (lens == Camera.Lens.FISHEYE) {
+        setAspectRatio(AspectRatio.SQUARE_RATIO);
+      }  
+      this.home.getCamera().setLens(this.lens);
+    }
+  }
+  
+  /**
+   * Returns the edited camera lens.
+   */
+  public Camera.Lens getLens() {    
+    return this.lens;
+  }
+  
+  /**
+   * Sets the edited ceiling light color.
+   */
+  public void setCeilingLightColor(int ceilingLightColor) {
+    if (this.ceilingLightColor != ceilingLightColor) {
+      int oldCeilingLightColor = this.ceilingLightColor;
+      this.ceilingLightColor = ceilingLightColor;
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_LIGHT_COLOR.name(), oldCeilingLightColor, ceilingLightColor);
+      this.home.getEnvironment().setCeillingLightColor(ceilingLightColor);
+    }
+  }
+  
+  /**
+   * Returns the edited ceiling light color.
+   */
+  public int getCeilingLightColor() {
+    return this.ceilingLightColor;
+  }
+
   /**
    * Sets the aspect ratio of the 3D view.
    */

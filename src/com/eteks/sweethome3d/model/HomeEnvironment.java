@@ -37,8 +37,8 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE,
-                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY,
+  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE,
+                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
    * The various modes used to draw home in 3D. 
@@ -52,6 +52,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private int                             skyColor;
   private HomeTexture                     skyTexture;
   private int                             lightColor;
+  private int                             ceilingLightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
   private int                             photoWidth;
@@ -104,6 +105,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.skyColor = skyColor;
     this.skyTexture = skyTexture;
     this.lightColor = lightColor;
+    this.ceilingLightColor = 0xD0D0D0;
     this.wallsAlpha = wallsAlpha;
     this.drawingMode = DrawingMode.FILL;
     this.photoWidth = 400;
@@ -121,6 +123,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.ceilingLightColor = 0xD0D0D0;
     this.photoWidth = 400;
     this.photoHeight = 300;
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
@@ -265,6 +268,25 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
+   * Returns the color of ceiling lights.
+   */
+  public int getCeillingLightColor() {
+    return this.ceilingLightColor;
+  }
+
+  /**
+   * Sets the color of ceiling lights and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setCeillingLightColor(int ceilingLightColor) {
+    if (lightColor != this.ceilingLightColor) {
+      int oldCeilingLightColor = this.ceilingLightColor;
+      this.ceilingLightColor = ceilingLightColor;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.CEILING_LIGHT_COLOR.name(), oldCeilingLightColor, ceilingLightColor);
+    }
+  }
+
+  /**
    * Returns the walls transparency alpha factor of this environment.
    */
   public float getWallsAlpha() {
@@ -390,7 +412,6 @@ public class HomeEnvironment implements Serializable, Cloneable {
           oldPhotoQuality, photoQuality);
     }
   }
-
 
   /**
    * Returns the preferred video width. 

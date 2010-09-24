@@ -34,6 +34,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Selectable;
@@ -48,7 +49,7 @@ public class HomeFurnitureController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, 
-      WIDTH, DEPTH,  HEIGHT, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, RESIZABLE}
+      WIDTH, DEPTH,  HEIGHT, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, RESIZABLE}
   /**
    * The possible values for {@linkplain #getPaint() paint type}.
    */
@@ -76,6 +77,8 @@ public class HomeFurnitureController implements Controller {
   private FurniturePaint   furniturePaint;
   private Boolean visible;
   private Boolean modelMirrored;
+  private boolean lightPowerEditable;
+  private Float   lightPower;
   private boolean resizable;
   
   /**
@@ -183,6 +186,8 @@ public class HomeFurnitureController implements Controller {
       setPaint(null);
       setVisible(null);
       setModelMirrored(null);
+      this.lightPowerEditable = false;
+      setLightPower(null);
     } else {
       // Search the common properties among selected furniture
       HomePieceOfFurniture firstPiece = selectedFurniture.get(0);
@@ -336,6 +341,27 @@ public class HomeFurnitureController implements Controller {
         }
       }
       setModelMirrored(modelMirrored);     
+
+      boolean lightPowerEditable = firstPiece instanceof HomeLight;
+      for (int i = 1; lightPowerEditable && i < selectedFurniture.size(); i++) {
+        if (!(selectedFurniture.get(i) instanceof HomeLight)) {
+          lightPowerEditable = false;
+        }
+      }
+      this.lightPowerEditable = lightPowerEditable;
+
+      if (lightPowerEditable) {
+        Float lightPower = ((HomeLight)firstPiece).getPower();
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (lightPower.floatValue() != ((HomeLight)selectedFurniture.get(i)).getPower()) {
+            lightPower = null;
+            break;
+          }
+        }
+        setLightPower(lightPower);
+      } else {
+        setLightPower(null);
+      }
       
       // Enable size components only if all pieces are resizable
       Boolean resizable = firstPiece.isResizable();
@@ -584,6 +610,31 @@ public class HomeFurnitureController implements Controller {
   }
   
   /**
+   * Returns <code>true</code> if light power is an editable property.
+   */
+  public boolean isLightPowerEditable() {
+    return this.lightPowerEditable;
+  }
+  
+  /**
+   * Returns the edited light power.
+   */
+  public Float getLightPower() {
+    return this.lightPower;
+  }
+  
+  /**
+   * Sets the edited light power.
+   */
+  public void setLightPower(Float lightPower) {
+    if (lightPower != this.lightPower) {
+      Float oldLightPower = this.lightPower;
+      this.lightPower = lightPower;
+      this.propertyChangeSupport.firePropertyChange(Property.LIGHT_POWER.name(), oldLightPower, lightPower);
+    }
+  }
+
+  /**
    * Sets whether furniture model can be resized or not.
    */
   public void setResizable(boolean resizable) {
@@ -631,26 +682,31 @@ public class HomeFurnitureController implements Controller {
       }
       Boolean visible = getVisible();
       Boolean modelMirrored = getModelMirrored();
+      Float lightPower = getLightPower();
       
       // Create an array of modified furniture with their current properties values
       ModifiedPieceOfFurniture [] modifiedFurniture = 
           new ModifiedPieceOfFurniture [selectedFurniture.size()]; 
       for (int i = 0; i < modifiedFurniture.length; i++) {
         HomePieceOfFurniture piece = selectedFurniture.get(i);
-        if (piece instanceof HomeDoorOrWindow) {
+        if (piece instanceof HomeLight) {
+          modifiedFurniture [i] = new ModifiedLight((HomeLight)piece);
+        } else if (piece instanceof HomeDoorOrWindow) {
           modifiedFurniture [i] = new ModifiedDoorOrWindow((HomeDoorOrWindow)piece);
+        } else if (piece instanceof HomeFurnitureGroup) {
+          modifiedFurniture [i] = new ModifiedFurnitureGroup((HomeFurnitureGroup)piece);
         } else {
           modifiedFurniture [i] = new ModifiedPieceOfFurniture(piece);
         }
       }
       // Apply modification
-      doModifyFurniture(modifiedFurniture, 
-          name, nameVisible, x, y, width, depth, height, elevation, angle, defaultColorsAndTextures, color, texture, visible, modelMirrored); 
+      doModifyFurniture(modifiedFurniture, name, nameVisible, x, y, width, depth, height, elevation, angle, 
+          defaultColorsAndTextures, color, texture, visible, modelMirrored, lightPower); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, modifiedFurniture, 
             name, nameVisible, x, y, width, depth, height, elevation, angle, 
-            defaultColorsAndTextures, color, texture, modelMirrored, visible);
+            defaultColorsAndTextures, color, texture, visible, modelMirrored, lightPower);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -677,8 +733,9 @@ public class HomeFurnitureController implements Controller {
     private final boolean                     defaultColorsAndTextures;
     private final Integer                     color;
     private final HomeTexture                 texture;
-    private final Boolean                     modelMirrored;
     private final Boolean                     visible;
+    private final Boolean                     modelMirrored;
+    private final Float                       lightPower;
 
     private FurnitureModificationUndoableEdit(Home home,
                                               UserPreferences preferences, 
@@ -690,8 +747,9 @@ public class HomeFurnitureController implements Controller {
                                               Float elevation, Float angle,
                                               boolean defaultColorsAndTextures,
                                               Integer color, HomeTexture texture,
+                                              Boolean visible,
                                               Boolean modelMirrored,
-                                              Boolean visible) {
+                                              Float lightPower) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
@@ -708,8 +766,9 @@ public class HomeFurnitureController implements Controller {
       this.defaultColorsAndTextures = defaultColorsAndTextures;
       this.color = color;
       this.texture = texture;
-      this.modelMirrored = modelMirrored;
       this.visible = visible;
+      this.modelMirrored = modelMirrored;
+      this.lightPower = lightPower;
     }
 
     @Override
@@ -726,7 +785,7 @@ public class HomeFurnitureController implements Controller {
           this.name, this.nameVisible, this.x, this.y, this.width, 
           this.depth, this.height, this.elevation, this.angle, 
           this.defaultColorsAndTextures, this.color, this.texture, 
-          this.visible, this.modelMirrored); 
+          this.visible, this.modelMirrored, this.lightPower); 
       home.setSelectedItems(this.oldSelection); 
     }
 
@@ -746,7 +805,8 @@ public class HomeFurnitureController implements Controller {
                                         Float depth, Float height, Float elevation, 
                                         Float angle, boolean defaultColorsAndTextures, 
                                         Integer color, HomeTexture texture,
-                                        Boolean visible, Boolean modelMirrored) {
+                                        Boolean visible, Boolean modelMirrored, 
+                                        Float lightPower) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       piece.setName(name != null 
@@ -782,6 +842,9 @@ public class HomeFurnitureController implements Controller {
       }
       piece.setVisible(visible != null 
           ? visible.booleanValue() : piece.isVisible());
+      if (lightPower != null) {
+        ((HomeLight)piece).setPower(lightPower);
+      }
     }
   }
 
@@ -812,10 +875,6 @@ public class HomeFurnitureController implements Controller {
     private final HomeTexture          texture;
     private final boolean              visible;
     private final boolean              modelMirrored;
-    private final float []             groupFurnitureX;
-    private final float []             groupFurnitureY;
-    private final float []             groupFurnitureWidth;
-    private final float []             groupFurnitureDepth;
 
     public ModifiedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
@@ -832,25 +891,6 @@ public class HomeFurnitureController implements Controller {
       this.texture = piece.getTexture();
       this.visible = piece.isVisible();
       this.modelMirrored = piece.isModelMirrored();
-      if (piece instanceof HomeFurnitureGroup) {
-        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)piece);
-        this.groupFurnitureX = new float [groupFurniture.size()];
-        this.groupFurnitureY = new float [groupFurniture.size()];
-        this.groupFurnitureWidth = new float [groupFurniture.size()];
-        this.groupFurnitureDepth = new float [groupFurniture.size()];
-        for (int i = 0; i < groupFurniture.size(); i++) {
-          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
-          this.groupFurnitureX [i] = groupPiece.getX();
-          this.groupFurnitureY [i] = groupPiece.getY();
-          this.groupFurnitureWidth [i] = groupPiece.getWidth();
-          this.groupFurnitureDepth [i] = groupPiece.getDepth();
-        }
-      } else {
-        this.groupFurnitureX = null;
-        this.groupFurnitureY = null;
-        this.groupFurnitureWidth = null;
-        this.groupFurnitureDepth = null;
-      }
     }
 
     public HomePieceOfFurniture getPieceOfFurniture() {
@@ -868,38 +908,11 @@ public class HomeFurnitureController implements Controller {
         this.piece.setWidth(this.width);
         this.piece.setDepth(this.depth);
         this.piece.setHeight(this.height);
-        this.piece.setModelMirrored(modelMirrored);
+        this.piece.setModelMirrored(this.modelMirrored);
       }
       this.piece.setColor(this.color);
       this.piece.setTexture(this.texture);
       this.piece.setVisible(this.visible);
-      if (this.piece instanceof HomeFurnitureGroup) {
-        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)this.piece);
-        for (int i = 0; i < groupFurniture.size(); i++) {
-          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
-          if (this.piece.isResizable()) {
-            // Restore group furniture location and size because resizing a group isn't reversible 
-            groupPiece.setX(this.groupFurnitureX [i]);
-            groupPiece.setY(this.groupFurnitureY [i]);
-            groupPiece.setWidth(this.groupFurnitureWidth [i]);
-            groupPiece.setDepth(this.groupFurnitureDepth [i]);
-          }
-        }
-      }
-    }
-    
-    /**
-     * Returns all the children of the given <code>furnitureGroup</code>.  
-     */
-    private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
-      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
-      for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
-        pieces.add(piece);
-        if (piece instanceof HomeFurnitureGroup) {
-          pieces.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
-        } 
-      }
-      return pieces;
     }
   }
   
@@ -917,6 +930,79 @@ public class HomeFurnitureController implements Controller {
     public void reset() {
       super.reset();
       ((HomeDoorOrWindow)getPieceOfFurniture()).setBoundToWall(this.boundToWall);
+    }
+  }
+
+  /**
+   * Stores the current properties values of a modified light.
+   */
+  private static class ModifiedLight extends ModifiedPieceOfFurniture {
+    private final float power;
+    
+    public ModifiedLight(HomeLight light) {
+      super(light);
+      this.power = light.getPower();
+    }
+
+    public void reset() {
+      super.reset();
+      ((HomeLight)getPieceOfFurniture()).setPower(this.power);
+    }
+  }
+
+  /**
+   * Stores the current properties values of a modified group.
+   */
+  private static class ModifiedFurnitureGroup extends ModifiedPieceOfFurniture {
+    private final float [] groupFurnitureX;
+    private final float [] groupFurnitureY;
+    private final float [] groupFurnitureWidth;
+    private final float [] groupFurnitureDepth;
+    
+    public ModifiedFurnitureGroup(HomeFurnitureGroup group) {
+      super(group);
+      List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)group);
+      this.groupFurnitureX = new float [groupFurniture.size()];
+      this.groupFurnitureY = new float [groupFurniture.size()];
+      this.groupFurnitureWidth = new float [groupFurniture.size()];
+      this.groupFurnitureDepth = new float [groupFurniture.size()];
+      for (int i = 0; i < groupFurniture.size(); i++) {
+        HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+        this.groupFurnitureX [i] = groupPiece.getX();
+        this.groupFurnitureY [i] = groupPiece.getY();
+        this.groupFurnitureWidth [i] = groupPiece.getWidth();
+        this.groupFurnitureDepth [i] = groupPiece.getDepth();
+      }
+    }
+
+    public void reset() {
+      super.reset();
+      HomeFurnitureGroup group = (HomeFurnitureGroup)getPieceOfFurniture();
+      List<HomePieceOfFurniture> groupFurniture = getGroupFurniture(group);
+      for (int i = 0; i < groupFurniture.size(); i++) {
+        HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+        if (group.isResizable()) {
+          // Restore group furniture location and size because resizing a group isn't reversible 
+          groupPiece.setX(this.groupFurnitureX [i]);
+          groupPiece.setY(this.groupFurnitureY [i]);
+          groupPiece.setWidth(this.groupFurnitureWidth [i]);
+          groupPiece.setDepth(this.groupFurnitureDepth [i]);
+        }
+      }
+    }
+    
+    /**
+     * Returns all the children of the given <code>furnitureGroup</code>.  
+     */
+    private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
+      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
+      for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
+        pieces.add(piece);
+        if (piece instanceof HomeFurnitureGroup) {
+          pieces.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
+        } 
+      }
+      return pieces;
     }
   }
 }

@@ -29,15 +29,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Enumeration;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -93,8 +92,11 @@ import org.sunflow.system.ui.SilentInterface;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
@@ -108,10 +110,10 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class PhotoRenderer {
   public enum Quality {LOW, HIGH}
   
-  private final static String CAMERA_NAME = "camera";
-  
   private final Quality quality;
   private final SunflowAPI sunflow;
+  private final Compass compass;
+  private String sunSkyLightName;
   private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
   private Thread renderingThread;
 
@@ -126,6 +128,7 @@ public class PhotoRenderer {
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
+    this.compass = home.getCompass();
     this.sunflow = new SunflowAPI();
     this.quality = quality;
     int samples = quality == Quality.LOW ? 4 : 8;
@@ -154,19 +157,6 @@ public class PhotoRenderer {
     groundTransformGroup.addChild(ground);
     exportNode(groundTransformGroup, true);
 
-    // Compute sun position today at midday (by Frédéric Mantegazza)  
-    Compass compass = home.getCompass();
-    Calendar midday = new GregorianCalendar(TimeZone.getTimeZone(compass.getTimeZone()));
-    midday.set(Calendar.HOUR_OF_DAY, 12);
-    midday.set(Calendar.MINUTE, 0);
-    midday.set(Calendar.SECOND, 0);
-    float elevation = compass.getSunElevation(midday.getTimeInMillis());
-    float azimuth = compass.getSunAzimuth(midday.getTimeInMillis());
-    azimuth += compass.getNorthDirection() - Math.PI / 2f;
-    float xSunDirection = (float)(Math.cos(azimuth) * Math.cos(elevation));
-    float ySunDirection = (float)Math.sin(elevation);
-    float zSunDirection = (float)(Math.sin(azimuth) * Math.cos(elevation));
-    
     // Set light settings 
     boolean observerCamera = home.getCamera() instanceof ObserverCamera;
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
@@ -194,17 +184,14 @@ public class PhotoRenderer {
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
     } else {
       // Use sun sky light
-      this.sunflow.parameter("up", new Vector3(0, 1, 0));
-      this.sunflow.parameter("east", 
-          new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
-      this.sunflow.parameter("sundir", new Vector3(xSunDirection, ySunDirection, zSunDirection));
-      this.sunflow.parameter("turbidity", 6f);
-      this.sunflow.parameter("samples", samples * 3 / 2);
-      this.sunflow.light(UUID.randomUUID().toString(), "sunsky");
+      this.sunSkyLightName = UUID.randomUUID().toString();
+      this.sunflow.light(this.sunSkyLightName, "sunsky");
     }
     
-    // Add lights at the top of each room when observer camera is used
-    if (observerCamera) {
+    int ceillingLightColor = home.getEnvironment().getCeillingLightColor();
+    int homeLightColor = home.getEnvironment().getLightColor();
+    if (ceillingLightColor > 0) {
+      // Add lights at the top of each room 
       for (Room room : home.getRooms()) {
         if (room.isCeilingVisible()) {
           float xCenter = room.getXCenter();
@@ -235,19 +222,43 @@ public class PhotoRenderer {
           }
           
           float power = (float)Math.sqrt(room.getArea()) / 3;
-          int lightColor = home.getEnvironment().getLightColor();
           this.sunflow.parameter("radiance", null, 
-              (lightColor >> 16) * power / 255, ((lightColor >> 8) & 0xFF) * power / 255, (lightColor & 0xFF) * power / 255);
+              power * (homeLightColor >> 16) / 255 * (ceillingLightColor >> 16) / 0xD0, 
+              power * ((homeLightColor >> 8) & 0xFF) / 255  * ((ceillingLightColor >> 8) & 0xFF) / 0xD0, 
+              power * (homeLightColor & 0xFF) / 255 * (ceillingLightColor & 0xFF) / 0xD0);
           this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 25, yCenter));                    
           this.sunflow.parameter("radius", 20f);
-          this.sunflow.parameter("samples", samples);
+          this.sunflow.parameter("samples", 4);
           this.sunflow.light(UUID.randomUUID().toString(), "sphere");
         } 
       }
     }
 
-    // Create pinhole camera at default location 
-    this.sunflow.camera(CAMERA_NAME, "pinhole");
+    // Add visible and turn on lights
+    for (HomeLight light : getLights(home.getFurniture())) {
+      float lightPower = light.getPower();
+      if (light.isVisible()
+          && lightPower > 0f) {
+        for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
+          float lightRadius = lightSource.getDiameter() != null 
+                  ? lightSource.getDiameter() * light.getWidth() / 2 
+                  : 3.25f; // Default radius compatible with most lights available before version 3.0
+          float power = 25 * lightPower * lightPower;
+          int lightColor = lightSource.getColor();
+          this.sunflow.parameter("radiance", null,
+              power * (lightColor >> 16) * (homeLightColor >> 16) / 100f * (16 / (lightRadius * lightRadius)),
+              power * ((lightColor >> 8) & 0xFF) * ((homeLightColor >> 8) & 0xFF) / 100f * (16 / (lightRadius * lightRadius)),
+              power * (lightColor & 0xFF) * (homeLightColor & 0xFF) / 100f * (16 / (lightRadius * lightRadius)));
+          this.sunflow.parameter("center",
+              new Point3(light.getX() - light.getWidth() / 2 + (lightSource.getX() * light.getWidth()),
+                  light.getElevation() + (lightSource.getZ() * light.getHeight()),
+                  light.getY() + light.getDepth() / 2 - (lightSource.getY() * light.getDepth())));                    
+          this.sunflow.parameter("radius", lightRadius);
+          this.sunflow.parameter("samples", 4);
+          this.sunflow.light(UUID.randomUUID().toString(), "sphere");
+        }
+      }
+    }
   }
 
   /**
@@ -259,12 +270,49 @@ public class PhotoRenderer {
                      Camera camera, 
                      final ImageObserver observer) {
     this.renderingThread = Thread.currentThread();
+
+    // Update Sun direction
+    if (this.sunSkyLightName != null) {
+      this.sunflow.remove(this.sunSkyLightName);
+      float [] sunDirection = getSunDirection(this.compass, Camera.convertTimeToTimeZone(camera.getTime(), this.compass.getTimeZone()));
+      this.sunflow.parameter("up", new Vector3(0, 1, 0));
+      this.sunflow.parameter("east", 
+          new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
+      this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
+      this.sunflow.parameter("turbidity", 6f);
+      this.sunflow.parameter("samples", quality == Quality.LOW ? 6 : 12);
+      this.sunflow.light(this.sunSkyLightName, "sunsky");
+    }
     
-    // Update pinhole camera lens from camera location in parameter
+    // Update camera lens from camera location in parameter
+    final String CAMERA_NAME = "camera";    
+    switch (camera.getLens()) {
+      case SPHERICAL:
+        this.sunflow.camera(CAMERA_NAME, "spherical");
+        break;
+      case FISHEYE:
+        this.sunflow.camera(CAMERA_NAME, "fisheye");
+        break;
+      case NORMAL:
+        this.sunflow.parameter("focus.distance", 250f);
+        this.sunflow.parameter("lens.radius", 1f);
+        this.sunflow.camera(CAMERA_NAME, "thinlens");
+        break;
+      case PINHOLE:
+      default: 
+        this.sunflow.camera(CAMERA_NAME, "pinhole");
+        break;
+    }
+    
     Point3 eye = new Point3(camera.getX(), camera.getZ(), camera.getY());
     Matrix4 transform;
     float yaw = camera.getYaw();
-    float pitch = camera.getPitch();
+    float pitch;
+    if (camera.getLens() == Camera.Lens.SPHERICAL) {
+      pitch = 0;
+    } else {
+      pitch = camera.getPitch();
+    }
     double pitchCos = Math.cos(pitch);
     if (Math.abs(pitchCos) > 1E-6) {
       // Set the point the camera is pointed to 
@@ -300,6 +348,7 @@ public class PhotoRenderer {
       this.sunflow.parameter("aa.max",  1); 
       this.sunflow.parameter("sampler", "fast"); // ipr, fast or bucket 
     }
+
     // Render image with default camera
     this.sunflow.parameter("camera", CAMERA_NAME);
     this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
@@ -316,6 +365,34 @@ public class PhotoRenderer {
       }
       this.renderingThread = null;
     }
+  }
+
+  /**
+   * Returns all the light children of the given <code>furniture</code>.  
+   */
+  private List<HomeLight> getLights(List<HomePieceOfFurniture> furniture) {
+    List<HomeLight> lights = new ArrayList<HomeLight>();
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece instanceof HomeLight) {
+        lights.add((HomeLight)piece);
+      } else if (piece instanceof HomeFurnitureGroup) {
+        lights.addAll(getLights(((HomeFurnitureGroup)piece).getFurniture()));
+      } 
+    }
+    return lights;
+  }
+
+  /**
+   * Returns sun direction at a given <code>time</code>. 
+   * @author Frédéric Mantegazza
+   */
+  private float [] getSunDirection(Compass compass, long time) {
+    float elevation = compass.getSunElevation(time);
+    float azimuth = compass.getSunAzimuth(time);
+    azimuth += compass.getNorthDirection() - Math.PI / 2f;
+    return new float [] {(float)(Math.cos(azimuth) * Math.cos(elevation)),
+                         (float)Math.sin(elevation),
+                         (float)(Math.sin(azimuth) * Math.cos(elevation))};
   }
 
   /**
@@ -1006,7 +1083,7 @@ public class PhotoRenderer {
               new float [] {Math.min(diffuseColor [0] * 2f, 1f), Math.min(diffuseColor [1] * 2f, 1f), Math.min(diffuseColor [2] * 2f, 1f)});
           this.sunflow.parameter("absorbtion.distance", 0f);          
           float transparency = transparencyAttributes.getTransparency();
-          this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency}); 
+          this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency});
           this.sunflow.shader(appearanceName, "glass");
         } else {  
           this.sunflow.parameter("diffuse", null, diffuseColor);

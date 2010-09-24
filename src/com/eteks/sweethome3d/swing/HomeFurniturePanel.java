@@ -31,6 +31,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -76,6 +77,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private JComponent              textureComponent;
   private NullableCheckBox        visibleCheckBox;
   private NullableCheckBox        mirroredModelCheckBox;
+  private JLabel                  lightPowerLabel;
+  private JSpinner                lightPowerSpinner;
   private String                  dialogTitle;
 
   /**
@@ -430,6 +433,32 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         }
       });
     
+    // Create power label and its spinner bound to POWER controller property
+    if (controller.isLightPowerEditable()) {
+      this.lightPowerLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          HomeFurniturePanel.class, "lightPowerLabel.text", unitName));
+      final NullableSpinner.NullableSpinnerNumberModel lightPowerSpinnerModel = 
+          new NullableSpinner.NullableSpinnerNumberModel(0, 0, 100, 10);
+      this.lightPowerSpinner = new NullableSpinner(lightPowerSpinnerModel);
+      lightPowerSpinnerModel.setNullable(controller.getLightPower() == null);
+      lightPowerSpinnerModel.setValue(controller.getLightPower() != null ? Math.round(controller.getLightPower() * 100) : null);
+      final PropertyChangeListener lightPowerChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            Float lightPower = (Float)ev.getNewValue();
+            lightPowerSpinnerModel.setNullable(lightPower == null);
+            lightPowerSpinnerModel.setValue(lightPower != null ? Math.round((Float)ev.getNewValue() * 100) : null);
+          }
+        };
+      controller.addPropertyChangeListener(HomeFurnitureController.Property.LIGHT_POWER, lightPowerChangeListener);
+      lightPowerSpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.removePropertyChangeListener(HomeFurnitureController.Property.LIGHT_POWER, lightPowerChangeListener);
+            controller.setLightPower(((Number)lightPowerSpinnerModel.getValue()).floatValue() / 100f);
+            controller.addPropertyChangeListener(HomeFurnitureController.Property.LIGHT_POWER, lightPowerChangeListener);
+          }
+        });
+    }
+    
     updateSizeComponents(controller);     
     // Add a listener that enables / disables size fields depending on furniture resizable
     controller.addPropertyChangeListener(HomeFurnitureController.Property.RESIZABLE, 
@@ -512,6 +541,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           HomeFurniturePanel.class, "visibleCheckBox.mnemonic")).getKeyCode());
       this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "mirroredModelCheckBox.mnemonic")).getKeyCode());
+      if (this.lightPowerLabel != null) {
+        this.lightPowerLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            HomeFurniturePanel.class, "lightPowerLabel.mnemonic")).getKeyCode());
+        this.lightPowerLabel.setLabelFor(this.lightPowerSpinner);
+      }
     }
   }
   
@@ -594,18 +628,30 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(this.colorButton, new GridBagConstraints(
         3, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    // Last row
+    // Seventh row
     add(this.visibleCheckBox, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
     if (this.textureComponent != null) {
       add(this.textureRadioButton, new GridBagConstraints(
           2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
           3, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
+    }
+    // Last rows
+    if (this.lightPowerLabel != null) {
+      add(new JSeparator(), new GridBagConstraints(
+          0, 7, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+      add(this.lightPowerLabel, new GridBagConstraints(
+          0, 8, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+      add(this.lightPowerSpinner, new GridBagConstraints(
+          1, 8, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 15), 0, 0));
     }
   }
 

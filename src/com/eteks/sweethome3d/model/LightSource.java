@@ -28,19 +28,29 @@ import java.io.Serializable;
 public class LightSource implements Serializable {
   private static final long serialVersionUID = 1L;
   
-  private float x;
-  private float y;
-  private float z;
-  private int   color;
+  private final float x;
+  private final float y;
+  private final float z;
+  private final int   color;
+  private final Float diameter;
 
   /**
    * Creates a new light source.
    */
   public LightSource(float x, float y, float z, int color) {
+    this(x, y, z, color, null);
+  }
+
+  /**
+   * Creates a new light source.
+   * @since 3.0
+   */
+  public LightSource(float x, float y, float z, int color, Float diameter) {
     this.x = x;
     this.y = y;
     this.z = z;
     this.color = color;
+    this.diameter = diameter;
   }
 
   /**
@@ -69,5 +79,13 @@ public class LightSource implements Serializable {
    */
   public int getColor() {
     return this.color;
+  }
+  
+  /**
+   * Returns the diameter of this source or <code>null</code> if it's not defined.
+   * @since 3.0
+   */
+  public Float getDiameter() {
+    return this.diameter;
   }
 }

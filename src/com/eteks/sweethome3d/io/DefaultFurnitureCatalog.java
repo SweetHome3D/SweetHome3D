@@ -187,6 +187,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     LIGHT_SOURCE_COLOR("lightSourceColor"),
     /**
+     * The key for the color(s) of light sources in a light (optional).
+     */
+    LIGHT_SOURCE_DIAMETER("lightSourceDiameter"),
+    /**
      * The key for the elevation in centimeters of a piece of furniture (optional).
      */
     ELEVATION("elevation"),
@@ -738,6 +742,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         throw new IllegalArgumentException(
             "Expected " + lightSourceX.length + " values in " + PropertyKey.LIGHT_SOURCE_COLOR.getKey(index) + " key");
       }
+      String lightSourceDiametersString = getOptionalString(resource, PropertyKey.LIGHT_SOURCE_DIAMETER.getKey(index), null);
+      String [] lightSourceDiameters;
+      if (lightSourceDiametersString != null) {
+        lightSourceDiameters = lightSourceDiametersString.split(" ");
+        if (lightSourceDiameters.length != lightSourceX.length) {
+          throw new IllegalArgumentException(
+              "Expected " + lightSourceX.length + " values in " + PropertyKey.LIGHT_SOURCE_DIAMETER.getKey(index) + " key");
+        }
+      } else {
+        lightSourceDiameters = null;
+      }
       
       lightSources = new LightSource [lightSourceX.length];
       for (int i = 0; i < lightSources.length; i++) {
@@ -748,7 +763,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         lightSources [i] = new LightSource(Float.parseFloat(lightSourceX [i]) / lightWidth, 
             Float.parseFloat(lightSourceY [i]) / lightDepth, 
             Float.parseFloat(lightSourceZ [i]) / lightHeight, 
-            color);
+            color,
+            lightSourceDiameters != null
+                ? Float.parseFloat(lightSourceDiameters [i]) / lightWidth
+                : null);
       }
     }     
     return lightSources;

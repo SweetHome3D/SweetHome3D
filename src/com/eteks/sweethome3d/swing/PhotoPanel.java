@@ -33,7 +33,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -48,8 +47,14 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Dictionary;
+import java.util.GregorianCalendar;
 import java.util.Hashtable;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,9 +72,11 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
@@ -80,6 +87,8 @@ import javax.swing.event.ChangeListener;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
 import com.eteks.sweethome3d.model.AspectRatio;
+import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.Camera.Lens;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -114,10 +123,19 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JSlider               qualitySlider;
   private JPanel                qualityDescriptionPanel;
   private JLabel []             qualityDescriptionLabels;
+  private Component             advancedComponentsSeparator;
+  private JLabel                dateLabel;
+  private JSpinner              dateSpinner;
+  private JLabel                timeLabel;
+  private JSpinner              timeSpinner;
+  private JLabel                lensLabel;
+  private JComboBox             lensComboBox;
+  private JCheckBox             ceilingLightEnabledCheckBox;
   private String                dialogTitle;
   private JPanel                photoPanel;
   private CardLayout            photoCardLayout;
   private ExecutorService       photoCreationExecutor;
+  private long                  photoCreationStartTime;
   private JButton               createButton;
   private JButton               saveButton;
   private JButton               closeButton;
@@ -132,7 +150,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.preferences = preferences;
     this.controller = controller;
     createActions(preferences);
-    createComponents(preferences, controller);
+    createComponents(home, preferences, controller);
     setMnemonics(preferences);
     layoutComponents();    
 
@@ -155,7 +173,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         new ResourceAction(preferences, PhotoPanel.class, ActionType.STOP_PHOTO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
-            stopPhotoCreation();
+            stopPhotoCreation(true);
           }
         });
     actions.put(ActionType.SAVE_PHOTO, 
@@ -177,7 +195,8 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components.
    */
-  private void createComponents(final UserPreferences preferences,
+  private void createComponents(final Home home, 
+                                final UserPreferences preferences,
                                 final PhotoController controller) {
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(400, 400));
@@ -296,7 +315,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         AspectRatio.RATIO_4_3,
         AspectRatio.RATIO_3_2,
         AspectRatio.RATIO_16_9,
-        AspectRatio.RATIO_1_2});
+        AspectRatio.RATIO_2_1});
     this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, 
@@ -322,8 +341,8 @@ public class PhotoPanel extends JPanel implements DialogView {
               case RATIO_16_9 :
                 displayedValue = "16/9";
                 break;
-              case RATIO_1_2 :
-                displayedValue = "1/2";
+              case RATIO_2_1 :
+                displayedValue = "2/1";
                 break;
             }
           } 
@@ -381,30 +400,132 @@ public class PhotoPanel extends JPanel implements DialogView {
           public void propertyChange(PropertyChangeEvent ev) {
             qualitySlider.setValue(controller.getQuality());
             qualityDescriptionLayout.show(qualityDescriptionPanel, String.valueOf(controller.getQuality()));
+            updateAdvancedComponents();
           }
         });
     this.qualitySlider.setValue(controller.getQuality());
     qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
+
+    this.advancedComponentsSeparator = new JSeparator();
+
+    // Create date and time labels and spinners bound to TIME controller property
+    Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+    this.dateLabel = new JLabel();
+    final SpinnerDateModel dateSpinnerModel = new SpinnerDateModel();
+    dateSpinnerModel.setValue(date);
+    this.dateSpinner = new JSpinner(dateSpinnerModel);
+    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, 
+        ((SimpleDateFormat)DateFormat.getDateInstance(DateFormat.SHORT)).toPattern().replace("yy", "yyyy"));
+    this.dateSpinner.setEditor(dateEditor);
+    SwingTools.addAutoSelectionOnFocusGain(dateEditor.getTextField());
+    
+    this.timeLabel = new JLabel();
+    final SpinnerDateModel timeSpinnerModel = new SpinnerDateModel();
+    timeSpinnerModel.setValue(date);
+    this.timeSpinner = new JSpinner(timeSpinnerModel);
+    JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(this.timeSpinner, 
+        ((SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT)).toPattern());
+    this.timeSpinner.setEditor(timeEditor);
+    SwingTools.addAutoSelectionOnFocusGain(timeEditor.getTextField());
+
+    final PropertyChangeListener timeChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+        dateSpinnerModel.setValue(date);
+        timeSpinnerModel.setValue(date);
+      }
+    };
+    controller.addPropertyChangeListener(PhotoController.Property.TIME, timeChangeListener);
+    final ChangeListener dateTimeChangeListener = new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(PhotoController.Property.TIME, timeChangeListener);
+          // Merge date and time
+          GregorianCalendar dateCalendar = new GregorianCalendar();
+          dateCalendar.setTime((Date)dateSpinnerModel.getValue());
+          GregorianCalendar timeCalendar = new GregorianCalendar();
+          timeCalendar.setTime((Date)timeSpinnerModel.getValue());
+          Calendar utcCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+          utcCalendar.set(GregorianCalendar.YEAR, dateCalendar.get(GregorianCalendar.YEAR));
+          utcCalendar.set(GregorianCalendar.MONTH, dateCalendar.get(GregorianCalendar.MONTH));
+          utcCalendar.set(GregorianCalendar.DAY_OF_MONTH, dateCalendar.get(GregorianCalendar.DAY_OF_MONTH));
+          utcCalendar.set(GregorianCalendar.HOUR_OF_DAY, timeCalendar.get(GregorianCalendar.HOUR_OF_DAY));
+          utcCalendar.set(GregorianCalendar.MINUTE, timeCalendar.get(GregorianCalendar.MINUTE));
+          utcCalendar.set(GregorianCalendar.SECOND, timeCalendar.get(GregorianCalendar.SECOND));
+          controller.setTime(utcCalendar.getTimeInMillis());
+          controller.addPropertyChangeListener(PhotoController.Property.TIME, timeChangeListener);
+        }
+      };
+    dateSpinnerModel.addChangeListener(dateTimeChangeListener);
+    timeSpinnerModel.addChangeListener(dateTimeChangeListener);
+
+    // Create lens label and combo box
+    this.lensLabel = new JLabel();
+    this.lensComboBox = new JComboBox(Camera.Lens.values());
+    this.lensComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, 
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
+          String displayedValue;
+          switch ((Camera.Lens)value) {
+            case NORMAL :
+              displayedValue = preferences.getLocalizedString(PhotoPanel.class, "lensComboBox.normalLens.text");
+              break;
+            case SPHERICAL :
+              displayedValue = preferences.getLocalizedString(PhotoPanel.class, "lensComboBox.sphericalLens.text");
+              break;
+            case FISHEYE :
+              displayedValue = preferences.getLocalizedString(PhotoPanel.class, "lensComboBox.fisheyeLens.text");
+              break;
+            case PINHOLE :
+            default :
+              displayedValue = preferences.getLocalizedString(PhotoPanel.class, "lensComboBox.pinholeLens.text");
+              break;
+          }
+          return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
+              cellHasFocus);
+        }
+      });
+    this.lensComboBox.setSelectedItem(controller.getLens());
+    controller.addPropertyChangeListener(PhotoController.Property.LENS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            lensComboBox.setSelectedItem(controller.getLens());
+            
+          }
+        });
+    this.lensComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          Camera.Lens lens = (Camera.Lens)lensComboBox.getSelectedItem();
+          controller.setLens(lens);
+          if (lens == Camera.Lens.SPHERICAL) {
+            applyProportionsCheckBox.setSelected(true);
+            aspectRatioComboBox.setSelectedItem(AspectRatio.RATIO_2_1);
+          } else if (lens == Camera.Lens.FISHEYE) {
+            applyProportionsCheckBox.setSelected(true);
+            aspectRatioComboBox.setSelectedItem(AspectRatio.SQUARE_RATIO);
+          }  
+          updateRatioComponents();
+        }
+      });
+
+    this.ceilingLightEnabledCheckBox = new JCheckBox();
+    this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
+    this.ceilingLightEnabledCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setCeilingLightColor(ceilingLightEnabledCheckBox.isSelected() ? 0xD0D0D0 : 0);
+        }
+      });
     
     final JComponent view3D = (JComponent)controller.get3DView();
     controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
 
     final ActionMap actionMap = getActionMap();
     this.createButton = new JButton(actionMap.get(ActionType.START_PHOTO_CREATION));
-    this.createButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          // Swap Start / Stop action
-          if (createButton.getAction() == actionMap.get(ActionType.START_PHOTO_CREATION)) {
-            createButton.setAction(actionMap.get(ActionType.STOP_PHOTO_CREATION));
-          } else {
-            createButton.setAction(actionMap.get(ActionType.START_PHOTO_CREATION));
-          }
-        }
-      });
     this.saveButton = new JButton(actionMap.get(ActionType.SAVE_PHOTO));
     this.closeButton = new JButton(actionMap.get(ActionType.CLOSE));
 
     setComponentTexts(preferences);
+    updateRatioComponents();
   }
 
   /**
@@ -419,6 +540,14 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "applyProportionsCheckBox.text"));
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "qualityLabel.text"));
+    this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "dateLabel.text"));
+    this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "timeLabel.text"));
+    this.lensLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "lensLabel.text"));
+    this.ceilingLightEnabledCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "ceilingLightEnabledCheckBox.text"));
     JLabel fastLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "fastLabel.text"));
     if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
@@ -450,21 +579,28 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.widthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "widthLabel.mnemonic")).getKeyCode());
+      this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "widthLabel.mnemonic")).getKeyCode());
       this.widthLabel.setLabelFor(this.widthSpinner);
-      this.heightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "heightLabel.mnemonic")).getKeyCode());
+      this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.applyProportionsCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "applyProportionsCheckBox.mnemonic")).getKeyCode());
-      this.qualityLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
+      this.applyProportionsCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "applyProportionsCheckBox.mnemonic")).getKeyCode());
+      this.qualityLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
       this.qualityLabel.setLabelFor(this.qualitySlider);
+      this.dateLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "dateLabel.mnemonic")).getKeyCode());
+      this.dateLabel.setLabelFor(this.dateSpinner);
+      this.timeLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "timeLabel.mnemonic")).getKeyCode());
+      this.timeLabel.setLabelFor(this.timeSpinner);
+      this.lensLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PhotoPanel.class, "lensLabel.mnemonic")).getKeyCode());
+      this.lensLabel.setLabelFor(this.lensComboBox);
+      this.ceilingLightEnabledCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+          PhotoPanel.class, "ceilingLightEnabledCheckBox.mnemonic")).getKeyCode());
     }
   }
 
@@ -543,15 +679,78 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
     add(this.qualitySlider, new GridBagConstraints(
         2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
-    // Last row
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    // Fifth row
     // Force minimum size to avoid resizing effect
     this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(2, 0, 2, 0), 0, 0));
+    // Sixth row
+    add(this.advancedComponentsSeparator, new GridBagConstraints(
+        1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    // Seventh row
+    add(this.dateLabel, new GridBagConstraints(
+        1, 6, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.dateSpinner, new GridBagConstraints(
+        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 1, 0));
+    add(this.timeLabel, new GridBagConstraints(
+        3, 6, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.timeSpinner, new GridBagConstraints(
+        4, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+    // Last row
+    add(this.lensLabel, new GridBagConstraints(
+        1, 7, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    add(this.lensComboBox, new GridBagConstraints(
+        2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+    this.lensComboBox.setPreferredSize(new Dimension(this.widthSpinner.getPreferredSize().width, 
+        this.lensComboBox.getPreferredSize().height));
+    add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
+        3, 7, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
   
+  private void updateAdvancedComponents() {
+    boolean highQuality = controller.getQuality() >= 2;
+    boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
+    if (advancedComponentsVisible != highQuality) {
+      int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
+          + this.dateSpinner.getPreferredSize().height + 5
+          + this.lensComboBox.getPreferredSize().height;
+      this.advancedComponentsSeparator.setVisible(highQuality);
+      this.dateLabel.setVisible(highQuality);
+      this.dateSpinner.setVisible(highQuality);
+      this.timeLabel.setVisible(highQuality);
+      this.timeSpinner.setVisible(highQuality);
+      this.lensLabel.setVisible(highQuality);
+      this.lensComboBox.setVisible(highQuality);
+      this.ceilingLightEnabledCheckBox.setVisible(highQuality);
+      Component root = SwingUtilities.getRoot(this);
+      if (root != null) {
+        root.setSize(root.getWidth(), 
+            root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
+      }
+    }   
+  }
+
+  /**
+   * Updates photo height.  
+   */
+  private void updateRatioComponents() {
+    Lens lens = this.controller.getLens();
+    boolean fixedProportions = lens == Camera.Lens.FISHEYE 
+        || lens == Camera.Lens.SPHERICAL;
+    this.applyProportionsCheckBox.setEnabled(!fixedProportions); 
+    this.aspectRatioComboBox.setEnabled(!fixedProportions && applyProportionsCheckBox.isSelected()); 
+  }
+
   /**
    * Displays this panel in a non modal dialog.
    */
@@ -615,11 +814,12 @@ public class PhotoPanel extends JPanel implements DialogView {
       dialog.addWindowListener(new WindowAdapter() {
           public void windowClosed(WindowEvent ev) {
             ((JComponent)controller.get3DView()).removeComponentListener(view3DSizeListener);
-            stopPhotoCreation();
+            stopPhotoCreation(false);
             currentPhotoPanel = null;
           }
         });
 
+      updateAdvancedComponents();
       dialog.setVisible(true);
       currentPhotoPanel = this;
     }
@@ -635,7 +835,12 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.applyProportionsCheckBox.setEnabled(false);
     this.aspectRatioComboBox.setEnabled(false);
     this.qualitySlider.setEnabled(false);
+    this.dateSpinner.setEnabled(false);
+    this.timeSpinner.setEnabled(false);
+    this.lensComboBox.setEnabled(false);
+    this.ceilingLightEnabledCheckBox.setEnabled(false);
     getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(false);
+    this.createButton.setAction(getActionMap().get(ActionType.STOP_PHOTO_CREATION));
     this.photoCardLayout.show(this.photoPanel, WAIT_CARD);
     
     // Compute photo in an other executor thread
@@ -654,6 +859,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    * Caution : this method must be thread safe because it's called from an executor. 
    */
   private void computePhoto(Home home) {
+    this.photoCreationStartTime = System.currentTimeMillis();
     BufferedImage image = null;
     try {
       int quality = this.controller.getQuality();
@@ -661,9 +867,10 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
-        PhotoRenderer photoRenderer = new PhotoRenderer(home, quality == 2 
-            ? PhotoRenderer.Quality.LOW 
-            : PhotoRenderer.Quality.HIGH);
+        PhotoRenderer photoRenderer = new PhotoRenderer(home, 
+            quality == 2 
+                ? PhotoRenderer.Quality.LOW 
+                : PhotoRenderer.Quality.HIGH);
         if (!Thread.currentThread().isInterrupted()) {
           image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
           this.photoComponent.setImage(image);
@@ -701,6 +908,10 @@ public class PhotoPanel extends JPanel implements DialogView {
             applyProportionsCheckBox.setEnabled(true);
             aspectRatioComboBox.setEnabled(applyProportionsCheckBox.isSelected());
             qualitySlider.setEnabled(true);
+            dateSpinner.setEnabled(true);
+            timeSpinner.setEnabled(true);
+            lensComboBox.setEnabled(true);
+            ceilingLightEnabledCheckBox.setEnabled(true);
             photoCardLayout.show(photoPanel, PHOTO_CARD);
             photoCreationExecutor = null;
           }
@@ -724,11 +935,21 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Stops photo creation.
    */
-  private void stopPhotoCreation() {
-    if (this.photoCreationExecutor != null) {
-      // Will interrupt executor thread
-      this.photoCreationExecutor.shutdownNow();
-      this.photoCreationExecutor = null;
+  private void stopPhotoCreation(boolean confirmStop) {
+    if (this.photoCreationExecutor != null
+        // Confirm the stop if a rendering has been running for more than 30 s 
+        && (!confirmStop
+            || System.currentTimeMillis() - this.photoCreationStartTime < 30000
+            || JOptionPane.showConfirmDialog(getRootPane(), 
+                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopRendering.message"),
+                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopRendering.title"), 
+                  JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
+      if (this.photoCreationExecutor != null) { // Check a second time in case rendering stopped meanwhile
+        // Will interrupt executor thread      
+        this.photoCreationExecutor.shutdownNow();
+        this.photoCreationExecutor = null;
+        this.createButton.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
+      }
     }
   }
 
