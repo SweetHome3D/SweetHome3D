@@ -779,7 +779,6 @@ public class OBJWriter extends FilterWriter {
   /**
    * Applies to <code>normal</code> the given transformation, and appends to <code>normalsBuffer</code> 
    * its values in a line vn at OBJ format, if the normal isn't a key of <code>normalIndices</code> yet.  
-   * @param normalsBuffer TODO
    * @return <code>true</code> if the written normal doens't contain any NaN value 
    */
   private boolean writeNormal(StringBuilder normalsBuffer,
@@ -865,7 +864,6 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes the triangle indices given at vertexIndex1, vertexIndex2, vertexIndex3, 
    * in a line f at OBJ format. 
-   * @param normalsDefined TODO
    */
   private void writeIndexedTriangle(IndexedGeometryArray geometryArray, 
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3, 
@@ -928,7 +926,6 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes the quadrilateral indices given at vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4,
    * in a line f at OBJ format. 
-   * @param normalsDefined TODO
    */
   private void writeIndexedQuadrilateral(IndexedGeometryArray geometryArray, 
                                          int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
@@ -1023,7 +1020,6 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes the triangle indices given at vertexIndex1, vertexIndex2, vertexIndex3, 
    * in a line f at OBJ format. 
-   * @param normalsDefined TODO
    */
   private void writeTriangle(GeometryArray geometryArray, 
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
@@ -1086,7 +1082,6 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes the quadrilateral indices given at vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4,
    * in a line f at OBJ format. 
-   * @param normalsDefined TODO
    */
   private void writeQuadrilateral(GeometryArray geometryArray, 
                                   int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
