@@ -265,7 +265,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     // Create width label and spinner bound to WIDTH controller property
     this.widthLabel = new JLabel();
-    final SpinnerNumberModel widthSpinnerModel = new SpinnerNumberModel(480, 10, 3000, 10);
+    final SpinnerNumberModel widthSpinnerModel = new SpinnerNumberModel(480, 10, 10000, 10);
     this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
     widthSpinnerModel.setValue(controller.getWidth());
     widthSpinnerModel.addChangeListener(new ChangeListener() {
@@ -283,7 +283,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     
     // Create height label and spinner bound to HEIGHT controller property
     this.heightLabel = new JLabel();
-    final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 3000, 10);
+    final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 10000, 10);
     this.heightSpinner = new AutoCommitSpinner(heightSpinnerModel);
     heightSpinnerModel.setValue(controller.getHeight());
     heightSpinnerModel.addChangeListener(new ChangeListener() {
@@ -409,10 +409,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.advancedComponentsSeparator = new JSeparator();
 
     // Create date and time labels and spinners bound to TIME controller property
-    Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+    Date time = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
     this.dateLabel = new JLabel();
     final SpinnerDateModel dateSpinnerModel = new SpinnerDateModel();
-    dateSpinnerModel.setValue(date);
+    dateSpinnerModel.setValue(time);
     this.dateSpinner = new JSpinner(dateSpinnerModel);
     JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, 
         ((SimpleDateFormat)DateFormat.getDateInstance(DateFormat.SHORT)).toPattern().replace("yy", "yyyy"));
@@ -421,7 +421,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     
     this.timeLabel = new JLabel();
     final SpinnerDateModel timeSpinnerModel = new SpinnerDateModel();
-    timeSpinnerModel.setValue(date);
+    timeSpinnerModel.setValue(time);
     this.timeSpinner = new JSpinner(timeSpinnerModel);
     JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(this.timeSpinner, 
         ((SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT)).toPattern());
@@ -489,8 +489,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(PhotoController.Property.LENS, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            lensComboBox.setSelectedItem(controller.getLens());
-            
+            lensComboBox.setSelectedItem(controller.getLens());            
           }
         });
     this.lensComboBox.addItemListener(new ItemListener() {
@@ -510,6 +509,12 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     this.ceilingLightEnabledCheckBox = new JCheckBox();
     this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
+    controller.addPropertyChangeListener(PhotoController.Property.CEILING_LIGHT_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
+          }
+        });
     this.ceilingLightEnabledCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setCeilingLightColor(ceilingLightEnabledCheckBox.isSelected() ? 0xD0D0D0 : 0);

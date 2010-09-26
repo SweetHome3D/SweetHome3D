@@ -62,13 +62,19 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Dictionary;
+import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -86,6 +92,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -94,9 +101,12 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSeparator;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerDateModel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -162,8 +172,15 @@ public class VideoPanel extends JPanel implements DialogView {
   private JSlider               qualitySlider;
   private JPanel                qualityDescriptionPanel;
   private JLabel []             qualityDescriptionLabels;
+  private Component             advancedComponentsSeparator;
+  private JLabel                dateLabel;
+  private JSpinner              dateSpinner;
+  private JLabel                timeLabel;
+  private JSpinner              timeSpinner;
+  private JCheckBox             ceilingLightEnabledCheckBox;
   private String                dialogTitle;
   private ExecutorService       videoCreationExecutor;
+  private long                  videoCreationStartTime;
   private File                  videoFile;
   private JButton               createButton;
   private JButton               saveButton;
@@ -269,7 +286,7 @@ public class VideoPanel extends JPanel implements DialogView {
         new ResourceAction(preferences, VideoPanel.class, ActionType.STOP_VIDEO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
-            stopVideoCreation();
+            stopVideoCreation(true);
           }
         });
     actions.put(ActionType.SAVE_VIDEO, 
@@ -576,22 +593,79 @@ public class VideoPanel extends JPanel implements DialogView {
           public void propertyChange(PropertyChangeEvent ev) {
             qualitySlider.setValue(controller.getQuality());
             qualityDescriptionLayout.show(qualityDescriptionPanel, String.valueOf(controller.getQuality()));
+            updateAdvancedComponents();
           }
         });
     this.qualitySlider.setValue(controller.getQuality());
     qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
     
-    this.createButton = new JButton(actionMap.get(ActionType.START_VIDEO_CREATION));
-    this.createButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          // Swap Start / Stop action
-          if (createButton.getAction() == actionMap.get(ActionType.START_VIDEO_CREATION)) {
-            createButton.setAction(actionMap.get(ActionType.STOP_VIDEO_CREATION));
-          } else {
-            createButton.setAction(actionMap.get(ActionType.START_VIDEO_CREATION));
+    this.advancedComponentsSeparator = new JSeparator();
+
+    // Create date and time labels and spinners bound to TIME controller property
+    Date time = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+    this.dateLabel = new JLabel();
+    final SpinnerDateModel dateSpinnerModel = new SpinnerDateModel();
+    dateSpinnerModel.setValue(time);
+    this.dateSpinner = new JSpinner(dateSpinnerModel);
+    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, 
+        ((SimpleDateFormat)DateFormat.getDateInstance(DateFormat.SHORT)).toPattern().replace("yy", "yyyy"));
+    this.dateSpinner.setEditor(dateEditor);
+    SwingTools.addAutoSelectionOnFocusGain(dateEditor.getTextField());
+    
+    this.timeLabel = new JLabel();
+    final SpinnerDateModel timeSpinnerModel = new SpinnerDateModel();
+    timeSpinnerModel.setValue(time);
+    this.timeSpinner = new JSpinner(timeSpinnerModel);
+    JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(this.timeSpinner, 
+        ((SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT)).toPattern());
+    this.timeSpinner.setEditor(timeEditor);
+    SwingTools.addAutoSelectionOnFocusGain(timeEditor.getTextField());
+
+    final PropertyChangeListener timeChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+        dateSpinnerModel.setValue(date);
+        timeSpinnerModel.setValue(date);
+      }
+    };
+    controller.addPropertyChangeListener(VideoController.Property.TIME, timeChangeListener);
+    final ChangeListener dateTimeChangeListener = new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(VideoController.Property.TIME, timeChangeListener);
+          // Merge date and time
+          GregorianCalendar dateCalendar = new GregorianCalendar();
+          dateCalendar.setTime((Date)dateSpinnerModel.getValue());
+          GregorianCalendar timeCalendar = new GregorianCalendar();
+          timeCalendar.setTime((Date)timeSpinnerModel.getValue());
+          Calendar utcCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+          utcCalendar.set(GregorianCalendar.YEAR, dateCalendar.get(GregorianCalendar.YEAR));
+          utcCalendar.set(GregorianCalendar.MONTH, dateCalendar.get(GregorianCalendar.MONTH));
+          utcCalendar.set(GregorianCalendar.DAY_OF_MONTH, dateCalendar.get(GregorianCalendar.DAY_OF_MONTH));
+          utcCalendar.set(GregorianCalendar.HOUR_OF_DAY, timeCalendar.get(GregorianCalendar.HOUR_OF_DAY));
+          utcCalendar.set(GregorianCalendar.MINUTE, timeCalendar.get(GregorianCalendar.MINUTE));
+          utcCalendar.set(GregorianCalendar.SECOND, timeCalendar.get(GregorianCalendar.SECOND));
+          controller.setTime(utcCalendar.getTimeInMillis());
+          controller.addPropertyChangeListener(VideoController.Property.TIME, timeChangeListener);
+        }
+      };
+    dateSpinnerModel.addChangeListener(dateTimeChangeListener);
+    timeSpinnerModel.addChangeListener(dateTimeChangeListener);
+
+    this.ceilingLightEnabledCheckBox = new JCheckBox();
+    this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
+    controller.addPropertyChangeListener(VideoController.Property.CEILING_LIGHT_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
           }
+        });
+    this.ceilingLightEnabledCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setCeilingLightColor(ceilingLightEnabledCheckBox.isSelected() ? 0xD0D0D0 : 0);
         }
       });
+
+    this.createButton = new JButton(actionMap.get(ActionType.START_VIDEO_CREATION));
     this.saveButton = new JButton(actionMap.get(ActionType.SAVE_VIDEO));
     this.closeButton = new JButton(actionMap.get(ActionType.CLOSE));
 
@@ -613,6 +687,12 @@ public class VideoPanel extends JPanel implements DialogView {
         VideoPanel.class, "videoFormatComboBox.format");
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         VideoPanel.class, "qualityLabel.text"));
+    this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+        VideoPanel.class, "dateLabel.text"));
+    this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+        VideoPanel.class, "timeLabel.text"));
+    this.ceilingLightEnabledCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+        VideoPanel.class, "ceilingLightEnabledCheckBox.text"));
     JLabel fastLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         VideoPanel.class, "fastLabel.text"));
     if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
@@ -652,6 +732,14 @@ public class VideoPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               VideoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
       this.qualityLabel.setLabelFor(this.qualitySlider);
+      this.dateLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          VideoPanel.class, "dateLabel.mnemonic")).getKeyCode());
+      this.dateLabel.setLabelFor(this.dateSpinner);
+      this.timeLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          VideoPanel.class, "timeLabel.mnemonic")).getKeyCode());
+      this.timeLabel.setLabelFor(this.timeSpinner);
+      this.ceilingLightEnabledCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+          VideoPanel.class, "ceilingLightEnabledCheckBox.mnemonic")).getKeyCode());
     }
   }
 
@@ -730,14 +818,61 @@ public class VideoPanel extends JPanel implements DialogView {
     add(this.qualitySlider, new GridBagConstraints(
         2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
-    // Last row
+    // Sixth row
     // Force minimum size to avoid resizing effect
     this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    // Seventh row
+    add(this.advancedComponentsSeparator, new GridBagConstraints(
+        1, 6, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    // Height row
+    JPanel advancedPanel = new JPanel(new GridBagLayout());
+    advancedPanel.add(this.dateLabel, new GridBagConstraints(
+        1, 7, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    advancedPanel.add(this.dateSpinner, new GridBagConstraints(
+        2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 1, 0));
+    advancedPanel.add(this.timeLabel, new GridBagConstraints(
+        3, 7, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    advancedPanel.add(this.timeSpinner, new GridBagConstraints(
+        4, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+    // Last row
+    advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
+        1, 8, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    
+    add(advancedPanel, new GridBagConstraints(
+        0, 7, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
   
+  private void updateAdvancedComponents() {
+    boolean highQuality = controller.getQuality() >= 2;
+    boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
+    if (advancedComponentsVisible != highQuality) {
+      int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
+          + this.dateSpinner.getPreferredSize().height + 5
+          + this.ceilingLightEnabledCheckBox.getPreferredSize().height;
+      this.advancedComponentsSeparator.setVisible(highQuality);
+      this.dateLabel.setVisible(highQuality);
+      this.dateSpinner.setVisible(highQuality);
+      this.timeLabel.setVisible(highQuality);
+      this.timeSpinner.setVisible(highQuality);
+      this.ceilingLightEnabledCheckBox.setVisible(highQuality);
+      Component root = SwingUtilities.getRoot(this);
+      if (root != null) {
+        root.setSize(root.getWidth(), 
+            root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
+      }
+    }   
+  }
+
   /**
    * Displays this panel in a non modal dialog.
    */
@@ -793,7 +928,7 @@ public class VideoPanel extends JPanel implements DialogView {
       
       dialog.addWindowListener(new WindowAdapter() {
         public void windowClosed(WindowEvent ev) {
-          stopVideoCreation();
+          stopVideoCreation(false);
           if (playbackTimer != null) {
             pausePlayback();
           }
@@ -804,6 +939,7 @@ public class VideoPanel extends JPanel implements DialogView {
         }
       });
       
+      updateAdvancedComponents();
       dialog.setVisible(true);
       currentVideoPanel = this;
     }
@@ -823,7 +959,10 @@ public class VideoPanel extends JPanel implements DialogView {
         || !compareCameraLocation(lastCamera, camera)) {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
-      cameraPath.add(camera.clone());
+      Camera recordedCamera = camera.clone();
+      recordedCamera.setLens(Camera.Lens.NORMAL);
+      recordedCamera.setTime(this.controller.getTime());
+      cameraPath.add(recordedCamera);
       this.controller.setCameraPath(cameraPath);
     }
   }
@@ -837,7 +976,8 @@ public class VideoPanel extends JPanel implements DialogView {
         && camera1.getZ() == camera2.getZ() 
         && camera1.getYaw() == camera2.getYaw()
         && camera1.getPitch() == camera2.getPitch() 
-        && camera1.getFieldOfView() == camera2.getFieldOfView();
+        && camera1.getFieldOfView() == camera2.getFieldOfView()
+        && camera1.getTime() == camera2.getTime();
   }
 
   /**
@@ -864,13 +1004,17 @@ public class VideoPanel extends JPanel implements DialogView {
           public void actionPerformed(ActionEvent ev) {
             if ("backward".equals(ev.getActionCommand())) {
               if (cameraPathIterator.hasPrevious()) {
-                home.getCamera().setCamera(cameraPathIterator.previous());
+                Camera camera = cameraPathIterator.previous();
+                home.getCamera().setCamera(camera);
+                controller.setTime(camera.getTime());
               } else {
                 pausePlayback();
               }
             } else {
               if (cameraPathIterator.hasNext()) {
-                home.getCamera().setCamera(cameraPathIterator.next());
+                Camera camera = cameraPathIterator.next();
+                home.getCamera().setCamera(camera);
+                controller.setTime(camera.getTime());
               } else {
                 pausePlayback();
               }
@@ -988,7 +1132,8 @@ public class VideoPanel extends JPanel implements DialogView {
   private Camera [] getVideoFramesPath(int frameRate) {
     List<Camera> videoFramesPath = new ArrayList<Camera>();
     final float moveDistancePerFrame = 240000f / 3600 / frameRate;  // 3 cm/frame = 1800 m / 3600 s / 25 frame/s = 2.4 km/h
-    final float moveAnglePerFrame = (float)(Math.PI / 180 * 30 / frameRate); 
+    final float moveAnglePerFrame = (float)(Math.PI / 180 * 30 / frameRate);
+    final float elapsedTimePerFrame = 345600 / frameRate * 25; // 250 frame/day at 25 frame/second
     
     List<Camera> cameraPath = this.controller.getCameraPath();
     Camera camera = cameraPath.get(0);
@@ -998,6 +1143,7 @@ public class VideoPanel extends JPanel implements DialogView {
     float yaw = camera.getYaw(); 
     float pitch = camera.getPitch(); 
     float fieldOfView = camera.getFieldOfView();
+    long  time = camera.getTime();
     videoFramesPath.add(camera.clone());
     
     for (int i = 1; i < cameraPath.size(); i++) {
@@ -1008,15 +1154,17 @@ public class VideoPanel extends JPanel implements DialogView {
       float newYaw = camera.getYaw(); 
       float newPitch = camera.getPitch(); 
       float newFieldOfView = camera.getFieldOfView();
+      long  newTime = camera.getTime();
       
       float distance = new Point3f(x, y, z).distance(new Point3f(newX, newY, newZ));
       float moveCount = distance / moveDistancePerFrame;
       float yawAngleCount = Math.abs(newYaw - yaw) / moveAnglePerFrame;
       float pitchAngleCount = Math.abs(newPitch - pitch) / moveAnglePerFrame;
       float fieldOfViewAngleCount = Math.abs(newFieldOfView - fieldOfView) / moveAnglePerFrame;
+      float timeCount = Math.abs(newTime - time) / elapsedTimePerFrame;
 
       int frameCount = (int)Math.max(moveCount, Math.max(yawAngleCount, 
-          Math.max(pitchAngleCount, fieldOfViewAngleCount)));
+          Math.max(pitchAngleCount, Math.max(fieldOfViewAngleCount, timeCount))));
       
       float deltaX = (newX - x) / frameCount;
       float deltaY = (newY - y) / frameCount;
@@ -1024,12 +1172,15 @@ public class VideoPanel extends JPanel implements DialogView {
       float deltaYawAngle = (newYaw - yaw) / frameCount;
       float deltaPitchAngle = (newPitch - pitch) / frameCount;
       float deltaFieldOfViewAngle = (newFieldOfView - fieldOfView) / frameCount;
+      long deltaTime = Math.round(((double)newTime - time) / timeCount);
       
       for (int j = 1; j <= frameCount; j++) {
         videoFramesPath.add(new Camera(
             x + deltaX * j, y + deltaY * j, z + deltaZ * j, 
             yaw + deltaYawAngle * j, pitch + deltaPitchAngle * j, 
-            fieldOfView + deltaFieldOfViewAngle * j));                    
+            fieldOfView + deltaFieldOfViewAngle * j,
+            time + deltaTime * j,
+            Camera.Lens.NORMAL));
       }
       
       x = newX;
@@ -1038,6 +1189,7 @@ public class VideoPanel extends JPanel implements DialogView {
       yaw = newYaw;
       pitch = newPitch;
       fieldOfView = newFieldOfView;
+      time = newTime;
     }
 
     return videoFramesPath.toArray(new Camera [videoFramesPath.size()]);
@@ -1049,11 +1201,15 @@ public class VideoPanel extends JPanel implements DialogView {
   private void startVideoCreation() {
     ActionMap actionMap = getActionMap();
     actionMap.get(ActionType.SAVE_VIDEO).setEnabled(false);
+    this.createButton.setAction(getActionMap().get(ActionType.STOP_VIDEO_CREATION));
     actionMap.get(ActionType.RECORD).setEnabled(false);
     actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(false);
     actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(false);
     this.videoFormatComboBox.setEnabled(false);
     this.qualitySlider.setEnabled(false);
+    this.dateSpinner.setEnabled(false);
+    this.timeSpinner.setEnabled(false);
+    this.ceilingLightEnabledCheckBox.setEnabled(false);
     this.statusLayout.show(this.statusPanel, PROGRESS_CARD);
     this.progressBar.setIndeterminate(true);
     this.progressLabel.setText("");
@@ -1074,6 +1230,7 @@ public class VideoPanel extends JPanel implements DialogView {
    * Caution : this method must be thread safe because it's called from an executor. 
    */
   private void computeVideo(Home home) {
+    this.videoCreationStartTime = System.currentTimeMillis();
     int frameRate = this.controller.getFrameRate();
     int quality = this.controller.getQuality();
     int width = this.controller.getWidth();
@@ -1142,6 +1299,9 @@ public class VideoPanel extends JPanel implements DialogView {
             actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(true);
             videoFormatComboBox.setEnabled(true);
             qualitySlider.setEnabled(true);
+            dateSpinner.setEnabled(true);
+            timeSpinner.setEnabled(true);
+            ceilingLightEnabledCheckBox.setEnabled(true);
             statusLayout.show(statusPanel, TIP_CARD);
             videoCreationExecutor = null;
           }
@@ -1166,11 +1326,21 @@ public class VideoPanel extends JPanel implements DialogView {
   /**
    * Stops video creation.
    */
-  private void stopVideoCreation() {
-    if (this.videoCreationExecutor != null) {
-      // Interrupt executor thread
-      this.videoCreationExecutor.shutdownNow();
-      this.videoCreationExecutor = null;
+  private void stopVideoCreation(boolean confirmStop) {
+    if (this.videoCreationExecutor != null
+        // Confirm the stop if a rendering has been running for more than 30 s 
+        && (!confirmStop
+            || System.currentTimeMillis() - this.videoCreationStartTime < 30000
+            || JOptionPane.showConfirmDialog(getRootPane(), 
+                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopRendering.message"),
+                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopRendering.title"), 
+                  JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
+      if (this.videoCreationExecutor != null) { // Check a second time in case rendering stopped meanwhile
+        // Interrupt executor thread
+        this.videoCreationExecutor.shutdownNow();
+        this.videoCreationExecutor = null;
+        this.createButton.setAction(getActionMap().get(ActionType.START_VIDEO_CREATION));
+      }
     }
   }
 

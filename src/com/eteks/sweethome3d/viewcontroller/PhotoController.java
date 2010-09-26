@@ -69,6 +69,7 @@ public class PhotoController implements Controller {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
     home.addPropertyChangeListener(Home.Property.CAMERA, new CameraChangeListener(this));
+    home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, new HomeEnvironmentChangeListener(this));
     updateProperties();
   }
 
@@ -88,6 +89,28 @@ public class PhotoController implements Controller {
       final PhotoController controller = this.photoController.get();
       if (controller == null) {
         ((Home)ev.getSource()).removePropertyChangeListener(Home.Property.CAMERA, this);
+      } else {
+        controller.updateProperties();
+      }
+    }
+  }
+
+  /**
+   * Home environment listener that updates properties. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between home and this controller.  
+   */
+  private static class HomeEnvironmentChangeListener implements PropertyChangeListener {
+    private WeakReference<PhotoController> photoController;
+    
+    public HomeEnvironmentChangeListener(PhotoController photoController) {
+      this.photoController = new WeakReference<PhotoController>(photoController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If controller was garbage collected, remove this listener from home
+      final PhotoController controller = this.photoController.get();
+      if (controller == null) {
+        ((HomeEnvironment)ev.getSource()).removePropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, this);
       } else {
         controller.updateProperties();
       }

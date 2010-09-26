@@ -19,8 +19,10 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.AspectRatio;
@@ -37,7 +39,7 @@ public class VideoController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {ASPECT_RATIO, FRAME_RATE, WIDTH, HEIGHT, QUALITY, CAMERA_PATH}
+  public enum Property {ASPECT_RATIO, FRAME_RATE, WIDTH, HEIGHT, QUALITY, CAMERA_PATH, TIME, CEILING_LIGHT_COLOR}
   
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -52,6 +54,8 @@ public class VideoController implements Controller {
   private int                         height;
   private int                         quality;
   private List<Camera>                cameraPath;
+  private long                        time;
+  private int                         ceilingLightColor;
 
   public VideoController(Home home,
                          UserPreferences preferences, 
@@ -64,6 +68,29 @@ public class VideoController implements Controller {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
     updateProperties();
+    home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, new HomeEnvironmentChangeListener(this));
+  }
+
+  /**
+   * Home environment listener that updates properties. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between home and this controller.  
+   */
+  private static class HomeEnvironmentChangeListener implements PropertyChangeListener {
+    private WeakReference<VideoController> videoController;
+    
+    public HomeEnvironmentChangeListener(VideoController videoController) {
+      this.videoController = new WeakReference<VideoController>(videoController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If controller was garbage collected, remove this listener from home
+      final VideoController controller = this.videoController.get();
+      if (controller == null) {
+        ((HomeEnvironment)ev.getSource()).removePropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, this);
+      } else {
+        controller.updateProperties();
+      }
+    }
   }
 
   /**
@@ -115,7 +142,12 @@ public class VideoController implements Controller {
     setWidth(homeEnvironment.getVideoWidth(), false);
     setHeight(homeEnvironment.getVideoHeight(), false);
     setQuality(homeEnvironment.getVideoQuality());
-    setCameraPath(homeEnvironment.getVideoCameraPath());
+    List<Camera> videoCameraPath = homeEnvironment.getVideoCameraPath();
+    setCameraPath(videoCameraPath);
+    setTime(videoCameraPath.isEmpty() 
+        ? this.home.getCamera().getTime()
+        : videoCameraPath.get(0).getTime());
+    setCeilingLightColor(homeEnvironment.getCeillingLightColor());
   }
   
   /**
@@ -251,5 +283,43 @@ public class VideoController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.CAMERA_PATH.name(), oldCameraPath, cameraPath);
       this.home.getEnvironment().setVideoCameraPath(this.cameraPath);
     }
+  }
+
+  /**
+   * Sets the edited time in UTC time zone.
+   */
+  public void setTime(long time) {
+    if (this.time != time) {
+      long oldTime = this.time;
+      this.time = time;
+      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(), oldTime, time);
+      this.home.getCamera().setTime(time);
+    }
+  }
+  
+  /**
+   * Returns the edited time in UTC time zone.
+   */
+  public long getTime() {
+    return this.time;
+  }
+
+  /**
+   * Sets the edited ceiling light color.
+   */
+  public void setCeilingLightColor(int ceilingLightColor) {
+    if (this.ceilingLightColor != ceilingLightColor) {
+      int oldCeilingLightColor = this.ceilingLightColor;
+      this.ceilingLightColor = ceilingLightColor;
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_LIGHT_COLOR.name(), oldCeilingLightColor, ceilingLightColor);
+      this.home.getEnvironment().setCeillingLightColor(ceilingLightColor);
+    }
+  }
+  
+  /**
+   * Returns the edited ceiling light color.
+   */
+  public int getCeilingLightColor() {
+    return this.ceilingLightColor;
   }
 }

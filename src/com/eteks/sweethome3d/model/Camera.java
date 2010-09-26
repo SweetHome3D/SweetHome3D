@@ -67,20 +67,29 @@ public class Camera implements Serializable, Cloneable {
    * Creates a camera at given location and angles.
    */
   public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView) {
+    this(x, y, z, yaw, pitch, fieldOfView, midday(), Lens.PINHOLE);
+  }
+
+  /**
+   * Creates a camera at given location and angles.
+   * @since 3.0
+   */
+  public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView, 
+                long time, Lens lens) {
     this.x = x;
     this.y = y;
     this.z = z;
     this.yaw = yaw;
     this.pitch = pitch;
     this.fieldOfView = fieldOfView;
-    this.time = midday();
-    this.lens = Lens.PINHOLE;
+    this.time = time;
+    this.lens = lens;
   }
 
   /**
    * Returns the time of midday today in milliseconds since the Epoch in UTC time zone.
    */
-  private long midday() {
+  private static long midday() {
     Calendar midday = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     midday.set(Calendar.HOUR_OF_DAY, 12);
     midday.set(Calendar.MINUTE, 0);
@@ -308,8 +317,6 @@ public class Camera implements Serializable, Cloneable {
     setYaw(camera.getYaw());
     setPitch(camera.getPitch());
     setFieldOfView(camera.getFieldOfView());
-    setTime(camera.getTime());
-    setLens(camera.getLens());
   }
   
   /**
