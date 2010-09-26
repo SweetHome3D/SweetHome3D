@@ -278,7 +278,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * Sets the color of ceiling lights and fires a <code>PropertyChangeEvent</code>.
    */
   public void setCeillingLightColor(int ceilingLightColor) {
-    if (lightColor != this.ceilingLightColor) {
+    if (ceilingLightColor != this.ceilingLightColor) {
       int oldCeilingLightColor = this.ceilingLightColor;
       this.ceilingLightColor = ceilingLightColor;
       this.propertyChangeSupport.firePropertyChange(
