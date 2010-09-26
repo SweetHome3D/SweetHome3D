@@ -438,7 +438,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.lightPowerLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           HomeFurniturePanel.class, "lightPowerLabel.text", unitName));
       final NullableSpinner.NullableSpinnerNumberModel lightPowerSpinnerModel = 
-          new NullableSpinner.NullableSpinnerNumberModel(0, 0, 100, 10);
+          new NullableSpinner.NullableSpinnerNumberModel(0, 0, 100, 5);
       this.lightPowerSpinner = new NullableSpinner(lightPowerSpinnerModel);
       lightPowerSpinnerModel.setNullable(controller.getLightPower() == null);
       lightPowerSpinnerModel.setValue(controller.getLightPower() != null ? Math.round(controller.getLightPower() * 100) : null);
