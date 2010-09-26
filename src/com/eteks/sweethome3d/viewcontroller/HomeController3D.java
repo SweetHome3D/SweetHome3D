@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.undo.UndoableEditSupport;
@@ -205,7 +206,7 @@ public class HomeController3D implements Controller {
     
     private Camera      topCamera;
     private Rectangle2D homeBounds;
-    private float       homeHeight;
+    private float       minDistanceToHomeCenter;
     private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
           updateCameraFromHomeBounds();
@@ -242,11 +243,6 @@ public class HomeController3D implements Controller {
         }
       };
 
-    public TopCameraState() {
-      this.homeBounds = getHomeBounds();
-      this.homeHeight = getHomeHeight();
-    }
-      
     @Override
     public void enter() {
       this.topCamera = home.getCamera();
@@ -270,11 +266,16 @@ public class HomeController3D implements Controller {
      */
     private void updateCameraFromHomeBounds() {
       Rectangle2D newHomeBounds = getHomeBounds();
-      float deltaZ = (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight())  
-          - Math.max(newHomeBounds.getWidth(), newHomeBounds.getHeight()));
+      float newMinDistance = getMinDistanceToHomeCenter(newHomeBounds);
+      float delta;
+      if (this.homeBounds == null) {
+        delta = 0;
+      } else {
+        delta = (this.minDistanceToHomeCenter - newMinDistance) / 2;
+      }
       this.homeBounds = newHomeBounds;
-      this.homeHeight = getHomeHeight();
-      moveCamera(deltaZ);
+      this.minDistanceToHomeCenter = newMinDistance;
+      moveCamera(delta);
     }
 
     /**
@@ -283,7 +284,8 @@ public class HomeController3D implements Controller {
     private Rectangle2D getHomeBounds() {
       // Compute plan bounds to include rooms, walls and furniture
       Rectangle2D homeBounds = null;
-      for (Wall wall : home.getWalls()) {
+      Collection<Wall> walls = home.getWalls();
+      for (Wall wall : walls) {
         homeBounds = updateHomeBounds(homeBounds, wall.getXStart(), wall.getYStart());
         homeBounds.add(wall.getXEnd(), wall.getYEnd());
       }
@@ -301,16 +303,21 @@ public class HomeController3D implements Controller {
       }
 
       if (homeBounds != null) {
-        // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
-        return new Rectangle2D.Float(
-            (float)(MIN_SIZE < homeBounds.getWidth() 
-                        ? homeBounds.getMinX()
-                        : homeBounds.getCenterX() - MIN_SIZE / 2), 
-            (float)(MIN_SIZE < homeBounds.getHeight() 
-                        ? homeBounds.getMinY()
-                        : homeBounds.getCenterY() - MIN_SIZE / 2), 
-            (float)Math.max(MIN_SIZE, homeBounds.getWidth()), 
-            (float)Math.max(MIN_SIZE, homeBounds.getHeight()));
+        if (walls.isEmpty()) {
+          // If home contains only rooms and furniture don't fix minimum size
+          return homeBounds;
+        } else {
+          // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
+          return new Rectangle2D.Float(
+              (float)(MIN_SIZE < homeBounds.getWidth() 
+                          ? homeBounds.getMinX()
+                          : homeBounds.getCenterX() - MIN_SIZE / 2), 
+              (float)(MIN_SIZE < homeBounds.getHeight() 
+                          ? homeBounds.getMinY()
+                          : homeBounds.getCenterY() - MIN_SIZE / 2), 
+              (float)Math.max(MIN_SIZE, homeBounds.getWidth()), 
+              (float)Math.max(MIN_SIZE, homeBounds.getHeight()));
+        }
       } else {
         return new Rectangle2D.Float(0, 0, MIN_SIZE, MIN_SIZE);
       }
@@ -330,47 +337,55 @@ public class HomeController3D implements Controller {
     }
 
     /**
-     * Returns home height that includes walls and furniture.
+     * Returns the minimum distance of the camera to home center.
      */
-    private float getHomeHeight() {
-      // Compute plan bounds to include walls and furniture
-      float homeHeight = 0;
-      for (Wall wall : home.getWalls()) {
-        Float height = wall.getHeight();
-        if (height != null) {
-          homeHeight = Math.max(homeHeight, height);
+    private float getMinDistanceToHomeCenter(Rectangle2D homeBounds) {
+      float maxHeight = 0;
+      Collection<Wall> walls = home.getWalls();
+      if (walls.isEmpty()) {
+        // If home contains no wall, search the max height of the highest piece
+        for (HomePieceOfFurniture piece : home.getFurniture()) {
+          if (piece.isVisible()) {
+            maxHeight = Math.max(maxHeight, piece.getElevation() + piece.getHeight());
+          }
         }
-        Float heightAtEnd = wall.getHeightAtEnd();
-        if (heightAtEnd != null) {
-          homeHeight = Math.max(homeHeight, heightAtEnd);
-        }
-      }
-      for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible()) {
-          homeHeight = Math.max(homeHeight, piece.getElevation() + piece.getHeight());
-        }
-      }
-      if (homeHeight > 0) {
-        return Math.max(10, homeHeight);
       } else {
-        return home.getWallHeight();
+         // Search the max height of the highest wall
+        for (Wall wall : walls) {
+          Float height = wall.getHeight();
+          if (height != null) {
+            maxHeight = Math.max(maxHeight, height);
+          }
+          Float heightAtEnd = wall.getHeightAtEnd();
+          if (heightAtEnd != null) {
+            maxHeight = Math.max(maxHeight, heightAtEnd);
+          }
+        }
       }
+      if (maxHeight > 0) {
+        maxHeight = Math.max(10, maxHeight);
+      } else {
+        maxHeight = home.getWallHeight();        
+      }
+      double halfDiagonal = Math.sqrt(homeBounds.getWidth() * homeBounds.getWidth() + homeBounds.getHeight() * homeBounds.getHeight()) / 2;
+      return (float)Math.sqrt(maxHeight * maxHeight + halfDiagonal * halfDiagonal) * 1.1f;
     }
     
     @Override
     public void moveCamera(float delta) {
-      // Use a 5 times bigger delta for top camera move
-      delta *= 5;
-      float newZ = this.topCamera.getZ() - (float)Math.sin(this.topCamera.getPitch()) * delta;
-      // Check new elevation is between home height and a half, and 3 times its largest dimension  
-      newZ = Math.max(newZ, this.homeHeight * 1.5f);
-      newZ = Math.min(newZ, (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3 * Math.sin(this.topCamera.getPitch())));
-      double distanceToCenterAtGroundLevel = newZ / Math.tan(this.topCamera.getPitch());
+      // Use a 3 times bigger delta for top camera move
+      delta *= 3;
+      float newDistanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
+          + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
+          + Math.pow(this.topCamera.getZ(), 2)) - delta;
+      // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
+      newDistanceToCenter = Math.max(newDistanceToCenter, this.minDistanceToHomeCenter);
+      double distanceToCenterAtGroundLevel = newDistanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
       this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ(newZ);
+      this.topCamera.setZ((float)Math.sin(this.topCamera.getPitch()) * newDistanceToCenter);
     }
 
     @Override
@@ -387,7 +402,7 @@ public class HomeController3D implements Controller {
     public void rotateCameraPitch(float delta) {
       float newPitch = this.topCamera.getPitch() - delta;
       // Check new pitch is between PI / 2 and PI / 8  
-      newPitch = Math.max(newPitch, (float)Math.PI / 8);
+      newPitch = Math.max(newPitch, (float)Math.PI / 16);
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
       // Compute new z to keep the same distance to view center
       double cameraToBoundsCenterDistance = Math.sqrt(Math.pow(this.topCamera.getX() - this.homeBounds.getCenterX(), 2)
