@@ -50,6 +50,7 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
   public HomeLight(Light light) {
     super(light);
     this.lightSources = light.getLightSources();
+    this.power = 0.5f;
   }
 
   /**
@@ -57,6 +58,7 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
    * and reads light from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    // Let power to 0 for lights previously added to home 
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     in.defaultReadObject();
   }
