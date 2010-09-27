@@ -375,7 +375,7 @@ public class RoomPanel extends JPanel implements DialogView {
                            this.floorTextureRadioButton, this.floorTextureComponent});
     add(floorPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     JPanel ceilingPanel = createVerticalTitledPanel(preferences.getLocalizedString(
         RoomPanel.class, "ceilingPanel.title"),
         new JComponent [] {this.ceilingVisibleCheckBox, null,
@@ -383,7 +383,7 @@ public class RoomPanel extends JPanel implements DialogView {
                            this.ceilingTextureRadioButton, this.ceilingTextureComponent});
     add(ceilingPanel, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
   private JPanel createVerticalTitledPanel(String title, JComponent [] components) {

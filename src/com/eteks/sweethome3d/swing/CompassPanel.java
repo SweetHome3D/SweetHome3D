@@ -399,6 +399,7 @@ public class CompassPanel extends JPanel implements DialogView {
     Insets labelInsets = new Insets(0, 0, 5, 5);
     Insets componentInsets = new Insets(0, 0, 5, 10);
     Insets lastComponentInsets = new Insets(0, 0, 5, 0);
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
     compassRosePanel.add(this.xLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
@@ -422,7 +423,7 @@ public class CompassPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     add(compassRosePanel, new GridBagConstraints(
         0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
     // Second row
     JPanel geographicLocationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         CompassPanel.class, "geographicLocationPanel.title"));

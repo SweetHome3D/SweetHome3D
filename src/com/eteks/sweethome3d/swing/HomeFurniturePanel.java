@@ -31,7 +31,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -93,7 +92,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.controller = controller;
     createComponents(preferences, controller);
     setMnemonics(preferences);
-    layoutComponents();
+    layoutComponents(preferences);
   }
 
   /**
@@ -106,7 +105,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     
     // Create name label and its text field bound to NAME controller property
     this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class, "nameLabel.text"));
-    this.nameTextField = new JTextField(controller.getName(), 10);
+    this.nameTextField = new JTextField(controller.getName(), 15);
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
@@ -552,106 +551,120 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents() {
+  private void layoutComponents(UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-    // First row
-    Insets labelInsets = new Insets(0, 0, 10, 5);
-    add(this.nameLabel, new GridBagConstraints(
+    // First row    
+    JPanel namePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "namePanel.title"));
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
+    namePanel.add(this.nameLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets componentInsets = new Insets(0, 0, 10, 15);
-    add(this.nameTextField, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    namePanel.add(this.nameTextField, new GridBagConstraints(
         1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 5), 0, 0));
-    Insets rightComponentInsets = new Insets(0, 0, 10, 0);
-    add(this.nameVisibleCheckBox, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+    namePanel.add(this.nameVisibleCheckBox, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    // Second row
-    add(this.xLabel, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(namePanel, new GridBagConstraints(
+        0, 0, 3, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+    // Location panel
+    JPanel locationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "locationPanel.title"));
+    Insets labelInsets = new Insets(0, 0, 5, 5);
+    Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    locationPanel.add(this.xLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.xSpinner, new GridBagConstraints(
+    locationPanel.add(this.xSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
-    add(this.widthLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.widthSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
-    // Third row
-    add(this.yLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+    locationPanel.add(this.yLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.ySpinner, new GridBagConstraints(
+    locationPanel.add(this.ySpinner, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
-    add(this.depthLabel, new GridBagConstraints(
-        2, 2, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.depthSpinner, new GridBagConstraints(
-        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
-    // Forth row
-    add(this.elevationLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+    locationPanel.add(this.elevationLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.elevationSpinner, new GridBagConstraints(
+    locationPanel.add(this.elevationSpinner, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -10, 0));
-    add(this.heightLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -10, 0));
+    locationPanel.add(this.angleLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    locationPanel.add(this.angleSpinner, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
+    add(locationPanel, new GridBagConstraints(
+        0, 1, 1, 1, 1, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+    // Size panel
+    JPanel sizePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "sizePanel.title"));
+    sizePanel.add(this.widthLabel, new GridBagConstraints(
+        2, 1, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    sizePanel.add(this.widthSpinner, new GridBagConstraints(
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
+    sizePanel.add(this.depthLabel, new GridBagConstraints(
+        2, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    sizePanel.add(this.depthSpinner, new GridBagConstraints(
+        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
+    sizePanel.add(this.heightLabel, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.heightSpinner, new GridBagConstraints(
+    sizePanel.add(this.heightSpinner, new GridBagConstraints(
         3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, -10, 0));
-    // Fifth row
-    add(this.angleLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    add(this.angleSpinner, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), -15, 0));
-    add(this.defaultRadioButton, new GridBagConstraints(
-        2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    // Sixth row
-    add(this.mirroredModelCheckBox, new GridBagConstraints(
-        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
-    add(this.colorRadioButton, new GridBagConstraints(
-        2, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    add(this.colorButton, new GridBagConstraints(
-        3, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    // Seventh row
-    add(this.visibleCheckBox, new GridBagConstraints(
-        1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
+    sizePanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
+        2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(sizePanel, new GridBagConstraints(
+        1, 1, 2, 1, 1, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+    // Color and texture panel
+    JPanel colorAndTexturePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "colorAndTexturePanel.title"));
+    colorAndTexturePanel.add(this.defaultRadioButton, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+    colorAndTexturePanel.add(this.colorRadioButton, new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    colorAndTexturePanel.add(this.colorButton, new GridBagConstraints(
+        2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
     if (this.textureComponent != null) {
-      add(this.textureRadioButton, new GridBagConstraints(
-          2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-      add(this.textureComponent, new GridBagConstraints(
-          3, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      colorAndTexturePanel.add(this.textureRadioButton, new GridBagConstraints(
+          3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+      colorAndTexturePanel.add(this.textureComponent, new GridBagConstraints(
+          4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
     }
-    // Last rows
+    add(colorAndTexturePanel, new GridBagConstraints(
+        0, 2, 3, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+    // Last row
+    add(this.visibleCheckBox, new GridBagConstraints(
+        0, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     if (this.lightPowerLabel != null) {
-      add(new JSeparator(), new GridBagConstraints(
-          0, 7, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
       add(this.lightPowerLabel, new GridBagConstraints(
-          0, 8, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          1, 3, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, new Insets(0, 10, 0, 5), 0, 0));
       add(this.lightPowerSpinner, new GridBagConstraints(
-          1, 8, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 15), 0, 0));
+          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     }
   }
 
