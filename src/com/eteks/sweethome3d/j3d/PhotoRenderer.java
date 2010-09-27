@@ -1109,7 +1109,7 @@ public class PhotoRenderer {
           this.sunflow.parameter("absorbtion.distance", 0f);          
           float transparency = transparencyAttributes.getTransparency();
           this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency});
-          this.sunflow.parameter("transparency", transparency * transparency);
+          this.sunflow.parameter("transparency", 1f - transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else {  
           this.sunflow.parameter("diffuse", null, diffuseColor);
