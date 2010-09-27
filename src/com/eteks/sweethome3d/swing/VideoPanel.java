@@ -1172,7 +1172,7 @@ public class VideoPanel extends JPanel implements DialogView {
       float deltaYawAngle = (newYaw - yaw) / frameCount;
       float deltaPitchAngle = (newPitch - pitch) / frameCount;
       float deltaFieldOfViewAngle = (newFieldOfView - fieldOfView) / frameCount;
-      long deltaTime = Math.round(((double)newTime - time) / timeCount);
+      long deltaTime = Math.round(((double)newTime - time) / frameCount);
       
       for (int j = 1; j <= frameCount; j++) {
         videoFramesPath.add(new Camera(
