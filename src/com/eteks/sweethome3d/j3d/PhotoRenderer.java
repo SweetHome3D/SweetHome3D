@@ -454,36 +454,31 @@ public class PhotoRenderer {
       if (renderingAttributes == null
           || renderingAttributes.getVisible()) {
         String shapeName = (String)shape.getUserData();
-        // If the shape isn't a light part
-        if (shapeName == null 
-            || !shapeName.startsWith(ModelManager.LIGHT_SHAPE_PREFIX) 
-            || !isLightChild(shape)) {
-          // Build a unique object name
-          String uuid = UUID.randomUUID().toString();
-    
-          String appearanceName = null;
-          TexCoordGeneration texCoordGeneration = null;
-          if (appearance != null) {
-            texCoordGeneration = appearance.getTexCoordGeneration();
-            appearanceName = "shader" + uuid;
-            boolean mirror = shapeName != null
-                && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-            exportAppearance(appearance, appearanceName, mirror, noConstantShader);
-          }
+        // Build a unique object name
+        String uuid = UUID.randomUUID().toString();
   
-          // Export object geometries
-          for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-            String objectNameBase = "object" + uuid + "-" + i;
-            // Always ignore normals on walls
-            String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
-                objectNameBase);
-            if (objectsName != null) {
-              for (String objectName : objectsName) {
-                if (appearanceName != null) {
-                  this.sunflow.parameter("shaders", new String [] {appearanceName});
-                }
-                this.sunflow.instance(objectName + ".instance", objectName);
+        String appearanceName = null;
+        TexCoordGeneration texCoordGeneration = null;
+        if (appearance != null) {
+          texCoordGeneration = appearance.getTexCoordGeneration();
+          appearanceName = "shader" + uuid;
+          boolean mirror = shapeName != null
+              && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
+          exportAppearance(appearance, appearanceName, mirror, noConstantShader);
+        }
+
+        // Export object geometries
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          String objectNameBase = "object" + uuid + "-" + i;
+          // Always ignore normals on walls
+          String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
+              objectNameBase);
+          if (objectsName != null) {
+            for (String objectName : objectsName) {
+              if (appearanceName != null) {
+                this.sunflow.parameter("shaders", new String [] {appearanceName});
               }
+              this.sunflow.instance(objectName + ".instance", objectName);
             }
           }
         }
@@ -491,23 +486,6 @@ public class PhotoRenderer {
     }    
   }
   
-  /**
-   * Returns <code>true</code> if the given <code>node</code> is a part of a light.
-   */
-  private boolean isLightChild(Node node) {
-    Object userData = node.getUserData();
-    if (userData instanceof HomeLight) {
-      return true;
-    } else {
-      Node parent = node.getParent();
-      if (parent != null) {
-        return isLightChild(parent);
-      } else {
-        return false;
-      }
-    }
-  }
-
   /**
    * Returns the names of the exported 3D geometries in Sunflow API.
    */

@@ -60,6 +60,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -668,6 +669,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns an image of the home viewed by this component at the given size.
    */
   public BufferedImage getOffScreenImage(int width, int height) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     SimpleUniverse offScreenImageUniverse = null;
     try {
       View view;
@@ -677,9 +679,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       } else {
         view = this.universe.getViewer().getView();
       }
-   
+      
+      // Empty temporarily selection to create the off screen image
+      List<Selectable> emptySelection = Collections.emptyList();
+      this.home.setSelectedItems(emptySelection);
       return Component3DManager.getInstance().getOffScreenImage(view, width, height);
     } finally {
+      // Restore selection
+      this.home.setSelectedItems(selectedItems);
       if (offScreenImageUniverse != null) {
         offScreenImageUniverse.cleanup();
       } 

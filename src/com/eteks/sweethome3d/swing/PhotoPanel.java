@@ -50,10 +50,12 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -90,6 +92,7 @@ import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Camera.Lens;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -851,6 +854,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Compute photo in an other executor thread
     // Use a clone of home because the user can modify home during photo computation
     final Home home = this.home.clone();
+    List<Selectable> emptySelection = Collections.emptyList();
+    home.setSelectedItems(emptySelection);
     this.photoCreationExecutor = Executors.newSingleThreadExecutor();
     this.photoCreationExecutor.execute(new Runnable() {
         public void run() {

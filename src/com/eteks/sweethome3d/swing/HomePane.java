@@ -64,6 +64,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -2866,10 +2867,14 @@ public class HomePane extends JRootPane implements HomeView {
           : "";      
       writer = new OBJWriter(objFile, header, -1);
 
-      if (this.home.getWalls().size() > 0) {
+      // Use a clone of home to ignore selection
+      final Home home = this.home.clone();
+      List<Selectable> emptySelection = Collections.emptyList();
+      home.setSelectedItems(emptySelection);
+      if (home.getWalls().size() > 0) {
         // Create a not alive new ground to be able to explore its coordinates without setting capabilities
-        Rectangle2D homeBounds = getExportedHomeBounds();
-        Ground3D groundNode = new Ground3D(this.home, 
+        Rectangle2D homeBounds = getExportedHomeBounds(home);
+        Ground3D groundNode = new Ground3D(home, 
             (float)homeBounds.getX(), (float)homeBounds.getY(), 
             (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
         writer.writeNode(groundNode, "ground");
@@ -2879,7 +2884,7 @@ public class HomePane extends JRootPane implements HomeView {
       int i = 0;
       for (Wall wall : this.home.getWalls()) {
         // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
-        Wall3D wallNode = new Wall3D(wall, this.home, true, true);
+        Wall3D wallNode = new Wall3D(wall, home, true, true);
         writer.writeNode(wallNode, "wall_" + ++i);
       }
       // Write 3D furniture 
@@ -2887,7 +2892,7 @@ public class HomePane extends JRootPane implements HomeView {
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
         if (piece.isVisible()) {
           // Create a not alive new piece to be able to explore its coordinates without setting capabilities
-          HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, this.home, true, true);
+          HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, home, true, true);
           writer.writeNode(pieceNode, "piece_" + ++i);
         }
       }
@@ -2895,7 +2900,7 @@ public class HomePane extends JRootPane implements HomeView {
       i = 0;
       for (Room room : this.home.getRooms()) {
         // Create a not alive new room to be able to explore its coordinates without setting capabilities 
-        Room3D roomNode = new Room3D(room, this.home, false, true, true);
+        Room3D roomNode = new Room3D(room, home, false, true, true);
         writer.writeNode(roomNode, "room_" + ++i);
       }
     } catch (InterruptedIOException ex) {
@@ -2919,12 +2924,12 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
-   * Returns home bounds. 
+   * Returns <code>home</code> bounds. 
    */
-  private Rectangle2D getExportedHomeBounds() {
+  private Rectangle2D getExportedHomeBounds(Home home) {
     // Compute bounds that include walls and furniture
-    Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
-    for (HomePieceOfFurniture piece : getVisibleFurniture(this.home.getFurniture())) {
+    Rectangle2D homeBounds = updateObjectsBounds(null, home.getWalls());
+    for (HomePieceOfFurniture piece : getVisibleFurniture(home.getFurniture())) {
       if (piece.isVisible()) {
         for (float [] point : piece.getPoints()) {
           if (homeBounds == null) {
@@ -2935,7 +2940,7 @@ public class HomePane extends JRootPane implements HomeView {
         }
       }
     }
-    return updateObjectsBounds(homeBounds, this.home.getRooms());
+    return updateObjectsBounds(homeBounds, home.getRooms());
   }
   
   /**

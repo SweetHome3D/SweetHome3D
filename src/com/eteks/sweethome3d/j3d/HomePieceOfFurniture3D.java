@@ -20,8 +20,10 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
+import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.media.j3d.Appearance;
@@ -52,6 +54,10 @@ import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Light;
+import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.sun.j3d.utils.geometry.Box;
 
 /**
@@ -307,8 +313,37 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
     updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureModelMirrored();
+
+    // Manage light sources visibility 
+    if (this.home != null 
+        && getUserData() instanceof Light) {
+      this.home.addSelectionListener(new LightSelectionListener(this));
+    }
   }
 
+  /**
+   * Selection listener bound to this object with a weak reference to avoid
+   * strong link between home and this tree.  
+   */
+  private static class LightSelectionListener implements SelectionListener {
+    private WeakReference<HomePieceOfFurniture3D>  piece;
+
+    public LightSelectionListener(HomePieceOfFurniture3D piece) {
+      this.piece = new WeakReference<HomePieceOfFurniture3D>(piece);
+    }
+    
+    public void selectionChanged(SelectionEvent ev) {
+      // If piece 3D was garbage collected, remove this listener from home
+      HomePieceOfFurniture3D piece3D = this.piece.get();
+      Home home = (Home)ev.getSource();
+      if (piece3D == null) {
+        home.removeSelectionListener(this);
+      } else {
+        piece3D.updatePieceOfFurnitureVisibility();
+      }
+    }
+  }
+  
   /**
    * Returns a box that may replace model. 
    */
@@ -465,7 +500,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   }
 
   /**
-   * Sets the visible attribute of all <code>Shape3D</code> children nodes of <code>node</code>. 
+   * Sets the visible attribute of the <code>Shape3D</code> children nodes of <code>node</code>.
+   * If <code>updateLightSources</code> is <code>true</code>, only light sources will updated. 
    */
   private void setVisible(Node node, boolean visible) {
     if (node instanceof Group) {
@@ -477,7 +513,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     } else if (node instanceof Link) {
       setVisible(((Link)node).getSharedGroup(), visible);
     } else if (node instanceof Shape3D) {
-      Appearance appearance = ((Shape3D)node).getAppearance();
+      final Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
       if (appearance == null) {
         appearance = createAppearanceWithChangeCapabilities();
         ((Shape3D)node).setAppearance(appearance);
@@ -489,9 +526,34 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         appearance.setRenderingAttributes(renderingAttributes);
       }
       
+      String shapeName = (String)shape.getUserData();
+      if (visible 
+          && shapeName != null
+          && (getUserData() instanceof Light)
+          && shapeName.startsWith(ModelManager.LIGHT_SHAPE_PREFIX)
+          && this.home != null
+          && !isSelected(this.home.getSelectedItems())) {
+        // Don't display light sources shapes of unselected lights
+        visible = false;
+      }
       // Change visibility
       renderingAttributes.setVisible(visible);
     }
+  }
+
+  /**
+   * Returns <code>true</code> if this piece of furniture belongs to <code>selectedItems</code>.
+   */
+  private boolean isSelected(List<? extends Selectable> selectedItems) {
+    Object piece = getUserData();
+    for (Selectable item : selectedItems) {
+      if (item == piece
+          || (item instanceof HomeFurnitureGroup
+              && isSelected(((HomeFurnitureGroup)item).getFurniture()))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
