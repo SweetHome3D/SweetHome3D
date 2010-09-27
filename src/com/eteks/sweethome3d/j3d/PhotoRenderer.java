@@ -449,7 +449,8 @@ public class PhotoRenderer {
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
-      RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
       if (renderingAttributes == null
           || renderingAttributes.getVisible()) {
         String shapeName = (String)shape.getUserData();
