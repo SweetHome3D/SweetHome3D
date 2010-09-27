@@ -299,7 +299,7 @@ public class CompassPanel extends JPanel implements DialogView {
     this.northDirectionComponent = new JComponent() {
         @Override
         public Dimension getPreferredSize() {
-          return new Dimension(32, 32);
+          return new Dimension(35, 35);
         }
         
         @Override
@@ -442,7 +442,7 @@ public class CompassPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     geographicLocationPanel.add(this.northDirectionComponent, new GridBagConstraints(
         4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     geographicLocationPanel.add(this.longitudeLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
