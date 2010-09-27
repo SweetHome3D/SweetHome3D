@@ -60,6 +60,7 @@ import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.SharedGroup;
 import javax.media.j3d.Texture;
@@ -673,9 +674,15 @@ public class ModelManager {
       computeAreaOnFloor(((Link)node).getSharedGroup(), nodeArea, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
-      // Compute shape geometries area
-      for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        computeGeometryAreaOnFloor(shape.getGeometry(i), parentTransformations, nodeArea);
+      Appearance appearance = shape.getAppearance();
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
+      if (renderingAttributes == null
+          || renderingAttributes.getVisible()) {
+        // Compute shape geometries area
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          computeGeometryAreaOnFloor(shape.getGeometry(i), parentTransformations, nodeArea);
+        }
       }
     }    
   }

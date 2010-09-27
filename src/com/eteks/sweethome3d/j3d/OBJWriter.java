@@ -66,6 +66,7 @@ import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.QuadArray;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
@@ -334,69 +335,73 @@ public class OBJWriter extends FilterWriter {
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
-      
-      // Build a unique human readable object name
-      String objectName = "";
-      if (accept(nodeName)) {
-        objectName = nodeName + "_";
-      }
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
+      if (renderingAttributes == null
+          || renderingAttributes.getVisible()) {
+        // Build a unique human readable object name
+        String objectName = "";
+        if (accept(nodeName)) {
+          objectName = nodeName + "_";
+        }
+          
+        String shapeName = null;
+        if (shape.getUserData() instanceof String) {
+          shapeName = (String)shape.getUserData(); 
+        }
+        if (accept(shapeName)) {
+          objectName += shapeName + "_";
+        } 
         
-      String shapeName = null;
-      if (shape.getUserData() instanceof String) {
-        shapeName = (String)shape.getUserData(); 
-      }
-      if (accept(shapeName)) {
-        objectName += shapeName + "_";
-      } 
-      
-      objectName += String.valueOf(this.vertexOffset);
-      
-      // Start a new object at OBJ format 
-      this.out.write("g " + objectName + "\n");
-      
-      TexCoordGeneration texCoordGeneration = null;
-      if (this.mtlFileName != null) {
-        if (appearance != null) {
-          texCoordGeneration = appearance.getTexCoordGeneration();
-          ComparableAppearance comparableAppearance = new ComparableAppearance(appearance);
-          String appearanceName = this.appearances.get(comparableAppearance);
-          if (appearanceName == null) {
-            // Store appearance
-            appearanceName = objectName;
-            this.appearances.put(comparableAppearance, appearanceName);
-            
-            Texture texture = appearance.getTexture();
-            if (texture != null) {
-              File textureFile = this.textures.get(texture);
-              if (textureFile == null) {
-                // Store texture
-                String fileFormat = texture.getFormat() == Texture.RGBA 
-                    ? "png"
-                    : "jpg";
-                textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
-                    + "_" + appearanceName + "." + fileFormat);
-                this.textures.put(texture, textureFile);
+        objectName += String.valueOf(this.vertexOffset);
+        
+        // Start a new object at OBJ format 
+        this.out.write("g " + objectName + "\n");
+        
+        TexCoordGeneration texCoordGeneration = null;
+        if (this.mtlFileName != null) {
+          if (appearance != null) {
+            texCoordGeneration = appearance.getTexCoordGeneration();
+            ComparableAppearance comparableAppearance = new ComparableAppearance(appearance);
+            String appearanceName = this.appearances.get(comparableAppearance);
+            if (appearanceName == null) {
+              // Store appearance
+              appearanceName = objectName;
+              this.appearances.put(comparableAppearance, appearanceName);
+              
+              Texture texture = appearance.getTexture();
+              if (texture != null) {
+                File textureFile = this.textures.get(texture);
+                if (textureFile == null) {
+                  // Store texture
+                  String fileFormat = texture.getFormat() == Texture.RGBA 
+                      ? "png"
+                      : "jpg";
+                  textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
+                      + "_" + appearanceName + "." + fileFormat);
+                  this.textures.put(texture, textureFile);
+                }
               }
-            }
-          } 
-          this.out.write("usemtl " + appearanceName + "\n");
+            } 
+            this.out.write("usemtl " + appearanceName + "\n");
+          }
         }
-      }
-      
-      int cullFace = PolygonAttributes.CULL_BACK;
-      boolean backFaceNormalFlip = false;
-      if (appearance != null) {
-        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-        if (polygonAttributes != null) {
-          cullFace = polygonAttributes.getCullFace();
-          backFaceNormalFlip = polygonAttributes.getBackFaceNormalFlip();
+        
+        int cullFace = PolygonAttributes.CULL_BACK;
+        boolean backFaceNormalFlip = false;
+        if (appearance != null) {
+          PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+          if (polygonAttributes != null) {
+            cullFace = polygonAttributes.getCullFace();
+            backFaceNormalFlip = polygonAttributes.getBackFaceNormalFlip();
+          }
         }
-      }
-      
-      // Write object geometries
-      for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        writeNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
-            cullFace, backFaceNormalFlip);
+        
+        // Write object geometries
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          writeNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
+              cullFace, backFaceNormalFlip);
+        }
       }
     }    
   }
