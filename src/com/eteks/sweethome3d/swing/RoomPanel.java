@@ -25,7 +25,6 @@ import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -34,7 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -349,7 +347,7 @@ public class RoomPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     // First row
     Insets rowInsets;
-    JPanel nameAndAreaPanel = createTitledPanel(preferences.getLocalizedString(
+    JPanel nameAndAreaPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         RoomPanel.class, "nameAndAreaPanel.title"));
     nameAndAreaPanel.add(this.nameLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
@@ -389,7 +387,7 @@ public class RoomPanel extends JPanel implements DialogView {
   }
   
   private JPanel createVerticalTitledPanel(String title, JComponent [] components) {
-    JPanel titledPanel = createTitledPanel(title);    
+    JPanel titledPanel = SwingTools.createTitledPanel(title);    
     
     for (int i = 0; i < components.length; i += 2) {
       int bottomInset = i < components.length - 2  ? 2  : 0;      
@@ -412,18 +410,6 @@ public class RoomPanel extends JPanel implements DialogView {
     return titledPanel;
   }
   
-  private JPanel createTitledPanel(String title) {
-    JPanel titledPanel = new JPanel(new GridBagLayout());
-    Border panelBorder = BorderFactory.createTitledBorder(title);
-    // For systems different from Mac OS X 10.5, add an empty border 
-    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      panelBorder = BorderFactory.createCompoundBorder(
-          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    }    
-    titledPanel.setBorder(panelBorder);    
-    return titledPanel;
-  }
-
   /**
    * Displays this panel in a modal dialog box. 
    */

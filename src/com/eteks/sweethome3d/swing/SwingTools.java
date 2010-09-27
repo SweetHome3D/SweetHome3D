@@ -25,6 +25,7 @@ import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -55,6 +56,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
@@ -490,5 +492,20 @@ public class SwingTools {
     } catch (IOException ex) {
       // Ignore splash screen
     }
+  }
+  
+  /**
+   * Returns a new panel with a border and the given <code>title</code>
+   */
+  public static JPanel createTitledPanel(String title) {
+    JPanel titledPanel = new JPanel(new GridBagLayout());
+    Border panelBorder = BorderFactory.createTitledBorder(title);
+    // For systems different from Mac OS X 10.5, add an empty border 
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      panelBorder = BorderFactory.createCompoundBorder(
+          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
+    }    
+    titledPanel.setBorder(panelBorder);    
+    return titledPanel;
   }
 }

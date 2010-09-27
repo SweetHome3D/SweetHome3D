@@ -25,7 +25,6 @@ import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -36,7 +35,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -618,7 +616,7 @@ public class WallPanel extends JPanel implements DialogView {
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
-    JPanel heightPanel = createTitledPanel(
+    JPanel heightPanel = SwingTools.createTitledPanel(
         preferences.getLocalizedString(WallPanel.class, "heightPanel.title"));   
     // First row of height panel
     heightPanel.add(this.rectangularWallRadioButton, new GridBagConstraints(
@@ -688,7 +686,7 @@ public class WallPanel extends JPanel implements DialogView {
   }
   
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
-    JPanel titledPanel = createTitledPanel(title);    
+    JPanel titledPanel = SwingTools.createTitledPanel(title);    
     
     if (horizontal) {
       int labelAlignment = OperatingSystem.isMacOSX() 
@@ -723,18 +721,6 @@ public class WallPanel extends JPanel implements DialogView {
     return titledPanel;
   }
   
-  private JPanel createTitledPanel(String title) {
-    JPanel titledPanel = new JPanel(new GridBagLayout());
-    Border panelBorder = BorderFactory.createTitledBorder(title);
-    // For systems different from Mac OS X 10.5, add an empty border 
-    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      panelBorder = BorderFactory.createCompoundBorder(
-          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    }    
-    titledPanel.setBorder(panelBorder);    
-    return titledPanel;
-  }
-
   /**
    * Displays this panel in a modal dialog box. 
    */

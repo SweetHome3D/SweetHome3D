@@ -39,7 +39,6 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.TimeZone;
 
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -53,7 +52,6 @@ import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatterFactory;
@@ -396,7 +394,7 @@ public class CompassPanel extends JPanel implements DialogView {
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
-    JPanel compassRosePanel = createTitledPanel(preferences.getLocalizedString(
+    JPanel compassRosePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         CompassPanel.class, "compassRosePanel.title"));
     Insets labelInsets = new Insets(0, 0, 5, 5);
     Insets componentInsets = new Insets(0, 0, 5, 10);
@@ -426,7 +424,7 @@ public class CompassPanel extends JPanel implements DialogView {
         0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Second row
-    JPanel geographicLocationPanel = createTitledPanel(preferences.getLocalizedString(
+    JPanel geographicLocationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         CompassPanel.class, "geographicLocationPanel.title"));
     geographicLocationPanel.add(this.latitudeLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
@@ -460,18 +458,6 @@ public class CompassPanel extends JPanel implements DialogView {
     add(geographicLocationPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-  }
-
-  private JPanel createTitledPanel(String title) {
-    JPanel titledPanel = new JPanel(new GridBagLayout());
-    Border panelBorder = BorderFactory.createTitledBorder(title);
-    // For systems different from Mac OS X 10.5, add an empty border 
-    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      panelBorder = BorderFactory.createCompoundBorder(
-          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    }    
-    titledPanel.setBorder(panelBorder);    
-    return titledPanel;
   }
 
   /**
