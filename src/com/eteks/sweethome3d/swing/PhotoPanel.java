@@ -199,7 +199,7 @@ public class PhotoPanel extends JPanel implements DialogView {
                                 final UserPreferences preferences,
                                 final PhotoController controller) {
     this.photoComponent = new ScaledImageComponent();
-    this.photoComponent.setPreferredSize(new Dimension(400, 400));
+    this.photoComponent.setPreferredSize(new Dimension(getToolkit().getScreenSize().width <= 1024 ? 320 : 400, 400));
     // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
     // to let the user drag and drop the created image (Windows support seems to fail) 
     if (OperatingSystem.isMacOSX()) {
@@ -694,14 +694,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 4, 0), 0, 0));
     // Seventh row
     add(this.dateLabel, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     add(this.dateSpinner, new GridBagConstraints(
         2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 1, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 8, 0));
     add(this.timeLabel, new GridBagConstraints(
         3, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));

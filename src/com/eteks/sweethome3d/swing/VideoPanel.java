@@ -311,6 +311,7 @@ public class VideoPanel extends JPanel implements DialogView {
   private void createComponents(Home home, 
                                 final UserPreferences preferences,
                                 final VideoController controller) {
+    final Dimension preferredSize = new Dimension(getToolkit().getScreenSize().width <= 1024 ? 324 : 404, 404);
     this.planComponent = new PlanComponent(home, preferences, null) {
         private void updateScale() {
           if (getWidth() > 0 && getHeight() > 0) {
@@ -326,20 +327,20 @@ public class VideoPanel extends JPanel implements DialogView {
         }
         
         @Override
+        public Dimension getPreferredSize() {
+          return preferredSize;
+        }
+        
+        @Override
         public void revalidate() {
-          updateScale();
           super.revalidate();
+          updateScale();
         }
 
         @Override
         public void setBounds(int x, int y, int width, int height) {
           super.setBounds(x, y, width, height);
           updateScale();
-        }
-        
-        @Override
-        public Dimension getPreferredSize() {
-          return new Dimension(404, 404);
         }
         
         @Override
@@ -823,11 +824,11 @@ public class VideoPanel extends JPanel implements DialogView {
     this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
     // Seventh row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 6, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 4, 0), 0, 0));
     // Height row
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
