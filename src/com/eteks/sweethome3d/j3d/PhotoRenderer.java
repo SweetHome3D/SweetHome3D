@@ -467,7 +467,7 @@ public class PhotoRenderer {
             appearanceName = "shader" + uuid;
             boolean mirror = shapeName != null
                 && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-          exportAppearance(appearance, appearanceName, mirror, noConstantShader);
+            exportAppearance(appearance, appearanceName, mirror, noConstantShader);
           }
   
           // Export object geometries
