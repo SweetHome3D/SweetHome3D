@@ -97,7 +97,6 @@ import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.LightSource;
-import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -111,9 +110,13 @@ public class PhotoRenderer {
   public enum Quality {LOW, HIGH}
   
   private final Quality quality;
-  private final SunflowAPI sunflow;
   private final Compass compass;
+  private final int homeLightColor;
+  
+  private final SunflowAPI sunflow;
+  private boolean useSunSky;
   private String sunSkyLightName;
+  private String sunLightName;
   private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
   private Thread renderingThread;
 
@@ -129,9 +132,8 @@ public class PhotoRenderer {
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
     this.compass = home.getCompass();
-    this.sunflow = new SunflowAPI();
     this.quality = quality;
-    int samples = quality == Quality.LOW ? 4 : 8;
+    this.sunflow = new SunflowAPI();
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     for (Wall wall : home.getWalls()) {
@@ -158,10 +160,9 @@ public class PhotoRenderer {
     exportNode(groundTransformGroup, true);
 
     // Set light settings 
-    boolean observerCamera = home.getCamera() instanceof ObserverCamera;
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
-    if (observerCamera 
-        && skyTexture != null) {
+    this.useSunSky = skyTexture == null;
+    if (!this.useSunSky) {
       // If observer camera is used with a sky texture, 
       // create an image base light from sky texture  
       InputStream skyImageStream = skyTexture.getImage().openStream();
@@ -180,16 +181,12 @@ public class PhotoRenderer {
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("fixed", true);
-      this.sunflow.parameter("samples", samples);
+      this.sunflow.parameter("samples", 2);
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
-    } else {
-      // Use sun sky light
-      this.sunSkyLightName = UUID.randomUUID().toString();
-      this.sunflow.light(this.sunSkyLightName, "sunsky");
-    }
+    } 
     
     int ceillingLightColor = home.getEnvironment().getCeillingLightColor();
-    int homeLightColor = home.getEnvironment().getLightColor();
+    this.homeLightColor = home.getEnvironment().getLightColor();
     if (ceillingLightColor > 0) {
       // Add lights at the top of each room 
       for (Room room : home.getRooms()) {
@@ -223,9 +220,9 @@ public class PhotoRenderer {
           
           float power = (float)Math.sqrt(room.getArea()) / 3;
           this.sunflow.parameter("radiance", null, 
-              power * (homeLightColor >> 16) / 255 * (ceillingLightColor >> 16) / 0xD0, 
-              power * ((homeLightColor >> 8) & 0xFF) / 255  * ((ceillingLightColor >> 8) & 0xFF) / 0xD0, 
-              power * (homeLightColor & 0xFF) / 255 * (ceillingLightColor & 0xFF) / 0xD0);
+              power * (ceillingLightColor >> 16) / 0xD0 * (this.homeLightColor >> 16) / 255, 
+              power * ((ceillingLightColor >> 8) & 0xFF) / 0xD0 * ((this.homeLightColor >> 8) & 0xFF) / 255, 
+              power * (ceillingLightColor & 0xFF) / 0xD0 * (this.homeLightColor & 0xFF) / 255);
           this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 25, yCenter));                    
           this.sunflow.parameter("radius", 20f);
           this.sunflow.parameter("samples", 4);
@@ -234,7 +231,7 @@ public class PhotoRenderer {
       }
     }
 
-    // Add visible and turn on lights
+    // Add visible and turned on lights
     for (HomeLight light : getLights(home.getFurniture())) {
       float lightPower = light.getPower();
       if (light.isVisible()
@@ -243,12 +240,12 @@ public class PhotoRenderer {
           float lightRadius = lightSource.getDiameter() != null 
                   ? lightSource.getDiameter() * light.getWidth() / 2 
                   : 3.25f; // Default radius compatible with most lights available before version 3.0
-          float power = 25 * lightPower * lightPower;
+          float power = 5 * lightPower * lightPower / (lightRadius * lightRadius);
           int lightColor = lightSource.getColor();
           this.sunflow.parameter("radiance", null,
-              power * (lightColor >> 16) * (homeLightColor >> 16) / 100f * (16 / (lightRadius * lightRadius)),
-              power * ((lightColor >> 8) & 0xFF) * ((homeLightColor >> 8) & 0xFF) / 100f * (16 / (lightRadius * lightRadius)),
-              power * (lightColor & 0xFF) * (homeLightColor & 0xFF) / 100f * (16 / (lightRadius * lightRadius)));
+              power * (lightColor >> 16) * (this.homeLightColor >> 16),
+              power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
+              power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
           this.sunflow.parameter("center",
               new Point3(light.getX() - light.getWidth() / 2 + (lightSource.getX() * light.getWidth()),
                   light.getElevation() + (lightSource.getZ() * light.getHeight()),
@@ -259,6 +256,11 @@ public class PhotoRenderer {
         }
       }
     }
+
+    this.sunflow.parameter("depths.diffuse", 1);
+    this.sunflow.parameter("depths.reflection", 4);
+    this.sunflow.parameter("depths.refraction", 8);
+    this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
   }
 
   /**
@@ -271,20 +273,40 @@ public class PhotoRenderer {
                      final ImageObserver observer) {
     this.renderingThread = Thread.currentThread();
 
-    // Update Sun direction
     if (this.sunSkyLightName != null) {
       this.sunflow.remove(this.sunSkyLightName);
-      float [] sunDirection = getSunDirection(this.compass, Camera.convertTimeToTimeZone(camera.getTime(), this.compass.getTimeZone()));
-      this.sunflow.parameter("up", new Vector3(0, 1, 0));
-      this.sunflow.parameter("east", 
-          new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
-      this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
-      this.sunflow.parameter("turbidity", 6f);
-      this.sunflow.parameter("samples", quality == Quality.LOW ? 6 : 12);
-      this.sunflow.light(this.sunSkyLightName, "sunsky");
     }
-    
-    // Update camera lens from camera location in parameter
+    if (this.sunLightName != null) {
+      this.sunflow.remove(this.sunLightName);
+    }
+    float [] sunDirection = getSunDirection(this.compass, Camera.convertTimeToTimeZone(camera.getTime(), this.compass.getTimeZone()));
+    // Update Sun direction during daytime
+    if (sunDirection [1] > -0.075f) {
+      if (this.useSunSky) {
+        this.sunflow.parameter("up", new Vector3(0, 1, 0));
+        this.sunflow.parameter("east", 
+            new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
+        this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
+        this.sunflow.parameter("turbidity", 6f);
+        this.sunflow.parameter("samples", quality == Quality.LOW ? 6 : 12);
+        this.sunSkyLightName = UUID.randomUUID().toString();
+        this.sunflow.light(this.sunSkyLightName, "sunsky");
+      }
+      
+      // Simulate additional Sun with a faraway sphere light
+      int sunPower = this.sunSkyLightName == null ? 75 : 15;
+      this.sunflow.parameter("radiance", null,
+          (this.homeLightColor >> 16) * sunPower, 
+          ((this.homeLightColor >> 8) & 0xFF) * sunPower, 
+          (this.homeLightColor & 0xFF) * sunPower);
+      this.sunflow.parameter("center", new Point3(1000000 * sunDirection [0], 1000000 * sunDirection [1], 1000000 * sunDirection [2])); 
+      this.sunflow.parameter("radius", 10000f);  
+      this.sunflow.parameter("samples", 4);
+      this.sunLightName = UUID.randomUUID().toString();
+      this.sunflow.light(this.sunLightName, "sphere");
+    }
+
+    // Update camera lens 
     final String CAMERA_NAME = "camera";    
     switch (camera.getLens()) {
       case SPHERICAL:
@@ -304,6 +326,7 @@ public class PhotoRenderer {
         break;
     }
     
+    // Update camera location 
     Point3 eye = new Point3(camera.getX(), camera.getZ(), camera.getY());
     Matrix4 transform;
     float yaw = camera.getYaw();
@@ -337,17 +360,18 @@ public class PhotoRenderer {
     // Set image size and quality
     this.sunflow.parameter("resolutionX", image.getWidth());
     this.sunflow.parameter("resolutionY", image.getHeight());
-    this.sunflow.parameter("filter", "gaussian"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
     
     if (this.quality == Quality.HIGH) {
+      this.sunflow.parameter("filter", "gaussian"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
       // The bigger aa.max is, the cleanest rendering you get
       this.sunflow.parameter("aa.min", 1);
       this.sunflow.parameter("aa.max",  2);
     } else {
+      this.sunflow.parameter("filter", "box");
       this.sunflow.parameter("aa.min", 0);
-      this.sunflow.parameter("aa.max",  1); 
-      this.sunflow.parameter("sampler", "fast"); // ipr, fast or bucket 
+      this.sunflow.parameter("aa.max", 0); 
     }
+    this.sunflow.parameter("sampler", "bucket"); // ipr, fast or bucket 
 
     // Render image with default camera
     this.sunflow.parameter("camera", CAMERA_NAME);
@@ -429,32 +453,36 @@ public class PhotoRenderer {
       if (renderingAttributes == null
           || renderingAttributes.getVisible()) {
         String shapeName = (String)shape.getUserData();
-        
-        // Build a unique object name
-        String uuid = UUID.randomUUID().toString();
-  
-        String appearanceName = null;
-        TexCoordGeneration texCoordGeneration = null;
-        if (appearance != null) {
-          texCoordGeneration = appearance.getTexCoordGeneration();
-          appearanceName = "shader" + uuid;
-          boolean mirror = shapeName != null
-              && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
+        // If the shape isn't a light part
+        if (shapeName == null 
+            || !shapeName.startsWith(ModelManager.LIGHT_SHAPE_PREFIX) 
+            || !isLightChild(shape)) {
+          // Build a unique object name
+          String uuid = UUID.randomUUID().toString();
+    
+          String appearanceName = null;
+          TexCoordGeneration texCoordGeneration = null;
+          if (appearance != null) {
+            texCoordGeneration = appearance.getTexCoordGeneration();
+            appearanceName = "shader" + uuid;
+            boolean mirror = shapeName != null
+                && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
           exportAppearance(appearance, appearanceName, mirror, noConstantShader);
-        }
-
-        // Export object geometries
-        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-          String objectNameBase = "object" + uuid + "-" + i;
-          // Always ignore normals on walls
-          String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
-              objectNameBase);
-          if (objectsName != null) {
-            for (String objectName : objectsName) {
-              if (appearanceName != null) {
-                this.sunflow.parameter("shaders", new String [] {appearanceName});
+          }
+  
+          // Export object geometries
+          for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+            String objectNameBase = "object" + uuid + "-" + i;
+            // Always ignore normals on walls
+            String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
+                objectNameBase);
+            if (objectsName != null) {
+              for (String objectName : objectsName) {
+                if (appearanceName != null) {
+                  this.sunflow.parameter("shaders", new String [] {appearanceName});
+                }
+                this.sunflow.instance(objectName + ".instance", objectName);
               }
-              this.sunflow.instance(objectName + ".instance", objectName);
             }
           }
         }
@@ -462,6 +490,23 @@ public class PhotoRenderer {
     }    
   }
   
+  /**
+   * Returns <code>true</code> if the given <code>node</code> is a part of a light.
+   */
+  private boolean isLightChild(Node node) {
+    Object userData = node.getUserData();
+    if (userData instanceof HomeLight) {
+      return true;
+    } else {
+      Node parent = node.getParent();
+      if (parent != null) {
+        return isLightChild(parent);
+      } else {
+        return false;
+      }
+    }
+  }
+
   /**
    * Returns the names of the exported 3D geometries in Sunflow API.
    */
@@ -1055,7 +1100,7 @@ public class PhotoRenderer {
       
       Material material = appearance.getMaterial();
       if (material != null
-          && material.getShininess() > 64) {
+          && material.getShininess() > 1) {
         this.sunflow.parameter("shiny", material.getShininess() / 512f);
         this.sunflow.shader(appearanceName, "textured_shiny_diffuse");
       } else {
@@ -1078,17 +1123,19 @@ public class PhotoRenderer {
             // Use glass ETA as default
             this.sunflow.parameter("eta", 1.55f);
           }
-          // Increase color to render better transparent objects
-          this.sunflow.parameter("color", null,
-              new float [] {Math.min(diffuseColor [0] * 2f, 1f), Math.min(diffuseColor [1] * 2f, 1f), Math.min(diffuseColor [2] * 2f, 1f)});
+          // Increase color brightness to render better transparent objects
+          java.awt.Color glassColor = new java.awt.Color(diffuseColor [0], diffuseColor [1], diffuseColor [2]);
+          glassColor = glassColor.brighter();
+          this.sunflow.parameter("color", null, glassColor.getColorComponents(null));
           this.sunflow.parameter("absorbtion.distance", 0f);          
           float transparency = transparencyAttributes.getTransparency();
           this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency});
+          this.sunflow.parameter("transparency", transparency * transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else {  
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
-          if (shininess > 64) {
+          if (shininess > 1) {
             this.sunflow.parameter("shiny", shininess / 512f);
             this.sunflow.shader(appearanceName, "shiny_diffuse");
           } else {

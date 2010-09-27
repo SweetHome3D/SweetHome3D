@@ -1,4 +1,4 @@
-The following additional provisions apply to sunflow-0.07.3d.jar third party software
+The following additional provisions apply to sunflow-0.07.3e.jar third party software
 included as part of this product.
 
 Copyright (c) 2003-2007 Christopher Kulla
@@ -21,4 +21,4 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
 
 
 
-Modifications made to SunFlow source code are described in sunflow-0.07.3c-src-diff.zip
+Modifications made to SunFlow source code are described in sunflow-0.07.3e-src-diff.zip

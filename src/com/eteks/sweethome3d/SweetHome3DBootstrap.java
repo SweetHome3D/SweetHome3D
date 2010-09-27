@@ -42,7 +42,7 @@ public class SweetHome3DBootstrap {
         "iText-2.1.5.jar", // Jars included in Sweet Home 3D executable jar file 
         "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2u.jar",
-        "sunflow-0.07.3d.jar",
+        "sunflow-0.07.3e.jar",
         "jmf.jar",
         "jnlp.jar",
         "j3dcore.jar", // Main Java 3D jars
