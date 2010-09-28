@@ -726,24 +726,24 @@ public class PhotoPanel extends JPanel implements DialogView {
   }
   
   private void updateAdvancedComponents() {
-    boolean highQuality = controller.getQuality() >= 2;
-    boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
-    if (advancedComponentsVisible != highQuality) {
-      int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
-          + this.dateSpinner.getPreferredSize().height + 5
-          + this.lensComboBox.getPreferredSize().height;
-      this.advancedComponentsSeparator.setVisible(highQuality);
-      this.dateLabel.setVisible(highQuality);
-      this.dateSpinner.setVisible(highQuality);
-      this.timeLabel.setVisible(highQuality);
-      this.timeSpinner.setVisible(highQuality);
-      this.lensLabel.setVisible(highQuality);
-      this.lensComboBox.setVisible(highQuality);
-      this.ceilingLightEnabledCheckBox.setVisible(highQuality);
-      Component root = SwingUtilities.getRoot(this);
-      if (root != null) {
-        root.setSize(root.getWidth(), 
-            root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
+    Component root = SwingUtilities.getRoot(this);
+    if (root != null) {
+      boolean highQuality = controller.getQuality() >= 2;
+      boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
+      if (advancedComponentsVisible != highQuality) {
+        int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
+            + this.dateSpinner.getPreferredSize().height + 5
+            + this.lensComboBox.getPreferredSize().height;
+        this.advancedComponentsSeparator.setVisible(highQuality);
+        this.dateLabel.setVisible(highQuality);
+        this.dateSpinner.setVisible(highQuality);
+        this.timeLabel.setVisible(highQuality);
+        this.timeSpinner.setVisible(highQuality);
+        this.lensLabel.setVisible(highQuality);
+        this.lensComboBox.setVisible(highQuality);
+        this.ceilingLightEnabledCheckBox.setVisible(highQuality);
+          root.setSize(root.getWidth(), 
+              root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
       }
     }   
   }

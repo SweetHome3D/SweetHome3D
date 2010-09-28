@@ -854,20 +854,20 @@ public class VideoPanel extends JPanel implements DialogView {
   }
   
   private void updateAdvancedComponents() {
-    boolean highQuality = controller.getQuality() >= 2;
-    boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
-    if (advancedComponentsVisible != highQuality) {
-      int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
-          + this.dateSpinner.getPreferredSize().height + 5
-          + this.ceilingLightEnabledCheckBox.getPreferredSize().height;
-      this.advancedComponentsSeparator.setVisible(highQuality);
-      this.dateLabel.setVisible(highQuality);
-      this.dateSpinner.setVisible(highQuality);
-      this.timeLabel.setVisible(highQuality);
-      this.timeSpinner.setVisible(highQuality);
-      this.ceilingLightEnabledCheckBox.setVisible(highQuality);
-      Component root = SwingUtilities.getRoot(this);
-      if (root != null) {
+    Component root = SwingUtilities.getRoot(this);
+    if (root != null) {
+      boolean highQuality = controller.getQuality() >= 2;
+      boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
+      if (advancedComponentsVisible != highQuality) {
+        int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
+            + this.dateSpinner.getPreferredSize().height + 5
+            + this.ceilingLightEnabledCheckBox.getPreferredSize().height;
+        this.advancedComponentsSeparator.setVisible(highQuality);
+        this.dateLabel.setVisible(highQuality);
+        this.dateSpinner.setVisible(highQuality);
+        this.timeLabel.setVisible(highQuality);
+        this.timeSpinner.setVisible(highQuality);
+        this.ceilingLightEnabledCheckBox.setVisible(highQuality);
         root.setSize(root.getWidth(), 
             root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
       }
