@@ -632,7 +632,7 @@ public class ModelManager {
           }
           
           // If texture image supports transparency
-          if (texture.getFormat() == Texture.RGBA) {
+          if (TextureManager.getInstance().isTextureTransparent(sharedTexture)) {
             if (appearance.getTransparencyAttributes() == null) {
               // Add transparency attributes to ensure transparency works
               appearance.setTransparencyAttributes(

@@ -255,6 +255,22 @@ public class TextureManager {
   }
  
   /**
+   * Returns <code>true</code> if the texture is shared and its image contains 
+   * at least one transparent pixel.
+   */
+  public boolean isTextureTransparent(Texture texture) {
+    synchronized (this.textures) { // Use one mutex for both maps
+      // Search which key matches texture
+      for (TextureKey key : textures.keySet()) {
+        if (key.getTexture() == texture) {
+          return key.isTransparent();
+        }
+      }
+      return texture.getFormat() == Texture.RGBA;
+    }
+  }
+  
+  /**
    * An observer that receives texture loading notifications. 
    */
   public static interface TextureObserver {
@@ -265,11 +281,12 @@ public class TextureManager {
    * Key used to ensure texture uniqueness in textures map.
    * Image bits of the texture are stored in a weak reference to avoid grabbing memory uselessly.
    */
-  public static class TextureKey {
+  private static class TextureKey {
     private Texture               texture;
     private WeakReference<int []> imageBits; 
     private int                   hashCodeCache;
     private boolean               hashCodeSet;
+    private boolean               transparent;
 
     public TextureKey(Texture texture) {
       this.texture = texture;      
@@ -300,11 +317,27 @@ public class TextureManager {
           image = tmp;
         }
         imageBits = (int [])image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+        if (image.getTransparency() != BufferedImage.OPAQUE) {
+          // Check if the image contains at least one transparent pixel 
+          for (int pixel : imageBits) {
+            if ((pixel & 0xFF000000) != 0xFF000000) {
+              this.transparent = true;
+              break;
+            }
+          }
+        }
         this.imageBits = new WeakReference<int[]>(imageBits);
       }
       return imageBits;
     }
 
+    /**
+     * Returns <code>true</code> if the image of the texture contains at least one transparent pixel.
+     */
+    public boolean isTransparent() {
+      return this.transparent;
+    }
+    
     /**
      * Returns <code>true</code> if the image of this texture and 
      * the image of the object in parameter are the same. 

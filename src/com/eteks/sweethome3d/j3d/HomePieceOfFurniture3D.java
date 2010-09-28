@@ -67,6 +67,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private static final Material               DEFAULT_TEXTURED_SHAPE_MATERIAL = new Material();
   private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
+  private static final PolygonAttributes DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
+      new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0);
   private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
   private final Home home;
@@ -463,6 +465,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
             appearance.setMaterial(material);
+            appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+            appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
             appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
             appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
             appearance.setTexture(null);
@@ -478,8 +482,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
                 new TextureManager.TextureObserver() {
                     public void textureUpdated(Texture texture) {
-                      if (texture.getFormat() == Texture.RGBA) {
+                      if (TextureManager.getInstance().isTextureTransparent(texture)) {
                         shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
+                        shape.getAppearance().setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
                       }
                       shape.getAppearance().setTexture(texture);
                     }
@@ -488,6 +493,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             // Restore default material and texture
             appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
             appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+            appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
             appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
             appearance.setTexture(defaultMaterialAndTexture.getTexture());
             appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
@@ -676,6 +682,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private static class DefaultMaterialAndTexture {
     private final Material               material;
     private final TransparencyAttributes transparencyAttributes;
+    private final PolygonAttributes      polygonAttributes;
     private final TexCoordGeneration     texCoordGeneration;
     private final Texture                texture;
     private final TextureAttributes      textureAttributes;
@@ -683,9 +690,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     public DefaultMaterialAndTexture(Appearance appearance) {
       this.material = appearance.getMaterial();
       this.transparencyAttributes = appearance.getTransparencyAttributes();
+      this.polygonAttributes = appearance.getPolygonAttributes();
       this.texCoordGeneration = appearance.getTexCoordGeneration();
       this.texture = appearance.getTexture();
-      this.textureAttributes = appearance.getTextureAttributes();      
+      this.textureAttributes = appearance.getTextureAttributes();
     }
     
     public Material getMaterial() {
@@ -694,6 +702,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
     public TransparencyAttributes getTransparencyAttributes() {
       return this.transparencyAttributes;
+    }
+    
+    public PolygonAttributes getPolygonAttributes() {
+      return this.polygonAttributes;
     }
     
     public TexCoordGeneration getTexCoordGeneration() {
