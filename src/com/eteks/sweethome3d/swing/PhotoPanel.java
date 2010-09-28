@@ -655,10 +655,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Second row
     // Add a dummy label at left and right
     add(new JLabel(), new GridBagConstraints(
-        0, 1, 1, 3, 0.5f, 0, GridBagConstraints.CENTER, 
+        0, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(new JLabel(), new GridBagConstraints(
-        5, 1, 1, 3, 0.5f, 0, GridBagConstraints.CENTER, 
+        5, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
