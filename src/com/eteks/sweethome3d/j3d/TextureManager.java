@@ -317,15 +317,7 @@ public class TextureManager {
           image = tmp;
         }
         imageBits = (int [])image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
-        if (image.getTransparency() != BufferedImage.OPAQUE) {
-          // Check if the image contains at least one transparent pixel 
-          for (int pixel : imageBits) {
-            if ((pixel & 0xFF000000) != 0xFF000000) {
-              this.transparent = true;
-              break;
-            }
-          }
-        }
+        this.transparent = image.getTransparency() != BufferedImage.OPAQUE;
         this.imageBits = new WeakReference<int[]>(imageBits);
       }
       return imageBits;
