@@ -194,7 +194,7 @@ public class CompassPanel extends JPanel implements DialogView {
       });
 
     this.latitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "latitudeLabel.text"));
-    final SpinnerNumberModel latitudeSpinnerModel = new SpinnerNumberModel(0., -90., 90., 5);
+    final SpinnerNumberModel latitudeSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-90), new Float(90), new Float(5));
     this.latitudeSpinner = new JSpinner(latitudeSpinnerModel);
     // Change positive / negative notation by North / South
     JFormattedTextField textField = ((DefaultEditor)this.latitudeSpinner.getEditor()).getTextField();
@@ -218,7 +218,7 @@ public class CompassPanel extends JPanel implements DialogView {
       });
     
     this.longitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "longitudeLabel.text"));
-    final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(0., -180., 180., 5);
+    final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-180), new Float(180), new Float(5));
     this.longitudeSpinner = new JSpinner(longitudeSpinnerModel);
     // Change positive / negative notation by East / West
     textField = ((DefaultEditor)this.longitudeSpinner.getEditor()).getTextField();
@@ -293,7 +293,7 @@ public class CompassPanel extends JPanel implements DialogView {
         }
       };
     this.northDirectionSpinner = new AutoCommitSpinner(northDirectionSpinnerModel);
-    northDirectionSpinnerModel.setValue(controller.getNorthDirectionInDegrees());
+    northDirectionSpinnerModel.setValue(new Integer(Math.round(controller.getNorthDirectionInDegrees())));
     this.northDirectionComponent = new JComponent() {
         @Override
         public Dimension getPreferredSize() {
@@ -338,7 +338,7 @@ public class CompassPanel extends JPanel implements DialogView {
     this.northDirectionComponent.setOpaque(false);
     final PropertyChangeListener northDirectionChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          northDirectionSpinnerModel.setValue((Float)ev.getNewValue());
+          northDirectionSpinnerModel.setValue(((Number)ev.getNewValue()).intValue());
           northDirectionComponent.repaint();
         }
       };
@@ -346,7 +346,7 @@ public class CompassPanel extends JPanel implements DialogView {
     northDirectionSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(CompassController.Property.NORTH_DIRECTION_IN_DEGREES, northDirectionChangeListener);
-          controller.setNorthDirectionInDegrees(((Number)northDirectionSpinnerModel.getValue()).intValue());
+          controller.setNorthDirectionInDegrees(((Number)northDirectionSpinnerModel.getValue()).floatValue());
           northDirectionComponent.repaint();
           controller.addPropertyChangeListener(CompassController.Property.NORTH_DIRECTION_IN_DEGREES, northDirectionChangeListener);
         }

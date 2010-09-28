@@ -598,11 +598,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     locationPanel.add(this.angleSpinner, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 4, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
     add(locationPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, labelAlignment, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     // Size panel
     JPanel sizePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "sizePanel.title"));
@@ -622,14 +622,14 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         2, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     sizePanel.add(this.heightSpinner, new GridBagConstraints(
-        3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 3, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, -10, 0));
     sizePanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
         2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(sizePanel, new GridBagConstraints(
         1, 1, 2, 1, 1, 0, labelAlignment, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     // Color and texture panel
     JPanel colorAndTexturePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "colorAndTexturePanel.title"));
