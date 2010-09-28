@@ -663,14 +663,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
     Insets componentInsets = new Insets(0, 0, 0, 10);
     add(this.widthSpinner, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     add(this.heightLabel, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
     add(this.heightSpinner, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -693,7 +693,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
     add(this.qualityDescriptionPanel, new GridBagConstraints(
         1, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(2, 0, 2, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
     // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -701,20 +701,20 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Seventh row
     add(this.dateLabel, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     add(this.dateSpinner, new GridBagConstraints(
         2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 8, 0));
     add(this.timeLabel, new GridBagConstraints(
         3, 6, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     add(this.timeSpinner, new GridBagConstraints(
         4, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     add(this.lensLabel, new GridBagConstraints(
         1, 7, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     add(this.lensComboBox, new GridBagConstraints(
         2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
@@ -793,6 +793,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         int screenRightBorder = screenSize.width - screenInsets.right;
         // Check dialog isn't too high
         int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+        if (OperatingSystem.isLinux() && screenHeight == screenSize.height) {
+          // Let's consider that under Linux at least an horizontal bar exists 
+          screenHeight -= 30;
+        }
         if (dialog.getHeight() > screenHeight) {
           dialog.setSize(dialog.getWidth(), screenHeight);
         }

@@ -908,6 +908,10 @@ public class VideoPanel extends JPanel implements DialogView {
         int screenRightBorder = screenSize.width - screenInsets.right;
         // Check dialog isn't too high
         int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+        if (OperatingSystem.isLinux() && screenHeight == screenSize.height) {
+          // Let's consider that under Linux at least an horizontal bar exists 
+          screenHeight -= 30;
+        }
         if (dialog.getHeight() > screenHeight) {
           dialog.setSize(dialog.getWidth(), screenHeight);
         }
