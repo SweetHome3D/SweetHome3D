@@ -1111,7 +1111,8 @@ public class PhotoRenderer {
           this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency});
           this.sunflow.parameter("transparency", 1f - transparency);
           this.sunflow.shader(appearanceName, "glass");
-        } else {  
+        } else if (material.getLightingEnable()
+                   || noConstantShader) {  
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 1) {
@@ -1120,6 +1121,9 @@ public class PhotoRenderer {
           } else {
             this.sunflow.shader(appearanceName, "diffuse");
           }
+        } else {
+          this.sunflow.parameter("color", null, diffuseColor);
+          this.sunflow.shader(appearanceName, "constant");
         }
       } else {
         ColoringAttributes coloringAttributes = appearance.getColoringAttributes();
