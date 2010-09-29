@@ -4596,6 +4596,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                yMovedPieceOfFurniture;
     private boolean              movedDoorOrWindowBoundToWall;
     private boolean              magnetismEnabled;
+    private boolean              duplicationActivated;
 
     @Override
     public Mode getMode() {
@@ -4640,11 +4641,14 @@ public class PlanController extends FurnitureController implements Controller {
             && ((HomeDoorOrWindow)this.movedPieceOfFurniture).isBoundToWall();
       }
       this.duplicatedItems = null;
-      setDuplicationActivated(wasDuplicationActivatedLastMousePress());
+      this.duplicationActivated = wasDuplicationActivatedLastMousePress();
     }
     
     @Override
     public void moveMouse(float x, float y) {      
+      if (!this.mouseMoved) {
+        toggleDuplication(this.duplicationActivated);
+      }
       if (this.movedPieceOfFurniture != null) {
         // Reset to default piece values and adjust piece of furniture location, angle and depth
         this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
@@ -4729,29 +4733,31 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      if (this.duplicatedItems != null) {
-        // Delete moved items and select original items
-        doDeleteItems(this.movedItems);
-        selectItems(this.duplicatedItems);
-      } else if (this.mouseMoved) {
-        // Put items back to their initial location
-        if (this.movedPieceOfFurniture != null) {
-          this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
-          this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
-          this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-          if (this.movedPieceOfFurniture.isResizable()
-              && isItemResizable(this.movedPieceOfFurniture)) {
-            this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
-          }
-          this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
-          if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
-            ((HomeDoorOrWindow)this.movedPieceOfFurniture).setBoundToWall(
-                this.movedDoorOrWindowBoundToWall);
-          }          
+      if (this.mouseMoved) {
+        if (this.duplicatedItems != null) {
+          // Delete moved items and select original items
+          doDeleteItems(this.movedItems);
+          selectItems(this.duplicatedItems);
         } else {
-          moveItems(this.movedItems, 
-              getXLastMousePress() - this.xLastMouseMove, 
-              getYLastMousePress() - this.yLastMouseMove);
+          // Put items back to their initial location
+          if (this.movedPieceOfFurniture != null) {
+            this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
+            this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
+            this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
+            if (this.movedPieceOfFurniture.isResizable()
+                && isItemResizable(this.movedPieceOfFurniture)) {
+              this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+            }
+            this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
+            if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
+              ((HomeDoorOrWindow)this.movedPieceOfFurniture).setBoundToWall(
+                  this.movedDoorOrWindowBoundToWall);
+            }          
+          } else {
+            moveItems(this.movedItems, 
+                getXLastMousePress() - this.xLastMouseMove, 
+                getYLastMousePress() - this.yLastMouseMove);
+          }
         }
       }
       // Change the state to SelectionState
@@ -4760,6 +4766,13 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void setDuplicationActivated(boolean duplicationActivated) {
+      if (this.mouseMoved) {
+        toggleDuplication(duplicationActivated);
+      }
+      this.duplicationActivated = duplicationActivated;
+    }
+
+    private void toggleDuplication(boolean duplicationActivated) {
       if (this.movedItems.size() > 0
           && !(this.movedItems.get(0) instanceof Camera)
           && !(this.movedItems.get(0) instanceof Compass)) {
@@ -4817,12 +4830,10 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setCursor(PlanView.CursorType.SELECTION);
         }
         
-        if (this.mouseMoved) {
-          selectItems(this.movedItems);
-        }
+        selectItems(this.movedItems);
       }
     }
-    
+
     @Override
     public void exit() {
       getView().deleteFeedback();
