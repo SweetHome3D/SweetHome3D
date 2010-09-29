@@ -259,7 +259,12 @@ public class PhotoRenderer {
 
     this.sunflow.parameter("depths.diffuse", 1);
     this.sunflow.parameter("depths.reflection", 4);
-    this.sunflow.parameter("depths.refraction", 8);
+    this.sunflow.parameter("depths.refraction", 16);
+    this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
+    
+    // Use a spiral computing
+    this.sunflow.parameter("bucket.size", 32);
+    this.sunflow.parameter("bucket.order", "spiral");
     this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
   }
 
