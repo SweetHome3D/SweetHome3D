@@ -48,6 +48,7 @@ public class DefaultUserPreferences extends UserPreferences {
     patterns.add(new PatternTexture("foreground"));
     patterns.add(new PatternTexture("hatchUp"));
     patterns.add(new PatternTexture("hatchDown"));
+    patterns.add(new PatternTexture("crossHatch"));
     patterns.add(new PatternTexture("background"));
     PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
     setPatternsCatalog(patternsCatalog);
