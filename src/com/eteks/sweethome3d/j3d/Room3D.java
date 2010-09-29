@@ -190,14 +190,25 @@ public class Room3D extends Object3DBranch {
         Area roomArea = new Area(roomShape);
         List<float []> currentPathPoints = new ArrayList<float[]>();
         roomPoints = new ArrayList<float[][]>();
+        float [] previousRoomPoint = null;
         for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
           float [] roomPoint = new float[2];
           switch (it.currentSegment(roomPoint)) {
-            case PathIterator.SEG_MOVETO : 
-              currentPathPoints.add(roomPoint);
+            case PathIterator.SEG_MOVETO :
+              if (previousRoomPoint == null
+                  || roomPoint [0] != previousRoomPoint [0] 
+                  || roomPoint [1] != previousRoomPoint [1]) {
+                currentPathPoints.add(roomPoint);
+              }
+              previousRoomPoint = roomPoint;
               break;
             case PathIterator.SEG_LINETO : 
-              currentPathPoints.add(roomPoint);
+              if (previousRoomPoint == null
+                  || roomPoint [0] != previousRoomPoint [0] 
+                  || roomPoint [1] != previousRoomPoint [1]) {
+                currentPathPoints.add(roomPoint);
+              }
+              previousRoomPoint = roomPoint;
               break;
             case PathIterator.SEG_CLOSE :
               float [][] pathPoints = 
@@ -209,6 +220,7 @@ public class Room3D extends Object3DBranch {
               }
               roomPoints.add(pathPoints);
               currentPathPoints.clear();
+              previousRoomPoint = null;
               break;
           }
           it.next();        
