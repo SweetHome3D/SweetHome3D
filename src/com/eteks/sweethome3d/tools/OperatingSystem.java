@@ -160,25 +160,26 @@ public class OperatingSystem {
         }
         
         // Launch a timer that updates modification date of the temporary folder each 10 s
-        final long delay = 10000;
+        final long updateDelay = 10000;
         new Timer(true).schedule(new TimerTask() {
             @Override
             public void run() {
               // Ensure modification date is always growing in case system time was adjusted
               sessionTemporaryFolder.setLastModified(Math.max(System.currentTimeMillis(),
-                  sessionTemporaryFolder.lastModified() + delay));
+                  sessionTemporaryFolder.lastModified() + updateDelay));
             }
-          }, delay, delay);
+          }, updateDelay, updateDelay);
         
         if (siblingTemporaryFolders != null
             && siblingTemporaryFolders.length > 0) {
-          // Launch a timer that will delete out dated temporary folders in 20 s
+          // Launch a timer that will delete out dated temporary folders in 5 min
+          final long deleteDelay = 5 * 60000;
           new Timer(true).schedule(new TimerTask() {
               @Override
               public void run() {
                 long now = System.currentTimeMillis();
                 for (File siblingTemporaryFolder : siblingTemporaryFolders) {
-                  if (now - siblingTemporaryFolder.lastModified() > 2 * delay) {
+                  if (now - siblingTemporaryFolder.lastModified() > deleteDelay) {
                     for (File temporaryFile : siblingTemporaryFolder.listFiles()) {
                       temporaryFile.delete();
                     }
@@ -186,7 +187,7 @@ public class OperatingSystem {
                   }
                 }
               }
-            }, 2 * delay);
+            }, deleteDelay);
         }
       }
       return sessionTemporaryFolder;
