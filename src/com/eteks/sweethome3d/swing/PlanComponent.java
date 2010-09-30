@@ -194,6 +194,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
+      MOVE_SELECTION_FAST_LEFT, MOVE_SELECTION_FAST_UP, MOVE_SELECTION_FAST_DOWN, MOVE_SELECTION_FAST_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
       ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION, 
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
@@ -918,9 +919,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
     inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.MOVE_SELECTION_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("shift LEFT"), ActionType.MOVE_SELECTION_FAST_LEFT);
     inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
+    inputMap.put(KeyStroke.getKeyStroke("shift UP"), ActionType.MOVE_SELECTION_FAST_UP);
     inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
+    inputMap.put(KeyStroke.getKeyStroke("shift DOWN"), ActionType.MOVE_SELECTION_FAST_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("shift RIGHT"), ActionType.MOVE_SELECTION_FAST_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
     inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
     inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
@@ -1028,9 +1033,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     actionMap.put(ActionType.DELETE_SELECTION, deleteSelectionAction);
     actionMap.put(ActionType.ESCAPE, escapeAction);
     actionMap.put(ActionType.MOVE_SELECTION_LEFT, new MoveSelectionAction(-1, 0));
+    actionMap.put(ActionType.MOVE_SELECTION_FAST_LEFT, new MoveSelectionAction(-10, 0));
     actionMap.put(ActionType.MOVE_SELECTION_UP, new MoveSelectionAction(0, -1));
+    actionMap.put(ActionType.MOVE_SELECTION_FAST_UP, new MoveSelectionAction(0, -10));
     actionMap.put(ActionType.MOVE_SELECTION_DOWN, new MoveSelectionAction(0, 1));
+    actionMap.put(ActionType.MOVE_SELECTION_FAST_DOWN, new MoveSelectionAction(0, 10));
     actionMap.put(ActionType.MOVE_SELECTION_RIGHT, new MoveSelectionAction(1, 0));
+    actionMap.put(ActionType.MOVE_SELECTION_FAST_RIGHT, new MoveSelectionAction(10, 0));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_ON, new ToggleMagnetismAction(true));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_OFF, new ToggleMagnetismAction(false));
     actionMap.put(ActionType.ACTIVATE_DUPLICATION, new SetDuplicationActivatedAction(true));
