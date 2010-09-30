@@ -264,7 +264,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Creates a default furniture catalog read from resources and   
    * furniture plugin folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
-;  public DefaultFurnitureCatalog(final UserPreferences preferences, 
+  public DefaultFurnitureCatalog(final UserPreferences preferences, 
                                  File furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
