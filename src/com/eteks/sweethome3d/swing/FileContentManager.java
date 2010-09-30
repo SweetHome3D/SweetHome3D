@@ -406,7 +406,7 @@ public class FileContentManager implements ContentManager {
    * This method may be overridden to change the default file extension of an existing content type
    * or to define the default file extension of a user defined content type.
    */
-  protected String getDefaultFileExtension(ContentType contentType) {
+  public String getDefaultFileExtension(ContentType contentType) {
     if (contentType == ContentType.USER_DEFINED) {
       return null;
     } else {

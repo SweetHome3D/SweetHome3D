@@ -36,8 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
@@ -72,7 +72,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT                  = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS               = "newWallThickness";
   private static final String RECENT_HOMES                     = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP               = "ignoredActionTip#";  
+  private static final String IGNORED_ACTION_TIP               = "ignoredActionTip#";
 
   private final URL [] pluginFurnitureCatalogURLs;
   private final URL    furnitureResourcesUrlBase;
@@ -206,7 +206,7 @@ public class AppletUserPreferences extends UserPreferences {
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
-    for (int i = 1; i <= 4; i++) {
+    for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
       String recentHome = properties.getProperty(RECENT_HOMES + i, null);
       if (recentHome != null) {
         recentHomes.add(recentHome);
@@ -301,7 +301,7 @@ public class AppletUserPreferences extends UserPreferences {
     properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
     // Write recent homes list
     int i = 1;
-    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {
+    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
       properties.setProperty(RECENT_HOMES + i, it.next());
     }
     // Write ignored action tips

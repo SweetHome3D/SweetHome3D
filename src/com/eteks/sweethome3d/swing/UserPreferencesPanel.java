@@ -98,6 +98,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newWallHeightLabel;
   private JSpinner       newWallHeightSpinner;
+  private JCheckBox      autoSaveDelayForRecoveryCheckBox;
+  private JSpinner       autoSaveDelayForRecoverySpinner;
+  private JLabel         autoSaveDelayForRecoveryUnitLabel;
   private JButton        resetDisplayedActionTipsButton;
   private String         dialogTitle;
   
@@ -483,6 +486,51 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
     
+    if (controller.isPropertyEditable(UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY)) {
+      this.autoSaveDelayForRecoveryCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.text"));
+      final SpinnerNumberModel autoSaveDelayForRecoverySpinnerModel = new SpinnerNumberModel(10, 1, 60, 5) {
+          @Override
+          public Object getNextValue() {
+            if (((Number)getValue()).intValue() == ((Number)getMinimum()).intValue()) {
+              return getStepSize();
+            } else {
+              return super.getNextValue();
+            }
+          }
+          
+          @Override
+          public Object getPreviousValue() {
+            if (((Number)getValue()).intValue() - ((Number)getStepSize()).intValue() < ((Number)getMinimum()).intValue()) {
+              return super.getMinimum();
+            } else {
+              return super.getPreviousValue();
+            }
+          }
+        };
+      this.autoSaveDelayForRecoverySpinner = new AutoCommitSpinner(autoSaveDelayForRecoverySpinnerModel);
+      this.autoSaveDelayForRecoveryUnitLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "autoSaveDelayForRecoveryUnitLabel.text"));
+      updateAutoSaveDelayForRecoveryComponents(controller);
+      this.autoSaveDelayForRecoveryCheckBox.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setAutoSaveForRecoveryEnabled(autoSaveDelayForRecoveryCheckBox.isSelected());
+          }
+        });
+      autoSaveDelayForRecoverySpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setAutoSaveDelayForRecovery(((Number)autoSaveDelayForRecoverySpinnerModel.getValue()).intValue() * 60000);
+          }
+        });
+      PropertyChangeListener listener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateAutoSaveDelayForRecoveryComponents(controller);
+          }
+        };
+      controller.addPropertyChangeListener(UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY, listener);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.AUTO_SAVE_FOR_RECOVERY_ENABLED, listener);
+    }
+    
     this.resetDisplayedActionTipsButton = new JButton(new ResourceAction.ButtonAction(
         new ResourceAction(preferences, UserPreferencesPanel.class, "RESET_DISPLAYED_ACTION_TIPS", true) {
           @Override
@@ -492,6 +540,16 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         }));
     
     this.dialogTitle = preferences.getLocalizedString(UserPreferencesPanel.class, "preferences.title");
+  }
+
+  private void updateAutoSaveDelayForRecoveryComponents(UserPreferencesController controller) {
+    int autoSaveDelayForRecoveryInMinutes = controller.getAutoSaveDelayForRecovery() / 60000;
+    boolean autoSaveForRecoveryEnabled = controller.isAutoSaveForRecoveryEnabled();
+    this.autoSaveDelayForRecoverySpinner.setEnabled(autoSaveForRecoveryEnabled);
+    this.autoSaveDelayForRecoveryCheckBox.setSelected(autoSaveForRecoveryEnabled);
+    if (autoSaveForRecoveryEnabled) {
+      this.autoSaveDelayForRecoverySpinner.setValue(autoSaveDelayForRecoveryInMinutes);
+    }
   }
   
   /**
@@ -562,7 +620,11 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.newWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "newWallHeightLabel.mnemonic")).getKeyCode());
         this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
-      }
+      }      
+      if (this.autoSaveDelayForRecoveryCheckBox != null) {
+        this.autoSaveDelayForRecoveryCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.mnemonic")).getKeyCode());
+      }      
     }
   }
   
@@ -704,12 +766,22 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           1, 12, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
+    if (this.autoSaveDelayForRecoveryCheckBox != null) {
+      JPanel autoSaveDelayForRecoveryPanel = new JPanel();
+      // Fourteenth  row
+      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryCheckBox);
+      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoverySpinner);
+      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryUnitLabel);
+      add(autoSaveDelayForRecoveryPanel, new GridBagConstraints(
+          0, 13, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
     // Last row
     if (this.resetDisplayedActionTipsButton.getText() != null
         && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 13, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 14, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }

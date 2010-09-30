@@ -1401,7 +1401,7 @@ public class HomeController implements Controller {
         try {
           if (this.application.getHomeRecorder().exists(homeName)) {
             recentHomes.add(homeName);
-            if (recentHomes.size() == 4) {
+            if (recentHomes.size() == this.preferences.getRecentHomesMaxCount()) {
               break;
             }
           }

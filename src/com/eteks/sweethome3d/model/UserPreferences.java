@@ -47,7 +47,7 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
-                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE}
+                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AUTO_SAVE_DELAY_FOR_RECOVERY}
   
   private static final String [] SUPPORTED_LANGUAGES; 
   private static final List<ClassLoader> DEFAULT_CLASS_LOADER = 
@@ -83,6 +83,7 @@ public abstract class UserPreferences {
   private float            newWallThickness;
   private float            newWallHeight;
   private List<String>     recentHomes;
+  private int              autoSaveDelayForRecovery;
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -608,6 +609,28 @@ public abstract class UserPreferences {
           oldWallHeight, newWallHeight);
     }
   }
+
+  /**
+   * Returns the delay between two automatic save operations of homes for recovery purpose.
+   * @return a delay in milliseconds or 0 to disable auto save.
+   * @since 3.0
+   */
+  public int getAutoSaveDelayForRecovery() {
+    return this.autoSaveDelayForRecovery;
+  }
+  
+  /**
+   * Sets the delay between two automatic save operations of homes for recovery purpose.
+   * @since 3.0
+   */
+  public void setAutoSaveDelayForRecovery(int autoSaveDelayForRecovery) {
+    if (this.autoSaveDelayForRecovery != autoSaveDelayForRecovery) {
+      float oldAutoSaveDelayForRecovery = this.autoSaveDelayForRecovery;
+      this.autoSaveDelayForRecovery = autoSaveDelayForRecovery;
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_DELAY_FOR_RECOVERY.name(), 
+          oldAutoSaveDelayForRecovery, autoSaveDelayForRecovery);
+    }
+  }
   
   /**
    * Returns an unmodifiable list of the recent homes.
@@ -627,7 +650,14 @@ public abstract class UserPreferences {
           oldRecentHomes, getRecentHomes());
     }
   }
-  
+
+  /**
+   * Returns the maximum count of homes that should be proposed to the user.
+   */
+  public int getRecentHomesMaxCount() {
+    return 10;
+  }
+
   /**
    * Sets which action tip should be ignored.
    * <br>This method should be overridden to store the ignore information.

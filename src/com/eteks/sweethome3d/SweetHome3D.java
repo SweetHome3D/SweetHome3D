@@ -29,17 +29,24 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -64,8 +71,10 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.UserPreferences.Property;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingTools;
@@ -82,6 +91,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  */
 public class SweetHome3D extends HomeApplication {
   private static final String APPLICATION_PLUGINS_SUB_FOLDER = "plugins";
+  private static final String RECOVERED_FILES_SUB_FOLDER     = "recovery";
   
   private HomeRecorder        homeRecorder;
   private HomeRecorder        compressedHomeRecorder;
@@ -322,6 +332,7 @@ public class SweetHome3D extends HomeApplication {
     // Init look and feel afterwards to ensure that Swing takes into account default locale change
     getUserPreferences();
     initLookAndFeel();
+    startAutoSaveForRecovery();
 
     // Run everything else in Event Dispatch Thread
     EventQueue.invokeLater(new Runnable() {
@@ -585,6 +596,143 @@ public class SweetHome3D extends HomeApplication {
       
       showHomeFrame(home);
     }
+  }
+    
+  /**
+   * Starts a timer that will automatically save open homes in recovered files folder.
+   */
+  private void startAutoSaveForRecovery() {
+    final Map<Home, File> autoSavedFiles = Collections.synchronizedMap(new HashMap<Home, File>());
+    // Create an executor running at min priority
+    final ExecutorService autoSaveForRecoveryExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        public Thread newThread(Runnable runnable) {
+          Thread thread = new Thread(runnable);
+          thread.setPriority(Thread.MIN_PRIORITY);
+          return thread;
+        }
+      });    
+    // Interrupt auto saving when program stops
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          autoSaveForRecoveryExecutor.shutdownNow();
+        }
+      });
+
+    // Add a listener on auto save delay that will run auto save timer 
+    getUserPreferences().addPropertyChangeListener(Property.AUTO_SAVE_DELAY_FOR_RECOVERY, new PropertyChangeListener() {
+        private Timer timer;
+        private long lastAutoSaveTime; 
+        
+        {
+          restartTimer();
+        }
+
+        public void propertyChange(PropertyChangeEvent ev) {
+          restartTimer();
+        }
+        
+        private void restartTimer() {
+          if (this.timer != null) {
+            this.timer.cancel();
+            this.timer = null;
+          } 
+          int autoSaveDelayForRecovery = getUserPreferences().getAutoSaveDelayForRecovery();
+          if (autoSaveDelayForRecovery > 0) {
+            this.timer = new Timer("autoSaveTimer", true);
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                  if (System.currentTimeMillis() - lastAutoSaveTime > 30000) {
+                    for (Home home : getHomes()) {
+                      if (getHomes().contains(home)) {
+                        cloneAndAutoSaveHome(home);
+                      }
+                    }
+                  }
+                }
+              };
+            this.timer.scheduleAtFixedRate(task , autoSaveDelayForRecovery, autoSaveDelayForRecovery);
+          } 
+        }
+        
+        private void cloneAndAutoSaveHome(final Home home) {
+          try {
+            EventQueue.invokeAndWait(new Runnable() {
+              public void run() {
+                // Clone home in Event Dispatch Thread
+                final Home autoSavedHome = home.clone();
+                autoSaveForRecoveryExecutor.submit(new Runnable() {
+                  public void run() {
+                    try {
+                      // Save home clone in an other thread
+                      autoSaveHome(home, autoSavedHome);
+                    } catch (IOException ex) {
+                      ex.printStackTrace();
+                    } catch (RecorderException ex) {
+                      ex.printStackTrace();
+                    }
+                  }
+                });
+              }
+            });
+          } catch (InvocationTargetException ex) {
+            throw new RuntimeException(ex);
+          } catch (InterruptedException ex) {
+            // Ignore saving in case of interruption
+          }
+        }
+
+        private void autoSaveHome(Home home, Home autoSavedHome) throws IOException, RecorderException {
+          if (getHomes().contains(home)) {
+            File autoSavedHomeFile = autoSavedFiles.get(home);
+            if (autoSavedHomeFile == null) {
+              // Find a unique file for home in recovered files sub folder 
+              File recoveredFilesFolder = new File(OperatingSystem.getDefaultApplicationFolder(), RECOVERED_FILES_SUB_FOLDER);
+              if (!recoveredFilesFolder.exists()) {
+                recoveredFilesFolder.mkdirs();
+              }
+              if (autoSavedHome.getName() != null) {
+                String homeFile = new File(autoSavedHome.getName()).getName();
+                autoSavedHomeFile = new File(recoveredFilesFolder, homeFile);   
+                if (autoSavedHomeFile.exists()) {
+                  autoSavedHomeFile = new File(recoveredFilesFolder, UUID.randomUUID() + "-" + homeFile);
+                }
+              } else {
+                ContentManager contentManager = getContentManager();
+                autoSavedHomeFile = new File(recoveredFilesFolder, UUID.randomUUID() +
+                    (contentManager instanceof FileContentManager 
+                        ? ((FileContentManager)contentManager).getDefaultFileExtension(ContentManager.ContentType.SWEET_HOME_3D) 
+                            : ".recover"));
+              }
+              autoSavedFiles.put(home, autoSavedHomeFile);
+            }
+            if (autoSavedHome.isModified()) {
+              try {
+                getHomeRecorder().writeHome(autoSavedHome, autoSavedHomeFile.getPath());
+              } catch (InterruptedRecorderException ex) {
+                // Forget exception that probably happen because of shutdown hook management
+              }
+            } else {
+              autoSavedHomeFile.delete();
+            }
+          }
+          lastAutoSaveTime = Math.max(lastAutoSaveTime, System.currentTimeMillis());
+        }
+      });
+    
+    // Remove auto saved files when a home is closed 
+    addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev) {
+          if (ev.getType() == CollectionEvent.Type.DELETE) {
+            File homeFile = autoSavedFiles.get(ev.getItem());
+            if (homeFile != null) {
+              homeFile.delete();
+              autoSavedFiles.remove(ev.getItem());
+            }
+          }
+        }
+      });
   }
   
   /**

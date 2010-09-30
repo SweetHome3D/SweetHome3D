@@ -38,6 +38,7 @@ import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
+import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -48,6 +49,7 @@ public class HomeAppletController extends HomeController {
   private final Home home;
   private final HomeApplication application;
   private final ViewFactory viewFactory;
+  private final ContentManager contentManager;
 
   public HomeAppletController(Home home, 
                               HomeApplication application, 
@@ -62,6 +64,7 @@ public class HomeAppletController extends HomeController {
     this.home = home;
     this.application = application;
     this.viewFactory = viewFactory;
+    this.contentManager = contentManager;
     
     HomeView view = (HomeView)getView();
     view.setEnabled(HomeView.ActionType.EXIT, false);
@@ -153,6 +156,18 @@ public class HomeAppletController extends HomeController {
           this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "exportToSH3DMessage"), exceptionHandler, 
           this.application.getUserPreferences(), viewFactory).executeTask(getView());
     }
+  }
+  
+  @Override
+  public void editPreferences() {
+    new UserPreferencesController(this.application.getUserPreferences(), 
+        this.viewFactory, this.contentManager) {
+      public boolean isPropertyEditable(UserPreferencesController.Property property) {
+        // No auto recovery with applet
+        return property != UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY
+            && property != UserPreferencesController.Property.AUTO_SAVE_FOR_RECOVERY_ENABLED;
+      }
+    }.displayView(getView());
   }
 }
 

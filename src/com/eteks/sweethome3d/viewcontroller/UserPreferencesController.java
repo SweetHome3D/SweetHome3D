@@ -36,7 +36,8 @@ public class UserPreferencesController implements Controller {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
-      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE}
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+      AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
   
   private final UserPreferences         preferences;
   private final ViewFactory             viewFactory;
@@ -55,6 +56,8 @@ public class UserPreferencesController implements Controller {
   private TextureImage                  wallPattern;
   private float                         newWallThickness;
   private float                         newWallHeight;
+  private int                           autoSaveDelayForRecovery;
+  private boolean                       autoSaveForRecoveryEnabled;
 
   /**
    * Creates the controller of user preferences view.
@@ -117,6 +120,8 @@ public class UserPreferencesController implements Controller {
     setWallPattern(this.preferences.getWallPattern());
     setNewWallThickness(this.preferences.getNewWallThickness());
     setNewWallHeight(this.preferences.getNewWallHeight());
+    setAutoSaveDelayForRecovery(this.preferences.getAutoSaveDelayForRecovery());
+    setAutoSaveForRecoveryEnabled(this.preferences.getAutoSaveDelayForRecovery() > 0);
   }  
 
   /**
@@ -345,6 +350,43 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
+   * Sets the edited auto recovery save delay.
+   */
+  public void setAutoSaveDelayForRecovery(int autoSaveDelayForRecovery) {
+    if (autoSaveDelayForRecovery != this.autoSaveDelayForRecovery) {
+      float oldAutoSaveDelayForRecovery = this.autoSaveDelayForRecovery;
+      this.autoSaveDelayForRecovery = autoSaveDelayForRecovery;
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_DELAY_FOR_RECOVERY.name(), 
+          oldAutoSaveDelayForRecovery, autoSaveDelayForRecovery);
+    }
+  }
+
+  /**
+   * Returns the edited auto recovery save delay.
+   */
+  public int getAutoSaveDelayForRecovery() {
+    return this.autoSaveDelayForRecovery;
+  }
+
+  /**
+   * Sets whether auto recovery save is enabled or not.
+   */
+  public void setAutoSaveForRecoveryEnabled(boolean autoSaveForRecoveryEnabled) {
+    if (autoSaveForRecoveryEnabled != this.autoSaveForRecoveryEnabled) {
+      this.autoSaveForRecoveryEnabled = autoSaveForRecoveryEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_FOR_RECOVERY_ENABLED.name(), 
+          !autoSaveForRecoveryEnabled, autoSaveForRecoveryEnabled);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if auto recovery save is enabled.
+   */
+  public boolean isAutoSaveForRecoveryEnabled() {
+    return this.autoSaveForRecoveryEnabled;
+  }
+
+  /**
    * Controls the modification of user preferences.
    */
   public void modifyUserPreferences() {
@@ -360,6 +402,8 @@ public class UserPreferencesController implements Controller {
     this.preferences.setWallPattern(getWallPattern());
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
+    this.preferences.setAutoSaveDelayForRecovery(isAutoSaveForRecoveryEnabled()
+        ? getAutoSaveDelayForRecovery() : 0);
   }
 
   /**

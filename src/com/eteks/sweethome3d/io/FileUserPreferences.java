@@ -41,9 +41,9 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
@@ -86,6 +86,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String WALL_PATTERN                          = "wallPattern";
   private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
+  private static final String AUTO_SAVE_DELAY_FOR_RECOVERY          = "autoSaveDelayForRecovery";
   private static final String RECENT_HOMES                          = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";  
 
@@ -185,13 +186,15 @@ public class FileUserPreferences extends UserPreferences {
       setWallPattern(defaultPreferences.getWallPattern());
     }
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
-            defaultPreferences.getNewWallThickness()));
+        defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
-            defaultPreferences.getNewWallHeight()));    
+        defaultPreferences.getNewWallHeight()));    
+    setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
+        defaultPreferences.getAutoSaveDelayForRecovery()));    
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
-    for (int i = 1; i <= 4; i++) {
+    for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
       String recentHome = preferences.get(RECENT_HOMES + i, null);
       if (recentHome != null) {
         recentHomes.add(recentHome);
@@ -522,13 +525,14 @@ public class FileUserPreferences extends UserPreferences {
     preferences.put(WALL_PATTERN, getWallPattern().getName());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
+    preferences.putInt(AUTO_SAVE_DELAY_FOR_RECOVERY, getAutoSaveDelayForRecovery());
     // Write recent homes list
     int i = 1;
-    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {
+    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
       preferences.put(RECENT_HOMES + i, it.next());
     }
     // Remove obsolete keys
-    for ( ; i <= 4; i++) {
+    for ( ; i <= getRecentHomesMaxCount(); i++) {
       preferences.remove(RECENT_HOMES + i);
     }
     // Write ignored action tips
