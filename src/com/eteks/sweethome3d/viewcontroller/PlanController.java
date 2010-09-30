@@ -6628,14 +6628,16 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       planView.deleteFeedback();
       if (this.offsetChoice) {
-        float distanceToDimensionLine = (float)Line2D.ptLineDist(
-            this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
-            this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
-        int relativeCCW = Line2D.relativeCCW(
-            this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
-            this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
-        this.newDimensionLine.setOffset(
-            -Math.signum(relativeCCW) * distanceToDimensionLine);
+          float distanceToDimensionLine = (float)Line2D.ptLineDist(
+              this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
+              this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
+          if (this.newDimensionLine.getLength() > 0) {
+            int relativeCCW = Line2D.relativeCCW(
+                this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
+                this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
+            this.newDimensionLine.setOffset(
+                -Math.signum(relativeCCW) * distanceToDimensionLine);
+          }
       } else {
         // Compute the coordinates where dimension line end point should be moved
         float newX;
@@ -7270,10 +7272,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     protected float getRoomSideLength(Room room, int pointIndex) {
       float [][] points = room.getPoints();
-      int previousPointIndex = pointIndex == 0 
-          ? points.length - 1
-          : pointIndex - 1;
-      return (float)Point2D.distance(points [previousPointIndex][0], points [previousPointIndex][1], 
+      float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+      return (float)Point2D.distance(previousPoint [0], previousPoint [1], 
           points [pointIndex][0], points [pointIndex][1]);
     }
 
@@ -7282,26 +7282,23 @@ public class PlanController extends FurnitureController implements Controller {
      */
     protected Integer getRoomSideAngle(Room room, int pointIndex) {
       float [][] points = room.getPoints();
-      int previousPointIndex = pointIndex == 0 
-          ? points.length - 1
-          : pointIndex - 1;
-      int previousPreviousPointIndex = previousPointIndex == 0 
-          ? points.length - 1
-          : previousPointIndex - 1;
+      float [] point = points [pointIndex];
+      float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+      float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
       float sideLength = (float)Point2D.distance(
-          points [previousPointIndex][0], points [previousPointIndex][1], 
+          previousPoint [0], previousPoint [1], 
           points [pointIndex][0], points [pointIndex][1]);
       float previousSideLength = (float)Point2D.distance(
-          points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1],
-          points [previousPointIndex][0], points [previousPointIndex][1]);
-      if (previousPreviousPointIndex != pointIndex 
+          previousPreviousPoint [0], previousPreviousPoint [1],
+          previousPoint [0], previousPoint [1]);
+      if (previousPreviousPoint != point 
           && sideLength != 0 && previousSideLength != 0) {
         // Compute the angle between the side finishing at pointIndex 
         // and the previous side
-        float xSideVector = (points [pointIndex][0] - points [previousPointIndex][0]) / sideLength;
-        float ySideVector = (points [pointIndex][1] - points [previousPointIndex][1]) / sideLength;
-        float xPreviousSideVector = (points [previousPointIndex][0] - points [previousPreviousPointIndex][0]) / previousSideLength;
-        float yPreviousSideVector = (points [previousPointIndex][1] - points [previousPreviousPointIndex][1]) / previousSideLength;
+        float xSideVector = (point [0] - previousPoint [0]) / sideLength;
+        float ySideVector = (point [1] - previousPoint [1]) / sideLength;
+        float xPreviousSideVector = (previousPoint [0] - previousPreviousPoint [0]) / previousSideLength;
+        float yPreviousSideVector = (previousPoint [1] - previousPreviousPoint [1]) / previousSideLength;
         int sideAngle = (int)Math.round(180 - Math.toDegrees(Math.atan2(
             ySideVector * xPreviousSideVector - xSideVector * yPreviousSideVector,
             xSideVector * xPreviousSideVector + ySideVector * yPreviousSideVector)));
@@ -7314,22 +7311,18 @@ public class PlanController extends FurnitureController implements Controller {
         return 0;
       } else {
         return (int)Math.round(Math.toDegrees(Math.atan2(
-            points [previousPointIndex][1] - points [pointIndex][1], 
-            points [pointIndex][0] - points [previousPointIndex][0])));
+            previousPoint [1] - point [1], 
+            point [0] - previousPoint [0])));
       }
     }
 
     protected void showRoomAngleFeedback(Room room, int pointIndex) {
       float [][] points = room.getPoints();
       if (points.length > 2) {
-        int previousPointIndex = pointIndex == 0 
-            ? points.length - 1
-            : pointIndex - 1;
-        int previousPreviousPointIndex = previousPointIndex == 0 
-            ? points.length - 1
-            : previousPointIndex - 1;
-        getView().setAngleFeedback(points [previousPointIndex][0], points [previousPointIndex][1], 
-            points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1], 
+        float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+        float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
+        getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
+            previousPreviousPoint [0], previousPreviousPoint [1], 
             points [pointIndex][0], points [pointIndex][1]);
       }
     }
@@ -7437,8 +7430,6 @@ public class PlanController extends FurnitureController implements Controller {
         this.xPreviousPoint = points [points.length - 1][0];
         this.yPreviousPoint = points [points.length - 1][1]; 
         this.newRoom.addPoint(xEnd, yEnd);
-        this.newPoint [0] = xEnd; 
-        this.newPoint [1] = yEnd; 
         this.newPoint = null;
       } else {
         // Otherwise update its last point
@@ -7713,42 +7704,42 @@ public class PlanController extends FurnitureController implements Controller {
         planView.setAlignmentFeedback(Room.class, null, this.xPreviousPoint, this.yPreviousPoint, true);
         planView.makePointVisible(this.xPreviousPoint, this.yPreviousPoint);
       } else {
-        float [][] points = this.newRoom.getPoints();
+        float [][] roomPoints = this.newRoom.getPoints();
+        float [] previousPoint = roomPoints [roomPoints.length - 2];
+        float [] point = roomPoints [roomPoints.length - 1];
+        float newX;
+        float newY;
         // Update end point of the current room
         switch (editableProperty) {
           case LENGTH : 
             float length = value != null ? ((Number)value).floatValue() : 0;
             length = Math.max(0.001f, Math.min(length, 100000f));
-            double wallAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1], 
-                points [points.length - 2][0] - points [points.length - 1][0]);
-            this.newRoom.setPoint(
-                (float)(points [points.length - 2][0] + length * Math.cos(wallAngle)),
-                (float)(points [points.length - 2][1] - length * Math.sin(wallAngle)),
-                points.length - 1);
+            double wallAngle = Math.PI - Math.atan2(previousPoint [1] - point [1], 
+                previousPoint [0] - point [0]);
+            newX = (float)(previousPoint [0] + length * Math.cos(wallAngle));
+            newY = (float)(previousPoint [1] - length * Math.sin(wallAngle));
             break;      
           case ANGLE : 
             wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
-            if (points.length > 2) {
-              wallAngle -= Math.atan2(points [points.length - 3][1] - points [points.length - 2][1], 
-                  points [points.length - 3][0] - points [points.length - 2][0]);
+            if (roomPoints.length > 2) {
+              wallAngle -= Math.atan2(roomPoints [roomPoints.length - 3][1] - previousPoint [1], 
+                  roomPoints [roomPoints.length - 3][0] - previousPoint [0]);
             }
-            float wallLength = getRoomSideLength(this.newRoom, points.length - 1);              
-            this.newRoom.setPoint(
-                (float)(points [points.length - 2][0] + wallLength * Math.cos(wallAngle)),
-                (float)(points [points.length - 2][1] - wallLength * Math.sin(wallAngle)),
-                points.length - 1);
+            float wallLength = getRoomSideLength(this.newRoom, roomPoints.length - 1);
+            newX = (float)(previousPoint [0] + wallLength * Math.cos(wallAngle));
+            newY = (float)(previousPoint [1] - wallLength * Math.sin(wallAngle));
             break;
           default :
             return;
         }
+        this.newRoom.setPoint(newX, newY, roomPoints.length - 1);
 
         // Update new room
-        planView.setAlignmentFeedback(Room.class, this.newRoom, 
-            points [points.length - 1][0], points [points.length - 1][1], false);
-        showRoomAngleFeedback(this.newRoom, points.length - 1);
+        planView.setAlignmentFeedback(Room.class, this.newRoom, newX, newY, false);
+        showRoomAngleFeedback(this.newRoom, roomPoints.length - 1);
         // Ensure room side points are visible
-        planView.makePointVisible(points [points.length - 2][0], points [points.length - 2][1]);
-        planView.makePointVisible(points [points.length - 1][0], points [points.length - 1][1]);
+        planView.makePointVisible(previousPoint [0], previousPoint [1]);
+        planView.makePointVisible(newX, newY);
       }
     }
 
