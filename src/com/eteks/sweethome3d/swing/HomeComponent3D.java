@@ -151,7 +151,8 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
-      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN, ELEVATE_CAMERA_UP, ELEVATE_CAMERA_DOWN}
+      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN, 
+      ELEVATE_CAMERA_UP, ELEVATE_CAMERA_FAST_UP, ELEVATE_CAMERA_DOWN, ELEVATE_CAMERA_FAST_DOWN}
   
   private final Home                               home;
   private final boolean                            displayShadowOnFloor;
@@ -380,7 +381,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-previous.png"))),
         new GridBagConstraints(0, 1, 1, 2, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 5, 0, 0, 
+    navigationPanel.add(new NavigationButton(controller, 12.5f, 0, 0, 
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up.png"))),
         new GridBagConstraints(1, 0, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
@@ -388,15 +389,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-next.png"))),
         new GridBagConstraints(2, 1, 1, 2, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, -5, 0, 0, 
+    navigationPanel.add(new NavigationButton(controller, -12.5f, 0, 0, 
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down.png"))),
         new GridBagConstraints(1, 3, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 0, 0, -(float)Math.PI / 72, 
+    navigationPanel.add(new NavigationButton(controller, 0, 0, -(float)Math.PI / 100, 
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up-small.png"))),
         new GridBagConstraints(1, 1, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 0, 0, (float)Math.PI / 72, 
+    navigationPanel.add(new NavigationButton(controller, 0, 0, (float)Math.PI / 100, 
         new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down-small.png"))),
         new GridBagConstraints(1, 2, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 1, 0), 0, 0));
@@ -452,8 +453,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Create a timer that will update camera angles and location
       final Timer timer = new Timer(50, new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
-            controller.moveCamera(shiftDown ? moveDelta / 10 : moveDelta);
-            controller.rotateCameraYaw(shiftDown ? yawDelta / 10 : yawDelta);
+            controller.moveCamera(shiftDown ? moveDelta : moveDelta / 5);
+            controller.rotateCameraYaw(shiftDown ? yawDelta : yawDelta / 5);
             controller.rotateCameraPitch(pitchDelta);
           }
         });
@@ -942,19 +943,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             if (isEnabled()) {
               if (ev.isAltDown()) {
                 // Mouse move along Y axis while alt is down changes camera location
-                float delta = 0.5f * (this.yLastMouseMove - ev.getY());
-                // Multiply delta by 10 if shift isn't down
-                if (!ev.isShiftDown()) {
-                  delta *= 10;
+                float delta = 1.25f * (this.yLastMouseMove - ev.getY());
+                // Multiply delta by 10 if shift is down
+                if (ev.isShiftDown()) {
+                  delta *= 5;
                 } 
                 controller.moveCamera(delta);
               } else {
                 final float ANGLE_FACTOR = 0.005f;
                 // Mouse move along X axis changes camera yaw 
                 float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
-                // Multiply yaw delta by 10 if shift isn't down
-                if (!ev.isShiftDown()) {
-                  yawDelta *= 10;
+                // Multiply yaw delta by 10 if shift is down
+                if (ev.isShiftDown()) {
+                  yawDelta *= 5;
                 } 
                 controller.rotateCameraYaw(yawDelta);
                 
@@ -1061,10 +1062,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void mouseWheelMoved(MouseWheelEvent ev) {
           if (isEnabled()) {
             // Mouse wheel changes camera location 
-            float delta = -ev.getWheelRotation();
-            // Multiply delta by 10 if shift isn't down
-            if (!ev.isShiftDown()) {
-              delta *= 10;
+            float delta = -2.5f * ev.getWheelRotation();
+            // Multiply delta by 10 if shift is down
+            if (ev.isShiftDown()) {
+              delta *= 5;
             } 
             controller.moveCamera(delta);
           }
@@ -1088,25 +1089,27 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private void installKeyboardActions() {
     InputMap inputMap = getInputMap(WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke("shift UP"), ActionType.MOVE_CAMERA_FORWARD);
-    inputMap.put(KeyStroke.getKeyStroke("shift W"), ActionType.MOVE_CAMERA_FORWARD);
-    inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_CAMERA_FAST_FORWARD);
-    inputMap.put(KeyStroke.getKeyStroke("W"), ActionType.MOVE_CAMERA_FAST_FORWARD);
-    inputMap.put(KeyStroke.getKeyStroke("shift DOWN"), ActionType.MOVE_CAMERA_BACKWARD);
-    inputMap.put(KeyStroke.getKeyStroke("shift S"), ActionType.MOVE_CAMERA_BACKWARD);
-    inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_CAMERA_FAST_BACKWARD);
-    inputMap.put(KeyStroke.getKeyStroke("S"), ActionType.MOVE_CAMERA_FAST_BACKWARD);
-    inputMap.put(KeyStroke.getKeyStroke("shift LEFT"), ActionType.ROTATE_CAMERA_YAW_LEFT);
-    inputMap.put(KeyStroke.getKeyStroke("shift A"), ActionType.ROTATE_CAMERA_YAW_LEFT);
-    inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.ROTATE_CAMERA_YAW_FAST_LEFT);
-    inputMap.put(KeyStroke.getKeyStroke("A"), ActionType.ROTATE_CAMERA_YAW_FAST_LEFT);
-    inputMap.put(KeyStroke.getKeyStroke("shift RIGHT"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
-    inputMap.put(KeyStroke.getKeyStroke("shift D"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
-    inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
-    inputMap.put(KeyStroke.getKeyStroke("D"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("shift UP"), ActionType.MOVE_CAMERA_FAST_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift W"), ActionType.MOVE_CAMERA_FAST_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_CAMERA_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("W"), ActionType.MOVE_CAMERA_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift DOWN"), ActionType.MOVE_CAMERA_FAST_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift S"), ActionType.MOVE_CAMERA_FAST_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_CAMERA_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("S"), ActionType.MOVE_CAMERA_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift LEFT"), ActionType.ROTATE_CAMERA_YAW_FAST_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("shift A"), ActionType.ROTATE_CAMERA_YAW_FAST_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.ROTATE_CAMERA_YAW_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("A"), ActionType.ROTATE_CAMERA_YAW_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("shift RIGHT"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("shift D"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("D"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_UP"), ActionType.ROTATE_CAMERA_PITCH_UP);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_DOWN"), ActionType.ROTATE_CAMERA_PITCH_DOWN);
+    inputMap.put(KeyStroke.getKeyStroke("shift HOME"), ActionType.ELEVATE_CAMERA_FAST_UP);
     inputMap.put(KeyStroke.getKeyStroke("HOME"), ActionType.ELEVATE_CAMERA_UP);
+    inputMap.put(KeyStroke.getKeyStroke("shift END"), ActionType.ELEVATE_CAMERA_FAST_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("END"), ActionType.ELEVATE_CAMERA_DOWN);
   }
  
@@ -1116,9 +1119,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void createActions(final HomeController3D controller) {
     // Move camera action mapped to arrow keys 
     class MoveCameraAction extends AbstractAction {
-      private final int delta;
+      private final float delta;
       
-      public MoveCameraAction(int delta) {
+      public MoveCameraAction(float delta) {
         this.delta = delta;
       }
 
@@ -1163,18 +1166,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       }
     }
     ActionMap actionMap = getActionMap();
-    actionMap.put(ActionType.MOVE_CAMERA_FORWARD, new MoveCameraAction(1));
-    actionMap.put(ActionType.MOVE_CAMERA_FAST_FORWARD, new MoveCameraAction(10));
-    actionMap.put(ActionType.MOVE_CAMERA_BACKWARD, new MoveCameraAction(-1));
-    actionMap.put(ActionType.MOVE_CAMERA_FAST_BACKWARD, new MoveCameraAction(-10));
+    actionMap.put(ActionType.MOVE_CAMERA_FORWARD, new MoveCameraAction(6.5f));
+    actionMap.put(ActionType.MOVE_CAMERA_FAST_FORWARD, new MoveCameraAction(32.5f));
+    actionMap.put(ActionType.MOVE_CAMERA_BACKWARD, new MoveCameraAction(-6.5f));
+    actionMap.put(ActionType.MOVE_CAMERA_FAST_BACKWARD, new MoveCameraAction(-32.5f));
     actionMap.put(ActionType.ELEVATE_CAMERA_DOWN, new ElevateCameraAction(-2.5f));
+    actionMap.put(ActionType.ELEVATE_CAMERA_FAST_DOWN, new ElevateCameraAction(-10f));
     actionMap.put(ActionType.ELEVATE_CAMERA_UP, new ElevateCameraAction(2.5f));
-    actionMap.put(ActionType.ROTATE_CAMERA_YAW_LEFT, new RotateCameraYawAction(-(float)Math.PI / 180));
-    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_LEFT, new RotateCameraYawAction(-(float)Math.PI / 18));
-    actionMap.put(ActionType.ROTATE_CAMERA_YAW_RIGHT, new RotateCameraYawAction((float)Math.PI / 180));
-    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT, new RotateCameraYawAction((float)Math.PI / 18));
-    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_UP, new RotateCameraPitchAction(-(float)Math.PI / 180));
-    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 180));
+    actionMap.put(ActionType.ELEVATE_CAMERA_FAST_UP, new ElevateCameraAction(10f));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_LEFT, new RotateCameraYawAction(-(float)Math.PI / 60));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_LEFT, new RotateCameraYawAction(-(float)Math.PI / 12));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_RIGHT, new RotateCameraYawAction((float)Math.PI / 60));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT, new RotateCameraYawAction((float)Math.PI / 12));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_UP, new RotateCameraPitchAction(-(float)Math.PI / 120));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 120));
   }
 
   /**

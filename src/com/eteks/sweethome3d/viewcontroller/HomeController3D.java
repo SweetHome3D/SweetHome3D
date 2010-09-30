@@ -373,8 +373,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void moveCamera(float delta) {
-      // Use a 3 times bigger delta for top camera move
-      delta *= 3;
+      // Use a 5 times bigger delta for top camera move
+      delta *= 5;
       float newDistanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
           + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
           + Math.pow(this.topCamera.getZ(), 2)) - delta;
