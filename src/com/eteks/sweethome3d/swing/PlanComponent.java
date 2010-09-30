@@ -1555,13 +1555,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         insets.top + (MARGIN - planBounds.getMinY()) * paintScale);
     g2D.scale(paintScale, paintScale);
     setRenderingHints(g2D);
-    // Paint component contents
-    if (this.backgroundPainted) {
-      paintBackgroundImage(g2D);
-      if (this.preferences.isGridVisible()) {
-        paintGrid(g2D, paintScale);
-      }
-    }
     try {
       paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);
     } catch (InterruptedIOException ex) {
@@ -1773,25 +1766,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints background image.
    */
-  private void paintBackgroundImage(Graphics2D g2D) {
+  private void paintBackgroundImage(Graphics2D g2D, PaintMode paintMode) {
     final BackgroundImage backgroundImage = this.home.getBackgroundImage();
     if (backgroundImage != null && backgroundImage.isVisible()) {
-      if (this.backgroundImageCache == null) {
+      if (this.backgroundImageCache == null && paintMode == PaintMode.PAINT) {
         // Load background image in an executor
         Executors.newSingleThreadExecutor().execute(new Runnable() {
             public void run() {
-              InputStream contentStream = null;
-              try {
-                contentStream = backgroundImage.getImage().openStream();
-                backgroundImageCache = ImageIO.read(contentStream);
-                contentStream.close();
-              } catch (IOException ex) {
-                backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-                // Ignore exceptions, the user may know its background image is incorrect 
-                // if he tries to modify the background image
-              } 
+              backgroundImageCache = readImage(backgroundImage.getImage()); 
               revalidate();
-            } 
+            }
           });
       } else {
         // Paint image at specified scale with 0.7 alpha
@@ -1805,12 +1789,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         } else {
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
         }
-        g2D.drawImage(this.backgroundImageCache, 0, 0, this);
+        g2D.drawImage(this.backgroundImageCache != null
+            ? this.backgroundImageCache
+            : readImage(backgroundImage.getImage()), 0, 0, this);
         g2D.setComposite(oldComposite);
         g2D.setTransform(previousTransform);
       }
     }
   }
+
+  /**
+   * Returns the image contained in <code>imageContent</code> or an empty image if reading failed.
+   */
+  private BufferedImage readImage(Content imageContent) {
+    InputStream contentStream = null;
+    try {
+      try {
+        contentStream = imageContent.openStream();
+        return ImageIO.read(contentStream);
+      } finally {
+        contentStream.close();
+      }
+    } catch (IOException ex) {
+      return new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+      // Ignore exceptions, the user may know its background image is incorrect 
+      // if he tries to modify the background image
+    }
+  } 
 
   /**
    * Paints background grid lines.
@@ -1928,6 +1933,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
+    if (this.backgroundPainted) {
+      paintBackgroundImage(g2D, paintMode);
+      if (paintMode == PaintMode.PAINT && this.preferences.isGridVisible()) {
+        paintGrid(g2D, planScale);
+      }
+    }
+    
     paintHomeItems(g2D, planScale, backgroundColor, foregroundColor, paintMode);
         
     if (paintMode == PaintMode.PAINT) {
