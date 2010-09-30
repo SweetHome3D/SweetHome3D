@@ -640,9 +640,9 @@ public class PhotoPanel extends JPanel implements DialogView {
    * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
-    int labelAlignment = OperatingSystem.isMacOSX() 
-        ? GridBagConstraints.LINE_END
-        : GridBagConstraints.LINE_START;
+    int labelAlignment = OperatingSystem.isMacOSX()
+        ? JLabel.TRAILING
+        : JLabel.LEADING;
     // Add animatedWaitLabel and photoComponent to a card panel 
     this.photoCardLayout = new CardLayout();
     this.photoPanel = new JPanel(this.photoCardLayout);
@@ -650,7 +650,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
     // First row
     add(photoPanel, new GridBagConstraints(
-        0, 0, 6, 1, 1, 1, labelAlignment, 
+        0, 0, 6, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
@@ -662,15 +662,19 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, labelAlignment, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
+    // Use HORIZONTAL fill constraint with label alignment to ensure
+    // label is correctly sized in small dialogs
+    this.widthLabel.setHorizontalAlignment(labelAlignment);
     Insets componentInsets = new Insets(0, 0, 0, 10);
     add(this.widthSpinner, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     add(this.heightLabel, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, labelAlignment, 
+        3, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
+    this.heightLabel.setHorizontalAlignment(labelAlignment);
     add(this.heightSpinner, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -683,8 +687,9 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Fourth row
     add(this.qualityLabel, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, labelAlignment, 
+        1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
+    this.qualityLabel.setHorizontalAlignment(labelAlignment);
     add(this.qualitySlider, new GridBagConstraints(
         2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -700,21 +705,24 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 4, 0), 0, 0));
     // Seventh row
     add(this.dateLabel, new GridBagConstraints(
-        1, 6, 1, 1, 0, 0, labelAlignment, 
+        1, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    this.dateLabel.setHorizontalAlignment(labelAlignment);
     add(this.dateSpinner, new GridBagConstraints(
         2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 8, 0));
     add(this.timeLabel, new GridBagConstraints(
-        3, 6, 1, 1, 0, 0, labelAlignment, 
+        3, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    this.timeLabel.setHorizontalAlignment(labelAlignment);
     add(this.timeSpinner, new GridBagConstraints(
         4, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     add(this.lensLabel, new GridBagConstraints(
-        1, 7, 1, 1, 0, 0, labelAlignment, 
+        1, 7, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    this.lensLabel.setHorizontalAlignment(labelAlignment);
     add(this.lensComboBox, new GridBagConstraints(
         2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
