@@ -108,6 +108,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class PhotoPanel extends JPanel implements DialogView {
   private enum ActionType {START_PHOTO_CREATION, STOP_PHOTO_CREATION, SAVE_PHOTO, CLOSE}
 
+  private static final int MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING = 30000;
+  
   private static final String WAIT_CARD  = "wait";
   private static final String PHOTO_CARD = "photo";
   
@@ -143,7 +145,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JButton               saveButton;
   private JButton               closeButton;
 
-  private static PhotoPanel     currentPhotoPanel; // There can be only one photo panel opened at a time
+  private static PhotoPanel     currentPhotoPanel; // Support only one photo panel opened at a time
 
   public PhotoPanel(Home home, 
                     UserPreferences preferences, 
@@ -860,6 +862,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.lensComboBox.setEnabled(false);
     this.ceilingLightEnabledCheckBox.setEnabled(false);
     getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(false);
+    getRootPane().setDefaultButton(this.createButton);
     this.createButton.setAction(getActionMap().get(ActionType.STOP_PHOTO_CREATION));
     this.photoCardLayout.show(this.photoPanel, WAIT_CARD);
     
@@ -923,6 +926,9 @@ public class PhotoPanel extends JPanel implements DialogView {
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(photoImage != null);
+            if (photoImage != null) {
+              getRootPane().setDefaultButton(saveButton);
+            }
             createButton.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
             photoComponent.setImage(photoImage);
             widthSpinner.setEnabled(true);
@@ -961,10 +967,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     if (this.photoCreationExecutor != null
         // Confirm the stop if a rendering has been running for more than 30 s 
         && (!confirmStop
-            || System.currentTimeMillis() - this.photoCreationStartTime < 30000
+            || System.currentTimeMillis() - this.photoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
             || JOptionPane.showConfirmDialog(getRootPane(), 
-                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopRendering.message"),
-                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopRendering.title"), 
+                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.message"),
+                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.title"), 
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
       if (this.photoCreationExecutor != null) { // Check a second time in case rendering stopped meanwhile
         // Will interrupt executor thread      

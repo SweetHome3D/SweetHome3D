@@ -137,6 +137,8 @@ public class VideoPanel extends JPanel implements DialogView {
   private enum ActionType {START_VIDEO_CREATION, STOP_VIDEO_CREATION, SAVE_VIDEO, CLOSE, 
       DELETE_CAMERA_PATH, PLAYBACK, PAUSE, RECORD, SEEK_BACKWARD, SEEK_FORWARD, SKIP_BACKWARD, SKIP_FORWARD, DELETE_LAST_RECORD}
   
+  private static final int MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING = 30000;
+  
   private static final VideoFormat [] VIDEO_FORMATS = {
       new VideoFormat(VideoFormat.JPEG, new Dimension(176, 132), Format.NOT_SPECIFIED, Format.byteArray, 12), // 4/3
       new VideoFormat(VideoFormat.JPEG, new Dimension(320, 240), Format.NOT_SPECIFIED, Format.byteArray, 25),
@@ -186,7 +188,7 @@ public class VideoPanel extends JPanel implements DialogView {
   private JButton               saveButton;
   private JButton               closeButton;
 
-  private static VideoPanel     currentVideoPanel; // There can be only one video panel opened at a time
+  private static VideoPanel     currentVideoPanel; // Support only one video panel opened at a time
 
   /**
    * Creates a video panel.
@@ -1210,6 +1212,7 @@ public class VideoPanel extends JPanel implements DialogView {
     actionMap.get(ActionType.RECORD).setEnabled(false);
     actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(false);
     actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(false);
+    getRootPane().setDefaultButton(this.createButton);
     this.videoFormatComboBox.setEnabled(false);
     this.qualitySlider.setEnabled(false);
     this.dateSpinner.setEnabled(false);
@@ -1302,6 +1305,9 @@ public class VideoPanel extends JPanel implements DialogView {
             actionMap.get(ActionType.RECORD).setEnabled(true);
             actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(true);
             actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(true);
+            if (videoFile != null) {
+              getRootPane().setDefaultButton(saveButton);
+            }
             videoFormatComboBox.setEnabled(true);
             qualitySlider.setEnabled(true);
             dateSpinner.setEnabled(true);
@@ -1335,10 +1341,10 @@ public class VideoPanel extends JPanel implements DialogView {
     if (this.videoCreationExecutor != null
         // Confirm the stop if a rendering has been running for more than 30 s 
         && (!confirmStop
-            || System.currentTimeMillis() - this.videoCreationStartTime < 30000
+            || System.currentTimeMillis() - this.videoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
             || JOptionPane.showConfirmDialog(getRootPane(), 
-                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopRendering.message"),
-                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopRendering.title"), 
+                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.message"),
+                  this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.title"), 
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
       if (this.videoCreationExecutor != null) { // Check a second time in case rendering stopped meanwhile
         // Interrupt executor thread
