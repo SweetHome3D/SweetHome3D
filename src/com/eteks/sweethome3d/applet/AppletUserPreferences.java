@@ -350,7 +350,6 @@ public class AppletUserPreferences extends UserPreferences {
       connection.setUseCaches(false);
       in = connection.getInputStream();
       properties.loadFromXML(in);
-      in.close();
     } catch (IOException ex) {
       // Let default preferences unchanged
     } finally {
