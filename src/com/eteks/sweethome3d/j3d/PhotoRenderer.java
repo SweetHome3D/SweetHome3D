@@ -138,15 +138,15 @@ public class PhotoRenderer {
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     for (Wall wall : home.getWalls()) {
       Wall3D wall3D = new Wall3D(wall, home, true, true);
-      exportNode(wall3D, false);
+      exportNode(wall3D, true, false);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home, true, true);
-      exportNode(piece3D, false);
+      exportNode(piece3D, false, false);
     }
     for (Room room : home.getRooms()) {
       Room3D room3D = new Room3D(room, home, home.getCamera() == home.getTopCamera(), true, true);
-      exportNode(room3D, false);
+      exportNode(room3D, true, false);
     } 
     // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
     Home groundHome = new Home();
@@ -157,7 +157,7 @@ public class PhotoRenderer {
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
     groundTransformGroup.addChild(ground);
-    exportNode(groundTransformGroup, true);
+    exportNode(groundTransformGroup, true, true);
 
     // Set light settings 
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
@@ -427,15 +427,16 @@ public class PhotoRenderer {
   /**
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
-  private void exportNode(Node node, boolean noConstantShader) throws IOException {
-    exportNode(node, noConstantShader, new Transform3D());
+  private void exportNode(Node node, boolean ignoreTransparency, boolean ignoreConstantShader) throws IOException {
+    exportNode(node, ignoreTransparency, ignoreConstantShader, new Transform3D());
   }
 
   /**
    * Exports all the 3D shapes children of <code>node</code> at OBJ format.
    */ 
   private void exportNode(Node node, 
-                          boolean noConstantShader,
+                          boolean ignoreTransparency,
+                          boolean ignoreConstantShader,
                           Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
@@ -447,10 +448,10 @@ public class PhotoRenderer {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode((Node)enumeration.nextElement(), noConstantShader, parentTransformations);
+        exportNode((Node)enumeration.nextElement(), ignoreTransparency, ignoreConstantShader, parentTransformations);
       }
     } else if (node instanceof Link) {
-      exportNode(((Link)node).getSharedGroup(), noConstantShader, parentTransformations);
+      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, ignoreConstantShader, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -469,7 +470,7 @@ public class PhotoRenderer {
           appearanceName = "shader" + uuid;
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-          exportAppearance(appearance, appearanceName, mirror, noConstantShader);
+          exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, ignoreConstantShader);
         }
 
         // Export object geometries
@@ -1055,7 +1056,8 @@ public class PhotoRenderer {
   private void exportAppearance(Appearance appearance,
                                 String appearanceName, 
                                 boolean mirror,
-                                boolean noConstantShader) throws IOException {
+                                boolean ignoreTransparency,
+                                boolean ignoreConstantShader) throws IOException {
     Texture texture = appearance.getTexture();    
     if (mirror) {
       Material material = appearance.getMaterial();
@@ -1099,7 +1101,8 @@ public class PhotoRenderer {
 
         TransparencyAttributes transparencyAttributes = appearance.getTransparencyAttributes();
         if (transparencyAttributes != null
-            && transparencyAttributes.getTransparency() > 0) {
+            && transparencyAttributes.getTransparency() > 0
+            && !ignoreTransparency) {
           if (material instanceof OBJMaterial
               && ((OBJMaterial)material).isOpticalDensitySet()) {
             this.sunflow.parameter("eta", ((OBJMaterial)material).getOpticalDensity());
@@ -1117,7 +1120,7 @@ public class PhotoRenderer {
           this.sunflow.parameter("transparency", 1f - transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else if (material.getLightingEnable()
-                   || noConstantShader) {  
+                   || ignoreConstantShader) {  
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 1) {
@@ -1135,7 +1138,7 @@ public class PhotoRenderer {
         if (coloringAttributes != null) {
           Color3f color = new Color3f();
           coloringAttributes.getColor(color);
-          if (noConstantShader) {
+          if (ignoreConstantShader) {
             this.sunflow.parameter("diffuse", null, new float [] {color.x, color.y, color.z});
             this.sunflow.shader(appearanceName, "diffuse");
           } else {
