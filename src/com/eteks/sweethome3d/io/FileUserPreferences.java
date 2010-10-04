@@ -114,8 +114,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String TEXTURE_WIDTH                         = "textureWidth#";
   private static final String TEXTURE_HEIGHT                        = "textureHeight#";
 
-  private static final String FURNITURE_CONTENT_PREFIX              = "Content";
-  private static final String TEXTURE_CONTENT_PREFIX                = "TextureContent";
+  private static final String FURNITURE_CONTENT_PREFIX              = "Furniture-3-";
+  private static final String TEXTURE_CONTENT_PREFIX                = "Texture-3-";
 
   private static final String LANGUAGE_LIBRARIES_PLUGIN_SUB_FOLDER  = "languages";
   private static final String FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER = "furniture";
