@@ -132,6 +132,15 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   public DefaultTexturesCatalog(final UserPreferences preferences, 
                                 File texturesPluginFolder) {
+    this(preferences, texturesPluginFolder == null ? null : new File [] {texturesPluginFolder});
+  }
+  
+  /**
+   * Creates a default textures catalog read from resources and   
+   * textures plugin folders if <code>texturesPluginFolders</code> isn't <code>null</code>.
+   */
+  public DefaultTexturesCatalog(final UserPreferences preferences, 
+                                File [] texturesPluginFolders) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
@@ -146,21 +155,23 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     readTexturesCatalog(classPackage + "." + ADDITIONAL_TEXTURES_CATALOG_FAMILY, 
         preferences, textureHomonymsCounter, identifiedTextures);
 
-    if (texturesPluginFolder != null) {
-      // Try to load sh3t files from textures plugin folder
-      File [] pluginTexturesCatalogFiles = texturesPluginFolder.listFiles(new FileFilter () {
-        public boolean accept(File pathname) {
-          return pathname.isFile();
-        }
-      });
-      
-      if (pluginTexturesCatalogFiles != null) {
-        // Treat textures catalog files in reverse order so file named with a date will be taken into account 
-        // from most recent to least recent
-        Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
-        for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
-          // Try to load the properties file describing textures catalog from current file  
-          readPluginTexturesCatalog(pluginTexturesCatalogFile, textureHomonymsCounter, identifiedTextures);
+    if (texturesPluginFolders != null) {
+      for (File texturesPluginFolder : texturesPluginFolders) {
+        // Try to load sh3t files from textures plugin folder
+        File [] pluginTexturesCatalogFiles = texturesPluginFolder.listFiles(new FileFilter () {
+          public boolean accept(File pathname) {
+            return pathname.isFile();
+          }
+        });
+        
+        if (pluginTexturesCatalogFiles != null) {
+          // Treat textures catalog files in reverse order so file named with a date will be taken into account 
+          // from most recent to least recent
+          Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
+          for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
+            // Try to load the properties file describing textures catalog from current file  
+            readPluginTexturesCatalog(pluginTexturesCatalogFile, textureHomonymsCounter, identifiedTextures);
+          }
         }
       }
     }

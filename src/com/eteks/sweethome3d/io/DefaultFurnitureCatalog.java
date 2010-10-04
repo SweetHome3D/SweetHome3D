@@ -266,6 +266,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    */
   public DefaultFurnitureCatalog(final UserPreferences preferences, 
                                  File furniturePluginFolder) {
+    this(preferences, furniturePluginFolder == null ? null : new File [] {furniturePluginFolder});
+  }
+  
+  /**
+   * Creates a default furniture catalog read from resources and   
+   * furniture plugin folders if <code>furniturePluginFolders</code> isn't <code>null</code>.
+   */
+  public DefaultFurnitureCatalog(final UserPreferences preferences, 
+                                 File [] furniturePluginFolders) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
@@ -284,21 +293,23 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     readFurnitureCatalog(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY, 
         preferences, furnitureHomonymsCounter, identifiedFurniture);
     
-    if (furniturePluginFolder != null) {
-      // Try to load sh3f files from furniture plugin folder
-      File [] pluginFurnitureCatalogFiles = furniturePluginFolder.listFiles(new FileFilter () {
-        public boolean accept(File pathname) {
-          return pathname.isFile();
-        }
-      });
-      
-      if (pluginFurnitureCatalogFiles != null) {
-        // Treat furniture catalog files in reverse order so file named with a date will be taken into account 
-        // from most recent to least recent
-        Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
-        for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
-          // Try to load the properties file describing furniture catalog from current file  
-          readPluginFurnitureCatalog(pluginFurnitureCatalogFile, furnitureHomonymsCounter, identifiedFurniture);
+    if (furniturePluginFolders != null) {
+      for (File furniturePluginFolder : furniturePluginFolders) {
+        // Try to load sh3f files from furniture plugin folder
+        File [] pluginFurnitureCatalogFiles = furniturePluginFolder.listFiles(new FileFilter () {
+          public boolean accept(File pathname) {
+            return pathname.isFile();
+          }
+        });
+        
+        if (pluginFurnitureCatalogFiles != null) {
+          // Treat furniture catalog files in reverse order so file named with a date will be taken into account 
+          // from most recent to least recent
+          Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
+          for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
+            // Try to load the properties file describing furniture catalog from current file  
+            readPluginFurnitureCatalog(pluginFurnitureCatalogFile, furnitureHomonymsCounter, identifiedFurniture);
+          }
         }
       }
     }

@@ -74,7 +74,7 @@ public class PluginManager {
   private static final String DEFAULT_APPLICATION_PLUGIN_PROPERTIES_FILE = 
       APPLICATION_PLUGIN_FAMILY + ".properties";
 
-  private final File pluginFolder;
+  private final File [] pluginFolders;
   private final Map<String, PluginDefinition> pluginDefinitions = 
       new TreeMap<String, PluginDefinition>();
   private final Map<Home, List<Plugin>> homePlugins = new HashMap<Home, List<Plugin>>();
@@ -83,24 +83,34 @@ public class PluginManager {
    * Reads application plug-ins from resources in the given plug-in folder.
    */
   public PluginManager(File pluginFolder) {
-    this.pluginFolder = pluginFolder;
-    if (pluginFolder != null) {
-      // Try to load plugin files from plugin folder
-      File [] pluginFiles = pluginFolder.listFiles(new FileFilter () {
-        public boolean accept(File pathname) {
-          return pathname.isFile();
-        }
-      });
-      
-      if (pluginFiles != null) {
-        // Treat plug in files in reverse order so file named with a date will be taken into account 
-        // from most recent to least recent
-        Arrays.sort(pluginFiles, Collections.reverseOrder());
-        for (File pluginFile : pluginFiles) {
-          try {
-            loadPlugins(pluginFile.toURI().toURL());
-          } catch (MalformedURLException ex) {
-            // Files are supposed to exist !
+    this(new File [] {pluginFolder});
+  }
+  
+  /**
+   * Reads application plug-ins from resources in the given plug-in folders.
+   * @since 3.0
+   */
+  public PluginManager(File [] pluginFolders) {
+    this.pluginFolders = pluginFolders;
+    if (pluginFolders != null) {
+      for (File pluginFolder : pluginFolders) {
+        // Try to load plugin files from plugin folder
+        File [] pluginFiles = pluginFolder.listFiles(new FileFilter () {
+          public boolean accept(File pathname) {
+            return pathname.isFile();
+          }
+        });
+        
+        if (pluginFiles != null) {
+          // Treat plug in files in reverse order so file named with a date will be taken into account 
+          // from most recent to least recent
+          Arrays.sort(pluginFiles, Collections.reverseOrder());
+          for (File pluginFile : pluginFiles) {
+            try {
+              loadPlugins(pluginFile.toURI().toURL());
+            } catch (MalformedURLException ex) {
+              // Files are supposed to exist !
+            }
           }
         }
       }
@@ -111,7 +121,7 @@ public class PluginManager {
    * Reads application plug-ins from resources in the given URLs.
    */
   public PluginManager(URL [] pluginUrls) {
-    this.pluginFolder = null;
+    this.pluginFolders = null;
     for (URL pluginUrl : pluginUrls) {
       loadPlugins(pluginUrl);
     }
@@ -342,37 +352,40 @@ public class PluginManager {
   }
   
   /**
-   * Returns <code>true</code> if a plug-in with the given file name already exists.
+   * Returns <code>true</code> if a plug-in with the given file name already exists
+   * in the first plug-ins folder.
    * @throws RecorderException if no plug-ins folder is associated to this manager.
    */
   public boolean pluginExists(String pluginName) throws RecorderException {
-    if (this.pluginFolder == null) {
+    if (this.pluginFolders == null
+        || this.pluginFolders.length == 0) {
       throw new RecorderException("Can't access to plugins folder");
     } else {
       String pluginFileName = new File(pluginName).getName();
-      return new File(this.pluginFolder, pluginFileName).exists();
+      return new File(this.pluginFolders [0], pluginFileName).exists();
     }
   }
 
   /**
-   * Adds the file <code>pluginName</code> to plug-ins folder if it exists.
+   * Adds the file <code>pluginName</code> to the first plug-ins folders if it exists.
    * Once added, the plug-in will be available at next application start. 
    * @throws RecorderException if no plug-ins folder is associated to this manager.
    */
   public void addPlugin(String pluginName) throws RecorderException {
     try {
-      if (this.pluginFolder == null) {
+      if (this.pluginFolders == null
+          || this.pluginFolders.length == 0) {
         throw new RecorderException("Can't access to plugins folder");
       }
       String pluginFileName = new File(pluginName).getName();
-      File destinationFile = new File(this.pluginFolder, pluginFileName);
+      File destinationFile = new File(this.pluginFolders [0], pluginFileName);
 
       // Copy furnitureCatalogFile to furniture plugin folder
       InputStream tempIn = null;
       OutputStream tempOut = null;
       try {
         tempIn = new BufferedInputStream(new FileInputStream(pluginName));
-        this.pluginFolder.mkdirs();
+        this.pluginFolders [0].mkdirs();
         tempOut = new FileOutputStream(destinationFile);          
         byte [] buffer = new byte [8192];
         int size; 
