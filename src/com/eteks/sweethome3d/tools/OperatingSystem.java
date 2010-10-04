@@ -65,7 +65,7 @@ public class OperatingSystem {
       temporarySubFolder = "work";
     }
     temporarySubFolder = System.getProperty(
-        "com.eteks.sweethome3d.tools.OperatingSystem.TemporarySubFolder", temporarySubFolder);
+        "com.eteks.sweethome3d.tools.temporarySubFolder", temporarySubFolder);
     TEMPORARY_SUB_FOLDER = temporarySubFolder;
     TEMPORARY_SESSION_SUB_FOLDER = UUID.randomUUID().toString();
   }
