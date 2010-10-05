@@ -1110,14 +1110,11 @@ public class PhotoRenderer {
             // Use glass ETA as default
             this.sunflow.parameter("eta", 1.55f);
           }
-          // Increase color brightness to render better transparent objects
-          java.awt.Color glassColor = new java.awt.Color(diffuseColor [0], diffuseColor [1], diffuseColor [2]);
-          glassColor = glassColor.brighter();
-          this.sunflow.parameter("color", null, glassColor.getColorComponents(null));
-          this.sunflow.parameter("absorbtion.distance", 0f);          
-          float transparency = transparencyAttributes.getTransparency();
-          this.sunflow.parameter("absorbtion.color", null, new float [] {transparency, transparency, transparency});
-          this.sunflow.parameter("transparency", 1f - transparency);
+          float transparency = 1 - transparencyAttributes.getTransparency();
+          this.sunflow.parameter("color", null, new float [] {transparency + (1 - transparency) * diffuseColor [0], 
+                                                              transparency + (1 - transparency) * diffuseColor [1], 
+                                                              transparency + (1 - transparency) * diffuseColor [2]});
+          this.sunflow.parameter("transparency", transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else if (material.getLightingEnable()
                    || ignoreConstantShader) {  
