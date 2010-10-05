@@ -59,6 +59,7 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of wall branch.
  */
 public class Wall3D extends Object3DBranch {
+  private static final Integer           DEFAULT_COLOR = 0xFFFFFF;
   private static final Material          DEFAULT_MATERIAL            = new Material();
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
@@ -620,9 +621,9 @@ public class Wall3D extends Object3DBranch {
   private void updateWallAppearance(boolean waitTextureLoadingEnd) {
     Wall wall = (Wall)getUserData();
     updateFilledWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
-        wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor());
+        wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
     updateFilledWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
-        wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor());
+        wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
     if (numChildren() > 2) {
       updateOutlineWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE + 2)).getAppearance());
       updateOutlineWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE + 2)).getAppearance());
@@ -631,17 +632,19 @@ public class Wall3D extends Object3DBranch {
   
   /**
    * Sets filled wall side appearance with its color, texture, transparency and visibility.
+   * @param f 
    */
   private void updateFilledWallSideAppearance(final Appearance wallSideAppearance, 
                                               final HomeTexture wallSideTexture,
                                               boolean waitTextureLoadingEnd,
-                                              Integer wallSideColor) {
+                                              Integer wallSideColor, 
+                                              float shininess) {
     if (wallSideTexture == null) {
-      wallSideAppearance.setMaterial(getMaterial(wallSideColor));
+      wallSideAppearance.setMaterial(getMaterial(wallSideColor, shininess));
       wallSideAppearance.setTexture(null);
     } else {
       // Update material and texture of wall side
-      wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
+      wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, shininess));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -677,21 +680,23 @@ public class Wall3D extends Object3DBranch {
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }
   
-  private Material getMaterial(Integer color) {
+  private Material getMaterial(Integer color, float shininess) {
     if (color != null) {
-      Material material = materials.get(color); 
+      Integer materialKey = new Integer(color + ((int)(shininess * 128) << 24));
+      Material material = materials.get(materialKey); 
       if (material == null) {
         Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
                                             ((color >>> 8) & 0xFF) / 256f,
                                                     (color & 0xFF) / 256f);
-        material = new Material(materialColor, new Color3f(), materialColor, new Color3f(), 1);
+        material = new Material(materialColor, new Color3f(), materialColor, 
+            new Color3f(shininess, shininess, shininess), shininess * 128);
         material.setCapability(Material.ALLOW_COMPONENT_READ);
         // Store created materials in cache
-        materials.put(color, material);
+        materials.put(materialKey, material);
       }
       return material;
     } else {
-      return DEFAULT_MATERIAL;
+      return getMaterial(DEFAULT_COLOR, shininess);
     }
   }
   

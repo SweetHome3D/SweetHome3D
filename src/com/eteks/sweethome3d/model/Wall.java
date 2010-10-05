@@ -43,7 +43,8 @@ public class Wall implements Serializable, Selectable {
    */
   public enum Property {X_START, Y_START, X_END, Y_END, WALL_AT_START, WALL_AT_END, 
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
-                        LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE}
+                        LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
+                        RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS}
   
   private static final long serialVersionUID = 1L;
   
@@ -58,8 +59,10 @@ public class Wall implements Serializable, Selectable {
   private Float       heightAtEnd;
   private Integer     leftSideColor;
   private HomeTexture leftSideTexture;
+  private float       leftSideShininess;
   private Integer     rightSideColor;
   private HomeTexture rightSideTexture;
+  private float       rightSideShininess;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
@@ -446,6 +449,50 @@ public class Wall implements Serializable, Selectable {
       this.rightSideTexture = rightSideTexture;
       this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.name(), 
           oldLeftSideTexture, rightSideTexture);
+    }
+  }
+
+  /**
+   * Returns the left side shininess of this wall.
+   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @since 3.0
+   */
+  public float getLeftSideShininess() {
+    return this.leftSideShininess;
+  }
+
+  /**
+   * Sets the left side shininess of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * @since 3.0
+   */
+  public void setLeftSideShininess(float leftSideShininess) {
+    if (leftSideShininess != this.leftSideShininess) {
+      float oldLeftSideShininess = this.leftSideShininess;
+      this.leftSideShininess = leftSideShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_SHININESS.name(), oldLeftSideShininess, leftSideShininess);
+    }
+  }
+
+  /**
+   * Returns the right side shininess of this wall.
+   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @since 3.0
+   */
+  public float getRightSideShininess() {
+    return this.rightSideShininess;
+  }
+
+  /**
+   * Sets the right side shininess of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * @since 3.0
+   */
+  public void setRightSideShininess(float rightSideShininess) {
+    if (rightSideShininess != this.rightSideShininess) {
+      float oldRightSideShininess = this.rightSideShininess;
+      this.rightSideShininess = rightSideShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_SHININESS.name(), oldRightSideShininess, rightSideShininess);
     }
   }
 

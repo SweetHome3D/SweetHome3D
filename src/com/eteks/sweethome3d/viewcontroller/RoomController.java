@@ -44,8 +44,8 @@ public class RoomController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {NAME, AREA_VISIBLE, FLOOR_VISIBLE, FLOOR_COLOR, FLOOR_PAINT, 
-      CEILING_VISIBLE, CEILING_COLOR, CEILING_PAINT}
+  public enum Property {NAME, AREA_VISIBLE, FLOOR_VISIBLE, FLOOR_COLOR, FLOOR_PAINT, FLOOR_SHININESS,
+      CEILING_VISIBLE, CEILING_COLOR, CEILING_PAINT, CEILING_SHININESS}
   
   /**
    * The possible values for {@linkplain #getFloorPaint() room paint type}.
@@ -67,9 +67,11 @@ public class RoomController implements Controller {
   private Boolean   floorVisible;
   private Integer   floorColor;
   private RoomPaint floorPaint;
+  private Float     floorShininess;
   private Boolean   ceilingVisible;
   private Integer   ceilingColor;
   private RoomPaint ceilingPaint;
+  private Float     ceilingShininess;
 
   /**
    * Creates the controller of room view with undo support.
@@ -169,8 +171,11 @@ public class RoomController implements Controller {
       setFloorColor(null);
       getFloorTextureController().setTexture(null);
       setFloorPaint(null);
+      setFloorShininess(null);
       setCeilingColor(null);
       getCeilingTextureController().setTexture(null);
+      setCeilingPaint(null);
+      setCeilingShininess(null);
     } else {
       // Search the common properties among selected rooms
       Room firstRoom = selectedRooms.get(0);
@@ -237,6 +242,16 @@ public class RoomController implements Controller {
       } else {
         setFloorPaint(null);
       }
+
+      // Search the common floor shininess among rooms
+      Float floorShininess = firstRoom.getFloorShininess();
+      for (int i = 1; i < selectedRooms.size(); i++) {
+        if (!floorShininess.equals(selectedRooms.get(i).getFloorShininess())) {
+          floorShininess = null;
+          break;
+        }
+      }
+      setFloorShininess(floorShininess);
       
       // Search the common ceilingVisible value among rooms
       Boolean ceilingVisible = firstRoom.isCeilingVisible();
@@ -279,6 +294,16 @@ public class RoomController implements Controller {
       } else {
         setCeilingPaint(null);
       }
+
+      // Search the common ceiling shininess among rooms
+      Float ceilingShininess = firstRoom.getCeilingShininess();
+      for (int i = 1; i < selectedRooms.size(); i++) {
+        if (!ceilingShininess.equals(selectedRooms.get(i).getCeilingShininess())) {
+          ceilingShininess = null;
+          break;
+        }
+      }
+      setCeilingShininess(ceilingShininess);
     }
   }
   
@@ -375,6 +400,24 @@ public class RoomController implements Controller {
   }
 
   /**
+   * Sets the edited shininess of the floor.
+   */
+  public void setFloorShininess(Float floorShininess) {
+    if (floorShininess != this.floorShininess) {
+      Float oldFloorShininess = this.floorShininess;
+      this.floorShininess = floorShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_SHININESS.name(), oldFloorShininess, floorShininess);
+    }
+  }
+  
+  /**
+   * Returns the edited shininess of the floor.
+   */
+  public Float getFloorShininess() {
+    return this.floorShininess;
+  }
+
+  /**
    * Sets whether room ceiling is visible or not.
    */
   public void setCeilingVisible(Boolean ceilingCeilingVisible) {
@@ -431,6 +474,24 @@ public class RoomController implements Controller {
   }
 
   /**
+   * Sets the edited shininess of the ceiling.
+   */
+  public void setCeilingShininess(Float ceilingShininess) {
+    if (ceilingShininess != this.ceilingShininess) {
+      Float oldCeilingShininess = this.ceilingShininess;
+      this.ceilingShininess = ceilingShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_SHININESS.name(), oldCeilingShininess, ceilingShininess);
+    }
+  }
+  
+  /**
+   * Returns the edited shininess of the ceiling.
+   */
+  public Float getCeilingShininess() {
+    return this.ceilingShininess;
+  }
+
+  /**
    * Controls the modification of selected rooms in edited home.
    */
   public void modifyRooms() {
@@ -444,11 +505,13 @@ public class RoomController implements Controller {
           ? getFloorColor() : null;
       HomeTexture floorTexture = getFloorPaint() == RoomPaint.TEXTURED
           ? getFloorTextureController().getTexture() : null;
+      Float floorShininess = getFloorShininess();
       Boolean ceilingVisible = getCeilingVisible();
       Integer ceilingColor = getCeilingPaint() == RoomPaint.COLORED
           ? getCeilingColor() : null;
       HomeTexture ceilingTexture = getCeilingPaint() == RoomPaint.TEXTURED
           ? getCeilingTextureController().getTexture() : null;
+      Float ceilingShininess = getCeilingShininess();
       
       // Create an array of modified rooms with their current properties values
       ModifiedRoom [] modifiedRooms = new ModifiedRoom [selectedRooms.size()]; 
@@ -457,14 +520,13 @@ public class RoomController implements Controller {
       }
       // Apply modification
       doModifyRooms(modifiedRooms, name, areaVisible, 
-          floorVisible, floorColor, floorTexture, 
-          ceilingVisible, ceilingColor, ceilingTexture);       
+          floorVisible, floorColor, floorTexture, floorShininess, 
+          ceilingVisible, ceilingColor, ceilingTexture, ceilingShininess);       
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new RoomsModificationUndoableEdit(
-            this.home, this.preferences, oldSelection,
-            modifiedRooms, name, areaVisible, floorColor,
-            floorTexture, floorVisible, ceilingColor, ceilingTexture,
-            ceilingVisible);
+            this.home, this.preferences, oldSelection, modifiedRooms, name, areaVisible, 
+            floorColor, floorTexture, floorVisible, floorShininess,
+            ceilingColor, ceilingTexture, ceilingVisible, ceilingShininess);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -484,9 +546,11 @@ public class RoomController implements Controller {
     private final Integer          floorColor;
     private final HomeTexture      floorTexture;
     private final Boolean          floorVisible;
+    private final Float            floorShininess;
     private final Integer          ceilingColor;
     private final HomeTexture      ceilingTexture;
     private final Boolean          ceilingVisible;
+    private final Float            ceilingShininess;
 
     private RoomsModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
@@ -497,9 +561,11 @@ public class RoomController implements Controller {
                                           Integer floorColor,
                                           HomeTexture floorTexture,
                                           Boolean floorVisible,
+                                          Float floorShininess,
                                           Integer ceilingColor,
                                           HomeTexture ceilingTexture,
-                                          Boolean ceilingVisible) {
+                                          Boolean ceilingVisible,
+                                          Float ceilingShininess) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
@@ -509,9 +575,11 @@ public class RoomController implements Controller {
       this.floorColor = floorColor;
       this.floorTexture = floorTexture;
       this.floorVisible = floorVisible;
+      this.floorShininess = floorShininess;
       this.ceilingColor = ceilingColor;
       this.ceilingTexture = ceilingTexture;
       this.ceilingVisible = ceilingVisible;
+      this.ceilingShininess = ceilingShininess;
     }
 
     @Override
@@ -525,8 +593,8 @@ public class RoomController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doModifyRooms(this.modifiedRooms, this.name, this.areaVisible, 
-          this.floorVisible, this.floorColor, this.floorTexture, 
-          this.ceilingVisible, this.ceilingColor, this.ceilingTexture); 
+          this.floorVisible, this.floorColor, this.floorTexture, this.floorShininess, 
+          this.ceilingVisible, this.ceilingColor, this.ceilingTexture, this.ceilingShininess); 
       this.home.setSelectedItems(this.oldSelection); 
     }
 
@@ -541,8 +609,8 @@ public class RoomController implements Controller {
    */
   private static void doModifyRooms(ModifiedRoom [] modifiedRooms, 
                              String name, Boolean areaVisible, 
-                             Boolean floorVisible, Integer floorColor, HomeTexture floorTexture, 
-                             Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture) {
+                             Boolean floorVisible, Integer floorColor, HomeTexture floorTexture, Float floorShininess,
+                             Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess) {
     for (ModifiedRoom modifiedRoom : modifiedRooms) {
       Room room = modifiedRoom.getRoom();
       if (name != null) {
@@ -561,6 +629,9 @@ public class RoomController implements Controller {
         room.setFloorColor(floorColor);
         room.setFloorTexture(null);
       }
+      if (floorShininess != null) {
+        room.setFloorShininess(floorShininess);
+      }
       if (ceilingVisible != null) {
         room.setCeilingVisible(ceilingVisible);
       }
@@ -570,6 +641,9 @@ public class RoomController implements Controller {
       } else if (ceilingColor != null) {
         room.setCeilingColor(ceilingColor);
         room.setCeilingTexture(null);
+      }
+      if (ceilingShininess != null) {
+        room.setCeilingShininess(ceilingShininess);
       }
     }
   }
@@ -593,9 +667,11 @@ public class RoomController implements Controller {
     private final boolean     floorVisible;
     private final Integer     floorColor;
     private final HomeTexture floorTexture;
+    private final float       floorShininess;
     private final boolean     ceilingVisible;
     private final Integer     ceilingColor;
     private final HomeTexture ceilingTexture;
+    private final float       ceilingShininess;
 
     public ModifiedRoom(Room room) {
       this.room = room;
@@ -604,9 +680,11 @@ public class RoomController implements Controller {
       this.floorVisible = room.isFloorVisible();
       this.floorColor = room.getFloorColor();
       this.floorTexture = room.getFloorTexture();
+      this.floorShininess = room.getFloorShininess();
       this.ceilingVisible = room.isCeilingVisible();
       this.ceilingColor = room.getCeilingColor();
       this.ceilingTexture = room.getCeilingTexture();
+      this.ceilingShininess = room.getCeilingShininess();
     }
 
     public Room getRoom() {
@@ -619,9 +697,11 @@ public class RoomController implements Controller {
       this.room.setFloorVisible(this.floorVisible);
       this.room.setFloorColor(this.floorColor);
       this.room.setFloorTexture(this.floorTexture);
+      this.room.setFloorShininess(this.floorShininess);
       this.room.setCeilingVisible(this.ceilingVisible);
       this.room.setCeilingColor(this.ceilingColor);
       this.room.setCeilingTexture(this.ceilingTexture);
+      this.room.setCeilingShininess(this.ceilingShininess);
     }    
   }
 }

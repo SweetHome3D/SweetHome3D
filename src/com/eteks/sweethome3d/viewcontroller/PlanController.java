@@ -863,12 +863,16 @@ public class PlanController extends FurnitureController implements Controller {
       
       Integer rightSideColor = wall.getRightSideColor();
       HomeTexture rightSideTexture = wall.getRightSideTexture();
+      float leftSideShininess = wall.getLeftSideShininess();
       Integer leftSideColor = wall.getLeftSideColor();
-      HomeTexture leftSideTexture = wall.getLeftSideTexture();      
+      HomeTexture leftSideTexture = wall.getLeftSideTexture();
+      float rightSideShininess = wall.getRightSideShininess();
       wall.setLeftSideColor(rightSideColor);
       wall.setLeftSideTexture(rightSideTexture);
+      wall.setLeftSideShininess(rightSideShininess);
       wall.setRightSideColor(leftSideColor);
       wall.setRightSideTexture(leftSideTexture);
+      wall.setRightSideShininess(leftSideShininess);
       
       Float heightAtEnd = wall.getHeightAtEnd();
       if (heightAtEnd != null) {

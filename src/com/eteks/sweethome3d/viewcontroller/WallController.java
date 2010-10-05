@@ -48,7 +48,7 @@ public class WallController implements Controller {
   public enum Property {X_START, Y_START, X_END, Y_END, LENGTH, EDITABLE_POINTS, 
       LEFT_SIDE_COLOR, LEFT_SIDE_PAINT,  RIGHT_SIDE_COLOR, RIGHT_SIDE_PAINT,
       SHAPE, RECTANGULAR_WALL_HEIGHT, SLOPING_WALL_HEIGHT_AT_START, SLOPING_WALL_HEIGHT_AT_END, 
-      THICKNESS}
+      THICKNESS, LEFT_SIDE_SHININESS, RIGHT_SIDE_SHININESS}
   /**
    * The possible values for {@linkplain #getShape() wall shape}.
    */
@@ -76,8 +76,10 @@ public class WallController implements Controller {
   private Float     length;
   private Integer   leftSideColor;
   private WallPaint leftSidePaint;
+  private Float     leftSideShininess;
   private Integer   rightSideColor;
   private WallPaint rightSidePaint;
+  private Float     rightSideShininess;
   private WallShape shape;
   private Float     rectangularWallHeight;
   private Float     slopingWallHeightAtStart;
@@ -186,9 +188,11 @@ public class WallController implements Controller {
       setLeftSideColor(null);
       getLeftSideTextureController().setTexture(null);
       setLeftSidePaint(null);
+      setLeftSideShininess(null);
       setRightSideColor(null);
       getRightSideTextureController().setTexture(null);
       setRightSidePaint(null);
+      setRightSideShininess(null);
       setRectangularWallHeight(null);
       setSlopingWallHeightAtStart(null);
       setSlopingWallHeightAtEnd(null);
@@ -273,6 +277,16 @@ public class WallController implements Controller {
         setLeftSidePaint(null);
       }
       
+      // Search the common left side shininess value among walls
+      Float leftSideShininess = firstWall.getLeftSideShininess();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!leftSideShininess.equals(selectedWalls.get(i).getLeftSideShininess())) {
+          leftSideShininess = null;
+          break;
+        }
+      }
+      setLeftSideShininess(leftSideShininess);      
+      
       // Search the common right side color among walls
       Integer rightSideColor = firstWall.getRightSideColor();
       if (rightSideColor != null) {
@@ -304,6 +318,16 @@ public class WallController implements Controller {
       } else {
         setRightSidePaint(null);
       }
+      
+      // Search the common right side shininess value among walls
+      Float rightSideShininess = firstWall.getRightSideShininess();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!rightSideShininess.equals(selectedWalls.get(i).getRightSideShininess())) {
+          rightSideShininess = null;
+          break;
+        }
+      }
+      setRightSideShininess(rightSideShininess);      
       
       // Search the common height among walls
       Float height = firstWall.getHeight();
@@ -553,6 +577,24 @@ public class WallController implements Controller {
   }
 
   /**
+   * Sets the edited left side shininess.
+   */
+  public void setLeftSideShininess(Float leftSideShininess) {
+    if (leftSideShininess != this.leftSideShininess) {
+      Float oldLeftSideShininess = this.leftSideShininess;
+      this.leftSideShininess = leftSideShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_SHININESS.name(), oldLeftSideShininess, leftSideShininess);
+    }
+  }
+  
+  /**
+   * Returns the edited left side shininess.
+   */
+  public Float getLeftSideShininess() {
+    return this.leftSideShininess;
+  }
+  
+  /**
    * Sets the edited color of the right side.
    */
   public void setRightSideColor(Integer rightSideColor) {
@@ -590,6 +632,24 @@ public class WallController implements Controller {
     return this.rightSidePaint;
   }
 
+  /**
+   * Sets the edited right side shininess.
+   */
+  public void setRightSideShininess(Float rightSideShininess) {
+    if (rightSideShininess != this.rightSideShininess) {
+      Float oldRightSideShininess = this.rightSideShininess;
+      this.rightSideShininess = rightSideShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_SHININESS.name(), oldRightSideShininess, rightSideShininess);
+    }
+  }
+  
+  /**
+   * Returns the edited right side shininess.
+   */
+  public Float getRightSideShininess() {
+    return this.rightSideShininess;
+  }
+  
   /**
    * Sets whether the edited wall is a rectangular wall, a sloping wall or unknown.
    */
@@ -704,10 +764,12 @@ public class WallController implements Controller {
           ? getLeftSideColor() : null;
       HomeTexture leftSideTexture = getLeftSidePaint() == WallPaint.TEXTURED
           ? getLeftSideTextureController().getTexture() : null;
+      Float leftSideShininess = getLeftSideShininess();
       Integer rightSideColor = getRightSidePaint() == WallPaint.COLORED
           ? getRightSideColor() : null;
       HomeTexture rightSideTexture = getRightSidePaint() == WallPaint.TEXTURED
           ? getRightSideTextureController().getTexture() : null;
+      Float rightSideShininess = getRightSideShininess();
       Float thickness = getThickness();
       Float height;
       if (getShape() == WallShape.SLOPING_WALL) {
@@ -733,15 +795,16 @@ public class WallController implements Controller {
       }
       // Apply modification
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
-          leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
+          leftSideColor, leftSideTexture, leftSideShininess, 
+          rightSideColor, rightSideTexture, rightSideShininess,
           height, heightAtEnd, thickness);      
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, 
             this.preferences, oldSelection,
             modifiedWalls, xStart, yStart, xEnd, yEnd,
-            leftSideColor, leftSideTexture, rightSideColor,
-            rightSideTexture, thickness, height,
-            heightAtEnd);
+            leftSideColor, leftSideTexture, leftSideShininess, 
+            rightSideColor, rightSideTexture, rightSideShininess,
+            thickness, height, heightAtEnd);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -762,8 +825,10 @@ public class WallController implements Controller {
     private final Float            yEnd;
     private final Integer          leftSideColor;
     private final HomeTexture      leftSideTexture;
+    private final Float            leftSideShininess;
     private final Integer          rightSideColor;
     private final HomeTexture      rightSideTexture;
+    private final Float            rightSideShininess;
     private final Float            thickness;
     private final Float            height;
     private final Float            heightAtEnd;
@@ -776,8 +841,10 @@ public class WallController implements Controller {
                                           Float xEnd, Float yEnd,
                                           Integer leftSideColor,
                                           HomeTexture leftSideTexture,
+                                          Float leftSideShininess,
                                           Integer rightSideColor,
                                           HomeTexture rightSideTexture,
+                                          Float rightSideShininess,
                                           Float thickness,
                                           Float height,
                                           Float heightAtEnd) {
@@ -788,6 +855,8 @@ public class WallController implements Controller {
       this.yStart = yStart;
       this.xEnd = xEnd;
       this.yEnd = yEnd;
+      this.leftSideShininess = leftSideShininess;
+      this.rightSideShininess = rightSideShininess;
       this.thickness = thickness;
       this.rightSideTexture = rightSideTexture;
       this.leftSideTexture = leftSideTexture;
@@ -809,7 +878,8 @@ public class WallController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doModifyWalls(this.modifiedWalls, this.xStart, this.yStart, this.xEnd, this.yEnd, 
-          this.leftSideColor, this.leftSideTexture, this.rightSideColor, this.rightSideTexture, 
+          this.leftSideColor, this.leftSideTexture, this.leftSideShininess, 
+          this.rightSideColor, this.rightSideTexture, this.rightSideShininess,
           this.height, this.heightAtEnd, this.thickness); 
       this.home.setSelectedItems(this.oldSelection); 
     }
@@ -825,8 +895,8 @@ public class WallController implements Controller {
    */
   private static void doModifyWalls(ModifiedWall [] modifiedWalls, 
                                     Float xStart, Float yStart, Float xEnd, Float yEnd,
-                                    Integer leftSideColor, HomeTexture leftSideTexture, 
-                                    Integer rightSideColor, HomeTexture rightSideTexture,
+                                    Integer leftSideColor, HomeTexture leftSideTexture, Float leftSideShininess,
+                                    Integer rightSideColor, HomeTexture rightSideTexture, Float rightSideShininess,
                                     Float height, Float heightAtEnd, Float thickness) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
@@ -838,12 +908,18 @@ public class WallController implements Controller {
         wall.setLeftSideColor(leftSideColor);
         wall.setLeftSideTexture(null);
       }
+      if (leftSideShininess != null) {
+        wall.setLeftSideShininess(leftSideShininess);
+      }
       if (rightSideTexture != null) {
         wall.setRightSideTexture(rightSideTexture);
         wall.setRightSideColor(null);
       } else if (rightSideColor != null) {
         wall.setRightSideColor(rightSideColor);
         wall.setRightSideTexture(null);
+      }
+      if (rightSideShininess != null) {
+        wall.setRightSideShininess(rightSideShininess);
       }
       if (height != null) {
         wall.setHeight(height);
@@ -871,8 +947,10 @@ public class WallController implements Controller {
           modifiedWall.getXEnd(), modifiedWall.getYEnd());
       wall.setLeftSideColor(modifiedWall.getLeftSideColor());
       wall.setLeftSideTexture(modifiedWall.getLeftSideTexture());
+      wall.setLeftSideShininess(modifiedWall.getLeftSideShininess());
       wall.setRightSideColor(modifiedWall.getRightSideColor());
       wall.setRightSideTexture(modifiedWall.getRightSideTexture());
+      wall.setRightSideShininess(modifiedWall.getRightSideShininess());
       wall.setThickness(modifiedWall.getThickness());
       wall.setHeight(modifiedWall.getHeight());
       wall.setHeightAtEnd(modifiedWall.getHeightAtEnd());
@@ -943,8 +1021,10 @@ public class WallController implements Controller {
     private final float       yEnd;
     private final Integer     leftSideColor;
     private final HomeTexture leftSideTexture;
+    private final float       leftSideShininess;
     private final Integer     rightSideColor;
     private final HomeTexture rightSideTexture;
+    private final float       rightSideShininess;
     private final float       thickness;
     private final Float       height;
     private final Float       heightAtEnd;
@@ -957,8 +1037,10 @@ public class WallController implements Controller {
       this.yEnd = wall.getYEnd();
       this.leftSideColor = wall.getLeftSideColor();
       this.leftSideTexture = wall.getLeftSideTexture();
+      this.leftSideShininess = wall.getLeftSideShininess();
       this.rightSideColor = wall.getRightSideColor();
       this.rightSideTexture = wall.getRightSideTexture();
+      this.rightSideShininess = wall.getRightSideShininess();
       this.thickness = wall.getThickness();
       this.height = wall.getHeight();
       this.heightAtEnd = wall.getHeightAtEnd();
@@ -975,6 +1057,10 @@ public class WallController implements Controller {
     public HomeTexture getLeftSideTexture() {
       return this.leftSideTexture;
     }
+    
+    public float getLeftSideShininess() {
+      return this.leftSideShininess;
+    }
 
     public Integer getRightSideColor() {
       return this.rightSideColor;
@@ -982,6 +1068,10 @@ public class WallController implements Controller {
     
     public HomeTexture getRightSideTexture() {
       return this.rightSideTexture;
+    }
+    
+    public float getRightSideShininess() {
+      return this.rightSideShininess;
     }
 
     public float getThickness() {

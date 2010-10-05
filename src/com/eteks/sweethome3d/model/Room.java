@@ -44,8 +44,8 @@ public class Room implements Serializable, Selectable {
    */
   public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
       POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE,
-      FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, 
-      CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE}
+      FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, FLOOR_SHININESS,
+      CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE, CEILING_SHININESS}
   
   private static final long serialVersionUID = 1L;
   
@@ -61,9 +61,11 @@ public class Room implements Serializable, Selectable {
   private boolean     floorVisible;
   private Integer     floorColor;
   private HomeTexture floorTexture;
+  private float       floorShininess;
   private boolean     ceilingVisible;
   private Integer     ceilingColor;
   private HomeTexture ceilingTexture;
+  private float       ceilingShininess;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -403,7 +405,7 @@ public class Room implements Serializable, Selectable {
   }
   
   /**
-   * Returns the floor color color of this room. 
+   * Returns the floor color of this room. 
    */
   public Integer getFloorColor() {
     return this.floorColor;
@@ -462,6 +464,29 @@ public class Room implements Serializable, Selectable {
     }
   }
   
+  /**
+   * Returns the floor shininess of this room. 
+   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @since 3.0
+   */
+  public float getFloorShininess() {
+    return this.floorShininess;
+  }
+
+  /**
+   * Sets the floor shininess of this room. Once this room is updated, 
+   * listeners added to this room will receive a change notification.
+   * @since 3.0
+   */
+  public void setFloorShininess(float floorShininess) {
+    if (floorShininess != this.floorShininess) {
+      float oldFloorShininess = this.floorShininess;
+      this.floorShininess = floorShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_SHININESS.name(), 
+          oldFloorShininess, floorShininess);
+    }
+  }
+
   /**
    * Returns the ceiling color color of this room. 
    */
@@ -522,6 +547,29 @@ public class Room implements Serializable, Selectable {
     }
   }
   
+  /**
+   * Returns the ceiling shininess of this room.
+   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @since 3.0
+   */
+  public float getCeilingShininess() {
+    return this.ceilingShininess;
+  }
+
+  /**
+   * Sets the ceiling shininess of this room. Once this room is updated, 
+   * listeners added to this room will receive a change notification.
+   * @since 3.0
+   */
+  public void setCeilingShininess(float ceilingShininess) {
+    if (ceilingShininess != this.ceilingShininess) {
+      float oldCeilingShininess = this.ceilingShininess;
+      this.ceilingShininess = ceilingShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_SHININESS.name(), 
+          oldCeilingShininess, ceilingShininess);
+    }
+  }
+
   /**
    * Returns the area of this room.
    */

@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -65,10 +66,14 @@ public class WallPanel extends JPanel implements DialogView {
   private ColorButton    leftSideColorButton;
   private JRadioButton   leftSideTextureRadioButton;
   private JComponent     leftSideTextureComponent;
+  private JRadioButton   leftSideMatteRadioButton;
+  private JRadioButton   leftSideShinyRadioButton;
   private JRadioButton   rightSideColorRadioButton;
   private ColorButton    rightSideColorButton;
   private JRadioButton   rightSideTextureRadioButton;
   private JComponent     rightSideTextureComponent;
+  private JRadioButton   rightSideMatteRadioButton;
+  private JRadioButton   rightSideShinyRadioButton;
   private JRadioButton   rectangularWallRadioButton;
   private JLabel         rectangularWallHeightLabel;
   private JSpinner       rectangularWallHeightSpinner;
@@ -236,7 +241,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_PAINT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateLeftSideRadioButtons(controller);
+            updateLeftSideColorRadioButtons(controller);
           }
         });
     
@@ -269,11 +274,46 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     this.leftSideTextureComponent = (JComponent)controller.getLeftSideTextureController().getView();
+
+    ButtonGroup leftSideColorButtonGroup = new ButtonGroup();
+    leftSideColorButtonGroup.add(this.leftSideColorRadioButton);
+    leftSideColorButtonGroup.add(this.leftSideTextureRadioButton);
+    updateLeftSideColorRadioButtons(controller);    
+
+    // Left side shininess radio buttons bound to LEFT_SIDE_SHININESS controller property
+    this.leftSideMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "leftSideMatteRadioButton.text"));
+    this.leftSideMatteRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (leftSideMatteRadioButton.isSelected()) {
+            controller.setLeftSideShininess(0f);
+          }
+        }
+      });
+    PropertyChangeListener leftSideShininessListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateLeftSideShininessRadioButtons(controller);
+        }
+      };
+    controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_SHININESS, 
+        leftSideShininessListener);
+
+    this.leftSideShinyRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "leftSideShinyRadioButton.text"));
+    this.leftSideShinyRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (leftSideShinyRadioButton.isSelected()) {
+            controller.setLeftSideShininess(0.2f);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_SHININESS, 
+        leftSideShininessListener);
     
-    ButtonGroup leftSideButtonGroup = new ButtonGroup();
-    leftSideButtonGroup.add(this.leftSideColorRadioButton);
-    leftSideButtonGroup.add(this.leftSideTextureRadioButton);
-    updateLeftSideRadioButtons(controller);
+    ButtonGroup leftSideShininessButtonGroup = new ButtonGroup();
+    leftSideShininessButtonGroup.add(this.leftSideMatteRadioButton);
+    leftSideShininessButtonGroup.add(this.leftSideShinyRadioButton);
+    updateLeftSideShininessRadioButtons(controller);
     
     // Right side color and texture buttons bound to right side controller properties
     this.rightSideColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
@@ -288,7 +328,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_PAINT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateRightSideRadioButtons(controller);
+            updateRightSideColorRadioButtons(controller);
           }
         });
 
@@ -322,11 +362,46 @@ public class WallPanel extends JPanel implements DialogView {
   
     this.rightSideTextureComponent = (JComponent)controller.getRightSideTextureController().getView();
 
-    ButtonGroup rightSideButtonGroup = new ButtonGroup();
-    rightSideButtonGroup.add(this.rightSideColorRadioButton);
-    rightSideButtonGroup.add(this.rightSideTextureRadioButton);
-    updateRightSideRadioButtons(controller);
+    ButtonGroup rightSideColorButtonGroup = new ButtonGroup();
+    rightSideColorButtonGroup.add(this.rightSideColorRadioButton);
+    rightSideColorButtonGroup.add(this.rightSideTextureRadioButton);
+    updateRightSideColorRadioButtons(controller);
 
+    // Right side shininess radio buttons bound to LEFT_SIDE_SHININESS controller property
+    this.rightSideMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "rightSideMatteRadioButton.text"));
+    this.rightSideMatteRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (rightSideMatteRadioButton.isSelected()) {
+            controller.setRightSideShininess(0f);
+          }
+        }
+      });
+    PropertyChangeListener rightSideShininessListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateRightSideShininessRadioButtons(controller);
+        }
+      };
+    controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_SHININESS, 
+        rightSideShininessListener);
+
+    this.rightSideShinyRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "rightSideShinyRadioButton.text"));
+    this.rightSideShinyRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (rightSideShinyRadioButton.isSelected()) {
+            controller.setRightSideShininess(0.2f);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_SHININESS, 
+        rightSideShininessListener);
+    
+    ButtonGroup rightSideShininessButtonGroup = new ButtonGroup();
+    rightSideShininessButtonGroup.add(this.rightSideMatteRadioButton);
+    rightSideShininessButtonGroup.add(this.rightSideShinyRadioButton);
+    updateRightSideShininessRadioButtons(controller);
+    
     this.rectangularWallRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "rectangularWallRadioButton.text"));
     this.rectangularWallRadioButton.addChangeListener(new ChangeListener() {
@@ -473,9 +548,9 @@ public class WallPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Updates left side radio buttons. 
+   * Updates left side color radio buttons. 
    */
-  private void updateLeftSideRadioButtons(WallController controller) {
+  private void updateLeftSideColorRadioButtons(WallController controller) {
     if (controller.getLeftSidePaint() == WallController.WallPaint.COLORED) {
       this.leftSideColorRadioButton.setSelected(true);
     } else if (controller.getLeftSidePaint() == WallController.WallPaint.TEXTURED) {
@@ -486,15 +561,41 @@ public class WallPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Updates right side radio buttons. 
+   * Updates left side shininess radio buttons. 
    */
-  private void updateRightSideRadioButtons(WallController controller) {
+  private void updateLeftSideShininessRadioButtons(WallController controller) {
+    if (controller.getLeftSideShininess() == null) {
+      SwingTools.deselectAllRadioButtons(this.leftSideMatteRadioButton, this.leftSideShinyRadioButton);
+    } else if (controller.getLeftSideShininess() == 0) {
+      this.leftSideMatteRadioButton.setSelected(true);
+    } else { // null
+      this.leftSideShinyRadioButton.setSelected(true);
+    }
+  }
+
+  /**
+   * Updates right side color radio buttons. 
+   */
+  private void updateRightSideColorRadioButtons(WallController controller) {
     if (controller.getRightSidePaint() == WallController.WallPaint.COLORED) {
       this.rightSideColorRadioButton.setSelected(true);
     } else if (controller.getRightSidePaint() == WallController.WallPaint.TEXTURED) {
       this.rightSideTextureRadioButton.setSelected(true);
     } else { // null
       SwingTools.deselectAllRadioButtons(this.rightSideColorRadioButton, this.rightSideTextureRadioButton);
+    }
+  }
+
+  /**
+   * Updates right side shininess radio buttons. 
+   */
+  private void updateRightSideShininessRadioButtons(WallController controller) {
+    if (controller.getRightSideShininess() == null) {
+      SwingTools.deselectAllRadioButtons(this.rightSideMatteRadioButton, this.rightSideShinyRadioButton);
+    } else if (controller.getRightSideShininess() == 0) {
+      this.rightSideMatteRadioButton.setSelected(true);
+    } else { // null
+      this.rightSideShinyRadioButton.setSelected(true);
     }
   }
 
@@ -536,10 +637,18 @@ public class WallPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(WallPanel.class, "leftSideColorRadioButton.mnemonic")).getKeyCode());
       this.leftSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "leftSideTextureRadioButton.mnemonic")).getKeyCode());
+      this.leftSideMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "leftSideMatteRadioButton.mnemonic")).getKeyCode());
+      this.leftSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "leftSideShinyRadioButton.mnemonic")).getKeyCode());
       this.rightSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideColorRadioButton.mnemonic")).getKeyCode());
       this.rightSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideTextureRadioButton.mnemonic")).getKeyCode());
+      this.rightSideMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rightSideMatteRadioButton.mnemonic")).getKeyCode());
+      this.rightSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rightSideShinyRadioButton.mnemonic")).getKeyCode());
       
       this.rectangularWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rectangularWallRadioButton.mnemonic")).getKeyCode());
@@ -605,13 +714,32 @@ public class WallPanel extends JPanel implements DialogView {
         preferences.getLocalizedString(WallPanel.class, "leftSidePanel.title"),
         new JComponent [] {this.leftSideColorRadioButton, this.leftSideColorButton, 
                            this.leftSideTextureRadioButton, this.leftSideTextureComponent}, false);
+    leftSidePanel.add(new JSeparator(), new GridBagConstraints(
+        0, 2, 2, 1, 1, 0, GridBagConstraints.CENTER,
+        GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
+    leftSidePanel.add(this.leftSideMatteRadioButton, new GridBagConstraints(
+        0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    leftSidePanel.add(this.leftSideShinyRadioButton, new GridBagConstraints(
+        1, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(leftSidePanel, new GridBagConstraints(
         0, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+    
     JPanel rightSidePanel = createTitledPanel(
         preferences.getLocalizedString(WallPanel.class, "rightSidePanel.title"),
         new JComponent [] {this.rightSideColorRadioButton, this.rightSideColorButton, 
                            this.rightSideTextureRadioButton, this.rightSideTextureComponent}, false);
+    rightSidePanel.add(new JSeparator(), new GridBagConstraints(
+        0, 2, 2, 1, 1, 0, GridBagConstraints.CENTER,
+        GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
+    rightSidePanel.add(this.rightSideMatteRadioButton, new GridBagConstraints(
+        0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    rightSidePanel.add(this.rightSideShinyRadioButton, new GridBagConstraints(
+        1, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(rightSidePanel, new GridBagConstraints(
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));

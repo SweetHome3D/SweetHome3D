@@ -54,6 +54,7 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of room branch.
  */
 public class Room3D extends Object3DBranch {
+  private static final Integer           DEFAULT_COLOR = 0xFFFFFF;
   private static final Material          DEFAULT_MATERIAL            = new Material();
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
@@ -311,9 +312,9 @@ public class Room3D extends Object3DBranch {
   private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
     updateRoomPartAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
-        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.isFloorVisible());
+        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible());
     updateRoomPartAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
-        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.isCeilingVisible());
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(), room.isCeilingVisible());
   }
   
   /**
@@ -323,13 +324,14 @@ public class Room3D extends Object3DBranch {
                                         final HomeTexture roomPartTexture,
                                         boolean waitTextureLoadingEnd,
                                         Integer roomPartColor,
+                                        float shininess,
                                         boolean visible) {
     if (roomPartTexture == null) {
-      roomPartAppearance.setMaterial(getMaterial(roomPartColor));
+      roomPartAppearance.setMaterial(getMaterial(roomPartColor, shininess));
       roomPartAppearance.setTexture(null);
     } else {
       // Update material and texture of room part
-      roomPartAppearance.setMaterial(DEFAULT_MATERIAL);
+      roomPartAppearance.setMaterial(getMaterial(DEFAULT_COLOR, shininess));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -343,21 +345,23 @@ public class Room3D extends Object3DBranch {
     renderingAttributes.setVisible(visible);
   }
   
-  private Material getMaterial(Integer color) {
+  private Material getMaterial(Integer color, float shininess) {
     if (color != null) {
-      Material material = materials.get(color); 
+      Integer materialKey = new Integer(color + ((int)(shininess * 128) << 24));
+      Material material = materials.get(materialKey); 
       if (material == null) {
         Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
                                              ((color >>> 8) & 0xFF) / 256f,
                                                      (color & 0xFF) / 256f);
-        material = new Material(materialColor, new Color3f(), materialColor, new Color3f(), 1);
+        material = new Material(materialColor, new Color3f(), materialColor, 
+            new Color3f(shininess, shininess, shininess), shininess * 128);
         material.setCapability(Material.ALLOW_COMPONENT_READ);
         // Store created materials in cache
-        materials.put(color, material);
+        materials.put(materialKey, material);
       }
       return material;
     } else {
-      return DEFAULT_MATERIAL;
+      return getMaterial(DEFAULT_COLOR, shininess);
     }
   }
 }
