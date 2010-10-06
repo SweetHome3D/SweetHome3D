@@ -22,10 +22,13 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -63,19 +66,21 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private JSpinner                elevationSpinner;
   private JLabel                  angleLabel;
   private JSpinner                angleSpinner;
+  private NullableCheckBox        basePlanItemCheckBox;
   private JLabel                  widthLabel;
   private JSpinner                widthSpinner;
   private JLabel                  depthLabel;
   private JSpinner                depthSpinner;
   private JLabel                  heightLabel;
   private JSpinner                heightSpinner;
+  private JCheckBox               keepProportionsCheckBox;
+  private NullableCheckBox        mirroredModelCheckBox;
   private JRadioButton            defaultRadioButton;
   private JRadioButton            colorRadioButton;
   private ColorButton             colorButton;
   private JRadioButton            textureRadioButton;
   private JComponent              textureComponent;
   private NullableCheckBox        visibleCheckBox;
-  private NullableCheckBox        mirroredModelCheckBox;
   private JLabel                  lightPowerLabel;
   private JSpinner                lightPowerSpinner;
   private String                  dialogTitle;
@@ -258,6 +263,27 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         }
       });
    
+    // Create base plan item check box bound to BASE_PLAN_ITEM controller property
+    this.basePlanItemCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "basePlanItemCheckBox.text"));
+    this.basePlanItemCheckBox.setNullable(controller.getBasePlanItem() == null);
+    this.basePlanItemCheckBox.setValue(controller.getBasePlanItem());
+    final PropertyChangeListener basePlanItemModelChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        basePlanItemCheckBox.setNullable(ev.getNewValue() == null);
+        basePlanItemCheckBox.setValue((Boolean)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.BASE_PLAN_ITEM, basePlanItemModelChangeListener);
+    this.basePlanItemCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.BASE_PLAN_ITEM, basePlanItemModelChangeListener);
+          controller.setBasePlanItem(basePlanItemCheckBox.getValue());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.BASE_PLAN_ITEM, basePlanItemModelChangeListener);
+        }
+      }); 
+    this.basePlanItemCheckBox.setEnabled(controller.isBasePlanItemEditable());
+
     // Create width label and its spinner bound to WIDTH controller property
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "widthLabel.text", unitName));
@@ -324,6 +350,42 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           controller.removePropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
           controller.setHeight(heightSpinnerModel.getLength());
           controller.addPropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
+        }
+      });
+    
+    // Create keep proportions check box bound to PROPORTIONAL controller property
+    this.keepProportionsCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        ImportedFurnitureWizardStepsPanel.class, "keepProportionsCheckBox.text"));
+    this.keepProportionsCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setProportional(keepProportionsCheckBox.isSelected());
+        }
+      });
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.PROPORTIONAL,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If proportional property changes update keep proportions check box
+            keepProportionsCheckBox.setSelected(controller.isProportional());
+          }
+        });
+
+    // Create mirror check box bound to MODEL_MIRRORED controller property
+    this.mirroredModelCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "mirroredModelCheckBox.text"));
+    this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
+    this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
+    final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        mirroredModelCheckBox.setNullable(ev.getNewValue() == null);
+        mirroredModelCheckBox.setValue((Boolean)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
+    this.mirroredModelCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
+          controller.setModelMirrored(mirroredModelCheckBox.getValue());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
         }
       });
     
@@ -409,26 +471,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           controller.removePropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
           controller.setVisible(visibleCheckBox.getValue());
           controller.addPropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
-        }
-      });
-    
-    // Create mirror check box bound to MODEL_MIRRORED controller property
-    this.mirroredModelCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
-        HomeFurniturePanel.class, "mirroredModelCheckBox.text"));
-    this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
-    this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
-    final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        mirroredModelCheckBox.setNullable(ev.getNewValue() == null);
-        mirroredModelCheckBox.setValue((Boolean)ev.getNewValue());
-      }
-    };
-    controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
-    this.mirroredModelCheckBox.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
-          controller.setModelMirrored(mirroredModelCheckBox.getValue());
-          controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
         }
       });
     
@@ -521,6 +563,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.angleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "angleLabel.mnemonic")).getKeyCode());
       this.angleLabel.setLabelFor(this.angleSpinner);
+      this.keepProportionsCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "keepProportionsCheckBox.mnemonic")).getKeyCode());
       this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "widthLabel.mnemonic")).getKeyCode());
       this.widthLabel.setLabelFor(this.widthSpinner);
@@ -530,6 +574,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
+      this.basePlanItemCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "basePlanItemCheckBox.mnemonic")).getKeyCode());;
+      this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "mirroredModelCheckBox.mnemonic")).getKeyCode());
       this.defaultRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(HomeFurniturePanel.class, "defaultRadioButton.mnemonic")).getKeyCode());
       this.colorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
@@ -538,8 +586,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           preferences.getLocalizedString(HomeFurniturePanel.class, "textureRadioButton.mnemonic")).getKeyCode());
       this.visibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "visibleCheckBox.mnemonic")).getKeyCode());
-      this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          HomeFurniturePanel.class, "mirroredModelCheckBox.mnemonic")).getKeyCode());
       if (this.lightPowerLabel != null) {
         this.lightPowerLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             HomeFurniturePanel.class, "lightPowerLabel.mnemonic")).getKeyCode());
@@ -577,29 +623,32 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     Insets labelInsets = new Insets(0, 0, 5, 5);
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
     locationPanel.add(this.xLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     locationPanel.add(this.xSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
     locationPanel.add(this.yLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, labelAlignment, 
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     locationPanel.add(this.ySpinner, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
     locationPanel.add(this.elevationLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
+        0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     locationPanel.add(this.elevationSpinner, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -10, 0));
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
     locationPanel.add(this.angleLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        0, 3, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     locationPanel.add(this.angleSpinner, new GridBagConstraints(
-        1, 4, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
+        1, 3, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+    locationPanel.add(this.basePlanItemCheckBox, new GridBagConstraints(
+        0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(locationPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
@@ -607,25 +656,28 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     JPanel sizePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "sizePanel.title"));
     sizePanel.add(this.widthLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     sizePanel.add(this.widthSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, -10, 0));
     sizePanel.add(this.depthLabel, new GridBagConstraints(
-        2, 2, 1, 1, 0, 0, labelAlignment, 
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     sizePanel.add(this.depthSpinner, new GridBagConstraints(
-        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, -10, 0));
     sizePanel.add(this.heightLabel, new GridBagConstraints(
-        2, 3, 1, 1, 0, 0, labelAlignment, 
+        0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     sizePanel.add(this.heightSpinner, new GridBagConstraints(
-        3, 3, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+        1, 2, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, -10, 0));
+    sizePanel.add(this.keepProportionsCheckBox, new GridBagConstraints(
+        0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     sizePanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
-        2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(sizePanel, new GridBagConstraints(
         1, 1, 2, 1, 1, 0, labelAlignment, 

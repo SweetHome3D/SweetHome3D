@@ -539,6 +539,9 @@ public class ImportedFurnitureWizardController extends WizardController
     if (doorOrWindow != this.doorOrWindow) {
       this.doorOrWindow = doorOrWindow;
       this.propertyChangeSupport.firePropertyChange(Property.DOOR_OR_WINDOW.name(), !doorOrWindow, doorOrWindow);
+      if (doorOrWindow) {
+        setMovable(false);
+      }
     }
   }
 

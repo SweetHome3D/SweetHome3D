@@ -606,7 +606,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If door or window changes update door or window check box
-            doorOrWindowCheckBox.setSelected(controller.isDoorOrWindow());
+            boolean doorOrWindow = controller.isDoorOrWindow();
+            doorOrWindowCheckBox.setSelected(doorOrWindow);
+            movableCheckBox.setEnabled(!doorOrWindow);
           }
         });
 

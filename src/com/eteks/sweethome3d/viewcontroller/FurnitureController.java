@@ -19,12 +19,14 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -32,14 +34,16 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 
 /**
  * A MVC controller for the home furniture table.
@@ -80,6 +84,21 @@ public class FurnitureController implements Controller {
     this.undoSupport = undoSupport;
     this.contentManager = contentManager;    
     
+    addModelListeners();
+  }
+
+  /**
+   * Returns the view associated with this controller.
+   */
+  public View getView() {
+    // Create view lazily only once it's needed
+    if (this.furnitureView == null) {
+      this.furnitureView = this.viewFactory.createFurnitureView(this.home, this.preferences, this);
+    }
+    return this.furnitureView;
+  }
+  
+  private void addModelListeners() {
     // Add a selection listener that gets the lead selected piece in home
     this.home.addSelectionListener(new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
@@ -93,19 +112,39 @@ public class FurnitureController implements Controller {
           }
         }
       });
-  }
-
-  /**
-   * Returns the view associated with this controller.
-   */
-  public View getView() {
-    // Create view lazily only once it's needed
-    if (this.furnitureView == null) {
-      this.furnitureView = this.viewFactory.createFurnitureView(this.home, this.preferences, this);
+    
+    // Add listener to update base plan lock when furniture movability changes
+    final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (HomePieceOfFurniture.Property.MOVABLE.name().equals(ev.getPropertyName())) {
+            // Remove non movable pieces from selection when base plan is locked 
+            HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
+            if (home.isBasePlanLocked()
+                && isPieceOfFurniturePartOfBasePlan(piece)) {
+              List<Selectable> selectedItems = home.getSelectedItems();
+              if (selectedItems.contains(piece)) {
+                selectedItems = new ArrayList<Selectable>(selectedItems);
+                selectedItems.remove(piece);
+                home.setSelectedItems(selectedItems);
+              }
+            }
+          }
+        }
+      };
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      piece.addPropertyChangeListener(furnitureChangeListener);
     }
-    return this.furnitureView;
+    this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture> () {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+          }
+        }
+      });
   }
-
+  
   /**
    * Controls new furniture added to home. 
    * Once added the furniture will be selected in view 
@@ -244,10 +283,10 @@ public class FurnitureController implements Controller {
   }
   
   /**
-   * Returns <code>true</code> if the given <code>piece</code> is a door or a window.
+   * Returns <code>true</code> if the given <code>piece</code> is movable.
    */
   protected boolean isPieceOfFurniturePartOfBasePlan(HomePieceOfFurniture piece) {
-    return piece.isDoorOrWindow();
+    return !piece.isMovable() || piece.isDoorOrWindow();
   }
 
   /**

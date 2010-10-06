@@ -50,7 +50,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -527,6 +527,13 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return this.movable;
   }
 
+  public void setMovable(boolean movable) {
+    if (movable != this.movable) {
+      this.movable = movable;
+      this.propertyChangeSupport.firePropertyChange(Property.MOVABLE.name(), !movable, movable);
+    }
+  }
+  
   /**
    * Returns <code>true</code> if this piece of furniture is a door or a window.
    * As this method existed before {@linkplain HomeDoorOrWindow HomeDoorOrWindow} class,
