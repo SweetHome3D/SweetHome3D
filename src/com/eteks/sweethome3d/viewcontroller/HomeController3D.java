@@ -202,7 +202,7 @@ public class HomeController3D implements Controller {
    * Top camera controller state. 
    */
   private class TopCameraState extends CameraControllerState {
-    private final float MIN_SIZE = 1000;
+    private final Rectangle2D MIN_BOUNDS = new Rectangle2D.Float(0, 0, 1000, 1000);
     
     private Camera      topCamera;
     private Rectangle2D homeBounds;
@@ -270,6 +270,8 @@ public class HomeController3D implements Controller {
       float delta;
       if (this.homeBounds == null) {
         delta = 0;
+      } else if (home.getRooms().isEmpty() && home.getWalls().isEmpty()) {
+        delta = (this.minDistanceToHomeCenter - newMinDistance) / 3;
       } else {
         delta = (this.minDistanceToHomeCenter - newMinDistance) / 2;
       }
@@ -309,17 +311,17 @@ public class HomeController3D implements Controller {
         } else {
           // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
           return new Rectangle2D.Float(
-              (float)(MIN_SIZE < homeBounds.getWidth() 
+              (float)(MIN_BOUNDS.getWidth() < homeBounds.getWidth() 
                           ? homeBounds.getMinX()
-                          : homeBounds.getCenterX() - MIN_SIZE / 2), 
-              (float)(MIN_SIZE < homeBounds.getHeight() 
+                          : homeBounds.getCenterX() - MIN_BOUNDS.getWidth() / 2), 
+              (float)(MIN_BOUNDS.getHeight() < homeBounds.getHeight() 
                           ? homeBounds.getMinY()
-                          : homeBounds.getCenterY() - MIN_SIZE / 2), 
-              (float)Math.max(MIN_SIZE, homeBounds.getWidth()), 
-              (float)Math.max(MIN_SIZE, homeBounds.getHeight()));
+                          : homeBounds.getCenterY() - MIN_BOUNDS.getHeight() / 2), 
+              (float)Math.max(MIN_BOUNDS.getWidth(), homeBounds.getWidth()), 
+              (float)Math.max(MIN_BOUNDS.getHeight(), homeBounds.getHeight()));
         }
       } else {
-        return new Rectangle2D.Float(0, 0, MIN_SIZE, MIN_SIZE);
+        return MIN_BOUNDS;
       }
     }
 
