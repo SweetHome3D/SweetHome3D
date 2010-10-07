@@ -66,13 +66,13 @@ public class WallPanel extends JPanel implements DialogView {
   private ColorButton    leftSideColorButton;
   private JRadioButton   leftSideTextureRadioButton;
   private JComponent     leftSideTextureComponent;
-  private JRadioButton   leftSideMatteRadioButton;
+  private JRadioButton   leftSideMattRadioButton;
   private JRadioButton   leftSideShinyRadioButton;
   private JRadioButton   rightSideColorRadioButton;
   private ColorButton    rightSideColorButton;
   private JRadioButton   rightSideTextureRadioButton;
   private JComponent     rightSideTextureComponent;
-  private JRadioButton   rightSideMatteRadioButton;
+  private JRadioButton   rightSideMattRadioButton;
   private JRadioButton   rightSideShinyRadioButton;
   private JRadioButton   rectangularWallRadioButton;
   private JLabel         rectangularWallHeightLabel;
@@ -281,11 +281,11 @@ public class WallPanel extends JPanel implements DialogView {
     updateLeftSideColorRadioButtons(controller);    
 
     // Left side shininess radio buttons bound to LEFT_SIDE_SHININESS controller property
-    this.leftSideMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        WallPanel.class, "leftSideMatteRadioButton.text"));
-    this.leftSideMatteRadioButton.addChangeListener(new ChangeListener() {
+    this.leftSideMattRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "leftSideMattRadioButton.text"));
+    this.leftSideMattRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          if (leftSideMatteRadioButton.isSelected()) {
+          if (leftSideMattRadioButton.isSelected()) {
             controller.setLeftSideShininess(0f);
           }
         }
@@ -311,7 +311,7 @@ public class WallPanel extends JPanel implements DialogView {
         leftSideShininessListener);
     
     ButtonGroup leftSideShininessButtonGroup = new ButtonGroup();
-    leftSideShininessButtonGroup.add(this.leftSideMatteRadioButton);
+    leftSideShininessButtonGroup.add(this.leftSideMattRadioButton);
     leftSideShininessButtonGroup.add(this.leftSideShinyRadioButton);
     updateLeftSideShininessRadioButtons(controller);
     
@@ -368,11 +368,11 @@ public class WallPanel extends JPanel implements DialogView {
     updateRightSideColorRadioButtons(controller);
 
     // Right side shininess radio buttons bound to LEFT_SIDE_SHININESS controller property
-    this.rightSideMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        WallPanel.class, "rightSideMatteRadioButton.text"));
-    this.rightSideMatteRadioButton.addChangeListener(new ChangeListener() {
+    this.rightSideMattRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "rightSideMattRadioButton.text"));
+    this.rightSideMattRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          if (rightSideMatteRadioButton.isSelected()) {
+          if (rightSideMattRadioButton.isSelected()) {
             controller.setRightSideShininess(0f);
           }
         }
@@ -398,7 +398,7 @@ public class WallPanel extends JPanel implements DialogView {
         rightSideShininessListener);
     
     ButtonGroup rightSideShininessButtonGroup = new ButtonGroup();
-    rightSideShininessButtonGroup.add(this.rightSideMatteRadioButton);
+    rightSideShininessButtonGroup.add(this.rightSideMattRadioButton);
     rightSideShininessButtonGroup.add(this.rightSideShinyRadioButton);
     updateRightSideShininessRadioButtons(controller);
     
@@ -565,9 +565,9 @@ public class WallPanel extends JPanel implements DialogView {
    */
   private void updateLeftSideShininessRadioButtons(WallController controller) {
     if (controller.getLeftSideShininess() == null) {
-      SwingTools.deselectAllRadioButtons(this.leftSideMatteRadioButton, this.leftSideShinyRadioButton);
+      SwingTools.deselectAllRadioButtons(this.leftSideMattRadioButton, this.leftSideShinyRadioButton);
     } else if (controller.getLeftSideShininess() == 0) {
-      this.leftSideMatteRadioButton.setSelected(true);
+      this.leftSideMattRadioButton.setSelected(true);
     } else { // null
       this.leftSideShinyRadioButton.setSelected(true);
     }
@@ -591,9 +591,9 @@ public class WallPanel extends JPanel implements DialogView {
    */
   private void updateRightSideShininessRadioButtons(WallController controller) {
     if (controller.getRightSideShininess() == null) {
-      SwingTools.deselectAllRadioButtons(this.rightSideMatteRadioButton, this.rightSideShinyRadioButton);
+      SwingTools.deselectAllRadioButtons(this.rightSideMattRadioButton, this.rightSideShinyRadioButton);
     } else if (controller.getRightSideShininess() == 0) {
-      this.rightSideMatteRadioButton.setSelected(true);
+      this.rightSideMattRadioButton.setSelected(true);
     } else { // null
       this.rightSideShinyRadioButton.setSelected(true);
     }
@@ -637,16 +637,16 @@ public class WallPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(WallPanel.class, "leftSideColorRadioButton.mnemonic")).getKeyCode());
       this.leftSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "leftSideTextureRadioButton.mnemonic")).getKeyCode());
-      this.leftSideMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "leftSideMatteRadioButton.mnemonic")).getKeyCode());
+      this.leftSideMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "leftSideMattRadioButton.mnemonic")).getKeyCode());
       this.leftSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "leftSideShinyRadioButton.mnemonic")).getKeyCode());
       this.rightSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideColorRadioButton.mnemonic")).getKeyCode());
       this.rightSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideTextureRadioButton.mnemonic")).getKeyCode());
-      this.rightSideMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rightSideMatteRadioButton.mnemonic")).getKeyCode());
+      this.rightSideMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rightSideMattRadioButton.mnemonic")).getKeyCode());
       this.rightSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideShinyRadioButton.mnemonic")).getKeyCode());
       
@@ -717,7 +717,7 @@ public class WallPanel extends JPanel implements DialogView {
     leftSidePanel.add(new JSeparator(), new GridBagConstraints(
         0, 2, 2, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
-    leftSidePanel.add(this.leftSideMatteRadioButton, new GridBagConstraints(
+    leftSidePanel.add(this.leftSideMattRadioButton, new GridBagConstraints(
         0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     leftSidePanel.add(this.leftSideShinyRadioButton, new GridBagConstraints(
@@ -734,7 +734,7 @@ public class WallPanel extends JPanel implements DialogView {
     rightSidePanel.add(new JSeparator(), new GridBagConstraints(
         0, 2, 2, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
-    rightSidePanel.add(this.rightSideMatteRadioButton, new GridBagConstraints(
+    rightSidePanel.add(this.rightSideMattRadioButton, new GridBagConstraints(
         0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     rightSidePanel.add(this.rightSideShinyRadioButton, new GridBagConstraints(

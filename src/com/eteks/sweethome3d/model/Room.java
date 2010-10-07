@@ -466,7 +466,7 @@ public class Room implements Serializable, Selectable {
   
   /**
    * Returns the floor shininess of this room. 
-   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @return a value between 0 (matt) and 1 (very shiny)  
    * @since 3.0
    */
   public float getFloorShininess() {
@@ -549,7 +549,7 @@ public class Room implements Serializable, Selectable {
   
   /**
    * Returns the ceiling shininess of this room.
-   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @return a value between 0 (matt) and 1 (very shiny)  
    * @since 3.0
    */
   public float getCeilingShininess() {

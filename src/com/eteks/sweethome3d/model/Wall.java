@@ -454,7 +454,7 @@ public class Wall implements Serializable, Selectable {
 
   /**
    * Returns the left side shininess of this wall.
-   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @return a value between 0 (matt) and 1 (very shiny)  
    * @since 3.0
    */
   public float getLeftSideShininess() {
@@ -476,7 +476,7 @@ public class Wall implements Serializable, Selectable {
 
   /**
    * Returns the right side shininess of this wall.
-   * @return a value between 0 (matte) and 1 (very shiny)  
+   * @return a value between 0 (matt) and 1 (very shiny)  
    * @since 3.0
    */
   public float getRightSideShininess() {

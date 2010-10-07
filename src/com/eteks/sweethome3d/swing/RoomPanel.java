@@ -59,14 +59,14 @@ public class RoomPanel extends JPanel implements DialogView {
   private ColorButton           floorColorButton;
   private JRadioButton          floorTextureRadioButton;
   private JComponent            floorTextureComponent;
-  private JRadioButton          floorMatteRadioButton;
+  private JRadioButton          floorMattRadioButton;
   private JRadioButton          floorShinyRadioButton;
   private NullableCheckBox      ceilingVisibleCheckBox;
   private JRadioButton          ceilingColorRadioButton;
   private ColorButton           ceilingColorButton;
   private JRadioButton          ceilingTextureRadioButton;
   private JComponent            ceilingTextureComponent;
-  private JRadioButton          ceilingMatteRadioButton;
+  private JRadioButton          ceilingMattRadioButton;
   private JRadioButton          ceilingShinyRadioButton;
   private String                dialogTitle;
 
@@ -217,11 +217,11 @@ public class RoomPanel extends JPanel implements DialogView {
     updateFloorColorRadioButtons(controller);
     
     // Floor shininess radio buttons bound to FLOOR_SHININESS controller property
-    this.floorMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        RoomPanel.class, "floorMatteRadioButton.text"));
-    this.floorMatteRadioButton.addChangeListener(new ChangeListener() {
+    this.floorMattRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        RoomPanel.class, "floorMattRadioButton.text"));
+    this.floorMattRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          if (floorMatteRadioButton.isSelected()) {
+          if (floorMattRadioButton.isSelected()) {
             controller.setFloorShininess(0f);
           }
         }
@@ -247,7 +247,7 @@ public class RoomPanel extends JPanel implements DialogView {
         floorShininessListener);
     
     ButtonGroup floorShininessButtonGroup = new ButtonGroup();
-    floorShininessButtonGroup.add(this.floorMatteRadioButton);
+    floorShininessButtonGroup.add(this.floorMattRadioButton);
     floorShininessButtonGroup.add(this.floorShinyRadioButton);
     updateFloorShininessRadioButtons(controller);
 
@@ -324,11 +324,11 @@ public class RoomPanel extends JPanel implements DialogView {
     updateCeilingColorRadioButtons(controller);
 
     // Ceiling shininess radio buttons bound to CEILING_SHININESS controller property
-    this.ceilingMatteRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        RoomPanel.class, "ceilingMatteRadioButton.text"));
-    this.ceilingMatteRadioButton.addChangeListener(new ChangeListener() {
+    this.ceilingMattRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        RoomPanel.class, "ceilingMattRadioButton.text"));
+    this.ceilingMattRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          if (ceilingMatteRadioButton.isSelected()) {
+          if (ceilingMattRadioButton.isSelected()) {
             controller.setCeilingShininess(0f);
           }
         }
@@ -354,7 +354,7 @@ public class RoomPanel extends JPanel implements DialogView {
         ceilingShininessListener);
     
     ButtonGroup ceilingShininessButtonGroup = new ButtonGroup();
-    ceilingShininessButtonGroup.add(this.ceilingMatteRadioButton);
+    ceilingShininessButtonGroup.add(this.ceilingMattRadioButton);
     ceilingShininessButtonGroup.add(this.ceilingShinyRadioButton);
     updateCeilingShininessRadioButtons(controller);
 
@@ -379,9 +379,9 @@ public class RoomPanel extends JPanel implements DialogView {
    */
   private void updateFloorShininessRadioButtons(RoomController controller) {
     if (controller.getFloorShininess() == null) {
-      SwingTools.deselectAllRadioButtons(this.floorMatteRadioButton, this.floorShinyRadioButton);
+      SwingTools.deselectAllRadioButtons(this.floorMattRadioButton, this.floorShinyRadioButton);
     } else if (controller.getFloorShininess() == 0) {
-      this.floorMatteRadioButton.setSelected(true);
+      this.floorMattRadioButton.setSelected(true);
     } else { // null
       this.floorShinyRadioButton.setSelected(true);
     }
@@ -405,9 +405,9 @@ public class RoomPanel extends JPanel implements DialogView {
    */
   private void updateCeilingShininessRadioButtons(RoomController controller) {
     if (controller.getCeilingShininess() == null) {
-      SwingTools.deselectAllRadioButtons(this.ceilingMatteRadioButton, this.ceilingShinyRadioButton);
+      SwingTools.deselectAllRadioButtons(this.ceilingMattRadioButton, this.ceilingShinyRadioButton);
     } else if (controller.getCeilingShininess() == 0) {
-      this.ceilingMatteRadioButton.setSelected(true);
+      this.ceilingMattRadioButton.setSelected(true);
     } else { // null
       this.ceilingShinyRadioButton.setSelected(true);
     }
@@ -429,8 +429,8 @@ public class RoomPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(RoomPanel.class, "floorColorRadioButton.mnemonic")).getKeyCode());
       this.floorTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(RoomPanel.class, "floorTextureRadioButton.mnemonic")).getKeyCode());
-      this.floorMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(RoomPanel.class, "floorMatteRadioButton.mnemonic")).getKeyCode());
+      this.floorMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "floorMattRadioButton.mnemonic")).getKeyCode());
       this.floorShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(RoomPanel.class, "floorShinyRadioButton.mnemonic")).getKeyCode());
       this.ceilingVisibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(
@@ -439,8 +439,8 @@ public class RoomPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(RoomPanel.class, "ceilingColorRadioButton.mnemonic")).getKeyCode());
       this.ceilingTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(RoomPanel.class, "ceilingTextureRadioButton.mnemonic")).getKeyCode());
-      this.ceilingMatteRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(RoomPanel.class, "ceilingMatteRadioButton.mnemonic")).getKeyCode());
+      this.ceilingMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "ceilingMattRadioButton.mnemonic")).getKeyCode());
       this.ceilingShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(RoomPanel.class, "ceilingShinyRadioButton.mnemonic")).getKeyCode());
     }
@@ -485,7 +485,7 @@ public class RoomPanel extends JPanel implements DialogView {
     floorPanel.add(new JSeparator(), new GridBagConstraints(
         0, 3, 2, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
-    floorPanel.add(this.floorMatteRadioButton, new GridBagConstraints(
+    floorPanel.add(this.floorMattRadioButton, new GridBagConstraints(
         0, 4, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     floorPanel.add(this.floorShinyRadioButton, new GridBagConstraints(
@@ -503,7 +503,7 @@ public class RoomPanel extends JPanel implements DialogView {
     ceilingPanel.add(new JSeparator(), new GridBagConstraints(
         0, 3, 2, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
-    ceilingPanel.add(this.ceilingMatteRadioButton, new GridBagConstraints(
+    ceilingPanel.add(this.ceilingMattRadioButton, new GridBagConstraints(
         0, 4, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     ceilingPanel.add(this.ceilingShinyRadioButton, new GridBagConstraints(
