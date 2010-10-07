@@ -584,27 +584,24 @@ public class VideoPanel extends JPanel implements DialogView {
           }
         }
       };
-    // Under Mac OS X, add a listener that displays also the tool tip when user clicks on the slider
-    // (it's not used on other systems because slider doesn't go directly to the tick where user clicks) 
-    if (OperatingSystem.isMacOSX()) {
-      this.qualitySlider.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mousePressed(final MouseEvent ev) {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  float valueUnderMouse = getSliderValueAt(qualitySlider, ev.getX(), preferences);
-                  if (qualitySlider.getValue() == Math.round(valueUnderMouse)) {
-                    ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-                    int initialDelay = toolTipManager.getInitialDelay();
-                    toolTipManager.setInitialDelay(0);
-                    toolTipManager.mouseMoved(ev);
-                    toolTipManager.setInitialDelay(initialDelay);
-                  }
+    // Add a listener that displays also the tool tip when user clicks on the slider
+    this.qualitySlider.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(final MouseEvent ev) {
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                float valueUnderMouse = getSliderValueAt(qualitySlider, ev.getX(), preferences);
+                if (qualitySlider.getValue() == Math.round(valueUnderMouse)) {
+                  ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+                  int initialDelay = toolTipManager.getInitialDelay();
+                  toolTipManager.setInitialDelay(0);
+                  toolTipManager.mouseMoved(ev);
+                  toolTipManager.setInitialDelay(initialDelay);
                 }
-              });
-          }
-        });
-    }
+              }
+            });
+        }
+      });
     this.qualitySlider.setPaintLabels(true);
     this.qualitySlider.setPaintTicks(true);    
     this.qualitySlider.setMajorTickSpacing(1);
