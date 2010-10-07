@@ -376,20 +376,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.qualitySlider = new JSlider(0, controller.getQualityLevelCount() - 1) {
         @Override
         public String getToolTipText(MouseEvent ev) {
-          int fastLabelOffset = OperatingSystem.isLinux() 
-              ? 0
-              : new JLabel(SwingTools.getLocalizedLabelText(preferences,
-                    PhotoPanel.class, "fastLabel.text")).getPreferredSize().width / 2;
-          int bestLabelOffset = OperatingSystem.isLinux() 
-              ? 0
-              : new JLabel(SwingTools.getLocalizedLabelText(preferences,
-                    PhotoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
-          int sliderWidth = getWidth() - fastLabelOffset - bestLabelOffset;
-          // Compute approximated slider value
-          float valueUnderMouse = (float)(ev.getX() - (getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
-                                                          ? fastLabelOffset 
-                                                          : bestLabelOffset))
-              / sliderWidth * getMaximum();
+          float valueUnderMouse = getSliderValueAt(this, ev.getX(), preferences);
           float valueToTick = valueUnderMouse + 1 - (float)Math.floor(valueUnderMouse + 1);
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
@@ -403,21 +390,23 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         }
       };
-    // Under Mac OS X, add a listener that displays also the tool tip when user clicks on the slider
-    // (it's not used on other systems because slider doesn't go directly to the tick where user clicks) 
+    // Add a listener that displays also the tool tip when user clicks on the slider
     if (OperatingSystem.isMacOSX()) {
       this.qualitySlider.addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(final MouseEvent ev) {
             EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-                int initialDelay = toolTipManager.getInitialDelay();
-                toolTipManager.setInitialDelay(0);
-                toolTipManager.mouseMoved(ev);
-                toolTipManager.setInitialDelay(initialDelay);
-              }
-            });
+                public void run() {
+                  float valueUnderMouse = getSliderValueAt(qualitySlider, ev.getX(), preferences);
+                  if (qualitySlider.getValue() == Math.round(valueUnderMouse)) {
+                    ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+                    int initialDelay = toolTipManager.getInitialDelay();
+                    toolTipManager.setInitialDelay(0);
+                    toolTipManager.mouseMoved(ev);
+                    toolTipManager.setInitialDelay(initialDelay);
+                  }
+                }
+              });
           }
         });
     }
@@ -571,6 +560,25 @@ public class PhotoPanel extends JPanel implements DialogView {
     updateRatioComponents();
   }
 
+  /**
+   * Returns the slider value matching a given x.
+   */
+  private float getSliderValueAt(JSlider qualitySlider, int x, UserPreferences preferences) {
+    int fastLabelOffset = OperatingSystem.isLinux() 
+        ? 0
+        : new JLabel(SwingTools.getLocalizedLabelText(preferences,
+              PhotoPanel.class, "fastLabel.text")).getPreferredSize().width / 2;
+    int bestLabelOffset = OperatingSystem.isLinux() 
+        ? 0
+        : new JLabel(SwingTools.getLocalizedLabelText(preferences,
+              PhotoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
+    int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
+    return (float)(x - (qualitySlider.getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
+                          ? fastLabelOffset 
+                          : bestLabelOffset))
+        / sliderWidth * qualitySlider.getMaximum();
+  }
+  
   /**
    * Sets the texts of the components.
    */
