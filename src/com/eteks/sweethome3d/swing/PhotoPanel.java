@@ -21,9 +21,9 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -81,8 +81,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
-import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -126,8 +126,6 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JComboBox             aspectRatioComboBox;
   private JLabel                qualityLabel;
   private JSlider               qualitySlider;
-  private JPanel                qualityDescriptionPanel;
-  private JLabel []             qualityDescriptionLabels;
   private Component             advancedComponentsSeparator;
   private JLabel                dateLabel;
   private JSpinner              dateSpinner;
@@ -144,6 +142,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JButton               createButton;
   private JButton               saveButton;
   private JButton               closeButton;
+
 
   private static PhotoPanel     currentPhotoPanel; // Support only one photo panel opened at a time
 
@@ -372,20 +371,56 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
 
-    // Quality panel displaying explanations about quality level
-    final CardLayout qualityDescriptionLayout = new CardLayout();
-    this.qualityDescriptionPanel = new JPanel(qualityDescriptionLayout);
-    this.qualityDescriptionLabels = new JLabel [controller.getQualityLevelCount()];
-    Font font = UIManager.getFont("ToolTip.font");
-    for (int i = 0; i < this.qualityDescriptionLabels.length; i++) {
-      this.qualityDescriptionLabels [i] = new JLabel();
-      this.qualityDescriptionLabels [i].setFont(font);
-      this.qualityDescriptionPanel.add(String.valueOf(i), this.qualityDescriptionLabels [i]);
-    }
-
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
-    this.qualitySlider = new JSlider(0, qualityDescriptionLabels.length - 1);
+    this.qualitySlider = new JSlider(0, controller.getQualityLevelCount() - 1) {
+        @Override
+        public String getToolTipText(MouseEvent ev) {
+          int fastLabelOffset = OperatingSystem.isLinux() 
+              ? 0
+              : new JLabel(SwingTools.getLocalizedLabelText(preferences,
+                    PhotoPanel.class, "fastLabel.text")).getPreferredSize().width / 2;
+          int bestLabelOffset = OperatingSystem.isLinux() 
+              ? 0
+              : new JLabel(SwingTools.getLocalizedLabelText(preferences,
+                    PhotoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
+          int sliderWidth = getWidth() - fastLabelOffset - bestLabelOffset;
+          // Compute approximated slider value
+          float valueUnderMouse = (float)(ev.getX() - (getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
+                                                          ? fastLabelOffset 
+                                                          : bestLabelOffset))
+              / sliderWidth * getMaximum();
+          float valueToTick = valueUnderMouse + 1 - (float)Math.floor(valueUnderMouse + 1);
+          if (valueToTick < 0.25f || valueToTick > 0.75f) {
+            // Display a tooltip that explains the different quality levels
+            return "<html><table><tr valign='middle'>"
+                + "<td><img border='1' src='" 
+                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse) + ".jpg").getURL() + "'></td>"
+                + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + Math.round(valueUnderMouse) + "DescriptionLabel.text") + "</td>"
+                + "</tr></table>";
+          } else {
+            return null;
+          }
+        }
+      };
+    // Under Mac OS X, add a listener that displays also the tool tip when user clicks on the slider
+    // (it's not used on other systems because slider doesn't go directly to the tick where user clicks) 
+    if (OperatingSystem.isMacOSX()) {
+      this.qualitySlider.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(final MouseEvent ev) {
+            EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+                int initialDelay = toolTipManager.getInitialDelay();
+                toolTipManager.setInitialDelay(0);
+                toolTipManager.mouseMoved(ev);
+                toolTipManager.setInitialDelay(initialDelay);
+              }
+            });
+          }
+        });
+    }
     this.qualitySlider.setPaintLabels(true);
     this.qualitySlider.setPaintTicks(true);    
     this.qualitySlider.setMajorTickSpacing(1);
@@ -404,12 +439,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             qualitySlider.setValue(controller.getQuality());
-            qualityDescriptionLayout.show(qualityDescriptionPanel, String.valueOf(controller.getQuality()));
             updateAdvancedComponents();
           }
         });
     this.qualitySlider.setValue(controller.getQuality());
-    qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
 
     this.advancedComponentsSeparator = new JSeparator();
 
@@ -569,13 +602,6 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
     qualitySliderLabelTable.put(this.qualitySlider.getMaximum(), bestLabel);
     this.qualitySlider.setLabelTable(qualitySliderLabelTable);
-    for (int i = 0; i < qualityDescriptionLabels.length; i++) {
-      this.qualityDescriptionLabels [i].setText("<html><table><tr valign='middle'>"
-         + "<td><img border='1' src='" 
-         + new ResourceURLContent(PhotoPanel.class, "resources/quality" + i + ".jpg").getURL() + "'></td>"
-         + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</td>"
-         + "</tr></table>");
-    }
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
     Window window = SwingUtilities.getWindowAncestor(this);  
     if (window != null) {
@@ -696,16 +722,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Fifth row
-    // Force minimum size to avoid resizing effect
-    this.qualityDescriptionPanel.setMinimumSize(this.qualityDescriptionPanel.getPreferredSize());
-    add(this.qualityDescriptionPanel, new GridBagConstraints(
-        1, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
-    // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 4, 0), 0, 0));
-    // Seventh row
+        GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
+    // Sixth row
     add(this.dateLabel, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
@@ -741,7 +761,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       boolean highQuality = controller.getQuality() >= 2;
       boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
       if (advancedComponentsVisible != highQuality) {
-        int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 4
+        int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 6
             + this.dateSpinner.getPreferredSize().height + 5
             + this.lensComboBox.getPreferredSize().height;
         this.advancedComponentsSeparator.setVisible(highQuality);
@@ -842,6 +862,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
 
       updateAdvancedComponents();
+      ToolTipManager.sharedInstance().registerComponent(this.qualitySlider);
       dialog.setVisible(true);
       currentPhotoPanel = this;
     }
@@ -1005,6 +1026,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private void close() {
     Window window = SwingUtilities.getWindowAncestor(this);
     if (window.isDisplayable()) {
+      ToolTipManager.sharedInstance().unregisterComponent(this.qualitySlider);
       window.dispose();
     }    
   }
