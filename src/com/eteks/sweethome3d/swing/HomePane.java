@@ -2893,7 +2893,7 @@ public class HomePane extends JRootPane implements HomeView {
         if (piece.isVisible()) {
           // Create a not alive new piece to be able to explore its coordinates without setting capabilities
           HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, home, true, true);
-          writer.writeNode(pieceNode, "piece_" + ++i);
+          writer.writeNode(pieceNode);
         }
       }
       // Write 3D rooms 
