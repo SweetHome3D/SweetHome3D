@@ -81,7 +81,10 @@ import org.sunflow.PluginRegistry;
 import org.sunflow.SunflowAPI;
 import org.sunflow.core.Display;
 import org.sunflow.core.Instance;
+import org.sunflow.core.ParameterList;
+import org.sunflow.core.ParameterList.InterpolationType;
 import org.sunflow.core.light.SphereLight;
+import org.sunflow.core.light.SunSkyLight;
 import org.sunflow.image.Color;
 import org.sunflow.math.Matrix4;
 import org.sunflow.math.Point3;
@@ -297,13 +300,24 @@ public class PhotoRenderer {
         this.sunSkyLightName = UUID.randomUUID().toString();
         this.sunflow.light(this.sunSkyLightName, "sunsky");
       }
+
+      // Retrieve sun color
+      SunSkyLight sunSkyLight = new SunSkyLight();
+      ParameterList parameterList = new ParameterList();
+      parameterList.addVectors("up", InterpolationType.NONE, new float [] {0, 1, 0});
+      parameterList.addVectors("east", InterpolationType.NONE, 
+          new float [] {(float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())});
+      parameterList.addVectors("sundir", InterpolationType.NONE, 
+          new float [] {sunDirection [0], sunDirection [1], sunDirection [2]});
+      sunSkyLight.update(parameterList, this.sunflow);
+      float [] sunColor = sunSkyLight.getSunColor().getRGB();
       
-      // Simulate additional Sun with a faraway sphere light
-      int sunPower = this.sunSkyLightName == null ? 75 : 15;
+      // Simulate additional Sun with a faraway sphere light of a color depending of the hour of the day
+      int sunPower = this.sunSkyLightName == null ? 50 : 10;
       this.sunflow.parameter("radiance", null,
-          (this.homeLightColor >> 16) * sunPower, 
-          ((this.homeLightColor >> 8) & 0xFF) * sunPower, 
-          (this.homeLightColor & 0xFF) * sunPower);
+          (this.homeLightColor >> 16) * sunPower * (float)Math.sqrt(sunColor [0]), 
+          ((this.homeLightColor >> 8) & 0xFF) * sunPower * (float)Math.sqrt(sunColor [1]), 
+          (this.homeLightColor & 0xFF) * sunPower * (float)Math.sqrt(sunColor [2]));
       this.sunflow.parameter("center", new Point3(1000000 * sunDirection [0], 1000000 * sunDirection [1], 1000000 * sunDirection [2])); 
       this.sunflow.parameter("radius", 10000f);  
       this.sunflow.parameter("samples", 4);
