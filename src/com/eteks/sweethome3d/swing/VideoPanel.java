@@ -594,7 +594,7 @@ public class VideoPanel extends JPanel implements DialogView {
                 if (qualitySlider.getValue() == Math.round(valueUnderMouse)) {
                   ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
                   int initialDelay = toolTipManager.getInitialDelay();
-                  toolTipManager.setInitialDelay(0);
+                  toolTipManager.setInitialDelay(Math.min(initialDelay, 150));
                   toolTipManager.mouseMoved(ev);
                   toolTipManager.setInitialDelay(initialDelay);
                 }
