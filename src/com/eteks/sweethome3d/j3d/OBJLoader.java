@@ -75,7 +75,8 @@ import com.sun.j3d.utils.image.TextureLoader;
  * specifications, and doesn't oblige to define texture coordinate on all vertices 
  * when only one face needs such coordinates. Material description is stored in 
  * {@link OBJMaterial OBJMaterial} instances to be able to use additional OBJ information
- * in other circumstances.
+ * in other circumstances.<br>
+ * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret
  */
 public class OBJLoader extends LoaderBase implements Loader {

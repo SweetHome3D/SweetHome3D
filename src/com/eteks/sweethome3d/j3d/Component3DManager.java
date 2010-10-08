@@ -41,6 +41,7 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * Manager of <code>Canvas3D</code> instantiations and Java 3D error listeners.
+ * Note: this class is compatible with Java 3D 1.3 at runtime but requires Java 3D 1.5 to compile.
  * @author Emmanuel Puybaret
  */
 public class Component3DManager {

@@ -93,7 +93,8 @@ import com.sun.j3d.loaders.lw3d.Lw3dLoader;
  * This manager supports 3D models with an OBJ, 3DS or LWS format by default. 
  * Additional classes implementing Java 3D <code>Loader</code> interface may be 
  * specified in the <code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code>
- * (separated by a space or a colon :) to enable the support of other formats. 
+ * (separated by a space or a colon :) to enable the support of other formats.<br> 
+ * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret
  */
 public class ModelManager {
@@ -566,14 +567,16 @@ public class ModelManager {
   /**
    * Updates the name of scene shapes and transparency window panes shapes.
    */
+  @SuppressWarnings("unchecked")
   private void updateShapeNamesAndWindowPanesTransparency(Scene scene) {
     Map<String, Object> namedObjects = scene.getNamedObjects();
     for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
       if (entry.getValue() instanceof Shape3D) {
+        String shapeName = entry.getKey();
         // Assign shape name to its user data
         Shape3D shape = (Shape3D)entry.getValue();
-        shape.setUserData(entry.getKey());
-        if (entry.getKey().startsWith(WINDOW_PANE_SHAPE_PREFIX)) {
+        shape.setUserData(shapeName);
+        if (shapeName.startsWith(WINDOW_PANE_SHAPE_PREFIX)) {
           Appearance appearance = shape.getAppearance();
           if (appearance == null) {
             appearance = new Appearance();
