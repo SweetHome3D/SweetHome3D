@@ -83,7 +83,8 @@ import com.sun.j3d.utils.image.TextureLoader;
 /**
  * A loader for DAE Collada 1.4.1 format as specified by
  * <a href="http://www.khronos.org/files/collada_spec_1_4.pdf">http://www.khronos.org/files/collada_spec_1_4.pdf</a>.
- * All texture coordinates are considered to belong to the same set (for example UVSET0).
+ * All texture coordinates are considered to belong to the same set (for example UVSET0).<br>
+ * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret
  * @author apptaro (bug fixes)
  */
@@ -378,15 +379,26 @@ public class DAELoader extends LoaderBase implements Loader {
         String geometryInstanceUrl = attributes.getValue("url");
         if (geometryInstanceUrl.startsWith("#")) {
           final String geometryInstanceAnchor = geometryInstanceUrl.substring(1);
+          final String nodeName = attributes.getValue("name");
           final Group parentGroup = new Group();
           this.parentGroups.peek().addChild(parentGroup);
           this.parentGroups.push(parentGroup);
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
+                int nameSuffix = 0;
                 // Resolve URL at the end of the document
                 for (Geometry geometry : geometries.get(geometryInstanceAnchor)) {
                   Shape3D shape = new Shape3D(geometry);
                   parentGroup.addChild(shape);
+                  // Give a name to shape 
+                  if (nodeName != null) {
+                    if (nameSuffix == 0) {
+                      scene.addNamedObject(nodeName, shape);
+                    } else {
+                      scene.addNamedObject(nodeName + "_" + nameSuffix, shape);
+                    }
+                    nameSuffix++;
+                  }
                 }
               }
             });
