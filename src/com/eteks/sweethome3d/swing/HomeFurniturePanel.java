@@ -538,6 +538,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.depthSpinner.setEnabled(editableSize);
     this.heightLabel.setEnabled(editableSize);
     this.heightSpinner.setEnabled(editableSize);
+    this.keepProportionsCheckBox.setEnabled(editableSize);
     this.mirroredModelCheckBox.setEnabled(editableSize);
   }
   
