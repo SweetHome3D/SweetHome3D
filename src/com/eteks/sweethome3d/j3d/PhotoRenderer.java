@@ -100,6 +100,7 @@ import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.LightSource;
+import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -118,6 +119,7 @@ public class PhotoRenderer {
   
   private final SunflowAPI sunflow;
   private boolean useSunSky;
+  private boolean useAmbientOcclusion;
   private String sunSkyLightName;
   private String sunLightName;
   private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
@@ -138,18 +140,23 @@ public class PhotoRenderer {
     this.quality = quality;
     this.sunflow = new SunflowAPI();
     
+    this.useAmbientOcclusion = home.getCamera() instanceof ObserverCamera;
+    // SunFlow produce too much white spots when silk shader is used with sun sky
+    // so use this shader only when observer is used 
+    boolean silk = this.useAmbientOcclusion && quality == Quality.HIGH;
+    
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     for (Wall wall : home.getWalls()) {
       Wall3D wall3D = new Wall3D(wall, home, true, true);
-      exportNode(wall3D, true, false);
+      exportNode(wall3D, true, false, silk);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home, true, true);
-      exportNode(piece3D, false, false);
+      exportNode(piece3D, false, false, silk);
     }
     for (Room room : home.getRooms()) {
       Room3D room3D = new Room3D(room, home, home.getCamera() == home.getTopCamera(), true, true);
-      exportNode(room3D, true, false);
+      exportNode(room3D, true, false, silk);
     } 
     // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
     Home groundHome = new Home();
@@ -160,11 +167,10 @@ public class PhotoRenderer {
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
     groundTransformGroup.addChild(ground);
-    exportNode(groundTransformGroup, true, true);
+    exportNode(groundTransformGroup, true, true, silk);
 
-    // Set light settings 
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
-    this.useSunSky = skyTexture == null;
+    this.useSunSky = skyTexture == null || !(home.getCamera() instanceof ObserverCamera);
     if (!this.useSunSky) {
       // If observer camera is used with a sky texture, 
       // create an image base light from sky texture  
@@ -184,10 +190,11 @@ public class PhotoRenderer {
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("fixed", true);
-      this.sunflow.parameter("samples", 2);
+      this.sunflow.parameter("samples", 0); 
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
     } 
     
+    // Set light settings 
     int ceillingLightColor = home.getEnvironment().getCeillingLightColor();
     this.homeLightColor = home.getEnvironment().getLightColor();
     if (ceillingLightColor > 0) {
@@ -296,7 +303,7 @@ public class PhotoRenderer {
             new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
         this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
         this.sunflow.parameter("turbidity", 6f);
-        this.sunflow.parameter("samples", quality == Quality.LOW ? 6 : 12);
+        this.sunflow.parameter("samples", this.useAmbientOcclusion ? 0 : 12); 
         this.sunSkyLightName = UUID.randomUUID().toString();
         this.sunflow.light(this.sunSkyLightName, "sunsky");
       }
@@ -313,7 +320,7 @@ public class PhotoRenderer {
       float [] sunColor = sunSkyLight.getSunColor().getRGB();
       
       // Simulate additional Sun with a faraway sphere light of a color depending of the hour of the day
-      int sunPower = this.sunSkyLightName == null ? 50 : 10;
+      int sunPower = this.useAmbientOcclusion ? 40 : 10; 
       this.sunflow.parameter("radiance", null,
           (this.homeLightColor >> 16) * sunPower * (float)Math.sqrt(sunColor [0]), 
           ((this.homeLightColor >> 8) & 0xFF) * sunPower * (float)Math.sqrt(sunColor [1]), 
@@ -323,6 +330,18 @@ public class PhotoRenderer {
       this.sunflow.parameter("samples", 4);
       this.sunLightName = UUID.randomUUID().toString();
       this.sunflow.light(this.sunLightName, "sphere");
+
+      if (this.useAmbientOcclusion) {
+        this.sunflow.parameter("gi.engine", "ambocc");
+        this.sunflow.parameter("gi.ambocc.bright", null, new float [] {1, 1, 1});
+        // Use complementary color
+        this.sunflow.parameter("gi.ambocc.dark", null, 
+            new float [] {(sunColor [1] + sunColor [2]) / 200, 
+                          (sunColor [0] + sunColor [2]) / 200,
+                          (sunColor [0] + sunColor [1]) / 200});
+        this.sunflow.parameter("gi.ambocc.samples", 1);
+        this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
+      }
     }
 
     // Update camera lens 
@@ -441,8 +460,9 @@ public class PhotoRenderer {
   /**
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
-  private void exportNode(Node node, boolean ignoreTransparency, boolean ignoreConstantShader) throws IOException {
-    exportNode(node, ignoreTransparency, ignoreConstantShader, new Transform3D());
+  private void exportNode(Node node, boolean ignoreTransparency, 
+                          boolean ignoreConstantShader, boolean silk) throws IOException {
+    exportNode(node, ignoreTransparency, ignoreConstantShader, silk, new Transform3D());
   }
 
   /**
@@ -450,7 +470,8 @@ public class PhotoRenderer {
    */ 
   private void exportNode(Node node, 
                           boolean ignoreTransparency,
-                          boolean ignoreConstantShader,
+                          boolean ignoreConstantShader, 
+                          boolean silk,
                           Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
@@ -462,10 +483,10 @@ public class PhotoRenderer {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode((Node)enumeration.nextElement(), ignoreTransparency, ignoreConstantShader, parentTransformations);
+        exportNode((Node)enumeration.nextElement(), ignoreTransparency, ignoreConstantShader, silk, parentTransformations);
       }
     } else if (node instanceof Link) {
-      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, ignoreConstantShader, parentTransformations);
+      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, ignoreConstantShader, silk, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -484,7 +505,7 @@ public class PhotoRenderer {
           appearanceName = "shader" + uuid;
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-          exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, ignoreConstantShader);
+          exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, ignoreConstantShader, silk);
         }
 
         // Export object geometries
@@ -1071,7 +1092,8 @@ public class PhotoRenderer {
                                 String appearanceName, 
                                 boolean mirror,
                                 boolean ignoreTransparency,
-                                boolean ignoreConstantShader) throws IOException {
+                                boolean ignoreConstantShader,
+                                boolean silk) throws IOException {
     Texture texture = appearance.getTexture();    
     if (mirror) {
       Material material = appearance.getMaterial();
@@ -1096,14 +1118,26 @@ public class PhotoRenderer {
         imagePath = imageFile.getAbsolutePath();
         this.textureImagesCache.put(texture, imagePath);
       }
-      this.sunflow.parameter("texture", imagePath);
-      
       Material material = appearance.getMaterial();
+      float shininess;
       if (material != null
-          && material.getShininess() > 1) {
-        this.sunflow.parameter("shiny", material.getShininess() / 512f);
-        this.sunflow.shader(appearanceName, "textured_shiny_diffuse");
+          && (shininess = material.getShininess()) > 1) {
+        if (silk) {
+          this.sunflow.parameter("diffuse.texture", imagePath);
+          Color3f color = new Color3f();
+          material.getSpecularColor(color);
+          float [] specularColor = new float [] {color.x, color.y, color.z};
+          this.sunflow.parameter("specular", null, specularColor);
+          this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.max(0, Math.log(shininess) / Math.log(2) - 3)));
+          this.sunflow.parameter("samples", shininess < 32 ? 4 : 16);
+          this.sunflow.shader(appearanceName, "uber");
+        } else {
+          this.sunflow.parameter("texture", imagePath);
+          this.sunflow.parameter("shiny", shininess / 512f);
+          this.sunflow.shader(appearanceName, "textured_shiny_diffuse");
+        }
       } else {
+        this.sunflow.parameter("texture", imagePath);
         this.sunflow.shader(appearanceName, "textured_diffuse");
       }
     } else {
@@ -1125,9 +1159,10 @@ public class PhotoRenderer {
             this.sunflow.parameter("eta", 1.55f);
           }
           float transparency = 1 - transparencyAttributes.getTransparency();
-          this.sunflow.parameter("color", null, new float [] {transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [0]), 
-                                                              transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [1]), 
-                                                              transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [2])});
+          this.sunflow.parameter("color", null, 
+              new float [] {transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [0]), 
+                            transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [1]), 
+                            transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [2])});
           this.sunflow.parameter("transparency", transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else if (material.getLightingEnable()
@@ -1135,8 +1170,17 @@ public class PhotoRenderer {
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 1) {
-            this.sunflow.parameter("shiny", shininess / 512f);
-            this.sunflow.shader(appearanceName, "shiny_diffuse");
+            if (silk) {
+              material.getSpecularColor(color);
+              float [] specularColor = new float [] {color.x, color.y, color.z};
+              this.sunflow.parameter("specular", null, specularColor);
+              this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.max(0, Math.log(shininess) / Math.log(2) - 3)));
+              this.sunflow.parameter("samples", shininess < 32 ? 4 : 16);
+              this.sunflow.shader(appearanceName, "uber");
+            } else { 
+              this.sunflow.parameter("shiny", shininess / 512f);
+              this.sunflow.shader(appearanceName, "shiny_diffuse");
+            }
           } else {
             this.sunflow.shader(appearanceName, "diffuse");
           }
