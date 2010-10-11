@@ -303,7 +303,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.leftSideShinyRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (leftSideShinyRadioButton.isSelected()) {
-            controller.setLeftSideShininess(0.2f);
+            controller.setLeftSideShininess(0.25f);
           }
         }
       });
@@ -390,7 +390,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.rightSideShinyRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (rightSideShinyRadioButton.isSelected()) {
-            controller.setRightSideShininess(0.2f);
+            controller.setRightSideShininess(0.25f);
           }
         }
       });

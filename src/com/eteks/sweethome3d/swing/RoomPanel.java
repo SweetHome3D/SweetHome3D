@@ -239,7 +239,7 @@ public class RoomPanel extends JPanel implements DialogView {
     this.floorShinyRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (floorShinyRadioButton.isSelected()) {
-            controller.setFloorShininess(0.2f);
+            controller.setFloorShininess(0.25f);
           }
         }
       });
@@ -346,7 +346,7 @@ public class RoomPanel extends JPanel implements DialogView {
     this.ceilingShinyRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (ceilingShinyRadioButton.isSelected()) {
-            controller.setCeilingShininess(0.2f);
+            controller.setCeilingShininess(0.25f);
           }
         }
       });
