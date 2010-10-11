@@ -1126,10 +1126,11 @@ public class PhotoRenderer {
           this.sunflow.parameter("diffuse.texture", imagePath);
           Color3f color = new Color3f();
           material.getSpecularColor(color);
-          float [] specularColor = new float [] {color.x, color.y, color.z};
+          float [] specularColor = new float [] {
+              (float)Math.sqrt(color.x) / 2, (float)Math.sqrt(color.y) / 2, (float)Math.sqrt(color.z) / 2};
           this.sunflow.parameter("specular", null, specularColor);
-          this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.max(0, Math.log(shininess) / Math.log(2) - 3)));
-          this.sunflow.parameter("samples", shininess < 32 ? 4 : 16);
+          this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.log(shininess) / Math.log(5)));
+          this.sunflow.parameter("samples", 1);
           this.sunflow.shader(appearanceName, "uber");
         } else {
           this.sunflow.parameter("texture", imagePath);
@@ -1172,10 +1173,11 @@ public class PhotoRenderer {
           if (shininess > 1) {
             if (silk) {
               material.getSpecularColor(color);
-              float [] specularColor = new float [] {color.x, color.y, color.z};
+              float [] specularColor = new float [] {
+                   (float)Math.sqrt(color.x) / 2, (float)Math.sqrt(color.y) / 2, (float)Math.sqrt(color.z) / 2};
               this.sunflow.parameter("specular", null, specularColor);
-              this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.max(0, Math.log(shininess) / Math.log(2) - 3)));
-              this.sunflow.parameter("samples", shininess < 32 ? 4 : 16);
+              this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.log(shininess) / Math.log(5)));
+              this.sunflow.parameter("samples", 1);
               this.sunflow.shader(appearanceName, "uber");
             } else { 
               this.sunflow.parameter("shiny", shininess / 512f);
