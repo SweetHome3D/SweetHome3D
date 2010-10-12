@@ -60,8 +60,8 @@ public interface HomeView extends View {
       INCREASE_TEXT_SIZE, DECREASE_TEXT_SIZE, TOGGLE_BOLD_STYLE, TOGGLE_ITALIC_STYLE,
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, HIDE_BACKGROUND_IMAGE, SHOW_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, 
       ZOOM_OUT, ZOOM_IN, EXPORT_TO_SVG,
-      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, DETACH_3D_VIEW, ATTACH_3D_VIEW, 
-      MODIFY_3D_ATTRIBUTES, CREATE_PHOTO, CREATE_VIDEO, EXPORT_TO_OBJ,
+      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, STORE_POINT_OF_VIEW,  
+      DETACH_3D_VIEW, ATTACH_3D_VIEW, MODIFY_3D_ATTRIBUTES, CREATE_PHOTO, CREATE_VIDEO, EXPORT_TO_OBJ,
       HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
@@ -230,6 +230,11 @@ public interface HomeView extends View {
    */
   public abstract void exportToOBJ(String objFile) throws RecorderException;
 
+  /**
+   * Displays a dialog that lets the user choose a name for the current camera.
+   */
+  public abstract String showStoreCameraDialog(String cameraName);
+  
   /**
    * Returns <code>true</code> if clipboard contains data that
    * components are able to handle.

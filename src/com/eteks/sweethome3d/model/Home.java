@@ -54,7 +54,7 @@ public class Home implements Serializable, Cloneable {
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED};
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
@@ -75,6 +75,7 @@ public class Home implements Serializable, Cloneable {
   private BackgroundImage                             backgroundImage;
   private ObserverCamera                              observerCamera;
   private Camera                                      topCamera;
+  private List<Camera>                                storedCameras;  
   private HomeEnvironment                             environment;
   private HomePrint                                   print;
   private String                                      furnitureSortedPropertyName;
@@ -223,6 +224,7 @@ public class Home implements Serializable, Cloneable {
     // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
     this.observerCamera = new ObserverCamera(150, 50, 170, 
         7 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
+    this.storedCameras = Collections.emptyList();
     // Initialize new fields 
     this.environment = new HomeEnvironment();
     this.rooms = new ArrayList<Room>();
@@ -895,6 +897,32 @@ public class Home implements Serializable, Cloneable {
     }
     return this.camera;
   }
+  
+  /**
+   * Sets the cameras stored by this home and fires a <code>PropertyChangeEvent</code>.
+   * The list given as parameter is cloned but not the camera instances it contains.
+   * @since 3.0
+   */
+  public void setStoredCameras(List<Camera> storedCameras) {
+    if (!this.storedCameras.equals(storedCameras)) {
+      List<Camera> oldStoredCameras = this.storedCameras;
+      if (storedCameras == null) {
+        this.storedCameras = Collections.emptyList();
+      } else {
+        this.storedCameras = new ArrayList<Camera>(storedCameras);
+      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.STORED_CAMERAS.name(), Collections.unmodifiableList(oldStoredCameras), Collections.unmodifiableList(storedCameras));
+    }
+  }
+
+  /**
+   * Returns an unmodifiable list of the cameras stored by this home.
+   * @since 3.0
+   */
+  public List<Camera> getStoredCameras() {
+    return Collections.unmodifiableList(this.storedCameras);
+  }
 
   /**
    * Returns the environment attributes of this home.
@@ -1014,6 +1042,10 @@ public class Home implements Serializable, Cloneable {
         }
       } else {
         clone.camera = clone.topCamera;
+      }
+      clone.storedCameras = new ArrayList<Camera>(this.storedCameras.size());
+      for (Camera camera : this.storedCameras) {
+        clone.storedCameras.add(camera.clone());
       }
       // Clone other mutable objects
       clone.environment = this.environment.clone();

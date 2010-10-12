@@ -102,6 +102,7 @@ import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
@@ -131,6 +132,7 @@ import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.j3d.Room3D;
 import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
@@ -162,7 +164,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
-      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE}
+      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE, 
+      GO_TO_POINT_OF_VIEW}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -468,6 +471,8 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getHomeController3D(), "viewFromTop");
     createAction(ActionType.VIEW_FROM_OBSERVER, preferences, 
         controller.getHomeController3D(), "viewFromObserver");
+    createAction(ActionType.STORE_POINT_OF_VIEW, preferences, 
+        controller, "storeCamera");
     getActionMap().put(ActionType.DETACH_3D_VIEW, 
         new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
           @Override
@@ -542,6 +547,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(preferences, MenuActionType.SORT_HOME_FURNITURE_MENU);
     createMenuAction(preferences, MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
     createMenuAction(preferences, MenuActionType.MODIFY_TEXT_STYLE);
+    createMenuAction(preferences, MenuActionType.GO_TO_POINT_OF_VIEW);
   }
   
   /**
@@ -952,6 +958,8 @@ public class HomePane extends JRootPane implements HomeView {
         this.viewFromTopToggleModel, true, preview3DMenu);
     addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
         this.viewFromObserverToggleModel, true, preview3DMenu);
+    addActionToMenu(ActionType.STORE_POINT_OF_VIEW, preview3DMenu);
+    preview3DMenu.add(createGoToPointOfViewMenu(home, preferences, controller));
     preview3DMenu.addSeparator();
     JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, false);
     if (attachDetach3DViewMenuItem != null) {
@@ -1592,10 +1600,52 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
+   * Returns Go to point of view menu.
+   */
+  private JMenu createGoToPointOfViewMenu(final Home home,
+                                          UserPreferences preferences,
+                                          final HomeController controller) {
+    final JMenu goToPointOfViewMenu = 
+        new JMenu(this.menuActionMap.get(MenuActionType.GO_TO_POINT_OF_VIEW));
+    updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
+    home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
+          }
+        });
+    return goToPointOfViewMenu;
+  }
+  
+  /**
+   * Updates Go to point of view menu items from the cameras stored in home. 
+   */
+  private void updateGoToPointOfViewMenu(JMenu goToPointOfViewMenu, 
+                                         Home home,
+                                         final HomeController controller) {
+    List<Camera> storedCameras = home.getStoredCameras();
+    goToPointOfViewMenu.removeAll();
+    if (storedCameras.isEmpty()) {
+      goToPointOfViewMenu.setEnabled(false);
+      goToPointOfViewMenu.add(new ResourceAction(preferences, HomePane.class, "NoStoredPointOfView", false));
+    } else {
+      goToPointOfViewMenu.setEnabled(true);
+      for (final Camera camera : storedCameras) {
+        goToPointOfViewMenu.add(
+            new AbstractAction(camera.getName()) {
+              public void actionPerformed(ActionEvent e) {
+                controller.getHomeController3D().goToCamera(camera);
+              }
+            });
+      }
+    }
+  }
+
+  /**
    * Returns Attach / Detach menu item for the 3D view.
    */
   private JMenuItem createAttachDetach3DViewMenuItem(final HomeController controller, 
-                                                                      final boolean popup) {
+                                                     final boolean popup) {
     ActionMap actionMap = getActionMap();
     Action display3DViewInSeparateWindowAction = actionMap.get(ActionType.DETACH_3D_VIEW);
     Action display3DViewInMainWindowAction = actionMap.get(ActionType.ATTACH_3D_VIEW);
@@ -2106,6 +2156,8 @@ public class HomePane extends JRootPane implements HomeView {
         this.viewFromTopToggleModel, true, view3DPopup);
     addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
         this.viewFromObserverToggleModel, true, view3DPopup);
+    addActionToPopupMenu(ActionType.STORE_POINT_OF_VIEW, view3DPopup);
+    view3DPopup.add(createGoToPointOfViewMenu(home, preferences, controller));
     view3DPopup.addSeparator();
     JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
     if (attachDetach3DViewMenuItem != null) {
@@ -2994,6 +3046,24 @@ public class HomePane extends JRootPane implements HomeView {
         null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
   
+  /**
+   * Displays a dialog that lets the user choose a name for the current camera.
+   * @return the chosen name or <code>null</code> if the user canceled.
+   */
+  public String showStoreCameraDialog(String cameraName) {
+    // Retrieve displayed text in dialog
+    String message = this.preferences.getLocalizedString(HomePane.class, "showStoreCameraDialog.message");
+    String title = this.preferences.getLocalizedString(HomePane.class, "showStoreCameraDialog.title");
+    
+    JTextField cameraNameTextField = new JTextField(cameraName, 20);
+    if (SwingTools.showConfirmDialog(this, new Object [] {message, cameraNameTextField}, 
+        title, cameraNameTextField) == JOptionPane.OK_OPTION) {
+      return cameraNameTextField.getText();
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Returns <code>true</code> if clipboard contains data that
    * components are able to handle.

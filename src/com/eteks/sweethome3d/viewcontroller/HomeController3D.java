@@ -113,6 +113,40 @@ public class HomeController3D implements Controller {
   }
   
   /**
+   * Stores a clone of the current camera in home under the given <code>name</code>.
+   */
+  public void storeCamera(String name) {
+    Camera storedCamera = this.home.getCamera().clone();
+    storedCamera.setName(name);
+    List<Camera> homeStoredCameras = this.home.getStoredCameras();
+    ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
+    storedCameras.addAll(homeStoredCameras);
+    storedCameras.add(0, storedCamera);
+    // Ensure home stored cameras don't contain more than 10 cameras
+    while (storedCameras.size() > 10) {
+      storedCameras.remove(storedCameras.size() - 1);
+    }
+    this.home.setStoredCameras(storedCameras);
+  }
+  
+  /**
+   * Switches to observer or top camera and move camera to the values as the current camera.
+   */
+  public void goToCamera(Camera camera) {
+    if (camera instanceof ObserverCamera) {
+      viewFromObserver();
+    } else {
+      viewFromTop();
+    }
+    this.cameraState.goToCamera(camera);
+    // Reorder cameras
+    ArrayList<Camera> storedCameras = new ArrayList<Camera>(this.home.getStoredCameras());
+    storedCameras.remove(camera);
+    storedCameras.add(0, camera);
+    this.home.setStoredCameras(storedCameras);
+  }
+  
+  /**
    * Controls the edition of 3D attributes. 
    */
   public void modifyAttributes() {
@@ -193,6 +227,9 @@ public class HomeController3D implements Controller {
     }
 
     public void rotateCameraPitch(float delta) {
+    }
+
+    public void goToCamera(Camera camera) {
     }
   }
   
@@ -422,6 +459,14 @@ public class HomeController3D implements Controller {
     }
     
     @Override
+    public void goToCamera(Camera camera) {
+      this.topCamera.setCamera(camera);
+      this.topCamera.setTime(camera.getTime());
+      this.topCamera.setLens(camera.getLens());
+      updateCameraFromHomeBounds();
+    }
+    
+    @Override
     public void exit() {
       this.topCamera = null;
       for (Wall wall : home.getWalls()) {
@@ -486,6 +531,13 @@ public class HomeController3D implements Controller {
       this.observerCamera.setPitch(newPitch); 
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    }
+    
+    @Override
+    public void goToCamera(Camera camera) {
+      this.observerCamera.setCamera(camera);
+      this.observerCamera.setTime(camera.getTime());
+      this.observerCamera.setLens(camera.getLens());
     }
     
     @Override

@@ -44,10 +44,11 @@ public class Camera implements Serializable, Cloneable {
    * The properties of a camera that may change. <code>PropertyChangeListener</code>s added 
    * to a camera will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {X, Y, Z, YAW, PITCH, FIELD_OF_VIEW, TIME, LENS}
+  public enum Property {NAME, X, Y, Z, YAW, PITCH, FIELD_OF_VIEW, TIME, LENS}
   
   private static final long serialVersionUID = 1L;
   
+  private String         name;
   private float          x;
   private float          y;
   private float          z;
@@ -64,7 +65,7 @@ public class Camera implements Serializable, Cloneable {
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
-   * Creates a camera at given location and angles.
+   * Creates a camera at given location and angles at midday and using a pinhole lens.
    */
   public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView) {
     this(x, y, z, yaw, pitch, fieldOfView, midday(), Lens.PINHOLE);
@@ -135,6 +136,27 @@ public class Camera implements Serializable, Cloneable {
    */
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
+   * Returns the name of this camera.
+   * @since 3.0
+   */
+  public String getName() {
+    return this.name;
+  }
+
+  /**
+   * Sets the name of this camera and notifies listeners of this change. 
+   * @since 3.0
+   */
+  public void setName(String name) {
+    if (name != this.name
+        || (name != null && !name.equals(this.name))) {
+      String oldName = this.name;
+      this.name = name;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
+    }
   }
 
   /**
@@ -307,7 +329,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the location and angles of this camera from the <code>camera</code> in parameter
+   * Sets the location and angles of this camera from the <code>camera</code> in parameter.
    * @since 2.3
    */
   public void setCamera(Camera camera) {

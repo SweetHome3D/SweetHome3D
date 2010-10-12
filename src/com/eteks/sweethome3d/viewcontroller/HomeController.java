@@ -22,9 +22,11 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -281,6 +283,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
+    homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.ATTACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
@@ -1926,6 +1929,17 @@ public class HomeController implements Controller {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() * 1.5f;
     planController.setScale(newScale);
+  }
+
+  /**
+   * Prompts a name for the current camera and stores it in home.
+   */
+  public void storeCamera() {
+    String now = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date());
+    String name = getView().showStoreCameraDialog(now);
+    if (name != null) {
+      getHomeController3D().storeCamera(name);
+    }
   }
 
   /**
