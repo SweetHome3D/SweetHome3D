@@ -111,7 +111,13 @@ public class OperatingSystem {
    * @throws IOException if the file couldn't be created
    */
   public static File createTemporaryFile(String prefix, String suffix) throws IOException {
-    File temporaryFolder = getDefaultTemporaryFolder(true);
+    File temporaryFolder;
+    try {
+      temporaryFolder = getDefaultTemporaryFolder(true);
+    } catch (IOException ex) {
+      // In case creating default temporary folder failed, use default temporary files folder
+      temporaryFolder = null;
+    }
     File temporaryFile = File.createTempFile(prefix, suffix, temporaryFolder);
     temporaryFile.deleteOnExit();
     return temporaryFile;
@@ -159,8 +165,8 @@ public class OperatingSystem {
           sessionTemporaryFolder.deleteOnExit();
         }
         
-        // Launch a timer that updates modification date of the temporary folder each 10 s
-        final long updateDelay = 10000;
+        // Launch a timer that updates modification date of the temporary folder each minute
+        final long updateDelay = 60000;
         new Timer(true).schedule(new TimerTask() {
             @Override
             public void run() {
@@ -172,8 +178,8 @@ public class OperatingSystem {
         
         if (siblingTemporaryFolders != null
             && siblingTemporaryFolders.length > 0) {
-          // Launch a timer that will delete out dated temporary folders in 5 min
-          final long deleteDelay = 5 * 60000;
+          // Launch a timer that will delete out dated temporary folders in 10 min
+          final long deleteDelay = 10 * 60000;
           new Timer(true).schedule(new TimerTask() {
               @Override
               public void run() {
