@@ -3013,12 +3013,12 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+   * Updates <code>objectBounds</code> to include the bounds of <code>items</code>.
    */
   private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
-                                          Collection<? extends Selectable> objects) {
-    for (Selectable wall : objects) {
-      for (float [] point : wall.getPoints()) {
+                                          Collection<? extends Selectable> items) {
+    for (Selectable item : items) {
+      for (float [] point : item.getPoints()) {
         if (objectBounds == null) {
           objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
         } else {
