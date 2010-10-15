@@ -492,8 +492,13 @@ public class PhotoRenderer {
       Appearance appearance = shape.getAppearance();
       RenderingAttributes renderingAttributes = appearance != null 
           ? appearance.getRenderingAttributes() : null;
-      if (renderingAttributes == null
-          || renderingAttributes.getVisible()) {
+      TransparencyAttributes transparencyAttributes = appearance != null 
+          ? appearance.getTransparencyAttributes() : null;
+      // Ignore invisible shapes and fully transparent shapes without a texture 
+      if ((renderingAttributes == null
+              || renderingAttributes.getVisible())
+          && (transparencyAttributes == null
+              || transparencyAttributes.getTransparency() != 1)) {
         String shapeName = (String)shape.getUserData();
         // Build a unique object name
         String uuid = UUID.randomUUID().toString();
