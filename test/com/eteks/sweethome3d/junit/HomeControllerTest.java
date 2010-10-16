@@ -218,9 +218,9 @@ public class HomeControllerTest extends TestCase {
     // 4. Select all while plan has focus
     this.homeController.focusedViewChanged(planController.getView());
     runAction(HomePane.ActionType.SELECT_ALL);
-    // Check selection contains the two pieces and the wall
+    // Check selection contains the two pieces, the wall and the compass
     assertEquals("Selection doesn't contain home objects", 
-        3, this.home.getSelectedItems().size());
+        4, this.home.getSelectedItems().size());
     
     // 5. Select the first two pieces 
     this.home.setSelectedItems(Arrays.asList(new Selectable [] {firstPiece, secondPiece}));

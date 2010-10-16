@@ -117,7 +117,6 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     tester.waitForIdle();
     assertTrue("X field doesn't have focus", ((DefaultEditor)xSpinner.getEditor()).getTextField().hasFocus());
     tester.actionKeyStroke(KeyEvent.VK_TAB);
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
     tester.waitForIdle();
     JFormattedTextField ySpinnerTextField = ((DefaultEditor)ySpinner.getEditor()).getTextField();
     assertTrue("Y field doesn't have focus", ySpinnerTextField.hasFocus());

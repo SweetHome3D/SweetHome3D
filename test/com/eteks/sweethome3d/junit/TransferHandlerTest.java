@@ -64,6 +64,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     preferences.setFurnitureCatalogViewedInTree(true);
     ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
+    home.getCompass().setVisible(false);
     HomeController controller = new HomeController(home, preferences, viewFactory);
     JComponent homeView = (JComponent)controller.getView();
     FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(

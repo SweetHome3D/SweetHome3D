@@ -462,6 +462,7 @@ public class PlanComponentTest extends ComponentTestFixture {
       super("Plan Component Test");
       // Create model objects
       this.home = new Home();
+      this.home.getCompass().setVisible(false);
       Locale.setDefault(Locale.FRANCE);
       this.preferences = new DefaultUserPreferences();
       ViewFactory viewFactory = new SwingViewFactory();

@@ -72,6 +72,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
+    home.getCompass().setVisible(false);
     final HomeController controller = 
         new HomeController(home, preferences, new SwingViewFactory());
     JComponent homeView = (JComponent)controller.getView();

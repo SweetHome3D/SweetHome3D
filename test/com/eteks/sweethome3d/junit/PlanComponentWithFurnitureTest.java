@@ -532,6 +532,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     public TestFrame() {
       super("Home Plan Component Test");
       this.home = new Home();
+      this.home.getCompass().setVisible(false);
       UserPreferences preferences = new DefaultUserPreferences();      
       ViewFactory viewFactory = new SwingViewFactory();
       this.homeController = new HomeController(home, preferences, viewFactory);
