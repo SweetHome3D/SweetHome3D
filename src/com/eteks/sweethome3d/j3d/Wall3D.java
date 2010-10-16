@@ -192,7 +192,7 @@ public class Wall3D extends Object3DBranch {
     float [][] wallSidePoints = getWallSidePoints(wallSide);
     float [] textureReferencePoint = wallSide == LEFT_WALL_SIDE
         ? wallSidePoints [0]
-        : wallSidePoints [3];
+        : wallSidePoints [wallSidePoints.length - 1];
     Shape wallShape = getShape(wallSidePoints);
     Area wallArea = new Area(wallShape);
     float wallHeightAtStart = getWallHeightAtStart();
@@ -275,7 +275,8 @@ public class Wall3D extends Object3DBranch {
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
             // Compute geometry for vertical part
             wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
-                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, 
+                textureReferencePoint, wallSide));
             // Compute geometry for bottom part
             wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true));
             // Compute geometry for top part
@@ -327,7 +328,8 @@ public class Wall3D extends Object3DBranch {
               // Generate geometry for wall part below window
               if (lowestDoorOrWindow.getElevation() > 0) {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
-                    cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindow.getElevation(), texture, textureReferencePoint));
+                    cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindow.getElevation(), texture, 
+                    textureReferencePoint, wallSide));
                 wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true));
                 wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowestDoorOrWindow.getElevation(), false));
               }
@@ -344,7 +346,7 @@ public class Wall3D extends Object3DBranch {
                 if (i < doorsOrWindows.size()
                     && lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() < higherDoorOrWindow.getElevation()) {
                   wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), 
-                      cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindow.getElevation(), texture, textureReferencePoint));
+                      cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindow.getElevation(), texture, textureReferencePoint, wallSide));
                   wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), true));
                   wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, higherDoorOrWindow.getElevation(), false));
                 }
@@ -367,7 +369,7 @@ public class Wall3D extends Object3DBranch {
               // Generate geometry for wall part above window
               if (doorOrWindowTop < minTopY) {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
-                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint, wallSide));
                 wallGeometries.add(createWallHorizontalPartGeometry(
                     wallPartPoints, doorOrWindowTop, true));
                 wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
@@ -437,7 +439,8 @@ public class Wall3D extends Object3DBranch {
                                                   double cosWallYawAngle, double sinWallYawAngle, 
                                                   double topLineAlpha, double topLineBeta, 
                                                   HomeTexture texture,
-                                                  float [] textureReferencePoint) {
+                                                  float [] textureReferencePoint,
+                                                  int wallSide) {
     // Compute wall coordinates
     Point3f [] bottom = new Point3f [points.length];
     Point3f [] top    = new Point3f [points.length];
@@ -446,9 +449,26 @@ public class Wall3D extends Object3DBranch {
     float yStart = wall.getYStart();
     float xEnd = wall.getXEnd();
     float yEnd = wall.getYEnd();
+    Float arcExtent = wall.getArcExtent();
+    float [] arcCircleCenter = null;
+    float referencePointAngle = 0;
+    float arcCircleRadius = 0;
+    if (arcExtent != null && arcExtent != 0) {
+      arcCircleCenter = new float [] {wall.getXArcCircleCenter(), wall.getYArcCircleCenter()};
+      referencePointAngle = (float)Math.atan2(textureReferencePoint [1] - arcCircleCenter [1], 
+          textureReferencePoint [0] - arcCircleCenter [0]);
+      arcCircleRadius = (float)Point2D.distance(arcCircleCenter [0], arcCircleCenter [1], 
+          xStart, yStart);
+    }
     for (int i = 0; i < points.length; i++) {
       bottom [i] = new Point3f(points[i][0], yMin, points[i][1]);
-      distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
+      if (arcCircleCenter == null) {
+        distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
+      } else {
+        distanceSqToWallMiddle [i] = arcCircleRadius 
+            - Point2D.distance(arcCircleCenter [0], arcCircleCenter [1], bottom [i].x, bottom [i].z);
+        distanceSqToWallMiddle [i] *= distanceSqToWallMiddle [i];
+      }
       // Compute vertical top point 
       double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
       float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
@@ -458,14 +478,14 @@ public class Wall3D extends Object3DBranch {
     int rectanglesCount = 0;
     boolean [] usedRectangle = new boolean [points.length]; 
     for (int i = 0; i < points.length - 1; i++) {
-      usedRectangle [i] = distanceSqToWallMiddle [i] > 0.0001
-          || distanceSqToWallMiddle [i + 1] > 0.0001;
+      usedRectangle [i] = distanceSqToWallMiddle [i] > 0.001f
+          || distanceSqToWallMiddle [i + 1] > 0.001f;
       if (usedRectangle [i]) {
         rectanglesCount++;
       } 
     }
-    usedRectangle [usedRectangle.length - 1] =  distanceSqToWallMiddle [0] > 0.0001
-        || distanceSqToWallMiddle [points.length - 1] > 0.0001;
+    usedRectangle [usedRectangle.length - 1] =  distanceSqToWallMiddle [0] > 0.001f
+        || distanceSqToWallMiddle [points.length - 1] > 0.001f;
     if (usedRectangle [usedRectangle.length - 1]) {
       rectanglesCount++;
     }
@@ -500,48 +520,44 @@ public class Wall3D extends Object3DBranch {
       float yMinTextureCoords = yMin / texture.getHeight();
       TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
       j = 0;
-      for (int i = 0; i < points.length - 1; i++) {
-        if (usedRectangle [i]) {
-          if (Math.abs(distanceSqToWallMiddle [i] - halfThicknessSq) < 0.0001
-              && Math.abs(distanceSqToWallMiddle [i + 1] - halfThicknessSq) < 0.0001) {
+      // Tolerate more error with round walls since arc points are approximative
+      float epsilon = arcCircleCenter == null 
+          ? 0.0001f 
+          : halfThicknessSq / 4;
+      for (int index = 0; index < points.length; index++) {
+        int nextIndex = (index + 1) % points.length;
+        if (usedRectangle [index]) {
+          if (Math.abs(distanceSqToWallMiddle [index] - halfThicknessSq) < epsilon
+              && Math.abs(distanceSqToWallMiddle [nextIndex] - halfThicknessSq) < epsilon) {
             // Compute texture coordinates of wall part parallel to wall middle
             // according to textureReferencePoint
-            float firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                points[i][0], points[i][1]) / texture.getWidth();
-            float secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                points[i + 1][0], points[i + 1][1]) / texture.getWidth();
+            float firstHorizontalTextureCoords;
+            float secondHorizontalTextureCoords;
+            if (arcCircleCenter == null) {
+              firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                  points[index][0], points[index][1]) / texture.getWidth();
+              secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                  points[nextIndex][0], points[nextIndex][1]) / texture.getWidth();
+            } else {
+              float angleDelta = (float)Math.atan2(points[index][1] - arcCircleCenter [1], points[index][0] - arcCircleCenter [0])
+                  - referencePointAngle;
+              firstHorizontalTextureCoords = angleDelta * arcCircleRadius / texture.getWidth();
+              angleDelta = (float)Math.atan2(points[nextIndex][1] - arcCircleCenter [1], points[nextIndex][0] - arcCircleCenter [0])
+                  - referencePointAngle;
+              secondHorizontalTextureCoords = angleDelta * arcCircleRadius / texture.getWidth();
+            }
             textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
-            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [i + 1].y / texture.getHeight());
-            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [i].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [nextIndex].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [index].y / texture.getHeight());
           } else {
-            float horizontalTextureCoords = (float)Point2D.distance(points[i][0], points[i][1], 
-                points[i + 1][0], points[i + 1][1]) / texture.getWidth();
+            float horizontalTextureCoords = (float)Point2D.distance(points[index][0], points[index][1], 
+                points[nextIndex][0], points[nextIndex][1]) / texture.getWidth();
             textureCoords [j++] = firstTextureCoords;
             textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].y / texture.getHeight());
-            textureCoords [j++] = new TexCoord2f(0, top [i].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [nextIndex].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(0, top [index].y / texture.getHeight());
           }
-        }
-      }
-      if (usedRectangle [usedRectangle.length - 1]) {
-        if (Math.abs(distanceSqToWallMiddle [0] - halfThicknessSq) < 0.0001
-            && Math.abs(distanceSqToWallMiddle [points.length - 1] - halfThicknessSq) < 0.0001) {
-          float firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-              points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
-          float secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-              points[0][0], points[0][1]) / texture.getWidth();
-          textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
-          textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
-          textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [0].y / texture.getHeight());
-          textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [top.length - 1].y / texture.getHeight());
-        } else {
-          float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
-              points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
-          textureCoords [j++] = firstTextureCoords;
-          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [0].y / texture.getHeight());
-          textureCoords [j++] = new TexCoord2f(0, top [top.length - 1].y / texture.getHeight());
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
