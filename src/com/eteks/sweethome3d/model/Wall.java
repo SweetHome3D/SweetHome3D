@@ -195,10 +195,26 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Returns the distance from the start point of this wall to its end point.
+   * Returns the length of this wall.
    * @since 2.0
    */
   public float getLength() {
+    if (this.arcExtent == null
+        || this.arcExtent == 0) {
+      return (float)Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
+    } else {
+      float [] arcCircleCenter = getArcCircleCenter();
+      float arcCircleRadius = (float)Point2D.distance(this.xStart, this.yStart, 
+          arcCircleCenter [0], arcCircleCenter [1]);
+      return Math.abs(this.arcExtent) * arcCircleRadius;
+    }
+  }
+  
+  /**
+   * Returns the distance from the start point of this wall to its end point.
+   * @since 2.0
+   */
+  public float getStartPointToEndPointDistance() {
     return (float)Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
   }
   

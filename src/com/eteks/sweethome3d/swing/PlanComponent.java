@@ -2469,7 +2469,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         float xArcCircleCenter = 0;
         float yArcCircleCenter = 0;
         double arcCircleRadius = 0;
-        double wallLength = wall.getLength();
+        double startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
         double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
             wall.getXEnd() - wall.getXStart());
         if (arcExtent != null) {
@@ -2478,11 +2478,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           arcCircleRadius = Point2D.distance(wall.getXStart(), wall.getYStart(), 
               xArcCircleCenter, yArcCircleCenter);
           distanceAtScale = arcCircleRadius * Math.abs(arcExtent) * planScale;
-          indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYStart(), 
-                  wall.getXArcCircleCenter() - wall.getXStart())  
+          indicatorAngle = Math.atan2(yArcCircleCenter - wall.getYStart(), 
+                  xArcCircleCenter - wall.getXStart())  
               + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
         } else {
-          distanceAtScale = wallLength * planScale;
+          distanceAtScale = startPointToEndPointDistance * planScale;
           indicatorAngle = wallAngle;
         }
         // If the distance between start and end points is < 30
@@ -2494,8 +2494,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 ? -(Math.PI + arcExtent) / 2
                 : (Math.PI - arcExtent) / 2;
             float arcCircleCenterToWallDistance = (float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
-                * wallLength / 2); 
-            g2D.translate(wallLength * planScale / 2, 
+                * startPointToEndPointDistance / 2); 
+            g2D.translate(startPointToEndPointDistance * planScale / 2, 
                 (arcCircleCenterToWallDistance - arcCircleRadius * (Math.abs(wallAngle) > Math.PI / 2 ? -1: 1)) * planScale);
           } else {
             g2D.translate(distanceAtScale / 2, 0);

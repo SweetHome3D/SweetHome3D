@@ -1504,7 +1504,7 @@ public class PlanController extends FurnitureController implements Controller {
     for (Wall wall : this.home.getWalls()) {
       if (wall.getArcExtent() == null
           && wall.containsPoint(x, y, 0)
-          && wall.getLength() > 0) {
+          && wall.getStartPointToEndPointDistance() > 0) {
         wallAtPoint = wall;
         break;
       }
@@ -1515,7 +1515,7 @@ public class PlanController extends FurnitureController implements Controller {
       for (Wall wall : this.home.getWalls()) {
         if (wall.getArcExtent() == null
             && wall.containsPoint(x, y, margin)
-            && wall.getLength() > 0) {
+            && wall.getStartPointToEndPointDistance() > 0) {
           wallAtPoint = wall;
           break;
         }
@@ -5193,36 +5193,35 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
-      float length = wall.getLength();
-      String wallAngleText = wall.getArcExtent() != null 
-          ? String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(wall.getArcExtent())))
-          : String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, length));
-      return "<html>" + String.format(this.wallLengthToolTipFeedback, 
-          preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + wallAngleText
-          + "<br>" + String.format(this.wallThicknessToolTipFeedback, 
-              preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+      if (wall.getArcExtent() != null) {
+        return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(wall.getArcExtent())));
+      } else {
+        float startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
+        return "<html>" + String.format(this.wallLengthToolTipFeedback, 
+            preferences.getLengthUnit().getFormatWithUnit().format(startPointToEndPointDistance))
+            + "<br>" + String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, startPointToEndPointDistance))
+            + "<br>" + String.format(this.wallThicknessToolTipFeedback, 
+                preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+      }
     }
     
     /**
      * Returns wall angle in degrees.
      */
     protected Integer getWallAngleInDegrees(Wall wall) {
-      return getWallAngleInDegrees(wall, wall.getLength());
+      return getWallAngleInDegrees(wall, wall.getStartPointToEndPointDistance());
     }
 
-    private Integer getWallAngleInDegrees(Wall wall, float wallLength) {
+    private Integer getWallAngleInDegrees(Wall wall, float startPointToEndPointDistance) {
       Wall wallAtStart = wall.getWallAtStart();
       if (wallAtStart != null) {
-        float wallAtStartLength = (float)Point2D.distance(
-            wallAtStart.getXStart(), wallAtStart.getYStart(), 
-            wallAtStart.getXEnd(), wallAtStart.getYEnd());
-        if (wallLength != 0 && wallAtStartLength != 0) {
+        float wallAtStartSegmentDistance = wallAtStart.getStartPointToEndPointDistance();
+        if (startPointToEndPointDistance != 0 && wallAtStartSegmentDistance != 0) {
           // Compute the angle between the wall and its wall at start
-          float xWallVector = (wall.getXEnd() - wall.getXStart()) / wallLength;
-          float yWallVector = (wall.getYEnd() - wall.getYStart()) / wallLength;
-          float xWallAtStartVector = (wallAtStart.getXEnd() - wallAtStart.getXStart()) / wallAtStartLength;
-          float yWallAtStartVector = (wallAtStart.getYEnd() - wallAtStart.getYStart()) / wallAtStartLength;
+          float xWallVector = (wall.getXEnd() - wall.getXStart()) / startPointToEndPointDistance;
+          float yWallVector = (wall.getYEnd() - wall.getYStart()) / startPointToEndPointDistance;
+          float xWallAtStartVector = (wallAtStart.getXEnd() - wallAtStart.getXStart()) / wallAtStartSegmentDistance;
+          float yWallAtStartVector = (wallAtStart.getYEnd() - wallAtStart.getYStart()) / wallAtStartSegmentDistance;
           if (wallAtStart.getWallAtStart() == wall) {
             // Reverse wall at start direction
             xWallAtStartVector = -xWallAtStartVector;
@@ -5237,7 +5236,7 @@ public class PlanController extends FurnitureController implements Controller {
           return wallAngle;
         }
       } 
-      if (wallLength == 0) {
+      if (startPointToEndPointDistance == 0) {
         return 0;
       } else {
         return (int)Math.round(Math.toDegrees(Math.atan2(
@@ -5485,9 +5484,9 @@ public class PlanController extends FurnitureController implements Controller {
         }
         validateDrawnWalls();
       } else {
-        // Create a new wall only when it will have a length > 0
+        // Create a new wall only when it will have a distance between start and end points > 0
         if (this.newWall != null
-            && this.newWall.getLength() > 0) {
+            && this.newWall.getStartPointToEndPointDistance() > 0) {
           if (this.roundWall && this.wallArcExtent == null) {
             this.wallArcExtent = (float)Math.PI;
             this.newWall.setArcExtent(this.wallArcExtent);
@@ -5604,18 +5603,21 @@ public class PlanController extends FurnitureController implements Controller {
             // May happen if edition is activated after the user clicked to finish one wall 
             createNextWall();            
           } 
-          // Edit length, angle and thickness        
-          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
-                                                                       this.wallArcExtent == null
-                                                                           ? EditableProperty.ANGLE
-                                                                           : EditableProperty.ARC_EXTENT,
-                                                                       EditableProperty.THICKNESS},
-              new Object [] {this.newWall.getLength(), 
-                             this.wallArcExtent == null
-                                 ? getWallAngleInDegrees(this.newWall)
-                                 : new Integer((int)Math.round(Math.toDegrees(this.wallArcExtent))), 
-                             this.newWall.getThickness()},
-              this.newWall.getXEnd(), this.newWall.getYEnd());
+          if (this.wallArcExtent == null) {
+            // Edit length, angle and thickness        
+            planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
+                                                                         EditableProperty.ANGLE,
+                                                                         EditableProperty.THICKNESS},
+                new Object [] {this.newWall.getLength(), 
+                               getWallAngleInDegrees(this.newWall),
+                               this.newWall.getThickness()},
+                this.newWall.getXEnd(), this.newWall.getYEnd());
+          } else {
+            // Edit arc extent        
+            planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.ARC_EXTENT},
+                new Object [] {new Integer((int)Math.round(Math.toDegrees(this.wallArcExtent)))},
+                this.newWall.getXEnd(), this.newWall.getYEnd());
+          }
         }
       } else { 
         if (this.newWall == null) {
@@ -5667,9 +5669,9 @@ public class PlanController extends FurnitureController implements Controller {
       double previousWallAngle = Math.PI - Math.atan2(previousWall.getYStart() - previousWall.getYEnd(), 
           previousWall.getXStart() - previousWall.getXEnd());
       previousWallAngle -=  Math.PI / 2;
-      float previousWallLength = previousWall.getLength(); 
-      this.xLastEnd = (float)(this.xStart + previousWallLength * Math.cos(previousWallAngle));
-      this.yLastEnd = (float)(this.yStart - previousWallLength * Math.sin(previousWallAngle));
+      float previousWallSegmentDistance = previousWall.getStartPointToEndPointDistance(); 
+      this.xLastEnd = (float)(this.xStart + previousWallSegmentDistance * Math.cos(previousWallAngle));
+      this.yLastEnd = (float)(this.yStart - previousWallSegmentDistance * Math.sin(previousWallAngle));
       this.newWall = createWall(this.xStart, this.yStart, 
           this.xLastEnd, this.yLastEnd, this.wallStartAtStart, previousWall);
       this.newWall.setThickness(previousWall.getThickness());          
@@ -5718,13 +5720,13 @@ public class PlanController extends FurnitureController implements Controller {
             case ANGLE : 
               wallAngle = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
               if (this.lastWall != null
-                  && this.lastWall.getLength() > 0) {
+                  && this.lastWall.getStartPointToEndPointDistance() > 0) {
                 wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
                     this.lastWall.getXStart() - this.lastWall.getXEnd());
               }
-              float wallLength = this.newWall.getLength();              
-              this.xLastEnd = (float)(this.xStart + wallLength * Math.cos(wallAngle));
-              this.yLastEnd = (float)(this.yStart - wallLength * Math.sin(wallAngle));
+              float startPointToEndPointDistance = this.newWall.getStartPointToEndPointDistance();              
+              this.xLastEnd = (float)(this.xStart + startPointToEndPointDistance * Math.cos(wallAngle));
+              this.yLastEnd = (float)(this.yStart - startPointToEndPointDistance * Math.sin(wallAngle));
               break;
             default :
               return;
