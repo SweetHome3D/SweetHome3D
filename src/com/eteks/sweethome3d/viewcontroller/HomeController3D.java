@@ -325,8 +325,9 @@ public class HomeController3D implements Controller {
       Rectangle2D homeBounds = null;
       Collection<Wall> walls = home.getWalls();
       for (Wall wall : walls) {
-        homeBounds = updateHomeBounds(homeBounds, wall.getXStart(), wall.getYStart());
-        homeBounds.add(wall.getXEnd(), wall.getYEnd());
+        for (float [] point : wall.getPoints()) {
+          homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+        }
       }
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         if (piece.isVisible()) {

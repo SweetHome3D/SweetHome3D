@@ -41,7 +41,7 @@ public class Wall implements Serializable, Selectable {
    * The properties of a wall that may change. <code>PropertyChangeListener</code>s added 
    * to a wall will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {X_START, Y_START, X_END, Y_END, WALL_AT_START, WALL_AT_END, 
+  public enum Property {X_START, Y_START, X_END, Y_END, ARC_EXTENT, WALL_AT_START, WALL_AT_END, 
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS}
@@ -52,6 +52,7 @@ public class Wall implements Serializable, Selectable {
   private float       yStart;
   private float       xEnd;
   private float       yEnd; 
+  private Float       arcExtent; 
   private Wall        wallAtStart;
   private Wall        wallAtEnd;
   private float       thickness;
@@ -194,11 +195,75 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Returns the length from the start point of this wall to its end point.
+   * Returns the distance from the start point of this wall to its end point.
    * @since 2.0
    */
   public float getLength() {
-    return (float)Point2D.distance(getXStart(), getYStart(), getXEnd(), getYEnd());
+    return (float)Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
+  }
+  
+  /**
+   * Sets the arc extent of a round wall.
+   * @since 3.0
+   */
+  public void setArcExtent(Float arcExtent) {
+    if (arcExtent != this.arcExtent
+        || (arcExtent != null && !arcExtent.equals(this.arcExtent))) {
+      Float oldArcExtent = this.arcExtent;
+      this.arcExtent = arcExtent;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.ARC_EXTENT.name(), 
+          oldArcExtent, arcExtent);
+    }
+  }
+
+  /**
+   * Returns the arc extent of a round wall or <code>null</code> if this wall isn't round.
+   * @since 3.0
+   */
+  public Float getArcExtent() {
+    return this.arcExtent;
+  }
+
+  /**
+   * Returns the abscissa of the arc circle center of this wall.
+   * If the wall isn't round, the return abscissa is at the middle of the wall. 
+   */
+  public float getXArcCircleCenter() {
+    if (this.arcExtent == null) {
+      return (this.xStart + this.xEnd) / 2; 
+    } else {
+      return getArcCircleCenter() [0];
+    }
+  }
+
+  /**
+   * Returns the ordinate of the arc circle center of this wall.
+   * If the wall isn't round, the return ordinate is at the middle of the wall. 
+   */
+  public float getYArcCircleCenter() {
+    if (this.arcExtent == null) {
+      return (this.yStart + this.yEnd) / 2;
+    } else {
+      return getArcCircleCenter() [1];
+    }
+  }
+
+  /**
+   * Returns the coordinates of the arc circle center of this wall.
+   */
+  private float [] getArcCircleCenter() {
+    double startToEndPointsDistance = Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
+    double wallToStartPointArcCircleCenterAngle = Math.abs(this.arcExtent) > Math.PI 
+        ? -(Math.PI + this.arcExtent) / 2
+        : (Math.PI - this.arcExtent) / 2;
+    float arcCircleCenterToWallDistance = -(float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
+        * startToEndPointsDistance / 2); 
+    float xMiddlePoint = (this.xStart + this.xEnd) / 2;
+    float yMiddlePoint = (this.yStart + this.yEnd) / 2;
+    double angle = Math.atan2(this.xStart - this.xEnd, this.yEnd - this.yStart);
+    return new float [] {(float)(xMiddlePoint + arcCircleCenterToWallDistance * Math.cos(angle)), 
+                         (float)(yMiddlePoint + arcCircleCenterToWallDistance * Math.sin(angle))};
   }
   
   /**
@@ -511,54 +576,62 @@ public class Wall implements Serializable, Selectable {
   
   /**
    * Returns the points of each corner of a wall. 
-   * @return an array of the 4 (x,y) coordinates of the wall corners.
-   *    The points at index 0 and 3 indicates the start of the wall, while
-   *    the points at index 1 and 2 indicates the end of the wall. 
+   * @return an array of the (x,y) coordinates of the wall corners.
+   *    For a straight wall, the points at index 0 and 3 indicates the start of the wall, 
+   *    while the points at index 1 and 2 indicates the end of the wall. 
    */
   public float [][] getPoints() {
     if (this.pointsCache == null) {
       final float epsilon = 0.01f;
-      float [][] wallPoints = getRectanglePoints();
+      float [][] wallPoints = getUnjoinedShapePoints();
+      int leftSideStartPointIndex = 0;
+      int rightSideStartPointIndex = wallPoints.length - 1;
+      int leftSideEndPointIndex = wallPoints.length / 2 - 1;
+      int rightSideEndPointIndex = wallPoints.length / 2;
       float limit = 2 * this.thickness;
       // If wall is joined to a wall at its start, 
       // compute the intersection between their outlines 
       if (this.wallAtStart != null) {
-        float [][] wallAtStartPoints = this.wallAtStart.getRectanglePoints();
+        float [][] wallAtStartPoints = this.wallAtStart.getUnjoinedShapePoints();
+        int wallAtStartLeftSideStartPointIndex = 0;
+        int wallAtStartRightSideStartPointIndex = wallAtStartPoints.length - 1;
+        int wallAtStartLeftSideEndPointIndex = wallAtStartPoints.length / 2 - 1;
+        int wallAtStartRightSideEndPointIndex = wallAtStartPoints.length / 2;
         if (this.wallAtStart.getWallAtEnd() == this) {
-          computeIntersection(wallPoints [0], wallPoints [1], 
-              wallAtStartPoints [1], wallAtStartPoints [0], limit);
-          computeIntersection(wallPoints [3], wallPoints [2],  
-              wallAtStartPoints [2], wallAtStartPoints [3], limit);
+          computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
+              wallAtStartPoints [wallAtStartLeftSideEndPointIndex], wallAtStartPoints [wallAtStartLeftSideEndPointIndex - 1], limit);
+          computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
+              wallAtStartPoints [wallAtStartRightSideEndPointIndex], wallAtStartPoints [wallAtStartRightSideEndPointIndex + 1], limit);
 
           // If the computed start point of this wall and the computed end point of the wall at start 
           // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
           if (this.wallAtStart.pointsCache != null) {
-            if (Math.abs(wallPoints [0][0] - this.wallAtStart.pointsCache [1][0]) < epsilon
-                && Math.abs(wallPoints [0][1] - this.wallAtStart.pointsCache [1][1]) < epsilon) {
-              wallPoints [0] = this.wallAtStart.pointsCache [1];
+            if (Math.abs(wallPoints [leftSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [leftSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex][1]) < epsilon) {
+              wallPoints [leftSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex];
             }                        
-            if (Math.abs(wallPoints [3][0] - this.wallAtStart.pointsCache [2][0]) < epsilon
-                && Math.abs(wallPoints [3][1] - this.wallAtStart.pointsCache [2][1]) < epsilon) {
-              wallPoints [3] = this.wallAtStart.pointsCache [2];
+            if (Math.abs(wallPoints [rightSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [rightSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex][1]) < epsilon) {
+              wallPoints [rightSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex];
             }
           }
         } else if (this.wallAtStart.getWallAtStart() == this) {
-          computeIntersection(wallPoints [0], wallPoints [1], 
-              wallAtStartPoints [2], wallAtStartPoints [3], limit);
-          computeIntersection(wallPoints [3], wallPoints [2],  
-              wallAtStartPoints [0], wallAtStartPoints [1], limit);
+          computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
+              wallAtStartPoints [wallAtStartRightSideStartPointIndex], wallAtStartPoints [wallAtStartRightSideStartPointIndex - 1], limit);
+          computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
+              wallAtStartPoints [wallAtStartLeftSideStartPointIndex], wallAtStartPoints [wallAtStartLeftSideStartPointIndex + 1], limit);
           
           // If the computed start point of this wall and the computed start point of the wall at start 
           // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
           if (this.wallAtStart.pointsCache != null) {
-            if (Math.abs(wallPoints [0][0] - this.wallAtStart.pointsCache [3][0]) < epsilon
-                && Math.abs(wallPoints [0][1] - this.wallAtStart.pointsCache [3][1]) < epsilon) {
-              wallPoints [0] = this.wallAtStart.pointsCache [3];
+            if (Math.abs(wallPoints [leftSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [leftSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex][1]) < epsilon) {
+              wallPoints [leftSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex];
             }                            
             if (this.wallAtStart.pointsCache != null
-                && Math.abs(wallPoints [3][0] - this.wallAtStart.pointsCache [0][0]) < epsilon
-                && Math.abs(wallPoints [3][1] - this.wallAtStart.pointsCache [0][1]) < epsilon) {
-              wallPoints [3] = this.wallAtStart.pointsCache [0];
+                && Math.abs(wallPoints [rightSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [rightSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex][1]) < epsilon) {
+              wallPoints [rightSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex];
             }
           }
         }
@@ -567,68 +640,111 @@ public class Wall implements Serializable, Selectable {
       // If wall is joined to a wall at its end, 
       // compute the intersection between their outlines 
       if (this.wallAtEnd != null) {
-        float [][] wallAtEndPoints = this.wallAtEnd.getRectanglePoints();
+        float [][] wallAtEndPoints = this.wallAtEnd.getUnjoinedShapePoints();
+        int wallAtEndLeftSideStartPointIndex = 0;
+        int wallAtEndRightSideStartPointIndex = wallAtEndPoints.length - 1;
+        int wallAtEndLeftSideEndPointIndex = wallAtEndPoints.length / 2 - 1;
+        int wallAtEndRightSideEndPointIndex = wallAtEndPoints.length / 2;
         if (this.wallAtEnd.getWallAtStart() == this) {
-          computeIntersection(wallPoints [1], wallPoints [0], 
-              wallAtEndPoints [0], wallAtEndPoints [1], limit);
-          computeIntersection(wallPoints [2], wallPoints [3], 
-              wallAtEndPoints [3], wallAtEndPoints [2], limit);
+          computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1], 
+              wallAtEndPoints [wallAtEndLeftSideStartPointIndex], wallAtEndPoints [wallAtEndLeftSideStartPointIndex + 1], limit);
+          computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
+              wallAtEndPoints [wallAtEndRightSideStartPointIndex], wallAtEndPoints [wallAtEndRightSideStartPointIndex - 1], limit);
 
           // If the computed end point of this wall and the computed start point of the wall at end 
           // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
           if (this.wallAtEnd.pointsCache != null) {
-            if (Math.abs(wallPoints [1][0] - this.wallAtEnd.pointsCache [0][0]) < epsilon
-                && Math.abs(wallPoints [1][1] - this.wallAtEnd.pointsCache [0][1]) < epsilon) {
-              wallPoints [1] = this.wallAtEnd.pointsCache [0];
+            if (Math.abs(wallPoints [leftSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [leftSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex][1]) < epsilon) {
+              wallPoints [leftSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex];
             }                        
-            if (Math.abs(wallPoints [2][0] - this.wallAtEnd.pointsCache [3][0]) < epsilon
-                && Math.abs(wallPoints [2][1] - this.wallAtEnd.pointsCache [3][1]) < epsilon) {
-              wallPoints [2] = this.wallAtEnd.pointsCache [3];
+            if (Math.abs(wallPoints [rightSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [rightSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex][1]) < epsilon) {
+              wallPoints [rightSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex];
             }
           }
         } else if (this.wallAtEnd.getWallAtEnd() == this) {
-          computeIntersection(wallPoints [1], wallPoints [0],  
-              wallAtEndPoints [3], wallAtEndPoints [2], limit);
-          computeIntersection(wallPoints [2], wallPoints [3], 
-              wallAtEndPoints [0], wallAtEndPoints [1], limit);
+          computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1],  
+              wallAtEndPoints [wallAtEndRightSideEndPointIndex], wallAtEndPoints [wallAtEndRightSideEndPointIndex + 1], limit);
+          computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
+              wallAtEndPoints [wallAtEndLeftSideEndPointIndex], wallAtEndPoints [wallAtEndLeftSideEndPointIndex - 1], limit);
 
           // If the computed end point of this wall and the computed start point of the wall at end 
           // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
           if (this.wallAtEnd.pointsCache != null) {
-            if (Math.abs(wallPoints [1][0] - this.wallAtEnd.pointsCache [2][0]) < epsilon
-                && Math.abs(wallPoints [1][1] - this.wallAtEnd.pointsCache [2][1]) < epsilon) {
-              wallPoints [1] = this.wallAtEnd.pointsCache [2];
+            if (Math.abs(wallPoints [leftSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [leftSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex][1]) < epsilon) {
+              wallPoints [leftSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex];
             }                        
-            if (Math.abs(wallPoints [2][0] - this.wallAtEnd.pointsCache [1][0]) < epsilon
-                && Math.abs(wallPoints [2][1] - this.wallAtEnd.pointsCache [1][1]) < epsilon) {
-              wallPoints [2] = this.wallAtEnd.pointsCache [1];
+            if (Math.abs(wallPoints [rightSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex][0]) < epsilon
+                && Math.abs(wallPoints [rightSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex][1]) < epsilon) {
+              wallPoints [rightSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex];
             }
           }
         }
-      }      
+      }
       // Cache shape
       this.pointsCache = wallPoints;
     }
-    return new float [][] {
-        {this.pointsCache [0][0], this.pointsCache [0][1]},
-        {this.pointsCache [1][0], this.pointsCache [1][1]},
-        {this.pointsCache [2][0], this.pointsCache [2][1]},
-        {this.pointsCache [3][0], this.pointsCache [3][1]}};
+    float [][] points = new float [this.pointsCache.length][];
+    for (int i = 0; i < this.pointsCache.length; i++) {
+      points [i] = this.pointsCache [i].clone();
+    }
+    return points;
   }
 
   /**
-   * Compute the rectangle of a wall with its thickness.
+   * Compute the rectangle or the circle arc of a wall with its thickness.
    */  
-  private float [][] getRectanglePoints() {
-    double angle = Math.atan2(this.yEnd - this.yStart, 
-                              this.xEnd - this.xStart);
-    float dx = (float)Math.sin(angle) * this.thickness / 2;
-    float dy = (float)Math.cos(angle) * this.thickness / 2;
-    return new float [][] {
-        {this.xStart + dx, this.yStart - dy},
-        {this.xEnd   + dx, this.yEnd   - dy},
-        {this.xEnd   - dx, this.yEnd   + dy},
-        {this.xStart - dx, this.yStart + dy}};
+  private float [][] getUnjoinedShapePoints() {
+    if (this.arcExtent != null
+        && this.arcExtent != 0
+        && Point2D.distanceSq(this.xStart, this.yStart, this.xEnd, this.yEnd) > 1E-10) {
+      float [] arcCircleCenter = getArcCircleCenter();
+      float startAngle = (float)Math.atan2(arcCircleCenter [1] - this.yStart, arcCircleCenter [0] - this.xStart);
+      startAngle += 2 * (float)Math.atan2(this.yStart - this.yEnd, this.xEnd - this.xStart);
+      float arcCircleRadius = (float)Point2D.distance(arcCircleCenter [0], arcCircleCenter [1], this.xStart, this.yStart);
+      float exteriorArcRadius = arcCircleRadius + this.thickness / 2;
+      float interiorArcRadius = Math.max(0, arcCircleRadius - this.thickness / 2);
+      float exteriorArcLength = exteriorArcRadius * Math.abs(this.arcExtent);
+      float angleDelta = this.arcExtent / (float)Math.sqrt(exteriorArcLength);
+      List<float[]> wallPoints = new ArrayList<float[]>(100);
+      int i = 0;
+      for (float angle = this.arcExtent; angleDelta > 0 ? angle >= angleDelta * 0.1f : angle <= -angleDelta * 0.1f; angle -= angleDelta, i++) {
+        double cos = Math.cos(startAngle + angle);
+        double sin = Math.sin(startAngle + angle);
+        float [] interiorArcPoint = new float [] {(float)(arcCircleCenter [0] + interiorArcRadius * cos), 
+                                                  (float)(arcCircleCenter [1] - interiorArcRadius * sin)};
+        float [] exteriorArcPoint = new float [] {(float)(arcCircleCenter [0] + exteriorArcRadius * cos), 
+                                                  (float)(arcCircleCenter [1] - exteriorArcRadius * sin)};
+        if (angleDelta > 0) {
+          wallPoints.add(i, interiorArcPoint);
+          wallPoints.add(wallPoints.size() - 1 - i, exteriorArcPoint);
+        } else {
+          wallPoints.add(i, exteriorArcPoint);
+          wallPoints.add(wallPoints.size() - 1 - i, interiorArcPoint);
+        }
+      }
+      double cos = Math.cos(startAngle);
+      double sin = Math.sin(startAngle);
+      float [] interiorStartPoint = new float [] {(float)(arcCircleCenter [0] + interiorArcRadius * cos), 
+                                                  (float)(arcCircleCenter [1] - interiorArcRadius * sin)};
+      float [] exteriorStartPoint = new float [] {(float)(arcCircleCenter [0] + exteriorArcRadius * cos), 
+                                                  (float)(arcCircleCenter [1] - exteriorArcRadius * sin)};
+      wallPoints.add(i, angleDelta > 0  ? interiorStartPoint  : exteriorStartPoint);
+      wallPoints.add(wallPoints.size() - 1 - i, angleDelta > 0  ? exteriorStartPoint  : interiorStartPoint);
+      return wallPoints.toArray(new float [wallPoints.size()][]);
+    } else { 
+      double angle = Math.atan2(this.yEnd - this.yStart, 
+                                this.xEnd - this.xStart);
+      float dx = (float)Math.sin(angle) * this.thickness / 2;
+      float dy = (float)Math.cos(angle) * this.thickness / 2;
+      return new float [][] {
+          {this.xStart + dx, this.yStart - dy},
+          {this.xEnd   + dx, this.yEnd   - dy},
+          {this.xEnd   - dx, this.yEnd   + dy},
+          {this.xStart - dx, this.yStart + dy}};
+    }
   }
   
   /**
@@ -696,7 +812,8 @@ public class Wall implements Serializable, Selectable {
    */
   public boolean containsWallStartAt(float x, float y, float margin) {
     float [][] wallPoints = getPoints();
-    Line2D startLine = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
+    Line2D startLine = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], 
+        wallPoints [wallPoints.length - 1][0], wallPoints [wallPoints.length - 1][1]);
     return containsShapeAtWithMargin(startLine, x, y, margin);
   }
   
@@ -707,7 +824,8 @@ public class Wall implements Serializable, Selectable {
    */
   public boolean containsWallEndAt(float x, float y, float margin) {
     float [][] wallPoints = getPoints();
-    Line2D endLine = new Line2D.Float(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]); 
+    Line2D endLine = new Line2D.Float(wallPoints [wallPoints.length / 2 - 1][0], wallPoints [wallPoints.length / 2 - 1][1], 
+        wallPoints [wallPoints.length / 2][0], wallPoints [wallPoints.length / 2][1]); 
     return containsShapeAtWithMargin(endLine, x, y, margin);
   }
 

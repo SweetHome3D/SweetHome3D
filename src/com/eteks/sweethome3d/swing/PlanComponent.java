@@ -557,7 +557,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Wall.Property.Y_END.name().equals(propertyName)
               || Wall.Property.WALL_AT_START.name().equals(propertyName)
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
-              || Wall.Property.THICKNESS.name().equals(propertyName)) {
+              || Wall.Property.THICKNESS.name().equals(propertyName)
+              || Wall.Property.ARC_EXTENT.name().equals(propertyName)) {
             wallsAreaCache = null;
             revalidate();
           }
@@ -965,9 +966,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (OperatingSystem.isMacOSX()) {
       // Under Mac OS X, duplication with Alt key 
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.DEACTIVATE_EDITIION);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift ENTER"), ActionType.DEACTIVATE_EDITIION);
+      inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift released ALT"), ActionType.DEACTIVATE_DUPLICATION);
     } else {
       // Under other systems, duplication with Ctrl key 
       inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("control ENTER"), ActionType.DEACTIVATE_EDITIION);
+      inputMap.put(KeyStroke.getKeyStroke("control shift ENTER"), ActionType.DEACTIVATE_EDITIION);
+      inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
     }
   }
  
@@ -2450,17 +2463,46 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setStroke(POINT_STROKE);
         g2D.fill(WALL_POINT);
       
+        Float arcExtent = wall.getArcExtent();
+        double indicatorAngle;
+        double distanceAtScale;
+        float xArcCircleCenter = 0;
+        float yArcCircleCenter = 0;
+        double arcCircleRadius = 0;
+        double wallLength = wall.getLength();
         double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
             wall.getXEnd() - wall.getXStart());
-        double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
-            wall.getXEnd(), wall.getYEnd()) * planScale;
-        g2D.rotate(wallAngle);
+        if (arcExtent != null) {
+          xArcCircleCenter = wall.getXArcCircleCenter();
+          yArcCircleCenter = wall.getYArcCircleCenter();
+          arcCircleRadius = Point2D.distance(wall.getXStart(), wall.getYStart(), 
+              xArcCircleCenter, yArcCircleCenter);
+          distanceAtScale = arcCircleRadius * Math.abs(arcExtent) * planScale;
+          indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYStart(), 
+                  wall.getXArcCircleCenter() - wall.getXStart())  
+              + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
+        } else {
+          distanceAtScale = wallLength * planScale;
+          indicatorAngle = wallAngle;
+        }
         // If the distance between start and end points is < 30
         if (distanceAtScale < 30) { 
           // Draw only one orientation indicator between the two points
-          g2D.translate(distanceAtScale / 2, 0);
+          g2D.rotate(wallAngle);
+          if (arcExtent != null) {
+            double wallToStartPointArcCircleCenterAngle = Math.abs(arcExtent) > Math.PI 
+                ? -(Math.PI + arcExtent) / 2
+                : (Math.PI - arcExtent) / 2;
+            float arcCircleCenterToWallDistance = (float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
+                * wallLength / 2); 
+            g2D.translate(wallLength * planScale / 2, 
+                (arcCircleCenterToWallDistance - arcCircleRadius * (Math.abs(wallAngle) > Math.PI / 2 ? -1: 1)) * planScale);
+          } else {
+            g2D.translate(distanceAtScale / 2, 0);
+          }
         } else {
           // Draw orientation indicator at start of the wall
+          g2D.rotate(indicatorAngle);
           g2D.translate(8, 0);
         }
         g2D.draw(WALL_ORIENTATION_INDICATOR);
@@ -2471,8 +2513,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.scale(scaleInverse, scaleInverse);
         g2D.fill(WALL_POINT);
         if (distanceAtScale >= 30) { 
+          if (arcExtent != null) {
+            indicatorAngle += arcExtent;
+          } 
           // Draw orientation indicator at end of the wall
-          g2D.rotate(wallAngle);
+          g2D.rotate(indicatorAngle);
           g2D.translate(-10, 0);
           g2D.draw(WALL_ORIENTATION_INDICATOR);
         }        
@@ -2501,23 +2546,37 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
-
-      double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
-          wall.getXEnd() - wall.getXStart());
+      
+      Float arcExtent = wall.getArcExtent();
+      double indicatorAngle;
+      if (arcExtent != null) {
+        indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYEnd(), 
+                wall.getXArcCircleCenter() - wall.getXEnd())  
+            + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
+      } else {
+        indicatorAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+            wall.getXEnd() - wall.getXStart());
+      }
       
       AffineTransform previousTransform = g2D.getTransform();
       float scaleInverse = 1 / planScale;
-      // Draw resize indicator at wall start point
-      g2D.translate(wall.getXStart(), wall.getYStart());
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(wallAngle + Math.PI);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
-      g2D.setTransform(previousTransform);
-      
       // Draw resize indicator at wall end point
       g2D.translate(wall.getXEnd(), wall.getYEnd());
       g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(wallAngle);
+      g2D.rotate(indicatorAngle);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+
+      if (arcExtent != null) {
+        indicatorAngle += Math.PI - arcExtent;
+      } else {
+        indicatorAngle += Math.PI;
+      }
+      
+      // Draw resize indicator at wall start point
+      g2D.translate(wall.getXStart(), wall.getYStart());
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(indicatorAngle);
       g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
     }
@@ -3587,11 +3646,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setStroke(new BasicStroke(1 / planScale));
     // Compute angles
     double angle1 = Math.atan2(center.getY() - point1.getY(), point1.getX() - center.getX());
+    if (angle1 < 0) {
+      angle1 = 2 * Math.PI + angle1; 
+    }
     double angle2 = Math.atan2(center.getY() - point2.getY(), point2.getX() - center.getX());
-    double extent = (angle2 - angle1 + Math.PI * 2) % (Math.PI * 2);
-    if (extent > Math.PI) {
-      extent = 2 * Math.PI - extent;
-      angle1 = angle2;
+    if (angle2 < 0) {
+      angle2 = 2 * Math.PI + angle2; 
+    }
+    double extent = angle2 - angle1;
+    if (angle1 > angle2) {
+      extent = 2 * Math.PI + extent;
     }
     AffineTransform previousTransform = g2D.getTransform();
     // Draw an arc
@@ -4077,7 +4141,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           toolTipEditedProperties [i].name() + ".editablePropertyLabel.text") + " ");
       label.setFont(textField.getFont());
       JLabel unitLabel = null;
-      if (toolTipEditedProperties [i] == PlanController.EditableProperty.ANGLE) {
+      if (toolTipEditedProperties [i] == PlanController.EditableProperty.ANGLE
+          || toolTipEditedProperties [i] == PlanController.EditableProperty.ARC_EXTENT) {
         unitLabel = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, "degreeLabel.text"));
       } else if (this.preferences.getLengthUnit() != LengthUnit.INCH) {
         unitLabel = new JLabel(" " + this.preferences.getLengthUnit().getName());
@@ -4129,7 +4194,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
   
         public void keyReleased(KeyEvent ev) {
-          KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(focusedTextField, ev);
+          if (ev.getKeyCode() != KeyEvent.VK_CONTROL
+              && ev.getKeyCode() != KeyEvent.VK_ALT) { 
+            // Forward other key events to focused text field (except for Ctrl and Alt key, otherwise InputMap won't receive it)
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
+          }
         }
   
         public void keyTyped(KeyEvent ev) {
@@ -4157,7 +4226,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 focusedTextField.setCaretPosition(focusedTextField.getText().length());
               }
               ev.consume();
-            } else if (ev.getKeyCode() != KeyEvent.VK_ESCAPE) { 
+            } else if (ev.getKeyCode() != KeyEvent.VK_ESCAPE
+                       && ev.getKeyCode() != KeyEvent.VK_CONTROL
+                       && ev.getKeyCode() != KeyEvent.VK_ALT) { 
               // Forward other key events to focused text field (except for Esc key, otherwise InputMap won't receive it)
               KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
               this.focusedTextField.getCaret().setVisible(true);

@@ -104,7 +104,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Fields that can be edited in plan view.
    */
-  public static enum EditableProperty {X, Y, LENGTH, ANGLE, THICKNESS, OFFSET}
+  public static enum EditableProperty {X, Y, LENGTH, ANGLE, THICKNESS, OFFSET, ARC_EXTENT}
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
@@ -830,6 +830,9 @@ public class PlanController extends FurnitureController implements Controller {
       wall.setYStart(yEnd);
       wall.setXEnd(xStart);
       wall.setYEnd(yStart);
+      if (wall.getArcExtent() != null) {
+        wall.setArcExtent(-wall.getArcExtent());
+      }
 
       Wall wallAtStart = wall.getWallAtStart();            
       boolean joinedAtEndOfWallAtStart =
@@ -1499,7 +1502,8 @@ public class PlanController extends FurnitureController implements Controller {
     Wall wallAtPoint = null;
     // Search if point (x, y) is contained in home walls with no margin
     for (Wall wall : this.home.getWalls()) {
-      if (wall.containsPoint(x, y, 0)
+      if (wall.getArcExtent() == null
+          && wall.containsPoint(x, y, 0)
           && wall.getLength() > 0) {
         wallAtPoint = wall;
         break;
@@ -1509,7 +1513,8 @@ public class PlanController extends FurnitureController implements Controller {
       float margin = PIXEL_MARGIN / getScale();
       // If not found search if point (x, y) is contained in home walls with a margin
       for (Wall wall : this.home.getWalls()) {
-        if (wall.containsPoint(x, y, margin)
+        if (wall.getArcExtent() == null
+            && wall.containsPoint(x, y, margin)
             && wall.getLength() > 0) {
           wallAtPoint = wall;
           break;
@@ -5172,6 +5177,7 @@ public class PlanController extends FurnitureController implements Controller {
   private abstract class AbstractWallState extends ControllerState {
     private String wallLengthToolTipFeedback;
     private String wallAngleToolTipFeedback;
+    private String wallArcExtentToolTipFeedback;
     private String wallThicknessToolTipFeedback;
     
     @Override
@@ -5180,16 +5186,20 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "wallLengthToolTipFeedback");
       this.wallAngleToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallAngleToolTipFeedback");
+      this.wallArcExtentToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "wallArcExtentToolTipFeedback");
       this.wallThicknessToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallThicknessToolTipFeedback");
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
       float length = wall.getLength();
-      int wallAngle = getWallAngle(wall, length);
+      String wallAngleText = wall.getArcExtent() != null 
+          ? String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(wall.getArcExtent())))
+          : String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, length));
       return "<html>" + String.format(this.wallLengthToolTipFeedback, 
           preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.wallAngleToolTipFeedback, wallAngle)
+          + "<br>" + wallAngleText
           + "<br>" + String.format(this.wallThicknessToolTipFeedback, 
               preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
     }
@@ -5197,11 +5207,11 @@ public class PlanController extends FurnitureController implements Controller {
     /**
      * Returns wall angle in degrees.
      */
-    protected Integer getWallAngle(Wall wall) {
-      return getWallAngle(wall, wall.getLength());
+    protected Integer getWallAngleInDegrees(Wall wall) {
+      return getWallAngleInDegrees(wall, wall.getLength());
     }
 
-    private Integer getWallAngle(Wall wall, float wallLength) {
+    private Integer getWallAngleInDegrees(Wall wall, float wallLength) {
       Wall wallAtStart = wall.getWallAtStart();
       if (wallAtStart != null) {
         float wallAtStartLength = (float)Point2D.distance(
@@ -5236,15 +5246,37 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     protected void showWallAngleFeedback(Wall wall) {
-      Wall wallAtStart = wall.getWallAtStart();
-      if (wallAtStart != null) {
-        if (wallAtStart.getWallAtStart() == wall) {
-          getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
-              wallAtStart.getXEnd(), wallAtStart.getYEnd(), wall.getXEnd(), wall.getYEnd());
+      Float arcExtent = wall.getArcExtent();
+      if (arcExtent != null) {
+        if (arcExtent < 0) {
+          getView().setAngleFeedback(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(), 
+              wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd());
         } else {
-          getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
-              wallAtStart.getXStart(), wallAtStart.getYStart(), 
-              wall.getXEnd(), wall.getYEnd());
+          getView().setAngleFeedback(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(), 
+              wall.getXEnd(), wall.getYEnd(), wall.getXStart(), wall.getYStart());
+        }
+      } else {
+        Wall wallAtStart = wall.getWallAtStart();
+        if (wallAtStart != null) {
+          if (wallAtStart.getWallAtStart() == wall) {
+            if (getWallAngleInDegrees(wall) > 0) {
+              getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
+                  wallAtStart.getXEnd(), wallAtStart.getYEnd(), wall.getXEnd(), wall.getYEnd());
+            } else {
+              getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
+                  wall.getXEnd(), wall.getYEnd(), wallAtStart.getXEnd(), wallAtStart.getYEnd());
+            }
+          } else {
+            if (getWallAngleInDegrees(wall) > 0) {
+              getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
+                  wallAtStart.getXStart(), wallAtStart.getYStart(), 
+                  wall.getXEnd(), wall.getYEnd());
+            } else {
+              getView().setAngleFeedback(wall.getXStart(), wall.getYStart(), 
+                  wall.getXEnd(), wall.getYEnd(),
+                  wallAtStart.getXStart(), wallAtStart.getYStart()); 
+            }
+          }
         }
       }
     }
@@ -5268,7 +5300,9 @@ public class PlanController extends FurnitureController implements Controller {
     private boolean          oldBasePlanLocked;
     private List<Wall>       newWalls;
     private boolean          magnetismEnabled;
+    private boolean          roundWall;
     private long             lastWallCreationTime;
+    private Float            wallArcExtent;
     
     @Override
     public Mode getMode() {
@@ -5327,6 +5361,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.lastWallCreationTime = -1;
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
+      setDuplicationActivated(wasDuplicationActivatedLastMousePress());
       PlanView planView = getView();
       planView.setAlignmentFeedback(Wall.class, null, this.xStart, this.yStart, false);
     }
@@ -5353,13 +5388,39 @@ public class PlanController extends FurnitureController implements Controller {
         this.newWall = createWall(this.xStart, this.yStart, 
             xEnd, yEnd, this.wallStartAtStart, this.wallEndAtStart);
         this.newWalls.add(this.newWall);
+      } else if (this.wallArcExtent != null) {
+        // Compute current wall arc extent from the circumscribed circle of the triangle 
+        // with vertices (xStart, yStart) (xEnd, yEnd) (x, y)
+        float [] arcCenter = getCircumscribedCircleCenter(this.newWall.getXStart(), this.newWall.getYStart(), 
+            this.newWall.getXEnd(), this.newWall.getYEnd(), x, y);
+        double startPointToBissectorLine1Distance = Point2D.distance(this.newWall.getXStart(), this.newWall.getYStart(), 
+            this.newWall.getXEnd(), this.newWall.getYEnd()) / 2;
+        double arcCenterToWallDistance = Float.isInfinite(arcCenter [0]) || Float.isInfinite(arcCenter [1]) 
+            ? Float.POSITIVE_INFINITY
+            : Line2D.ptLineDist(this.newWall.getXStart(), this.newWall.getYStart(), 
+                  this.newWall.getXEnd(), this.newWall.getYEnd(), arcCenter [0], arcCenter [1]);
+        int mousePosition = Line2D.relativeCCW(this.newWall.getXStart(), this.newWall.getYStart(), 
+            this.newWall.getXEnd(), this.newWall.getYEnd(), x, y);
+        int centerPosition = Line2D.relativeCCW(this.newWall.getXStart(), this.newWall.getYStart(), 
+            this.newWall.getXEnd(), this.newWall.getYEnd(), arcCenter [0], arcCenter [1]);
+        if (centerPosition == mousePosition) {
+          this.wallArcExtent = (float)(Math.PI + 2 * Math.atan2(arcCenterToWallDistance, startPointToBissectorLine1Distance));
+        } else {
+          this.wallArcExtent = (float)(2 * Math.atan2(startPointToBissectorLine1Distance, arcCenterToWallDistance));
+        }
+        this.wallArcExtent = Math.min(this.wallArcExtent, 3 * (float)Math.PI / 2);
+        this.wallArcExtent *= mousePosition;
+        if (this.magnetismEnabled) {
+          this.wallArcExtent = (float)Math.toRadians(Math.round(Math.toDegrees(this.wallArcExtent)));
+        }
+        this.newWall.setArcExtent(this.wallArcExtent);
       } else {
         // Otherwise update its end point
         this.newWall.setXEnd(xEnd);
         this.newWall.setYEnd(yEnd);
       }         
       planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
-      planView.setAlignmentFeedback(Wall.class, this.newWall, xEnd, yEnd, false);
+      planView.setAlignmentFeedback(Wall.class, this.newWall, xEnd, yEnd, false); 
       showWallAngleFeedback(this.newWall);
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
@@ -5386,6 +5447,29 @@ public class PlanController extends FurnitureController implements Controller {
       this.yLastEnd = yEnd;      
     }
 
+    /**
+     * Returns the circumscribed circle of the triangle with vertices (x1, y1) (x2, y2) (x, y).
+     */
+    private float [] getCircumscribedCircleCenter(float x1, float y1, float x2, float y2, float x, float y) {
+      float [][] bissectorLine1 = getBissectorLine(x1, y1, x2, y2);
+      float [][] bissectorLine2 = getBissectorLine(x1, y1, x, y);
+      float [] arcCenter = computeIntersection(bissectorLine1 [0], bissectorLine1 [1], 
+          bissectorLine2 [0], bissectorLine2 [1]);
+      return arcCenter;
+    }
+    
+    private float [][] getBissectorLine(float x1, float y1, float x2, float y2) {
+      float xMiddlePoint = (x1 + x2) / 2;
+      float yMiddlePoint = (y1 + y2) / 2;
+      float bissectorLineAlpha = (x1 - x2) / (y2 - y1);
+      if (bissectorLineAlpha > 1E10) {
+        // Vertical line
+        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint, yMiddlePoint + 1}};
+      } else {
+        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint + 1, bissectorLineAlpha + yMiddlePoint}};
+      }
+    }
+
     @Override
     public void pressMouse(float x, float y, int clickCount, 
                            boolean shiftDown, boolean duplicationActivated) {
@@ -5404,9 +5488,15 @@ public class PlanController extends FurnitureController implements Controller {
         // Create a new wall only when it will have a length > 0
         if (this.newWall != null
             && this.newWall.getLength() > 0) {
-          getView().deleteToolTipFeedback();
-          selectItem(this.newWall);
-          endWallCreation();
+          if (this.roundWall && this.wallArcExtent == null) {
+            this.wallArcExtent = (float)Math.PI;
+            this.newWall.setArcExtent(this.wallArcExtent);
+            getView().setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
+          } else {
+            getView().deleteToolTipFeedback();
+            selectItem(this.newWall);
+            endWallCreation();
+          }
         }
       }
     }
@@ -5490,9 +5580,10 @@ public class PlanController extends FurnitureController implements Controller {
       this.lastWall = 
       this.wallEndAtStart = this.newWall;
       this.wallStartAtStart = null;
+      this.xStart = this.newWall.getXEnd(); 
+      this.yStart = this.newWall.getYEnd();
       this.newWall = null;
-      this.xStart = this.xLastEnd; 
-      this.yStart = this.yLastEnd;
+      this.wallArcExtent = null;
     }
 
     @Override
@@ -5512,13 +5603,17 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.newWall == null) {
             // May happen if edition is activated after the user clicked to finish one wall 
             createNextWall();            
-          }
+          } 
           // Edit length, angle and thickness        
           planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
-                                                                       EditableProperty.ANGLE,
+                                                                       this.wallArcExtent == null
+                                                                           ? EditableProperty.ANGLE
+                                                                           : EditableProperty.ARC_EXTENT,
                                                                        EditableProperty.THICKNESS},
               new Object [] {this.newWall.getLength(), 
-                             getWallAngle(this.newWall), 
+                             this.wallArcExtent == null
+                                 ? getWallAngleInDegrees(this.newWall)
+                                 : new Integer((int)Math.round(Math.toDegrees(this.wallArcExtent))), 
                              this.newWall.getThickness()},
               this.newWall.getXEnd(), this.newWall.getYEnd());
         }
@@ -5535,6 +5630,10 @@ public class PlanController extends FurnitureController implements Controller {
           // Activate automatically second step to let user enter the 
           // length, angle and thickness of the new wall
           planView.deleteFeedback();
+          setEditionActivated(true);
+        } else if (this.roundWall && this.wallArcExtent == null) {
+          this.wallArcExtent = (float)Math.PI;
+          this.newWall.setArcExtent(this.wallArcExtent);
           setEditionActivated(true);
         } else if (System.currentTimeMillis() - this.lastWallCreationTime < 300) {
           // If the user deactivated edition less than 300 ms after activation, 
@@ -5601,6 +5700,11 @@ public class PlanController extends FurnitureController implements Controller {
           float thickness = value != null ? Math.abs(((Number)value).floatValue()) : 0;
           thickness = Math.max(0.01f, Math.min(thickness, 1000));
           this.newWall.setThickness(thickness);
+        } else if (editableProperty == EditableProperty.ARC_EXTENT) {
+          double arcExtent = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
+          this.wallArcExtent = (float)(Math.signum(arcExtent) * Math.min(Math.abs(arcExtent), 3 * Math.PI / 2));
+          this.newWall.setArcExtent(this.wallArcExtent);
+          showWallAngleFeedback(this.newWall);
         } else {
           // Update end point of the current wall
           switch (editableProperty) {
@@ -5612,7 +5716,7 @@ public class PlanController extends FurnitureController implements Controller {
               this.yLastEnd = (float)(this.yStart - length * Math.sin(wallAngle));
               break;      
             case ANGLE : 
-              wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+              wallAngle = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
               if (this.lastWall != null
                   && this.lastWall.getLength() > 0) {
                 wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
@@ -5661,6 +5765,12 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public void setDuplicationActivated(boolean duplicationActivated) {
+      // Reuse duplication activation for round circle creation
+      this.roundWall = duplicationActivated;
+    }
+    
+    @Override
     public void escape() {
       if (this.newWall != null) {
         // Delete current created wall
@@ -5677,6 +5787,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.wallStartAtStart = null;
       this.wallEndAtStart = null;
       this.newWall = null;
+      this.wallArcExtent = null;
       this.wallStartAtEnd = null;
       this.wallEndAtEnd = null;
       this.lastWall = null;
@@ -7325,9 +7436,15 @@ public class PlanController extends FurnitureController implements Controller {
       if (points.length > 2) {
         float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
         float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
-        getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
-            previousPreviousPoint [0], previousPreviousPoint [1], 
-            points [pointIndex][0], points [pointIndex][1]);
+        if (getRoomSideAngle(room, pointIndex) > 0) {
+          getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
+              previousPreviousPoint [0], previousPreviousPoint [1], 
+              points [pointIndex][0], points [pointIndex][1]);
+        } else {
+          getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
+              points [pointIndex][0], points [pointIndex][1], 
+              previousPreviousPoint [0], previousPreviousPoint [1]);
+        }
       }
     }
   }
