@@ -590,15 +590,15 @@ public class Wall3D extends Object3DBranch {
             && pointAngle < 0 
             && referencePointAngle > pointAngle)) {
         pointAngle += 2 * (float)Math.PI;
-      } else {
-        if ((referencePointAngle < 0 
-              && (pointAngle > 0
-                  || referencePointAngle < pointAngle))
-            || (referencePointAngle > 0 
-                && pointAngle > 0 
-                && referencePointAngle < pointAngle)) {
-          pointAngle -= 2 * (float)Math.PI;
-        }
+      }
+    } else {
+      if ((referencePointAngle < 0 
+            && (pointAngle > 0
+                || referencePointAngle < pointAngle))
+          || (referencePointAngle > 0 
+              && pointAngle > 0 
+              && referencePointAngle < pointAngle)) {
+        pointAngle -= 2 * (float)Math.PI;
       }
     }
     return pointAngle;
