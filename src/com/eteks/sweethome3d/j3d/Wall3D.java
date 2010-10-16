@@ -445,23 +445,24 @@ public class Wall3D extends Object3DBranch {
     Point3f [] bottom = new Point3f [points.length];
     Point3f [] top    = new Point3f [points.length];
     double  [] distanceSqToWallMiddle = new double [points.length];
+    Float   [] pointUCoordinates = new Float [points.length];
     float xStart = wall.getXStart();
     float yStart = wall.getYStart();
     float xEnd = wall.getXEnd();
     float yEnd = wall.getYEnd();
     Float arcExtent = wall.getArcExtent();
     float [] arcCircleCenter = null;
-    float referencePointAngle = 0;
     float arcCircleRadius = 0;
+    float referencePointAngle = 0;
     if (arcExtent != null && arcExtent != 0) {
       arcCircleCenter = new float [] {wall.getXArcCircleCenter(), wall.getYArcCircleCenter()};
-      referencePointAngle = (float)Math.atan2(textureReferencePoint [1] - arcCircleCenter [1], 
-          textureReferencePoint [0] - arcCircleCenter [0]);
       arcCircleRadius = (float)Point2D.distance(arcCircleCenter [0], arcCircleCenter [1], 
           xStart, yStart);
+      referencePointAngle = (float)Math.atan2(textureReferencePoint [1] - arcCircleCenter [1], 
+          textureReferencePoint [0] - arcCircleCenter [0]);
     }
     for (int i = 0; i < points.length; i++) {
-      bottom [i] = new Point3f(points[i][0], yMin, points[i][1]);
+      bottom [i] = new Point3f(points [i][0], yMin, points [i][1]);
       if (arcCircleCenter == null) {
         distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
       } else {
@@ -470,9 +471,9 @@ public class Wall3D extends Object3DBranch {
         distanceSqToWallMiddle [i] *= distanceSqToWallMiddle [i];
       }
       // Compute vertical top point 
-      double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
+      double xTopPointWithZeroYaw = cosWallYawAngle * points [i][0] + sinWallYawAngle * points [i][1];
       float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-      top [i] = new Point3f(points[i][0], topY, points[i][1]);
+      top [i] = new Point3f(points [i][0], topY, points [i][1]);
     }
     // Search which rectangles should be ignored
     int rectanglesCount = 0;
@@ -535,24 +536,31 @@ public class Wall3D extends Object3DBranch {
             float secondHorizontalTextureCoords;
             if (arcCircleCenter == null) {
               firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                  points[index][0], points[index][1]) / texture.getWidth();
+                  points [index][0], points [index][1]) / texture.getWidth();
               secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                  points[nextIndex][0], points[nextIndex][1]) / texture.getWidth();
+                  points [nextIndex][0], points [nextIndex][1]) / texture.getWidth();
             } else {
-              float angleDelta = (float)Math.atan2(points[index][1] - arcCircleCenter [1], points[index][0] - arcCircleCenter [0])
-                  - referencePointAngle;
-              firstHorizontalTextureCoords = angleDelta * arcCircleRadius / texture.getWidth();
-              angleDelta = (float)Math.atan2(points[nextIndex][1] - arcCircleCenter [1], points[nextIndex][0] - arcCircleCenter [0])
-                  - referencePointAngle;
-              secondHorizontalTextureCoords = angleDelta * arcCircleRadius / texture.getWidth();
+              if (pointUCoordinates [index] == null) {
+                float pointAngle = (float)Math.atan2(points [index][1] - arcCircleCenter [1], points [index][0] - arcCircleCenter [0]);
+                pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
+                pointUCoordinates [index] = (pointAngle - referencePointAngle) * arcCircleRadius / texture.getWidth();
+              }
+              if (pointUCoordinates [nextIndex] == null) {
+                float pointAngle = (float)Math.atan2(points [nextIndex][1] - arcCircleCenter [1], points [nextIndex][0] - arcCircleCenter [0]);
+                pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
+                pointUCoordinates [nextIndex] = (pointAngle - referencePointAngle) * arcCircleRadius / texture.getWidth();
+              }
+              
+              firstHorizontalTextureCoords = pointUCoordinates [index];
+              secondHorizontalTextureCoords = pointUCoordinates [nextIndex];
             }
             textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [nextIndex].y / texture.getHeight());
             textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [index].y / texture.getHeight());
           } else {
-            float horizontalTextureCoords = (float)Point2D.distance(points[index][0], points[index][1], 
-                points[nextIndex][0], points[nextIndex][1]) / texture.getWidth();
+            float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1], 
+                points [nextIndex][0], points [nextIndex][1]) / texture.getWidth();
             textureCoords [j++] = firstTextureCoords;
             textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [nextIndex].y / texture.getHeight());
@@ -570,12 +578,39 @@ public class Wall3D extends Object3DBranch {
   }
 
   /**
+   * Returns <code>pointAngle</code> plus or minus 2 PI to ensure <code>pointAngle</code> value 
+   * will be greater or lower than <code>referencePointAngle</code> depending on <code>arcExtent</code> direction.
+   */
+  private float adjustAngleOnReferencePointAngle(float pointAngle, float referencePointAngle, float arcExtent) {
+    if (arcExtent > 0) {
+      if ((referencePointAngle > 0 
+          && (pointAngle < 0
+              || referencePointAngle > pointAngle))
+        || (referencePointAngle < 0 
+            && pointAngle < 0 
+            && referencePointAngle > pointAngle)) {
+        pointAngle += 2 * (float)Math.PI;
+      } else {
+        if ((referencePointAngle < 0 
+              && (pointAngle > 0
+                  || referencePointAngle < pointAngle))
+            || (referencePointAngle > 0 
+                && pointAngle > 0 
+                && referencePointAngle < pointAngle)) {
+          pointAngle -= 2 * (float)Math.PI;
+        }
+      }
+    }
+    return pointAngle;
+  }
+
+  /**
    * Returns the geometry of an horizontal part of a wall at <code>y</code>.
    */
   private Geometry createWallHorizontalPartGeometry(float [][] points, float y, boolean reverseOrder) {
     Point3f [] coords = new Point3f [points.length];
     for (int i = 0; i < points.length; i++) {
-      coords [i] = new Point3f(points[i][0], y, points[i][1]);
+      coords [i] = new Point3f(points [i][0], y, points [i][1]);
     }
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
     geometryInfo.setCoordinates (coords);
@@ -596,9 +631,9 @@ public class Wall3D extends Object3DBranch {
                                              double topLineAlpha, double topLineBeta) {
     Point3f [] coords = new Point3f [points.length];
     for (int i = 0; i < points.length; i++) {
-      double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
+      double xTopPointWithZeroYaw = cosWallYawAngle * points [i][0] + sinWallYawAngle * points [i][1];
       float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-      coords [i] = new Point3f(points[i][0], topY, points[i][1]);
+      coords [i] = new Point3f(points [i][0], topY, points [i][1]);
     }
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
     geometryInfo.setCoordinates (coords);
