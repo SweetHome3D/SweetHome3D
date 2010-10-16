@@ -212,7 +212,7 @@ public class Wall implements Serializable, Selectable {
   
   /**
    * Returns the distance from the start point of this wall to its end point.
-   * @since 2.0
+   * @since 3.0
    */
   public float getStartPointToEndPointDistance() {
     return (float)Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
