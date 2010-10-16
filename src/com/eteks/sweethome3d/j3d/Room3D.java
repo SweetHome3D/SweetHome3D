@@ -214,12 +214,15 @@ public class Room3D extends Object3DBranch {
             case PathIterator.SEG_CLOSE :
               float [][] pathPoints = 
                   currentPathPoints.toArray(new float [currentPathPoints.size()][]);
-              boolean pathPointsClockwise = new Room(pathPoints).isClockwise();
-              if (pathPointsClockwise && roomPart == FLOOR_PART
-                  || !pathPointsClockwise && roomPart == CEILING_PART) {
-                pathPoints = getReversedArray(pathPoints);
+              Room subRoom = new Room(pathPoints);
+              if (subRoom.getArea() > 0) {
+                boolean pathPointsClockwise = subRoom.isClockwise();
+                if (pathPointsClockwise && roomPart == FLOOR_PART
+                    || !pathPointsClockwise && roomPart == CEILING_PART) {
+                  pathPoints = getReversedArray(pathPoints);
+                }
+                roomPoints.add(pathPoints);
               }
-              roomPoints.add(pathPoints);
               currentPathPoints.clear();
               previousRoomPoint = null;
               break;
