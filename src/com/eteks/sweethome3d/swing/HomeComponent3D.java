@@ -1424,9 +1424,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void updateLightColor(Light light) {
     Color3f defaultColor = (Color3f)light.getUserData();
     int lightColor = this.home.getEnvironment().getLightColor();
-    light.setColor(new Color3f(((lightColor >>> 16) & 0xFF) / 256f * defaultColor.x,
-                                ((lightColor >>> 8) & 0xFF) / 256f * defaultColor.y,
-                                        (lightColor & 0xFF) / 256f * defaultColor.z));
+    light.setColor(new Color3f(((lightColor >>> 16) & 0xFF) / 255f * defaultColor.x,
+                                ((lightColor >>> 8) & 0xFF) / 255f * defaultColor.y,
+                                        (lightColor & 0xFF) / 255f * defaultColor.z));
     clearPrintedImageCache();
   }
   /**

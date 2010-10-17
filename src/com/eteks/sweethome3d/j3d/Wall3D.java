@@ -739,9 +739,9 @@ public class Wall3D extends Object3DBranch {
       Integer materialKey = new Integer(color + ((int)(shininess * 128) << 24));
       Material material = materials.get(materialKey); 
       if (material == null) {
-        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
-                                            ((color >>> 8) & 0xFF) / 256f,
-                                                    (color & 0xFF) / 256f);
+        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 255f,
+                                            ((color >>> 8) & 0xFF) / 255f,
+                                                    (color & 0xFF) / 255f);
         material = new Material(materialColor, new Color3f(), materialColor, 
             new Color3f(shininess, shininess, shininess), shininess * 128);
         material.setCapability(Material.ALLOW_COMPONENT_READ);

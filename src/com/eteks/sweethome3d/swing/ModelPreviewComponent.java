@@ -688,9 +688,9 @@ public class ModelPreviewComponent extends JComponent {
    */
   protected void setModelColor(Integer color) {
     if (color != null) {
-      Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
-                                           ((color >>> 8) & 0xFF) / 256f,
-                                                   (color & 0xFF) / 256f);
+      Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 255f,
+                                           ((color >>> 8) & 0xFF) / 255f,
+                                                   (color & 0xFF) / 255f);
       setMaterial(this.sceneTree.getChild(0), 
           new Material(materialColor, new Color3f(), materialColor, materialColor, 64));
     } else {
