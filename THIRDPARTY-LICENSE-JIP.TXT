@@ -1,6 +1,13 @@
 The following additional provisions apply to JIP profile.jar third party software
 included as part of this product.
 
+JIP library is used to profile Sweet Home 3D only and isn't redistributed with binaries.
+
+JIP library is available at:
+http://sourceforge.net/projects/jiprof/ 
+and source code can be downloaded at:
+http://sourceforge.net/projects/jiprof/files/jip/1.1/jip-src-1.1.zip/download 
+
 
 BSD License
 

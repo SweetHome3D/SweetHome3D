@@ -1,6 +1,15 @@
 The following additional provisions apply to jdepend-2.9.jar third party software
 included as part of this product.
 
+JDepend library is used to check package dependencies and isn't redistributed with binaries.
+
+JDepend library is available at:
+http://www.clarkware.com/software/JDepend.html
+and source code can be downloaded at:
+http://www.clarkware.com/software/jdepend-2.9.zip 
+
+
+
 Copyright (C) 2001 Clarkware Consulting, Inc.
 All Rights Reserved.
 

@@ -1,6 +1,13 @@
 The following additional provisions apply to Inno Setup third party software
 required to build the Windows installer of this product.
 
+Inno Setup is used to generate Sweet Home 3D setup under Windows, and isn't redistributed with binaries.
+
+Inno Setup is available at:
+http://www.jrsoftware.org/isinfo.php 
+and source code can be downloaded at:
+http://www.jrsoftware.org/download.php/issrc.zip 
+
 
 Inno Setup License
 ==================

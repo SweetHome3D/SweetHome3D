@@ -1,6 +1,12 @@
 The following additional provisions apply to AppleJavaExtensions.jar third party software
 included as part of this product.
 
+Apple Java Extensions library is used at compilation time only under operating systems different from Mac OS X, and isn't redistributed with binaries.
+
+Apple Java Extensions library is available at:
+http://developer.apple.com/samplecode/AppleJavaExtensions/
+No source code available 
+
 
 AppleJavaExtensions
 v 1.2

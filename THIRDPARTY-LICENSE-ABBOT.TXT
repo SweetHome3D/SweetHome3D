@@ -1,6 +1,14 @@
 The following additional provisions apply to abbot.jar third party software
 included as part of this product.
 
+Abbot library is used for unit tests only and isn't redistributed with binaries.
+
+Abbot library is available at:
+http://sourceforge.net/projects/abbot/ 
+and source code can be downloaded at:
+http://sourceforge.net/projects/abbot/files/abbot/1.0.2/abbot-1.0.2.tgz/download 
+
+
 
 Common Public License Version 1.0
 

@@ -2,6 +2,15 @@ The following additional provisions apply to Launch4j third party software
 required to build the SweetHome3D.exe file included in the Windows installer 
 of this product.
 
+Launch4j is used to generate Sweet Home 3D executable under Windows, and isn't redistributed with binaries.
+
+Launch4j is available at:
+http://sourceforge.net/projects/launch4j/ 
+and source code can be downloaded at:
+http://sourceforge.net/projects/launch4j/files/launch4j-3/3.0.1/launch4j-3.0.1-win32.zip/download 
+
+
+
 Launch4j (http://launch4j.sourceforge.net/)
 Cross-platform Java application wrapper for creating Windows native executables.
 

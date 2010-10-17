@@ -1,6 +1,15 @@
 The following additional provisions apply to Loader3DS1_2u.jar third party software
 included as part of this product.
 
+Loader3DS library is used to load 3D model files at 3DS format. 
+Loader3DS1_2u.jar is a version lighter than the official release with useless classes removed.
+
+Loader3DS library is available at:
+http://sourceforge.net/projects/java3dsloader/ 
+and source code can be downloaded at:
+http://sourceforge.net/projects/java3dsloader/files/java3dsloader/1.2/Loader3DS1_2src.jar/download 
+
+
 
 		   GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

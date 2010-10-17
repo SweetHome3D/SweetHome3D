@@ -1,6 +1,14 @@
 The following additional provisions apply to iText-2.1.2u.jar third party software
 included as part of this product.
 
+iText library is useful to create PDF files in Sweet Home 3D.
+
+iText library is available at:
+http://sourceforge.net/projects/itext/ 
+and source code can be downloaded at:
+http://sourceforge.net/projects/itext/files/iText/iText%202.1.7/iText-2.1.7-sources.jar/download 
+
+
 
 		   GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

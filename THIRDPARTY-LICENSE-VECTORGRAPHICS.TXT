@@ -1,6 +1,14 @@
 The following additional provisions apply to freehep-vectorgraphics-svg-2.1.1.jar third party software
 included as part of this product.
 
+FreeHEP VectorGraphics library is used to create SVG files in Sweet Home 3D.
+
+FreeHEP VectorGraphics library is available at:
+http://java.freehep.org/ 
+and source code can be downloaded at:
+ftp://ftp.slac.stanford.edu/software/freehep/VectorGraphics
+
+
 
 		   GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
