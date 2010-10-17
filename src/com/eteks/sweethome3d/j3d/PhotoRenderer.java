@@ -400,7 +400,7 @@ public class PhotoRenderer {
     this.sunflow.parameter("resolutionY", image.getHeight());
     
     if (this.quality == Quality.HIGH) {
-      this.sunflow.parameter("filter", "gaussian"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
+      this.sunflow.parameter("filter", "blackman-harris"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
       // The bigger aa.max is, the cleanest rendering you get
       this.sunflow.parameter("aa.min", 1);
       this.sunflow.parameter("aa.max",  2);
