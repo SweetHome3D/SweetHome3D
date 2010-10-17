@@ -207,10 +207,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Node filledModelNode = getFilledModelNode();
     if (piece.getColor() != null) {
       Integer color = piece.getColor();
-      Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 255f,
-                                           ((color >>> 8) & 0xFF) / 255f,
-                                                   (color & 0xFF) / 255f);
-      Material material = new Material(materialColor, new Color3f(), materialColor, new Color3f(), 1);
+      Material material = getMaterial(color, color, 0);
       setMaterialAndTexture(filledModelNode, material, null, false, null, null, new HashSet<Appearance>());
     } else if (piece.getTexture() != null) {
       setMaterialAndTexture(filledModelNode, null, piece.getTexture(), waitTextureLoadingEnd, 

@@ -28,21 +28,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Geometry;
-import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.TransparencyAttributes;
-import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 
@@ -59,16 +55,9 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of wall branch.
  */
 public class Wall3D extends Object3DBranch {
-  private static final Integer           DEFAULT_COLOR = 0xFFFFFF;
-  private static final Material          DEFAULT_MATERIAL            = new Material();
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
-  private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
-  
   static {
-    DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
-    DEFAULT_MATERIAL.setShininess(1);
-    DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
@@ -694,11 +683,11 @@ public class Wall3D extends Object3DBranch {
                                               Integer wallSideColor, 
                                               float shininess) {
     if (wallSideTexture == null) {
-      wallSideAppearance.setMaterial(getMaterial(wallSideColor, shininess));
+      wallSideAppearance.setMaterial(getMaterial(wallSideColor, wallSideColor, shininess));
       wallSideAppearance.setTexture(null);
     } else {
       // Update material and texture of wall side
-      wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, shininess));
+      wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -732,26 +721,6 @@ public class Wall3D extends Object3DBranch {
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE 
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
-  }
-  
-  private Material getMaterial(Integer color, float shininess) {
-    if (color != null) {
-      Integer materialKey = new Integer(color + ((int)(shininess * 128) << 24));
-      Material material = materials.get(materialKey); 
-      if (material == null) {
-        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 255f,
-                                            ((color >>> 8) & 0xFF) / 255f,
-                                                    (color & 0xFF) / 255f);
-        material = new Material(materialColor, new Color3f(), materialColor, 
-            new Color3f(shininess, shininess, shininess), shininess * 128);
-        material.setCapability(Material.ALLOW_COMPONENT_READ);
-        // Store created materials in cache
-        materials.put(materialKey, material);
-      }
-      return material;
-    } else {
-      return getMaterial(DEFAULT_COLOR, shininess);
-    }
   }
   
   /**

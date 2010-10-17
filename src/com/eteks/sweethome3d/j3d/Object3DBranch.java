@@ -21,10 +21,13 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.LineAttributes;
+import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.vecmath.Color3f;
 
@@ -40,6 +43,18 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
       new LineAttributes(0.5f, LineAttributes.PATTERN_SOLID, true);
 
+  protected static final Integer  DEFAULT_COLOR         = 0xFFFFFF;
+  protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
+  protected static final Material DEFAULT_MATERIAL      = new Material();
+
+  private static final Map<Long, Material> materials = new HashMap<Long, Material>();
+
+  static {
+    DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    DEFAULT_MATERIAL.setShininess(1);
+    DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
+  }
+  
   /**
    * Updates the this branch from the home object.
    */
@@ -56,5 +71,31 @@ public abstract class Object3DBranch extends BranchGroup {
     }
     path.closePath();
     return path;
+  }
+  
+  /**
+   * Returns a shared material instance matching the given color.
+   */
+  protected Material getMaterial(Integer diffuseColor, Integer ambientColor, float shininess) {
+    if (diffuseColor != null) {
+      Long materialKey = new Long(diffuseColor + (ambientColor << 24) + ((char)(shininess * 128) << 48));
+      Material material = materials.get(materialKey); 
+      if (material == null) {
+        Color3f ambientMaterialColor = new Color3f(((ambientColor >>> 16) & 0xFF) / 255f,
+                                                    ((ambientColor >>> 8) & 0xFF) / 255f,
+                                                            (ambientColor & 0xFF) / 255f);
+        Color3f diffuseMaterialColor = new Color3f(((diffuseColor >>> 16) & 0xFF) / 255f,
+                                                    ((diffuseColor >>> 8) & 0xFF) / 255f,
+                                                            (diffuseColor & 0xFF) / 255f);
+        material = new Material(ambientMaterialColor, new Color3f(), diffuseMaterialColor, 
+            new Color3f(shininess, shininess, shininess), shininess * 128);
+        material.setCapability(Material.ALLOW_COMPONENT_READ);
+        // Store created materials in cache
+        materials.put(materialKey, material);
+      }
+      return material;
+    } else {
+      return getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess);
+    }
   }
 }
