@@ -5192,8 +5192,8 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "wallThicknessToolTipFeedback");
     }
     
-    protected String getToolTipFeedbackText(Wall wall) {
-      if (wall.getArcExtent() != null) {
+    protected String getToolTipFeedbackText(Wall wall, boolean ignoreArcExtent) {
+      if (!ignoreArcExtent && wall.getArcExtent() != null) {
         return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(wall.getArcExtent())));
       } else {
         float startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
@@ -5418,7 +5418,7 @@ public class PlanController extends FurnitureController implements Controller {
         this.newWall.setXEnd(xEnd);
         this.newWall.setYEnd(yEnd);
       }         
-      planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall, false), x, y);
       planView.setAlignmentFeedback(Wall.class, this.newWall, xEnd, yEnd, false); 
       showWallAngleFeedback(this.newWall);
       
@@ -5490,7 +5490,7 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.roundWall && this.wallArcExtent == null) {
             this.wallArcExtent = (float)Math.PI;
             this.newWall.setArcExtent(this.wallArcExtent);
-            getView().setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
+            getView().setToolTipFeedback(getToolTipFeedbackText(this.newWall, false), x, y);
           } else {
             getView().deleteToolTipFeedback();
             selectItem(this.newWall);
@@ -5838,7 +5838,7 @@ public class PlanController extends FurnitureController implements Controller {
       toggleMagnetism(wasShiftDownLastMousePress());
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
-      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), 
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), 
           getXLastMousePress(), getYLastMousePress());
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, this.oldX, this.oldY, false);
       showWallAngleFeedback(this.selectedWall);
@@ -5863,7 +5863,7 @@ public class PlanController extends FurnitureController implements Controller {
       } 
       moveWallPoint(this.selectedWall, newX, newY, this.startPoint);
 
-      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), x, y);
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, newX, newY, false);
       showWallAngleFeedback(this.selectedWall);
       // Ensure point at (x,y) is visible

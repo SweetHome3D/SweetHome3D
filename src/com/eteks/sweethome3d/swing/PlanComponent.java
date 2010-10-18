@@ -3345,6 +3345,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
 
           float [][] wallPoints = wall.getPoints();
+          // Take into account only points at start and end of the wall
+          wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
+                                       wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
           for (int i = 0; i < wallPoints.length; i++) {
             if (Math.abs(x - wallPoints [i][0]) < margin
                 && (alignedWall == null
@@ -3460,6 +3463,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Search which wall points are at locationFeedback abscissa or ordinate
       for (Wall wall : this.home.getWalls()) {
         float [][] wallPoints = wall.getPoints();
+        // Take into account only points at start and end of the wall
+        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
+                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
         for (int i = 0; i < wallPoints.length; i++) {
           if (Math.abs(x - wallPoints [i][0]) < margin
               && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
@@ -3571,6 +3577,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Search which wall points are at locationFeedback abscissa or ordinate
       for (Wall wall : this.home.getWalls()) {
         float [][] wallPoints = wall.getPoints();
+        // Take into account only points at start and end of the wall
+        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
+                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
         for (int i = 0; i < wallPoints.length; i++) {
           if (Math.abs(x - wallPoints [i][0]) < margin
               && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
