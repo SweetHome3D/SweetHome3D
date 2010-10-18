@@ -195,6 +195,7 @@ public class Wall3D extends Object3DBranch {
     double sinWallYawAngle = Math.sin(wallYawAngle);
     double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
     double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
+    boolean roundWall = wall.getArcExtent() != null && wall.getArcExtent() != 0; 
     double topLineAlpha;
     double topLineBeta;
     if (wallHeightAtStart == wallHeightAtEnd) {
@@ -267,10 +268,10 @@ public class Wall3D extends Object3DBranch {
                 cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, 
                 textureReferencePoint, wallSide));
             // Compute geometry for bottom part
-            wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true));
+            wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true, roundWall));
             // Compute geometry for top part
             wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
           }
         }
         wallPoints.clear();
@@ -319,8 +320,9 @@ public class Wall3D extends Object3DBranch {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
                     cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindow.getElevation(), texture, 
                     textureReferencePoint, wallSide));
-                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true));
-                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowestDoorOrWindow.getElevation(), false));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0, true, roundWall));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 
+                    lowestDoorOrWindow.getElevation(), false, roundWall));
               }
               
               // Generate geometry for wall parts between superimposed windows
@@ -336,8 +338,9 @@ public class Wall3D extends Object3DBranch {
                     && lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight() < higherDoorOrWindow.getElevation()) {
                   wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), 
                       cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindow.getElevation(), texture, textureReferencePoint, wallSide));
-                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), true));
-                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, higherDoorOrWindow.getElevation(), false));
+                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 
+                      lowerDoorOrWindow.getElevation() + lowerDoorOrWindow.getHeight(), true, roundWall));
+                  wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, higherDoorOrWindow.getElevation(), false, roundWall));
                 }
               }
                 
@@ -360,9 +363,9 @@ public class Wall3D extends Object3DBranch {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
                     cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint, wallSide));
                 wallGeometries.add(createWallHorizontalPartGeometry(
-                    wallPartPoints, doorOrWindowTop, true));
+                    wallPartPoints, doorOrWindowTop, true, roundWall));
                 wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
               }
             }
             wallPoints.clear();
@@ -562,7 +565,11 @@ public class Wall3D extends Object3DBranch {
     }
     
     // Generate normals
-    new NormalGenerator().generateNormals(geometryInfo);
+    NormalGenerator normalGenerator = new NormalGenerator();
+    if (arcCircleCenter == null) {
+      normalGenerator.setCreaseAngle(0);
+    }
+    normalGenerator.generateNormals(geometryInfo);
     return geometryInfo.getIndexedGeometryArray();
   }
 
@@ -596,7 +603,8 @@ public class Wall3D extends Object3DBranch {
   /**
    * Returns the geometry of an horizontal part of a wall at <code>y</code>.
    */
-  private Geometry createWallHorizontalPartGeometry(float [][] points, float y, boolean reverseOrder) {
+  private Geometry createWallHorizontalPartGeometry(float [][] points, float y, 
+                                                    boolean reverseOrder, boolean roundWall) {
     Point3f [] coords = new Point3f [points.length];
     for (int i = 0; i < points.length; i++) {
       coords [i] = new Point3f(points [i][0], y, points [i][1]);
@@ -608,7 +616,11 @@ public class Wall3D extends Object3DBranch {
       geometryInfo.reverse();
     }
     // Generate normals
-    new NormalGenerator().generateNormals(geometryInfo);
+    NormalGenerator normalGenerator = new NormalGenerator();
+    if (roundWall) {
+      normalGenerator.setCreaseAngle(0);
+    }
+    normalGenerator.generateNormals(geometryInfo);
     return geometryInfo.getIndexedGeometryArray ();
   }
   
@@ -617,7 +629,8 @@ public class Wall3D extends Object3DBranch {
    */
   private Geometry createWallTopPartGeometry(float [][] points, 
                                              double cosWallYawAngle, double sinWallYawAngle, 
-                                             double topLineAlpha, double topLineBeta) {
+                                             double topLineAlpha, double topLineBeta, 
+                                             boolean roundWall) {
     Point3f [] coords = new Point3f [points.length];
     for (int i = 0; i < points.length; i++) {
       double xTopPointWithZeroYaw = cosWallYawAngle * points [i][0] + sinWallYawAngle * points [i][1];
@@ -628,7 +641,11 @@ public class Wall3D extends Object3DBranch {
     geometryInfo.setCoordinates (coords);
     geometryInfo.setStripCounts(new int [] {coords.length});
     // Generate normals
-    new NormalGenerator().generateNormals(geometryInfo);
+    NormalGenerator normalGenerator = new NormalGenerator();
+    if (roundWall) {
+      normalGenerator.setCreaseAngle(0);
+    }
+    normalGenerator.generateNormals(geometryInfo);
     return geometryInfo.getIndexedGeometryArray ();
   }
   
