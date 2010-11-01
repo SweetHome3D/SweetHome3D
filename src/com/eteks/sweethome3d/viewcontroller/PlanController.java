@@ -5193,8 +5193,9 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     protected String getToolTipFeedbackText(Wall wall, boolean ignoreArcExtent) {
-      if (!ignoreArcExtent && wall.getArcExtent() != null) {
-        return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(wall.getArcExtent())));
+      Float arcExtent = wall.getArcExtent();
+      if (!ignoreArcExtent && arcExtent != null) {
+        return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(arcExtent)));
       } else {
         float startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
         return "<html>" + String.format(this.wallLengthToolTipFeedback, 
@@ -5244,9 +5245,9 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
-    protected void showWallAngleFeedback(Wall wall) {
+    protected void showWallAngleFeedback(Wall wall, boolean ignoreArcExtent) {
       Float arcExtent = wall.getArcExtent();
-      if (arcExtent != null) {
+      if (!ignoreArcExtent && arcExtent != null) {
         if (arcExtent < 0) {
           getView().setAngleFeedback(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(), 
               wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd());
@@ -5420,7 +5421,7 @@ public class PlanController extends FurnitureController implements Controller {
       }         
       planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall, false), x, y);
       planView.setAlignmentFeedback(Wall.class, this.newWall, xEnd, yEnd, false); 
-      showWallAngleFeedback(this.newWall);
+      showWallAngleFeedback(this.newWall, false);
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
       // free, it will the wall at end of the new wall.
@@ -5706,7 +5707,7 @@ public class PlanController extends FurnitureController implements Controller {
           double arcExtent = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
           this.wallArcExtent = (float)(Math.signum(arcExtent) * Math.min(Math.abs(arcExtent), 3 * Math.PI / 2));
           this.newWall.setArcExtent(this.wallArcExtent);
-          showWallAngleFeedback(this.newWall);
+          showWallAngleFeedback(this.newWall, false);
         } else {
           // Update end point of the current wall
           switch (editableProperty) {
@@ -5736,7 +5737,7 @@ public class PlanController extends FurnitureController implements Controller {
           this.newWall.setXEnd(this.xLastEnd);
           this.newWall.setYEnd(this.yLastEnd);
           planView.setAlignmentFeedback(Wall.class, this.newWall, this.xLastEnd, this.yLastEnd, false);
-          showWallAngleFeedback(this.newWall);
+          showWallAngleFeedback(this.newWall, false);
           // Ensure wall points are visible
           planView.makePointVisible(this.xStart, this.yStart);
           planView.makePointVisible(this.xLastEnd, this.yLastEnd);
@@ -5841,7 +5842,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), 
           getXLastMousePress(), getYLastMousePress());
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, this.oldX, this.oldY, false);
-      showWallAngleFeedback(this.selectedWall);
+      showWallAngleFeedback(this.selectedWall, true);
     }
     
     @Override
@@ -5865,7 +5866,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), x, y);
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, newX, newY, false);
-      showWallAngleFeedback(this.selectedWall);
+      showWallAngleFeedback(this.selectedWall, true);
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
     }
