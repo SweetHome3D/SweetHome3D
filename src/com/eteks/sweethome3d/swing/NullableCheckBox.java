@@ -178,6 +178,13 @@ public class NullableCheckBox extends JComponent {
   public String getText() {
     return this.checkBox.getText();
   }
+  
+  /**
+   * Sets the tool tip text displayed by this check box.
+   */
+  public void setToolTipText(String text) {
+    this.checkBox.setToolTipText(text);
+  }
 
   @Override
   public void setEnabled(boolean enabled) {
