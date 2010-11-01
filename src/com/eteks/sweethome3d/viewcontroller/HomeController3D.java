@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.undo.UndoableEditSupport;
@@ -121,6 +122,12 @@ public class HomeController3D implements Controller {
     List<Camera> homeStoredCameras = this.home.getStoredCameras();
     ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
     storedCameras.addAll(homeStoredCameras);
+    // Don't keep two cameras with the same name
+    for (Iterator<Camera> it = storedCameras.iterator(); it.hasNext(); ) {
+      if (name.equals(it.next().getName())) {
+        it.remove();
+      }
+    }
     storedCameras.add(0, storedCamera);
     // Ensure home stored cameras don't contain more than 10 cameras
     while (storedCameras.size() > 10) {
