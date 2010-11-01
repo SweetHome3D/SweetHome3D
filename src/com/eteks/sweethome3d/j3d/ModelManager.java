@@ -32,7 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -133,7 +132,7 @@ public class ModelManager {
   
   private ModelManager() {    
     // This class is a singleton
-    this.loadedModelNodes = Collections.synchronizedMap(new WeakHashMap<Content, BranchGroup>());
+    this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
     // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
@@ -197,7 +196,9 @@ public class ModelManager {
       this.modelsLoader.shutdownNow();
       this.modelsLoader = null;
     }
-    this.loadedModelNodes.clear();
+    synchronized (this.loadedModelNodes) {
+      this.loadedModelNodes.clear();
+    }
   }
   
   /**
@@ -328,15 +329,20 @@ public class ModelManager {
   public void loadModel(final Content content,
                         boolean synchronous,
                         ModelObserver modelObserver) {
-    BranchGroup modelRoot = this.loadedModelNodes.get(content);
+    BranchGroup modelRoot;
+    synchronized (this.loadedModelNodes) {
+      modelRoot = this.loadedModelNodes.get(content);
+    }
     if (modelRoot != null) {
       // Notify cached model to observer with a clone of the model
       modelObserver.modelUpdated((BranchGroup)cloneNode(modelRoot));
     } else if (synchronous) {
       try {
         modelRoot = loadModel(content);
-        // Store in cache model node for future copies 
-        this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
+        synchronized (this.loadedModelNodes) {
+          // Store in cache model node for future copies 
+          this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
+        }
         modelObserver.modelUpdated((BranchGroup)cloneNode(modelRoot));
       } catch (IOException ex) {
         modelObserver.modelError(ex);
@@ -363,8 +369,10 @@ public class ModelManager {
           public void run() {
             try {
               final BranchGroup loadedModel = loadModel(content);
-              // Update loaded models cache and notify registered observers
-              loadedModelNodes.put(content, loadedModel);
+              synchronized (loadedModelNodes) {
+                // Update loaded models cache and notify registered observers
+                loadedModelNodes.put(content, loadedModel);
+              }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
                     for (final ModelObserver observer : loadingModelObservers.remove(content)) {
@@ -393,7 +401,10 @@ public class ModelManager {
    * and the texture images of shapes.
    */
   public Node cloneNode(Node node) {
-    return cloneNode(node, new HashMap<SharedGroup, SharedGroup>());
+    // Clone node in a synchronized block because cloneNodeComponent is not thread safe
+    synchronized (this.loadedModelNodes) {  
+      return cloneNode(node, new HashMap<SharedGroup, SharedGroup>());
+    }
   }
     
   private Node cloneNode(Node node, Map<SharedGroup, SharedGroup> clonedSharedGroups) {
@@ -403,7 +414,7 @@ public class ModelManager {
       Appearance appearance = shape.getAppearance();
       if (appearance != null) {
         // Force only duplication of node's appearance except its texture
-        Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);
+        Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);        
         Texture texture = appearance.getTexture();
         if (texture != null) {
           clonedAppearance.setTexture(texture);
