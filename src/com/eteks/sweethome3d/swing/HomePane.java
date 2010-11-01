@@ -3055,10 +3055,32 @@ public class HomePane extends JRootPane implements HomeView {
     String message = this.preferences.getLocalizedString(HomePane.class, "showStoreCameraDialog.message");
     String title = this.preferences.getLocalizedString(HomePane.class, "showStoreCameraDialog.title");
     
-    JTextField cameraNameTextField = new JTextField(cameraName, 20);
-    if (SwingTools.showConfirmDialog(this, new Object [] {message, cameraNameTextField}, 
-        title, cameraNameTextField) == JOptionPane.OK_OPTION) {
-      return cameraNameTextField.getText();
+    List<Camera> storedCameras = this.home.getStoredCameras();
+    JComponent cameraNameChooser;
+    JTextComponent cameraNameTextComponent;
+    if (storedCameras.isEmpty()) {
+      cameraNameChooser = cameraNameTextComponent = new JTextField(cameraName, 20);
+    } else {
+      // If cameras are already stored in home propose an editable combo box to user
+      // to let him choose more easily an existing one if he want to overwrite it
+      String [] storedCameraNames = new String [storedCameras.size()];
+      for (int i = 0; i < storedCameraNames.length; i++) {
+        storedCameraNames [i] = storedCameras.get(i).getName();
+      }
+      JComboBox cameraNameComboBox = new JComboBox(storedCameraNames);
+      cameraNameComboBox.setEditable(true);
+      cameraNameComboBox.getEditor().setItem(cameraName);
+      Component editorComponent = cameraNameComboBox.getEditor().getEditorComponent();
+      if (editorComponent instanceof JTextComponent) {
+        cameraNameTextComponent = (JTextComponent)editorComponent;
+        cameraNameChooser = cameraNameComboBox;
+      } else {
+        cameraNameChooser = cameraNameTextComponent = new JTextField(cameraName, 20);
+      }
+    }
+    if (SwingTools.showConfirmDialog(this, new Object [] {message, cameraNameChooser}, 
+        title, cameraNameTextComponent) == JOptionPane.OK_OPTION) {
+      return cameraNameTextComponent.getText();
     } else {
       return null;
     }
