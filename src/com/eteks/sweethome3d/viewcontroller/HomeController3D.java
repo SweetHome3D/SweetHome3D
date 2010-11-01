@@ -117,18 +117,27 @@ public class HomeController3D implements Controller {
    * Stores a clone of the current camera in home under the given <code>name</code>.
    */
   public void storeCamera(String name) {
-    Camera storedCamera = this.home.getCamera().clone();
-    storedCamera.setName(name);
+    Camera camera = this.home.getCamera().clone();
+    camera.setName(name);
     List<Camera> homeStoredCameras = this.home.getStoredCameras();
     ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
     storedCameras.addAll(homeStoredCameras);
-    // Don't keep two cameras with the same name
+    // Don't keep two cameras with the same name or the same location
     for (Iterator<Camera> it = storedCameras.iterator(); it.hasNext(); ) {
-      if (name.equals(it.next().getName())) {
+      Camera storedCamera = it.next();
+      if (name.equals(storedCamera.getName())
+          || (camera.getX() == storedCamera.getX()
+              && camera.getY() == storedCamera.getY()
+              && camera.getZ() == storedCamera.getZ()
+              && camera.getPitch() == storedCamera.getPitch()
+              && camera.getYaw() == storedCamera.getYaw()
+              && camera.getFieldOfView() == storedCamera.getFieldOfView()
+              && camera.getTime() == storedCamera.getTime()
+              && camera.getLens() == storedCamera.getLens())) {
         it.remove();
       }
     }
-    storedCameras.add(0, storedCamera);
+    storedCameras.add(0, camera);
     // Ensure home stored cameras don't contain more than 10 cameras
     while (storedCameras.size() > 10) {
       storedCameras.remove(storedCameras.size() - 1);
