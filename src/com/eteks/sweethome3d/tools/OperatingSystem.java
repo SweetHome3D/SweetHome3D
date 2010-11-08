@@ -178,14 +178,15 @@ public class OperatingSystem {
         
         if (siblingTemporaryFolders != null
             && siblingTemporaryFolders.length > 0) {
-          // Launch a timer that will delete out dated temporary folders in 10 min
+          // Launch a timer that will delete in 10 min temporary folders older than a week 
           final long deleteDelay = 10 * 60000;
+          final long age = 7 * 24 * 3600000;
           new Timer(true).schedule(new TimerTask() {
               @Override
               public void run() {
                 long now = System.currentTimeMillis();
                 for (File siblingTemporaryFolder : siblingTemporaryFolders) {
-                  if (now - siblingTemporaryFolder.lastModified() > deleteDelay) {
+                  if (now - siblingTemporaryFolder.lastModified() > age) {
                     for (File temporaryFile : siblingTemporaryFolder.listFiles()) {
                       temporaryFile.delete();
                     }
