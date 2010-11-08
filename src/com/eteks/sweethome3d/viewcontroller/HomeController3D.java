@@ -436,6 +436,8 @@ public class HomeController3D implements Controller {
           + Math.pow(this.topCamera.getZ(), 2)) - delta;
       // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
       newDistanceToCenter = Math.max(newDistanceToCenter, this.minDistanceToHomeCenter);
+      // Check camera isn't too far
+      newDistanceToCenter = Math.min(newDistanceToCenter, 5 * this.minDistanceToHomeCenter);
       double distanceToCenterAtGroundLevel = newDistanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
@@ -457,7 +459,7 @@ public class HomeController3D implements Controller {
     @Override
     public void rotateCameraPitch(float delta) {
       float newPitch = this.topCamera.getPitch() - delta;
-      // Check new pitch is between PI / 2 and PI / 8  
+      // Check new pitch is between PI / 2 and PI / 16  
       newPitch = Math.max(newPitch, (float)Math.PI / 16);
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
       // Compute new z to keep the same distance to view center
