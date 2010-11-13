@@ -32,6 +32,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -663,13 +665,129 @@ public class ModelManager {
    * projected on the floor (plan y = 0). 
    */
   public Area getAreaOnFloor(Node node) {
-    Area modelAreaOnFloor = new Area();
-    computeAreaOnFloor(node, modelAreaOnFloor, new Transform3D());
+    Area modelAreaOnFloor;
+    int vertexCount = getVertexCount(node);
+    if (vertexCount < 10000) {
+      modelAreaOnFloor = new Area();
+      computeAreaOnFloor(node, modelAreaOnFloor, new Transform3D());
+    } else {
+      List<float []> vertices = new ArrayList<float[]>(vertexCount); 
+      computeVerticesOnFloor(node, vertices, new Transform3D());
+      float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
+      GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
+      generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
+      for (int i = 0; i < surroundingPolygon.length; i++) {
+        generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+      }
+      generalPath.closePath();
+      modelAreaOnFloor = new Area(generalPath);
+    }
     return modelAreaOnFloor;
   }
   
   /**
-   * Computes the 2D area on floor of a the 3D shapes children of <code>node</code>.
+   * Returns the total count of vertices in all geometries.
+   */
+  private int getVertexCount(Node node) {
+    int count = 0;
+    if (node instanceof Group) {
+      // Enumerate all children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        count += getVertexCount((Node)enumeration.nextElement());
+      }
+    } else if (node instanceof Link) {
+      count = getVertexCount(((Link)node).getSharedGroup());
+    } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
+      if (renderingAttributes == null
+          || renderingAttributes.getVisible()) {
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          Geometry geometry = shape.getGeometry(i);
+          if (geometry instanceof GeometryArray) {
+            count += ((GeometryArray)geometry).getVertexCount();
+          }
+        }
+      }
+    }    
+    return count;
+  }
+  
+  /**
+   * Computes the vertices coordinates projected on floor of the 3D shapes children of <code>node</code>.
+   */
+  private void computeVerticesOnFloor(Node node, List<float []> vertices, Transform3D parentTransformations) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
+      // Compute all children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        computeVerticesOnFloor((Node)enumeration.nextElement(), vertices, parentTransformations);
+      }
+    } else if (node instanceof Link) {
+      computeVerticesOnFloor(((Link)node).getSharedGroup(), vertices, parentTransformations);
+    } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
+      if (renderingAttributes == null
+          || renderingAttributes.getVisible()) {
+        // Compute shape geometries area
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          Geometry geometry = shape.getGeometry(i);
+          if (geometry instanceof GeometryArray) {
+            GeometryArray geometryArray = (GeometryArray)geometry;      
+
+            int vertexCount = geometryArray.getVertexCount();
+            Point3f vertex = new Point3f();
+            if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+              if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+                float [] vertexData = geometryArray.getInterleavedVertices();
+                int vertexSize = vertexData.length / vertexCount;
+                // Store vertices coordinates 
+                for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+                  vertex.x = vertexData [j];
+                  vertex.y = vertexData [j + 1];
+                  vertex.z = vertexData [j + 2];
+                  parentTransformations.transform(vertex);
+                  vertices.add(new float [] {vertex.x, vertex.z});
+                }
+              } else {
+                // Store vertices coordinates
+                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+                  vertex.x = vertexCoordinates [j];
+                  vertex.y = vertexCoordinates [j + 1];
+                  vertex.z = vertexCoordinates [j + 2];
+                  parentTransformations.transform(vertex);
+                  vertices.add(new float [] {vertex.x, vertex.z});
+                }
+              }
+            } else {
+              // Store vertices coordinates
+              for (int index = 0, j = 0; index < vertexCount; j++, index++) {
+                geometryArray.getCoordinate(j, vertex);
+                parentTransformations.transform(vertex);
+                vertices.add(new float [] {vertex.x, vertex.z});
+              }
+            }
+          }
+        }
+      }
+    }    
+  }
+  
+  /**
+   * Computes the 2D area on floor of the 3D shapes children of <code>node</code>.
    */
   private void computeAreaOnFloor(Node node, Area nodeArea, Transform3D parentTransformations) {
     if (node instanceof Group) {
@@ -930,6 +1048,124 @@ public class ModelManager {
       geometryPath.lineTo(vertices [2 * vertexIndex4], vertices [2 * vertexIndex4 + 1]);
       geometryPath.closePath();
     }
+  }
+
+  /**
+   * Returns the convex polygon that surrounds the given <code>vertices</code>.
+   * From Andrew's monotone chain 2D convex hull algorithm described at
+   * http://softsurfer.com/Archive/algorithm%5F0109/algorithm%5F0109.htm
+   */
+  private float [][] getSurroundingPolygon(float [][] vertices) {
+    Arrays.sort(vertices, new Comparator<float []> () {
+        public int compare(float [] vertex1, float [] vertex2) {
+          if (vertex1 [0] == vertex2 [0]) {
+            return (int)Math.signum(vertex2 [1] - vertex1 [1]);
+          } else {
+            return (int)Math.signum(vertex2 [0] - vertex1 [0]);
+          }
+        }
+      });
+    float [][] polygon = new float [vertices.length] [];
+    // The output array polygon[] will be used as the stack
+    int bottom = 0, top = -1; // indices for bottom and top of the stack
+    int i; // array scan index
+
+    // Get the indices of points with min x-coord and min|max y-coord
+    int minMin = 0, minMax;
+    float xmin = vertices [0] [0];
+    for (i = 1; i < vertices.length; i++) {
+      if (vertices [i] [0] != xmin) {
+        break;
+      }
+    }
+    minMax = i - 1;
+    if (minMax == vertices.length - 1) { 
+      // Degenerate case: all x-coords == xmin
+      polygon [++top] = vertices [minMin];
+      if (vertices [minMax] [1] != vertices [minMin] [1]) { 
+        // A nontrivial segment
+        polygon [++top] = vertices [minMax];
+      }
+      // Add polygon endpoint
+      polygon [++top] = vertices [minMin];
+      float [][] surroundingPolygon = new float [top + 1][];
+      System.arraycopy(polygon, 0, surroundingPolygon, 0, surroundingPolygon.length);
+    }
+
+    // Get the indices of points with max x-coord and min|max y-coord
+    int maxMin, maxMax = vertices.length - 1;
+    float xMax = vertices [vertices.length - 1] [0];
+    for (i = vertices.length - 2; i >= 0; i--) {
+      if (vertices [i] [0] != xMax) {
+        break;
+      }
+    }
+    maxMin = i + 1;
+
+    // Compute the lower hull on the stack polygon
+    polygon [++top] = vertices [minMin]; // push minmin point onto stack
+    i = minMax;
+    while (++i <= maxMin) {
+      // The lower line joins points [minmin] with points [maxmin]
+      if (isLeft(vertices [minMin], vertices [maxMin], vertices [i]) >= 0 && i < maxMin) {
+        // ignore points [i] above or on the lower line
+        continue; 
+      }
+
+      while (top > 0) // There are at least 2 points on the stack
+      {
+        // Test if points [i] is left of the line at the stack top
+        if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0)
+          break; // points [i] is a new hull vertex
+        else
+          top--; // pop top point off stack
+      }
+      polygon [++top] = vertices [i]; // push points [i] onto stack
+    }
+
+    // Next, compute the upper hull on the stack polygon above the bottom hull
+    // If distinct xmax points
+    if (maxMax != maxMin) { 
+      // Push maxmax point onto stack
+      polygon [++top] = vertices [maxMax]; 
+    }
+    // The bottom point of the upper hull stack
+    bottom = top; 
+    i = maxMin;
+    while (--i >= minMax) {
+      // The upper line joins points [maxmax] with points [minmax]
+      if (isLeft(vertices [maxMax], vertices [minMax], vertices [i]) >= 0 && i > minMax) {
+        // Ignore points [i] below or on the upper line
+        continue; 
+      }
+
+      // At least 2 points on the upper stack
+      while (top > bottom) 
+      {
+        // Test if points [i] is left of the line at the stack top
+        if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0) {
+          // points [i] is a new hull vertex
+          break; 
+        } else {
+          // Pop top point off stack
+          top--; 
+        }
+      }
+      // Push points [i] onto stack
+      polygon [++top] = vertices [i]; 
+    }
+    if (minMax != minMin) {
+      // Push joining endpoint onto stack
+      polygon [++top] = vertices [minMin]; 
+    }
+
+    float [][] surroundingPolygon = new float [top + 1][];
+    System.arraycopy(polygon, 0, surroundingPolygon, 0, surroundingPolygon.length);
+    return surroundingPolygon;
+  }
+
+  private float isLeft(float [] vertex0, float [] vertex1, float [] vertex2) {
+    return (vertex1 [0] - vertex0 [0]) * (vertex2 [1] - vertex0 [1]) - (vertex2 [0] - vertex0 [0]) * (vertex1 [1] - vertex0 [1]);
   }
 
   /**
