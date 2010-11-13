@@ -1065,16 +1065,16 @@ public class ModelManager {
           }
         }
       });
-    float [][] polygon = new float [vertices.length] [];
-    // The output array polygon[] will be used as the stack
+    float [][] polygon = new float [vertices.length][];
+    // The output array polygon [] will be used as the stack
     int bottom = 0, top = -1; // indices for bottom and top of the stack
     int i; // array scan index
 
     // Get the indices of points with min x-coord and min|max y-coord
     int minMin = 0, minMax;
-    float xmin = vertices [0] [0];
+    float xmin = vertices [0][0];
     for (i = 1; i < vertices.length; i++) {
-      if (vertices [i] [0] != xmin) {
+      if (vertices [i][0] != xmin) {
         break;
       }
     }
@@ -1082,11 +1082,11 @@ public class ModelManager {
     if (minMax == vertices.length - 1) { 
       // Degenerate case: all x-coords == xmin
       polygon [++top] = vertices [minMin];
-      if (vertices [minMax] [1] != vertices [minMin] [1]) { 
+      if (vertices [minMax][1] != vertices [minMin][1]) { 
         // A nontrivial segment
         polygon [++top] = vertices [minMax];
       }
-      // Add polygon endpoint
+      // Add polygon end point
       polygon [++top] = vertices [minMin];
       float [][] surroundingPolygon = new float [top + 1][];
       System.arraycopy(polygon, 0, surroundingPolygon, 0, surroundingPolygon.length);
@@ -1094,9 +1094,9 @@ public class ModelManager {
 
     // Get the indices of points with max x-coord and min|max y-coord
     int maxMin, maxMax = vertices.length - 1;
-    float xMax = vertices [vertices.length - 1] [0];
+    float xMax = vertices [vertices.length - 1][0];
     for (i = vertices.length - 2; i >= 0; i--) {
-      if (vertices [i] [0] != xMax) {
+      if (vertices [i][0] != xMax) {
         break;
       }
     }
@@ -1165,7 +1165,8 @@ public class ModelManager {
   }
 
   private float isLeft(float [] vertex0, float [] vertex1, float [] vertex2) {
-    return (vertex1 [0] - vertex0 [0]) * (vertex2 [1] - vertex0 [1]) - (vertex2 [0] - vertex0 [0]) * (vertex1 [1] - vertex0 [1]);
+    return (vertex1 [0] - vertex0 [0]) * (vertex2 [1] - vertex0 [1]) 
+         - (vertex2 [0] - vertex0 [0]) * (vertex1 [1] - vertex0 [1]);
   }
 
   /**
