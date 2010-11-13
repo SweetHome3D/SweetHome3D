@@ -4830,7 +4830,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               // work on a clone of the piece centered at the origin
               // with the same size to get a correct texture mapping
               final HomePieceOfFurniture normalizedPiece = piece.clone();
-              normalizedPiece.setModelMirrored(false);
+              if (normalizedPiece.isResizable()) {
+                normalizedPiece.setModelMirrored(false);
+              }
               normalizedPiece.setX(0);
               normalizedPiece.setY(0);
               normalizedPiece.setElevation(-normalizedPiece.getHeight() / 2);
