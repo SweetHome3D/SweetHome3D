@@ -368,7 +368,7 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    // Read again default furniture and textures catalogs with new default locale
+    // Read again default furniture catalog with new default locale
     // Add default pieces that don't have homonym among user catalog
     FurnitureCatalog defaultFurnitureCatalog = 
         new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders());
@@ -396,6 +396,7 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
+    // Read again default textures catalog with new default locale
     // Add default textures that don't have homonym among user catalog
     TexturesCatalog defaultTexturesCatalog = 
         new DefaultTexturesCatalog(this, getTexturesLibrariesPluginFolders());
