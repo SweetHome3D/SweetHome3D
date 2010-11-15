@@ -161,6 +161,7 @@ import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
@@ -213,6 +214,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor          rotationCursor;
   private final Cursor          elevationCursor;
   private final Cursor          heightCursor;
+  private final Cursor          powerCursor;
   private final Cursor          resizeCursor;
   private final Cursor          panningCursor;
   private final Cursor          duplicationCursor;
@@ -257,6 +259,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       FURNITURE_ELEVATION_POINT_INDICATOR;
   private static final GeneralPath FURNITURE_HEIGHT_INDICATOR;
   private static final Shape       FURNITURE_HEIGHT_POINT_INDICATOR;
+  private static final GeneralPath LIGHT_POWER_INDICATOR;
+  private static final Shape       LIGHT_POWER_POINT_INDICATOR;
   private static final GeneralPath WALL_ORIENTATION_INDICATOR;
   private static final Shape       WALL_POINT;
   private static final GeneralPath WALL_AND_LINE_RESIZE_INDICATOR;
@@ -323,6 +327,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_HEIGHT_INDICATOR.lineTo(0f, 5.5f);
     FURNITURE_HEIGHT_INDICATOR.lineTo(1.2f, 2.5f);
     
+    LIGHT_POWER_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
+    
+    // Create a path that draws a stripped triangle as a power indicator
+    // at bottom left of a not deformable lights
+    LIGHT_POWER_INDICATOR = new GeneralPath();
+    LIGHT_POWER_INDICATOR.moveTo(-8, 0); 
+    LIGHT_POWER_INDICATOR.lineTo(-6f, 0);
+    LIGHT_POWER_INDICATOR.lineTo(-6f, -1);    
+    LIGHT_POWER_INDICATOR.closePath();    
+    LIGHT_POWER_INDICATOR.moveTo(-3, 0); 
+    LIGHT_POWER_INDICATOR.lineTo(-1f, 0);
+    LIGHT_POWER_INDICATOR.lineTo(-1f, -2.5);    
+    LIGHT_POWER_INDICATOR.lineTo(-3f, -1.8);    
+    LIGHT_POWER_INDICATOR.closePath();    
+    LIGHT_POWER_INDICATOR.moveTo(2, 0); 
+    LIGHT_POWER_INDICATOR.lineTo(4, 0);
+    LIGHT_POWER_INDICATOR.lineTo(4, -3.5);    
+    LIGHT_POWER_INDICATOR.lineTo(2, -2.8);    
+    LIGHT_POWER_INDICATOR.closePath();    
+
     // Create a path used as a resize indicator 
     // at bottom right point of a piece of furniture
     FURNITURE_RESIZE_INDICATOR = new GeneralPath();
@@ -494,6 +518,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         "resources/cursors/elevation32x32.png", "Elevation cursor", Cursor.MOVE_CURSOR);
     this.heightCursor = createCustomCursor("resources/cursors/height16x16.png",
         "resources/cursors/height32x32.png", "Height cursor", Cursor.MOVE_CURSOR);
+    this.powerCursor = createCustomCursor("resources/cursors/power16x16.png",
+        "resources/cursors/power32x32.png", "Power cursor", Cursor.MOVE_CURSOR);
     this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
         "resources/cursors/resize32x32.png", "Resize cursor", Cursor.MOVE_CURSOR);
     this.panningCursor = createCustomCursor("resources/cursors/panning16x16.png",
@@ -2983,11 +3009,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.translate(piecePoints [3][0], piecePoints [3][1]);
         g2D.scale(scaleInverse, scaleInverse);
         g2D.rotate(pieceAngle);
-        g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
-        // Place height indicator farther but don't rotate it
-        g2D.translate(-7.5f, 7.5f);
-        g2D.rotate(-pieceAngle);
-        g2D.draw(FURNITURE_HEIGHT_INDICATOR);
+        
+        if (piece instanceof HomeLight) {
+          g2D.draw(LIGHT_POWER_POINT_INDICATOR);
+          // Place power indicator farther but don't rotate it
+          g2D.translate(-7.5f, 7.5f);
+          g2D.rotate(-pieceAngle);
+          g2D.draw(LIGHT_POWER_INDICATOR);
+        } else {
+          g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
+          // Place height indicator farther but don't rotate it
+          g2D.translate(-7.5f, 7.5f);
+          g2D.rotate(-pieceAngle);
+          g2D.draw(FURNITURE_HEIGHT_INDICATOR);
+        }
         g2D.setTransform(previousTransform);
         
         // Draw resize indicator at top left point of the piece
@@ -4014,6 +4049,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         break;
       case HEIGHT :
         setCursor(this.heightCursor);
+        break;
+      case POWER :
+        setCursor(this.powerCursor);
         break;
       case ELEVATION :
         setCursor(this.elevationCursor);

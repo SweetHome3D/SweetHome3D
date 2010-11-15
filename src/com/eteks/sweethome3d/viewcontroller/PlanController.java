@@ -53,6 +53,7 @@ import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
@@ -132,6 +133,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       pieceOfFurnitureElevationState;
   private final ControllerState       pieceOfFurnitureHeightState;
   private final ControllerState       pieceOfFurnitureResizeState;
+  private final ControllerState       lightPowerModificationState;
   private final ControllerState       pieceOfFurnitureNameOffsetState;
   private final ControllerState       cameraYawRotationState;
   private final ControllerState       cameraPitchRotationState;
@@ -196,6 +198,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.pieceOfFurnitureElevationState = new PieceOfFurnitureElevationState();
     this.pieceOfFurnitureHeightState = new PieceOfFurnitureHeightState();
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
+    this.lightPowerModificationState = new LightPowerModificationState();
     this.pieceOfFurnitureNameOffsetState = new PieceOfFurnitureNameOffsetState();
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
@@ -469,6 +472,13 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getPieceOfFurnitureResizeState() {
     return this.pieceOfFurnitureResizeState;
+  }
+
+  /**
+   * Returns the light power modification state.
+   */
+  protected ControllerState getLightPowerModificationState() {
+    return this.lightPowerModificationState;
   }
 
   /**
@@ -2434,6 +2444,23 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the selected light with a point at (<code>x</code>, <code>y</code>) 
+   * that can be used to resize the power of the light.
+   */
+  private HomeLight getModifiedLightPowerAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomeLight) {
+      HomeLight light = (HomeLight)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getScale();
+      if (light.isBottomLeftPointAt(x, y, margin)) {
+        return light;
+      }
+    } 
+    return null;
+  }
+  
+  /**
    * Returns the selected piece of furniture with its 
    * name center point at (<code>x</code>, <code>y</code>).
    */
@@ -3608,31 +3635,9 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Post to undo support a height change on <code>piece</code>. 
    */
-  private void postPieceOfFurnitureHeightResize(final HomePieceOfFurniture piece, final float oldHeight) {
-    final float newHeight = piece.getHeight();
-    if (newHeight != oldHeight) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          piece.setHeight(oldHeight);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          piece.setHeight(newHeight);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureHeightResizeName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+  private void postPieceOfFurnitureHeightResize(final ResizedPieceOfFurniture resizedPiece) {
+    if (resizedPiece.getPieceOfFurniture().getHeight() != resizedPiece.getHeight()) {
+      postPieceOfFurnitureResize(resizedPiece, "undoPieceOfFurnitureHeightResizeName");
     }
   }
 
@@ -3641,40 +3646,82 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postPieceOfFurnitureWidthAndDepthResize(final ResizedPieceOfFurniture resizedPiece) {
     HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
+    if (piece.getWidth() != resizedPiece.getWidth()
+        || piece.getDepth() != resizedPiece.getDepth()) {
+      postPieceOfFurnitureResize(resizedPiece, "undoPieceOfFurnitureWidthAndDepthResizeName");
+    }
+  }
+
+  /**
+   * Post to undo support a size change on <code>piece</code>. 
+   */
+  private void postPieceOfFurnitureResize(final ResizedPieceOfFurniture resizedPiece,
+                                          final String presentationNameKey) {
+    HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
     final float newX = piece.getX();
     final float newY = piece.getY();
     final float newWidth = piece.getWidth();
     final float newDepth = piece.getDepth();
+    final float newHeight = piece.getHeight();
     final boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
-        && ((HomeDoorOrWindow)piece).isBoundToWall();
-    if (newWidth != resizedPiece.getWidth()
-        || newDepth != resizedPiece.getDepth()) {
+    && ((HomeDoorOrWindow)piece).isBoundToWall();
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        resizedPiece.reset();
+        selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {resizedPiece.getPieceOfFurniture()}));
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
+        piece.setX(newX);
+        piece.setY(newY);
+        piece.setWidth(newWidth);
+        piece.setDepth(newDepth);
+        piece.setHeight(newHeight);
+        if (piece instanceof HomeDoorOrWindow) {
+          ((HomeDoorOrWindow)piece).setBoundToWall(doorOrWindowBoundToWall);
+        }
+        selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      }      
+ 
+      @Override
+      public String getPresentationName() {
+        return preferences.getLocalizedString(
+            PlanController.class, presentationNameKey);
+      }      
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Post to undo support a power modification on <code>light</code>. 
+   */
+  private void postLightPowerModification(final HomeLight light, final float oldPower) {
+    final float newPower = light.getPower();
+    if (newPower != oldPower) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          resizedPiece.reset();
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {resizedPiece.getPieceOfFurniture()}));
+          light.setPower(oldPower);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {light}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
-          piece.setX(newX);
-          piece.setY(newY);
-          piece.setWidth(newWidth);
-          piece.setDepth(newDepth);
-          if (piece instanceof HomeDoorOrWindow) {
-            ((HomeDoorOrWindow)piece).setBoundToWall(doorOrWindowBoundToWall);
-          }
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+          light.setPower(newPower);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {light}));
         }      
   
         @Override
         public String getPresentationName() {
           return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureWidthAndDepthResizeName");
+              PlanController.class, "undoLightPowerModificationName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -4005,11 +4052,13 @@ public class PlanController extends FurnitureController implements Controller {
     private final float                y;
     private final float                width;
     private final float                depth;
+    private final float                height;
     private final boolean              doorOrWindowBoundToWall;
     private final float []             groupFurnitureX;
     private final float []             groupFurnitureY;
     private final float []             groupFurnitureWidth;
     private final float []             groupFurnitureDepth;
+    private final float []             groupFurnitureHeight;
 
     public ResizedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
@@ -4017,6 +4066,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.y = piece.getY();
       this.width = piece.getWidth();
       this.depth = piece.getDepth();
+      this.height = piece.getHeight();
       this.doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
           && ((HomeDoorOrWindow)piece).isBoundToWall();
       if (piece instanceof HomeFurnitureGroup) {
@@ -4025,18 +4075,21 @@ public class PlanController extends FurnitureController implements Controller {
         this.groupFurnitureY = new float [groupFurniture.size()];
         this.groupFurnitureWidth = new float [groupFurniture.size()];
         this.groupFurnitureDepth = new float [groupFurniture.size()];
+        this.groupFurnitureHeight = new float [groupFurniture.size()];
         for (int i = 0; i < groupFurniture.size(); i++) {
           HomePieceOfFurniture groupPiece = groupFurniture.get(i);
           this.groupFurnitureX [i] = groupPiece.getX();
           this.groupFurnitureY [i] = groupPiece.getY();
           this.groupFurnitureWidth [i] = groupPiece.getWidth();
           this.groupFurnitureDepth [i] = groupPiece.getDepth();
+          this.groupFurnitureHeight [i] = groupPiece.getHeight();
         }
       } else {
         this.groupFurnitureX = null;
         this.groupFurnitureY = null;
         this.groupFurnitureWidth = null;
         this.groupFurnitureDepth = null;
+        this.groupFurnitureHeight = null;
       }
     }
 
@@ -4052,6 +4105,10 @@ public class PlanController extends FurnitureController implements Controller {
       return this.depth;
     }
     
+    public float getHeight() {
+      return this.height;
+    }
+    
     public boolean isDoorOrWindowBoundToWall() {
       return this.doorOrWindowBoundToWall;
     }
@@ -4061,6 +4118,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.piece.setY(this.y);
       this.piece.setWidth(this.width);
       this.piece.setDepth(this.depth);
+      this.piece.setHeight(this.height);
       if (this.piece instanceof HomeDoorOrWindow) {
         ((HomeDoorOrWindow)this.piece).setBoundToWall(this.doorOrWindowBoundToWall);
       }
@@ -4074,6 +4132,7 @@ public class PlanController extends FurnitureController implements Controller {
             groupPiece.setY(this.groupFurnitureY [i]);
             groupPiece.setWidth(this.groupFurnitureWidth [i]);
             groupPiece.setDepth(this.groupFurnitureDepth [i]);
+            groupPiece.setHeight(this.groupFurnitureHeight [i]);
           }
         }
       }
@@ -4490,6 +4549,8 @@ public class PlanController extends FurnitureController implements Controller {
           || getResizedWallEndAt(x, y) != null
           || getResizedRoomAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
+      } else if (getModifiedLightPowerAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.POWER);
       } else if (getOffsetDimensionLineAt(x, y) != null
           || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.HEIGHT);
@@ -4534,6 +4595,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getRoomResizeState());
         } else if (getOffsetDimensionLineAt(x, y) != null) {
           setState(getDimensionLineOffsetState());
+        } else if (getModifiedLightPowerAt(x, y) != null) {
+          setState(getLightPowerModificationState());
         } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureHeightState());
         } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
@@ -6097,11 +6160,12 @@ public class PlanController extends FurnitureController implements Controller {
    * Furniture height state. This states manages the height resizing of a piece of furniture.
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
-    private boolean              magnetismEnabled;
-    private float                deltaYToResizePoint;
-    private HomePieceOfFurniture selectedPiece;
-    private float                oldHeight;
-    private String               resizeToolTipFeedback;
+    private boolean                 magnetismEnabled;
+    private float                   deltaYToResizePoint;
+    private ResizedPieceOfFurniture resizedPiece;
+    private float []                topLeftPoint;
+    private float []                resizePoint;
+    private String                  resizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -6117,15 +6181,17 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.resizeToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "heightResizeToolTipFeedback");
-      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
-      float [] resizePoint = this.selectedPiece.getPoints() [3];
-      this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
-      this.oldHeight = this.selectedPiece.getHeight();
+      HomePieceOfFurniture selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      this.resizedPiece = new ResizedPieceOfFurniture(selectedPiece);
+      float [][] resizedPiecePoints = selectedPiece.getPoints();
+      this.resizePoint = resizedPiecePoints [3];
+      this.deltaYToResizePoint = getYLastMousePress() - this.resizePoint [1];
+      this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
-      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldHeight), 
+      planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getHeight()), 
           getXLastMousePress(), getYLastMousePress());
     }
     
@@ -6133,9 +6199,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void moveMouse(float x, float y) {
       // Compute the new height of the piece 
       PlanView planView = getView();
-      float [] bottomLeftPoint = this.selectedPiece.getPoints() [3];
-      float deltaY = y - this.deltaYToResizePoint - bottomLeftPoint[1];
-      float newHeight = this.oldHeight - deltaY;
+      HomePieceOfFurniture selectedPiece = this.resizedPiece.getPieceOfFurniture();
+      float deltaY = y - this.deltaYToResizePoint - this.resizePoint [1];
+      float newHeight = this.resizedPiece.getHeight() - deltaY;
       newHeight = Math.max(newHeight, 0f);
       if (this.magnetismEnabled) {
         newHeight = preferences.getLengthUnit().getMagnetizedLength(newHeight, planView.getPixelLength());
@@ -6143,8 +6209,25 @@ public class PlanController extends FurnitureController implements Controller {
       newHeight = Math.max(newHeight, preferences.getLengthUnit().getMinimumLength());
 
       // Update piece new dimension
-      this.selectedPiece.setHeight(newHeight);
+      selectedPiece.setHeight(newHeight);
 
+      // Manage proportional constraint 
+      if (!selectedPiece.isDeformable()) {
+        float ratio = newHeight / this.resizedPiece.getHeight();
+        float newWidth = this.resizedPiece.getWidth() * ratio;
+        float newDepth = this.resizedPiece.getDepth() * ratio;
+        // Update piece new location
+        float angle = selectedPiece.getAngle();
+        double cos = Math.cos(angle); 
+        double sin = Math.sin(angle); 
+        float newX = (float)(this.topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
+        float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
+        selectedPiece.setX(newX);
+        selectedPiece.setY(newY);
+        selectedPiece.setWidth(newWidth);
+        selectedPiece.setDepth(newDepth);
+      }
+      
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newHeight), x, y);
@@ -6152,7 +6235,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureHeightResize(this.selectedPiece, this.oldHeight);
+      postPieceOfFurnitureHeightResize(this.resizedPiece);
       setState(getSelectionState());
     }
 
@@ -6167,7 +6250,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      this.selectedPiece.setHeight(this.oldHeight);
+      this.resizedPiece.reset();
       setState(getSelectionState());
     }
 
@@ -6176,7 +6259,7 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(false);
       planView.deleteFeedback();
-      this.selectedPiece = null;
+      this.resizedPiece = null;
     }  
     
     private String getToolTipFeedbackText(float height) {
@@ -6247,6 +6330,7 @@ public class PlanController extends FurnitureController implements Controller {
       
       float newDepth;
       if (!this.resizedPiece.isDoorOrWindowBoundToWall()
+          || !selectedPiece.isDeformable()
           || !this.magnetismEnabled) {
         // Update piece depth if it's not a door a window 
         // or if it's a a door a window unbound to a wall when magnetism is enabled
@@ -6258,15 +6342,31 @@ public class PlanController extends FurnitureController implements Controller {
       } else {
         newDepth = this.resizedPiece.getDepth();
       }
-
+      
+      // Manage proportional constraint 
+      float newHeight = this.resizedPiece.getHeight();
+      if (!selectedPiece.isDeformable()) {
+        float [][] resizedPiecePoints = selectedPiece.getPoints();
+        float ratio;
+        if (Line2D.relativeCCW(resizedPiecePoints [0][0], resizedPiecePoints [0][1], resizedPiecePoints [2][0], resizedPiecePoints [2][1], x, y) >= 0) {
+          ratio = newWidth / this.resizedPiece.getWidth();
+          newDepth = this.resizedPiece.getDepth() * ratio;
+        } else {
+          ratio = newDepth / this.resizedPiece.getDepth();
+          newWidth = this.resizedPiece.getWidth() * ratio;
+        }
+        newHeight = this.resizedPiece.getHeight() * ratio;
+      }
+      
       // Update piece new location
       float newX = (float)(this.topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
       float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
       selectedPiece.setX(newX);
       selectedPiece.setY(newY);
       // Update piece size
-      selectedPiece.setDepth(newDepth);
       selectedPiece.setWidth(newWidth);
+      selectedPiece.setDepth(newDepth);
+      selectedPiece.setHeight(newHeight);
       if (this.resizedPiece.isDoorOrWindowBoundToWall()) {
         // Maintain boundToWall flag
         ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled);
@@ -6315,6 +6415,80 @@ public class PlanController extends FurnitureController implements Controller {
             preferences.getLengthUnit().getFormatWithUnit().format(depth));
       }
       return toolTipFeedbackText;
+    }
+  }
+
+  /**
+   * Light power state. This states manages the power modification of a light.
+   */
+  private class LightPowerModificationState extends ControllerState {
+    private float     deltaXToModificationPoint;
+    private HomeLight selectedLight;
+    private float     oldPower;
+    private String    lightPowerToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.lightPowerToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "lightPowerToolTipFeedback");
+      this.selectedLight = (HomeLight)home.getSelectedItems().get(0);
+      float [] resizePoint = this.selectedLight.getPoints() [3];
+      this.deltaXToModificationPoint = getXLastMousePress() - resizePoint [0];
+      this.oldPower = this.selectedLight.getPower();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldPower), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new height of the piece 
+      PlanView planView = getView();
+      float [] bottomLeftPoint = this.selectedLight.getPoints() [3];
+      float deltaX = x - this.deltaXToModificationPoint - bottomLeftPoint [0];
+      float newPower = this.oldPower + deltaX / 200f;
+      newPower = Math.min(Math.max(newPower, 0f), 1f);
+      // Update light power
+      this.selectedLight.setPower(newPower);
+
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newPower), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postLightPowerModification(this.selectedLight, this.oldPower);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedLight.setPower(this.oldPower);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedLight = null;
+    }  
+    
+    private String getToolTipFeedbackText(float power) {
+      return String.format(this.lightPowerToolTipFeedback, Math.round(power * 100));
     }
   }
 

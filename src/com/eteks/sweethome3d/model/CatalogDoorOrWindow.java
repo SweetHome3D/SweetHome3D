@@ -94,8 +94,46 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              float wallThickness, float wallDistance, Sash [] sashes,
                              float [][] modelRotation, String creator,
                              boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
-    super(id, name, description, icon, model, width, depth, height, elevation, movable,   
-        modelRotation, creator, resizable, price, valueAddedTaxPercentage);
+    this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable,   
+        wallThickness, wallDistance, sashes,
+        modelRotation, creator, resizable, true, price, valueAddedTaxPercentage);
+  }
+         
+  /**
+   * Creates an unmodifiable catalog door or window of the default catalog.
+   * @param id    the id of the new door or window, or <code>null</code>
+   * @param name  the name of the new door or window
+   * @param description the description of the new door or window 
+   * @param icon content of the icon of the new door or window
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new door or window
+   * @param width  the width in centimeters of the new door or window
+   * @param depth  the depth in centimeters of the new door or window
+   * @param height  the height in centimeters of the new door or window
+   * @param elevation  the elevation in centimeters of the new door or window
+   * @param movable if <code>true</code>, the new door or window is movable
+   * @param wallThickness a value in percentage of the depth of the new door or window
+   * @param wallDistance a distance in percentage of the depth of the new door or window
+   * @param sashes the sashes attached to the new door or window
+   * @param modelRotation the rotation 3 by 3 matrix applied to the door or window model
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new door or window may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param price the price of the new door or window, or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new door or window or <code>null</code>
+   * @since 3.0 
+   */
+  public CatalogDoorOrWindow(String id, String name, String description, 
+                             Content icon, Content planIcon, Content model, 
+                             float width, float depth, float height, float elevation, boolean movable, 
+                             float wallThickness, float wallDistance, Sash [] sashes,
+                             float [][] modelRotation, String creator,
+                             boolean resizable, boolean deformable,
+                             BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+    super(id, name, description, icon, null, model, width, depth, height, elevation, movable,   
+        modelRotation, creator, resizable, deformable, price, valueAddedTaxPercentage);
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;
     this.sashes = sashes;

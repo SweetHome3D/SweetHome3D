@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.model;
 
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +40,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   private List<HomePieceOfFurniture> furniture;
   private boolean                    resizable;
+  private boolean                    deformable;
   private boolean                    movable;
   private boolean                    doorOrWindow;
   private float                      fixedWidth;
@@ -71,6 +74,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     float height    = 0;
     this.resizable = true;
     this.movable = true;
+    this.deformable = true;
     this.doorOrWindow = true;
     boolean visible = false;
     boolean modelMirrored = true;
@@ -79,6 +83,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       elevation = Math.min(elevation, piece.getElevation());      
       height = Math.max(height, piece.getElevation() + piece.getHeight());
       this.resizable &= piece.isResizable();
+      this.deformable &= piece.isDeformable();
       this.movable &= piece.isMovable();
       this.doorOrWindow &= piece.isDoorOrWindow();
       visible |= piece.isVisible();
@@ -134,6 +139,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Initializes new piece fields to their default values 
+   * and reads piece from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.deformable = true;
+    in.defaultReadObject();
+  }
+
+  /**
    * Returns all the pieces of the given <code>furniture</code> list.  
    */
   private List<HomePieceOfFurniture> getFurnitureWithoutGroups(List<HomePieceOfFurniture> furniture) {
@@ -185,6 +199,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   @Override
   public boolean isResizable() {
     return this.resizable;
+  }
+  
+  /**
+   * Returns <code>true</code> if all furniture of this group are deformable.
+   * @since 3.0
+   */
+  @Override
+  public boolean isDeformable() {
+    return this.deformable;
   }
   
   /**

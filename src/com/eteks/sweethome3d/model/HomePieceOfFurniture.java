@@ -219,6 +219,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float [][]             modelRotation;
   private boolean                backFaceShown;
   private boolean                resizable;
+  private boolean                deformable;
   private BigDecimal             price;
   private BigDecimal             valueAddedTaxPercentage;
   private boolean                visible;
@@ -251,6 +252,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.modelRotation = piece.getModelRotation();
     this.backFaceShown = piece.isBackFaceShown();
     this.resizable = piece.isResizable();
+    this.deformable = piece.isDeformable();
     this.price = piece.getPrice();
     this.valueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
     if (piece instanceof HomePieceOfFurniture) {
@@ -284,6 +286,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.modelRotation = IDENTITY;
     this.resizable = true;
+    this.deformable = true;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     in.defaultReadObject();
   }
@@ -617,6 +620,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return this.resizable;    
   }
   
+  /**
+   * Returns <code>true</code> if this piece is deformable.
+   * @since 3.0
+   */
+  public boolean isDeformable() {
+    return this.deformable;    
+  }
+
   /**
    * Returns the price of this piece of furniture or <code>null</code>. 
    */

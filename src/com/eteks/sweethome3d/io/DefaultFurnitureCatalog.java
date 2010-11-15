@@ -207,11 +207,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     CREATOR("creator"),
     /**
-     * The key for the resizability of a piece of furniture (optional).
+     * The key for the resizability of a piece of furniture (optional, <code>true</code> by default).
      * If the value of this key is <code>false</code>, the piece of furniture
      * will be considered as a piece with a fixed size. 
      */
     RESIZABLE("resizable"),
+    /**
+     * The key for the deformability of a piece of furniture (optional, <code>true</code> by default).
+     * If the value of this key is <code>false</code>, the piece of furniture
+     * will be considered as a piece that should always keep its proportions when resized. 
+     */
+    DEFORMABLE("deformable"),
     /**
      * The key for the price of a piece of furniture (optional).
      */
@@ -476,12 +482,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         furnitureCatalogUrl, furnitureResourcesUrlBase, false, false);
     Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, false, true);
-    boolean multiPartModel = false;
-    try {
-      multiPartModel = Boolean.parseBoolean(resource.getString(PropertyKey.MULTI_PART_MODEL.getKey(index)));
-    } catch (MissingResourceException ex) {
-      // By default inDirectory is false
-    }
+    boolean multiPartModel = getOptionalBoolean(resource, PropertyKey.MULTI_PART_MODEL.getKey(index), false);
     Content model = getContent(resource, PropertyKey.MODEL.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, multiPartModel, false);
     float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
@@ -494,12 +495,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     // By default creator is eTeks
     String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), null);
     String id = getOptionalString(resource, PropertyKey.ID.getKey(index), null);
-    boolean resizable = true;
-    try {
-      resizable = Boolean.parseBoolean(resource.getString(PropertyKey.RESIZABLE.getKey(index)));
-    } catch (MissingResourceException ex) {
-      // By default piece is resizable
-    }
+    boolean resizable = getOptionalBoolean(resource, PropertyKey.RESIZABLE.getKey(index), true);
+    boolean deformable = getOptionalBoolean(resource, PropertyKey.DEFORMABLE.getKey(index), true);
     BigDecimal price = null;
     try {
       price = new BigDecimal(resource.getString(PropertyKey.PRICE.getKey(index)));
@@ -522,17 +519,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
           width, depth, height, elevation, movable, 
           wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-          resizable, price, valueAddedTaxPercentage);
+          resizable, deformable, price, valueAddedTaxPercentage);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
-            resizable, price, valueAddedTaxPercentage);
+            resizable, deformable, price, valueAddedTaxPercentage);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, modelRotation, creator, 
-            resizable, price, valueAddedTaxPercentage);
+            resizable, deformable, price, valueAddedTaxPercentage);
       }
     }
   }
@@ -806,6 +803,20 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                                  float defaultValue) {
     try {
       return Float.parseFloat(resource.getString(propertyKey));
+    } catch (MissingResourceException ex) {
+      return defaultValue;
+    }
+  }
+
+  /**
+   * Returns the boolean value of <code>propertyKey</code> in <code>resource</code>, 
+   * or <code>defaultValue</code> if the property doesn't exist.
+   */
+  private boolean getOptionalBoolean(ResourceBundle resource, 
+                                     String propertyKey,
+                                     boolean defaultValue) {
+    try {
+      return Boolean.parseBoolean(resource.getString(propertyKey));
     } catch (MissingResourceException ex) {
       return defaultValue;
     }

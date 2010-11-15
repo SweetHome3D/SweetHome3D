@@ -49,7 +49,9 @@ public class HomeFurnitureController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
-      WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, RESIZABLE}
+      WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
+      RESIZABLE, DEFORMABLE}
+  
   /**
    * The possible values for {@linkplain #getPaint() paint type}.
    */
@@ -83,6 +85,7 @@ public class HomeFurnitureController implements Controller {
   private boolean lightPowerEditable;
   private Float   lightPower;
   private boolean resizable;
+  private boolean deformable;
   
   /**
    * Creates the controller of home furniture view with undo support.
@@ -192,6 +195,9 @@ public class HomeFurnitureController implements Controller {
       setModelMirrored(null);
       this.lightPowerEditable = false;
       setLightPower(null);
+      setResizable(true);
+      setDeformable(true);
+      setProportional(false);
     } else {
       // Search the common properties among selected furniture
       HomePieceOfFurniture firstPiece = selectedFurniture.get(0);
@@ -393,6 +399,18 @@ public class HomeFurnitureController implements Controller {
         }
       }
       setResizable(resizable != null && resizable.booleanValue());
+
+      Boolean deformable = firstPiece.isDeformable();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (deformable.booleanValue() != selectedFurniture.get(i).isDeformable()) {
+          deformable = null;
+          break;
+        }
+      }
+      setDeformable(deformable != null && deformable.booleanValue());
+      if (!isDeformable()) {
+        setProportional(true);
+      }
     }
   }  
   
@@ -740,7 +758,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * Sets whether furniture model can be resized or not.
    */
-  public void setResizable(boolean resizable) {
+  private void setResizable(boolean resizable) {
     if (resizable != this.resizable) {
       boolean oldResizable = this.resizable;
       this.resizable = resizable;
@@ -753,6 +771,24 @@ public class HomeFurnitureController implements Controller {
    */
   public boolean isResizable() {
     return this.resizable;
+  }
+
+  /**
+   * Sets whether furniture model can be deformed or not.
+   */
+  private void setDeformable(boolean deformable) {
+    if (deformable != this.deformable) {
+      boolean oldDeformable = this.deformable;
+      this.deformable = deformable;
+      this.propertyChangeSupport.firePropertyChange(Property.DEFORMABLE.name(), oldDeformable, deformable);
+    }
+  }
+
+  /**
+   * Returns whether furniture model can be deformed or not.
+   */
+  public boolean isDeformable() {
+    return this.deformable;
   }
   
   /**

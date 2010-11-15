@@ -108,6 +108,13 @@ public interface PieceOfFurniture {
   public abstract boolean isResizable();
   
   /**
+   * Returns <code>true</code> if this piece is deformable. The width, depth and height
+   * of a deformable piece may change independently from each other.
+   * @since 3.0
+   */
+  public abstract boolean isDeformable();
+
+  /**
    * Returns the price of this piece of furniture or <code>null</code>. 
    */
   public abstract BigDecimal getPrice();

@@ -24,7 +24,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -38,7 +37,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -365,6 +363,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           controller.setProportional(keepProportionsCheckBox.isSelected());
         }
       });
+    this.keepProportionsCheckBox.setSelected(controller.isProportional());
     controller.addPropertyChangeListener(HomeFurnitureController.Property.PROPORTIONAL,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
@@ -507,13 +506,14 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     
     updateSizeComponents(controller);     
-    // Add a listener that enables / disables size fields depending on furniture resizable
-    controller.addPropertyChangeListener(HomeFurnitureController.Property.RESIZABLE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateSizeComponents(controller);     
-          }
-        });
+    // Add a listener that enables / disables size fields depending on furniture resizable and deformable
+    PropertyChangeListener sizeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        updateSizeComponents(controller);     
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.RESIZABLE, sizeListener);
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.DEFORMABLE, sizeListener);
     
     this.dialogTitle = preferences.getLocalizedString(HomeFurniturePanel.class, "homeFurniture.title");
   }
@@ -544,7 +544,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.depthSpinner.setEnabled(editableSize);
     this.heightLabel.setEnabled(editableSize);
     this.heightSpinner.setEnabled(editableSize);
-    this.keepProportionsCheckBox.setEnabled(editableSize);
+    this.keepProportionsCheckBox.setEnabled(editableSize && controller.isDeformable());
     this.mirroredModelCheckBox.setEnabled(editableSize);
   }
   
