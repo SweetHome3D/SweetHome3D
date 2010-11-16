@@ -246,6 +246,9 @@ public class PhotoRenderer {
       float lightPower = light.getPower();
       if (light.isVisible()
           && lightPower > 0f) {
+        float angle = light.getAngle();
+        float cos = (float)Math.cos(angle);
+        float sin = (float)Math.sin(angle);
         for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
           float lightRadius = lightSource.getDiameter() != null 
                   ? lightSource.getDiameter() * light.getWidth() / 2 
@@ -256,10 +259,12 @@ public class PhotoRenderer {
               power * (lightColor >> 16) * (this.homeLightColor >> 16),
               power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
               power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
+          float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
+          float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
           this.sunflow.parameter("center",
-              new Point3(light.getX() - light.getWidth() / 2 + (lightSource.getX() * light.getWidth()),
+              new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
                   light.getElevation() + (lightSource.getZ() * light.getHeight()),
-                  light.getY() + light.getDepth() / 2 - (lightSource.getY() * light.getDepth())));                    
+                  light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos));                    
           this.sunflow.parameter("radius", lightRadius);
           this.sunflow.parameter("samples", 4);
           this.sunflow.light(UUID.randomUUID().toString(), "sphere");
