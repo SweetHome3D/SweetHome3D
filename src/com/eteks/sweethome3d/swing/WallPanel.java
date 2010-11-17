@@ -60,8 +60,8 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner       xEndSpinner;
   private JLabel         yEndLabel;
   private JSpinner       yEndSpinner;
-  private JLabel         lengthLabel;
-  private JSpinner       lengthSpinner;
+  private JLabel         distanceToEndPointLabel;
+  private JSpinner       distanceToEndPointSpinner;
   private JRadioButton   leftSideColorRadioButton;
   private ColorButton    leftSideColorButton;
   private JRadioButton   leftSideTextureRadioButton;
@@ -84,6 +84,8 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner       slopingWallHeightAtEndSpinner;
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
+  private JLabel         arcExtentLabel;
+  private JSpinner       arcExtentSpinner;
   private JLabel         wallOrientationLabel;
   private String         dialogTitle;
 
@@ -202,29 +204,29 @@ public class WallPanel extends JPanel implements DialogView {
         }
       });
 
-    // Create length label and its spinner bound to LENGTH controller property
-    this.lengthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        WallPanel.class, "lengthLabel.text", unitName));
-    final NullableSpinner.NullableSpinnerLengthModel lengthSpinnerModel = 
+    // Create distance to end point label and its spinner bound to DISTANCE_TO_END_POINT controller property
+    this.distanceToEndPointLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "distanceToEndPointLabel.text", unitName));
+    final NullableSpinner.NullableSpinnerLengthModel distanceToEndPointSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
-    this.lengthSpinner = new NullableSpinner(lengthSpinnerModel);
-    lengthSpinnerModel.setNullable(controller.getLength() == null);
-    lengthSpinnerModel.setLength(controller.getLength());
-    final PropertyChangeListener lengthChangeListener = new PropertyChangeListener() {
+    this.distanceToEndPointSpinner = new NullableSpinner(distanceToEndPointSpinnerModel);
+    distanceToEndPointSpinnerModel.setNullable(controller.getLength() == null);
+    distanceToEndPointSpinnerModel.setLength(controller.getLength());
+    final PropertyChangeListener distanceToEndPointChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          lengthSpinnerModel.setNullable(ev.getNewValue() == null);
-          lengthSpinnerModel.setLength((Float)ev.getNewValue());
+          distanceToEndPointSpinnerModel.setNullable(ev.getNewValue() == null);
+          distanceToEndPointSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
-    controller.addPropertyChangeListener(WallController.Property.LENGTH, 
-        lengthChangeListener);
-    lengthSpinnerModel.addChangeListener(new ChangeListener() {
+    controller.addPropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT, 
+        distanceToEndPointChangeListener);
+    distanceToEndPointSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.LENGTH, 
-              lengthChangeListener);
-          controller.setLength(lengthSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.LENGTH, 
-              lengthChangeListener);
+          controller.removePropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT, 
+              distanceToEndPointChangeListener);
+          controller.setLength(distanceToEndPointSpinnerModel.getLength());
+          controller.addPropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT, 
+              distanceToEndPointChangeListener);
         }
       });
 
@@ -536,6 +538,32 @@ public class WallPanel extends JPanel implements DialogView {
         }
       });
     
+    // Create arc extent label and its spinner bound to ARC_EXTENT_IN_DEGREES controller property
+    this.arcExtentLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "arcExtentLabel.text", unitName));
+    final NullableSpinner.NullableSpinnerNumberModel arcExtentSpinnerModel = 
+        new NullableSpinner.NullableSpinnerNumberModel(new Float(0), new Float(-270), new Float(270), new Float(5));
+    this.arcExtentSpinner = new NullableSpinner(arcExtentSpinnerModel);
+    arcExtentSpinnerModel.setNullable(controller.getArcExtentInDegrees() == null);
+    arcExtentSpinnerModel.setValue(controller.getArcExtentInDegrees());
+    final PropertyChangeListener arcExtentChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          arcExtentSpinnerModel.setNullable(ev.getNewValue() == null);
+          arcExtentSpinnerModel.setValue(((Number)ev.getNewValue()).floatValue());
+        }
+      };
+    controller.addPropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES, 
+        arcExtentChangeListener);
+    arcExtentSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES, 
+              arcExtentChangeListener);
+          controller.setArcExtentInDegrees(((Number)arcExtentSpinnerModel.getValue()).floatValue());
+          controller.addPropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES, 
+              arcExtentChangeListener);
+        }
+      });
+    
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(preferences.getLocalizedString(
             WallPanel.class, "wallOrientationLabel.text", 
@@ -629,9 +657,9 @@ public class WallPanel extends JPanel implements DialogView {
       this.yEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
-      this.lengthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "lengthLabel.mnemonic")).getKeyCode());
-      this.lengthLabel.setLabelFor(this.lengthSpinner);
+      this.distanceToEndPointLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "distanceToEndPointLabel.mnemonic")).getKeyCode());
+      this.distanceToEndPointLabel.setLabelFor(this.distanceToEndPointSpinner);
 
       this.leftSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "leftSideColorRadioButton.mnemonic")).getKeyCode());
@@ -667,6 +695,9 @@ public class WallPanel extends JPanel implements DialogView {
       this.thicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "thicknessLabel.mnemonic")).getKeyCode());
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
+      this.arcExtentLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "arcExtentLabel.mnemonic")).getKeyCode());
+      this.arcExtentLabel.setLabelFor(this.arcExtentSpinner);
     }
   }
   
@@ -698,11 +729,11 @@ public class WallPanel extends JPanel implements DialogView {
         preferences.getLocalizedString(WallPanel.class, "endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
-    // Add length label and spinner at the end of second row of endPointPanel
-    endPointPanel.add(this.lengthLabel, new GridBagConstraints(
+    // Add distance label and spinner at the end of second row of endPointPanel
+    endPointPanel.add(this.distanceToEndPointLabel, new GridBagConstraints(
         0, 1, 3, 1, 1, 0, GridBagConstraints.LINE_END, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
-    endPointPanel.add(this.lengthSpinner, new GridBagConstraints(
+    endPointPanel.add(this.distanceToEndPointSpinner, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
 
@@ -783,19 +814,22 @@ public class WallPanel extends JPanel implements DialogView {
         0, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
     // Fifth row
-    JPanel ticknessPanel = new JPanel(new GridBagLayout());
-    ticknessPanel.add(this.thicknessLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 50, 0));
-    if (OperatingSystem.isMacOSX()) {
-      this.thicknessLabel.setHorizontalAlignment(JLabel.TRAILING);
-    }
-    ticknessPanel.add(this.thicknessSpinner, new GridBagConstraints(
+    JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
+    ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    ticknessAndArcExtentPanel.add(this.thicknessSpinner, new GridBagConstraints(
         1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+    ticknessAndArcExtentPanel.add(this.arcExtentLabel, new GridBagConstraints(
+        2, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    ticknessAndArcExtentPanel.add(this.arcExtentSpinner, new GridBagConstraints(
+        3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    add(ticknessPanel, new GridBagConstraints(
-        0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(5, 0, 10, 0), 0, 0));
+    add(ticknessAndArcExtentPanel, new GridBagConstraints(
+        0, 4, 2, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(5, 8, 10, 8), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
         0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
@@ -807,10 +841,14 @@ public class WallPanel extends JPanel implements DialogView {
           public void propertyChange(PropertyChangeEvent ev) {
             startPointPanel.setVisible(controller.isEditablePoints());
             endPointPanel.setVisible(controller.isEditablePoints());
+            arcExtentLabel.setVisible(controller.isEditablePoints());
+            arcExtentSpinner.setVisible(controller.isEditablePoints());
           }
         });
     startPointPanel.setVisible(controller.isEditablePoints());
     endPointPanel.setVisible(controller.isEditablePoints());
+    this.arcExtentLabel.setVisible(controller.isEditablePoints());
+    this.arcExtentSpinner.setVisible(controller.isEditablePoints());
   }
   
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {

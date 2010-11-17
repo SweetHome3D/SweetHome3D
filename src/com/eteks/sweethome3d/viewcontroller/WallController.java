@@ -45,10 +45,10 @@ public class WallController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {X_START, Y_START, X_END, Y_END, LENGTH, EDITABLE_POINTS, 
+  public enum Property {X_START, Y_START, X_END, Y_END, LENGTH, DISTANCE_TO_END_POINT, EDITABLE_POINTS, 
       LEFT_SIDE_COLOR, LEFT_SIDE_PAINT,  RIGHT_SIDE_COLOR, RIGHT_SIDE_PAINT,
       SHAPE, RECTANGULAR_WALL_HEIGHT, SLOPING_WALL_HEIGHT_AT_START, SLOPING_WALL_HEIGHT_AT_END, 
-      THICKNESS, LEFT_SIDE_SHININESS, RIGHT_SIDE_SHININESS}
+      THICKNESS, ARC_EXTENT_IN_DEGREES, LEFT_SIDE_SHININESS, RIGHT_SIDE_SHININESS}
   /**
    * The possible values for {@linkplain #getShape() wall shape}.
    */
@@ -74,6 +74,7 @@ public class WallController implements Controller {
   private Float     xEnd;
   private Float     yEnd;
   private Float     length;
+  private Float     distanceToEndPoint;
   private Integer   leftSideColor;
   private WallPaint leftSidePaint;
   private Float     leftSideShininess;
@@ -85,6 +86,7 @@ public class WallController implements Controller {
   private Float     slopingWallHeightAtStart;
   private Float     sloppingWallHeightAtEnd;
   private Float     thickness;
+  private Float     arcExtentInDegrees;
 
   /**
    * Creates the controller of wall view with undo support.
@@ -198,6 +200,7 @@ public class WallController implements Controller {
       setSlopingWallHeightAtEnd(null);
       setShape(null);
       setThickness(null);
+      setArcExtentInDegrees(null);
     } else {
       // Search the common properties among selected walls
       Wall firstWall = selectedWalls.get(0);
@@ -386,6 +389,22 @@ public class WallController implements Controller {
         }
       }
       setThickness(thickness);
+
+      // Search the common arc extent among walls
+      Float arcExtent = firstWall.getArcExtent();
+      if (arcExtent != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!arcExtent.equals(selectedWalls.get(i).getArcExtent())) {
+            arcExtent = null;
+            break;
+          }
+        }
+      }
+      if (arcExtent != null) {
+        setArcExtentInDegrees((float)Math.toDegrees(arcExtent));
+      } else {
+        setArcExtentInDegrees(selectedWalls.size() == 1 ? new Float(0) : null);
+      }
     }
   }
   
@@ -398,6 +417,7 @@ public class WallController implements Controller {
       this.xStart = xStart;
       this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
       updateLength();
+      updateDistanceToEndPoint();
     }
   }
   
@@ -417,6 +437,7 @@ public class WallController implements Controller {
       this.yStart = yStart;
       this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
       updateLength();
+      updateDistanceToEndPoint();
     }
   }
   
@@ -436,6 +457,7 @@ public class WallController implements Controller {
       this.xEnd = xEnd;
       this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
       updateLength();
+      updateDistanceToEndPoint();
     }
   }
   
@@ -455,6 +477,7 @@ public class WallController implements Controller {
       this.yEnd = yEnd;
       this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
       updateLength();
+      updateDistanceToEndPoint();
     }
   }
   
@@ -474,7 +497,12 @@ public class WallController implements Controller {
     Float xEnd = getXEnd();
     Float yEnd = getYEnd();    
     if (xStart != null && yStart != null && xEnd != null && yEnd != null) {
-      setLength((float)Point2D.distance(xStart, yStart, xEnd, yEnd), false);
+      Wall wall = new Wall(xStart, yStart, xEnd, yEnd, 0);
+      Float arcExtent = getArcExtentInDegrees();
+      if (arcExtent != null) {
+        wall.setArcExtent((float)Math.toRadians(arcExtent));
+      }
+      setLength(wall.getLength(), false);
     } else {
       setLength(null, false);
     }
@@ -487,6 +515,13 @@ public class WallController implements Controller {
     setLength(length, true);
   }
 
+  /**
+   * Returns the edited length.
+   */
+  public Float getLength() {
+    return this.length;
+  }
+  
   /**
    * Sets the edited length and updates the coordinates of the end point if 
    * <code>updateEndPoint</code> is <code>true</code>.
@@ -503,9 +538,14 @@ public class WallController implements Controller {
         Float xEnd = getXEnd();
         Float yEnd = getYEnd();
         if (xStart != null && yStart != null && xEnd != null && yEnd != null && length != null) {
-          double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
-          setXEnd((float)(xStart + length * Math.cos(wallAngle)));
-          setYEnd((float)(yStart - length * Math.sin(wallAngle)));
+          if (getArcExtentInDegrees() != null && getArcExtentInDegrees().floatValue() == 0) {
+            double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
+            setXEnd((float)(xStart + length * Math.cos(wallAngle)));
+            setYEnd((float)(yStart - length * Math.sin(wallAngle)));
+          } else {
+            throw new UnsupportedOperationException(
+                "Computing end point of a round wall from its length not supported");
+          }
         } else {
           setXEnd(null);
           setYEnd(null);
@@ -515,10 +555,59 @@ public class WallController implements Controller {
   }
 
   /**
-   * Returns the edited length.
+   * Updates the edited distance to end point after its coordinates change.
    */
-  public Float getLength() {
-    return this.length;
+  private void updateDistanceToEndPoint() {
+    Float xStart = getXStart();
+    Float yStart = getYStart();
+    Float xEnd = getXEnd();
+    Float yEnd = getYEnd();    
+    if (xStart != null && yStart != null && xEnd != null && yEnd != null) {
+      setDistanceToEndPoint((float)Point2D.distance(xStart, yStart, xEnd, yEnd), false);
+    } else {
+      setDistanceToEndPoint(null, false);
+    }
+  }
+  
+  /**
+   * Sets the edited distance to end point.
+   */
+  public void setDistanceToEndPoint(Float distanceToEndPoint) {
+    setDistanceToEndPoint(distanceToEndPoint, true);
+  }
+
+  /**
+   * Sets the edited distance to end point and updates the coordinates of the end point if 
+   * <code>updateEndPoint</code> is <code>true</code>.
+   */
+  private void setDistanceToEndPoint(Float distanceToEndPoint, boolean updateEndPoint) {
+    if (distanceToEndPoint != this.distanceToEndPoint) {
+      Float oldDistance = this.distanceToEndPoint;
+      this.distanceToEndPoint = distanceToEndPoint;
+      this.propertyChangeSupport.firePropertyChange(Property.DISTANCE_TO_END_POINT.name(), oldDistance, distanceToEndPoint);
+      
+      if (updateEndPoint) {
+        Float xStart = getXStart();
+        Float yStart = getYStart();
+        Float xEnd = getXEnd();
+        Float yEnd = getYEnd();
+        if (xStart != null && yStart != null && xEnd != null && yEnd != null && distanceToEndPoint != null) {
+          double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
+          setXEnd((float)(xStart + distanceToEndPoint * Math.cos(wallAngle)));
+          setYEnd((float)(yStart - distanceToEndPoint * Math.sin(wallAngle)));
+        } else {
+          setXEnd(null);
+          setYEnd(null);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the edited distance to end point.
+   */
+  public Float getDistanceToEndPoint() {
+    return this.distanceToEndPoint;
   }
   
   /**
@@ -750,6 +839,24 @@ public class WallController implements Controller {
   }
   
   /**
+   * Sets the edited arc extent.
+   */
+  public void setArcExtentInDegrees(Float arcExtentInDegrees) {
+    if (arcExtentInDegrees != this.arcExtentInDegrees) {
+      Float oldArcExtent = this.arcExtentInDegrees;
+      this.arcExtentInDegrees = arcExtentInDegrees;
+      this.propertyChangeSupport.firePropertyChange(Property.ARC_EXTENT_IN_DEGREES.name(), oldArcExtent, arcExtentInDegrees);
+    }
+  }
+  
+  /**
+   * Returns the edited arc extent.
+   */
+  public Float getArcExtentInDegrees() {
+    return this.arcExtentInDegrees;
+  }
+  
+  /**
    * Controls the modification of selected walls in edited home.
    */
   public void modifyWalls() {
@@ -771,6 +878,10 @@ public class WallController implements Controller {
           ? getRightSideTextureController().getTexture() : null;
       Float rightSideShininess = getRightSideShininess();
       Float thickness = getThickness();
+      Float arcExtent = getArcExtentInDegrees();
+      if (arcExtent != null) {
+        arcExtent = (float)Math.toRadians(arcExtent);
+      }
       Float height;
       if (getShape() == WallShape.SLOPING_WALL) {
         height = getSlopingWallHeightAtStart();
@@ -797,14 +908,14 @@ public class WallController implements Controller {
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
           leftSideColor, leftSideTexture, leftSideShininess, 
           rightSideColor, rightSideTexture, rightSideShininess,
-          height, heightAtEnd, thickness);      
+          height, heightAtEnd, thickness, arcExtent);      
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, 
             this.preferences, oldSelection,
             modifiedWalls, xStart, yStart, xEnd, yEnd,
             leftSideColor, leftSideTexture, leftSideShininess, 
             rightSideColor, rightSideTexture, rightSideShininess,
-            thickness, height, heightAtEnd);
+            height, heightAtEnd, thickness, arcExtent);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -829,9 +940,10 @@ public class WallController implements Controller {
     private final Integer          rightSideColor;
     private final HomeTexture      rightSideTexture;
     private final Float            rightSideShininess;
-    private final Float            thickness;
     private final Float            height;
     private final Float            heightAtEnd;
+    private final Float            thickness;
+    private final Float            arcExtent;
 
     private WallsModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
@@ -845,26 +957,28 @@ public class WallController implements Controller {
                                           Integer rightSideColor,
                                           HomeTexture rightSideTexture,
                                           Float rightSideShininess,
-                                          Float thickness,
                                           Float height,
-                                          Float heightAtEnd) {
+                                          Float heightAtEnd,
+                                          Float thickness,
+                                          Float arcExtent) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
+      this.modifiedWalls = modifiedWalls;
       this.xStart = xStart;
       this.yStart = yStart;
       this.xEnd = xEnd;
       this.yEnd = yEnd;
-      this.leftSideShininess = leftSideShininess;
-      this.rightSideShininess = rightSideShininess;
-      this.thickness = thickness;
-      this.rightSideTexture = rightSideTexture;
-      this.leftSideTexture = leftSideTexture;
-      this.height = height;
-      this.modifiedWalls = modifiedWalls;
-      this.heightAtEnd = heightAtEnd;
       this.leftSideColor = leftSideColor;
+      this.rightSideTexture = rightSideTexture;
+      this.leftSideShininess = leftSideShininess;
       this.rightSideColor = rightSideColor;
+      this.leftSideTexture = leftSideTexture;
+      this.rightSideShininess = rightSideShininess;
+      this.height = height;
+      this.heightAtEnd = heightAtEnd;
+      this.thickness = thickness;
+      this.arcExtent = arcExtent;
     }
 
     @Override
@@ -880,7 +994,7 @@ public class WallController implements Controller {
       doModifyWalls(this.modifiedWalls, this.xStart, this.yStart, this.xEnd, this.yEnd, 
           this.leftSideColor, this.leftSideTexture, this.leftSideShininess, 
           this.rightSideColor, this.rightSideTexture, this.rightSideShininess,
-          this.height, this.heightAtEnd, this.thickness); 
+          this.height, this.heightAtEnd, this.thickness, this.arcExtent); 
       this.home.setSelectedItems(this.oldSelection); 
     }
 
@@ -897,7 +1011,7 @@ public class WallController implements Controller {
                                     Float xStart, Float yStart, Float xEnd, Float yEnd,
                                     Integer leftSideColor, HomeTexture leftSideTexture, Float leftSideShininess,
                                     Integer rightSideColor, HomeTexture rightSideTexture, Float rightSideShininess,
-                                    Float height, Float heightAtEnd, Float thickness) {
+                                    Float height, Float heightAtEnd, Float thickness, Float arcExtent) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
@@ -931,9 +1045,16 @@ public class WallController implements Controller {
           }
         }
       }
-      wall.setThickness(thickness != null 
-          ? thickness.floatValue() 
-          : wall.getThickness());
+      if (thickness != null) {
+        wall.setThickness(thickness.floatValue());
+      }
+      if (arcExtent != null) {
+        if (arcExtent.floatValue() == 0) {
+          wall.setArcExtent(null);
+        } else {
+          wall.setArcExtent(arcExtent);
+        }
+      }
     }
   }
 
@@ -951,9 +1072,10 @@ public class WallController implements Controller {
       wall.setRightSideColor(modifiedWall.getRightSideColor());
       wall.setRightSideTexture(modifiedWall.getRightSideTexture());
       wall.setRightSideShininess(modifiedWall.getRightSideShininess());
-      wall.setThickness(modifiedWall.getThickness());
       wall.setHeight(modifiedWall.getHeight());
       wall.setHeightAtEnd(modifiedWall.getHeightAtEnd());
+      wall.setThickness(modifiedWall.getThickness());
+      wall.setArcExtent(modifiedWall.getArcExtent());
     }
   }
   
@@ -1025,9 +1147,10 @@ public class WallController implements Controller {
     private final Integer     rightSideColor;
     private final HomeTexture rightSideTexture;
     private final float       rightSideShininess;
-    private final float       thickness;
     private final Float       height;
     private final Float       heightAtEnd;
+    private final float       thickness;
+    private final Float       arcExtent;
 
     public ModifiedWall(Wall wall) {
       this.wall = wall;
@@ -1041,15 +1164,40 @@ public class WallController implements Controller {
       this.rightSideColor = wall.getRightSideColor();
       this.rightSideTexture = wall.getRightSideTexture();
       this.rightSideShininess = wall.getRightSideShininess();
-      this.thickness = wall.getThickness();
       this.height = wall.getHeight();
       this.heightAtEnd = wall.getHeightAtEnd();
+      this.thickness = wall.getThickness();
+      this.arcExtent = wall.getArcExtent();
     }
 
     public Wall getWall() {
       return this.wall;
     }
-
+    
+    public float getXStart() {
+      return this.xStart;
+    }
+    
+    public float getXEnd() {
+      return this.xEnd;
+    }
+    
+    public float getYStart() {
+      return this.yStart;
+    }    
+    
+    public float getYEnd() {
+      return this.yEnd;
+    }
+    
+    public Float getHeight() {
+      return this.height;
+    }
+    
+    public Float getHeightAtEnd() {
+      return this.heightAtEnd;
+    }
+    
     public Integer getLeftSideColor() {
       return this.leftSideColor;
     }
@@ -1073,33 +1221,13 @@ public class WallController implements Controller {
     public float getRightSideShininess() {
       return this.rightSideShininess;
     }
-
+    
     public float getThickness() {
       return this.thickness;
     }
 
-    public float getXEnd() {
-      return this.xEnd;
-    }
-
-    public float getXStart() {
-      return this.xStart;
-    }
-
-    public float getYEnd() {
-      return this.yEnd;
-    }
-
-    public float getYStart() {
-      return this.yStart;
-    }    
-
-    public Float getHeight() {
-      return this.height;
-    }
-    
-    public Float getHeightAtEnd() {
-      return this.heightAtEnd;
+    public float getArcExtent() {
+      return this.arcExtent;
     }
   }
 }
