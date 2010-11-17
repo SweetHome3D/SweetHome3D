@@ -2377,7 +2377,10 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
-      if (piece.isTopLeftPointAt(x, y, margin)) {
+      if (piece.isTopLeftPointAt(x, y, margin)
+          // Keep a free zone around piece center
+          && Math.abs(x - piece.getX()) > 1 
+          && Math.abs(y - piece.getY()) > 1) {
         return piece;
       }
     } 
@@ -2395,7 +2398,10 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
-      if (piece.isTopRightPointAt(x, y, margin)) {
+      if (piece.isTopRightPointAt(x, y, margin)
+          // Keep a free zone around piece center
+          && Math.abs(x - piece.getX()) > 1 
+          && Math.abs(y - piece.getY()) > 1) {
         return piece;
       }
     } 
@@ -2415,7 +2421,10 @@ public class PlanController extends FurnitureController implements Controller {
       float margin = PIXEL_MARGIN / getScale();
       if (piece.isResizable()
           && isItemResizable(piece) 
-          && piece.isBottomLeftPointAt(x, y, margin)) {
+          && piece.isBottomLeftPointAt(x, y, margin)
+          // Keep a free zone around piece center
+          && Math.abs(x - piece.getX()) > 1 
+          && Math.abs(y - piece.getY()) > 1) {
         return piece;
       }
     } 
@@ -2436,7 +2445,10 @@ public class PlanController extends FurnitureController implements Controller {
       float margin = PIXEL_MARGIN / getScale();
       if (piece.isResizable()
           && isItemResizable(piece) 
-          && piece.isBottomRightPointAt(x, y, margin)) {
+          && piece.isBottomRightPointAt(x, y, margin)
+          // Keep a free zone around piece center
+          && Math.abs(x - piece.getX()) > 1 
+          && Math.abs(y - piece.getY()) > 1) {
         return piece;
       }
     } 
@@ -2453,7 +2465,10 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomeLight) {
       HomeLight light = (HomeLight)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
-      if (light.isBottomLeftPointAt(x, y, margin)) {
+      if (light.isBottomLeftPointAt(x, y, margin)
+          // Keep a free zone around piece center
+          && Math.abs(x - light.getX()) > 1 
+          && Math.abs(y - light.getY()) > 1) {
         return light;
       }
     } 
