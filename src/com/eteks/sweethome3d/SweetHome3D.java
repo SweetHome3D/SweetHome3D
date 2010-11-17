@@ -374,8 +374,12 @@ public class SweetHome3D extends HomeApplication {
               if (singleInstanceService != null) {
                 singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
               }
-              // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
-              System.exit(0);
+              // Exit once current events are managed (under Mac OS X, exit is managed by MacOSXConfiguration)
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    System.exit(0);
+                  }
+                });
             }
             break;
         }
