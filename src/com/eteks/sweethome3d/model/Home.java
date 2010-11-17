@@ -779,6 +779,7 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Returns whether this home was recovered or not.
+   * @since 3.0
    */
   public boolean isRecovered() {
     return this.recovered;
@@ -786,6 +787,7 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Sets whether this home was recovered or not and fires a <code>PropertyChangeEvent</code>.
+   * @since 3.0
    */
   public void setRecovered(boolean recovered) {
     if (recovered != this.recovered) {
