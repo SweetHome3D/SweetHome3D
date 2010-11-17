@@ -231,7 +231,7 @@ public class Home implements Serializable, Cloneable {
     this.rooms = new ArrayList<Room>();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.labels = new ArrayList<Label>();
-    this.compass = new Compass(50, 50, 100);
+    this.compass = new Compass(-100, 50, 100);
     // Let compass be visible only on new homes
     this.compass.setVisible(newHome);
     this.visualProperties = new HashMap<String, Object>();
