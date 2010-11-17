@@ -542,6 +542,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (furnitureTopViewIconsCache != null
               && (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
+                  || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName())
                   || (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
                       || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
                       || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName()))
