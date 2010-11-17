@@ -54,7 +54,7 @@ public class Home implements Serializable, Cloneable {
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS};
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
@@ -72,6 +72,7 @@ public class Home implements Serializable, Cloneable {
   private String                                      name;
   private float                                       wallHeight;
   private transient boolean                           modified;
+  private transient boolean                           recovered;
   private BackgroundImage                             backgroundImage;
   private ObserverCamera                              observerCamera;
   private Camera                                      topCamera;
@@ -773,6 +774,24 @@ public class Home implements Serializable, Cloneable {
       this.modified = modified;
       this.propertyChangeSupport.firePropertyChange(
           Property.MODIFIED.name(), !modified, modified);
+    }
+  }
+  
+  /**
+   * Returns whether this home was recovered or not.
+   */
+  public boolean isRecovered() {
+    return this.recovered;
+  }
+
+  /**
+   * Sets whether this home was recovered or not and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setRecovered(boolean recovered) {
+    if (recovered != this.recovered) {
+      this.recovered = recovered;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.RECOVERED.name(), !recovered, recovered);
     }
   }
   

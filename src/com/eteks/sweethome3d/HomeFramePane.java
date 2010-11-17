@@ -209,16 +209,14 @@ public class HomeFramePane extends JRootPane implements View {
         };
       });
     // Update title when the name or the modified state of home changes
-    home.addPropertyChangeListener(Home.Property.NAME, new PropertyChangeListener () {
+    PropertyChangeListener frameTitleChangeListener = new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
           updateFrameTitle(frame, home, application);
         }
-      });
-    home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
-        public void propertyChange(PropertyChangeEvent ev) {
-          updateFrameTitle(frame, home, application);
-        }
-      });
+      };
+    home.addPropertyChangeListener(Home.Property.NAME, frameTitleChangeListener);
+    home.addPropertyChangeListener(Home.Property.MODIFIED, frameTitleChangeListener);
+    home.addPropertyChangeListener(Home.Property.RECOVERED, frameTitleChangeListener);
   }
 
   /**
@@ -322,10 +320,14 @@ public class HomeFramePane extends JRootPane implements View {
           homeName, ContentManager.ContentType.SWEET_HOME_3D);
     }
     
+    if (home.isRecovered()) {
+      homeDisplayedName += " " + application.getUserPreferences().getLocalizedString(HomeFramePane.class, "recovered");
+    }
+    
     String title = homeDisplayedName;
     if (OperatingSystem.isMacOSX()) {
       // Use black indicator in close icon for a modified home 
-      Boolean homeModified = Boolean.valueOf(home.isModified());
+      Boolean homeModified = Boolean.valueOf(home.isModified() || home.isRecovered());
       // Set Mac OS X 10.4 property for backward compatibility
       putClientProperty("windowModified", homeModified);
       
@@ -342,7 +344,7 @@ public class HomeFramePane extends JRootPane implements View {
       }
     } else {
       title += " - " + application.getName(); 
-      if (home.isModified()) {
+      if (home.isModified() || home.isRecovered()) {
         title = "* " + title;
       }
     }

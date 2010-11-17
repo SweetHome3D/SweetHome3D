@@ -1461,6 +1461,7 @@ public class HomeController implements Controller {
     // Create a task that deletes home and run postCloseTask
     Runnable closeTask = new Runnable() {
         public void run() {
+          home.setRecovered(false);
           application.deleteHome(home);
           if (postCloseTask != null) {
             postCloseTask.run();
@@ -1468,7 +1469,7 @@ public class HomeController implements Controller {
         }
       };
       
-    if (this.home.isModified()) {
+    if (this.home.isModified()  || this.home.isRecovered()) {
       switch (getView().confirmSave(this.home.getName())) {
         case SAVE   : save(HomeRecorder.Type.DEFAULT, closeTask); // Falls through
         case CANCEL : return;
@@ -1577,6 +1578,7 @@ public class HomeController implements Controller {
           home.setName(homeName);
           saveUndoLevel = 0;
           home.setModified(false);
+          home.setRecovered(false);
           // Update recent homes list
           List<String> recentHomes = new ArrayList<String>(preferences.getRecentHomes());
           int homeNameIndex = recentHomes.indexOf(homeName);
@@ -1762,7 +1764,7 @@ public class HomeController implements Controller {
    */
   public void exit() {
     for (Home home : this.application.getHomes()) {
-      if (home.isModified()) {
+      if (home.isModified() || home.isRecovered()) {
         if (getView().confirmExit()) {
           break;
         } else {
@@ -1772,6 +1774,7 @@ public class HomeController implements Controller {
     }
     // Remove all homes from application
     for (Home home : this.application.getHomes()) {
+      home.setRecovered(false);
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
