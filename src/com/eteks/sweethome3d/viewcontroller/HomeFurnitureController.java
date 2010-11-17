@@ -49,13 +49,18 @@ public class HomeFurnitureController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
-      WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
+      WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, SHININESS, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
       RESIZABLE, DEFORMABLE}
   
   /**
    * The possible values for {@linkplain #getPaint() paint type}.
    */
   public enum FurniturePaint {DEFAULT, COLORED, TEXTURED} 
+
+  /**
+   * The possible values for {@linkplain #getShininess() shininess type}.
+   */
+  public enum FurnitureShininess {DEFAULT, MATT, SHINY} 
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -77,7 +82,8 @@ public class HomeFurnitureController implements Controller {
   private Float   height;
   private boolean proportional;
   private Integer color;
-  private FurniturePaint   furniturePaint;
+  private FurniturePaint     paint;
+  private FurnitureShininess shininess;
   private Boolean visible;
   private Boolean modelMirrored;
   private Boolean basePlanItem;
@@ -191,6 +197,7 @@ public class HomeFurnitureController implements Controller {
         textureController.setTexture(null);
       }
       setPaint(null);
+      setShininess(null);
       setVisible(null);
       setModelMirrored(null);
       this.lightPowerEditable = false;
@@ -350,6 +357,22 @@ public class HomeFurnitureController implements Controller {
       } else {
         setPaint(null);
       }
+
+      Float firstPieceShininess = firstPiece.getShininess();
+      FurnitureShininess shininess = firstPieceShininess == null 
+          ? FurnitureShininess.DEFAULT
+          : (firstPieceShininess.floatValue() == 0
+              ? FurnitureShininess.MATT
+              : FurnitureShininess.SHINY);
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        HomePieceOfFurniture piece = selectedFurniture.get(i);
+        if (firstPieceShininess != piece.getShininess()
+            || (firstPieceShininess != null && !firstPieceShininess.equals(piece.getShininess()))) {
+          shininess = null;
+          break;
+        }
+      }
+      setShininess(shininess);
 
       Boolean visible = firstPiece.isVisible();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -679,11 +702,11 @@ public class HomeFurnitureController implements Controller {
   /**
    * Sets whether the piece is colored, textured or unknown painted.
    */
-  public void setPaint(FurniturePaint furniturePaint) {
-    if (furniturePaint != this.furniturePaint) {
-      FurniturePaint oldPaint = this.furniturePaint;
-      this.furniturePaint = furniturePaint;
-      this.propertyChangeSupport.firePropertyChange(Property.PAINT.name(), oldPaint, furniturePaint);
+  public void setPaint(FurniturePaint paint) {
+    if (paint != this.paint) {
+      FurniturePaint oldPaint = this.paint;
+      this.paint = paint;
+      this.propertyChangeSupport.firePropertyChange(Property.PAINT.name(), oldPaint, paint);
     }
   }
   
@@ -691,7 +714,25 @@ public class HomeFurnitureController implements Controller {
    * Returns whether the piece is colored, textured or unknown painted.
    */
   public FurniturePaint getPaint() {
-    return this.furniturePaint;
+    return this.paint;
+  }
+
+  /**
+   * Sets whether the piece shininess is the default one, matt, shiny or unknown.
+   */
+  public void setShininess(FurnitureShininess shininess) {
+    if (shininess != this.shininess) {
+      FurnitureShininess oldShininess = this.shininess;
+      this.shininess = shininess;
+      this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
+    }
+  }
+  
+  /**
+   * Returns whether the piece is shininess is the default one, matt, shiny or unknown.
+   */
+  public FurnitureShininess getShininess() {
+    return this.shininess;
   }
 
   /**
@@ -819,6 +860,11 @@ public class HomeFurnitureController implements Controller {
       } else {
         texture = null;
       }
+      boolean defaultShininess = getShininess() == FurnitureShininess.DEFAULT;
+      Float shininess = getShininess() == FurnitureShininess.SHINY
+          ? new Float(0.5f)
+          : (getShininess() == FurnitureShininess.MATT
+              ? new Float(0) : null);
       Boolean visible = getVisible();
       Boolean modelMirrored = getModelMirrored();
       Float lightPower = getLightPower();
@@ -840,13 +886,13 @@ public class HomeFurnitureController implements Controller {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, name, nameVisible, x, y, elevation, angle, basePlanItem, width, depth, height, 
-          defaultColorsAndTextures, color, texture, visible, modelMirrored, lightPower);
+          defaultColorsAndTextures, color, texture, defaultShininess, shininess, visible, modelMirrored, lightPower);
       List<Selectable> newSelection = this.home.getSelectedItems(); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, newSelection, modifiedFurniture, 
             name, nameVisible, x, y, elevation, angle, basePlanItem, width, depth, height, 
-            defaultColorsAndTextures, color, texture, visible, modelMirrored, lightPower);
+            defaultColorsAndTextures, color, texture, defaultShininess, shininess, visible, modelMirrored, lightPower);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -875,6 +921,8 @@ public class HomeFurnitureController implements Controller {
     private final boolean                     defaultColorsAndTextures;
     private final Integer                     color;
     private final HomeTexture                 texture;
+    private final boolean                     defaultShininess;
+    private final Float                       shininess;
     private final Boolean                     visible;
     private final Boolean                     modelMirrored;
     private final Float                       lightPower;
@@ -887,8 +935,8 @@ public class HomeFurnitureController implements Controller {
                                               String name, Boolean nameVisible, 
                                               Float x, Float y, Float elevation, Float angle, Boolean basePlanItem, 
                                               Float width, Float depth, Float height,
-                                              boolean defaultColorsAndTextures,
-                                              Integer color, HomeTexture texture,
+                                              boolean defaultColorsAndTextures, Integer color, HomeTexture texture,
+                                              boolean defaultShininess, Float shininess,
                                               Boolean visible,
                                               Boolean modelMirrored,
                                               Float lightPower) {
@@ -910,6 +958,8 @@ public class HomeFurnitureController implements Controller {
       this.defaultColorsAndTextures = defaultColorsAndTextures;
       this.color = color;
       this.texture = texture;
+      this.defaultShininess = defaultShininess;
+      this.shininess = shininess;
       this.visible = visible;
       this.modelMirrored = modelMirrored;
       this.lightPower = lightPower;
@@ -929,6 +979,7 @@ public class HomeFurnitureController implements Controller {
           this.name, this.nameVisible, this.x, this.y, this.elevation, 
           this.angle, this.basePlanItem, this.width, this.depth, this.height, 
           this.defaultColorsAndTextures, this.color, this.texture, 
+          this.defaultShininess, this.shininess,
           this.visible, this.modelMirrored, this.lightPower); 
       home.setSelectedItems(this.newSelection); 
     }
@@ -947,8 +998,8 @@ public class HomeFurnitureController implements Controller {
                                         String name, Boolean nameVisible, 
                                         Float x, Float y, Float elevation, Float angle, Boolean basePlanItem, 
                                         Float width, Float depth, Float height, 
-                                        boolean defaultColorsAndTextures, 
-                                        Integer color, HomeTexture texture,
+                                        boolean defaultColorsAndTextures, Integer color, HomeTexture texture,
+                                        boolean defaultShininess, Float shininess,
                                         Boolean visible, Boolean modelMirrored, 
                                         Float lightPower) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
@@ -998,6 +1049,11 @@ public class HomeFurnitureController implements Controller {
         piece.setTexture(null);
         piece.setColor(color);
       }
+      if (defaultShininess) {
+        piece.setShininess(null);
+      } else if (shininess != null) {
+        piece.setShininess(shininess);
+      }
       if (visible != null) {
         piece.setVisible(visible);
       }
@@ -1033,6 +1089,7 @@ public class HomeFurnitureController implements Controller {
     private final float                height;
     private final Integer              color;
     private final HomeTexture          texture;
+    private final Float                shininess;
     private final boolean              visible;
     private final boolean              modelMirrored;
 
@@ -1050,6 +1107,7 @@ public class HomeFurnitureController implements Controller {
       this.height = piece.getHeight();
       this.color = piece.getColor();
       this.texture = piece.getTexture();
+      this.shininess = piece.getShininess();
       this.visible = piece.isVisible();
       this.modelMirrored = piece.isModelMirrored();
     }
@@ -1074,6 +1132,7 @@ public class HomeFurnitureController implements Controller {
       }
       this.piece.setColor(this.color);
       this.piece.setTexture(this.texture);
+      this.piece.setShininess(this.shininess);
       this.piece.setVisible(this.visible);
     }
   }

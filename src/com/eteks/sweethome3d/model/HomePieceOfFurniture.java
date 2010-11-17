@@ -50,7 +50,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -216,6 +216,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private boolean                doorOrWindow;
   private Integer                color;
   private HomeTexture            texture;
+  private Float                  shininess;
   private float [][]             modelRotation;
   private boolean                backFaceShown;
   private boolean                resizable;
@@ -610,6 +611,29 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       HomeTexture oldTexture = this.texture;
       this.texture = texture;
       this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
+    }
+  }
+
+  /**
+   * Returns the shininess of this piece of furniture.
+   * @return a value between 0 (matt) and 1 (very shiny) or <code>null</code> if piece shininess is unchanged.
+   * @since 3.0
+   */
+  public Float getShininess() {
+    return this.shininess;
+  }
+  
+  /**
+   * Sets the shininess of this piece of furniture or <code>null</code> if piece shininess is unchanged. 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 3.0
+   */
+  public void setShininess(Float shininess) {
+    if (shininess != this.shininess
+        || (shininess != null && !shininess.equals(this.shininess))) {
+      Float oldShininess = this.shininess;
+      this.shininess = shininess;
+      this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
     }
   }
 

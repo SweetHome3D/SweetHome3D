@@ -75,11 +75,14 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private JSpinner                heightSpinner;
   private JCheckBox               keepProportionsCheckBox;
   private NullableCheckBox        mirroredModelCheckBox;
-  private JRadioButton            defaultRadioButton;
+  private JRadioButton            defaultColorAndTextureRadioButton;
   private JRadioButton            colorRadioButton;
   private ColorButton             colorButton;
   private JRadioButton            textureRadioButton;
   private JComponent              textureComponent;
+  private JRadioButton            defaultShininessRadioButton;
+  private JRadioButton            mattRadioButton;
+  private JRadioButton            shinyRadioButton;
   private NullableCheckBox        visibleCheckBox;
   private JLabel                  lightPowerLabel;
   private JSpinner                lightPowerSpinner;
@@ -395,11 +398,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create radio buttons bound to COLOR and TEXTURE controller properties
-    this.defaultRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        HomeFurniturePanel.class, "defaultRadioButton.text"));
-    this.defaultRadioButton.addChangeListener(new ChangeListener() {
+    this.defaultColorAndTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "defaultColorAndTextureRadioButton.text"));
+    this.defaultColorAndTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          if (defaultRadioButton.isSelected()) {
+          if (defaultColorAndTextureRadioButton.isSelected()) {
             controller.setPaint(HomeFurnitureController.FurniturePaint.DEFAULT);
           }
         }
@@ -407,7 +410,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(HomeFurnitureController.Property.PAINT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateRadioButtons(controller);
+            updateColorAndTextureRadioButtons(controller);
           }
         });
     this.colorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
@@ -454,10 +457,51 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
 
     ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(this.defaultRadioButton);
+    buttonGroup.add(this.defaultColorAndTextureRadioButton);
     buttonGroup.add(this.colorRadioButton);
     buttonGroup.add(this.textureRadioButton);
-    updateRadioButtons(controller);
+    updateColorAndTextureRadioButtons(controller);
+
+    // Create radio buttons bound to SHININESS controller properties
+    this.defaultShininessRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "defaultShininessRadioButton.text"));
+    this.defaultShininessRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (defaultShininessRadioButton.isSelected()) {
+            controller.setShininess(HomeFurnitureController.FurnitureShininess.DEFAULT);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.SHININESS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateShininessRadioButtons(controller);
+          }
+        });
+    this.mattRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "mattRadioButton.text"));
+    this.mattRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (mattRadioButton.isSelected()) {
+            controller.setShininess(HomeFurnitureController.FurnitureShininess.MATT);
+          }
+        }
+      });
+    this.shinyRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "shinyRadioButton.text"));
+    this.shinyRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (shinyRadioButton.isSelected()) {
+            controller.setShininess(HomeFurnitureController.FurnitureShininess.SHINY);
+          }
+        }
+      });
+    
+    buttonGroup = new ButtonGroup();
+    buttonGroup.add(this.defaultShininessRadioButton);
+    buttonGroup.add(this.mattRadioButton);
+    buttonGroup.add(this.shinyRadioButton);
+    updateShininessRadioButtons(controller);
 
     // Create visible check box bound to VISIBLE controller property
     this.visibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
@@ -519,17 +563,32 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   }
   
   /**
-   * Updates radio buttons. 
+   * Updates color and texture radio buttons. 
    */
-  private void updateRadioButtons(HomeFurnitureController controller) {
+  private void updateColorAndTextureRadioButtons(HomeFurnitureController controller) {
     if (controller.getPaint() == HomeFurnitureController.FurniturePaint.DEFAULT) {
-      this.defaultRadioButton.setSelected(true);
+      this.defaultColorAndTextureRadioButton.setSelected(true);
     } else if (controller.getPaint() == HomeFurnitureController.FurniturePaint.COLORED) {
       this.colorRadioButton.setSelected(true);
     } else if (controller.getPaint() == HomeFurnitureController.FurniturePaint.TEXTURED) {
       this.textureRadioButton.setSelected(true);
     } else { // null
-      SwingTools.deselectAllRadioButtons(this.defaultRadioButton, this.colorRadioButton, this.textureRadioButton);
+      SwingTools.deselectAllRadioButtons(this.defaultColorAndTextureRadioButton, this.colorRadioButton, this.textureRadioButton);
+    }
+  }
+
+  /**
+   * Updates shininess radio buttons. 
+   */
+  private void updateShininessRadioButtons(HomeFurnitureController controller) {
+    if (controller.getShininess() == HomeFurnitureController.FurnitureShininess.DEFAULT) {
+      this.defaultShininessRadioButton.setSelected(true);
+    } else if (controller.getShininess() == HomeFurnitureController.FurnitureShininess.MATT) {
+      this.mattRadioButton.setSelected(true);
+    } else if (controller.getShininess() == HomeFurnitureController.FurnitureShininess.SHINY) {
+      this.shinyRadioButton.setSelected(true);
+    } else { // null
+      SwingTools.deselectAllRadioButtons(this.defaultShininessRadioButton, this.mattRadioButton, this.shinyRadioButton);
     }
   }
 
@@ -585,12 +644,18 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           HomeFurniturePanel.class, "basePlanItemCheckBox.mnemonic")).getKeyCode());;
       this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "mirroredModelCheckBox.mnemonic")).getKeyCode());
-      this.defaultRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(HomeFurniturePanel.class, "defaultRadioButton.mnemonic")).getKeyCode());
+      this.defaultColorAndTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "defaultColorAndTextureRadioButton.mnemonic")).getKeyCode());
       this.colorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(HomeFurniturePanel.class, "colorRadioButton.mnemonic")).getKeyCode());
       this.textureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(HomeFurniturePanel.class, "textureRadioButton.mnemonic")).getKeyCode());
+      this.defaultShininessRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "defaultShininessRadioButton.mnemonic")).getKeyCode());
+      this.mattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "mattRadioButton.mnemonic")).getKeyCode());
+      this.shinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "shinyRadioButton.mnemonic")).getKeyCode());
       this.visibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "visibleCheckBox.mnemonic")).getKeyCode());
       if (this.lightPowerLabel != null) {
@@ -689,30 +754,45 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(sizePanel, new GridBagConstraints(
         1, 1, 2, 1, 1, 0, labelAlignment, 
         GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
-    // Color and texture panel
+    // Color and Texture panel
     JPanel colorAndTexturePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "colorAndTexturePanel.title"));
-    colorAndTexturePanel.add(this.defaultRadioButton, new GridBagConstraints(
+    colorAndTexturePanel.add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     colorAndTexturePanel.add(this.colorRadioButton, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     colorAndTexturePanel.add(this.colorButton, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     if (this.textureComponent != null) {
       colorAndTexturePanel.add(this.textureRadioButton, new GridBagConstraints(
-          3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
       colorAndTexturePanel.add(this.textureComponent, new GridBagConstraints(
-          4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+          1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
     }
     add(colorAndTexturePanel, new GridBagConstraints(
-        0, 2, 3, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
+        0, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
+    // Shininess panel
+    JPanel shininessPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "shininessPanel.title"));
+    shininessPanel.add(this.defaultShininessRadioButton, new GridBagConstraints(
+        0, 0, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    shininessPanel.add(this.mattRadioButton, new GridBagConstraints(
+        0, 1, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    shininessPanel.add(this.shinyRadioButton, new GridBagConstraints(
+        0, 2, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    add(shininessPanel, new GridBagConstraints(
+        1, 2, 2, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     // Last row
     add(this.visibleCheckBox, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 

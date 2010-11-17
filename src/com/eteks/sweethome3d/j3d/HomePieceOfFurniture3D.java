@@ -64,18 +64,15 @@ import com.sun.j3d.utils.geometry.Box;
  * Root of piece of furniture branch.
  */
 public class HomePieceOfFurniture3D extends Object3DBranch {
-  private static final Material               DEFAULT_TEXTURED_SHAPE_MATERIAL = new Material();
   private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
-  private static final PolygonAttributes DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
+  private static final PolygonAttributes      DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0);
   private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
   private final Home home;
   
   static {
-    DEFAULT_TEXTURED_SHAPE_MATERIAL.setShininess(1);
-    DEFAULT_TEXTURED_SHAPE_MATERIAL.setSpecularColor(0, 0, 0);
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
@@ -206,16 +203,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     Node filledModelNode = getFilledModelNode();
     if (piece.getColor() != null) {
-      Integer color = piece.getColor();
-      Material material = getMaterial(color, color, 0);
-      setMaterialAndTexture(filledModelNode, material, null, false, null, null, new HashSet<Appearance>());
+      setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), 
+          false, null, null, new HashSet<Appearance>());
     } else if (piece.getTexture() != null) {
-      setMaterialAndTexture(filledModelNode, null, piece.getTexture(), waitTextureLoadingEnd, 
-          new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()),
+      setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(),
+          waitTextureLoadingEnd, new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()),
           ModelManager.getInstance().getSize(((Group)filledModelNode).getChild(0)), new HashSet<Appearance>());
     } else {
       // Set default material and texture of model
-      setMaterialAndTexture(filledModelNode, null, null, false, null, null, new HashSet<Appearance>());
+      setColorAndTexture(filledModelNode, null, null, piece.getShininess(), 
+          false, null, null, new HashSet<Appearance>());
     }
   }
 
@@ -424,19 +421,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   /**
    * Sets the material and texture attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
-   * with a given <code>material</code>. 
+   * from the given <code>color</code> and <code>texture</code>. 
    */
-  private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, boolean waitTextureLoadingEnd,
-                                     Vector3f pieceSize, Vector3f modelSize, Set<Appearance> modifiedAppearances) {
+  private void setColorAndTexture(Node node, Integer color, HomeTexture texture, 
+                                  Float shininess, boolean waitTextureLoadingEnd,
+                                  Vector3f pieceSize, Vector3f modelSize, Set<Appearance> modifiedAppearances) {
     if (node instanceof Group) {
       // Set material and texture of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
+        setColorAndTexture((Node)enumeration.nextElement(), color, texture, shininess, waitTextureLoadingEnd,
             pieceSize, modelSize, modifiedAppearances);
       }
     } else if (node instanceof Link) {
-      setMaterialAndTexture(((Link)node).getSharedGroup(), material, texture, waitTextureLoadingEnd,
+      setColorAndTexture(((Link)node).getSharedGroup(), color, texture, shininess, waitTextureLoadingEnd,
           pieceSize, modelSize, modifiedAppearances);
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
@@ -458,18 +456,23 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
             appearance.setUserData(defaultMaterialAndTexture);
           }
-          if (material != null && defaultMaterialAndTexture.getTexture() == null) {
+          float materialShininess = shininess != null
+              ? shininess.floatValue()
+              : (appearance.getMaterial() != null
+                  ? appearance.getMaterial().getShininess() / 128f
+                  : 0);
+          if (color != null && defaultMaterialAndTexture.getTexture() == null) {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
-            appearance.setMaterial(material);
+            appearance.setMaterial(getMaterial(color, color, materialShininess));
             appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
             appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
             appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
             appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
             appearance.setTexture(null);
-          } else if (material == null && texture != null) {
+          } else if (color == null && texture != null) {
             // Change material to white then texture
-            appearance.setMaterial((Material)DEFAULT_TEXTURED_SHAPE_MATERIAL);
+            appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
             TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
                 TexCoordGeneration.TEXTURE_COORDINATE_2,
                 new Vector4f(-pieceSize.x / modelSize.x / texture.getWidth(), 0, 0, 0), 
@@ -488,7 +491,13 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                   });
           } else {
             // Restore default material and texture
-            appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
+            Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
+            if (defaultMaterial != null && shininess != null) {
+              defaultMaterial = (Material)defaultMaterial.cloneNodeComponent(true);
+              defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
+              defaultMaterial.setShininess(shininess * 128);
+            }
+            appearance.setMaterial(defaultMaterial);
             appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
             appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
             appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
@@ -640,6 +649,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Allow future material and rendering attributes changes
     appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
     appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+    Material material = appearance.getMaterial();
+    if (material != null) {
+      material.setCapability(Material.ALLOW_COMPONENT_READ);
+    }
     appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
     appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);

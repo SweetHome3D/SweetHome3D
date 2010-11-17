@@ -1491,6 +1491,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             || HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.VISIBLE.name().equals(ev.getPropertyName())) {
               HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
