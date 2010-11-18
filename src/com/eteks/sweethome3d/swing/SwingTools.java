@@ -334,7 +334,7 @@ public class SwingTools {
    * Displays <code>messageComponent</code> in a modal dialog box, giving focus to one of its components. 
    */
   public static int showConfirmDialog(JComponent parentComponent,
-                                      Object messageComponent,
+                                      JComponent messageComponent,
                                       String title,
                                       final JComponent focusedComponent) {
     JOptionPane optionPane = new JOptionPane(messageComponent, 

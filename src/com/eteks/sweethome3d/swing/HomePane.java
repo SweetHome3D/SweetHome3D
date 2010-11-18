@@ -3078,7 +3078,10 @@ public class HomePane extends JRootPane implements HomeView {
         cameraNameChooser = cameraNameTextComponent = new JTextField(cameraName, 20);
       }
     }
-    if (SwingTools.showConfirmDialog(this, new Object [] {message, cameraNameChooser}, 
+    JPanel cameraNamePanel = new JPanel(new BorderLayout(2, 2));
+    cameraNamePanel.add(new JLabel(message), BorderLayout.NORTH);
+    cameraNamePanel.add(cameraNameChooser, BorderLayout.SOUTH);
+    if (SwingTools.showConfirmDialog(this, cameraNamePanel, 
         title, cameraNameTextComponent) == JOptionPane.OK_OPTION) {
       return cameraNameTextComponent.getText();
     } else {
