@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -27,6 +29,7 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -35,6 +38,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -891,6 +895,24 @@ public class WallPanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
+    Component homeRoot = SwingUtilities.getRoot((Component)parentView);
+    if (homeRoot != null) {
+      JOptionPane optionPane = new JOptionPane(this, 
+          JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+      JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
+      Dimension screenSize = getToolkit().getScreenSize();
+      Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
+      // Check dialog isn't too high
+      int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+      if (OperatingSystem.isLinux() && screenHeight == screenSize.height) {
+        // Let's consider that under Linux at least an horizontal bar exists 
+        screenHeight -= 30;
+      }
+      if (dialog.getHeight() > screenHeight) {
+        this.wallOrientationLabel.setVisible(false);
+      }
+    }
+
     JFormattedTextField thicknessTextField = 
         ((JSpinner.DefaultEditor)thicknessSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
