@@ -752,38 +752,40 @@ public class SweetHome3D extends HomeApplication {
                       : RECOVERED_FILES_DEFAULT_EXTENSION);
           }
         });
-      Arrays.sort(recoveredFiles, new Comparator<File>() {
-          public int compare(File f1, File f2) {
-            if (f1.lastModified() < f2.lastModified()) {
-              return 1;
-            } else {
-              return -1;
+      if (recoveredFiles != null) {
+        Arrays.sort(recoveredFiles, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+              if (f1.lastModified() < f2.lastModified()) {
+                return 1;
+              } else {
+                return -1;
+              }
             }
-          }
-        });
-      for (final File file : recoveredFiles) {
-        try {
-          final Home home = this.application.getHomeRecorder().readHome(file.getPath());
-          // Recovered homes are the ones with a name different from the file path 
-          if (home.getName() == null 
-              || !file.equals(new File(home.getName()))) {
-            home.setRecovered(true);
-            // Delete recovered file once home isn't recovered anymore
-            home.addPropertyChangeListener(Home.Property.RECOVERED, new PropertyChangeListener() {
-                public void propertyChange(PropertyChangeEvent evt) {
-                  if (!home.isRecovered()) {
-                    file.delete();
+          });
+        for (final File file : recoveredFiles) {
+          try {
+            final Home home = this.application.getHomeRecorder().readHome(file.getPath());
+            // Recovered homes are the ones with a name different from the file path 
+            if (home.getName() == null 
+                || !file.equals(new File(home.getName()))) {
+              home.setRecovered(true);
+              // Delete recovered file once home isn't recovered anymore
+              home.addPropertyChangeListener(Home.Property.RECOVERED, new PropertyChangeListener() {
+                  public void propertyChange(PropertyChangeEvent evt) {
+                    if (!home.isRecovered()) {
+                      file.delete();
+                    }
                   }
-                }
-              });
-            this.recoveredHomes.add(home);
-          }
-        } catch (RecorderException ex) {
-          if (recoveredFiles.length > 1) {
-            // Let's give a chance to other files
-            ex.printStackTrace();
-          } else {
-            throw ex; 
+                });
+              this.recoveredHomes.add(home);
+            }
+          } catch (RecorderException ex) {
+            if (recoveredFiles.length > 1) {
+              // Let's give a chance to other files
+              ex.printStackTrace();
+            } else {
+              throw ex; 
+            }
           }
         }
       }
