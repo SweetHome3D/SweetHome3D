@@ -1226,7 +1226,7 @@ public class WallController implements Controller {
       return this.thickness;
     }
 
-    public float getArcExtent() {
+    public Float getArcExtent() {
       return this.arcExtent;
     }
   }
