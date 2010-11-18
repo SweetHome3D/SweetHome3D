@@ -911,6 +911,7 @@ public class WallPanel extends JPanel implements DialogView {
       if (dialog.getHeight() > screenHeight) {
         this.wallOrientationLabel.setVisible(false);
       }
+      dialog.dispose();
     }
 
     JFormattedTextField thicknessTextField = 
