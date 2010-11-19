@@ -466,7 +466,9 @@ public class OBJWriter extends FilterWriter {
       Vector4f planeT = null;
       if (texCoordGeneration != null) {
         textureCoordinatesGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
-            && texCoordGeneration.getEnable();
+            && texCoordGeneration.getEnable()
+            && !(geometryArray instanceof IndexedLineArray)
+            && !(geometryArray instanceof LineArray);
         if (textureCoordinatesGenerated) {
           planeS = new Vector4f();
           planeT = new Vector4f();
@@ -597,8 +599,7 @@ public class OBJWriter extends FilterWriter {
         if (geometryArray instanceof IndexedLineArray) {
           IndexedLineArray lineArray = (IndexedLineArray)geometryArray;
           for (int i = 0, n = lineArray.getIndexCount(); i < n; i += 2) {
-            writeIndexedLine(lineArray, i, i + 1,  
-                vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+            writeIndexedLine(lineArray, i, i + 1, vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes);
           }
         } else if (geometryArray instanceof IndexedTriangleArray) {
           IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
@@ -624,7 +625,7 @@ public class OBJWriter extends FilterWriter {
             for (int strip = 0; strip < stripIndexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 1; i < n; i++) {
                 writeIndexedLine(geometryStripArray, i, i + 1, 
-                    vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                    vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes);
               }
               initialIndex += stripIndexCounts [strip];
             }
@@ -658,8 +659,7 @@ public class OBJWriter extends FilterWriter {
         if (geometryArray instanceof LineArray) {
           LineArray lineArray = (LineArray)geometryArray;
           for (int i = 0, n = lineArray.getVertexCount(); i < n; i += 2) {
-            writeLine(lineArray, i, i + 1, vertexIndexSubstitutes,    
-                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+            writeLine(lineArray, i, i + 1, vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes);
           }
         } else if (geometryArray instanceof TriangleArray) {
           TriangleArray triangleArray = (TriangleArray)geometryArray;
@@ -684,8 +684,7 @@ public class OBJWriter extends FilterWriter {
           if (geometryStripArray instanceof LineStripArray) {
             for (int strip = 0; strip < stripVertexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 1; i < n; i++) {
-                writeLine(geometryStripArray, i, i + 1, vertexIndexSubstitutes,   
-                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                writeLine(geometryStripArray, i, i + 1, vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes);
               }
               initialIndex += stripVertexCounts [strip];
             }
@@ -853,10 +852,8 @@ public class OBJWriter extends FilterWriter {
   private void writeIndexedLine(IndexedGeometryArray geometryArray, 
                                 int vertexIndex1, int vertexIndex2, 
                                 int [] vertexIndexSubstitutes, 
-                                int [] textureCoordinatesIndexSubstitutes,
-                                boolean textureCoordinatesGenerated) throws IOException {
-    if (textureCoordinatesGenerated
-        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                                int [] textureCoordinatesIndexSubstitutes) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
           + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
           + " " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
@@ -1009,10 +1006,8 @@ public class OBJWriter extends FilterWriter {
   private void writeLine(GeometryArray geometryArray, 
                          int vertexIndex1, int vertexIndex2, 
                          int [] vertexIndexSubstitutes,  
-                         int [] textureCoordinatesIndexSubstitutes,
-                         boolean textureCoordinatesGenerated) throws IOException {
-    if (textureCoordinatesGenerated
-        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                         int [] textureCoordinatesIndexSubstitutes) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
           + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
           + " " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
