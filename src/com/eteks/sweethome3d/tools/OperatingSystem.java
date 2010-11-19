@@ -186,8 +186,10 @@ public class OperatingSystem {
               public void run() {
                 long now = System.currentTimeMillis();
                 for (File siblingTemporaryFolder : siblingTemporaryFolders) {
-                  if (now - siblingTemporaryFolder.lastModified() > age) {
-                    for (File temporaryFile : siblingTemporaryFolder.listFiles()) {
+                  if (siblingTemporaryFolder.exists()
+                      && now - siblingTemporaryFolder.lastModified() > age) {
+                    File [] temporaryFiles = siblingTemporaryFolder.listFiles();
+                    for (File temporaryFile : temporaryFiles) {
                       temporaryFile.delete();
                     }
                     siblingTemporaryFolder.delete();
