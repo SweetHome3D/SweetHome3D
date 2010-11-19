@@ -576,7 +576,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
             doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
             doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
-            doorOrWindow.isResizable(), doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
+            doorOrWindow.isResizable(), doorOrWindow.isDeformable(), 
+            doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
       } else if (piece instanceof CatalogLight) {
         CatalogLight light = (CatalogLight)piece;
         piece = new CatalogLight(light.getId(), suffixedName,
@@ -584,13 +585,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
             light.isMovable(), light.getLightSources(), 
             light.getModelRotation(), light.getCreator(),
-            light.isResizable(), light.getPrice(), light.getValueAddedTaxPercentage());
+            light.isResizable(), light.isDeformable(), 
+            light.getPrice(), light.getValueAddedTaxPercentage());
       } else {
         piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
             piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
             piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
             piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
-            piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());
+            piece.isResizable(), piece.isDeformable(),
+            piece.getPrice(), piece.getValueAddedTaxPercentage());
       }
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
