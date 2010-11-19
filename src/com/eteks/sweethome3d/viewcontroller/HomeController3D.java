@@ -318,19 +318,15 @@ public class HomeController3D implements Controller {
      * Updates camera location from home bounds.
      */
     private void updateCameraFromHomeBounds() {
-      Rectangle2D newHomeBounds = getHomeBounds();
-      float newMinDistance = getMinDistanceToHomeCenter(newHomeBounds);
-      float delta;
       if (this.homeBounds == null) {
-        delta = 0;
-      } else if (home.getRooms().isEmpty() && home.getWalls().isEmpty()) {
-        delta = (this.minDistanceToHomeCenter - newMinDistance) / 3;
-      } else {
-        delta = (this.minDistanceToHomeCenter - newMinDistance) / 2;
+        this.homeBounds = getHomeBounds();
       }
-      this.homeBounds = newHomeBounds;
-      this.minDistanceToHomeCenter = newMinDistance;
-      moveCamera(delta);
+      float distanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
+          + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
+          + Math.pow(this.topCamera.getZ(), 2));
+      this.homeBounds = getHomeBounds();
+      this.minDistanceToHomeCenter = getMinDistanceToHomeCenter(this.homeBounds);
+      placeCameraAt(distanceToCenter);
     }
 
     /**
@@ -434,16 +430,20 @@ public class HomeController3D implements Controller {
       float newDistanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
           + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
           + Math.pow(this.topCamera.getZ(), 2)) - delta;
+      placeCameraAt(newDistanceToCenter);
+    }
+
+    public void placeCameraAt(float distanceToCenter) {
       // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
-      newDistanceToCenter = Math.max(newDistanceToCenter, this.minDistanceToHomeCenter);
+      distanceToCenter = Math.max(distanceToCenter, this.minDistanceToHomeCenter);
       // Check camera isn't too far
-      newDistanceToCenter = Math.min(newDistanceToCenter, 5 * this.minDistanceToHomeCenter);
-      double distanceToCenterAtGroundLevel = newDistanceToCenter * Math.cos(this.topCamera.getPitch());
+      distanceToCenter = Math.min(distanceToCenter, 5 * this.minDistanceToHomeCenter);
+      double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
       this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ((float)Math.sin(this.topCamera.getPitch()) * newDistanceToCenter);
+      this.topCamera.setZ((float)Math.sin(this.topCamera.getPitch()) * distanceToCenter);
     }
 
     @Override
