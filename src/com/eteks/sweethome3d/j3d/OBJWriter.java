@@ -468,7 +468,9 @@ public class OBJWriter extends FilterWriter {
         textureCoordinatesGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
             && texCoordGeneration.getEnable()
             && !(geometryArray instanceof IndexedLineArray)
-            && !(geometryArray instanceof LineArray);
+            && !(geometryArray instanceof IndexedLineStripArray)
+            && !(geometryArray instanceof LineArray)
+            && !(geometryArray instanceof LineStripArray);
         if (textureCoordinatesGenerated) {
           planeS = new Vector4f();
           planeT = new Vector4f();
