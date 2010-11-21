@@ -43,7 +43,9 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -57,6 +59,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -96,6 +99,7 @@ public class HomeController implements Controller {
   private HomeController3D            homeController3D;
   private static HelpController       helpController;  // Only one help controller
   private int                         saveUndoLevel;
+  private boolean                     notUndoableModifications;
   private View                        focusedView;
 
   /**
@@ -401,6 +405,7 @@ public class HomeController implements Controller {
       
     addCatalogSelectionListener();
     addHomeBackgroundImageListener();
+    addNotUndoableModificationListeners();
     addHomeSelectionListener();
     addFurnitureSortListener();
     addUndoSupportListener();
@@ -608,6 +613,49 @@ public class HomeController implements Controller {
     }
   }
 
+  /**
+   * Adds listeners to track property changes that are not undoable.
+   */
+  private void addNotUndoableModificationListeners() {
+    if (this.home != null) {
+      final PropertyChangeListener notUndoableModificationListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            notUndoableModifications = true;
+            home.setModified(true);
+          }
+        };
+      this.home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_WIDTH, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_ASPECT_RATIO, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_FRAME_RATE, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_QUALITY, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_CAMERA_PATH, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.PHOTO_QUALITY, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.PHOTO_ASPECT_RATIO, notUndoableModificationListener);
+      PropertyChangeListener photoSizeModificationListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (home.getEnvironment().getPhotoAspectRatio() != AspectRatio.VIEW_3D_RATIO) {
+              // Ignore photo size modification with 3D view aspect ratio since it can change for various reasons
+              notUndoableModificationListener.propertyChange(ev);
+            }
+          }
+        };
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.PHOTO_WIDTH, photoSizeModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.PHOTO_HEIGHT, photoSizeModificationListener);
+      PropertyChangeListener timeOrLensModificationListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (ev.getPropertyName().equals(Camera.Property.TIME.name())
+                || ev.getPropertyName().equals(Camera.Property.LENS.name())) {
+              notUndoableModificationListener.propertyChange(ev);
+            }
+          }
+        };
+      this.home.getObserverCamera().addPropertyChangeListener(timeOrLensModificationListener);
+      this.home.getTopCamera().addPropertyChangeListener(timeOrLensModificationListener);
+    }
+  }
+  
   /**
    * Enables or disables action bound to selection. 
    * This method will be called when selection in plan or in catalog changes and when 
@@ -1060,7 +1108,7 @@ public class HomeController implements Controller {
       view.setUndoRedoName(null, this.undoManager.getRedoPresentationName());
     }
     this.saveUndoLevel--;
-    this.home.setModified(this.saveUndoLevel != 0);
+    this.home.setModified(this.saveUndoLevel != 0 || notUndoableModifications);
   }
   
   /**
@@ -1079,7 +1127,7 @@ public class HomeController implements Controller {
       view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
     }
     this.saveUndoLevel++;
-    this.home.setModified(this.saveUndoLevel != 0);
+    this.home.setModified(this.saveUndoLevel != 0 || notUndoableModifications);
   }
 
   /**
@@ -1577,6 +1625,7 @@ public class HomeController implements Controller {
         public void run() {
           home.setName(homeName);
           saveUndoLevel = 0;
+          notUndoableModifications = false;
           home.setModified(false);
           home.setRecovered(false);
           // Update recent homes list
@@ -1951,6 +2000,7 @@ public class HomeController implements Controller {
   public void detachView(View view) {
     if (view != null) {
       getView().detachView(view);
+      this.notUndoableModifications = true;
     }
   }
       		
@@ -1960,6 +2010,7 @@ public class HomeController implements Controller {
   public void attachView(View view) {
     if (view != null) {
       getView().attachView(view);
+      this.notUndoableModifications = true;
     }
   }
                 
