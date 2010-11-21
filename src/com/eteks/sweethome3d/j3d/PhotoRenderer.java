@@ -1289,13 +1289,13 @@ public class PhotoRenderer {
     }
 
     private void notifyObserver(final int flags, final int x, final int y, final int width, final int height) {
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            if (observer != null) {
+      if (observer != null) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
               observer.imageUpdate(image, flags, x, y, width, height);
             }
-          }
-        });
+          });
+      }
     }
   }
 
