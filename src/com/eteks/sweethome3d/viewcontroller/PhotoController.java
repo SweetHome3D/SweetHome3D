@@ -372,4 +372,12 @@ public class PhotoController implements Controller {
   public View get3DView() {
     return this.view3D;
   }
+
+  /**
+   * Controls the change of value of a visual property in home.
+   */
+  public void setVisualProperty(String propertyName,
+                                Object propertyValue) {
+    this.home.setVisualProperty(propertyName, propertyValue);
+  }
 }

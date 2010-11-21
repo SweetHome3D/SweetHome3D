@@ -140,7 +140,10 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class VideoPanel extends JPanel implements DialogView {
   private enum ActionType {START_VIDEO_CREATION, STOP_VIDEO_CREATION, SAVE_VIDEO, CLOSE, 
       DELETE_CAMERA_PATH, PLAYBACK, PAUSE, RECORD, SEEK_BACKWARD, SEEK_FORWARD, SKIP_BACKWARD, SKIP_FORWARD, DELETE_LAST_RECORD}
-  
+
+  private static final String VIDEO_DIALOG_X_VISUAL_PROPERTY = "com.eteks.sweethome3d.swing.VideoPanel.VideoDialogX";
+  private static final String VIDEO_DIALOG_Y_VISUAL_PROPERTY = "com.eteks.sweethome3d.swing.VideoPanel.VideoDialogY";
+
   private static final int MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING = 30000;
   
   private static final VideoFormat [] VIDEO_FORMATS = {
@@ -920,19 +923,13 @@ public class VideoPanel extends JPanel implements DialogView {
           null, new Object [] {this.createButton, this.saveButton, this.closeButton}, this.createButton);
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
-      dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-      dialog.addComponentListener(new ComponentAdapter() {
-          @Override
-          public void componentHidden(ComponentEvent ev) {
-            if (optionPane.getValue() != null
-                && optionPane.getValue() != JOptionPane.UNINITIALIZED_VALUE) {
-              close();
-            }
-          }
-        });
       
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);
       if (homeRoot != null) {
+        // Restore location if it exists
+        Integer x = (Integer)this.home.getVisualProperty(VIDEO_DIALOG_X_VISUAL_PROPERTY);
+        Integer y = (Integer)this.home.getVisualProperty(VIDEO_DIALOG_Y_VISUAL_PROPERTY);      
+
         int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
         Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
@@ -943,18 +940,24 @@ public class VideoPanel extends JPanel implements DialogView {
           // Let's consider that under Linux at least an horizontal bar exists 
           screenHeight -= 30;
         }
-        if (dialog.getHeight() > screenHeight) {
-          dialog.setSize(dialog.getWidth(), screenHeight);
-        }
+        int screenBottomBorder = screenSize.height - screenInsets.bottom;
         int dialogWidth = dialog.getWidth();
-        // If there some space left at the right of the window
-        if (screenRightBorder - windowRightBorder > dialogWidth / 2
-            || dialog.getHeight() == screenHeight) {
-          // Move the dialog to the right of window
+        if (dialog.getHeight() > screenHeight) {
+          dialog.setSize(dialogWidth, screenHeight);
+        }
+        int dialogHeight = dialog.getHeight();
+        if (x != null && y != null 
+            && x + dialogWidth <= screenRightBorder
+            && y + dialogHeight <= screenBottomBorder) {
+          dialog.setLocation(x, y);
+        } else if (screenRightBorder - windowRightBorder > dialogWidth / 2
+            || dialogHeight == screenHeight) {
+          // If there some space left at the right of the window
+          // move the dialog to the right of window
           dialog.setLocationByPlatform(false);
           dialog.setLocation(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
               Math.max(Math.min(homeRoot.getY() + dialog.getInsets().top, 
-                  screenSize.height - dialog.getHeight() - screenInsets.bottom), screenInsets.top));
+                  screenSize.height - dialogHeight - screenInsets.bottom), screenInsets.top));
         } else {
           dialog.setLocationByPlatform(true);
         }
@@ -977,6 +980,22 @@ public class VideoPanel extends JPanel implements DialogView {
       
       updateAdvancedComponents();
       ToolTipManager.sharedInstance().registerComponent(this.qualitySlider);
+      dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+      dialog.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentHidden(ComponentEvent ev) {
+            if (optionPane.getValue() != null
+                && optionPane.getValue() != JOptionPane.UNINITIALIZED_VALUE) {
+              close();
+            }
+          }
+
+          @Override
+          public void componentMoved(ComponentEvent ev) {
+            controller.setVisualProperty(VIDEO_DIALOG_X_VISUAL_PROPERTY, dialog.getX());
+            controller.setVisualProperty(VIDEO_DIALOG_Y_VISUAL_PROPERTY, dialog.getY());
+          }
+        });
       dialog.setVisible(true);
       currentVideoPanel = this;
     }

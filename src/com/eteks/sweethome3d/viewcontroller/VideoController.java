@@ -322,4 +322,12 @@ public class VideoController implements Controller {
   public int getCeilingLightColor() {
     return this.ceilingLightColor;
   }
+
+  /**
+   * Controls the change of value of a visual property in home.
+   */
+  public void setVisualProperty(String propertyName,
+                                Object propertyValue) {
+    this.home.setVisualProperty(propertyName, propertyValue);
+  }
 }
