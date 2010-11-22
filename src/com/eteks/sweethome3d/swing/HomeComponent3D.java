@@ -47,6 +47,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -1556,17 +1557,51 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
               || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
               || Room.Property.FLOOR_SHININESS.name().equals(ev.getPropertyName())
-              || Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_COLOR.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_TEXTURE.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_SHININESS.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_VISIBLE.name().equals(ev.getPropertyName())) {
+              || Room.Property.CEILING_SHININESS.name().equals(ev.getPropertyName())) {
             updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
-          } else if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {   
-            // Update all the rooms since some of them may overlap the updated one
+          } else if (Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName())
+              || Room.Property.CEILING_VISIBLE.name().equals(ev.getPropertyName())) {   
             updateObjects(home.getRooms());
             groundColorAndTextureListener.propertyChange(null);
+          } else if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {   
+            if (homeObjectsToUpdate != null) {
+              // Don't try to optimize if more than one room to update
+              updateObjects(home.getRooms());
+            } else {
+              updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
+              // Search the rooms that overlap the updated one
+              Area oldArea = getArea((float [][])ev.getOldValue());
+              Area newArea = getArea((float [][])ev.getNewValue());
+              for (Room room : home.getRooms()) {
+                if (room != ev.getSource()) {
+                  Area roomAreaIntersectionWithOldArea = getArea(room.getPoints());
+                  Area roomAreaIntersectionWithNewArea = new Area(roomAreaIntersectionWithOldArea);
+                  roomAreaIntersectionWithNewArea.intersect(newArea);                  
+                  if (!roomAreaIntersectionWithNewArea.isEmpty()) {
+                    updateObjects(Arrays.asList(new Room [] {room}));
+                  } else {
+                    roomAreaIntersectionWithOldArea.intersect(oldArea);
+                    if (!roomAreaIntersectionWithOldArea.isEmpty()) {
+                      updateObjects(Arrays.asList(new Room [] {room}));
+                    }
+                  }
+                }
+              }              
+            }
+            groundColorAndTextureListener.propertyChange(null);
+          }            
+        }
+        
+        private Area getArea(float [][] points) {
+          GeneralPath path = new GeneralPath();
+          path.moveTo(points [0][0], points [0][1]);
+          for (int i = 1; i < points.length; i++) {
+            path.lineTo(points [i][0], points [i][1]);
           }
+          path.closePath();
+          return new Area(path);
         }
       };
     for (Room room : this.home.getRooms()) {
