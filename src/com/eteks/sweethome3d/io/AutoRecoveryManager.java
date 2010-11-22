@@ -24,8 +24,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,12 +63,13 @@ public class AutoRecoveryManager {
   private static final String RECOVERY_SUB_FOLDER        = "recovery";
   private static final String RECOVERED_FILE_EXTENSION = ".recovered";
 
-  private final HomeApplication application;
-  private final List<Home>      recoveredHomes = new ArrayList<Home>();
-  private final Map<Home, File> autoSavedFiles = Collections.synchronizedMap(new HashMap<Home, File>());
-  private final ExecutorService autoSaveForRecoveryExecutor;
-  private Timer                 timer;
-  private long                  lastAutoSaveTime;
+  private final HomeApplication             application;
+  private final List<Home>                  recoveredHomes      = new ArrayList<Home>();
+  private final Map<Home, File>             autoSavedFiles      = new HashMap<Home, File>();
+  private final Map<File, FileOutputStream> lockedOutputStreams = new HashMap<File, FileOutputStream>();
+  private final ExecutorService             autoSaveForRecoveryExecutor;
+  private Timer                             timer;
+  private long                              lastAutoSaveTime;
 
   /**
    * Creates a manager able to automatically recover <code>application</code> homes.
@@ -95,11 +98,20 @@ public class AutoRecoveryManager {
     application.addHomesListener(new CollectionListener<Home>() {
         public void collectionChanged(CollectionEvent<Home> ev) {
           if (ev.getType() == CollectionEvent.Type.DELETE) {
-            File homeFile = autoSavedFiles.get(ev.getItem());
-            if (homeFile != null) {
-              homeFile.delete();
-              autoSavedFiles.remove(ev.getItem());
-            }
+            final Home home = ev.getItem();
+            autoSaveForRecoveryExecutor.submit(new Runnable() {
+                public void run() {
+                  try {
+                    final File homeFile = autoSavedFiles.get(home);
+                    if (homeFile != null) {
+                      freeLockedFile(homeFile);
+                      homeFile.delete();
+                      autoSavedFiles.remove(home);
+                    }
+                  } catch (RecorderException ex) {
+                  }
+                }
+              });
           }
         }
       });
@@ -134,29 +146,54 @@ public class AutoRecoveryManager {
           }
         });
       for (final File file : recoveredFiles) {
-        try {
-          final Home home = this.application.getHomeRecorder().readHome(file.getPath());
-          // Recovered homes are the ones with a name different from the file path 
-          if (home.getName() == null 
-              || !file.equals(new File(home.getName()))) {
-            home.setRecovered(true);
-            // Delete recovered file once home isn't recovered anymore
-            home.addPropertyChangeListener(Home.Property.RECOVERED, new PropertyChangeListener() {
-                public void propertyChange(PropertyChangeEvent evt) {
-                  if (!home.isRecovered()) {
-                    file.delete();
+        if (!isFileLocked(file)) {
+          try {
+            final Home home = this.application.getHomeRecorder().readHome(file.getPath());
+            // Recovered homes are the ones with a name different from the file path 
+            if (home.getName() == null 
+                || !file.equals(new File(home.getName()))) {
+              home.setRecovered(true);
+              // Delete recovered file once home isn't recovered anymore
+              home.addPropertyChangeListener(Home.Property.RECOVERED, new PropertyChangeListener() {
+                  public void propertyChange(PropertyChangeEvent evt) {
+                    if (!home.isRecovered()) {
+                      file.delete();
+                    }
                   }
-                }
-              });
-            this.recoveredHomes.add(home);
+                });
+              this.recoveredHomes.add(home);
+            }
+          } catch (RecorderException ex) {
+            if (recoveredFiles.length > 1) {
+              // Let's give a chance to other files
+              ex.printStackTrace();
+            } else {
+              throw ex; 
+            }
           }
-        } catch (RecorderException ex) {
-          if (recoveredFiles.length > 1) {
-            // Let's give a chance to other files
-            ex.printStackTrace();
-          } else {
-            throw ex; 
-          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the given file is locked or can't accessed.
+   */
+  private boolean isFileLocked(final File file) {
+    FileOutputStream out = null;
+    try {
+      // Check file lock is free
+      out = new FileOutputStream(file, true); 
+      return out.getChannel().tryLock() == null;
+    } catch (IOException ex) {
+      // Forget this file
+      return true;
+    } finally {
+      if (out != null) {
+        try {
+          out.close();
+        } catch (IOException ex) {
+          return true;
         }
       }
     }
@@ -264,20 +301,56 @@ public class AutoRecoveryManager {
           autoSavedHomeFile = new File(recoveredFilesFolder,
               UUID.randomUUID() + RECOVERED_FILE_EXTENSION);
         }
-        this.autoSavedFiles.put(home, autoSavedHomeFile);
       }
+      freeLockedFile(autoSavedHomeFile);        
       if (autoSavedHome.isModified()) {
+        this.autoSavedFiles.put(home, autoSavedHomeFile);
         try {
+          // Save home and lock the saved file to avoid possible auto recovery processes to read it 
           this.application.getHomeRecorder().writeHome(autoSavedHome, autoSavedHomeFile.getPath());
+          
+          FileOutputStream lockedOutputStream = null;
+          try {
+            lockedOutputStream = new FileOutputStream(autoSavedHomeFile, true);
+            lockedOutputStream.getChannel().lock();
+            lockedOutputStreams.put(autoSavedHomeFile, lockedOutputStream);
+          } catch (OverlappingFileLockException ex) {
+            // Don't try to race with other processes that acquired a lock on the file 
+          } catch (IOException ex) {
+            if (lockedOutputStream != null) {
+              try {
+                lockedOutputStream.close();
+              } catch (IOException ex1) {
+                // Forget it
+              }
+            }
+            throw new RecorderException("Can't lock saved home", ex);            
+          }
         } catch (InterruptedRecorderException ex) {
-          // Forget exception that probably happen because of shutdown hook
-          // management
-        }
+          // Forget exception that probably happen because of shutdown hook management
+        } 
       } else {
         autoSavedHomeFile.delete();
+        this.autoSavedFiles.remove(home);
       }
     }
     this.lastAutoSaveTime = Math.max(this.lastAutoSaveTime, System.currentTimeMillis());
+  }
+
+  /**
+   * Frees the given <code>file</code> if it's locked.
+   */
+  private void freeLockedFile(File file) throws RecorderException {
+    FileOutputStream lockedOutputStream = this.lockedOutputStreams.get(file);
+    if (lockedOutputStream != null) {
+      // Close stream and free its associated lock
+      try {
+        lockedOutputStream.close();
+        this.lockedOutputStreams.remove(file);
+      } catch (IOException ex) {
+        throw new RecorderException("Can't close locked stream", ex);
+      }
+    }
   }
 
   /**
