@@ -30,7 +30,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +59,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class AutoRecoveryManager {
-  private static final String RECOVERY_SUB_FOLDER        = "recovery";
+  private static final String RECOVERY_SUB_FOLDER      = "recovery";
   private static final String RECOVERED_FILE_EXTENSION = ".recovered";
 
   private final HomeApplication             application;
