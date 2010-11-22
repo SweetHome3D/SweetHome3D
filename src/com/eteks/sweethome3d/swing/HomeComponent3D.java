@@ -85,7 +85,6 @@ import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.J3DGraphics2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Node;
-import javax.media.j3d.OrderedGroup;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
@@ -1188,49 +1187,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                       boolean listenToHomeUpdates, 
                                       boolean waitForLoading) {
     BranchGroup root = new BranchGroup();
-
     // Build scene tree
+    root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
     root.addChild(createBackgroundNode(listenToHomeUpdates));
-    
-    Group groundAndRoomsGroup = createExtensibleGroup(true);
-    // Add first ground then home rooms to an ordered group to ensure ground is always drawn behind floors   
-    groundAndRoomsGroup.addChild(createGroundNode(-1E5f / 2, -1E5f / 2, 1E5f, 1E5f, listenToHomeUpdates, waitForLoading));
-    for (Room room : this.home.getRooms()) {
-      addObject(groundAndRoomsGroup, room, waitForLoading);
-    }    
-    root.addChild(groundAndRoomsGroup);
-    
-    Group wallsAndFurnitureGroup = createExtensibleGroup(false);
-    // Add walls and pieces already available in a normal group 
-    // (transparent shapes don't work well in ordered groups) 
-    for (Wall wall : this.home.getWalls()) {
-      addObject(wallsAndFurnitureGroup, wall, waitForLoading);
-    }
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      addObject(wallsAndFurnitureGroup, piece, waitForLoading);
-    }
-    if (displayShadowOnFloor) {
-      addShadowOnFloor(groundAndRoomsGroup);
-    }
-    root.addChild(wallsAndFurnitureGroup);
-    
+    root.addChild(createGroundNode(-1E5f / 2, -1E5f / 2, 1E5f, 1E5f, listenToHomeUpdates, waitForLoading));
+
     // Add default lights
     for (Light light : createLights(listenToHomeUpdates)) {
       root.addChild(light);
     }
     
-    if (listenToHomeUpdates) {
-      // Add wall, furniture, room listeners to home for further update    
-      addWallListener(wallsAndFurnitureGroup);
-      addFurnitureListener(wallsAndFurnitureGroup);
-      addRoomListener(groundAndRoomsGroup, 1);
-      // Add environment listeners
-      addEnvironmentListeners();
-      // Should update shadow on floor too but in the facts 
-      // User Interface doesn't propose to modify the furniture of a home
-      // that displays shadow on floor yet
-    }
-
     return root;
   }
 
@@ -1428,13 +1394,49 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                         (lightColor & 0xFF) / 255f * defaultColor.z));
     clearPrintedImageCache();
   }
+
   /**
-   * Returns a new extensible group.  
+   * Returns a <code>home</code> new tree node, with branches for each wall 
+   * and piece of furniture of <code>home</code>. 
    */
-  private Group createExtensibleGroup(boolean ordered) {
-    Group homeGroup = ordered
-        ? new OrderedGroup()
-        : new Group();    
+  private Node createHomeTree(boolean displayShadowOnFloor, 
+                              boolean listenToHomeUpdates, 
+                              boolean waitForLoading) {
+    Group homeRoot = createHomeRoot();
+    // Add walls, pieces and rooms already available 
+    for (Room room : this.home.getRooms()) {
+      addObject(homeRoot, room, waitForLoading);
+    }    
+    for (Wall wall : this.home.getWalls()) {
+      addObject(homeRoot, wall, waitForLoading);
+    }
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      addObject(homeRoot, piece, waitForLoading);
+    }
+    
+    if (displayShadowOnFloor) {
+      addShadowOnFloor(homeRoot);
+    }
+    
+    if (listenToHomeUpdates) {
+      // Add wall, furniture, room listeners to home for further update    
+      addWallListener(homeRoot);
+      addFurnitureListener(homeRoot);
+      addRoomListener(homeRoot);
+      // Add environment listeners
+      addEnvironmentListeners();
+      // Should update shadow on floor too but in the facts 
+      // User Interface doesn't propose to modify the furniture of a home
+      // that displays shadow on floor yet
+    }
+    return homeRoot;
+  }
+
+  /**
+   * Returns a new group at home subtree root.
+   */
+  private Group createHomeRoot() {
+    Group homeGroup = new Group();    
     //  Allow group to have new children
     homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
     homeGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -1548,11 +1550,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds a room listener to home rooms that updates the children of the given 
    * <code>group</code>, each time a room is added, updated or deleted. 
    */
-  private void addRoomListener(final Group group, final int indexOffset) {
+  private void addRoomListener(final Group group) {
     this.roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
-          groundColorAndTextureListener.propertyChange(null);
+          if (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
+              || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
+              || Room.Property.FLOOR_SHININESS.name().equals(ev.getPropertyName())
+              || Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName())
+              || Room.Property.CEILING_COLOR.name().equals(ev.getPropertyName())
+              || Room.Property.CEILING_TEXTURE.name().equals(ev.getPropertyName())
+              || Room.Property.CEILING_SHININESS.name().equals(ev.getPropertyName())
+              || Room.Property.CEILING_VISIBLE.name().equals(ev.getPropertyName())) {
+            updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
+          } else if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {   
+            // Update all the rooms since some of them may overlap the updated one
+            updateObjects(home.getRooms());
+            groundColorAndTextureListener.propertyChange(null);
+          }
         }
       };
     for (Room room : this.home.getRooms()) {
@@ -1565,7 +1579,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             case ADD :
               // Add room to its group at the index indicated by the event 
               // to ensure the 3D rooms are drawn in the same order as in the plan  
-              addObject(group, room, ev.getIndex() + indexOffset, false);
+              addObject(group, room, ev.getIndex(), false);
               room.addPropertyChangeListener(roomChangeListener);
               break;
             case DELETE :
@@ -1573,6 +1587,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               room.removePropertyChangeListener(roomChangeListener);
               break;
           }
+          updateObjects(home.getRooms());
           groundColorAndTextureListener.propertyChange(null);
         }
       };

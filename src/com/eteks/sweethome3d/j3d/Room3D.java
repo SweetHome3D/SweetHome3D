@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -168,16 +167,15 @@ public class Room3D extends Object3DBranch {
       
       // If room isn't singular retrieve all the points of its different polygons 
       List<float [][]> roomPoints = new ArrayList<float[][]>();
-      if (!room.isSingular()) {        
-        GeneralPath roomShape = new GeneralPath();
-        roomShape.moveTo(points [0][0], points [0][1]);
-        for (int i = 1; i < points.length; i++) {
-          roomShape.lineTo(points [i][0], points [i][1]);
-        }
-        roomShape.closePath();
+      List<Room> rooms = this.home.getRooms();
+      if (!room.isSingular() || rooms.get(rooms.size() - 1) != room) {        
+        Area roomArea = new Area(getShape(points));
+        // Remove other rooms surface that may overlap the current room
+        for (int i = rooms.size() - 1; i > 0 && rooms.get(i) != room; i--) {
+          roomArea.subtract(new Area(getShape(rooms.get(i).getPoints())));
+        }        
         // Retrieve the points of the different polygons 
         // and reverse their points order if necessary
-        Area roomArea = new Area(roomShape);
         List<float []> currentPathPoints = new ArrayList<float[]>();
         roomPoints = new ArrayList<float[][]>();
         float [] previousRoomPoint = null;
