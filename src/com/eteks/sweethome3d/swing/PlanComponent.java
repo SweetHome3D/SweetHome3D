@@ -272,9 +272,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final GeneralPath DIMENSION_LINE_END;  
   private static final GeneralPath TEXT_LOCATION_INDICATOR;
   private static final Shape       COMPASS_DISC;
-  private static final GeneralPath COMPASS_CARDINAL_DIRECTIONS;
-  private static final GeneralPath COMPASS_NEEDLE;
-  private static final GeneralPath COMPASS_NORTH_CARDINAL_DIRECTION;
+  private static final GeneralPath COMPASS;
   private static final GeneralPath COMPASS_ROTATION_INDICATOR;
   private static final GeneralPath COMPASS_RESIZE_INDICATOR;
   
@@ -453,22 +451,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     // Create the path used to draw the compass
     COMPASS_DISC = new Ellipse2D.Float(-0.5f, -0.5f, 1, 1);
-    COMPASS_CARDINAL_DIRECTIONS = new GeneralPath();
-    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(-0.6f, 0, -0.5f, 0), false);
-    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(0.6f, 0, 0.5f, 0), false);
-    COMPASS_CARDINAL_DIRECTIONS.append(new Line2D.Float(0, 0.6f, 0, 0.5f), false);
-    COMPASS_NEEDLE = new GeneralPath();
-    COMPASS_NEEDLE.moveTo(0, -0.47f);
-    COMPASS_NEEDLE.lineTo(0.15f, 0.46f);
-    COMPASS_NEEDLE.lineTo(0, 0.32f);
-    COMPASS_NEEDLE.lineTo(-0.15f, 0.46f);
-    COMPASS_NEEDLE.closePath();
-    COMPASS_NEEDLE.append(new Ellipse2D.Float(-0.01f, -0.01f, 0.02f, 0.02f), false);
-    COMPASS_NORTH_CARDINAL_DIRECTION = new GeneralPath();
-    COMPASS_NORTH_CARDINAL_DIRECTION.moveTo(-0.07f, -0.55f); // Draws the N letter
-    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(-0.07f, -0.69f);
-    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(0.07f, -0.56f);
-    COMPASS_NORTH_CARDINAL_DIRECTION.lineTo(0.07f, -0.7f);
+    BasicStroke stroke = new BasicStroke(0.01f);
+    COMPASS = new GeneralPath(stroke.createStrokedShape(COMPASS_DISC));
+    COMPASS.append(stroke.createStrokedShape(new Line2D.Float(-0.6f, 0, -0.5f, 0)), false);
+    COMPASS.append(stroke.createStrokedShape(new Line2D.Float(0.6f, 0, 0.5f, 0)), false);
+    COMPASS.append(stroke.createStrokedShape(new Line2D.Float(0, 0.6f, 0, 0.5f)), false);
+    stroke = new BasicStroke(0.04f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    COMPASS.append(stroke.createStrokedShape(new Line2D.Float(0, 0, 0, 0)), false);
+    GeneralPath compassNeedle = new GeneralPath();
+    compassNeedle.moveTo(0, -0.47f);
+    compassNeedle.lineTo(0.15f, 0.46f);
+    compassNeedle.lineTo(0, 0.32f);
+    compassNeedle.lineTo(-0.15f, 0.46f);
+    compassNeedle.closePath();
+    stroke = new BasicStroke(0.03f);
+    COMPASS.append(stroke.createStrokedShape(compassNeedle), false);
+    GeneralPath compassNorthDirection = new GeneralPath();
+    compassNorthDirection.moveTo(-0.07f, -0.55f); // Draws the N letter
+    compassNorthDirection.lineTo(-0.07f, -0.69f);
+    compassNorthDirection.lineTo(0.07f, -0.56f);
+    compassNorthDirection.lineTo(0.07f, -0.7f);
+    COMPASS.append(stroke.createStrokedShape(compassNorthDirection), false);
 
     // Create a path used as rotation indicator for the compass
     COMPASS_ROTATION_INDICATOR = new GeneralPath();
@@ -3260,14 +3263,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.rotate(compass.getNorthDirection());
       float diameter = compass.getDiameter();
       g2D.scale(diameter, diameter);
-  
       g2D.setColor(foregroundColor);
-      g2D.setStroke(new BasicStroke(1f / diameter));
-      g2D.draw(COMPASS_DISC);
-      g2D.draw(COMPASS_CARDINAL_DIRECTIONS);
-      g2D.setStroke(new BasicStroke(3 / diameter));
-      g2D.draw(COMPASS_NEEDLE);
-      g2D.draw(COMPASS_NORTH_CARDINAL_DIRECTION);
+      g2D.fill(COMPASS);
       g2D.setTransform(previousTransform);
     }
   }
@@ -3288,7 +3285,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.scale(diameter, diameter);
   
       g2D.setPaint(selectionOutlinePaint);
-      g2D.setStroke(new BasicStroke(6f / diameter / planScale));
+      g2D.setStroke(new BasicStroke((5.5f + planScale) / diameter / planScale));
       g2D.draw(COMPASS_DISC);
       g2D.setColor(foregroundColor);
       g2D.setStroke(new BasicStroke(1f / diameter / planScale));
