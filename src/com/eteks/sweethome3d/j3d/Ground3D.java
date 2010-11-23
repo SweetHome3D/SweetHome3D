@@ -167,7 +167,7 @@ public class Ground3D extends Object3DBranch {
           coords.add(new Point3f(point [0], 0, point [1]));
           if (groundTexture != null) {
             textureCoords.add(new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-                (point [1] - this.originY) / groundTexture.getHeight()));
+                (this.originY - point [1]) / groundTexture.getHeight()));
           }
         }
         stripCounts.add(points.length);
@@ -182,7 +182,7 @@ public class Ground3D extends Object3DBranch {
           innerSurfaceCoords [j] = new Point3f(point [0], 0, point [1]);
           if (groundTexture != null) {
             innerSurfaceTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-                (point [1] - this.originY) / groundTexture.getHeight());
+                (this.originY - point [1]) / groundTexture.getHeight());
           }
         }
         GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
