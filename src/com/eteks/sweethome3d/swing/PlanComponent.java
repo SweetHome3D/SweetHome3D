@@ -1449,23 +1449,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
           yLabel + labelFontMetrics.getDescent());
     } else if (item instanceof Compass) {
-      // Add to bounds the N letter height indicating north 
       Compass compass = (Compass)item;
-      float northDirection = compass.getNorthDirection();
-      double sin = Math.sin(northDirection);
-      double cos = Math.cos(northDirection);
-      float letterHeight = compass.getDiameter() * 0.2f;
-      float deltaX = (float)(sin * letterHeight);
-      float deltaY = (float)(-cos * letterHeight);
-      itemBounds.add(points [0][0] + deltaX, points [0][1] + deltaY);
-      itemBounds.add(points [1][0] + deltaX, points [1][1] + deltaY);
-      // Add to bounds the three lines at cardinal point
-      float cardinalPointHeight = compass.getDiameter() * 0.1f;
-      deltaX = (float)(cos * cardinalPointHeight);
-      deltaY = (float)(sin * cardinalPointHeight);
-      itemBounds.add((points [1][0] + points [2][0]) / 2 + deltaX, (points [1][1] + points [2][1]) / 2 + deltaY);
-      itemBounds.add((points [3][0] + points [0][0]) / 2 - deltaX, (points [3][1] + points [0][1]) / 2 + deltaY);
-      itemBounds.add((points [2][0] + points [3][0]) / 2 + deltaY, (points [2][1] + points [3][1]) / 2 + deltaX);
+      AffineTransform transform = AffineTransform.getTranslateInstance(compass.getX(), compass.getY());
+      transform.scale(compass.getDiameter(), compass.getDiameter());
+      transform.rotate(compass.getNorthDirection());
+      return COMPASS.createTransformedShape(transform).getBounds2D();
     } 
     return itemBounds;
   }
