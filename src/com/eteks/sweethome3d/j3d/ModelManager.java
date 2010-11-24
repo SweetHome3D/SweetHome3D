@@ -739,8 +739,12 @@ public class ModelManager {
       Appearance appearance = shape.getAppearance();
       RenderingAttributes renderingAttributes = appearance != null 
           ? appearance.getRenderingAttributes() : null;
-      if (renderingAttributes == null
-          || renderingAttributes.getVisible()) {
+      TransparencyAttributes transparencyAttributes = appearance != null 
+          ? appearance.getTransparencyAttributes() : null;
+      if ((renderingAttributes == null
+            || renderingAttributes.getVisible())
+          && (transparencyAttributes == null
+              || transparencyAttributes.getTransparency() < 1)) {
         // Compute shape geometries area
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           Geometry geometry = shape.getGeometry(i);
@@ -809,8 +813,12 @@ public class ModelManager {
       Appearance appearance = shape.getAppearance();
       RenderingAttributes renderingAttributes = appearance != null 
           ? appearance.getRenderingAttributes() : null;
-      if (renderingAttributes == null
-          || renderingAttributes.getVisible()) {
+      TransparencyAttributes transparencyAttributes = appearance != null 
+          ? appearance.getTransparencyAttributes() : null;
+      if ((renderingAttributes == null
+            || renderingAttributes.getVisible())
+          && (transparencyAttributes == null
+              || transparencyAttributes.getTransparency() < 1)) {
         // Compute shape geometries area
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           computeGeometryAreaOnFloor(shape.getGeometry(i), parentTransformations, nodeArea);
