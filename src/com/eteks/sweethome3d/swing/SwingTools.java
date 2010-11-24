@@ -207,26 +207,35 @@ public class SwingTools {
   }
 
   /**
-   * Updates the Swing resource bundle in use from the current Locale. 
+   * Updates the Swing resource bundles in use from the current Locale. 
    */
   public static void updateSwingResourceLanguage() {
     // Read Swing localized properties because Swing doesn't update its internal strings automatically
     // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
-    String [] swingResources = {"com.sun.swing.internal.plaf.basic.resources.basic",
-                                "com.sun.swing.internal.plaf.metal.resources.metal"};
-    for (String swingResource : swingResources) {
-      ResourceBundle resource;
-      try {
-        resource = ResourceBundle.getBundle(swingResource);
-      } catch (MissingResourceException ex) {
-        resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
-      }
-      // Update UIManager properties
-      for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
-        String property = (String)it.nextElement();
-        UIManager.put(property, resource.getString(property));
-      }      
-    };
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal");
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.basic.resources.basic");
+    if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
+      updateSwingResourceBundle("com.sun.java.swing.plaf.gtk.resources.gtk");
+    } else if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.motif.MotifLookAndFeel")) {
+      updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif");
+    } 
+  }
+
+  /**
+   * Updates a Swing resource bundle in use from the current Locale. 
+   */
+  private static void updateSwingResourceBundle(String swingResource) {
+    ResourceBundle resource;
+    try {
+      resource = ResourceBundle.getBundle(swingResource);
+    } catch (MissingResourceException ex) {
+      resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
+    }
+    // Update UIManager properties
+    for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
+      String property = (String)it.nextElement();
+      UIManager.put(property, resource.getString(property));
+    }
   }
   
   /**
