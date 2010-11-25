@@ -67,7 +67,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
   public void testPlanComponentWithFurniture() throws InterruptedException {
     // 1. Create a frame that displays a home view and a tool bar
     // with Mode, Add furniture, Undo and Redo buttons
-    TestFrame frame = new TestFrame();    
+    final TestFrame frame = new TestFrame();    
     // Show home plan frame
     showWindow(frame);
     
@@ -96,8 +96,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         frame.homeController.getFurnitureCatalogController().getView();
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
-    // Click on Add furniture button
-    frame.addButton.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          // Click on Add furniture button
+          frame.addButton.doClick();
+        }
+      });
     // Check home contains one selected piece
     assertEquals("Wrong piece count", 
         1, frame.home.getFurniture().size());

@@ -67,11 +67,11 @@ public class TransferHandlerTest extends ComponentTestFixture {
     home.getCompass().setVisible(false);
     HomeController controller = new HomeController(home, preferences, viewFactory);
     JComponent homeView = (JComponent)controller.getView();
-    FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(
+    final FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(
          homeView, FurnitureCatalogTree.class);
     FurnitureTable furnitureTable = (FurnitureTable)TestUtilities.findComponent(
         homeView, FurnitureTable.class);
-    PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
+    final PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
          homeView, PlanComponent.class);
 
     // 1. Create a frame that displays a home view 
@@ -83,7 +83,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // Show home plan frame
     showWindow(frame);
-    JComponentTester tester = new JComponentTester();
+    final JComponentTester tester = new JComponentTester();
     tester.waitForIdle();
     // Check catalog tree has default focus
     assertTrue("Tree doesn't have the focus", catalogTree.isFocusOwner());
@@ -100,8 +100,12 @@ public class TransferHandlerTest extends ComponentTestFixture {
     Rectangle selectedRowBounds = catalogTree.getRowBounds(1);
     tester.actionDrag(catalogTree, new ComponentLocation( 
         new Point(selectedRowBounds.x, selectedRowBounds.y)));
-    tester.actionDrop(planComponent, new ComponentLocation( 
-        new Point(120, 120))); 
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          tester.actionDrop(planComponent, new ComponentLocation( 
+              new Point(120, 120))); 
+        }
+      });
     tester.waitForIdle();
     // Check a piece was added to home
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());

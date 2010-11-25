@@ -156,7 +156,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Retrieve ImportedFurnitureWizardStepsPanel components
     ImportedFurnitureWizardStepsPanel panel = (ImportedFurnitureWizardStepsPanel)TestUtilities.findComponent(
         frame, ImportedFurnitureWizardStepsPanel.class);
-    JButton modelChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "modelChoiceOrChangeButton");
+    final JButton modelChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "modelChoiceOrChangeButton");
     JButton turnLeftButton = (JButton)TestUtilities.getField(panel, "turnLeftButton");
     JButton turnDownButton = (JButton)TestUtilities.getField(panel, "turnDownButton");
     JCheckBox backFaceShownCheckBox = (JCheckBox)TestUtilities.getField(panel, "backFaceShownCheckBox");
@@ -179,7 +179,11 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     
     // 3. Choose tested model
     String modelChoiceOrChangeButtonText = modelChoiceOrChangeButton.getText();
-    modelChoiceOrChangeButton.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          modelChoiceOrChangeButton.doClick();
+        }
+      });
     // Wait 1 s to let time to Java 3D to load the model
     Thread.sleep(1000);
     // Check choice button text changed
@@ -189,7 +193,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     WizardPane view = (WizardPane)TestUtilities.findComponent(frame, WizardPane.class);
     // Retrieve wizard view next button
     final JButton nextFinishOptionButton = (JButton)TestUtilities.getField(view, "nextFinishOptionButton"); 
-    assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
+    assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());    
     nextFinishOptionButton.doClick();
     // Check current step is rotation
     tester.waitForIdle();
