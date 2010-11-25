@@ -128,34 +128,34 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Add 1° to camera pitch
     tester.actionKeyStroke(KeyEvent.VK_PAGE_UP);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1009.0617f, 1017.3002f, 
-        (float)Math.PI, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1000.1468f, 1025.8342f, 
+        (float)Math.PI, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     
     // 4. Remove 10° from camera yaw 
     tester.actionKeyStroke(KeyEvent.VK_LEFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(263.9243f, 994.1371f, 1017.3002f, 
-        (float)Math.PI - 10 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(144.2812f, 998.8128f, 1025.8342f, 
+        (float)Math.PI - (float)Math.PI / 60, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     // Add 1° to camera yaw 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(247.0138f, 996.967f, 1017.3002f, 
-        (float)Math.PI - 9 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-109.0647f, 978.874f, 1025.8342f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     
     // 5. Move camera 1cm forward
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_UP);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(246.4704f, 993.5365f, 1013.7034f, 
-        (float)Math.PI - 9 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-85.8082f, 869.4608f, 907.961f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     // Move camera 10 backward 
     tester.actionKeyStroke(KeyEvent.VK_DOWN);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(251.9039f, 1027.8417f, 1049.6704f, 
-        (float)Math.PI - 9 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-90.4595f, 891.3434f, 931.5356f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     
     // 6. View from observer
     runAction(controller, HomePane.ActionType.VIEW_FROM_OBSERVER);
@@ -238,7 +238,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionKeyRelease(KeyEvent.VK_ALT);
     tester.actionMouseRelease();
     // Check camera location changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(130.6284f, 141.8525f, 170, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
         2.5156f, 0.1639f, home.getCamera());
 
     // 10. Change observer camera yaw with mouse in 3D view
@@ -246,16 +246,16 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionMouseMove(component3D, new ComponentLocation(new Point(20, 20)));
     tester.actionMouseRelease();
     // Check camera yaw changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(130.6284f, 141.8525f, 170, 
-        3.0156f, 0.1639f, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
+        2.5656f, 0.1639f, home.getCamera());
     
     // Change camera pitch with mouse in 3D view
     tester.actionMousePress(component3D, new ComponentLocation(new Point(20, 20)));
     tester.actionMouseMove(component3D, new ComponentLocation(new Point(20, 30)));
     tester.actionMouseRelease();
     // Check camera yaw changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(130.6284f, 141.8525f, 170, 
-        3.0156f, 0.2139f, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
+        2.5656f, 0.2139f, home.getCamera());
     
     // 11. Edit 3D view modal dialog box
     JDialog attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
