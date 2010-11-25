@@ -104,8 +104,8 @@ public class HomeCameraTest extends ComponentTestFixture {
         (float)Math.PI, (float)Math.PI / 4, home.getCamera());
     
     // 2. Create one wall between points (50, 50) and (150, 50) at a bigger scale
-    runAction(controller, HomePane.ActionType.CREATE_WALLS);
-    runAction(controller, HomePane.ActionType.ZOOM_IN);
+    runAction(controller, HomePane.ActionType.CREATE_WALLS, tester);
+    runAction(controller, HomePane.ActionType.ZOOM_IN, tester);
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 50, 50);
     tester.actionClick(planComponent, 150, 50, InputEvent.BUTTON1_MASK, 2);
@@ -158,7 +158,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
     
     // 6. View from observer
-    runAction(controller, HomePane.ActionType.VIEW_FROM_OBSERVER);
+    runAction(controller, HomePane.ActionType.VIEW_FROM_OBSERVER, tester);
     tester.waitForIdle();
     ObserverCamera observerCamera = home.getObserverCamera();
     // Check camera is the observer camera
@@ -177,7 +177,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertTrue("Camera isn't selected", home.getSelectedItems().contains(home.getCamera()));
 
     // Try to select wall and observer camera 
-    runAction(controller, HomePane.ActionType.SELECT);
+    runAction(controller, HomePane.ActionType.SELECT, tester);
     tester.actionClick(planComponent, 50, 50);
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, (int)(140 * planComponent.getScale()), 
@@ -313,12 +313,12 @@ public class HomeCameraTest extends ComponentTestFixture {
         0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
     
     // 13. Undo changes
-    runAction(controller, HomePane.ActionType.UNDO);
+    runAction(controller, HomePane.ActionType.UNDO, tester);
     // Check home attributes have previous values
     assert3DAttributesEqualHomeAttributes(oldCameraFieldOfView, oldCameraHeight, 
         oldGroundColor, null, oldSkyColor, oldLightColor, oldWallsAlpha, home);
     // Redo
-    runAction(controller, HomePane.ActionType.REDO);
+    runAction(controller, HomePane.ActionType.REDO, tester);
     // Check home attributes are modified accordingly
     assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
         0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
@@ -389,7 +389,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          runAction(controller, HomePane.ActionType.MODIFY_3D_ATTRIBUTES);
+          ((JComponent)controller.getView()).getActionMap().get(HomePane.ActionType.MODIFY_3D_ATTRIBUTES).actionPerformed(null);
         }
       });
     // Wait for 3D view to be shown
@@ -420,11 +420,16 @@ public class HomeCameraTest extends ComponentTestFixture {
 
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
-   * in <code>HomePane</code>. 
+   * in <code>controller</code> view. 
    */
-  private void runAction(HomeController controller,
-                         HomePane.ActionType actionType) {
-    ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
+  private void runAction(final HomeController controller,
+                         final HomePane.ActionType actionType,
+                         JComponentTester tester) {
+    tester.invokeAndWait(new Runnable() { 
+        public void run() {
+          ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
+        }
+      });
   }
 
   /**

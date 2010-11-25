@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Dialog;
-import java.awt.FileDialog;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 import java.io.File;
@@ -43,7 +42,6 @@ import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.matchers.ClassMatcher;
-import abbot.tester.FileDialogTester;
 import abbot.tester.JComponentTester;
 import abbot.tester.JFileChooserTester;
 
@@ -58,7 +56,10 @@ import com.eteks.sweethome3d.swing.HomePrintableComponent;
 import com.eteks.sweethome3d.swing.PageSetupPanel;
 import com.eteks.sweethome3d.swing.PrintPreviewPanel;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -71,8 +72,23 @@ public class PrintTest extends ComponentTestFixture {
     UserPreferences preferences = new DefaultUserPreferences();
     ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
+    ContentManager contentManager = new FileContentManager(preferences) {
+        @Override
+        public String showSaveDialog(View parentView, String dialogTitle, ContentType contentType, String name) {
+          String os = System.getProperty("os.name");
+          if (OperatingSystem.isMacOSX()) {
+            // Let's pretend the OS isn't Mac OS X to get a JFileChooser instance that works better in test
+            System.setProperty("os.name", "dummy");
+          }
+          try {
+            return super.showSaveDialog(parentView, dialogTitle, contentType, name);
+          } finally {
+            System.setProperty("os.name", os);
+          }
+        }
+      };
     final HomeController controller = 
-        new HomeController(home, preferences, viewFactory, new FileContentManager(preferences));
+        new HomeController(home, preferences, viewFactory, contentManager);
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home Print Test");    
@@ -178,7 +194,7 @@ public class PrintTest extends ComponentTestFixture {
     assertEquals("Wrong printable component page count", 2, printableComponent.getPageCount());
     
     // 6. Click on next page button
-    nextButton.doClick();
+    tester.click(nextButton);
     // Check if buttons are enabled and if printable component displays the second page
     assertTrue("Previous button is enabled", previousButton.isEnabled());
     assertFalse("Next button is disabled", nextButton.isEnabled());
@@ -214,25 +230,13 @@ public class PrintTest extends ComponentTestFixture {
         new ClassMatcher (Dialog.class, true));
     assertTrue("Print to pdf dialog not showing", printToPdfDialog.isShowing());
     // Change file in print to PDF file chooser 
-    if (printToPdfDialog instanceof FileDialog) {
-      final FileDialogTester fileDialogTester = new FileDialogTester();
-      fileDialogTester.actionSetDirectory(printToPdfDialog, System.getProperty("user.dir"));
-      fileDialogTester.actionSetFile(printToPdfDialog, pdfFileBase);
-      tester.invokeAndWait(new Runnable() {
-          public void run() {
-            // Select Ok option to hide dialog box in Event Dispatch Thread
-            fileDialogTester.actionAccept(printToPdfDialog);
-          }
-        });
-    } else {
-      final JFileChooserTester fileChooserTester = new JFileChooserTester();
-      final JFileChooser fileChooser = (JFileChooser)new BasicFinder().find(printToPdfDialog, 
-          new ClassMatcher(JFileChooser.class));
-      fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
-      fileChooserTester.actionSetFilename(fileChooser, pdfFileBase);
-      // Select Ok option to hide dialog box
-      fileChooserTester.actionApprove(fileChooser);
-    }
+    final JFileChooserTester fileChooserTester = new JFileChooserTester();
+    final JFileChooser fileChooser = (JFileChooser)new BasicFinder().find(printToPdfDialog, 
+        new ClassMatcher(JFileChooser.class));
+    fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
+    fileChooserTester.actionSetFilename(fileChooser, pdfFileBase);
+    // Select Ok option to hide dialog box
+    fileChooserTester.actionApprove(fileChooser);
     // Wait PDF generation  
     Thread.sleep(2000);
     assertFalse("Print to pdf dialog still showing", printToPdfDialog.isShowing());

@@ -187,7 +187,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // Retrieve ImportedFurnitureWizardStepsPanel components
     ImportedTextureWizardStepsPanel panel = (ImportedTextureWizardStepsPanel)TestUtilities.findComponent(
         textureWizardDialog, ImportedTextureWizardStepsPanel.class);
-    JButton imageChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "imageChoiceOrChangeButton");
+    final JButton imageChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "imageChoiceOrChangeButton");
     final JTextField nameTextField = (JTextField)TestUtilities.getField(panel, "nameTextField");
     JComboBox categoryComboBox = (JComboBox)TestUtilities.getField(panel, "categoryComboBox");
     JSpinner widthSpinner = (JSpinner)TestUtilities.getField(panel, "widthSpinner");
@@ -203,16 +203,23 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     
     // 4. Choose tested image 
     String imageChoiceOrChangeButtonText = imageChoiceOrChangeButton.getText();
-    imageChoiceOrChangeButton.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          imageChoiceOrChangeButton.doClick();
+        }
+      });
     // Wait 200 ms to let time to Java to load the image
     Thread.sleep(200);
     // Check choice button text changed
     assertFalse("Choice button text didn't change", 
         imageChoiceOrChangeButtonText.equals(imageChoiceOrChangeButton.getText()));
     // Click on next button
-    nextFinishOptionButton.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          nextFinishOptionButton.doClick();
+        }
+      });
     // Check current step is attributes
-    tester.waitForIdle();
     assertStepShowing(panel, false, true);
 
     // 5. Check default furniture name is the presentation name proposed by content manager
@@ -302,12 +309,14 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // Retrieve ImportedFurnitureWizardStepsPanel components
     panel = (ImportedTextureWizardStepsPanel)TestUtilities.findComponent(
         textureWizardDialog, ImportedTextureWizardStepsPanel.class);
-    imageChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "imageChoiceOrChangeButton");
     widthSpinner = (JSpinner)TestUtilities.getField(panel, "widthSpinner");
     final JButton nextFinishOptionButton2 = (JButton)TestUtilities.getField(
         TestUtilities.findComponent(textureWizardDialog, WizardPane.class), "nextFinishOptionButton");
-    tester.waitForIdle();
-    nextFinishOptionButton2.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          nextFinishOptionButton2.doClick();
+        }
+      });
     
     // Change width
     widthSpinner.setValue((Float)widthSpinner.getValue() * 2);

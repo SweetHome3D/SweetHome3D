@@ -140,46 +140,46 @@ public class RoomTest extends ComponentTestFixture {
     
     // 5. Increase font size of room name text
     assertNull("Text style exists", room.getNameStyle());
-    runAction(frame.homeController, HomeView.ActionType.INCREASE_TEXT_SIZE);
+    runAction(frame.homeController, HomeView.ActionType.INCREASE_TEXT_SIZE, tester);
     // Check text style
     assertEquals("Wrong text size", 26.f, room.getNameStyle().getFontSize());
     // Decrease font size of room name text
-    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE);
-    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE);    
+    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE, tester);
+    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE, tester);    
     assertEquals("Wrong text size", 22.f, room.getNameStyle().getFontSize());
     // Change style to italic
-    runAction(frame.homeController, HomeView.ActionType.TOGGLE_ITALIC_STYLE);
+    runAction(frame.homeController, HomeView.ActionType.TOGGLE_ITALIC_STYLE, tester);
     assertTrue("Text isn't italic", room.getNameStyle().isItalic());
     assertFalse("Text is bold", room.getNameStyle().isBold());
     // Change style to bold
-    runAction(frame.homeController, HomeView.ActionType.TOGGLE_BOLD_STYLE);
+    runAction(frame.homeController, HomeView.ActionType.TOGGLE_BOLD_STYLE, tester);
     assertTrue("Text isn't italic", room.getNameStyle().isItalic());
     assertTrue("Text isn't bold", room.getNameStyle().isBold());
     
     // 6. Undo style change
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     // Check style
     assertFalse("Text is italic", room.getNameStyle().isItalic());
     assertFalse("Text is bold", room.getNameStyle().isBold());
     // Undo text size change
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     assertEquals("Wrong text size", 24.f, room.getNameStyle().getFontSize());
     // Undo room modification
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     assertNull("Name isn't empty", room.getName());
     assertTrue("Area isn't visible", room.isAreaVisible());
     assertTrue("Floor isn't visible", room.isFloorVisible());
     assertTrue("Ceiling isn't visible", room.isCeilingVisible());
     // Undo room creation
-    runAction(frame.homeController, HomeView.ActionType.UNDO);
+    runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     assertEquals("Wrong room count in home", 0, frame.home.getRooms().size());
    
     // 7. Redo everything
     for (int i = 0; i < 7; i++) {
-      runAction(frame.homeController, HomeView.ActionType.REDO);
+      runAction(frame.homeController, HomeView.ActionType.REDO, tester);
     }
     // Check room is back
     assertEquals("Wrong room count in home", 1, frame.home.getRooms().size());
@@ -196,10 +196,15 @@ public class RoomTest extends ComponentTestFixture {
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
+   * @param tester TODO
    */
-  private void runAction(HomeController controller,
-                         HomePane.ActionType actionType) {
-    ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
+  private void runAction(final HomeController controller,
+                         final HomePane.ActionType actionType, JComponentTester tester) {
+    tester.invokeAndWait(new Runnable() { 
+        public void run() {
+          ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
+        }
+      });
   }
   
   /**
@@ -212,7 +217,7 @@ public class RoomTest extends ComponentTestFixture {
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          runAction(controller, HomeView.ActionType.MODIFY_ROOM);
+          ((JComponent)controller.getView()).getActionMap().get(HomeView.ActionType.MODIFY_ROOM).actionPerformed(null);
         }
       });
     // Wait for wall view to be shown

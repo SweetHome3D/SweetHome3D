@@ -30,6 +30,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -59,7 +60,8 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class TransferHandlerTest extends ComponentTestFixture {
-  public void testTransferHandler() throws ComponentSearchException, UnsupportedFlavorException, IOException {
+  public void testTransferHandler() throws ComponentSearchException, UnsupportedFlavorException, 
+                                           IOException, InterruptedException, InvocationTargetException {
     UserPreferences preferences = new DefaultUserPreferences();
     preferences.setFurnitureCatalogViewedInTree(true);
     ViewFactory viewFactory = new SwingViewFactory();
@@ -100,12 +102,8 @@ public class TransferHandlerTest extends ComponentTestFixture {
     Rectangle selectedRowBounds = catalogTree.getRowBounds(1);
     tester.actionDrag(catalogTree, new ComponentLocation( 
         new Point(selectedRowBounds.x, selectedRowBounds.y)));
-    tester.invokeAndWait(new Runnable() {
-        public void run() {
-          tester.actionDrop(planComponent, new ComponentLocation( 
-              new Point(120, 120))); 
-        }
-      });
+    tester.actionDrop(planComponent, new ComponentLocation( 
+        new Point(120, 120))); 
     tester.waitForIdle();
     // Check a piece was added to home
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
@@ -156,7 +154,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check home selection contains 3 items
     assertEquals("Selected items wrong count", 3, home.getSelectedItems().size());
     // Cut selected items in plan component
-    runAction(controller, HomePane.ActionType.CUT);
+    runAction(tester, controller, HomePane.ActionType.CUT);
     // Check home is empty
     assertEquals("Wrong piece count in home", 0, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 0, home.getWalls().size());
@@ -169,7 +167,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertTrue("Missing String flavor", clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor));
 
     // 8. Paste selected items in plan component
-    runAction(controller, HomePane.ActionType.PASTE);
+    runAction(tester, controller, HomePane.ActionType.PASTE);
     tester.waitForIdle();
     // Check home contains one piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
@@ -181,7 +179,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check furniture table has focus
     assertTrue("Table doesn't have the focus", furnitureTable.isFocusOwner());
     // Delete selection 
-    runAction(controller, HomePane.ActionType.DELETE);
+    runAction(tester, controller, HomePane.ActionType.DELETE);
     // Check home contains no piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 0, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
@@ -190,7 +188,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, false, false, true, false);
 
     // 10. Paste selected items in furniture table
-    runAction(controller, HomePane.ActionType.PASTE);
+    runAction(tester, controller, HomePane.ActionType.PASTE);
     // Check home contains one piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
@@ -199,7 +197,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, true, true, true, true);
     
     // 11. Copy selected furniture in clipboard while furniture table has focus
-    runAction(controller, HomePane.ActionType.COPY);    
+    runAction(tester, controller, HomePane.ActionType.COPY);    
     // Check clipboard contains two different data flavors (HomeTransferableList and String)
     assertTrue("Missing home data flavor", clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR));
     assertTrue("Missing String flavor", clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor));
@@ -209,9 +207,13 @@ public class TransferHandlerTest extends ComponentTestFixture {
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
    */
-  private void runAction(HomeController controller,
-                         HomePane.ActionType actionType) {
-    getAction(controller, actionType).actionPerformed(null);
+  private void runAction(JComponentTester tester, final HomeController controller,
+                         final HomePane.ActionType actionType) {
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        getAction(controller, actionType).actionPerformed(null);
+      }
+    });
   }
 
   /**

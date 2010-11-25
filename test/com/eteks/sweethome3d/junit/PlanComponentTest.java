@@ -68,7 +68,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     // 1. Create a frame that displays a PlanComponent instance of 
     // a new home at 540 pixels by 400 preferred size, and a tool bar
     // with a mode toggle button, an undo button and a redo button
-    PlanTestFrame frame = new PlanTestFrame();    
+    final PlanTestFrame frame = new PlanTestFrame();    
     // Show home plan frame
     showWindow(frame);
     PlanComponent planComponent = (PlanComponent)frame.planController.getView();
@@ -85,11 +85,11 @@ public class PlanComponentTest extends ComponentTestFixture {
     });
     
     // 2. Use WALL_CREATION mode
-    frame.modeButton.doClick();
+    JComponentTester tester = new JComponentTester();
+    tester.click(frame.modeButton);
     assertEquals("Current mode isn't " + PlanController.Mode.WALL_CREATION, 
         PlanController.Mode.WALL_CREATION, frame.planController.getMode());
     // Click at (30, 30), (270, 31), (269, 170), then double click at (30, 171)
-    JComponentTester tester = new JComponentTester();
     tester.actionClick(planComponent, 30, 30);
     tester.actionClick(planComponent, 270, 31);
     tester.actionClick(planComponent, 269, 170);
@@ -124,7 +124,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall3, wall4, null);
     
     // 4. Use SELECTION mode
-    frame.modeButton.doClick(); 
+    tester.click(frame.modeButton); 
     // Check current mode is SELECTION
     assertEquals("Current mode isn't " + PlanController.Mode.SELECTION, 
         PlanController.Mode.SELECTION, frame.planController.getMode());
@@ -136,7 +136,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertHomeContains(frame.home, wall1, wall2, wall3);
     
     // 5. Use WALL_CREATION mode
-    frame.modeButton.doClick();   
+    tester.click(frame.modeButton);   
     //  Click at (31, 29), then double click at (30, 170)
     tester.actionClick(planComponent, 31, 29); 
     tester.actionClick(planComponent, 30, 170, InputEvent.BUTTON1_MASK, 2);
@@ -147,7 +147,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall1, wall4, wall3);
     
     // 6. Use SELECTION mode
-    frame.modeButton.doClick(); 
+    tester.click(frame.modeButton); 
     // Drag and drop cursor from (200, 100) to (300, 180)
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(200, 100))); 
@@ -188,14 +188,22 @@ public class PlanComponentTest extends ComponentTestFixture {
 
     // 10. Click 6 times on undo button
     for (int i = 0; i < 6; i++) {
-      frame.undoButton.doClick();
+      tester.invokeAndWait(new Runnable() {
+          public void run() {
+            frame.undoButton.doClick();
+          }
+        });
     }
     // Check home doesn't contain any wall
     assertHomeContains(frame.home);
     
     // 11. Click 6 times on redo button
     for (int i = 0; i < 6; i++) {
-      frame.redoButton.doClick();
+      tester.invokeAndWait(new Runnable() {
+          public void run() {
+            frame.redoButton.doClick();
+          }
+        });
     }
     // Check plan contains the four wall
     assertHomeContains(frame.home, wall1, wall2, wall3, wall4);
@@ -214,7 +222,11 @@ public class PlanComponentTest extends ComponentTestFixture {
     float yStartWall3 = wall3.getYStart();
     float xEndWall3 = wall3.getXEnd();
     float yEndWall3 = wall3.getYEnd();
-    frame.reverseDirectionButton.doClick();
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          frame.reverseDirectionButton.doClick();
+        }
+      });
     // Check the second and the third wall are still selected
     assertSelectionContains(frame.home, wall2, wall3);
     // Check wall2 and wall3 were reserved
@@ -243,7 +255,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 60, 50);
     assertSelectionContains(frame.home, wall1);
     // Split first wall in two walls
-    frame.splitButton.doClick();
+    tester.click(frame.splitButton);
     Wall wall5 = orderedWalls.get(orderedWalls.size() - 2);
     Wall wall6 = orderedWalls.get(orderedWalls.size() - 1);
     assertSelectionContains(frame.home, wall5);
@@ -253,7 +265,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall5, wall6, wall2); 
     assertFalse("Split wall still present in home", frame.home.getWalls().contains(wall1));
     // Undo operation and check undone state
-    frame.undoButton.doClick();
+    tester.click(frame.undoButton);
     assertSelectionContains(frame.home, wall1);
     assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
     assertWallsAreJoined(wall4, wall1, wall2); 

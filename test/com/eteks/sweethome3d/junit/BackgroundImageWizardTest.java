@@ -50,6 +50,7 @@ import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
@@ -111,12 +112,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Home background image isn't empty", null, home.getBackgroundImage());
 
     // 2. Open wizard to import a background image
-    tester.invokeLater(new Runnable() { 
-        public void run() {
-          // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          homeView.getActionMap().get(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE).actionPerformed(null);
-        }
-      });
+    runAction(controller, HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, tester);
     // Wait for import furniture view to be shown
     tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
         BackgroundImageWizardController.class, "wizard.title"));
@@ -133,12 +129,11 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     JSpinner yOriginSpinner = (JSpinner)TestUtilities.getField(panel, "yOriginSpinner");
     
     // Check current step is image
-    tester.waitForIdle();
     assertStepShowing(panel, true, false, false);    
     
     // 3. Choose tested image
     String imageChoiceOrChangeButtonText = imageChoiceOrChangeButton.getText();
-    imageChoiceOrChangeButton.doClick();
+    tester.click(imageChoiceOrChangeButton);
     // Wait 100 s to let time to Java to load the image
     Thread.sleep(100);
     // Check choice button text changed
@@ -149,9 +144,8 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     // Retrieve wizard view next button
     final JButton nextFinishOptionButton = (JButton)TestUtilities.getField(view, "nextFinishOptionButton"); 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
-    nextFinishOptionButton.doClick();
+    tester.click(nextFinishOptionButton);
     // Check current step is scale
-    tester.waitForIdle();
     assertStepShowing(panel, false, true, false);
     
     // 4. Check scale distance spinner value is empty
@@ -164,9 +158,8 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     tester.actionKeyString("100");    
     // Check next button is enabled 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
-    nextFinishOptionButton.doClick();
+    tester.click(nextFinishOptionButton);
     // Check current step is origin
-    tester.waitForIdle();
     assertStepShowing(panel, false, false, true);
     
     // 5. Check origin x and y spinners value is 0
@@ -179,8 +172,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     tester.actionKeyString("10");    
     assertEquals("Wrong origin x spinner value", 10f, xOriginSpinner.getValue());
 
-    nextFinishOptionButton.doClick();
-    tester.waitForIdle();    
+    tester.click(nextFinishOptionButton);
     // Check home has a background image
     BackgroundImage backgroundImage = home.getBackgroundImage();
     assertTrue("No background image in home", backgroundImage != null);
@@ -189,16 +181,16 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Background image wrong y origin", 0f, backgroundImage.getYOrigin());
         
     // 6. Undo background image choice in home
-    homeView.getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
+    runAction(controller, HomeView.ActionType.UNDO, tester);
     // Check home background image is empty
     assertEquals("Home background image isn't empty", null, home.getBackgroundImage());
     // Redo
-    homeView.getActionMap().get(HomePane.ActionType.REDO).actionPerformed(null);
+    runAction(controller, HomeView.ActionType.REDO, tester);
     // Check home background image is back
     assertSame("No background image in home", backgroundImage, home.getBackgroundImage());
     
     // 7. Delete background image
-    homeView.getActionMap().get(HomePane.ActionType.DELETE_BACKGROUND_IMAGE).actionPerformed(null);
+    runAction(controller, HomeView.ActionType.DELETE_BACKGROUND_IMAGE, tester);
     // Check home background image is empty
     assertEquals("Home background image isn't empty", null, home.getBackgroundImage());
   }
@@ -216,5 +208,19 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
         ((JComponent)TestUtilities.getField(panel, "scalePreviewComponent")).isShowing());
     assertEquals("Wrong origin step visibility", originStepShowing,
         ((JComponent)TestUtilities.getField(panel, "originPreviewComponent")).isShowing());
+  }
+
+  /**
+   * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
+   * in <code>controller</code> view. 
+   */
+  private void runAction(final HomeController controller, 
+                         final HomePane.ActionType actionType,
+                         JComponentTester tester) {
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
+      }
+    });
   }
 }
