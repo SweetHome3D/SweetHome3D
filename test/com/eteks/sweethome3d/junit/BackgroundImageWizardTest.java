@@ -152,6 +152,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Scale distance spinner isn't empty", null, scaleDistanceSpinner.getValue());
     assertFalse("Next button is enabled", nextFinishOptionButton.isEnabled());
     // Check scale spinner field has focus
+    tester.waitForIdle();
     assertSame("Scale spinner doesn't have focus", ((JSpinner.DefaultEditor)scaleDistanceSpinner.getEditor()).getTextField(),
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Enter as scale
@@ -166,6 +167,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Wrong origin x spinner value", new Float(0), xOriginSpinner.getValue());
     assertEquals("Wrong origin y spinner value", new Float(0), yOriginSpinner.getValue());
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
+    tester.waitForIdle();
     assertSame("Origin x spinner doesn't have focus", ((JSpinner.DefaultEditor)xOriginSpinner.getEditor()).getTextField(),
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Change origin

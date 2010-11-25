@@ -99,6 +99,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Click on Add furniture button
     tester.click(frame.addButton);
     // Check home contains one selected piece
+    tester.waitForIdle();
     assertEquals("Wrong piece count", 
         1, frame.home.getFurniture().size());
     assertEquals("Wrong selected items count", 
