@@ -229,8 +229,7 @@ public class SweetHome3D extends HomeApplication {
         if (userPreferences instanceof FileUserPreferences) {
           File [] applicationPluginsFolders = ((FileUserPreferences) userPreferences)
               .getApplicationSubfolders(APPLICATION_PLUGINS_SUB_FOLDER);
-          // Create the plug-in manager that will search plug-in files in
-          // plugins folders
+          // Create the plug-in manager that will search plug-in files in plugins folders
           this.pluginManager = new PluginManager(applicationPluginsFolders);
         }
       } catch (IOException ex) {
@@ -358,8 +357,7 @@ public class SweetHome3D extends HomeApplication {
 
             // If application has no more home
             if (getHomes().isEmpty() && !OperatingSystem.isMacOSX()) {
-              // If SingleInstanceService is available, remove the listener that
-              // was added on it
+              // If SingleInstanceService is available, remove the listener that was added on it
               if (singleInstanceService != null) {
                 singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
               }
@@ -482,8 +480,7 @@ public class SweetHome3D extends HomeApplication {
    */
   private void addComponent3DRenderingErrorObserver() {
     // Add a RenderingErrorObserver to Canvas3DManager, because offscreen
-    // rendering needs to check rendering errors with its own
-    // RenderingErrorListener
+    // rendering needs to check rendering errors with its own RenderingErrorListener
     Component3DManager.getInstance().setRenderingErrorObserver(new Component3DManager.RenderingErrorObserver() {
       public void errorOccured(int errorCode, String errorMessage) {
         System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
@@ -596,8 +593,7 @@ public class SweetHome3D extends HomeApplication {
               }
             }
           });
-        // Read home file in args [1] if args [0] == "-open" with a dummy
-        // controller
+        // Read home file in args [1] if args [0] == "-open" with a dummy controller
         createHomeFrameController(createHome()).getHomeController().open(args [1]);
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.LANGUAGE_LIBRARY)) {
         run(new String [0]);
@@ -643,8 +639,7 @@ public class SweetHome3D extends HomeApplication {
         addHome(createHome());
       }
     } else {
-      // If no Sweet Home 3D frame has focus, bring last created viewed frame to
-      // front
+      // If no Sweet Home 3D frame has focus, bring last created viewed frame to front
       final List<Home> homes = getHomes();
       Home home = null;
       for (int i = homes.size() - 1; i >= 0; i--) {
@@ -750,8 +745,7 @@ public class SweetHome3D extends HomeApplication {
           return (Boolean) desktopClass.getMethod("isSupported", desktopActionClass).invoke(desktopInstance,
               desktopBrowseAction);
         } catch (Exception ex) {
-          // For any exception, let's consider simply the isSupported method
-          // failed
+          // For any exception, let's consider simply the isSupported method failed
         }
       }
       // For other Java versions, let's support only Mac OS X
@@ -791,11 +785,8 @@ public class SweetHome3D extends HomeApplication {
     public void addSingleInstanceListener(SingleInstanceListener l) {
       if (this.singleInstanceListeners.isEmpty()) {
         if (!OperatingSystem.isMacOSX()) {
-          // Launching a server is useless under Mac OS X because further
-          // launches will
-          // be notified by com.apple.eawt.ApplicationListener added to
-          // application
-          // in MacOSXConfiguration class
+          // Launching a server is useless under Mac OS X because further launches will be notified 
+          // by com.apple.eawt.ApplicationListener added to application in MacOSXConfiguration class
           launchSingleInstanceServer();
         }
       }
