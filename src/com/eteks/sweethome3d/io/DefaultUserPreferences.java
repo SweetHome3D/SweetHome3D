@@ -64,7 +64,12 @@ public class DefaultUserPreferences extends UserPreferences {
     setWallPattern(patternsCatalog.getPattern(getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
     setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
     setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
-    setAutoSaveDelayForRecovery(Integer.parseInt(getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
+    try {
+      setAutoSaveDelayForRecovery(Integer.parseInt(getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
+    } catch (IllegalArgumentException ex) {
+      // Disable auto save
+      setAutoSaveDelayForRecovery(0);
+    }
     setRecentHomes(new ArrayList<String>());
     try {
       setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
