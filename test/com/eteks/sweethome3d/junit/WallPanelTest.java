@@ -83,9 +83,9 @@ public class WallPanelTest extends TestCase {
     
     // 4. Increase length in dialog
     DialogView wallView = wallController.getView();
-    JSpinner lengthSpinner = 
-        (JSpinner)TestUtilities.getField(wallView, "lengthSpinner");
-    lengthSpinner.setValue((Float)lengthSpinner.getValue() + 20f);
+    JSpinner distanceToEndPointSpinner = 
+        (JSpinner)TestUtilities.getField(wallView, "distanceToEndPointSpinner");
+    distanceToEndPointSpinner.setValue((Float)distanceToEndPointSpinner.getValue() + 20f);
     // Check wall end coordinates changed accordingly
     assertTrue("Wrong X end", Math.abs(wall1.getXEnd() + 20f * (float)Math.cos(Math.PI / 4) - wallController.getXEnd()) < 1E-5);
     assertTrue("Wrong Y end", Math.abs(wall1.getYEnd() + 20f * (float)Math.sin(Math.PI / 4) - wallController.getYEnd()) < 1E-5);
