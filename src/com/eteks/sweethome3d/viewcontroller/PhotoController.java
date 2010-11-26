@@ -46,6 +46,7 @@ public class PhotoController implements Controller {
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
   private final PropertyChangeSupport propertyChangeSupport;
+  private final CameraChangeListener  cameraChangeListener;
   private DialogView                  photoView;
   
   private AspectRatio                 aspectRatio;
@@ -68,9 +69,35 @@ public class PhotoController implements Controller {
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
-    home.addPropertyChangeListener(Home.Property.CAMERA, new CameraChangeListener(this));
+    this.cameraChangeListener = new CameraChangeListener(this);
+    home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
+    home.addPropertyChangeListener(Home.Property.CAMERA, new HomeCameraChangeListener(this));
     home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, new HomeEnvironmentChangeListener(this));
     updateProperties();
+  }
+
+  /**
+   * Camera listener that updates properties when home camera changes. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between home and this controller.  
+   */
+  private static class HomeCameraChangeListener implements PropertyChangeListener {
+    private WeakReference<PhotoController> photoController;
+    
+    public HomeCameraChangeListener(PhotoController photoController) {
+      this.photoController = new WeakReference<PhotoController>(photoController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If controller was garbage collected, remove this listener from home
+      final PhotoController controller = this.photoController.get();
+      if (controller == null) {
+        ((Home)ev.getSource()).removePropertyChangeListener(Home.Property.CAMERA, this);
+      } else {
+        ((Camera)ev.getOldValue()).removePropertyChangeListener(controller.cameraChangeListener);
+        controller.updateProperties();
+        ((Camera)ev.getNewValue()).removePropertyChangeListener(controller.cameraChangeListener);
+      }
+    }
   }
 
   /**
@@ -88,7 +115,7 @@ public class PhotoController implements Controller {
       // If controller was garbage collected, remove this listener from home
       final PhotoController controller = this.photoController.get();
       if (controller == null) {
-        ((Home)ev.getSource()).removePropertyChangeListener(Home.Property.CAMERA, this);
+        ((Camera)ev.getSource()).removePropertyChangeListener(this);
       } else {
         controller.updateProperties();
       }
@@ -111,8 +138,9 @@ public class PhotoController implements Controller {
       final PhotoController controller = this.photoController.get();
       if (controller == null) {
         ((HomeEnvironment)ev.getSource()).removePropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, this);
-      } else {
-        controller.updateProperties();
+      } else if (ev.getPropertyName().equals(Camera.Property.LENS.name())
+            || ev.getPropertyName().equals(Camera.Property.TIME.name())) {
+          controller.updateProperties();
       }
     }
   }
