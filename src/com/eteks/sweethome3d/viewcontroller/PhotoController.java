@@ -77,7 +77,7 @@ public class PhotoController implements Controller {
   }
 
   /**
-   * Camera listener that updates properties when home camera changes. This listener is bound to this controller 
+   * Home camera listener that updates properties when home camera changes. This listener is bound to this controller 
    * with a weak reference to avoid strong link between home and this controller.  
    */
   private static class HomeCameraChangeListener implements PropertyChangeListener {
@@ -112,7 +112,7 @@ public class PhotoController implements Controller {
     }
     
     public void propertyChange(PropertyChangeEvent ev) {
-      // If controller was garbage collected, remove this listener from home
+      // If controller was garbage collected, remove this listener from camera
       final PhotoController controller = this.photoController.get();
       if (controller == null) {
         ((Camera)ev.getSource()).removePropertyChangeListener(this);
