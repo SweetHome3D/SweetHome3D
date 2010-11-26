@@ -979,8 +979,7 @@ public class PhotoPanel extends JPanel implements DialogView {
             photoComponent.setImage(photoImage);
             widthSpinner.setEnabled(true);
             heightSpinner.setEnabled(true);
-            applyProportionsCheckBox.setEnabled(true);
-            aspectRatioComboBox.setEnabled(applyProportionsCheckBox.isSelected());
+            updateRatioComponents();
             qualitySlider.setEnabled(true);
             dateSpinner.setEnabled(true);
             timeSpinner.setEnabled(true);
