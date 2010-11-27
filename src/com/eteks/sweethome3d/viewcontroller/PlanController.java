@@ -4860,9 +4860,10 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     private void toggleDuplication(boolean duplicationActivated) {
-      if (this.movedItems.size() > 0
-          && !(this.movedItems.get(0) instanceof Camera)
-          && !(this.movedItems.get(0) instanceof Compass)) {
+      if (this.movedItems.size() > 1
+          || (this.movedItems.size() == 1
+              && !(this.movedItems.get(0) instanceof Camera)
+              && !(this.movedItems.get(0) instanceof Compass))) {
         if (duplicationActivated
             && this.duplicatedItems == null) {
           // Duplicate original items and add them to home
