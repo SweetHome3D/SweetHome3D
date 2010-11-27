@@ -184,7 +184,7 @@ public class PrintTest extends ComponentTestFixture {
     JToolBar toolBar = 
         (JToolBar)TestUtilities.getField(printPreviewPanel, "toolBar");
     JButton previousButton = (JButton)toolBar.getComponent(0); 
-    JButton nextButton = (JButton)toolBar.getComponent(1); 
+    final JButton nextButton = (JButton)toolBar.getComponent(1); 
     HomePrintableComponent printableComponent = 
         (HomePrintableComponent)TestUtilities.getField(printPreviewPanel, "printableComponent");;
     // Check if buttons are enabled and if printable component displays the first page
@@ -194,7 +194,11 @@ public class PrintTest extends ComponentTestFixture {
     assertEquals("Wrong printable component page count", 2, printableComponent.getPageCount());
     
     // 6. Click on next page button
-    tester.click(nextButton);
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          nextButton.doClick();
+        }
+      });
     // Check if buttons are enabled and if printable component displays the second page
     assertTrue("Previous button is enabled", previousButton.isEnabled());
     assertFalse("Next button is disabled", nextButton.isEnabled());
