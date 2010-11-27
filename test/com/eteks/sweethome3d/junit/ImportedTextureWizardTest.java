@@ -369,11 +369,12 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
                 TextureChoiceComponent.class, "deleteTextureButton.text"));
           }
         });
-    tester.invokeLater(new Runnable() { 
-      public void run() {
-        // Display confirm dialog box later in Event Dispatch Thread to avoid blocking test thread
-        deleteButton.doClick();        }
-    });
+    tester.invokeAndWait(new Runnable() { 
+        public void run() {
+          // Display confirm dialog box later in Event Dispatch Thread to avoid blocking test thread
+          deleteButton.doClick();        
+        }
+      });
     // Wait for confirm dialog to be shown
     final String confirmDeleteSelectedCatalogTextureDialogTitle = preferences.getLocalizedString(
         TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.title");
