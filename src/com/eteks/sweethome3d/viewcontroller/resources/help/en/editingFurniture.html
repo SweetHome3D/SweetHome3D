@@ -78,8 +78,12 @@
                     <tr valign="top">
                       <td nowrap><p>3.</p>
                       </td>
-                      <td><p>The height indicator shows the corner you can drag  to change the height
-                          of the selected piece.</p>
+                      <td><p>The height indicator shows the corner you can drag 
+                  to change the height of the selected piece.<br>
+                  If the piece of furniture is a light source or a lamp containing 
+                  light sources, this indicator is a light dimmer. If you want 
+                  to modify the height of such items, edit its attributes as indicated 
+                  in the next paragraph.</p>
                       </td>
                     </tr>
                     <tr valign="top">
@@ -104,12 +108,13 @@
 	  <p>A piece of furniture  may also be  edited thanks to its pane, by double-clicking on that piece in the home plan
 	    or furniture list, or by choosing <i>Furniture &gt; Modify...</i> after
 	    selecting it.</p>
-	    <p align="center"><img src="images/editingFurniture.png" alt="Modify furniture" width="374" height="234"></p>
+	    <p align="center"><img src="images/editingFurniture.png" alt="Modify furniture" width="375" height="382"></p>
 	    <p>In the furniture pane, you may change its name, the abcissa (X) and 
           the ordinate (Y) of its center, the elevation of its bottom from the 
           floor, its width, its depth, its height, its color or its texture, its 
-          visibility, its rotation angle, whether its name should be displayed 
-          in plan or not and whether its 3D model shape should be mirrored.<br>
+          shininess, its visibility, its rotation angle, whether its name should 
+          be displayed in plan or not and whether its 3D model shape should be 
+          mirrored.<br>
 	    If you make a piece invisible, it won't be drawn in the home plan
 	    and 3D view, but it will
 	    still appear in the furniture list to let you make it visible again later.</p></td>
@@ -120,106 +125,98 @@
     <tr valign="top" BGCOLOR="#eeeeee">
       <td bgcolor="#eeeeee" width="98%">
         <table border="0" cellspacing="0" cellpadding="4">
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>If you want to modify the attributes of a set of pieces, select these pieces and choose <i>Furniture &gt; Modify...</i>.
-                The values of the attributes that are different from one piece to another in the selected furniture set,
-                will appear  blank  in the furniture pane.</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>Use the menu items of <i>Plan &gt; Modify text style</i> submenu to change the size or the style
-                of the text displaying the name of the selected  furniture.</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>If you want to align a set of pieces, select these pieces and choose one of the <i>Furniture &gt; Align</i> menu
-                items. Furniture are aligned on the first selected piece.</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>A piece of furniture qualified as a door or a window indicates to Sweet Home 3D to automatically make holes
-              in walls at doors or windows intersection location. To ensure this intersection is correctly computed, check
-                that the depth of a door or a window  is always larger than the thickness of the wall in which it makes a
-                hole. This
-              computation isn't made for the other kinds of furniture. </td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>If a piece of furniture is dropped on an other one, it will be elevated to appear
-                on the top of the latter, when its selection rectangle is included in the one of the latter and its  elevation
-                is equal to zero (at floor level).</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>If the items selected in the plan contain walls, rooms, furniture,  dimensions and texts, all these
-                items will be moved with a drag and drop or the keyboard arrows. If you keep the <i>ctrl</i> key (or under Mac
-                OS X, the <i>alt</i> key) pressed while
-              you drag and drop these items, they will be duplicated.</td>
-          </tr>
-          <tr valign="top">
-            <td width="16">
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>By default, the angle of a piece of furniture is a multiple of 15&deg; to help you placing it parallel to
-                walls in your home. You may cancel this magnetism by holding down the <i>shift</i> key&nbsp; during the rotation
-                of a piece, or by disabling magnetism in the <a href="editingPreferences.html">preferences</a> pane. In the
-                same way, the angle, the depth and the elevation of a moved piece may be automatically updated only when
-                magnetism is enabled.</p>
-            </td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>The unit displayed by default in the tooltips and furniture pane depends on your country. You may switch
-              to Centimeter, Meter, Millimeter  or Inch in the <a href="editingPreferences.html">preferences</a> pane. </td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>If you want to modify the attributes of a set of pieces, 
+                  select these pieces and choose <i>Furniture &gt; Modify...</i>. 
+                  The values of the attributes that are different from one piece 
+                  to another in the selected furniture set, will appear blank 
+                  in the furniture pane.</td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>Use the menu items of <i>Plan &gt; Modify text style</i> 
+                  submenu to change the size or the style of the text displaying 
+                  the name of the selected furniture.</td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>If you want to align a set of pieces, select these pieces 
+                  and choose one of the <i>Furniture &gt; Align</i> menu items. 
+                  Furniture are aligned on the first selected piece.</td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>A piece of furniture qualified as a door or a window indicates 
+                  to Sweet Home 3D to automatically make holes in walls at doors 
+                  or windows intersection location. To ensure this intersection 
+                  is correctly computed, check that the depth of a door or a window 
+                  is always larger than the thickness of the wall in which it 
+                  makes a hole. This computation isn't made for the other kinds 
+                  of furniture. </td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>Modifying the power of lights has some effect only in the 
+                  images computed by the <a href="creatingPhotos.html">photo</a> 
+                  or <a href="creatingVideos.html">video</a> creation tools, at 
+                  the two best quality levels available for these tools. A light 
+                  source has no physical 3D representation and can be seen in 
+                  the 3D view when selected for feedback purpose. 
+              </td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>If a piece of furniture is dropped on an other one, it will 
+                  be elevated to appear on the top of the latter, when its selection 
+                  rectangle is included in the one of the latter and its elevation 
+                  is equal to zero (at floor level). This automatic behavior is 
+                  disabled when magnetism is disabled. </td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>If the items selected in the plan contain walls, rooms, 
+                  furniture, dimensions and texts, all these items will be moved 
+                  with a drag and drop or the keyboard arrows. If you keep the 
+                  <i>ctrl</i> key (or under Mac OS X, the <i>alt</i> key) pressed 
+                  while you drag and drop these items, they will be duplicated.</td>
+            </tr>
+            <tr valign="top"> 
+              <td width="16"> <p>&#149;</p></td>
+              <td> <p>By default, the angle of a piece of furniture is a multiple 
+                  of 15&deg; to help you placing it parallel to walls in your 
+                  home. You may cancel this magnetism by holding down the <i>shift</i> 
+                  key&nbsp; during the rotation of a piece, or by disabling magnetism 
+                  in the <a href="editingPreferences.html">preferences</a> pane. 
+                  In the same way, the angle, the depth and the elevation of a 
+                  moved piece may be automatically updated only when magnetism 
+                  is enabled.</p></td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>The unit displayed by default in the tooltips and furniture 
+                  pane depends on your country. You may switch to Centimeter, 
+                  Meter, Millimeter or Inch in the <a href="editingPreferences.html">preferences</a> 
+                  pane. </td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
               <td> <p>Choose the items of the menu <i>Plan &gt; Modify text style 
                   </i><i></i> to modify the size and the style of the font used 
                   to draw the name of a piece of furniture. </td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>To help you place furniture, <a href="editing3DView.html">change</a> the point of view and/or the
-                transparency of walls in the 3D view of your home.</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>Pieces <a href="importingFurniture.html">imported</a> into furniture catalog may also be edited by double-clicking
-                on them.</td>
-          </tr>
-        </table>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>To help you place furniture, <a href="editing3DView.html">change</a> 
+                  the point of view and/or the transparency of walls in the 3D 
+                  view of your home.</td>
+            </tr>
+            <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+              <td> <p>Pieces <a href="importingFurniture.html">imported</a> into 
+                  furniture catalog may also be edited by double-clicking on them.</td>
+            </tr>
+          </table>
       </td>
     </tr>
   </table>
