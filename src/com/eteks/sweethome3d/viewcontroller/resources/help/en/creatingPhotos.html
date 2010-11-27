@@ -9,7 +9,7 @@
 <div id="banner">
 	
   <div id="helpheader"> <a class="bread" href="index.html"> Sweet Home 3D Help</a> 
-    > <A class="bread" HREF="tocCreatingPhotos.html">Creating photos</A></div>
+    > <A class="bread" HREF="tocCreatingPhotos.html">Creating photos and videos</A></div>
 </div>
 <div id="mainbox" align="left">
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -26,21 +26,22 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr> 
       <td><p>To create 3D images or photos of your home, choose the <i>3D view 
-          &gt; Create photo...</i> menu item or select the <i>Create photo</i> 
+          &gt; Create photo...</i> menu item or click on the <i>Create photo</i> 
           tool.</p>
         <blockquote> 
           <p><img src="../images/createPhotoTool.png" alt="Photo Creation tool" width="24" height="24" align="absmiddle">&nbsp;<i>Create 
             photo</i> tool</p>
         </blockquote>
-        <p>This will display the following dialog box showing the various parameters 
-          you can use to create an image, along with the <i>Create</i> button 
-          that launches the computing of the image and the <i>Save...</i> button 
-          that will let you save the shown image, once its rendering is computed.</p>
+        <p>This will display the following dialog box showing the size, quality 
+          and possibly other settings used during the image creation process, 
+          along with the <i>Create</i> button that launches the computing of the 
+          image and the <i>Save...</i> button that will let you save the shown 
+          image, once computed.</p>
         <p align="center"><img src="images/creatingPhotos.jpg" width="507" height="475"></p>
         <p>If the default size of the image doesn't satisfy you, choose a different 
           width and height. When the <i>Apply proportions</i> check box is selected, 
           the height of the image is automatically updated at each change of the 
-          width depending on the proportions given by the combo box beside the 
+          width according to the proportions given by the combo box beside the 
           <i>Apply proportions</i> check box.<br>
           The <i>Quality</i> slider lets you choose between the four following 
           levels, from worst to best quality, or from the fastest to the slowest 
@@ -56,7 +57,7 @@
             <tr valign="top"> 
               <td width="240"><img src="../images/photoQuality0.jpg" alt="Quality 0" width="240" height="160" border="1" align="absmiddle"  ></td>
               <td width="209"><p>1. The lowest quality level matches what you 
-                  see in the 3D view at the same width.</p></td>
+                  see in the 3D view with the same field of view.</p></td>
               <td width="8" rowspan="3">&nbsp;&nbsp;</td>
               <td width="242"><img src="../images/photoQuality2.jpg" alt="Quality 2" width="240" height="160" border="1" align="absmiddle"  ></td>
               <td width="214">3. The third quality level uses a completely different 
@@ -147,17 +148,31 @@
             </tr>
             <tr valign="top"> 
               <td><p>&#149;</p></td>
+              <td> <p>At the two best quality levels, the color of the sun rays 
+                  depends on the elevation of the sun in the sky at day time, 
+                  and the sun doesn't produce light at night time. If you selected 
+                  a color for the sky in the <a href="editing3DView.html">3D view</a> 
+                  pane, it will always be replaced by a sky image computed according 
+                  to the hour of the day. If you chose a texture for the sky, 
+                  that texture will always be used whatever the selected hour.</p></td>
+            </tr>
+            <tr valign="top"> 
+              <td><p>&#149;</p></td>
               <td> <p>At a given quality level, you can still improve the image 
                   quality by choosing a bigger size for your image, then reducing 
                   the size of the computed image in an editor like The Gimp.</p></td>
             </tr>
             <tr valign="top"> 
-              <td width="16"><p>&#149;</p></td>
+              <td><p>&#149;</p></td>
               <td> <p>The <i>Create photo</i> dialog box isn't modal. This means 
                   that it doesn't block the input in other windows and lets you 
                   modify your home or your point of view in the main window, while 
-                  this dialog box is opened. Once a rendering operation is running, 
-                  the changes made in your home won't affect the current rendering.</p></td>
+                  this dialog box is opened. </p></td>
+            </tr>
+            <tr valign="top"> 
+              <td width="16"><p>&#149;</p></td>
+              <td> <p> While a photo a is computed, changes made in your home 
+                  won't affect the current rendering.</p></td>
             </tr>
           </table>
 	 </td>

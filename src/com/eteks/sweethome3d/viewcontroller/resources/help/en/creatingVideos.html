@@ -9,7 +9,7 @@
 <div id="banner">
 	
   <div id="helpheader"> <a class="bread" href="index.html"> Sweet Home 3D Help</a> 
-    > <A class="bread" HREF="tocCreatingPhotos.html">Creating videos</A></div>
+    > <A class="bread" HREF="tocCreatingPhotos.html">Creating photos and videos</A></div>
 </div>
 <div id="mainbox" align="left">
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -26,9 +26,40 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
 	<td><p>To create a 3D video of your home, select the <i>3D view &gt; Create 
-          video...</i> menu item.<br>
+          video...</i> menu item or click on the <i>Create video</i> tool.</p>
+        <blockquote> 
+          <p><img src="../images/createVideoTool.png" alt="Video Creation tool" width="24" height="24" align="absmiddle">&nbsp;<i>Create 
+            video</i> tool</p>
+        </blockquote>
+        <p>This will display a dialog box similar to the one dedicated to <a href="creatingPhotos.html">photos</a> 
+          creation.</p>
+        <p align="center"><img src="images/creatingVideos.jpg" width="319" height="512"></p>
+        <p>At the top of this pane, appears the plan of your home upon which the 
+          virtual path of the video camera will be drawn. Below the plan, the 
+          recording, playback and deletion buttons helps you to record the points 
+          the camera path shall pass by, playback the recorded path or remove 
+          some path points. <br>
+          The <i>Video format</i> combo box lets you choose the size, apect ratio 
+          and frame rate of the video, among most common formats.<br>
+          The <i>Quality</i> slider and possibly other fields are the same as 
+          the one found in the <a href="creatingPhotos.html">photo</a> creation 
+          pane.</p>
+        <p>To create a video, choose the initial location of the video camera 
+          in the 3D view of Sweet Home 3D main window, and click on the red button 
+          in the video creation pane. Then move in the 3D view to the next location 
+          of the video camera and click again on the red button. Repeat these 
+          steps for each location the camera should pass by during the video. 
+          <br>
+          Each time you click on the red button, a new point is added in the plan 
+          displayed by the video creation pane to show you the path of the camera.<br>
+          Once you're satisfied by the path you created, click on the <i>Create</i> 
+          button to start the computing of the video frames. Once this computing 
+          is finished, click on the <i>Save...</i> button to save the video in 
+          a Quicktime file. You may view this video with differents tools like 
+          <a href="http://www.videolan.org/">VLC</a> or transcode it in an other 
+          format.<br>
         </p>
-	  </td>
+        </td>
 	</tr>
 </table>
 <div id="taskbox">
@@ -36,9 +67,39 @@
 	<tr valign="top" BGCOLOR="#eeeeee">
 	<td bgcolor="#eeeeee" width="98%">
 	<table border="0" cellspacing="0" cellpadding="4">
-            <tr valign="top">
+            <tr valign="top"> 
               <td width="16"><p>&#149;</p></td>
-              <td> <p>&nbsp;</p></td>
+              <td> <p>Use playback buttons to check roughly the path of the camera 
+                  in the 3D view of Sweet Home 3D main window, because once started, 
+                  computing a video may take minutes to hours depending on your 
+                  home, the chosen quality and the power of your computer. </p></td>
+            </tr>
+            <tr valign="top"> 
+              <td><p>&#149;</p></td>
+              <td> <p>The vertical elevation of the camera, its two rotation angles 
+                  and its field of view are also stored at each recorded location. 
+                  This information is taken into account during the proccess of 
+                  the video and let you create all kind of animations. <br>
+                  At the two best quality levels, you may also set a different 
+                  hour at each recorded point even if you didn't move the camera 
+                  between two recorded points. If the hour set at the first recorded 
+                  point is at the beginning of the day and the hour set at the 
+                  second point is at the end of the day, you'll get an animation 
+                  showing what parts of a room will receive direct sun light during 
+                  a day.</p></td>
+            </tr>
+            <tr valign="top"> 
+              <td><p>&#149;</p></td>
+              <td> <p>The <i>Create video</i> dialog box isn't modal. This means 
+                  that it doesn't block the input in other windows and lets you 
+                  change the current point of view in the 3D view of main window 
+                  before recording a new camera location, even if this dialog 
+                  box is opened. </p></td>
+            </tr>
+            <tr valign="top"> 
+              <td><p>&#149;</p></td>
+              <td> <p> While a video is computed, changes made in your home won't 
+                  affect the current rendering.</p></td>
             </tr>
           </table>
 	 </td>
