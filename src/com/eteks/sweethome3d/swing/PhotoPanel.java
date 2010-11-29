@@ -442,8 +442,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     final SpinnerDateModel dateSpinnerModel = new SpinnerDateModel();
     dateSpinnerModel.setValue(time);
     this.dateSpinner = new JSpinner(dateSpinnerModel);
-    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, 
-        ((SimpleDateFormat)DateFormat.getDateInstance(DateFormat.SHORT)).toPattern().replace("yy", "yyyy"));
+    String datePattern = ((SimpleDateFormat)DateFormat.getDateInstance(DateFormat.SHORT)).toPattern();
+    if (datePattern.indexOf("yyyy") == -1) {
+      datePattern = datePattern.replace("yy", "yyyy");
+    }
+    JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, datePattern);
     this.dateSpinner.setEditor(dateEditor);
     SwingTools.addAutoSelectionOnFocusGain(dateEditor.getTextField());
     
