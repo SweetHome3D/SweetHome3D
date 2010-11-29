@@ -269,8 +269,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Create base plan item check box bound to BASE_PLAN_ITEM controller property
     this.basePlanItemCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "basePlanItemCheckBox.text"));
-    this.basePlanItemCheckBox.setToolTipText(preferences.getLocalizedString(
-        HomeFurniturePanel.class, "basePlanItemCheckBox.tooltip"));
+    String basePlanItemToolTip = preferences.getLocalizedString(
+        HomeFurniturePanel.class, "basePlanItemCheckBox.tooltip");
+    if (basePlanItemToolTip.length() > 0) {
+      this.basePlanItemCheckBox.setToolTipText(basePlanItemToolTip);
+    }
     this.basePlanItemCheckBox.setNullable(controller.getBasePlanItem() == null);
     this.basePlanItemCheckBox.setValue(controller.getBasePlanItem());
     final PropertyChangeListener basePlanItemModelChangeListener = new PropertyChangeListener() {
@@ -378,8 +381,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Create mirror check box bound to MODEL_MIRRORED controller property
     this.mirroredModelCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "mirroredModelCheckBox.text"));
-    this.mirroredModelCheckBox.setToolTipText(preferences.getLocalizedString(
-        HomeFurniturePanel.class, "mirroredModelCheckBox.tooltip"));
+    String mirroredModelToolTip = preferences.getLocalizedString(
+        HomeFurniturePanel.class, "mirroredModelCheckBox.tooltip");
+    if (mirroredModelToolTip.length() > 0) {
+      this.mirroredModelCheckBox.setToolTipText(mirroredModelToolTip);
+    }
     this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
     this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
     final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
