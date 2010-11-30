@@ -115,6 +115,12 @@ public interface PieceOfFurniture {
   public abstract boolean isDeformable();
 
   /**
+   * Returns <code>false</code> if this piece should always keep the same color or texture.
+   * @since 3.0
+   */
+  public abstract boolean isTexturable();
+  
+  /**
    * Returns the price of this piece of furniture or <code>null</code>. 
    */
   public abstract BigDecimal getPrice();

@@ -219,6 +219,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     DEFORMABLE("deformable"),
     /**
+     * The key for the texturable capability of a piece of furniture (optional, <code>true</code> by default).
+     * If the value of this key is <code>false</code>, the piece of furniture
+     * will be considered as a piece that will always keep the same color or texture. 
+     */
+    TEXTURABLE("texturable"),
+    /**
      * The key for the price of a piece of furniture (optional).
      */
     PRICE("price"),
@@ -497,6 +503,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     String id = getOptionalString(resource, PropertyKey.ID.getKey(index), null);
     boolean resizable = getOptionalBoolean(resource, PropertyKey.RESIZABLE.getKey(index), true);
     boolean deformable = getOptionalBoolean(resource, PropertyKey.DEFORMABLE.getKey(index), true);
+    boolean texturable = getOptionalBoolean(resource, PropertyKey.TEXTURABLE.getKey(index), true);
     BigDecimal price = null;
     try {
       price = new BigDecimal(resource.getString(PropertyKey.PRICE.getKey(index)));
@@ -519,17 +526,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
           width, depth, height, elevation, movable, 
           wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-          resizable, deformable, price, valueAddedTaxPercentage);
+          resizable, deformable, texturable, price, valueAddedTaxPercentage);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
-            resizable, deformable, price, valueAddedTaxPercentage);
+            resizable, deformable, texturable, price, valueAddedTaxPercentage);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, modelRotation, creator, 
-            resizable, deformable, price, valueAddedTaxPercentage);
+            resizable, deformable, texturable, price, valueAddedTaxPercentage);
       }
     }
   }
@@ -576,7 +583,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
             doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
             doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
-            doorOrWindow.isResizable(), doorOrWindow.isDeformable(), 
+            doorOrWindow.isResizable(), doorOrWindow.isDeformable(), doorOrWindow.isTexturable(), 
             doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
       } else if (piece instanceof CatalogLight) {
         CatalogLight light = (CatalogLight)piece;
@@ -585,14 +592,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
             light.isMovable(), light.getLightSources(), 
             light.getModelRotation(), light.getCreator(),
-            light.isResizable(), light.isDeformable(), 
+            light.isResizable(), light.isDeformable(), light.isTexturable(),
             light.getPrice(), light.getValueAddedTaxPercentage());
       } else {
         piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
             piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
             piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
             piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
-            piece.isResizable(), piece.isDeformable(),
+            piece.isResizable(), piece.isDeformable(), piece.isTexturable(),
             piece.getPrice(), piece.getValueAddedTaxPercentage());
       }
       add(pieceCategory, piece, furnitureHomonymsCounter);

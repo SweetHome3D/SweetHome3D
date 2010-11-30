@@ -50,7 +50,7 @@ public class HomeFurnitureController implements Controller {
    */
   public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
       WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, SHININESS, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
-      RESIZABLE, DEFORMABLE}
+      RESIZABLE, DEFORMABLE, TEXTURABLE}
   
   /**
    * The possible values for {@linkplain #getPaint() paint type}.
@@ -92,6 +92,7 @@ public class HomeFurnitureController implements Controller {
   private Float   lightPower;
   private boolean resizable;
   private boolean deformable;
+  private boolean texturable;
   
   /**
    * Creates the controller of home furniture view with undo support.
@@ -204,6 +205,7 @@ public class HomeFurnitureController implements Controller {
       setLightPower(null);
       setResizable(true);
       setDeformable(true);
+      setTexturable(true);
       setProportional(false);
     } else {
       // Search the common properties among selected furniture
@@ -434,6 +436,15 @@ public class HomeFurnitureController implements Controller {
       if (!isDeformable()) {
         setProportional(true);
       }
+
+      Boolean texturable = firstPiece.isTexturable();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (texturable.booleanValue() != selectedFurniture.get(i).isTexturable()) {
+          texturable = null;
+          break;
+        }
+      }
+      setTexturable(texturable == null || texturable.booleanValue());
     }
   }  
   
@@ -833,6 +844,24 @@ public class HomeFurnitureController implements Controller {
   }
   
   /**
+   * Sets whether the color or the texture of the furniture model can be changed or not.
+   */
+  private void setTexturable(boolean texturable) {
+    if (texturable != this.texturable) {
+      boolean oldTexturable = this.texturable;
+      this.texturable = texturable;
+      this.propertyChangeSupport.firePropertyChange(Property.TEXTURABLE.name(), oldTexturable, texturable);
+    }
+  }
+
+  /**
+   * Returns whether the color or the texture of the furniture model can be changed or not.
+   */
+  public boolean isTexturable() {
+    return this.texturable;
+  }
+  
+  /**
    * Controls the modification of selected furniture in the edited home.
    */
   public void modifyFurniture() {
@@ -1039,20 +1068,22 @@ public class HomeFurnitureController implements Controller {
           piece.setModelMirrored(modelMirrored);
         }
       }
-      if (defaultColorsAndTextures) {
-        piece.setColor(null);
-        piece.setTexture(null);
-      } else if (texture != null) {
-        piece.setColor(null);
-        piece.setTexture(texture);
-      } else if (color != null) {
-        piece.setTexture(null);
-        piece.setColor(color);
-      }
-      if (defaultShininess) {
-        piece.setShininess(null);
-      } else if (shininess != null) {
-        piece.setShininess(shininess);
+      if (piece.isTexturable()) {
+        if (defaultColorsAndTextures) {
+          piece.setColor(null);
+          piece.setTexture(null);
+        } else if (texture != null) {
+          piece.setColor(null);
+          piece.setTexture(texture);
+        } else if (color != null) {
+          piece.setTexture(null);
+          piece.setColor(color);
+        }
+        if (defaultShininess) {
+          piece.setShininess(null);
+        } else if (shininess != null) {
+          piece.setShininess(shininess);
+        }
       }
       if (visible != null) {
         piece.setVisible(visible);
@@ -1130,9 +1161,11 @@ public class HomeFurnitureController implements Controller {
         this.piece.setHeight(this.height);
         this.piece.setModelMirrored(this.modelMirrored);
       }
-      this.piece.setColor(this.color);
-      this.piece.setTexture(this.texture);
-      this.piece.setShininess(this.shininess);
+      if (this.piece.isTexturable()) {
+        this.piece.setColor(this.color);
+        this.piece.setTexture(this.texture);
+        this.piece.setShininess(this.shininess);
+      }
       this.piece.setVisible(this.visible);
     }
   }

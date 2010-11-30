@@ -100,7 +100,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.controller = controller;
     createComponents(preferences, controller);
     setMnemonics(preferences);
-    layoutComponents(preferences);
+    layoutComponents(preferences, controller);
   }
 
   /**
@@ -675,7 +675,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents(UserPreferences preferences) {
+  private void layoutComponents(UserPreferences preferences, 
+                                final HomeFurnitureController controller) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
@@ -761,7 +762,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         1, 1, 2, 1, 1, 0, labelAlignment, 
         GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     // Color and Texture panel
-    JPanel colorAndTexturePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+    final JPanel colorAndTexturePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "colorAndTexturePanel.title"));
     colorAndTexturePanel.add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -785,7 +786,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     // Shininess panel
-    JPanel shininessPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+    final JPanel shininessPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "shininessPanel.title"));
     shininessPanel.add(this.defaultShininessRadioButton, new GridBagConstraints(
         0, 0, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
@@ -811,6 +812,16 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     }
+    
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.TEXTURABLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            colorAndTexturePanel.setVisible(controller.isTexturable());
+            shininessPanel.setVisible(controller.isTexturable());
+          }
+        });
+    colorAndTexturePanel.setVisible(controller.isTexturable());
+    shininessPanel.setVisible(controller.isTexturable());
   }
 
   /**

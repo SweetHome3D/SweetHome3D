@@ -96,7 +96,7 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
     this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable,   
         wallThickness, wallDistance, sashes,
-        modelRotation, creator, resizable, true, price, valueAddedTaxPercentage);
+        modelRotation, creator, resizable, true, true, price, valueAddedTaxPercentage);
   }
          
   /**
@@ -120,6 +120,7 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param resizable if <code>true</code>, the size of the new door or window may be edited
    * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
    *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
    * @param price the price of the new door or window, or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new door or window or <code>null</code>
@@ -130,10 +131,10 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              float width, float depth, float height, float elevation, boolean movable, 
                              float wallThickness, float wallDistance, Sash [] sashes,
                              float [][] modelRotation, String creator,
-                             boolean resizable, boolean deformable,
+                             boolean resizable, boolean deformable, boolean texturable,
                              BigDecimal price, BigDecimal valueAddedTaxPercentage) {
     super(id, name, description, icon, null, model, width, depth, height, elevation, movable,   
-        modelRotation, creator, resizable, deformable, price, valueAddedTaxPercentage);
+        modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage);
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;
     this.sashes = sashes;

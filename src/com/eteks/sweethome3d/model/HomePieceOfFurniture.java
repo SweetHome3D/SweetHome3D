@@ -221,6 +221,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private boolean                backFaceShown;
   private boolean                resizable;
   private boolean                deformable;
+  private boolean                texturable;
   private BigDecimal             price;
   private BigDecimal             valueAddedTaxPercentage;
   private boolean                visible;
@@ -231,7 +232,6 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
-
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -254,6 +254,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.backFaceShown = piece.isBackFaceShown();
     this.resizable = piece.isResizable();
     this.deformable = piece.isDeformable();
+    this.texturable = piece.isTexturable();
     this.price = piece.getPrice();
     this.valueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
     if (piece instanceof HomePieceOfFurniture) {
@@ -288,6 +289,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.modelRotation = IDENTITY;
     this.resizable = true;
     this.deformable = true;
+    this.texturable = true;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     in.defaultReadObject();
   }
@@ -581,13 +583,18 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   /**
    * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged. 
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @throws IllegalStateException if this piece of furniture isn't texturable
    */
   public void setColor(Integer color) {
-    if (color != this.color
-        || (color != null && !color.equals(this.color))) {
-      Integer oldColor = this.color;
-      this.color = color;
-      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+    if (isTexturable()) {
+      if (color != this.color
+          || (color != null && !color.equals(this.color))) {
+        Integer oldColor = this.color;
+        this.color = color;
+        this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+      }
+    } else {
+      throw new IllegalStateException("Piece isn't texturable");
     }
   }
 
@@ -603,14 +610,19 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   /**
    * Sets the texture of this piece of furniture or <code>null</code> if piece texture is unchanged. 
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @throws IllegalStateException if this piece of furniture isn't texturable
    * @since 2.3
    */
   public void setTexture(HomeTexture texture) {
-    if (texture != this.texture
-        || (texture != null && !texture.equals(this.texture))) {
-      HomeTexture oldTexture = this.texture;
-      this.texture = texture;
-      this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
+    if (isTexturable()) {
+      if (texture != this.texture
+          || (texture != null && !texture.equals(this.texture))) {
+        HomeTexture oldTexture = this.texture;
+        this.texture = texture;
+        this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
+      }
+    } else {
+      throw new IllegalStateException("Piece isn't texturable");
     }
   }
 
@@ -626,14 +638,19 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   /**
    * Sets the shininess of this piece of furniture or <code>null</code> if piece shininess is unchanged. 
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @throws IllegalStateException if this piece of furniture isn't texturable
    * @since 3.0
    */
   public void setShininess(Float shininess) {
-    if (shininess != this.shininess
-        || (shininess != null && !shininess.equals(this.shininess))) {
-      Float oldShininess = this.shininess;
-      this.shininess = shininess;
-      this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
+    if (isTexturable()) {
+      if (shininess != this.shininess
+          || (shininess != null && !shininess.equals(this.shininess))) {
+        Float oldShininess = this.shininess;
+        this.shininess = shininess;
+        this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
+      }
+    } else {
+      throw new IllegalStateException("Piece isn't texturable");
     }
   }
 
@@ -650,6 +667,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public boolean isDeformable() {
     return this.deformable;    
+  }
+
+  /**
+   * Returns <code>false</code> if this piece should always keep the same color or texture.
+   * @since 3.0
+   */
+  public boolean isTexturable() {
+    return this.texturable;
   }
 
   /**
