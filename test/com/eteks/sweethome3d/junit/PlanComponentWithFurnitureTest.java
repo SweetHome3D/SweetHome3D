@@ -248,10 +248,11 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     //     at height resize point of the piece
     pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
     pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
+    widthPixel = Math.round((piece.getWidth()) * planComponent.getScale());
+    depthPixel = Math.round((piece.getDepth()) * planComponent.getScale());
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2)));
     Thread.sleep(1000);
-    
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2)));
     // Drag mouse (2,4) pixels 
