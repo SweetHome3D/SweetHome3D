@@ -375,15 +375,14 @@ public class SweetHome3D extends HomeApplication {
 
     addComponent3DRenderingErrorObserver();
 
-    if (OperatingSystem.isMacOSX()) {
-      // Bind to application menu
-      MacOSXConfiguration.bindToApplicationMenu(this);
-    }
-
     // Init look and feel afterwards to ensure that Swing takes into account
     // default locale change
     getUserPreferences();
     initLookAndFeel();
+    if (OperatingSystem.isMacOSX()) {
+      // Bind to application menu
+      MacOSXConfiguration.bindToApplicationMenu(this);
+    }
     try {
       this.autoRecoveryManager = new AutoRecoveryManager(this);
     } catch (RecorderException ex) {
