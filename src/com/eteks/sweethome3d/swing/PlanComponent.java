@@ -336,13 +336,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     LIGHT_POWER_INDICATOR.closePath();    
     LIGHT_POWER_INDICATOR.moveTo(-3, 0); 
     LIGHT_POWER_INDICATOR.lineTo(-1f, 0);
-    LIGHT_POWER_INDICATOR.lineTo(-1f, -2.5);    
-    LIGHT_POWER_INDICATOR.lineTo(-3f, -1.8);    
+    LIGHT_POWER_INDICATOR.lineTo(-1f, -2.5f);    
+    LIGHT_POWER_INDICATOR.lineTo(-3f, -1.8f);    
     LIGHT_POWER_INDICATOR.closePath();    
     LIGHT_POWER_INDICATOR.moveTo(2, 0); 
     LIGHT_POWER_INDICATOR.lineTo(4, 0);
-    LIGHT_POWER_INDICATOR.lineTo(4, -3.5);    
-    LIGHT_POWER_INDICATOR.lineTo(2, -2.8);    
+    LIGHT_POWER_INDICATOR.lineTo(4f, -3.5f);    
+    LIGHT_POWER_INDICATOR.lineTo(2f, -2.8f);    
     LIGHT_POWER_INDICATOR.closePath();    
 
     // Create a path used as a resize indicator 
