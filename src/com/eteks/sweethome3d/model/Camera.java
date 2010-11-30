@@ -269,7 +269,7 @@ public class Camera implements Serializable, Cloneable {
 
   /**
    * Returns the time in milliseconds when this camera is used.
-   * @returns a time in milliseconds since the Epoch in UTC time zone
+   * @return a time in milliseconds since the Epoch in UTC time zone
    * @since 3.0
    */
   public long getTime() {
