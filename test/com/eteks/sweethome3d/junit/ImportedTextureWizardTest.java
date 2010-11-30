@@ -327,6 +327,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
           nextFinishOptionButton2.doClick(); 
         }
       });
+    tester.waitForIdle();
     assertFalse("Import texture wizard still showing", textureWizardDialog.isShowing());
     // Check the list of available textures has the same texture count 
     // and a new selected texture 
@@ -375,6 +376,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
           deleteButton.doClick();        
         }
       });
+    tester.waitForIdle();
     // Wait for confirm dialog to be shown
     final String confirmDeleteSelectedCatalogTextureDialogTitle = preferences.getLocalizedString(
         TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.title");

@@ -67,7 +67,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
     home.getCompass().setVisible(false);
-    HomeController controller = new HomeController(home, preferences, viewFactory);
+    final HomeController controller = new HomeController(home, preferences, viewFactory);
     JComponent homeView = (JComponent)controller.getView();
     final FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(
          homeView, FurnitureCatalogTree.class);
@@ -93,8 +93,12 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, false, false, false, false);
     
     // 2. Select the first piece of furniture in catalog
-    catalogTree.expandRow(0); 
-    catalogTree.addSelectionInterval(1, 1);
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        catalogTree.expandRow(0); 
+        catalogTree.addSelectionInterval(1, 1);
+      }
+    });
     // Check only Copy action is enabled
     assertActionsEnabled(controller, false, true, false, false);
     
@@ -123,7 +127,11 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, true, true, false, true);
 
     // 5. Use Wall creation mode
-    controller.getPlanController().setMode(PlanController.Mode.WALL_CREATION);
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        controller.getPlanController().setMode(PlanController.Mode.WALL_CREATION);
+      }
+    });
     // Check Cut, Copy, Paste actions are enabled
     assertActionsEnabled(controller, true, true, false, true);    
     // Create a wall between points (25, 25) and (100, 25)
@@ -133,7 +141,11 @@ public class TransferHandlerTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 100, 25, InputEvent.BUTTON1_MASK, 2);
 
     // 6. Use Dimension creation mode
-    controller.getPlanController().setMode(PlanController.Mode.DIMENSION_LINE_CREATION);
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        controller.getPlanController().setMode(PlanController.Mode.DIMENSION_LINE_CREATION);
+      }
+    });
     // Check Cut, Copy, Paste actions are enabled
     assertActionsEnabled(controller, true, true, false, true);
     // 7. Create a dimension line between points (25, 35) and (100, 35)
@@ -142,7 +154,11 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, false, false, false, false);    
     tester.actionClick(planComponent, 100, 35, InputEvent.BUTTON1_MASK, 2);
     // Use Selection mode 
-    controller.getPlanController().setMode(PlanController.Mode.SELECTION);
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          controller.getPlanController().setMode(PlanController.Mode.SELECTION);
+        }
+      });
     // Check Cut, Copy and Delete actions are enabled
     assertActionsEnabled(controller, true, true, false, true);
     
@@ -210,10 +226,10 @@ public class TransferHandlerTest extends ComponentTestFixture {
   private void runAction(JComponentTester tester, final HomeController controller,
                          final HomePane.ActionType actionType) {
     tester.invokeAndWait(new Runnable() {
-      public void run() {
-        getAction(controller, actionType).actionPerformed(null);
-      }
-    });
+        public void run() {
+          getAction(controller, actionType).actionPerformed(null);
+        }
+      });
   }
 
   /**
