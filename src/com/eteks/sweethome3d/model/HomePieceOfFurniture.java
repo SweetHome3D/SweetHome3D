@@ -23,6 +23,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -891,38 +892,54 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   /**
    * Returns <code>true</code> if the top left point of this piece is 
-   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>, 
+   * and if that point is closer to top left point than to top right and bottom left points.
    */
   public boolean isTopLeftPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin;
+    double distanceSquareToTopLeftPoint = Point2D.distanceSq(x, y, points[0][0], points[0][1]);
+    return distanceSquareToTopLeftPoint <= margin * margin
+        && distanceSquareToTopLeftPoint < Point2D.distanceSq(x, y, points[1][0], points[1][1])
+        && distanceSquareToTopLeftPoint < Point2D.distanceSq(x, y, points[3][0], points[3][1]);
   }
 
   /**
    * Returns <code>true</code> if the top right point of this piece is 
-   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>, 
+   * and if that point is closer to top right point than to top left and bottom right points.
    */
   public boolean isTopRightPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return Math.abs(x - points[1][0]) <= margin && Math.abs(y - points[1][1]) <= margin;
+    double distanceSquareToTopRightPoint = Point2D.distanceSq(x, y, points[1][0], points[1][1]);
+    return distanceSquareToTopRightPoint <= margin * margin
+        && distanceSquareToTopRightPoint < Point2D.distanceSq(x, y, points[0][0], points[0][1])
+        && distanceSquareToTopRightPoint < Point2D.distanceSq(x, y, points[2][0], points[2][1]);
   }
 
   /**
    * Returns <code>true</code> if the bottom left point of this piece is 
-   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>,
+   * and if that point is closer to bottom left point than to top left and bottom right points.
    */
   public boolean isBottomLeftPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return Math.abs(x - points[3][0]) <= margin && Math.abs(y - points[3][1]) <= margin;
+    double distanceSquareToBottomLeftPoint = Point2D.distanceSq(x, y, points[3][0], points[3][1]);
+    return distanceSquareToBottomLeftPoint <= margin * margin
+        && distanceSquareToBottomLeftPoint < Point2D.distanceSq(x, y, points[0][0], points[0][1])
+        && distanceSquareToBottomLeftPoint < Point2D.distanceSq(x, y, points[2][0], points[2][1]);
   }
 
   /**
    * Returns <code>true</code> if the bottom right point of this piece is 
-   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>, 
+   * and if that point is closer to top left point than to top right and bottom left points.
    */
   public boolean isBottomRightPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin;
+    double distanceSquareToBottomRightPoint = Point2D.distanceSq(x, y, points[2][0], points[2][1]);
+    return distanceSquareToBottomRightPoint <= margin * margin
+        && distanceSquareToBottomRightPoint < Point2D.distanceSq(x, y, points[1][0], points[1][1])
+        && distanceSquareToBottomRightPoint < Point2D.distanceSq(x, y, points[3][0], points[3][1]);
   }
 
   /**

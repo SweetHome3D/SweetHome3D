@@ -2376,11 +2376,12 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (piece.isTopLeftPointAt(x, y, margin)
           // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > 1 
-          && Math.abs(y - piece.getY()) > 1) {
+          && Math.abs(x - piece.getX()) > scaleInverse
+          && Math.abs(y - piece.getY()) > scaleInverse) {
         return piece;
       }
     } 
@@ -2397,11 +2398,12 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (piece.isTopRightPointAt(x, y, margin)
           // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > 1 
-          && Math.abs(y - piece.getY()) > 1) {
+          && Math.abs(x - piece.getX()) > scaleInverse
+          && Math.abs(y - piece.getY()) > scaleInverse) {
         return piece;
       }
     } 
@@ -2418,13 +2420,14 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (piece.isResizable()
           && isItemResizable(piece) 
           && piece.isBottomLeftPointAt(x, y, margin)
           // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > 1 
-          && Math.abs(y - piece.getY()) > 1) {
+          && Math.abs(x - piece.getX()) > scaleInverse
+          && Math.abs(y - piece.getY()) > scaleInverse) {
         return piece;
       }
     } 
@@ -2442,13 +2445,14 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemResizable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (piece.isResizable()
           && isItemResizable(piece) 
           && piece.isBottomRightPointAt(x, y, margin)
           // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > 1 
-          && Math.abs(y - piece.getY()) > 1) {
+          && Math.abs(x - piece.getX()) > scaleInverse
+          && Math.abs(y - piece.getY()) > scaleInverse) {
         return piece;
       }
     } 
@@ -2464,11 +2468,12 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomeLight) {
       HomeLight light = (HomeLight)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (light.isBottomLeftPointAt(x, y, margin)
           // Keep a free zone around piece center
-          && Math.abs(x - light.getX()) > 1 
-          && Math.abs(y - light.getY()) > 1) {
+          && Math.abs(x - light.getX()) > scaleInverse
+          && Math.abs(y - light.getY()) > scaleInverse) {
         return light;
       }
     } 
@@ -2485,7 +2490,8 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float scaleInverse = 1 / getScale();
+      float margin = PIXEL_MARGIN * scaleInverse;
       if (piece.isNameVisible()
           && piece.getName().trim().length() > 0
           && piece.isNameCenterPointAt(x, y, margin)) {
