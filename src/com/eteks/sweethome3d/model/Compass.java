@@ -1078,7 +1078,7 @@ public class Compass implements Serializable, Selectable {
       timeZoneGeographicPoints.put("NZ", auckland); // Auckland
       timeZoneGeographicPoints.put("NZ-CHAT", new GeographicPoint(-43.883f, -176.517f)); // Chatham
       
-      // Store geographic points in a weak reference because it shouldn't be used only to init new compass  
+      // Store geographic points in a weak reference because it should be used only to init a new compass  
       timeZoneGeographicPointsReference = new WeakReference<Map<String,GeographicPoint>>(timeZoneGeographicPoints);
     } else {
       timeZoneGeographicPoints = timeZoneGeographicPointsReference.get();
