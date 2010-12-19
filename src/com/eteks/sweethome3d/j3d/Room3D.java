@@ -122,6 +122,7 @@ public class Room3D extends Object3DBranch {
     roomAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     roomAppearance.setMaterial(DEFAULT_MATERIAL);      
     roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
     // Mix texture and room color
     roomAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     

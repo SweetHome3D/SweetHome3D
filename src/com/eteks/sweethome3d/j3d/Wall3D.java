@@ -130,6 +130,7 @@ public class Wall3D extends Object3DBranch {
       wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
       wallAppearance.setMaterial(DEFAULT_MATERIAL);      
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
       // Mix texture and wall color
       wallAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     }

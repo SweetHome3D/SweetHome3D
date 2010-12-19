@@ -71,6 +71,7 @@ public class Ground3D extends Object3DBranch {
     groundAppearance.setColoringAttributes(groundColoringAttributes);
     groundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 
     final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
