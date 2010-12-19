@@ -182,7 +182,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // This image should be set to null each time the 3D view changes
   private BufferedImage                            printedImage;
   private SimpleUniverse                           offscreenUniverse;
-  private Map<Texture, Texture>                    offscreenTextures;
   
   private JComponent                               navigationPanel;
   private ComponentListener                        navigationPanelListener;
@@ -322,6 +321,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                    final boolean displayShadowOnFloor) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
+          if (offscreenUniverse != null) {
+            throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
+          }
           onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
           // Bind universe to canvas3D
           onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
@@ -639,13 +641,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
         try {          
-          startOffscreenImagesCreation();
           this.printedImage = getOffScreenImage(printedImageSize, printedImageSize);
         } catch (IllegalRenderingStateException ex) {
           // If off screen canvas failed, consider that 3D view page doesn't exist
           return NO_SUCH_PAGE;
-        } finally {
-          endOffscreenImagesCreation();
         }
       }
   
@@ -671,12 +670,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   void startOffscreenImagesCreation() {
     if (this.offscreenUniverse == null) {
+      if (this.onscreenUniverse != null) {
+        throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
+      }
       this.offscreenUniverse = createUniverse(this.displayShadowOnFloor, true, true);
-      // Replace textures by copies because Java 3D doesn't accept all the time 
+      // Replace textures by clones because Java 3D doesn't accept all the time 
       // to share textures between offscreen and onscreen environments 
-      this.offscreenTextures = new HashMap<Texture, Texture>();
-      for (BranchGroup homeObject : this.homeObjects.values()) {
-        swapTexture(homeObject, this.offscreenTextures, true);
+      Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
+      for (Enumeration it = this.offscreenUniverse.getLocale().getAllBranchGraphs(); it.hasMoreElements(); ) {
+        cloneTexture((Node)it.nextElement(), replacedTextures);
       }      
     }
   }
@@ -687,17 +689,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public BufferedImage getOffScreenImage(int width, int height) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     SimpleUniverse offScreenImageUniverse = null;
-    Map<Texture, Texture> replacedTextures = null;
     try {
       View view;
       if (this.offscreenUniverse == null) {
         offScreenImageUniverse = createUniverse(this.displayShadowOnFloor, false, true);
         view = offScreenImageUniverse.getViewer().getView();
-        // Replace textures by copies because Java 3D doesn't accept all the time 
+        // Replace textures by clones because Java 3D doesn't accept all the time 
         // to share textures between offscreen and onscreen environments 
-        replacedTextures = new HashMap<Texture, Texture>();
-        for (BranchGroup homeObject : this.homeObjects.values()) {
-          swapTexture(homeObject, replacedTextures, true);
+        Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
+        for (Enumeration it = offScreenImageUniverse.getLocale().getAllBranchGraphs(); it.hasMoreElements(); ) {
+          cloneTexture((Node)it.nextElement(), replacedTextures);
         }      
       } else {
         view = this.offscreenUniverse.getViewer().getView();
@@ -711,47 +712,34 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Restore selection
       this.home.setSelectedItems(selectedItems);
       if (offScreenImageUniverse != null) {
-        // Restore textures
-        for (BranchGroup homeObject : this.homeObjects.values()) {
-          swapTexture(homeObject, replacedTextures, false);
-        }      
         offScreenImageUniverse.cleanup();
       } 
     }
   }
   
   /**
-   * Replace the textures set on node shapes by clones if <code>replace</code> is <code>true</code>,
-   * or replace the textures by the original ones in <code>replacedTextures</code> if <code>replace</code> is <code>false</code>. 
+   * Replace the textures set on node shapes by clones. 
    */
-  private void swapTexture(Node node, Map<Texture, Texture> replacedTextures, boolean replace) {
+  private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        swapTexture((Node)enumeration.nextElement(), replacedTextures, replace);
+        cloneTexture((Node)enumeration.nextElement(), replacedTextures);
       }
     } else if (node instanceof Link) {
-      swapTexture(((Link)node).getSharedGroup(), replacedTextures, replace);
+      cloneTexture(((Link)node).getSharedGroup(), replacedTextures);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          if (replace) {
-            Texture replacedTexture = replacedTextures.get(texture);
-            if (replacedTexture == null) {
-              replacedTexture = (Texture)texture.cloneNodeComponent(true);
-              replacedTextures.put(texture, replacedTexture);
-            }
-            appearance.setTexture(replacedTexture);
-          } else {
-            for (Map.Entry<Texture, Texture> entry : replacedTextures.entrySet()) {
-              if (entry.getValue() == texture) {
-                appearance.setTexture(entry.getKey());
-              }
-            }
+          Texture replacedTexture = replacedTextures.get(texture);
+          if (replacedTexture == null) {
+            replacedTexture = (Texture)texture.cloneNodeComponent(false);
+            replacedTextures.put(texture, replacedTexture);
           }
+          appearance.setTexture(replacedTexture);
         }
       }
     } 
@@ -762,11 +750,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   void endOffscreenImagesCreation() {
     if (this.offscreenUniverse != null) {
-      // Restore textures
-      for (BranchGroup homeObject : this.homeObjects.values()) {
-        swapTexture(homeObject, this.offscreenTextures, false);
-      }      
-      this.offscreenTextures = null;
       this.offscreenUniverse.cleanup();
       removeHomeListeners();
       this.offscreenUniverse = null;
@@ -1474,13 +1457,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     Group homeRoot = createHomeRoot();
     // Add walls, pieces and rooms already available 
     for (Room room : this.home.getRooms()) {
-      addObject(homeRoot, room, waitForLoading);
+      addObject(homeRoot, room, listenToHomeUpdates, waitForLoading);
     }    
     for (Wall wall : this.home.getWalls()) {
-      addObject(homeRoot, wall, waitForLoading);
+      addObject(homeRoot, wall, listenToHomeUpdates, waitForLoading);
     }
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      addObject(homeRoot, piece, waitForLoading);
+      addObject(homeRoot, piece, listenToHomeUpdates, waitForLoading);
     }
     
     if (displayShadowOnFloor) {
@@ -1531,7 +1514,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           Wall wall = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addObject(group, wall, false);
+              addObject(group, wall, true, false);
               wall.addPropertyChangeListener(wallChangeListener);
               break;
             case DELETE :
@@ -1582,7 +1565,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addObject(group, piece, false);
+              addObject(group, piece, true, false);
               piece.addPropertyChangeListener(furnitureChangeListener);
               break;
             case DELETE :
@@ -1682,7 +1665,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             case ADD :
               // Add room to its group at the index indicated by the event 
               // to ensure the 3D rooms are drawn in the same order as in the plan  
-              addObject(group, room, ev.getIndex(), false);
+              addObject(group, room, ev.getIndex(), true, false);
               room.addPropertyChangeListener(roomChangeListener);
               break;
             case DELETE :
@@ -1722,17 +1705,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>group</code> a branch matching <code>homeObject</code>.
    */
-  private void addObject(Group group, Selectable homeObject, boolean waitForLoading) {
-    addObject(group, homeObject, -1, waitForLoading);
+  private void addObject(Group group, Selectable homeObject, boolean listenToHomeUpdates, boolean waitForLoading) {
+    addObject(group, homeObject, -1, listenToHomeUpdates, waitForLoading);
   }
 
   /**
    * Adds to <code>group</code> a branch matching <code>homeObject</code> at a given <code>index</code>.
    * If <code>index</code> is equal to -1, <code>homeObject</code> will be added at the end of the group.
    */
-  private void addObject(Group group, Selectable homeObject, int index, boolean waitForLoading) {
+  private void addObject(Group group, Selectable homeObject, int index, 
+                         boolean listenToHomeUpdates, boolean waitForLoading) {
     Object3DBranch object3D = createObject3D(homeObject, waitForLoading);
-    this.homeObjects.put(homeObject, object3D);
+    if (listenToHomeUpdates) {
+      this.homeObjects.put(homeObject, object3D);
+    }
     if (index == -1) {
       group.addChild(object3D);
     } else {
