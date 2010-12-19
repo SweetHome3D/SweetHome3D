@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -85,6 +86,7 @@ import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.J3DGraphics2D;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
@@ -159,7 +161,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
   private Canvas3D                                 canvas3D;
-  private SimpleUniverse                           universe;
+  private SimpleUniverse                           onscreenUniverse;
   private Camera                                   camera;
   // Listeners bound to home that updates 3D scene objects
   private PropertyChangeListener                   cameraChangeListener;
@@ -179,6 +181,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
   private BufferedImage                            printedImage;
+  private SimpleUniverse                           offscreenUniverse;
+  private Map<Texture, Texture>                    offscreenTextures;
   
   private JComponent                               navigationPanel;
   private ComponentListener                        navigationPanelListener;
@@ -318,17 +322,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                    final boolean displayShadowOnFloor) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
-          universe = createUniverse(displayShadowOnFloor, true, false);
+          onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
           // Bind universe to canvas3D
-          universe.getViewer().getView().addCanvas3D(canvas3D);
+          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
           canvas3D.setFocusable(false);
           updateNavigationPanelImage();
         }
         
         public void ancestorRemoved(AncestorEvent event) {
-          universe.cleanup();
-          removeHomeListeners();
-          universe = null;
+          if (onscreenUniverse != null) {
+            onscreenUniverse.cleanup();
+            removeHomeListeners();
+            onscreenUniverse = null;
+          }
         }
         
         public void ancestorMoved(AncestorEvent event) {
@@ -632,11 +638,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       int printedImageSize = (int)(printSize / 72 * 150);
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
-        try {
+        try {          
+          startOffscreenImagesCreation();
           this.printedImage = getOffScreenImage(printedImageSize, printedImageSize);
         } catch (IllegalRenderingStateException ex) {
           // If off screen canvas failed, consider that 3D view page doesn't exist
           return NO_SUCH_PAGE;
+        } finally {
+          endOffscreenImagesCreation();
         }
       }
   
@@ -661,8 +670,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * call {@link #endOffscreenImagesCreation() endOffscreenImagesCreation} method to free resources.
    */
   void startOffscreenImagesCreation() {
-    if (this.universe == null) {
-      this.universe = createUniverse(this.displayShadowOnFloor, true, true);
+    if (this.offscreenUniverse == null) {
+      this.offscreenUniverse = createUniverse(this.displayShadowOnFloor, true, true);
+      // Replace textures by copies because Java 3D doesn't accept all the time 
+      // to share textures between offscreen and onscreen environments 
+      this.offscreenTextures = new HashMap<Texture, Texture>();
+      for (BranchGroup homeObject : this.homeObjects.values()) {
+        swapTexture(homeObject, this.offscreenTextures, true);
+      }      
     }
   }
   
@@ -672,13 +687,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public BufferedImage getOffScreenImage(int width, int height) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     SimpleUniverse offScreenImageUniverse = null;
+    Map<Texture, Texture> replacedTextures = null;
     try {
       View view;
-      if (this.universe == null) {
+      if (this.offscreenUniverse == null) {
         offScreenImageUniverse = createUniverse(this.displayShadowOnFloor, false, true);
         view = offScreenImageUniverse.getViewer().getView();
+        // Replace textures by copies because Java 3D doesn't accept all the time 
+        // to share textures between offscreen and onscreen environments 
+        replacedTextures = new HashMap<Texture, Texture>();
+        for (BranchGroup homeObject : this.homeObjects.values()) {
+          swapTexture(homeObject, replacedTextures, true);
+        }      
       } else {
-        view = this.universe.getViewer().getView();
+        view = this.offscreenUniverse.getViewer().getView();
       }
       
       // Empty temporarily selection to create the off screen image
@@ -689,19 +711,65 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Restore selection
       this.home.setSelectedItems(selectedItems);
       if (offScreenImageUniverse != null) {
+        // Restore textures
+        for (BranchGroup homeObject : this.homeObjects.values()) {
+          swapTexture(homeObject, replacedTextures, false);
+        }      
         offScreenImageUniverse.cleanup();
       } 
     }
   }
   
   /**
+   * Replace the textures set on node shapes by clones if <code>replace</code> is <code>true</code>,
+   * or replace the textures by the original ones in <code>replacedTextures</code> if <code>replace</code> is <code>false</code>. 
+   */
+  private void swapTexture(Node node, Map<Texture, Texture> replacedTextures, boolean replace) {
+    if (node instanceof Group) {
+      // Enumerate children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        swapTexture((Node)enumeration.nextElement(), replacedTextures, replace);
+      }
+    } else if (node instanceof Link) {
+      swapTexture(((Link)node).getSharedGroup(), replacedTextures, replace);
+    } else if (node instanceof Shape3D) {
+      Appearance appearance = ((Shape3D)node).getAppearance();
+      if (appearance != null) {
+        Texture texture = appearance.getTexture();
+        if (texture != null) {
+          if (replace) {
+            Texture replacedTexture = replacedTextures.get(texture);
+            if (replacedTexture == null) {
+              replacedTexture = (Texture)texture.cloneNodeComponent(true);
+              replacedTextures.put(texture, replacedTexture);
+            }
+            appearance.setTexture(replacedTexture);
+          } else {
+            for (Map.Entry<Texture, Texture> entry : replacedTextures.entrySet()) {
+              if (entry.getValue() == texture) {
+                appearance.setTexture(entry.getKey());
+              }
+            }
+          }
+        }
+      }
+    } 
+  }
+
+  /**
    * Frees unnecessary resources after the creation of a sequence of multiple offscreen images.
    */
   void endOffscreenImagesCreation() {
-    if (this.universe != null) {
-      this.universe.cleanup();
+    if (this.offscreenUniverse != null) {
+      // Restore textures
+      for (BranchGroup homeObject : this.homeObjects.values()) {
+        swapTexture(homeObject, this.offscreenTextures, false);
+      }      
+      this.offscreenTextures = null;
+      this.offscreenUniverse.cleanup();
       removeHomeListeners();
-      this.universe = null;
+      this.offscreenUniverse = null;
     }
   }
   
