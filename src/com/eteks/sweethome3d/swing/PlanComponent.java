@@ -89,6 +89,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -100,13 +101,18 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
+import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
+import javax.media.j3d.Node;
+import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -4900,6 +4906,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       TransformGroup modelTransformGroup = new TransformGroup();
       modelTransformGroup.setTransform(scaleTransform);
       modelTransformGroup.addChild(modelNode);
+      // Replace model textures by clones because Java 3D doesn't accept all the time 
+      // to share textures between offscreen and onscreen environments 
+      cloneTexture(modelNode, new HashMap<Texture, Texture>());
 
       BranchGroup model = new BranchGroup();
       model.setCapability(BranchGroup.ALLOW_DETACH);
@@ -4934,6 +4943,34 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return new ImageIcon(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
           imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
           imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())));
+    }
+
+    /**
+     * Replace the textures set on node shapes by clones. 
+     */
+    private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
+      if (node instanceof Group) {
+        // Enumerate children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          cloneTexture((Node)enumeration.nextElement(), replacedTextures);
+        }
+      } else if (node instanceof Link) {
+        cloneTexture(((Link)node).getSharedGroup(), replacedTextures);
+      } else if (node instanceof Shape3D) {
+        Appearance appearance = ((Shape3D)node).getAppearance();
+        if (appearance != null) {
+          Texture texture = appearance.getTexture();
+          if (texture != null) {
+            Texture replacedTexture = replacedTextures.get(texture);
+            if (replacedTexture == null) {
+              replacedTexture = (Texture)texture.cloneNodeComponent(false);
+              replacedTextures.put(texture, replacedTexture);
+            }
+            appearance.setTexture(replacedTexture);
+          }
+        }
+      } 
     }
 
     /**
