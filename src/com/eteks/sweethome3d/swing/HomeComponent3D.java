@@ -1462,12 +1462,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     for (Wall wall : this.home.getWalls()) {
       addObject(homeRoot, wall, listenToHomeUpdates, waitForLoading);
     }
+    Map<HomePieceOfFurniture, Node> pieces3D = new HashMap<HomePieceOfFurniture, Node>();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      addObject(homeRoot, piece, listenToHomeUpdates, waitForLoading);
+      pieces3D.put(piece, addObject(homeRoot, piece, listenToHomeUpdates, waitForLoading));
     }
     
     if (displayShadowOnFloor) {
-      addShadowOnFloor(homeRoot);
+      addShadowOnFloor(homeRoot, pieces3D);
     }
     
     if (listenToHomeUpdates) {
@@ -1705,15 +1706,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>group</code> a branch matching <code>homeObject</code>.
    */
-  private void addObject(Group group, Selectable homeObject, boolean listenToHomeUpdates, boolean waitForLoading) {
-    addObject(group, homeObject, -1, listenToHomeUpdates, waitForLoading);
+  private Node addObject(Group group, Selectable homeObject, boolean listenToHomeUpdates, boolean waitForLoading) {
+    return addObject(group, homeObject, -1, listenToHomeUpdates, waitForLoading);
   }
 
   /**
    * Adds to <code>group</code> a branch matching <code>homeObject</code> at a given <code>index</code>.
    * If <code>index</code> is equal to -1, <code>homeObject</code> will be added at the end of the group.
    */
-  private void addObject(Group group, Selectable homeObject, int index, 
+  private Node addObject(Group group, Selectable homeObject, int index, 
                          boolean listenToHomeUpdates, boolean waitForLoading) {
     Object3DBranch object3D = createObject3D(homeObject, waitForLoading);
     if (listenToHomeUpdates) {
@@ -1725,6 +1726,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       group.insertChild(object3D, index);
     }
     clearPrintedImageCache();
+    return object3D;
   }
 
   /**
@@ -1797,12 +1799,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>homeRoot</code> a shape matching the shadow of furniture at ground level.
    */
-  private void addShadowOnFloor(Group homeRoot) {
+  private void addShadowOnFloor(Group homeRoot, Map<HomePieceOfFurniture, Node> pieces3D) {
     Area areaOnFloor = new Area();
     // Compute union of the areas of pieces at ground level that are not lights, doors or windows
-    for (Map.Entry<Selectable, Object3DBranch> object3DEntry : this.homeObjects.entrySet()) {
+    for (Map.Entry<HomePieceOfFurniture, Node> object3DEntry : pieces3D.entrySet()) {
       if (object3DEntry.getKey() instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)object3DEntry.getKey();
+        HomePieceOfFurniture piece = object3DEntry.getKey();
         // This operation can be lengthy, so give up if thread is interrupted 
         if (Thread.currentThread().isInterrupted()) {
           return;
