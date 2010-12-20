@@ -376,17 +376,17 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
-    this.qualitySlider = new JSlider(0, controller.getQualityLevelCount() - 1) {
+    this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
         @Override
         public String getToolTipText(MouseEvent ev) {
           float valueUnderMouse = getSliderValueAt(this, ev.getX(), preferences);
-          float valueToTick = valueUnderMouse + 1 - (float)Math.floor(valueUnderMouse + 1);
+          float valueToTick = valueUnderMouse - (float)Math.floor(valueUnderMouse);
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
             return "<html><table><tr valign='middle'>"
                 + "<td><img border='1' src='" 
-                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse) + ".jpg").getURL() + "'></td>"
-                + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + Math.round(valueUnderMouse) + "DescriptionLabel.text") + "</td>"
+                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
+                + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
                 + "</tr></table>";
           } else {
             return null;
@@ -420,19 +420,19 @@ public class PhotoPanel extends JPanel implements DialogView {
         public void stateChanged(ChangeEvent ev) {
           if (!offScreenImageSupported) {
             // Can't support 2 first quality levels if offscreen image isn't supported 
-            qualitySlider.setValue(Math.max(2, qualitySlider.getValue()));
+            qualitySlider.setValue(Math.max(qualitySlider.getMinimum() + 2, qualitySlider.getValue()));
           }
-          controller.setQuality(qualitySlider.getValue());
+          controller.setQuality(qualitySlider.getValue() - qualitySlider.getMinimum());
         }
       });
     controller.addPropertyChangeListener(PhotoController.Property.QUALITY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            qualitySlider.setValue(controller.getQuality());
+            qualitySlider.setValue(qualitySlider.getMinimum() + controller.getQuality());
             updateAdvancedComponents();
           }
         });
-    this.qualitySlider.setValue(controller.getQuality());
+    this.qualitySlider.setValue(this.qualitySlider.getMinimum() + controller.getQuality());
 
     this.advancedComponentsSeparator = new JSeparator();
 
@@ -577,10 +577,11 @@ public class PhotoPanel extends JPanel implements DialogView {
         : new JLabel(SwingTools.getLocalizedLabelText(preferences,
               PhotoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
-    return (float)(x - (qualitySlider.getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
+    return qualitySlider.getMinimum()
+        + (float)(x - (qualitySlider.getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
                           ? fastLabelOffset 
                           : bestLabelOffset))
-        / sliderWidth * qualitySlider.getMaximum();
+        / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
   }
   
   /**
