@@ -2934,14 +2934,14 @@ public class HomePane extends JRootPane implements HomeView {
       
       // Write 3D walls 
       int i = 0;
-      for (Wall wall : this.home.getWalls()) {
+      for (Wall wall : home.getWalls()) {
         // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
         Wall3D wallNode = new Wall3D(wall, home, true, true);
         writer.writeNode(wallNode, "wall_" + ++i);
       }
       // Write 3D furniture 
       i = 0;
-      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
         if (piece.isVisible()) {
           // Create a not alive new piece to be able to explore its coordinates without setting capabilities
           HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, home, true, true);
@@ -2950,7 +2950,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
       // Write 3D rooms 
       i = 0;
-      for (Room room : this.home.getRooms()) {
+      for (Room room : home.getRooms()) {
         // Create a not alive new room to be able to explore its coordinates without setting capabilities 
         Room3D roomNode = new Room3D(room, home, false, true, true);
         writer.writeNode(roomNode, "room_" + ++i);
