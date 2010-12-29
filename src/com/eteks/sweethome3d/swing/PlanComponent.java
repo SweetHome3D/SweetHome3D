@@ -146,6 +146,7 @@ import javax.swing.text.InternationalFormatter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
@@ -4828,16 +4829,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
       sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
-      Background background = new Background(1, 1, 1);
+      Background background = new Background(1.1f, 1.1f, 1.1f);
       background.setCapability(Background.ALLOW_COLOR_WRITE);
-      background.setApplicationBounds(new BoundingBox());
+      background.setApplicationBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
       sceneRoot.addChild(background);
       Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
                          new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
                          new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
                          new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
       for (Light light : lights) {
-        light.setInfluencingBounds(new BoundingBox());
+        light.setInfluencingBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
         sceneRoot.addChild(light);
       }
       universe.addBranchGraph(sceneRoot);
