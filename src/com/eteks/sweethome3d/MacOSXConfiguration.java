@@ -32,6 +32,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
@@ -80,8 +81,10 @@ class MacOSXConfiguration {
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
     JFrame frame;
     try {
-      macosxApplication.setDefaultMenuBar(defaultMenuBar);
-      addWindowMenu(null, defaultMenuBar, homeApplication, true);
+      if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
+        macosxApplication.setDefaultMenuBar(defaultMenuBar);
+        addWindowMenu(null, defaultMenuBar, homeApplication, true);
+      }
       frame = null;
     } catch (NoSuchMethodError ex) {
       // Create default frame if setDefaultMenuBar isn't available
