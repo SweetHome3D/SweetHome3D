@@ -162,29 +162,30 @@ public class FileUserPreferences extends UserPreferences {
     this.applicationFolders = applicationFolders;
     
     updateSupportedLanguages();
-    
+
+    Preferences preferences;
     // From version 3.0 use portable preferences
-    PortablePreferences portablePreferences = new PortablePreferences();
+    PortablePreferences portablePreferences = new PortablePreferences();    
     // If portable preferences storage doesn't exist and default preferences folder is used
     if (!portablePreferences.exist()
         && preferencesFolder == null) {
       // Retrieve preferences from pre version 3.0
-      this.preferences = getPreferences();
+      preferences = getPreferences();
     } else {
-      this.preferences = portablePreferences;
+      preferences = portablePreferences;
     }
     
-    setLanguage(this.preferences.get(LANGUAGE, getLanguage()));    
+    setLanguage(preferences.get(LANGUAGE, getLanguage()));    
     
     // Fill default furniture catalog 
     setFurnitureCatalog(new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders()));
     // Read additional furniture
-    readFurnitureCatalog(this.preferences);
+    readFurnitureCatalog(preferences);
     
     // Fill default textures catalog 
     setTexturesCatalog(new DefaultTexturesCatalog(this, getTexturesLibrariesPluginFolders()));
     // Read additional textures
-    readTexturesCatalog(this.preferences);
+    readTexturesCatalog(preferences);
 
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     // Share same language settings 
@@ -195,39 +196,39 @@ public class FileUserPreferences extends UserPreferences {
     setPatternsCatalog(patternsCatalog);
 
     // Read other preferences 
-    setUnit(LengthUnit.valueOf(this.preferences.get(UNIT, 
+    setUnit(LengthUnit.valueOf(preferences.get(UNIT, 
         defaultPreferences.getLengthUnit().name())));
-    setFurnitureCatalogViewedInTree(this.preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
+    setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
         defaultPreferences.isFurnitureCatalogViewedInTree()));
-    setNavigationPanelVisible(this.preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
+    setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
         defaultPreferences.isNavigationPanelVisible()));
-    setMagnetismEnabled(this.preferences.getBoolean(MAGNETISM_ENABLED, true));
-    setRulersVisible(this.preferences.getBoolean(RULERS_VISIBLE, 
+    setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
+    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
         defaultPreferences.isRulersVisible()));
-    setGridVisible(this.preferences.getBoolean(GRID_VISIBLE, 
+    setGridVisible(preferences.getBoolean(GRID_VISIBLE, 
         defaultPreferences.isGridVisible()));
-    setFurnitureViewedFromTop(this.preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
+    setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
         defaultPreferences.isFurnitureViewedFromTop()));
-    setFloorColoredOrTextured(this.preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
+    setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
         defaultPreferences.isRoomFloorColoredOrTextured()));
     try {
-      setWallPattern(patternsCatalog.getPattern(this.preferences.get(WALL_PATTERN, 
+      setWallPattern(patternsCatalog.getPattern(preferences.get(WALL_PATTERN, 
           defaultPreferences.getWallPattern().getName())));
     } catch (IllegalArgumentException ex) {
       // Ensure wall pattern always exists even if new patterns are added in future versions
       setWallPattern(defaultPreferences.getWallPattern());
     }
-    setNewWallThickness(this.preferences.getFloat(NEW_WALL_THICKNESS, 
+    setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
         defaultPreferences.getNewWallThickness()));
-    setNewWallHeight(this.preferences.getFloat(NEW_WALL_HEIGHT,
+    setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
         defaultPreferences.getNewWallHeight()));    
-    setAutoSaveDelayForRecovery(this.preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
+    setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
         defaultPreferences.getAutoSaveDelayForRecovery()));    
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
-      String recentHome = this.preferences.get(RECENT_HOMES + i, null);
+      String recentHome = preferences.get(RECENT_HOMES + i, null);
       if (recentHome != null) {
         recentHomes.add(recentHome);
       }
@@ -235,7 +236,7 @@ public class FileUserPreferences extends UserPreferences {
     setRecentHomes(recentHomes);
     // Read ignored action tips
     for (int i = 1; ; i++) {
-      String ignoredActionTip = this.preferences.get(IGNORED_ACTION_TIP + i, "");
+      String ignoredActionTip = preferences.get(IGNORED_ACTION_TIP + i, "");
       if (ignoredActionTip.length() == 0) {
         break;
       } else {
@@ -250,10 +251,11 @@ public class FileUserPreferences extends UserPreferences {
         }
       });
     
-    if (this.preferences != portablePreferences) {
+    if (preferences != portablePreferences) {
       // Switch to portable preferences now that all preferences are read
-      this.preferences = portablePreferences;
+      preferences = portablePreferences;
     }
+    this.preferences = preferences;
   }
   
   /**
@@ -553,31 +555,32 @@ public class FileUserPreferences extends UserPreferences {
    */
   @Override
   public void write() throws RecorderException {
-    writeFurnitureCatalog(this.preferences);
-    writeTexturesCatalog(this.preferences);
+    Preferences preferences = getPreferences();
+    writeFurnitureCatalog(preferences);
+    writeTexturesCatalog(preferences);
 
     // Write other preferences 
-    this.preferences.put(LANGUAGE, getLanguage());
-    this.preferences.put(UNIT, getLengthUnit().name());   
-    this.preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
-    this.preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
-    this.preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
-    this.preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
-    this.preferences.putBoolean(GRID_VISIBLE, isGridVisible());
-    this.preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
-    this.preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
-    this.preferences.put(WALL_PATTERN, getWallPattern().getName());
-    this.preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
-    this.preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
-    this.preferences.putInt(AUTO_SAVE_DELAY_FOR_RECOVERY, getAutoSaveDelayForRecovery());
+    preferences.put(LANGUAGE, getLanguage());
+    preferences.put(UNIT, getLengthUnit().name());   
+    preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
+    preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
+    preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
+    preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
+    preferences.putBoolean(GRID_VISIBLE, isGridVisible());
+    preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
+    preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
+    preferences.put(WALL_PATTERN, getWallPattern().getName());
+    preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
+    preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
+    preferences.putInt(AUTO_SAVE_DELAY_FOR_RECOVERY, getAutoSaveDelayForRecovery());
     // Write recent homes list
     int i = 1;
     for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
-      this.preferences.put(RECENT_HOMES + i, it.next());
+      preferences.put(RECENT_HOMES + i, it.next());
     }
     // Remove obsolete keys
     for ( ; i <= getRecentHomesMaxCount(); i++) {
-      this.preferences.remove(RECENT_HOMES + i);
+      preferences.remove(RECENT_HOMES + i);
     }
     // Write ignored action tips
     i = 1;
@@ -585,17 +588,17 @@ public class FileUserPreferences extends UserPreferences {
          it.hasNext(); ) {
       Entry<String, Boolean> ignoredActionTipEntry = it.next();
       if (ignoredActionTipEntry.getValue()) {
-        this.preferences.put(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
+        preferences.put(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
       } 
     }
     // Remove obsolete keys
     for ( ; i <= this.ignoredActionTips.size(); i++) {
-      this.preferences.remove(IGNORED_ACTION_TIP + i);
+      preferences.remove(IGNORED_ACTION_TIP + i);
     }
     
     try {
       // Write preferences 
-      this.preferences.flush();
+      preferences.flush();
     } catch (BackingStoreException ex) {
       throw new RecorderException("Couldn't write preferences", ex);
     }
@@ -903,7 +906,11 @@ public class FileUserPreferences extends UserPreferences {
    * shouldn't be based on the state of their fields.
    */
   protected Preferences getPreferences() {
-    return Preferences.userNodeForPackage(FileUserPreferences.class);
+    if (this.preferences != null) {
+      return this.preferences;
+    } else {
+      return Preferences.userNodeForPackage(FileUserPreferences.class);
+    }
   }
 
   /**
