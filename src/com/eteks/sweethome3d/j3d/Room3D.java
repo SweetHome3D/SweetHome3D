@@ -166,17 +166,19 @@ public class Room3D extends Object3DBranch {
       // If room isn't singular retrieve all the points of its different polygons 
       List<float [][]> roomPoints = new ArrayList<float[][]>();
       Map<Integer, List<float [][]>> roomHoles = new HashMap<Integer, List<float [][]>>();
-      List<Room> rooms = this.home.getRooms();
-      if (!room.isSingular() || rooms.get(rooms.size() - 1) != room) {        
+      List<Room> homeRooms = this.home.getRooms();
+      if (!room.isSingular() || homeRooms.get(homeRooms.size() - 1) != room) {        
         Area roomArea = new Area(getShape(points));
-        // Remove other rooms surface that may overlap the current room
-        for (int i = rooms.size() - 1; i > 0 && rooms.get(i) != room; i--) {
-          Room otherRoom = rooms.get(i);
-          if (roomPart == FLOOR_PART && otherRoom.isFloorVisible()
-              || roomPart == CEILING_PART && otherRoom.isCeilingVisible()) {
-            roomArea.subtract(new Area(getShape(otherRoom.getPoints())));
+        if (homeRooms.contains(room)) {
+          // Remove other rooms surface that may overlap the current room
+          for (int i = homeRooms.size() - 1; i > 0 && homeRooms.get(i) != room; i--) {
+            Room otherRoom = homeRooms.get(i);
+            if (roomPart == FLOOR_PART && otherRoom.isFloorVisible()
+                || roomPart == CEILING_PART && otherRoom.isCeilingVisible()) {
+              roomArea.subtract(new Area(getShape(otherRoom.getPoints())));
+            }
           }
-        }        
+        }
         // Retrieve the points of the different polygons 
         // and reverse their points order if necessary
         List<float []> currentPathPoints = new ArrayList<float[]>();
