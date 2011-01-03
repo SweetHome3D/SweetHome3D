@@ -116,7 +116,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private final Font           headerFooterFont;
   private int                  page;
   private int                  pageCount = -1;
-  private int                  planViewIndex;
+  private int                  furniturePageCount;
+  private int                  planPageCount;
   private Date                 printDate;
   private JLabel               fixedHeaderLabel;
   private JLabel               fixedFooterLabel;
@@ -293,26 +294,26 @@ public class HomePrintableComponent extends JComponent implements Printable {
       }
     }
     
-    // Print current page 
-    if ((homePrint == null || homePrint.isFurniturePrinted())
-        && page <= this.planViewIndex) {
+    if (page == 0) {
+      this.furniturePageCount = 0;
+      this.planPageCount = 0;
+    }
+    if (homePrint == null || homePrint.isFurniturePrinted()) {
       // Try to print next furniture view page
       pageExists = ((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, page);
       if (pageExists == PAGE_EXISTS) {
-        this.planViewIndex = page + 1;
+        this.furniturePageCount++;
       }
-    } 
-    if ((homePrint == null || homePrint.isPlanPrinted())
-        && page == this.planViewIndex) {
-      pageExists = ((Printable)planView).print(g2D, pageFormat, 0);
-    } else if ((homePrint == null && page == this.planViewIndex + 1)
-               || (homePrint != null
-                   && homePrint.isView3DPrinted()
-                   && ((homePrint.isPlanPrinted()
-                         && page == this.planViewIndex + 1)
-                       || (!homePrint.isPlanPrinted()
-                           && page == this.planViewIndex)))) {
-      pageExists = ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
+    }
+    if (pageExists == NO_SUCH_PAGE && (homePrint == null || homePrint.isPlanPrinted())) {
+      // Try to print next plan view page
+      pageExists = ((Printable)planView).print(g2D, pageFormat, page - this.furniturePageCount);
+      if (pageExists == PAGE_EXISTS) {
+        this.planPageCount++;
+      }
+    }
+    if (pageExists == NO_SUCH_PAGE && (homePrint == null || homePrint.isView3DPrinted())) {
+      pageExists = ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, page - this.planPageCount - this.furniturePageCount);
     }
     
     // Print header and footer

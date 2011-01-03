@@ -69,7 +69,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class PageSetupPanel extends JPanel implements DialogView {
-  private static final int DEFAULT_SCALE = 10;
+  private static final int DEFAULT_SCALE = 100;
   
   private final PageSetupController controller;
   private PageFormat          pageFormat;

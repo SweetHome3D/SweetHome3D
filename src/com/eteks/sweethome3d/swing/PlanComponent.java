@@ -1650,31 +1650,57 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
     List<Selectable> printedItems = getPaintedItems(); 
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
-    if (printedItemBounds != null && pageIndex == 0) {
-      // Compute a scale that ensures the plan will fill the component if plan scale is null
-      float printScale = this.home.getPrint() != null && this.home.getPrint().getPlanScale() != null 
-          ? this.home.getPrint().getPlanScale().floatValue()
-          : getPrintPreferredScale(g, pageFormat);
-          
-      Graphics2D g2D = (Graphics2D)g.create();
+    if (printedItemBounds != null) {
       double imageableX = pageFormat.getImageableX();
       double imageableY = pageFormat.getImageableY();
       double imageableWidth = pageFormat.getImageableWidth();
       double imageableHeight = pageFormat.getImageableHeight();
+      float printScale;
+      float rowIndex;
+      float columnIndex;
+      int pagesPerRow;
+      int pagesPerColumn;
+      if (this.home.getPrint() == null || this.home.getPrint().getPlanScale() == null) {
+        // Compute a scale that ensures the plan will fill the component if plan scale is null
+        printScale = getPrintPreferredScale(g, pageFormat) * LengthUnit.centimeterToInch(72);
+        if (pageIndex > 0) {
+          return NO_SUCH_PAGE;
+        }
+        pagesPerRow = 1;
+        pagesPerColumn = 1;
+        rowIndex   = 0;
+        columnIndex = 0;
+      } else {
+        // Apply print scale to paper size expressed in 1/72nds of an inch
+        printScale = this.home.getPrint().getPlanScale().floatValue() * LengthUnit.centimeterToInch(72);
+        pagesPerRow = (int)(printedItemBounds.getWidth() * printScale / imageableWidth);
+        if (printedItemBounds.getWidth() * printScale != imageableWidth) {
+          pagesPerRow++;
+        }
+        pagesPerColumn = (int)(printedItemBounds.getHeight() * printScale / imageableHeight);
+        if (printedItemBounds.getHeight() * printScale != imageableHeight) {
+          pagesPerColumn++;
+        }
+        if (pageIndex >= pagesPerRow * pagesPerColumn) {
+          return NO_SUCH_PAGE;
+        }
+        rowIndex = pageIndex / pagesPerRow;
+        columnIndex = pageIndex - rowIndex * pagesPerRow;
+      }
+          
+      Graphics2D g2D = (Graphics2D)g.create();
       g2D.clip(new Rectangle2D.Double(imageableX, imageableY, imageableWidth, imageableHeight));
       // Change coordinates system to paper imageable origin
-      g2D.translate(imageableX, imageableY);
-      // Apply print scale to paper size expressed in 1/72nds of an inch
-      printScale *= LengthUnit.centimeterToInch(72);
+      g2D.translate(imageableX - columnIndex * imageableWidth, imageableY - rowIndex * imageableHeight);
       g2D.scale(printScale, printScale);
       float extraMargin = getStrokeWidthExtraMargin(printedItems);
       g2D.translate(-printedItemBounds.getMinX() + extraMargin,
           -printedItemBounds.getMinY() + extraMargin);
       // Center plan in component if possible
       g2D.translate(Math.max(0, 
-              (imageableWidth / printScale - printedItemBounds.getWidth() - 2 * extraMargin) / 2), 
+              (imageableWidth * pagesPerRow / printScale - printedItemBounds.getWidth() - 2 * extraMargin) / 2), 
           Math.max(0, 
-              (imageableHeight / printScale - printedItemBounds.getHeight() - 2 * extraMargin) / 2));
+              (imageableHeight * pagesPerColumn / printScale - printedItemBounds.getHeight() - 2 * extraMargin) / 2));
       setRenderingHints(g2D);
       try {
         // Print component contents
