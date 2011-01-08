@@ -63,6 +63,7 @@ public class ResourceURLContent extends URLContent {
   
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClassLoader</code>.
+   * <code>resourceName</code> is absolute and shouldn't start with a slash.
    * @param resourceClassLoader the class loader used to load the given resource name
    * @param resourceName  the name of the resource
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
