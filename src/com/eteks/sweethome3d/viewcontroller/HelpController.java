@@ -278,8 +278,25 @@ public class HelpController implements Controller {
       // Try first to interpret contentFile as an absolute URL 
       return new URL(helpIndex);
     } catch (MalformedURLException ex) {
-      // Build URL of index page with ResourceURLContent because of Java bug #6746185 
-      return new ResourceURLContent(HelpController.class, helpIndex).getURL();
+      String classPackage = HelpController.class.getName();
+      classPackage = classPackage.substring(0, classPackage.lastIndexOf(".")).replace('.', '/');
+      String helpIndexWithoutLeadingSlash = helpIndex.startsWith("/") 
+          ? helpIndex.substring(1) 
+          : classPackage + '/' + helpIndex;
+      for (ClassLoader classLoader : this.preferences.getResourceClassLoaders()) {
+        try {
+          return new ResourceURLContent(classLoader, helpIndexWithoutLeadingSlash).getURL();
+        } catch (IllegalArgumentException ex2) {
+          // Try next class loader 
+        }
+      }
+      try {
+        // Build URL of index page with ResourceURLContent because of Java bug #6746185 
+        return new ResourceURLContent(HelpController.class, helpIndex).getURL();
+      } catch (IllegalArgumentException ex2) {
+        // Return English help by default
+        return new ResourceURLContent(HelpController.class, "resources/help/en/index.html").getURL();
+      }
     }
   }
   

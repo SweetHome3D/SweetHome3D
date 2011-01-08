@@ -353,7 +353,7 @@ public class FileUserPreferences extends UserPreferences {
    * give access to resources in language libraries plugin folder. 
    */
   @Override
-  protected List<ClassLoader> getResourceClassLoaders() {
+  public List<ClassLoader> getResourceClassLoaders() {
     return this.resourceClassLoaders;
   }
   

@@ -375,7 +375,7 @@ public abstract class UserPreferences {
    * {@link #getLocalizedString(Class, String, Object...) getLocalizedString} might be loaded.
    * @since 2.3
    */
-  protected List<ClassLoader> getResourceClassLoaders() {
+  public List<ClassLoader> getResourceClassLoaders() {
     return DEFAULT_CLASS_LOADER;
   }
   
