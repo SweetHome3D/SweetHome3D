@@ -294,6 +294,7 @@ public class HelpController implements Controller {
         // Build URL of index page with ResourceURLContent because of Java bug #6746185 
         return new ResourceURLContent(HelpController.class, helpIndex).getURL();
       } catch (IllegalArgumentException ex2) {
+        ex2.printStackTrace();
         // Return English help by default
         return new ResourceURLContent(HelpController.class, "resources/help/en/index.html").getURL();
       }
