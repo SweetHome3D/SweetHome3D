@@ -151,7 +151,7 @@ public class IconManager {
    * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
    *            be read immediately in the current thread.
    */
-  public Icon getIcon(Content content, int height, Component waitingComponent) {
+  public Icon getIcon(Content content, final int height, Component waitingComponent) {
     Map<Integer, Icon> contentIcons = this.icons.get(content);
     if (contentIcons == null) {
       contentIcons = Collections.synchronizedMap(new HashMap<Integer, Icon>());
@@ -159,8 +159,22 @@ public class IconManager {
     }
     Icon icon = contentIcons.get(height);
     if (icon == null) {
-      if (content == this.errorIconContent ||
-          content == this.waitIconContent) {
+      // Tolerate null content
+      if (content == null) {
+        icon = new Icon() {
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+          }
+          
+          public int getIconWidth() {
+            return Math.max(0, height);
+          }
+          
+          public int getIconHeight() {
+            return Math.max(0, height);
+          }
+        };
+      } else if (content == this.errorIconContent ||
+                 content == this.waitIconContent) {
         // Load error and wait icons immediately in this thread 
         icon = createIcon(content, height, null); 
       } else if (waitingComponent == null) {
