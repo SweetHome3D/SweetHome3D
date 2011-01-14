@@ -693,7 +693,6 @@ public class Wall3D extends Object3DBranch {
   
   /**
    * Sets filled wall side appearance with its color, texture, transparency and visibility.
-   * @param f 
    */
   private void updateFilledWallSideAppearance(final Appearance wallSideAppearance, 
                                               final HomeTexture wallSideTexture,

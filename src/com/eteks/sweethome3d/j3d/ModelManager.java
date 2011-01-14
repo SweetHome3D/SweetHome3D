@@ -1004,7 +1004,7 @@ public class ModelManager {
   /**
    * Adds to <code>nodePath</code> the triangle joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3 indices, 
-   * only if the triangle has a positive orientation. .
+   * only if the triangle has a positive orientation. 
    */
   private void addTriangleToPath(GeometryArray geometryArray, 
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
