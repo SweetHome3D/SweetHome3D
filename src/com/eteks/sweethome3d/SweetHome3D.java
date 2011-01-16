@@ -134,7 +134,7 @@ public class SweetHome3D extends HomeApplication {
   private ViewFactory             viewFactory;
   private PluginManager           pluginManager;
   private boolean                 pluginManagerInitialized;
-  private AutoRecoveryManager         autoRecoveryManager;
+  private AutoRecoveryManager     autoRecoveryManager;
   private final Map<Home, JFrame> homeFrames;
 
   /**
@@ -379,15 +379,15 @@ public class SweetHome3D extends HomeApplication {
     // default locale change
     getUserPreferences();
     initLookAndFeel();
-    if (OperatingSystem.isMacOSX()) {
-      // Bind to application menu
-      MacOSXConfiguration.bindToApplicationMenu(this);
-    }
     try {
       this.autoRecoveryManager = new AutoRecoveryManager(this);
     } catch (RecorderException ex) {
       // Too bad we can't retrieve homes to recover
       ex.printStackTrace();
+    }
+    if (OperatingSystem.isMacOSX()) {
+      // Bind to application menu at last
+      MacOSXConfiguration.bindToApplicationMenu(this);
     }
 
     // Run everything else in Event Dispatch Thread
