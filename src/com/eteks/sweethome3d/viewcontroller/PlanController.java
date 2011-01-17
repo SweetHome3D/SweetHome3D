@@ -5805,10 +5805,11 @@ public class PlanController extends FurnitureController implements Controller {
               break;      
             case ANGLE : 
               wallAngle = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
-              if (this.lastWall != null
-                  && this.lastWall.getStartPointToEndPointDistance() > 0) {
-                wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
-                    this.lastWall.getXStart() - this.lastWall.getXEnd());
+              Wall previousWall = this.newWall.getWallAtStart();
+              if (this.newWall != null
+                  && previousWall.getStartPointToEndPointDistance() > 0) {
+                wallAngle -= Math.atan2(previousWall.getYStart() - previousWall.getYEnd(), 
+                    previousWall.getXStart() - previousWall.getXEnd());
               }
               float startPointToEndPointDistance = this.newWall.getStartPointToEndPointDistance();              
               this.xLastEnd = (float)(this.xStart + startPointToEndPointDistance * Math.cos(wallAngle));
