@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
@@ -33,6 +34,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.ImageIcon;
@@ -99,8 +102,15 @@ public class HomeFramePane extends JRootPane implements View {
       }
     };
     // Update frame image and title 
-    homeFrame.setIconImage(new ImageIcon(
-        HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
+    Image [] frameImages = {new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon.png")).getImage(),
+                            new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon32x32.png")).getImage()};
+    try {
+      // Call setIconImages by reflection
+      homeFrame.getClass().getMethod("setIconImages", List.class)
+          .invoke(homeFrame, Arrays.asList(frameImages));
+    } catch (Exception ex) {
+      homeFrame.setIconImage(frameImages [0]);
+    }
     updateFrameTitle(homeFrame, this.home, this.application);
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
