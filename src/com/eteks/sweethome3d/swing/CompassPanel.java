@@ -257,9 +257,11 @@ public class CompassPanel extends JPanel implements DialogView {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
           String timeZoneId = (String)value;
+          String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
           if (OperatingSystem.isMacOSX()) {
-            String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
             value = timeZoneId + " - " + timeZoneDisplayName;
+          } else {
+            setToolTipText(timeZoneId + " - " + timeZoneDisplayName);
           }
           return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
@@ -408,7 +410,7 @@ public class CompassPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     compassRosePanel.add(this.xSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -10, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 20), -10, 0));
     compassRosePanel.add(this.visibleCheckBox, new GridBagConstraints(
         2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, lastComponentInsets, 0, 0));
@@ -417,7 +419,7 @@ public class CompassPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     compassRosePanel.add(this.ySpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), -10, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 20), -10, 0));
     compassRosePanel.add(this.diameterLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
