@@ -329,7 +329,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         piece.setTexture(null);
         piece.setColor(color);
       } 
-    } else {
+    } else if (getTexture() == null) {
       restoreDefaultColorsAndTextures();
     }
   }
@@ -346,7 +346,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         piece.setColor(null);
         piece.setTexture(texture);
       } 
-    } else {
+    } else if (getColor() == null) {
       restoreDefaultColorsAndTextures();
     }
   }
