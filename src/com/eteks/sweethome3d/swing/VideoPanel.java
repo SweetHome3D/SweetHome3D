@@ -94,6 +94,7 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -184,6 +185,7 @@ public class VideoPanel extends JPanel implements DialogView {
   private JSpinner              dateSpinner;
   private JLabel                timeLabel;
   private JSpinner              timeSpinner;
+  private JLabel                dayNightLabel;
   private JCheckBox             ceilingLightEnabledCheckBox;
   private String                dialogTitle;
   private ExecutorService       videoCreationExecutor;
@@ -315,7 +317,7 @@ public class VideoPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components.
    */
-  private void createComponents(Home home, 
+  private void createComponents(final Home home, 
                                 final UserPreferences preferences,
                                 final VideoController controller) {
     final Dimension preferredSize = new Dimension(getToolkit().getScreenSize().width <= 1024 ? 324 : 404, 404);
@@ -683,6 +685,23 @@ public class VideoPanel extends JPanel implements DialogView {
     dateSpinnerModel.addChangeListener(dateTimeChangeListener);
     timeSpinnerModel.addChangeListener(dateTimeChangeListener);
 
+    this.dayNightLabel = new JLabel();
+    final ImageIcon dayIcon = new ImageIcon(PhotoPanel.class.getResource("resources/day.png"));
+    final ImageIcon nightIcon = new ImageIcon(PhotoPanel.class.getResource("resources/night.png"));
+    PropertyChangeListener dayNightListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (home.getCompass().getSunElevation(
+                Camera.convertTimeToTimeZone(controller.getTime(), home.getCompass().getTimeZone())) > 0) {
+            dayNightLabel.setIcon(dayIcon);
+          } else {
+            dayNightLabel.setIcon(nightIcon);
+          }
+        }
+      };
+    controller.addPropertyChangeListener(VideoController.Property.TIME, dayNightListener);
+    home.getCompass().addPropertyChangeListener(dayNightListener);
+    dayNightListener.propertyChange(null);
+    
     this.ceilingLightEnabledCheckBox = new JCheckBox();
     this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
     controller.addPropertyChangeListener(VideoController.Property.CEILING_LIGHT_COLOR, 
@@ -880,10 +899,13 @@ public class VideoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
         4, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
+        5, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
-        1, 8, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 8, 5, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     
     add(advancedPanel, new GridBagConstraints(
@@ -905,6 +927,7 @@ public class VideoPanel extends JPanel implements DialogView {
         this.dateSpinner.setVisible(highQuality);
         this.timeLabel.setVisible(highQuality);
         this.timeSpinner.setVisible(highQuality);
+        this.dayNightLabel.setVisible(highQuality);
         this.ceilingLightEnabledCheckBox.setVisible(highQuality);
         root.setSize(root.getWidth(), 
             root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));

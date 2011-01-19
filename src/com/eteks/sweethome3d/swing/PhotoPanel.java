@@ -134,6 +134,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JSpinner              dateSpinner;
   private JLabel                timeLabel;
   private JSpinner              timeSpinner;
+  private JLabel                dayNightLabel;
   private JLabel                lensLabel;
   private JComboBox             lensComboBox;
   private JCheckBox             ceilingLightEnabledCheckBox;
@@ -489,6 +490,23 @@ public class PhotoPanel extends JPanel implements DialogView {
     dateSpinnerModel.addChangeListener(dateTimeChangeListener);
     timeSpinnerModel.addChangeListener(dateTimeChangeListener);
 
+    this.dayNightLabel = new JLabel();
+    final ImageIcon dayIcon = new ImageIcon(PhotoPanel.class.getResource("resources/day.png"));
+    final ImageIcon nightIcon = new ImageIcon(PhotoPanel.class.getResource("resources/night.png"));
+    PropertyChangeListener dayNightListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (home.getCompass().getSunElevation(
+                Camera.convertTimeToTimeZone(controller.getTime(), home.getCompass().getTimeZone())) > 0) {
+            dayNightLabel.setIcon(dayIcon);
+          } else {
+            dayNightLabel.setIcon(nightIcon);
+          }
+        }
+      };
+    controller.addPropertyChangeListener(PhotoController.Property.TIME, dayNightListener);
+    home.getCompass().addPropertyChangeListener(dayNightListener);
+    dayNightListener.propertyChange(null);
+    
     // Create lens label and combo box
     this.lensLabel = new JLabel();
     this.lensComboBox = new JComboBox(Camera.Lens.values());
@@ -691,7 +709,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
     // First row
     add(photoPanel, new GridBagConstraints(
-        0, 0, 6, 1, 1, 1, GridBagConstraints.CENTER, 
+        0, 0, 7, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
@@ -699,7 +717,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         0, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(new JLabel(), new GridBagConstraints(
-        5, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
+        6, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
@@ -717,7 +735,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
     this.heightLabel.setHorizontalAlignment(labelAlignment);
     add(this.heightSpinner, new GridBagConstraints(
-        4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        4, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
     JPanel proportionsPanel = new JPanel();
@@ -729,14 +747,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Fourth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 5), 0, 0));
     this.qualityLabel.setHorizontalAlignment(labelAlignment);
     add(this.qualitySlider, new GridBagConstraints(
-        2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Fifth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 5, 5, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     // Sixth row
     add(this.dateLabel, new GridBagConstraints(
@@ -752,7 +770,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.timeLabel.setHorizontalAlignment(labelAlignment);
     add(this.timeSpinner, new GridBagConstraints(
         4, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.dayNightLabel, new GridBagConstraints(
+        5, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     add(this.lensLabel, new GridBagConstraints(
         1, 7, 1, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -764,7 +785,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.lensComboBox.setPreferredSize(new Dimension(this.widthSpinner.getPreferredSize().width, 
         this.lensComboBox.getPreferredSize().height));
     add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
-        3, 7, 2, 1, 0, 0, GridBagConstraints.CENTER, 
+        3, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
   
@@ -782,6 +803,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         this.dateSpinner.setVisible(highQuality);
         this.timeLabel.setVisible(highQuality);
         this.timeSpinner.setVisible(highQuality);
+        this.dayNightLabel.setVisible(highQuality);
         this.lensLabel.setVisible(highQuality);
         this.lensComboBox.setVisible(highQuality);
         this.ceilingLightEnabledCheckBox.setVisible(highQuality);
