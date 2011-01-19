@@ -105,10 +105,11 @@ public class HomeFramePane extends JRootPane implements View {
     Image [] frameImages = {new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon.png")).getImage(),
                             new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon32x32.png")).getImage()};
     try {
-      // Call setIconImages by reflection
+      // Call Java 1.6 setIconImages by reflection
       homeFrame.getClass().getMethod("setIconImages", List.class)
           .invoke(homeFrame, Arrays.asList(frameImages));
     } catch (Exception ex) {
+      // Call setIconImage available in previous versions
       homeFrame.setIconImage(frameImages [0]);
     }
     updateFrameTitle(homeFrame, this.home, this.application);
