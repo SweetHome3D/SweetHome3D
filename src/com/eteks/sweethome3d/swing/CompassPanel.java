@@ -257,8 +257,10 @@ public class CompassPanel extends JPanel implements DialogView {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
           String timeZoneId = (String)value;
-          String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
-          value = timeZoneId + " - " + timeZoneDisplayName;
+          if (OperatingSystem.isMacOSX()) {
+            String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
+            value = timeZoneId + " - " + timeZoneDisplayName;
+          }
           return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
       });
@@ -270,6 +272,7 @@ public class CompassPanel extends JPanel implements DialogView {
           controller.addPropertyChangeListener(CompassController.Property.TIME_ZONE, timeZoneChangeListener);
         }
       });
+    this.timeZoneComboBox.setPrototypeDisplayValue("GMT");
     
     this.northDirectionLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "northDirectionLabel.text"));
     // Create a spinner model able to choose an angle modulo 360
@@ -453,8 +456,8 @@ public class CompassPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     geographicLocationPanel.add(this.timeZoneComboBox, new GridBagConstraints(
         3, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 40, 0));
-    this.timeZoneComboBox.setPreferredSize(new Dimension(this.latitudeSpinner.getPreferredSize().width, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    this.timeZoneComboBox.setPreferredSize(new Dimension(this.latitudeSpinner.getPreferredSize().width + 60, 
         this.timeZoneComboBox.getPreferredSize().height));
     add(geographicLocationPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, GridBagConstraints.CENTER, 
