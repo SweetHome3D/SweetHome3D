@@ -286,7 +286,9 @@ public class AutoRecoveryManager {
       if (autoSavedHomeFile == null) {
         File recoveredFilesFolder = getRecoveryFolder();
         if (!recoveredFilesFolder.exists()) {
-          recoveredFilesFolder.mkdirs();
+          if (!recoveredFilesFolder.mkdirs()) {
+            throw new RecorderException("Can't create folder " + recoveredFilesFolder + " to store recovered files");
+          }
         }
         // Find a unique file for home in recovered files sub folder
         if (autoSavedHome.getName() != null) {
