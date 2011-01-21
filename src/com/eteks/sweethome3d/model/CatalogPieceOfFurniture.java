@@ -61,8 +61,6 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   private static final Collator COMPARATOR = Collator.getInstance();
 
-
-
   /**
    * Creates a catalog piece of furniture.
    * @param name  the name of the new piece
