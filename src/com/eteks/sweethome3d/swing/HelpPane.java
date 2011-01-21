@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
@@ -57,6 +58,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Element;
+import javax.swing.text.Highlighter;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -80,7 +85,7 @@ public class HelpPane extends JRootPane implements HelpView {
                   final HelpController controller) {
     this.preferences = preferences;
     createActions(preferences, controller);
-    createComponents(preferences);
+    createComponents(preferences, controller);
     setMnemonics(preferences);
     layoutComponents();
     addLanguageListener(preferences);
@@ -94,6 +99,7 @@ public class HelpPane extends JRootPane implements HelpView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             setPage(controller.getHelpPage());
+            highlightText(controller.getHighlightedText());
           }
         });
     controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE, 
@@ -204,7 +210,7 @@ public class HelpPane extends JRootPane implements HelpView {
   /**
    * Creates the components displayed by this view.
   */
-  private void createComponents(UserPreferences preferences) {
+  private void createComponents(UserPreferences preferences, final HelpController controller) {
     this.searchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HelpPane.class, "searchLabel.text"));
     this.searchTextField = new JTextField(12);
     // Under Mac OS 10.5 use client properties to use search text field look and feel
@@ -218,6 +224,7 @@ public class HelpPane extends JRootPane implements HelpView {
     this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
         public void changedUpdate(DocumentEvent ev) {
           getActionMap().get(ActionType.SEARCH).setEnabled(searchTextField.getText().trim().length() > 0);
+          controller.setHighlightedText(searchTextField.getText());
         }
     
         public void insertUpdate(DocumentEvent ev) {
@@ -234,6 +241,14 @@ public class HelpPane extends JRootPane implements HelpView {
     this.helpEditorPane.setEditable(false);
     this.helpEditorPane.setContentType("text/html");
     this.helpEditorPane.putClientProperty(JEditorPane.W3C_LENGTH_UNITS, Boolean.TRUE);
+    this.helpEditorPane.setHighlighter(new DefaultHighlighter());
+    PropertyChangeListener highlightingTextListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          highlightText(controller.getHighlightedText());
+        }
+      };
+    controller.addPropertyChangeListener(HelpController.Property.HIGHLIGHTED_TEXT, highlightingTextListener);
+    this.helpEditorPane.addPropertyChangeListener("page", highlightingTextListener);
     
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
         @Override
@@ -241,6 +256,47 @@ public class HelpPane extends JRootPane implements HelpView {
           return helpEditorPane;
         }
       });
+  }
+
+  /**
+   * Highlights the words of the given text in HTML pane.
+   */
+  private void highlightText(String highlightedText) {
+    DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
+        new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 204, 51));
+    this.helpEditorPane.getHighlighter().removeAllHighlights();
+    if (highlightedText != null) {
+      String [] highlightedWords = highlightedText.split("\\s");
+      for (int i = 0; i < highlightedWords.length; i++) {
+        highlightedWords [i] = highlightedWords [i].toLowerCase().trim();
+      }                            
+      highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(), 
+          highlightedWords, highlightPainter);
+    }
+  }
+
+  private void highlightWords(Element element, 
+                              String [] highlightedWords, 
+                              Highlighter.HighlightPainter highlightPainter) {
+    if (element.isLeaf()) {
+      int startOffset = element.getStartOffset();
+      try {
+        String text = element.getDocument().getText(element.getStartOffset(), 
+            element.getEndOffset() - startOffset).toLowerCase();
+        for (String highlightedWord : highlightedWords) {
+          for (int index = 0; index < text.length() - 1 &&  (index = text.indexOf(highlightedWord, index)) >= 0; index += highlightedWord.length() + 1) {
+            this.helpEditorPane.getHighlighter().addHighlight(
+                startOffset + index, startOffset + index + highlightedWord.length(), highlightPainter);
+          }
+        }
+      } catch (BadLocationException ex) {
+        // Ignore unexpected exception
+      }
+    } else {
+      for (int i = 0, n = element.getElementCount(); i < n; i++) {
+        highlightWords(element.getElement(i), highlightedWords, highlightPainter);
+      }
+    }
   }
 
   /**

@@ -59,7 +59,9 @@ public class HelpController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {HELP_PAGE, BROWSER_PAGE, 
-      PREVIOUS_PAGE_ENABLED, NEXT_PAGE_ENABLED}
+      PREVIOUS_PAGE_ENABLED, NEXT_PAGE_ENABLED, HIGHLIGHTED_TEXT}
+
+  private static final String SEARCH_RESULT_PROTOCOL = "search";
   
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
@@ -72,7 +74,7 @@ public class HelpController implements Controller {
   private URL browserPage;
   private boolean previousPageEnabled;
   private boolean nextPageEnabled;
-
+  private String  highlightedText;
   
   public HelpController(UserPreferences preferences, 
                         ViewFactory viewFactory) {
@@ -186,6 +188,28 @@ public class HelpController implements Controller {
    */
   public boolean isNextPageEnabled() {
     return this.nextPageEnabled;
+  }
+
+  /**
+   * Sets the highlighted text.
+   */
+  public void setHighlightedText(String highlightedText) {
+    if (highlightedText != this.highlightedText
+        || (highlightedText != null && !highlightedText.equals(this.highlightedText))) {
+      String oldHighlightedText = this.highlightedText;
+      this.highlightedText = highlightedText;
+      this.propertyChangeSupport.firePropertyChange(Property.HIGHLIGHTED_TEXT.name(), 
+          oldHighlightedText, highlightedText);
+    }
+  }
+  
+  /**
+   * Returns the highlighted text.
+   */
+  public String getHighlightedText() {
+    return getHelpPage() == null || SEARCH_RESULT_PROTOCOL.equals(getHelpPage().getProtocol()) 
+        ? null
+        : this.highlightedText;
   }
 
   /**
@@ -307,10 +331,7 @@ public class HelpController implements Controller {
    */
   public void search(String searchedText) {
     URL helpIndex = getHelpIndexPageURL();
-    String [] searchedWords = searchedText.split("\\s");
-    for (int i = 0; i < searchedWords.length; i++) {
-      searchedWords [i] = searchedWords [i].toLowerCase().trim();
-    }
+    String [] searchedWords = getLowerCaseSearchedWords(searchedText);
     List<HelpDocument> helpDocuments = searchInHelpDocuments(helpIndex, searchedWords);
     // Build dynamically the search result page
     final StringBuilder htmlText = new StringBuilder(
@@ -359,7 +380,7 @@ public class HelpController implements Controller {
 
     try {
       // Show built HTML text as a page read from an URL
-      showPage(new URL(null, "string://" + htmlText.hashCode(), new URLStreamHandler() {
+      showPage(new URL(null, SEARCH_RESULT_PROTOCOL + "://" + htmlText.hashCode(), new URLStreamHandler() {
           @Override
           protected URLConnection openConnection(URL url) throws IOException {
             return new URLConnection(url) {
@@ -382,6 +403,17 @@ public class HelpController implements Controller {
   }
 
   /**
+   * Returns the searched words in the given text.
+   */
+  private String [] getLowerCaseSearchedWords(String searchedText) {
+    String [] searchedWords = searchedText.split("\\s");
+    for (int i = 0; i < searchedWords.length; i++) {
+      searchedWords [i] = searchedWords [i].toLowerCase().trim();
+    }
+    return searchedWords;
+  }
+
+  /**
    * Searches <code>searchedWords</code> in help documents and returns 
    * the list of matching documents sorted from the most relevant to the least relevant.
    * This method uses some Swing classes for their HTML parsing capabilities 
@@ -393,34 +425,16 @@ public class HelpController implements Controller {
     
     List<HelpDocument> helpDocuments = new ArrayList<HelpDocument>();
     // Parse all the URLs added to parsedDocuments at each loop
-    HTMLEditorKit html = new HTMLEditorKit();
     for (int i = 0; i < parsedDocuments.size(); i++) {
-      URL helpDocumentUrl = (URL)parsedDocuments.get(i);
-      Reader urlReader = null;
       try {
-        urlReader = new InputStreamReader(helpDocumentUrl.openStream(), "ISO-8859-1");
-
-        // Create an HTML document
+        // Parse a HTML document
+        URL helpDocumentUrl = parsedDocuments.get(i);
         HelpDocument helpDocument = new HelpDocument(helpDocumentUrl, searchedWords);
-        // Parse HTML file first without ignoring charset directive
-        helpDocument.putProperty("IgnoreCharsetDirective", Boolean.FALSE);
-        try {
-          html.read(urlReader, helpDocument, 0);
-        } catch (ChangedCharSetException ex) {
-          // Retrieve document real encoding
-          String mimeType = ex.getCharSetSpec();
-          String encoding = mimeType.substring(mimeType.indexOf("=") + 1).trim();
-          // Restart reading document with its real encoding
-          urlReader.close();
-          urlReader = new InputStreamReader(helpDocumentUrl.openStream(), encoding);
-          helpDocument.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-          html.read(urlReader, helpDocument, 0);
-        }
+        helpDocument.parse();
         // If searched text was found add it to returned documents list
         if (helpDocument.getRelevance() > 0) {
           helpDocuments.add(helpDocument);
         }
-
         // Check if the HTML file contains new URLs to parse
         for (URL url : helpDocument.getReferencedDocuments()) {
           String lowerCaseFile = url.getFile().toLowerCase();
@@ -431,14 +445,6 @@ public class HelpController implements Controller {
         } 
       } catch (IOException ex) {
         // Ignore unknown documents (their URLs should be checked outside of Sweet Home 3D)
-      } catch (BadLocationException ex) {
-      } finally {
-        if (urlReader != null) {
-          try {
-            urlReader.close();
-          } catch (IOException ex) {
-          }
-        }
       }
     }
     // Sort by relevance
@@ -455,15 +461,48 @@ public class HelpController implements Controller {
    */
   private static class HelpDocument extends HTMLDocument {
     // Documents set referenced in this file 
-    private Set<URL>  referencedDocuments = new HashSet<URL>();
-    private String [] searchedWords;
-    private int       relevance;
-    private String    title = "";
+    private Set<URL>     referencedDocuments = new HashSet<URL>();
+    private String []    searchedWords;
+    private int          relevance;
+    private String       title = "";
 
     public HelpDocument(URL helpDocument, String [] searchedWords) {
       this.searchedWords = searchedWords;
       // Store HTML file base
       setBase(helpDocument);
+    }
+
+    /**
+     * Parses this document. 
+     */
+    public void parse() throws IOException {
+      HTMLEditorKit html = new HTMLEditorKit();
+      Reader urlReader = null;
+      try {
+        urlReader = new InputStreamReader(getBase().openStream(), "ISO-8859-1");
+        // Parse HTML file first without ignoring charset directive
+        putProperty("IgnoreCharsetDirective", Boolean.FALSE);
+        try {
+          html.read(urlReader, this, 0);
+        } catch (ChangedCharSetException ex) {
+          // Retrieve document real encoding
+          String mimeType = ex.getCharSetSpec();
+          String encoding = mimeType.substring(mimeType.indexOf("=") + 1).trim();
+          // Restart reading document with its real encoding
+          urlReader.close();
+          urlReader = new InputStreamReader(getBase().openStream(), encoding);
+          putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+          html.read(urlReader, this, 0);
+        }
+      } catch (BadLocationException ex) {
+      } finally {
+        if (urlReader != null) {
+          try {
+            urlReader.close();
+          } catch (IOException ex) {
+          }
+        }
+      }
     }
 
     public Set<URL> getReferencedDocuments() {
@@ -473,7 +512,7 @@ public class HelpController implements Controller {
     public int getRelevance() {
       return this.relevance;
     }
-
+    
     public String getTitle() {
       return this.title;
     }
