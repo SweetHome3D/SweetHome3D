@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
@@ -30,6 +31,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -37,11 +39,9 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.colorchooser.AbstractColorChooserPanel;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -107,44 +107,16 @@ public class ColorButton extends JButton {
           }
           
           colorChooser = new JColorChooser();
-          colorChooser.addAncestorListener(new AncestorListener() {
-              public void ancestorAdded(AncestorEvent ev) {
-                colorChooser.removeAncestorListener(this);
-                // Add auto selection to color chooser panels text fields
-                addAutoSelectionOnTextFields(colorChooser);
-                AbstractColorChooserPanel [] chooserPanels = colorChooser.getChooserPanels();                
-                if (chooserPanels.length > 1
-                    && chooserPanels [1].getClass().getName().equals("javax.swing.colorchooser.DefaultHSBChooserPanel")
-                    && chooserPanels [1].getParent().getParent() instanceof JTabbedPane) {
-                  // Prefer HSB panel as default color panel
-                  ((JTabbedPane)chooserPanels [1].getParent().getParent()).setSelectedIndex(1);
-                }
-              }
-              
-              private void addAutoSelectionOnTextFields(JComponent component) {
-                if (component instanceof JTextComponent) {
-                  SwingTools.addAutoSelectionOnFocusGain((JTextComponent)component);
-                } else if (component instanceof JSpinner) {
-                  JComponent editor = ((JSpinner)component).getEditor();
-                  if (editor instanceof JSpinner.DefaultEditor) {
-                    SwingTools.addAutoSelectionOnFocusGain(((JSpinner.DefaultEditor)editor).getTextField());
-                  }
-                }
-                for (int i = 0, n = component.getComponentCount(); i < n; i++) {
-                  Component childComponent = component.getComponent(i);
-                  if (childComponent instanceof JComponent) {
-                    addAutoSelectionOnTextFields((JComponent)childComponent);
-                  }
-                }
-              }
-              
-              public void ancestorRemoved(AncestorEvent ev) {
-              }
-              
-              public void ancestorMoved(AncestorEvent ev) {
+          // Add auto selection to color chooser panels text fields
+          addAutoSelectionOnTextFields(colorChooser);
+          // Add Esc key management
+          colorChooser.getActionMap().put("close", new AbstractAction() {
+              public void actionPerformed(ActionEvent ev) {
+                ((Window)SwingUtilities.getRoot(colorChooser)).dispose();
               }
             });
-          colorChooserLocale = Locale.getDefault();
+          colorChooser.getInputMap(JColorChooser.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), "close");
+          colorChooserLocale = Locale.getDefault();          
         }
         // Update edited color in furniture color chooser
         colorChooser.setColor(color != null 
@@ -157,8 +129,25 @@ public class ColorButton extends JButton {
                 // Change button color when user click on ok button
                 setColor(colorChooser.getColor().getRGB());
               }
-            }, null);
+            }, null);        
         colorDialog.setVisible(true);
+      }
+
+      private void addAutoSelectionOnTextFields(JComponent component) {
+        if (component instanceof JTextComponent) {
+          SwingTools.addAutoSelectionOnFocusGain((JTextComponent)component);
+        } else if (component instanceof JSpinner) {
+          JComponent editor = ((JSpinner)component).getEditor();
+          if (editor instanceof JSpinner.DefaultEditor) {
+            SwingTools.addAutoSelectionOnFocusGain(((JSpinner.DefaultEditor)editor).getTextField());
+          }
+        }
+        for (int i = 0, n = component.getComponentCount(); i < n; i++) {
+          Component childComponent = component.getComponent(i);
+          if (childComponent instanceof JComponent) {
+            addAutoSelectionOnTextFields((JComponent)childComponent);
+          }
+        }
       }
     });
   }
