@@ -324,7 +324,7 @@ public class HelpPane extends JRootPane implements HelpView {
     ActionMap actions = getActionMap();    
     toolBar.add(new JButton(actions.get(ActionType.SHOW_PREVIOUS)),
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-            GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     toolBar.add(new JButton(actions.get(ActionType.SHOW_NEXT)),
         new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
