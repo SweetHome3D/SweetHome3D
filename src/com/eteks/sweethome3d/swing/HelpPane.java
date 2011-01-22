@@ -27,6 +27,8 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.DefaultFocusTraversalPolicy;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -49,6 +51,7 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -316,9 +319,15 @@ public class HelpPane extends JRootPane implements HelpView {
   private void layoutComponents() {
     final JToolBar toolBar = new JToolBar();
     toolBar.setFloatable(false);
+    // Change layout because BoxLayout glue doesn't work well under Linux
+    toolBar.setLayout(new GridBagLayout());
     ActionMap actions = getActionMap();    
-    toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
-    toolBar.add(actions.get(ActionType.SHOW_NEXT));
+    toolBar.add(new JButton(actions.get(ActionType.SHOW_PREVIOUS)),
+        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    toolBar.add(new JButton(actions.get(ActionType.SHOW_NEXT)),
+        new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     updateToolBarButtonsStyle(toolBar);
     toolBar.addPropertyChangeListener("componentOrientation", 
         new PropertyChangeListener () {
@@ -326,23 +335,28 @@ public class HelpPane extends JRootPane implements HelpView {
             updateToolBarButtonsStyle(toolBar);
           }
         });
-    toolBar.add(Box.createHorizontalStrut(5));
+    toolBar.add(new JLabel(),
+        new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     
-    toolBar.add(Box.createGlue());
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      toolBar.add(this.searchLabel);
-      toolBar.add(Box.createHorizontalStrut(2));
+      toolBar.add(this.searchLabel,
+          new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+              GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     }
-    toolBar.add(this.searchTextField);
+    toolBar.add(this.searchTextField,
+        new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     this.searchTextField.setMaximumSize(this.searchTextField.getPreferredSize());
     // Ignore search button under Mac OS X 10.5 (it's included in the search field)
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      toolBar.add(Box.createHorizontalStrut(2));
-      toolBar.add(actions.get(ActionType.SEARCH));
+      toolBar.add(new JButton(actions.get(ActionType.SEARCH)),
+          new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+              GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));          
     }
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {      
-      Component component = toolBar.getComponentAtIndex(i);
+      Component component = toolBar.getComponent(i);
       if (component instanceof JButton) {
         component.setFocusable(false);
       }
@@ -361,13 +375,13 @@ public class HelpPane extends JRootPane implements HelpView {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
       ComponentOrientation orientation = toolBar.getComponentOrientation();
-      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
+      JComponent previousButton = (JComponent)toolBar.getComponent(0);
       previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       previousButton.putClientProperty("JButton.segmentPosition", 
           orientation == ComponentOrientation.LEFT_TO_RIGHT 
             ? "first"
             : "last");
-      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
+      JComponent nextButton = (JComponent)toolBar.getComponent(1);
       nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       nextButton.putClientProperty("JButton.segmentPosition", 
           orientation == ComponentOrientation.LEFT_TO_RIGHT 
