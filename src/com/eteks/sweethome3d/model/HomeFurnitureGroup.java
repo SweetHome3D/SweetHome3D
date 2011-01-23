@@ -41,7 +41,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private List<HomePieceOfFurniture> furniture;
   private boolean                    resizable;
   private boolean                    deformable;
-  private boolean                    movable;
   private boolean                    doorOrWindow;
   private float                      fixedWidth;
   private float                      fixedDepth;
@@ -72,8 +71,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     float elevation = Float.MAX_VALUE;
     float height    = 0;
+    boolean movable = true;
     this.resizable = true;
-    this.movable = true;
     this.deformable = true;
     this.doorOrWindow = true;
     boolean visible = false;
@@ -82,9 +81,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     for (HomePieceOfFurniture piece : furniture) {
       elevation = Math.min(elevation, piece.getElevation());      
       height = Math.max(height, piece.getElevation() + piece.getHeight());
+      movable &= piece.isMovable();
       this.resizable &= piece.isResizable();
       this.deformable &= piece.isDeformable();
-      this.movable &= piece.isMovable();
       this.doorOrWindow &= piece.isDoorOrWindow();
       visible |= piece.isVisible();
       modelMirrored &= piece.isModelMirrored();
@@ -128,6 +127,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setNameYOffset(0);
     setNameStyle(null);
     setDescription(null);
+    setMovable(movable);
     setVisible(visible);
     super.setColor(null);
     super.setTexture(null);
@@ -182,7 +182,19 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public boolean isMovable() {
-    return this.movable;
+    return super.isMovable();
+  }
+  
+  /**
+   * Sets whether this piece is movable or not.
+   * @since 3.1
+   */
+  @Override
+  public void setMovable(boolean movable) {
+    super.setMovable(movable);
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.setMovable(movable);
+    }
   }
 
   /**

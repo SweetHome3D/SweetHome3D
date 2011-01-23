@@ -455,10 +455,12 @@ public class FurnitureController implements Controller {
       final HomePieceOfFurniture [] groupPieces = sortedMap.values().
           toArray(new HomePieceOfFurniture [sortedMap.size()]); 
       final int [] groupPiecesIndex = new int [groupPieces.length];
+      final boolean [] groupPiecesMovable = new boolean [groupPieces.length];
       final boolean [] groupPiecesVisible = new boolean [groupPieces.length];
       int i = 0;
       for (Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMap.entrySet()) {
         groupPiecesIndex [i] = pieceEntry.getKey();
+        groupPiecesMovable [i] = pieceEntry.getValue().isMovable();
         groupPiecesVisible [i++] = pieceEntry.getValue().isVisible();
       }
 
@@ -466,6 +468,7 @@ public class FurnitureController implements Controller {
           FurnitureController.class, "groupName", getFurnitureGroupCount(homeFurniture) + 1);
       final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(selectedFurniture, furnitureGroupName);
       final int furnitureGroupIndex = homeFurniture.size() - groupPieces.length;
+      final boolean movable = furnitureGroup.isMovable();
       
       doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
           new int [] {furnitureGroupIndex}, basePlanLocked);
@@ -477,6 +480,7 @@ public class FurnitureController implements Controller {
               doUngroupFurniture(groupPieces, groupPiecesIndex, 
                   new HomeFurnitureGroup [] {furnitureGroup}, basePlanLocked);
               for (int i = 0; i < groupPieces.length; i++) {
+                groupPieces [i].setMovable(groupPiecesMovable [i]);
                 groupPieces [i].setVisible(groupPiecesVisible [i]);
               }
               home.setSelectedItems(oldSelection);
@@ -487,6 +491,7 @@ public class FurnitureController implements Controller {
               super.redo();
               doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
                   new int [] {furnitureGroupIndex}, basePlanLocked);
+              furnitureGroup.setMovable(movable);
               furnitureGroup.setVisible(true);
             }
             
