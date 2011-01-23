@@ -534,6 +534,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return this.movable;
   }
 
+  /**
+   * Sets whether this piece is movable or not.
+   * @since 3.0
+   */
   public void setMovable(boolean movable) {
     if (movable != this.movable) {
       this.movable = movable;
