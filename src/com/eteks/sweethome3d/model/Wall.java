@@ -64,6 +64,7 @@ public class Wall implements Serializable, Selectable {
   private Integer     rightSideColor;
   private HomeTexture rightSideTexture;
   private float       rightSideShininess;
+  private boolean     symmetric = true;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
@@ -710,7 +711,7 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Compute the rectangle or the circle arc of a wall with its thickness.
+   * Computes the rectangle or the circle arc of a wall with its thickness.
    */  
   private float [][] getUnjoinedShapePoints() {
     if (this.arcExtent != null
@@ -724,31 +725,26 @@ public class Wall implements Serializable, Selectable {
       float interiorArcRadius = Math.max(0, arcCircleRadius - this.thickness / 2);
       float exteriorArcLength = exteriorArcRadius * Math.abs(this.arcExtent);
       float angleDelta = this.arcExtent / (float)Math.sqrt(exteriorArcLength);
-      List<float[]> wallPoints = new ArrayList<float[]>(100);
-      int i = 0;
-      for (float angle = this.arcExtent; angleDelta > 0 ? angle >= angleDelta * 0.1f : angle <= -angleDelta * 0.1f; angle -= angleDelta, i++) {
-        double cos = Math.cos(startAngle + angle);
-        double sin = Math.sin(startAngle + angle);
-        float [] interiorArcPoint = new float [] {(float)(arcCircleCenter [0] + interiorArcRadius * cos), 
-                                                  (float)(arcCircleCenter [1] - interiorArcRadius * sin)};
-        float [] exteriorArcPoint = new float [] {(float)(arcCircleCenter [0] + exteriorArcRadius * cos), 
-                                                  (float)(arcCircleCenter [1] - exteriorArcRadius * sin)};
-        if (angleDelta > 0) {
-          wallPoints.add(i, interiorArcPoint);
-          wallPoints.add(wallPoints.size() - 1 - i, exteriorArcPoint);
-        } else {
-          wallPoints.add(i, exteriorArcPoint);
-          wallPoints.add(wallPoints.size() - 1 - i, interiorArcPoint);
+      int angleStepCount = (int)(this.arcExtent / angleDelta);
+      List<float[]> wallPoints = new ArrayList<float[]>((angleStepCount + 2) * 2);      
+      if (this.symmetric) {
+        if (Math.abs(this.arcExtent - angleStepCount * angleDelta) > 1E-6) {
+          angleDelta = this.arcExtent / ++angleStepCount;
         }
+        for (int i = 0; i <= angleStepCount; i++) {
+          computeRoundWallShapePoint(wallPoints, startAngle + this.arcExtent - i * angleDelta, i, angleDelta, 
+              arcCircleCenter, exteriorArcRadius, interiorArcRadius);
+        }
+      } else {
+        // Don't change the way walls were computed in version 3.0 to ensure they exactly look the same
+        int i = 0;
+        for (float angle = this.arcExtent; angleDelta > 0 ? angle >= angleDelta * 0.1f : angle <= -angleDelta * 0.1f; angle -= angleDelta, i++) {
+          computeRoundWallShapePoint(wallPoints, startAngle + angle, i, angleDelta, 
+              arcCircleCenter, exteriorArcRadius, interiorArcRadius);
+        }
+        computeRoundWallShapePoint(wallPoints, startAngle, i, angleDelta, 
+            arcCircleCenter, exteriorArcRadius, interiorArcRadius);
       }
-      double cos = Math.cos(startAngle);
-      double sin = Math.sin(startAngle);
-      float [] interiorStartPoint = new float [] {(float)(arcCircleCenter [0] + interiorArcRadius * cos), 
-                                                  (float)(arcCircleCenter [1] - interiorArcRadius * sin)};
-      float [] exteriorStartPoint = new float [] {(float)(arcCircleCenter [0] + exteriorArcRadius * cos), 
-                                                  (float)(arcCircleCenter [1] - exteriorArcRadius * sin)};
-      wallPoints.add(i, angleDelta > 0  ? interiorStartPoint  : exteriorStartPoint);
-      wallPoints.add(wallPoints.size() - 1 - i, angleDelta > 0  ? exteriorStartPoint  : interiorStartPoint);
       return wallPoints.toArray(new float [wallPoints.size()][]);
     } else { 
       double angle = Math.atan2(this.yEnd - this.yStart, 
@@ -760,6 +756,26 @@ public class Wall implements Serializable, Selectable {
           {this.xEnd   + dx, this.yEnd   - dy},
           {this.xEnd   - dx, this.yEnd   + dy},
           {this.xStart - dx, this.yStart + dy}};
+    }
+  }
+
+  /**
+   * Computes the exterior and interior arc points of a round wall at the given <code>index</code>.
+   */  
+  private void computeRoundWallShapePoint(List<float []> wallPoints, float angle, int index, float angleDelta, 
+                                          float [] arcCircleCenter, float exteriorArcRadius, float interiorArcRadius) {
+    double cos = Math.cos(angle);
+    double sin = Math.sin(angle);
+    float [] interiorArcPoint = new float [] {(float)(arcCircleCenter [0] + interiorArcRadius * cos), 
+                                              (float)(arcCircleCenter [1] - interiorArcRadius * sin)};
+    float [] exteriorArcPoint = new float [] {(float)(arcCircleCenter [0] + exteriorArcRadius * cos), 
+                                              (float)(arcCircleCenter [1] - exteriorArcRadius * sin)};
+    if (angleDelta > 0) {
+      wallPoints.add(index, interiorArcPoint);
+      wallPoints.add(wallPoints.size() - 1 - index, exteriorArcPoint);
+    } else {
+      wallPoints.add(index, exteriorArcPoint);
+      wallPoints.add(wallPoints.size() - 1 - index, interiorArcPoint);
     }
   }
   
