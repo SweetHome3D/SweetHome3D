@@ -2800,7 +2800,9 @@ public class PlanController extends FurnitureController implements Controller {
    * and the wall point joined to its start point if <code>moveWallAtStart</code> is true.
    */
   private void moveWallStartPoint(Wall wall, float xStart, float yStart,
-                                  boolean moveWallAtStart) {
+                                  boolean moveWallAtStart) {    
+    float oldXStart = wall.getXStart();
+    float oldYStart = wall.getYStart();
     wall.setXStart(xStart);
     wall.setYStart(yStart);
     Wall wallAtStart = wall.getWallAtStart();
@@ -2808,10 +2810,16 @@ public class PlanController extends FurnitureController implements Controller {
     // and this wall doesn't belong to the list of moved walls
     if (wallAtStart != null && moveWallAtStart) {
       // Move the wall start point or end point
-      if (wallAtStart.getWallAtStart() == wall) {
+      if (wallAtStart.getWallAtStart() == wall
+          && (wallAtStart.getWallAtEnd() != wall
+              || (wallAtStart.getXStart() == oldXStart
+                  && wallAtStart.getYStart() == oldYStart))) {
         wallAtStart.setXStart(xStart);
         wallAtStart.setYStart(yStart);
-      } else if (wallAtStart.getWallAtEnd() == wall) {
+      } else if (wallAtStart.getWallAtEnd() == wall
+                 && (wallAtStart.getWallAtStart() != wall
+                     || (wallAtStart.getXEnd() == oldXStart
+                         && wallAtStart.getYEnd() == oldYStart))) {
         wallAtStart.setXEnd(xStart);
         wallAtStart.setYEnd(yStart);
       }
@@ -2824,6 +2832,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void moveWallEndPoint(Wall wall, float xEnd, float yEnd,
                                 boolean moveWallAtEnd) {
+    float oldXEnd = wall.getXEnd();
+    float oldYEnd = wall.getYEnd();
     wall.setXEnd(xEnd);
     wall.setYEnd(yEnd);
     Wall wallAtEnd = wall.getWallAtEnd();
@@ -2831,10 +2841,16 @@ public class PlanController extends FurnitureController implements Controller {
     // and this wall doesn't belong to the list of moved walls
     if (wallAtEnd != null && moveWallAtEnd) {
       // Move the wall start point or end point
-      if (wallAtEnd.getWallAtStart() == wall) {
+      if (wallAtEnd.getWallAtStart() == wall
+          && (wallAtEnd.getWallAtEnd() != wall
+              || (wallAtEnd.getXStart() == oldXEnd
+                  && wallAtEnd.getYStart() == oldYEnd))) {
         wallAtEnd.setXStart(xEnd);
         wallAtEnd.setYStart(yEnd);
-      } else if (wallAtEnd.getWallAtEnd() == wall) {
+      } else if (wallAtEnd.getWallAtEnd() == wall
+                 && (wallAtEnd.getWallAtStart() != wall
+                     || (wallAtEnd.getXEnd() == oldXEnd
+                         && wallAtEnd.getYEnd() == oldYEnd))) {
         wallAtEnd.setXEnd(xEnd);
         wallAtEnd.setYEnd(yEnd);
       }
@@ -5563,10 +5579,16 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.newWalls.size() == 0
             && selectableItem instanceof Room) {
           createWallsAroundRoom((Room)selectableItem);
-        } else if (this.lastWall != null) {
-          // Join last wall to the selected wall at its end
-          joinNewWallEndToWall(this.lastWall, 
-              this.wallStartAtEnd, this.wallEndAtEnd);
+        } else {
+          if (this.roundWall && this.newWall != null) {
+            // Let's end wall creation of round walls after a double click 
+            endWallCreation();
+          }
+          if (this.lastWall != null) {
+            // Join last wall to the selected wall at its end
+            joinNewWallEndToWall(this.lastWall, 
+                this.wallStartAtEnd, this.wallEndAtEnd);
+          }
         }
         validateDrawnWalls();
       } else {
@@ -5806,7 +5828,7 @@ public class PlanController extends FurnitureController implements Controller {
             case ANGLE : 
               wallAngle = Math.toRadians(value != null ? ((Number)value).doubleValue() : 0);
               Wall previousWall = this.newWall.getWallAtStart();
-              if (this.newWall != null
+              if (previousWall != null
                   && previousWall.getStartPointToEndPointDistance() > 0) {
                 wallAngle -= Math.atan2(previousWall.getYStart() - previousWall.getYEnd(), 
                     previousWall.getXStart() - previousWall.getXEnd());
