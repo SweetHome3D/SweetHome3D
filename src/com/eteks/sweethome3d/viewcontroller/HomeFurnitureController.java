@@ -31,6 +31,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
@@ -48,7 +49,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
+  public enum Property {ICON, NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
       WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, SHININESS, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
       RESIZABLE, DEFORMABLE, TEXTURABLE}
   
@@ -71,6 +72,7 @@ public class HomeFurnitureController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeFurnitureView;
 
+  private Content icon;
   private String  name;
   private Boolean nameVisible;
   private Float   x;
@@ -183,6 +185,7 @@ public class HomeFurnitureController implements Controller {
         Home.getFurnitureSubList(this.home.getSelectedItems());
     TextureChoiceController textureController = getTextureController();
     if (selectedFurniture.isEmpty()) {
+      setIcon(null);
       setName(null); // Nothing to edit
       setNameVisible(null); 
       setAngleInDegrees(null);
@@ -210,6 +213,17 @@ public class HomeFurnitureController implements Controller {
     } else {
       // Search the common properties among selected furniture
       HomePieceOfFurniture firstPiece = selectedFurniture.get(0);
+      Content icon = firstPiece.getIcon();
+      if (icon != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (!icon.equals(selectedFurniture.get(i).getIcon())) {
+            icon = null;
+            break;
+          }
+        }
+      }
+      setIcon(icon);
+      
       String name = firstPiece.getName();
       if (name != null) {
         for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -447,6 +461,24 @@ public class HomeFurnitureController implements Controller {
       setTexturable(texturable == null || texturable.booleanValue());
     }
   }  
+  
+  /**
+   * Sets the edited icon.
+   */
+  private void setIcon(Content icon) {
+    if (icon != this.icon) {
+      Content oldIcon = this.icon;
+      this.icon = icon;
+      this.propertyChangeSupport.firePropertyChange(Property.ICON.name(), oldIcon, icon);
+    }
+  }
+
+  /**
+   * Returns the edited icon.
+   */
+  public Content getIcon() {
+    return this.icon;
+  }
   
   /**
    * Sets the edited name.
