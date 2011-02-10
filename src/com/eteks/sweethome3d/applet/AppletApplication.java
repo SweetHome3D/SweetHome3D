@@ -140,7 +140,7 @@ public class AppletApplication extends HomeApplication {
     if (!serviceManagerAvailable) {
       // Create JNLP services required by Sweet Home 3D 
       ServiceManager.setServiceManagerStub(
-          new StandaloneServiceManager(applet.getAppletContext(), codeBase, this.name));
+          new StandaloneServiceManager(applet.getAppletContext(), codeBase));
       // Caution: setting a new service manager stub won't replace the existing one,
     }          
  
@@ -647,9 +647,8 @@ public class AppletApplication extends HomeApplication {
     private BasicService basicService;
 
     public StandaloneServiceManager(AppletContext appletContext,
-                                    URL codeBase,
-                                    String appletName) {
-      this.basicService = new AppletBasicService(appletContext, codeBase, appletName);
+                                    URL codeBase) {
+      this.basicService = new AppletBasicService(appletContext, codeBase);
     }
 
     public Object lookup(final String name) throws UnavailableServiceException {
@@ -671,18 +670,15 @@ public class AppletApplication extends HomeApplication {
   private static class AppletBasicService implements BasicService {
     private final AppletContext appletContext;
     private final URL    codeBase;
-    private final String appletName;
 
     public AppletBasicService(AppletContext appletContext,
-                              URL codeBase, 
-                              String appletName) {
+                              URL codeBase) {
       this.appletContext = appletContext;
       this.codeBase = codeBase;
-      this.appletName = appletName;
     }
 
     public boolean showDocument(URL url) {
-      this.appletContext.showDocument(url, this.appletName);
+      this.appletContext.showDocument(url);
       return true;
     }
 

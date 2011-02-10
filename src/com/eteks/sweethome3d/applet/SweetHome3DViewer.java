@@ -1,5 +1,5 @@
 /*
- * SweetHome3DApplet.java 10 oct. 2008
+ * SweetHome3DViewer.java 10 oct. 2008
  *
  * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -22,9 +22,11 @@ package com.eteks.sweethome3d.applet;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import javax.swing.JApplet;
 import javax.swing.JLabel;
@@ -63,10 +65,7 @@ public class SweetHome3DViewer extends JApplet {
   
   public void init() {
     if (!isJava5OrSuperior()) {
-      showError("<html><p>This applet may be run under Windows, Mac OS X 10.4 / 10.5, Linux and Solaris." +
-          "<br>It requires Java version 5 or superior.</p>" +
-          "<p>Please, check Java version set in Java preferences under Mac OS X," +
-          "<br>or update your Java Runtime to the latest version available at java.com under the other systems.</p>");
+      showError(getLocalizedString("requirementsMessage"));
     } else {
       createAppletApplication();
     }
@@ -105,6 +104,15 @@ public class SweetHome3DViewer extends JApplet {
   }
 
   /**
+   * Returns the localized string matching the given <code>key</code>. 
+   */
+  private String getLocalizedString(String key) {
+    Class SweetHome3DViewerClass = SweetHome3DViewer.class;
+    return ResourceBundle.getBundle(SweetHome3DViewerClass.getPackage().getName().replace('.', '/') + "/package").
+        getString(SweetHome3DViewerClass.getName().substring(SweetHome3DViewerClass.getName().lastIndexOf('.') + 1) + "." + key);
+  }
+  
+  /**
    * Shows the given text in a label.
    */
   private void showError(String text) {
@@ -117,7 +125,7 @@ public class SweetHome3DViewer extends JApplet {
    */
   private void createAppletApplication() {
     try {
-      Class sweetHome3DAppletClass = SweetHome3DViewer.class;
+      Class sweetHome3DViewerClass = SweetHome3DViewer.class;
       List java3DFiles = new ArrayList(Arrays.asList(new String [] {
           "j3dcore.jar", // Main Java 3D jars
           "vecmath.jar",
@@ -150,7 +158,7 @@ public class SweetHome3DViewer extends JApplet {
           "com.microcrowd.loader.java3d"}));
       
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
-          sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
+          sweetHome3DViewerClass.getClassLoader(), sweetHome3DViewerClass.getProtectionDomain(),
           (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
           (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
       
@@ -164,9 +172,13 @@ public class SweetHome3DViewer extends JApplet {
       if (ex instanceof InvocationTargetException) {
         ex = ((InvocationTargetException)ex).getCause();
       }
-      showError("<html>Can't start applet:<br>Exception" 
-          + ex.getClass().getName() + " " + ex.getMessage());
-      ex.printStackTrace();
+      if (ex instanceof AccessControlException) {
+        showError(getLocalizedString("signatureError"));
+      } else {
+        showError("<html>" + getLocalizedString("startError") 
+            + "<br>Exception" + ex.getClass().getName() + " " + ex.getMessage());
+        ex.printStackTrace();
+      }
     }
   }  
 }

@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.applet;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -177,10 +177,7 @@ public class SweetHome3DApplet extends JApplet {
    
   public void init() {
     if (!isJava5OrSuperior()) {
-      showError("<html><p>This applet may be run under Windows, Mac OS X 10.4 / 10.5, Linux and Solaris." +
-          "<br>It requires Java version 5 or superior.</p>" +
-          "<p>Please, check Java version set in Java preferences under Mac OS X," +
-          "<br>or update your Java Runtime to the latest version available at java.com under the other systems.</p>");
+      showError(getLocalizedString("requirementsMessage"));
     } else {
       createAppletApplication();
     }
@@ -236,6 +233,15 @@ public class SweetHome3DApplet extends JApplet {
   }
 
   /**
+   * Returns the localized string matching the given <code>key</code>. 
+   */
+  private String getLocalizedString(String key) {
+    Class SweetHome3DAppletClass = SweetHome3DApplet.class;
+    return ResourceBundle.getBundle(SweetHome3DAppletClass.getPackage().getName().replace('.', '/') + "/package").
+        getString(SweetHome3DAppletClass.getName().substring(SweetHome3DAppletClass.getName().lastIndexOf('.') + 1) + "." + key);
+  }
+  
+  /**
    * Shows the given text in a label.
    */
   private void showError(String text) {
@@ -253,22 +259,22 @@ public class SweetHome3DApplet extends JApplet {
           "j3dcore.jar", // Main Java 3D jars
           "vecmath.jar",
           "j3dutils.jar",
-          "windows/j3dcore-d3d.dll", // Windows DLLs
-          "windows/j3dcore-ogl.dll",
-          "windows/j3dcore-ogl-cg.dll",
-          "windows/j3dcore-ogl-chk.dll",
           "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
           "macosx/jogl.jar",
           "macosx/libgluegen-rt.jnilib",
           "macosx/libjogl.jnilib",
           "macosx/libjogl_awt.jnilib",
           "macosx/libjogl_cg.jnilib"}));
-      if (System.getProperty("os.name").startsWith("Linux")
-          && "64".equals(System.getProperty("sun.arch.data.model"))) {
-        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
+      if ("64".equals(System.getProperty("sun.arch.data.model"))) {
+        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLL
+        java3DFiles.add("windows/x64/j3dcore-ogl.dll"); // Windows DLL
       } else {
-        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); 
+        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
         java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+        java3DFiles.add("windows/i386/j3dcore-d3d.dll"); // Windows DLLs
+        java3DFiles.add("windows/i386/j3dcore-ogl.dll");
+        java3DFiles.add("windows/i386/j3dcore-ogl-cg.dll");
+        java3DFiles.add("windows/i386/j3dcore-ogl-chk.dll");
       }
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
@@ -310,15 +316,11 @@ public class SweetHome3DApplet extends JApplet {
           applicationClass.getConstructor(new Class [] {JApplet.class});
       this.appletApplication = applicationConstructor.newInstance(new Object [] {this});
     } catch (Throwable ex) {
-      if (ex instanceof InvocationTargetException) {
-        ex = ((InvocationTargetException)ex).getCause();
-      }
       if (ex instanceof AccessControlException) {
-        showError("<html>If you want to run this applet, you must relaunch your browser,"               
-            + "<br>display this page again and accept the displayed digital signature.");
+        showError(getLocalizedString("signatureError"));
       } else {
-        showError("<html>Can't start applet:<br>Exception" 
-            + ex.getClass().getName() + " " + ex.getMessage());
+        showError("<html>" + getLocalizedString("startError") 
+            + "<br>Exception" + ex.getClass().getName() + " " + ex.getMessage());
         ex.printStackTrace();
       }
     }
