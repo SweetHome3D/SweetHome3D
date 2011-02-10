@@ -121,8 +121,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 import javax.swing.text.JTextComponent;
 
@@ -1940,7 +1938,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.MODIFY_FURNITURE, catalogViewPopup);
     catalogViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.IMPORT_FURNITURE, catalogViewPopup);
-    catalogViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
+    SwingTools.hideDisabledMenuItems(catalogViewPopup);
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
@@ -1976,7 +1974,7 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
     furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
-    furnitureViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
+    SwingTools.hideDisabledMenuItems(furnitureViewPopup);
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
 
     if (furnitureView instanceof Scrollable) {
@@ -2114,7 +2112,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.ZOOM_IN, planViewPopup);
     planViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.EXPORT_TO_SVG, planViewPopup);
-    planViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
+    SwingTools.hideDisabledMenuItems(planViewPopup);
     planView.setComponentPopupMenu(planViewPopup);
     
     if (planView instanceof Scrollable) {
@@ -2169,7 +2167,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.CREATE_VIDEO, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
-    view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
+    SwingTools.hideDisabledMenuItems(view3DPopup);
     view3D.setComponentPopupMenu(view3DPopup);
     
     JComponent component3D = view3D;
@@ -3231,101 +3229,6 @@ public class HomePane extends JRootPane implements HomeView {
       }
       SwingTools.installFocusBorder(view);
       setMinimumSize(new Dimension());
-    }
-  }
-  
-  /**
-   * A popup menu listener that displays only enabled menu items.
-   */
-  private static class MenuItemsVisibilityListener implements PopupMenuListener {
-    public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {        
-      JPopupMenu popupMenu = (JPopupMenu)ev.getSource();
-      // Make visible only enabled menu items   
-      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
-        Component component = popupMenu.getComponent(i);
-        if (component instanceof JMenu) {
-          component.setVisible(containsEnabledItems((JMenu)component));
-        } else if (component instanceof JMenuItem) {
-          component.setVisible(component.isEnabled());
-        }
-      }
-      hideUselessSeparators(popupMenu);
-      // Ensure at least one item is visible
-      boolean allItemsInvisible = true;
-      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
-        if (popupMenu.getComponent(i).isVisible()) {
-          allItemsInvisible = false;
-          break;
-        }
-      }  
-      if (allItemsInvisible) {
-        popupMenu.getComponent(0).setVisible(true);
-      }
-    }
-
-    /**
-     * Makes useless separators invisible.
-     */
-    private void hideUselessSeparators(JPopupMenu popupMenu) {
-      boolean allMenuItemsInvisible = true;
-      int lastVisibleSeparatorIndex = -1;
-      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
-        Component component = popupMenu.getComponent(i);
-        if (allMenuItemsInvisible && (component instanceof JMenuItem)) {
-          if (component.isVisible()) {
-            allMenuItemsInvisible = false;
-          }
-        } else if (component instanceof JSeparator) {          
-          component.setVisible(!allMenuItemsInvisible);
-          if (!allMenuItemsInvisible) {
-            lastVisibleSeparatorIndex = i;
-          }
-          allMenuItemsInvisible = true;
-        }
-      }  
-      if (lastVisibleSeparatorIndex != -1 && allMenuItemsInvisible) {
-        // Check if last separator is the first visible component
-        boolean allComponentsBeforeLastVisibleSeparatorInvisible = true;
-        for (int i = lastVisibleSeparatorIndex - 1; i >= 0; i--) {
-          if (popupMenu.getComponent(i).isVisible()) {
-            allComponentsBeforeLastVisibleSeparatorInvisible = false;
-            break;
-          }
-        }
-        boolean allComponentsAfterLastVisibleSeparatorInvisible = true;
-        for (int i = lastVisibleSeparatorIndex; i < popupMenu.getComponentCount(); i++) {
-          if (popupMenu.getComponent(i).isVisible()) {
-            allComponentsBeforeLastVisibleSeparatorInvisible = false;
-            break;
-          }
-        }
-        
-        popupMenu.getComponent(lastVisibleSeparatorIndex).setVisible(
-            !allComponentsBeforeLastVisibleSeparatorInvisible && !allComponentsAfterLastVisibleSeparatorInvisible);
-      }
-    }
-
-    /**
-     * Returns <code>true</code> if the given <code>menu</code> contains 
-     * at least one enabled menu item.
-     */
-    private boolean containsEnabledItems(JMenu menu) {
-      boolean menuContainsEnabledItems = false;
-      for (int i = 0; i < menu.getMenuComponentCount() && !menuContainsEnabledItems; i++) {
-        Component component = menu.getMenuComponent(i);
-        if (component instanceof JMenu) {
-          menuContainsEnabledItems = containsEnabledItems((JMenu)component);
-        } else if (component instanceof JMenuItem) {
-          menuContainsEnabledItems = component.isEnabled();
-        }
-      }
-      return menuContainsEnabledItems;
-    }
-
-    public void popupMenuCanceled(PopupMenuEvent ev) {
-    }
-
-    public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
     }
   }
 }

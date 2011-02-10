@@ -55,16 +55,22 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.model.TextureImage;
@@ -516,5 +522,107 @@ public class SwingTools {
     }    
     titledPanel.setBorder(panelBorder);    
     return titledPanel;
+  }
+
+  /**
+   * Adds a listener that will update the given popup menu to hide disabled menu items.
+   */
+  public static void hideDisabledMenuItems(JPopupMenu popupMenu) {
+    popupMenu.addPopupMenuListener(new MenuItemsVisibilityListener());
+  }
+  
+  /**
+   * A popup menu listener that displays only enabled menu items.
+   */
+  private static class MenuItemsVisibilityListener implements PopupMenuListener {
+    public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {        
+      JPopupMenu popupMenu = (JPopupMenu)ev.getSource();
+      // Make visible only enabled menu items   
+      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
+        Component component = popupMenu.getComponent(i);
+        if (component instanceof JMenu) {
+          component.setVisible(containsEnabledItems((JMenu)component));
+        } else if (component instanceof JMenuItem) {
+          component.setVisible(component.isEnabled());
+        }
+      }
+      hideUselessSeparators(popupMenu);
+      // Ensure at least one item is visible
+      boolean allItemsInvisible = true;
+      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
+        if (popupMenu.getComponent(i).isVisible()) {
+          allItemsInvisible = false;
+          break;
+        }
+      }  
+      if (allItemsInvisible) {
+        popupMenu.getComponent(0).setVisible(true);
+      }
+    }
+
+    /**
+     * Makes useless separators invisible.
+     */
+    private void hideUselessSeparators(JPopupMenu popupMenu) {
+      boolean allMenuItemsInvisible = true;
+      int lastVisibleSeparatorIndex = -1;
+      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
+        Component component = popupMenu.getComponent(i);
+        if (allMenuItemsInvisible && (component instanceof JMenuItem)) {
+          if (component.isVisible()) {
+            allMenuItemsInvisible = false;
+          }
+        } else if (component instanceof JSeparator) {          
+          component.setVisible(!allMenuItemsInvisible);
+          if (!allMenuItemsInvisible) {
+            lastVisibleSeparatorIndex = i;
+          }
+          allMenuItemsInvisible = true;
+        }
+      }  
+      if (lastVisibleSeparatorIndex != -1 && allMenuItemsInvisible) {
+        // Check if last separator is the first visible component
+        boolean allComponentsBeforeLastVisibleSeparatorInvisible = true;
+        for (int i = lastVisibleSeparatorIndex - 1; i >= 0; i--) {
+          if (popupMenu.getComponent(i).isVisible()) {
+            allComponentsBeforeLastVisibleSeparatorInvisible = false;
+            break;
+          }
+        }
+        boolean allComponentsAfterLastVisibleSeparatorInvisible = true;
+        for (int i = lastVisibleSeparatorIndex; i < popupMenu.getComponentCount(); i++) {
+          if (popupMenu.getComponent(i).isVisible()) {
+            allComponentsBeforeLastVisibleSeparatorInvisible = false;
+            break;
+          }
+        }
+        
+        popupMenu.getComponent(lastVisibleSeparatorIndex).setVisible(
+            !allComponentsBeforeLastVisibleSeparatorInvisible && !allComponentsAfterLastVisibleSeparatorInvisible);
+      }
+    }
+
+    /**
+     * Returns <code>true</code> if the given <code>menu</code> contains 
+     * at least one enabled menu item.
+     */
+    private boolean containsEnabledItems(JMenu menu) {
+      boolean menuContainsEnabledItems = false;
+      for (int i = 0; i < menu.getMenuComponentCount() && !menuContainsEnabledItems; i++) {
+        Component component = menu.getMenuComponent(i);
+        if (component instanceof JMenu) {
+          menuContainsEnabledItems = containsEnabledItems((JMenu)component);
+        } else if (component instanceof JMenuItem) {
+          menuContainsEnabledItems = component.isEnabled();
+        }
+      }
+      return menuContainsEnabledItems;
+    }
+
+    public void popupMenuCanceled(PopupMenuEvent ev) {
+    }
+
+    public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+    }
   }
 }
