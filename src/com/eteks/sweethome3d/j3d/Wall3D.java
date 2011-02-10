@@ -739,7 +739,7 @@ public class Wall3D extends Object3DBranch {
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE 
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }
-  
+
   /**
    * An area used to compute holes in walls. 
    */
