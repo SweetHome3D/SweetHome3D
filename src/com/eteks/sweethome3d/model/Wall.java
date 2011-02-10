@@ -614,7 +614,17 @@ public class Wall implements Serializable, Selectable {
         int wallAtStartRightSideStartPointIndex = wallAtStartPoints.length - 1;
         int wallAtStartLeftSideEndPointIndex = wallAtStartPoints.length / 2 - 1;
         int wallAtStartRightSideEndPointIndex = wallAtStartPoints.length / 2;
-        if (this.wallAtStart.getWallAtEnd() == this) {
+        boolean wallAtStartJoinedAtEnd = this.wallAtStart.getWallAtEnd() == this
+            // Check the coordinates when walls are joined to each other at both ends 
+            && (this.wallAtStart.getWallAtStart() != this
+                || (this.wallAtStart.xEnd == this.xStart
+                    && this.wallAtStart.yEnd == this.yStart));
+        boolean wallAtStartJoinedAtStart = this.wallAtStart.getWallAtStart() == this
+            // Check the coordinates when walls are joined to each other at both ends 
+            && (this.wallAtStart.getWallAtEnd() != this
+                || (this.wallAtStart.xStart == this.xStart
+                    && this.wallAtStart.yStart == this.yStart));
+        if (wallAtStartJoinedAtEnd) {
           computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
               wallAtStartPoints [wallAtStartLeftSideEndPointIndex], wallAtStartPoints [wallAtStartLeftSideEndPointIndex - 1], limit);
           computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
@@ -632,7 +642,7 @@ public class Wall implements Serializable, Selectable {
               wallPoints [rightSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex];
             }
           }
-        } else if (this.wallAtStart.getWallAtStart() == this) {
+        } else if (wallAtStartJoinedAtStart) {
           computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
               wallAtStartPoints [wallAtStartRightSideStartPointIndex], wallAtStartPoints [wallAtStartRightSideStartPointIndex - 1], limit);
           computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
@@ -662,7 +672,17 @@ public class Wall implements Serializable, Selectable {
         int wallAtEndRightSideStartPointIndex = wallAtEndPoints.length - 1;
         int wallAtEndLeftSideEndPointIndex = wallAtEndPoints.length / 2 - 1;
         int wallAtEndRightSideEndPointIndex = wallAtEndPoints.length / 2;
-        if (this.wallAtEnd.getWallAtStart() == this) {
+        boolean wallAtEndJoinedAtStart = this.wallAtEnd.getWallAtStart() == this
+            // Check the coordinates when walls are joined to each other at both ends 
+            && (this.wallAtEnd.getWallAtEnd() != this
+                || (this.wallAtEnd.xStart == this.xEnd
+                    && this.wallAtEnd.yStart == this.yEnd));
+        boolean wallAtEndJoinedAtEnd = this.wallAtEnd.getWallAtEnd() == this
+            // Check the coordinates when walls are joined to each other at both ends 
+            && (this.wallAtEnd.getWallAtStart() != this
+                || (this.wallAtEnd.xEnd == this.xEnd
+                    && this.wallAtEnd.yEnd == this.yEnd));
+        if (wallAtEndJoinedAtStart) {
           computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1], 
               wallAtEndPoints [wallAtEndLeftSideStartPointIndex], wallAtEndPoints [wallAtEndLeftSideStartPointIndex + 1], limit);
           computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
@@ -680,7 +700,7 @@ public class Wall implements Serializable, Selectable {
               wallPoints [rightSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex];
             }
           }
-        } else if (this.wallAtEnd.getWallAtEnd() == this) {
+        } else if (wallAtEndJoinedAtEnd) {
           computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1],  
               wallAtEndPoints [wallAtEndRightSideEndPointIndex], wallAtEndPoints [wallAtEndRightSideEndPointIndex + 1], limit);
           computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
