@@ -24,7 +24,11 @@
   var jars = "lib/SweetHome3DViewer.jar,lib/Loader3DS1_2u.jar";
   // Append Java 3D Jars depending on the platform
   if (navigator.platform.match("Win.*")) {
-    jars += ",lib/windows/java3d.jar";
+    if (navigator.platform.match(".*64")) {
+      jars += ",lib/windows/x64/java3d.jar";
+    } else {
+      jars += ",lib/windows/i386/java3d.jar";
+    } 
   } else if (navigator.platform.match("Mac.*")) {
     javaMinimumVersion = "1.5";
     jars += ",lib/macosx/java3d.jar";

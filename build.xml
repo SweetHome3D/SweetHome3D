@@ -108,11 +108,24 @@
 
   <target name="java3dLibraries"
   	      description="Builds JNLP Java 3D libraries in deploy/lib subdirectories">
-    <!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
-    <mkdir dir="deploy/lib/windows"/>
-    <zip destfile="deploy/lib/windows/java3d.jar">
+    <!-- Create java3d.jar containing Windows 32 bits Java 3D DLLs and jars -->
+    <mkdir dir="deploy/lib/windows/i386"/>
+    <zip destfile="deploy/lib/windows/i386/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/*.dll"/>
+        <include name="windows/i386/*.dll"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
+      </fileset>
+    </zip>
+
+    <!-- Create java3d.jar containing Windows 64 bits Java 3D DLLs and jars -->
+    <mkdir dir="deploy/lib/windows/x64"/>
+    <zip destfile="deploy/lib/windows/x64/java3d.jar">
+      <fileset dir="lib">
+        <include name="windows/x64/*.dll"/>
       </fileset>
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
@@ -217,7 +230,7 @@
          (this library is used when Javascript doesn't succeed to detect user's OS) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/*.dll"/>
+        <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
         <include name="macosx/*.jnilib"/>
         <include name="macosx/*.jar"/>
@@ -307,7 +320,7 @@
          (this library is used for Java versions older than Java SE 6 update 10) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/*.dll"/>
+        <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
         <include name="macosx/*.jnilib"/>
         <include name="macosx/*.jar"/>
@@ -361,7 +374,7 @@
       <zipfileset src="build/Textures.jar"/>
       <zipfileset src="build/Help.jar"/>
       <fileset dir="lib">
-        <include name="windows/*.dll"/>
+        <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
         <include name="macosx/*.jnilib"/>
         <include name="macosx/*.jar"/>
@@ -394,7 +407,7 @@
 
   <!-- Builds install/SweetHome3D-version-windows.exe installer able to install SweetHome3D.exe 
        with a Windows JRE and Sweet Home 3D libraries.
-       CAUTION : May be run only under Windows and requires a Windows JRE, launch4j and Inno Setup 
+       CAUTION : May be run only under Windows and requires a Windows 32 bits JRE, launch4j and Inno Setup 
                  installed in their default location -->
   <target name="windowsInstaller" depends="application,furniture,textures,help"
   	      description="Builds install/SweetHome3D-version-windows.exe installer">
@@ -409,7 +422,7 @@
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
-      <fileset dir="lib/windows">
+      <fileset dir="lib/windows/i386">
         <include name="*.dll"/>
       </fileset>
     </copy>
