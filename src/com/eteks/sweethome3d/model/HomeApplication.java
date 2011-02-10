@@ -73,7 +73,7 @@ public abstract class HomeApplication {
   public void addHome(Home home) {
     this.homes = new ArrayList<Home>(this.homes);
     this.homes.add(home);
-    this.homesChangeSupport.fireCollectionChanged(home, CollectionEvent.Type.ADD);
+    this.homesChangeSupport.fireCollectionChanged(home, this.homes.size() - 1, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -85,9 +85,12 @@ public abstract class HomeApplication {
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    */
   public void deleteHome(Home home) {
-    this.homes = new ArrayList<Home>(this.homes);
-    this.homes.remove(home);
-    this.homesChangeSupport.fireCollectionChanged(home, CollectionEvent.Type.DELETE);
+    int index = this.homes.indexOf(home);
+    if (index != -1) {
+      this.homes = new ArrayList<Home>(this.homes);
+      this.homes.remove(index);
+      this.homesChangeSupport.fireCollectionChanged(home, index, CollectionEvent.Type.DELETE);
+    }
   }
 
   /**
