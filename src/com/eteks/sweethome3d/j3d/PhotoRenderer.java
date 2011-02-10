@@ -85,6 +85,7 @@ import org.sunflow.core.ParameterList;
 import org.sunflow.core.ParameterList.InterpolationType;
 import org.sunflow.core.light.SphereLight;
 import org.sunflow.core.light.SunSkyLight;
+import org.sunflow.core.primitive.TriangleMesh;
 import org.sunflow.image.Color;
 import org.sunflow.math.Matrix4;
 import org.sunflow.math.Point3;
@@ -102,8 +103,10 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
 /**
  * A renderer able to create a photo realistic image of a home.
@@ -128,6 +131,8 @@ public class PhotoRenderer {
   static {
     // Ignore logs
     UI.set(new SilentInterface());
+    // Use small triangles for better rendering
+    TriangleMesh.setSmallTriangles(true);
     PluginRegistry.lightSourcePlugins.registerPlugin("sphere", SphereLightWithNoRepresentation.class);
   }
 
@@ -136,6 +141,30 @@ public class PhotoRenderer {
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
+    this(home, 
+        new Object3DBranchFactory() {
+          public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
+            if (item instanceof Room) {
+              // Never display ceiling whit top camera
+              return new Room3D((Room)item, home, home.getCamera() == home.getTopCamera(), true, waitForLoading);
+            } else {
+              return super.createObject3D(home, item, waitForLoading);
+            }  
+          }
+        }, quality);
+  }
+  
+  /**
+   * Creates an instance ready to render the scene matching the given <code>home</code>.
+   * @param home the home to render
+   * @param object3DFactory a factory able to create 3D objects from <code>home</code> items.
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            this factory is expected to return an instance of {@link Node} in current implementation.
+   * @throws IOException if texture image files required in the scene couldn't be created. 
+   */
+  public PhotoRenderer(Home home,
+                       Object3DFactory object3DFactory,
+                       Quality quality) throws IOException {
     this.compass = home.getCompass();
     this.quality = quality;
     this.sunflow = new SunflowAPI();
@@ -147,16 +176,13 @@ public class PhotoRenderer {
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     for (Wall wall : home.getWalls()) {
-      Wall3D wall3D = new Wall3D(wall, home, true, true);
-      exportNode(wall3D, true, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, wall, true), true, false, silk);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home, true, true);
-      exportNode(piece3D, false, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, piece, true), false, false, silk);
     }
     for (Room room : home.getRooms()) {
-      Room3D room3D = new Room3D(room, home, home.getCamera() == home.getTopCamera(), true, true);
-      exportNode(room3D, true, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, room, true), true, false, silk);
     } 
     // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
     Home groundHome = new Home();

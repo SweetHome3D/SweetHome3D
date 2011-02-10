@@ -121,12 +121,10 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.Ground3D;
-import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.Object3DBranch;
-import com.eteks.sweethome3d.j3d.Room3D;
+import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
 import com.eteks.sweethome3d.j3d.TextureManager;
-import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -141,6 +139,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -158,6 +157,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   
   private final Home                               home;
   private final boolean                            displayShadowOnFloor;
+  private final Object3DFactory                    object3dFactory;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
   private Canvas3D                                 canvas3D;
@@ -215,7 +215,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public HomeComponent3D(Home home, 
                          UserPreferences  preferences, 
                          boolean displayShadowOnFloor) {
-    this(home, preferences, displayShadowOnFloor, null);  
+    this(home, preferences, new Object3DBranchFactory(), displayShadowOnFloor, null);  
   }
   
   /**
@@ -226,7 +226,25 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
                          HomeController3D controller) {
-    this(home, preferences, false, controller);    
+    this(home, preferences, new Object3DBranchFactory(), false, controller);    
+  }
+
+  /**
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
+   * @param home the home to display in this component
+   * @param preferences user preferences
+   * @param object3DFactory a factory able to create 3D objects from <code>home</code> items.
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
+   * @param controller the controller that manages modifications in <code>home</code>.           
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *            by this component couldn't be created.
+   */
+  public HomeComponent3D(Home home,
+                         UserPreferences  preferences,
+                         Object3DFactory  object3DFactory,
+                         HomeController3D controller) {
+    this(home, preferences, object3DFactory, false, controller);    
   }
 
   /**
@@ -236,10 +254,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private HomeComponent3D(Home home,
                           UserPreferences  preferences,
+                          Object3DFactory  object3DFactory,
                           boolean displayShadowOnFloor,
                           HomeController3D controller) {
     this.home = home;
     this.displayShadowOnFloor = displayShadowOnFloor;
+    this.object3dFactory = object3DFactory;
 
     this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
         public void canvas3DSwapped(Canvas3D canvas3D) {
@@ -297,7 +317,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         // No support for navigation panel under Mac OS X Tiger 
         // (too unstable, may crash system at 3D view resizing)
         this.navigationPanel = createNavigationPanel(home, preferences, controller);
-        setNavigationPanelVisible(preferences.isNavigationPanelVisible());
+        setNavigationPanelVisible(preferences.isNavigationPanelVisible() && isVisible());
         preferences.addPropertyChangeListener(UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, 
             new NavigationPanelChangeListener(this, controller));
       }
@@ -344,6 +364,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       });
   }
 
+  @Override
+  public void setVisible(boolean visible) {
+    super.setVisible(visible);
+    this.canvas3D.setVisible(visible);
+  }
+  
   /**
    * Preferences property listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  
@@ -363,7 +389,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, this);
       } else {
-        homeComponent3D.setNavigationPanelVisible((Boolean)ev.getNewValue());
+        homeComponent3D.setNavigationPanelVisible((Boolean)ev.getNewValue() && homeComponent3D.isVisible());
       }
     }
   }
@@ -1732,18 +1758,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns the 3D object matching the given home object. If <code>waitForLoading</code> 
    * is <code>true</code> the resources used by the returned 3D object should be ready to be displayed.
+   * @deprecated Subclasses which used to override this method must be updated to create an instance of  
+   *    a {@link Object3DFactory factory} and give it as parameter to the constructor of this class.
    */
-  protected Object3DBranch createObject3D(Selectable homeObject,
-                                          boolean waitForLoading) {
-    if (homeObject instanceof HomePieceOfFurniture) {
-      return new HomePieceOfFurniture3D((HomePieceOfFurniture)homeObject, this.home, true, waitForLoading);
-    } else if (homeObject instanceof Wall) {
-      return new Wall3D((Wall)homeObject, this.home, true, waitForLoading);
-    } else if (homeObject instanceof Room) {
-      return new Room3D((Room)homeObject, this.home, false, false, waitForLoading);
-    } else {
-      throw new IllegalArgumentException("Can't create 3D object for an item of class " + homeObject.getClass());
-    }
+  private Object3DBranch createObject3D(Selectable homeObject,
+                                        boolean waitForLoading) {
+    return (Object3DBranch)this.object3dFactory.createObject3D(this.home, homeObject, waitForLoading);
   }
 
   /**
