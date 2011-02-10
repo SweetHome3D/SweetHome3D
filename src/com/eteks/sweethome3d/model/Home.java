@@ -44,7 +44,7 @@ public class Home implements Serializable, Cloneable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 3000;
+  public static final long CURRENT_VERSION = 3100;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
@@ -595,10 +595,13 @@ public class Home implements Serializable, Cloneable {
   public void deleteRoom(Room room) {
     //  Ensure selectedItems don't keep a reference to room
     deselectItem(room);
-    // Make a copy of the list to avoid conflicts in the list returned by getRooms
-    this.rooms = new ArrayList<Room>(this.rooms);
-    this.rooms.remove(room);
-    this.roomsChangeSupport.fireCollectionChanged(room, CollectionEvent.Type.DELETE);
+    int index = this.rooms.indexOf(room);
+    if (index != -1) {
+      // Make a copy of the list to avoid conflicts in the list returned by getRooms
+      this.rooms = new ArrayList<Room>(this.rooms);
+      this.rooms.remove(index);
+      this.roomsChangeSupport.fireCollectionChanged(room, index, CollectionEvent.Type.DELETE);
+    }
   }
 
   /**
