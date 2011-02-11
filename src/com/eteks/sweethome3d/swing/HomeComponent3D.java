@@ -97,7 +97,6 @@ import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -108,6 +107,7 @@ import javax.swing.KeyStroke;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
@@ -400,39 +400,49 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private JComponent createNavigationPanel(Home home, 
                                            UserPreferences preferences, 
                                            HomeController3D controller) {
-    JPanel navigationPanel = new JPanel(new GridBagLayout()) {
-        @Override
-        protected void paintComponent(Graphics g) {
-          Graphics2D g2D = (Graphics2D)g;
-          g2D.setColor(Color.BLACK);
-          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2D.drawOval(3, 3, getWidth() - 4, getHeight() - 4);
+    JPanel navigationPanel = new JPanel(new GridBagLayout());
+    String navigationPanelIconPath = preferences.getLocalizedString(HomeComponent3D.class, "navigationPanel.icon");
+    final ImageIcon nagivationPanelIcon = navigationPanelIconPath.length() > 0
+        ? new ImageIcon(HomeComponent3D.class.getResource(navigationPanelIconPath))
+        : null;
+    navigationPanel.setBorder(new Border() {
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+          if (nagivationPanelIcon != null) {
+            nagivationPanelIcon.paintIcon(c, g, x, y);
+          } else {
+            // Draw a surrounding oval if no navigation panel icon is defined
+            Graphics2D g2D = (Graphics2D)g;
+            g2D.setColor(Color.BLACK);
+            g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2D.drawOval(x + 3, y + 3, width - 6, height - 6);
+          }
         }
-      };   
-      
+  
+        public Insets getBorderInsets(Component c) {
+          return new Insets(2, 2, 2, 2);
+        }
+  
+        public boolean isBorderOpaque() {
+          return false;
+        }
+      });
     navigationPanel.setOpaque(false);
-    navigationPanel.add(new NavigationButton(controller, 0, -(float)Math.PI / 36, 0,
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-previous.png"))),
+    navigationPanel.add(new NavigationButton(0, -(float)Math.PI / 36, 0, "TURN_LEFT", preferences, controller),
         new GridBagConstraints(0, 1, 1, 2, 0, 0, 
-            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 12.5f, 0, 0, 
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up.png"))),
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
+    navigationPanel.add(new NavigationButton(12.5f, 0, 0, "GO_FORWARD", preferences, controller),
         new GridBagConstraints(1, 0, 1, 1, 0, 0, 
-            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 0, (float)Math.PI / 36, 0, 
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-next.png"))),
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(3, 0, 0, 0), 0, 0));
+    navigationPanel.add(new NavigationButton(0, (float)Math.PI / 36, 0, "TURN_RIGHT", preferences, controller),
         new GridBagConstraints(2, 1, 1, 2, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, -12.5f, 0, 0, 
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down.png"))),
+    navigationPanel.add(new NavigationButton(-12.5f, 0, 0, "GO_BACKWARD", preferences, controller),
         new GridBagConstraints(1, 3, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 0, 0, -(float)Math.PI / 100, 
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up-small.png"))),
+    navigationPanel.add(new NavigationButton(0, 0, -(float)Math.PI / 100, "TURN_UP", preferences, controller),
         new GridBagConstraints(1, 1, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
-    navigationPanel.add(new NavigationButton(controller, 0, 0, (float)Math.PI / 100, 
-        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down-small.png"))),
+    navigationPanel.add(new NavigationButton(0, 0, (float)Math.PI / 100, "TURN_DOWN", preferences, controller),
         new GridBagConstraints(1, 2, 1, 1, 0, 0, 
             GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 1, 0), 0, 0));
     return navigationPanel;
@@ -444,12 +454,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private static class NavigationButton extends JButton {
     private boolean shiftDown;
 
-    public NavigationButton(final HomeController3D controller, 
-                            final float moveDelta, 
+    public NavigationButton(final float moveDelta, 
                             final float yawDelta, 
                             final float pitchDelta, 
-                            Icon icon) {
-      super(icon);
+                            String actionName, 
+                            UserPreferences preferences,
+                            final HomeController3D controller) {
+      super(new ResourceAction(preferences, HomeComponent3D.class, actionName, true) {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            // Manage auto repeat button with mouse listener
+          }
+        });
       // Create a darker press icon
       setPressedIcon(new ImageIcon(createImage(new FilteredImageSource(
           ((ImageIcon)getIcon()).getImage().getSource(),
