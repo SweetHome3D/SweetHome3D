@@ -67,6 +67,7 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sunflow = constraint.addPackage("org.sunflow");
     JavaPackage sunflowCore = constraint.addPackage("org.sunflow.core");
     JavaPackage sunflowCoreLight = constraint.addPackage("org.sunflow.core.light");
+    JavaPackage sunflowCorePrimitive = constraint.addPackage("org.sunflow.core.primitive");
     JavaPackage sunflowImage = constraint.addPackage("org.sunflow.image");
     JavaPackage sunflowMath = constraint.addPackage("org.sunflow.math");
     JavaPackage sunflowSystem = constraint.addPackage("org.sunflow.system");
@@ -87,6 +88,7 @@ public class PackageDependenciesTest extends TestCase {
     // other packages, IO and View/Controller packages ignore each other
     // and Swing components and Java 3D use is isolated in sweetHome3DSwing
     sweetHome3DTools.dependsUpon(sweetHome3DModel);
+    sweetHome3DTools.dependsUpon(eio);
     
     sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
@@ -97,6 +99,7 @@ public class PackageDependenciesTest extends TestCase {
     
     sweetHome3DJava3D.dependsUpon(sweetHome3DModel);
     sweetHome3DJava3D.dependsUpon(sweetHome3DTools);
+    sweetHome3DJava3D.dependsUpon(sweetHome3DViewController);
     sweetHome3DJava3D.dependsUpon(java3d);
     sweetHome3DJava3D.dependsUpon(vecmath);
     sweetHome3DJava3D.dependsUpon(sun3dLoaders);
@@ -109,6 +112,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(sunflow);
     sweetHome3DJava3D.dependsUpon(sunflowCore);
     sweetHome3DJava3D.dependsUpon(sunflowCoreLight);
+    sweetHome3DJava3D.dependsUpon(sunflowCorePrimitive);
     sweetHome3DJava3D.dependsUpon(sunflowImage);
     sweetHome3DJava3D.dependsUpon(sunflowMath);
     sweetHome3DJava3D.dependsUpon(sunflowSystem);
