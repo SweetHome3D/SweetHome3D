@@ -134,7 +134,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     // 3. Choose tested image
     String imageChoiceOrChangeButtonText = imageChoiceOrChangeButton.getText();
     tester.click(imageChoiceOrChangeButton);
-    // Wait 100 s to let time to Java to load the image
+    // Wait 100 ms to let time to Java to load the image
     Thread.sleep(100);
     // Check choice button text changed
     assertFalse("Choice button text didn't change", 
