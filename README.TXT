@@ -1,4 +1,4 @@
-SWEET HOME 3D v 3.0
+SWEET HOME 3D v 3.1
 -------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_3_0 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_3_1 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -32,9 +32,13 @@ with Eclipse, please follow the next steps:
 You may execute applications and tests of this archive, with the Eclipse Run menu.
 To execute applications and tests that require Java 3D, open Run Dialog in Eclipse, 
 select the Arguments tab of the target application, and add to the VM arguments 
-text field the option -Djava.ext.dirs=lib;lib/windows, -Djava.ext.dirs=lib:lib/macosx, 
--Djava.ext.dirs=lib:lib/linux/i386 or -Djava.ext.dirs=lib:lib/linux/x64 depending on  
-your system and its architecture.
+text field the option 
+-Djava.ext.dirs=lib;lib/windows/i386, 
+-Djava.ext.dirs=lib;lib/windows/x64,
+-Djava.ext.dirs=lib:lib/macosx, 
+-Djava.ext.dirs=lib:lib/linux/i386 
+or -Djava.ext.dirs=lib:lib/linux/x64 
+according to your system and its architecture.
 
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
 application at http://www.sweethome3d.com/ or as an applet at
@@ -58,4 +62,4 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-(C) 2006-2010 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
+(C) 2006-2011 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
