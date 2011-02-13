@@ -189,13 +189,6 @@ public class Room3D extends Object3DBranch {
           float [] roomPoint = new float[2];
           switch (it.currentSegment(roomPoint)) {
             case PathIterator.SEG_MOVETO :
-              if (previousRoomPoint == null
-                  || roomPoint [0] != previousRoomPoint [0] 
-                  || roomPoint [1] != previousRoomPoint [1]) {
-                currentPathPoints.add(roomPoint);
-              }
-              previousRoomPoint = roomPoint;
-              break;
             case PathIterator.SEG_LINETO : 
               if (previousRoomPoint == null
                   || roomPoint [0] != previousRoomPoint [0] 
