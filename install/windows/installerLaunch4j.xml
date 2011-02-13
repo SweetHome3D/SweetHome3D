@@ -6,7 +6,7 @@
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D.exe in tmp directory running with
-     JRE 6 Update 22 stored in jre6 subdirectory 
+     JRE 6 Update 23 stored in jre6 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
