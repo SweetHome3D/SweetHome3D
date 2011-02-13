@@ -150,13 +150,26 @@ public class Ground3D extends Object3DBranch {
     // Retrieve points
     List<float [][]> roomParts = new ArrayList<float [][]>();
     List<float []>   roomPart  = new ArrayList<float[]>();
+    float [] previousRoomPoint = null;
     for (PathIterator it = roomsArea.getPathIterator(null); !it.isDone(); ) {
       float [] roomPoint = new float[2];
       if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
-        roomParts.add(roomPart.toArray(new float [roomPart.size()][]));
-        roomPart = new ArrayList<float[]>();
+        if (roomPart.get(0) [0] == previousRoomPoint [0] 
+            && roomPart.get(0) [1] == previousRoomPoint [1]) {
+          roomPart.remove(roomPart.size() - 1);
+        }
+        if (roomPart.size() > 2) {
+          roomParts.add(roomPart.toArray(new float [roomPart.size()][]));
+        }
+        roomPart.clear();
+        previousRoomPoint = null;
       } else {
-        roomPart.add(roomPoint);
+        if (previousRoomPoint == null
+            || roomPoint [0] != previousRoomPoint [0] 
+            || roomPoint [1] != previousRoomPoint [1]) {
+          roomPart.add(roomPoint);
+        }
+        previousRoomPoint = roomPoint;
       }
       it.next();
     }
