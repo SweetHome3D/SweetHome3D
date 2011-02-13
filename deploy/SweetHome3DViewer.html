@@ -47,11 +47,11 @@
                     code:"com.eteks.sweethome3d.applet.SweetHome3DViewer",
                     archive:jars,
                     width:"100%", height:"95%"};
-   var parameters = {java_arguments:"-Xmx512m",
-                     navigationPanel:"true",
-                     homeURL:"default.sh3d"};
+  var parameters = {java_arguments:"-Xmx512m",
+                    navigationPanel:"true",
+                    homeURL:"default.sh3d"};
    
-   deployJava.setInstallerType("kernel");
-   deployJava.setAdditionalPackages("javax.swing,javax.imageio");
-   deployJava.runApplet(attributes, parameters, javaMinimumVersion);
+  deployJava.setInstallerType("kernel");
+  deployJava.setAdditionalPackages("javax.swing,javax.imageio");
+  deployJava.runApplet(attributes, parameters, javaMinimumVersion);
 </script>
