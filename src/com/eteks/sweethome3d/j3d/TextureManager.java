@@ -27,7 +27,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
@@ -56,6 +59,8 @@ public class TextureManager {
   private final Map<Content, TextureKey> contentTextureKeys;
   // Map storing loaded textures
   private final Map<TextureKey, Texture> textures;
+  // Map storing model nodes being loaded
+  private Map<Content, List<TextureObserver>> loadingTextureObservers;
   // Executor used to load images
   private ExecutorService                texturesLoader;
 
@@ -64,6 +69,7 @@ public class TextureManager {
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.contentTextureKeys = new WeakHashMap<Content, TextureKey>();
     this.textures = new WeakHashMap<TextureKey, Texture>();
+    this.loadingTextureObservers = new HashMap<Content, List<TextureObserver>>();
   }
 
   /**
@@ -129,6 +135,8 @@ public class TextureManager {
    * @param content an object containing an image
    * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
    * @param textureObserver the observer that will be notified once the texture is available
+   * @throws IllegalStateException if synchronous is <code>false</code> and the current thread isn't 
+   *    the Event Dispatch Thread.  
    */
   public void loadTexture(final Content content,
                           boolean synchronous,
@@ -148,24 +156,41 @@ public class TextureManager {
         texture = shareTexture(readTexture(content), content);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
+      } else if (!EventQueue.isDispatchThread()) {
+        throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
       } else {
         // Notify wait texture to observer
         textureObserver.textureUpdated(this.waitTexture);
         if (this.texturesLoader == null) {
           this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
-        // Load the image in a different thread
-        this.texturesLoader.execute(new Runnable () {
-            public void run() {
-              final Texture texture = shareTexture(readTexture(content), content);
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    // Notify loaded or error texture to observer
-                    textureObserver.textureUpdated(texture);
-                  }
-                });
-            }
-          });
+        
+        List<TextureObserver> observers = this.loadingTextureObservers.get(content);
+        if (observers != null) {
+          // If observers list exists, content texture is already being loaded
+          // register observer for future notification
+          observers.add(textureObserver);
+        } else {
+          // Create a list of observers that will be notified once content texture is loaded
+          observers = new ArrayList<TextureObserver>();
+          observers.add(textureObserver);
+          this.loadingTextureObservers.put(content, observers);
+
+          // Load the image in a different thread
+          this.texturesLoader.execute(new Runnable () {
+              public void run() {
+                final Texture texture = shareTexture(readTexture(content), content);
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      // Notify loaded texture to observer
+                      for (TextureObserver observer : loadingTextureObservers.remove(content)) {
+                        observer.textureUpdated(texture);
+                      }
+                    }
+                  });
+              }
+            });
+        }
       }
     } else {
       // Notify cached texture to observer
