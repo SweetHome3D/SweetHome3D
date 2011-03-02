@@ -207,10 +207,13 @@ public class IconManager {
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
-        if (height != -1) {
+        if (height != -1 && height != image.getHeight()) {
           int width = image.getWidth() * height / image.getHeight();
-          Image scaledImage = image.getScaledInstance(
-              width, height, Image.SCALE_SMOOTH);
+          // Create a scaled image not bound to original image to let the original image being garbage collected 
+          BufferedImage scaledImage = new BufferedImage(width, height, image.getType());
+          Graphics g = scaledImage.getGraphics();
+          g.drawImage(image.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
+          g.dispose();
           return new ImageIcon(scaledImage);
         } else {
           return new ImageIcon(image);
