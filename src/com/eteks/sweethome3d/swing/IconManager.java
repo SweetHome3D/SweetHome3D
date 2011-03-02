@@ -210,7 +210,7 @@ public class IconManager {
         if (height != -1 && height != image.getHeight()) {
           int width = image.getWidth() * height / image.getHeight();
           // Create a scaled image not bound to original image to let the original image being garbage collected 
-          BufferedImage scaledImage = new BufferedImage(width, height, image.getType());
+          BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
           Graphics g = scaledImage.getGraphics();
           g.drawImage(image.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
           g.dispose();
