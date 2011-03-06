@@ -1753,7 +1753,6 @@ public class PlanController extends FurnitureController implements Controller {
     float y = point2 [1];
     float alpha1 = (point2 [1] - point1 [1]) / (point2 [0] - point1 [0]);
     float alpha2 = (point4 [1] - point3 [1]) / (point4 [0] - point3 [0]);
-
     if (alpha1 != alpha2) {
       // If first line is vertical
       if (Math.abs(alpha1) > 1E5)  {
@@ -1769,9 +1768,10 @@ public class PlanController extends FurnitureController implements Controller {
           float beta1 = point2 [1] - alpha1 * point2 [0];
           y = alpha1 * x + beta1;
         }
-      } else {
-        if (Math.signum(alpha1) != Math.signum(alpha2)
-            || (alpha1 > alpha2   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001) {
+      } else { 
+        boolean sameSignum = Math.signum(alpha1) == Math.signum(alpha2);
+        if ((sameSignum && (alpha1 > alpha2   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001)
+            || (!sameSignum && Math.abs(alpha1 - alpha2) > 1E-5)) {
           float beta1 = point2 [1] - alpha1 * point2 [0];
           float beta2 = point4 [1] - alpha2 * point4 [0];
           x = (beta2 - beta1) / (alpha1 - alpha2);
