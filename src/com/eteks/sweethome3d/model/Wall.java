@@ -828,10 +828,8 @@ public class Wall implements Serializable, Selectable {
           y = alpha1 * x + beta1;
         }
       } else {
-        float relativeDifference = alpha1 > alpha2 
-            ? alpha1 / alpha2
-            : alpha2 / alpha1;
-        if (relativeDifference > 1.0001) {
+        if (Math.signum(alpha1) != Math.signum(alpha2)
+            || (alpha1 > alpha2   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001) {
           float beta1  = point2 [1] - alpha1 * point2 [0];
           float beta2  = point4 [1] - alpha2 * point4 [0];
           x = (beta2 - beta1) / (alpha1 - alpha2);
