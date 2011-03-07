@@ -52,6 +52,7 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sun3dUtilsGeometry = constraint.addPackage("com.sun.j3d.utils.geometry");
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
+    JavaPackage sun3dExpSwing = constraint.addPackage("com.sun.j3d.exp.swing.JCanvas3D");
     JavaPackage loader3ds = constraint.addPackage("com.microcrowd.loader.java3d.max3ds");
     // XML
     JavaPackage xmlParsers = constraint.addPackage("javax.xml.parsers");
@@ -132,6 +133,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(vecmath);
     sweetHome3DSwing.dependsUpon(sun3dUtilsGeometry);
     sweetHome3DSwing.dependsUpon(sun3dUtilsUniverse);
+    sweetHome3DSwing.dependsUpon(sun3dExpSwing);
     sweetHome3DSwing.dependsUpon(jmf);
     sweetHome3DSwing.dependsUpon(jmfControl);
     sweetHome3DSwing.dependsUpon(jmfDataSink);

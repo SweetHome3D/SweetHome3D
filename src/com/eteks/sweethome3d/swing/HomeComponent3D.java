@@ -82,6 +82,7 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
+import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.J3DGraphics2D;
@@ -140,6 +141,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
+import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -160,7 +162,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final Object3DFactory                    object3dFactory;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
-  private Canvas3D                                 canvas3D;
+  private Component                                component3D;
   private SimpleUniverse                           onscreenUniverse;
   private Camera                                   camera;
   // Listeners bound to home that updates 3D scene objects
@@ -261,7 +263,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.displayShadowOnFloor = displayShadowOnFloor;
     this.object3dFactory = object3DFactory;
 
-    this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
+    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.useOffScreenCanvas3D", "false"))) {
+      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      this.component3D = new JCanvas3D(gc) {
+          public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(navigationPanelImage, 0, 0, this);
+          }
+        };
+      this.component3D.setSize(1, 1);
+    } else {
+      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
         public void canvas3DSwapped(Canvas3D canvas3D) {
         }
         
@@ -279,7 +292,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             g2D.flush(true);
           }
         }
-      });   
+      });
+    }
     JPanel canvasPanel = new JPanel(new LayoutManager() {
         public void addLayoutComponent(String name, Component comp) {
         }
@@ -288,15 +302,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         public Dimension preferredLayoutSize(Container parent) {
-          return canvas3D.getPreferredSize();
+          return component3D.getPreferredSize();
         }
         
         public Dimension minimumLayoutSize(Container parent) {
-          return canvas3D.getMinimumSize();
+          return component3D.getMinimumSize();
         }
         
         public void layoutContainer(Container parent) {
-          canvas3D.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+          component3D.setBounds(0, 0, Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
           if (navigationPanel != null 
               && navigationPanel.isVisible()) {
             // Ensure that navigationPanel is always in top corner             
@@ -305,12 +319,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
       });
-    canvasPanel.add(this.canvas3D);    
+    canvasPanel.add(this.component3D);    
     setLayout(new GridLayout());
     add(canvasPanel);
 
     if (controller != null) {
-      addMouseListeners(controller, this.canvas3D);
+      addMouseListeners(controller, this.component3D);
       if (preferences != null
           && (!OperatingSystem.isMacOSX()
               || OperatingSystem.isMacOSXLeopardOrSuperior())) {
@@ -330,14 +344,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     // Add an ancestor listener to create canvas universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
-    addAncestorListener(this.canvas3D, displayShadowOnFloor);
+    addAncestorListener(this.component3D, displayShadowOnFloor);
   }
 
   /**
    * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
    */
-  private void addAncestorListener(final Canvas3D canvas3D,
+  private void addAncestorListener(final Component component3D,
                                    final boolean displayShadowOnFloor) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
@@ -346,8 +360,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
           // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
-          canvas3D.setFocusable(false);
+          onscreenUniverse.getViewer().getView().addCanvas3D(component3D instanceof Canvas3D
+              ? (Canvas3D)component3D
+              : ((JCanvas3D)component3D).getOffscreenCanvas3D());
+          component3D.setFocusable(false);
           updateNavigationPanelImage();
         }
         
@@ -367,7 +383,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   @Override
   public void setVisible(boolean visible) {
     super.setVisible(visible);
-    this.canvas3D.setVisible(visible);
+    this.component3D.setVisible(visible);
   }
   
   /**
@@ -557,8 +573,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           };
         this.navigationPanel.addComponentListener(this.navigationPanelListener);
         // Add the navigation panel to this component to be able to paint it 
-        // but show it behind heavyweight canvas 3D
-        this.canvas3D.getParent().add(this.navigationPanel);    
+        // but show it behind canvas 3D
+        this.component3D.getParent().add(this.navigationPanel);    
       } else {
         this.navigationPanel.removeComponentListener(this.navigationPanelListener);
         if (this.navigationPanel.getParent() != null) {
@@ -567,7 +583,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       }
       revalidate();
       updateNavigationPanelImage();          
-      this.canvas3D.repaint();
+      this.component3D.repaint();
     }
   }
   
@@ -579,7 +595,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (this.navigationPanel != null 
         && this.navigationPanel.isVisible()) {
       Rectangle componentBounds = this.navigationPanel.getBounds();
-      Rectangle imageSize = new Rectangle(this.canvas3D.getX(), this.canvas3D.getY());
+      Rectangle imageSize = new Rectangle(this.component3D.getX(), this.component3D.getY());
       imageSize.add(componentBounds.x + componentBounds.width, 
           componentBounds.y + componentBounds.height);
       if (!imageSize.isEmpty()) {
@@ -991,9 +1007,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds AWT mouse listeners to <code>canvas3D</code> that calls back <code>controller</code> methods.  
+   * Adds AWT mouse listeners to <code>component3D</code> that calls back <code>controller</code> methods.  
    */
-  private void addMouseListeners(final HomeController3D controller, final Component canvas3D) {
+  private void addMouseListeners(final HomeController3D controller, final Component component3D) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
         private int        xLastMouseMove;
         private int        yLastMouseMove;
@@ -1141,7 +1157,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           ev.getComponent().dispatchEvent(ev);
           if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
             updateNavigationPanelImage();
-            canvas3D.repaint();
+            component3D.repaint();
             return true;
           }
           return false;
@@ -1170,9 +1186,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       };
     
-    canvas3D.addMouseListener(mouseListener);
-    canvas3D.addMouseMotionListener(mouseListener);
-    canvas3D.addMouseWheelListener(mouseWheelListener);
+    component3D.addMouseListener(mouseListener);
+    component3D.addMouseMotionListener(mouseListener);
+    component3D.addMouseWheelListener(mouseWheelListener);
     // Add a mouse listener to this component to request focus in case user clicks in component border
     this.addMouseListener(new MouseInputAdapter() {
         @Override
