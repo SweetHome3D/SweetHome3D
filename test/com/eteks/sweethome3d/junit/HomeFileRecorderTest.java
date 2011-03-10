@@ -38,7 +38,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Wall;
 
 /**
- * Tests FileHome class.
+ * Tests {@link HomeFileRecorder} class.
  * @author Emmanuel Puybaret
  */
 public class HomeFileRecorderTest extends TestCase {
