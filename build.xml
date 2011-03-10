@@ -295,6 +295,7 @@
         <include name="com/eteks/sweethome3d/model/*.properties"/>
         <include name="com/eteks/sweethome3d/tools/*.properties"/>
         <include name="com/eteks/sweethome3d/swing/resources/icons/tango/go-*.png"/>
+        <include name="com/eteks/sweethome3d/swing/HomeComponent3D.properties"/>
       </fileset>
     </copy>
     
@@ -312,6 +313,7 @@
       <include name="com/eteks/sweethome3d/viewcontroller/Controller.*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/ContentManager*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/HomeController3D*"/>      
+      <include name="com/eteks/sweethome3d/viewcontroller/Object3DFactory*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/ThreadedTaskController*"/>      
     </zip>
     <delete dir="build/classes"/>
