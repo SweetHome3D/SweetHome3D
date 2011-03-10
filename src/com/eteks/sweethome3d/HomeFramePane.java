@@ -25,9 +25,11 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -42,16 +44,21 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import javax.swing.JToolBar;
+import javax.swing.RepaintManager;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.event.MouseInputAdapter;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -88,7 +95,8 @@ public class HomeFramePane extends JRootPane implements View {
       this.newHomeNumber = ++newHomeCount;
     }
     // Set controller view as content pane
-    setContentPane((JComponent)controller.getHomeController().getView());
+    HomeView homeView = this.controller.getHomeController().getView();
+    setContentPane((JComponent)homeView);
   }
 
   /**
@@ -119,12 +127,16 @@ public class HomeFramePane extends JRootPane implements View {
     computeFrameBounds(this.home, homeFrame);
     // Enable windows to update their content while window resizing
     getToolkit().setDynamicLayout(true); 
-    // The best solution should be to avoid the 3 following statements 
+    // The best MVC solution should be to avoid the following statements 
     // but Mac OS X accepts to display the menu bar of a frame in the screen 
     // menu bar only if this menu bar depends directly on its root pane  
-    HomePane homeView = (HomePane)this.controller.getHomeController().getView();
-    setJMenuBar(homeView.getJMenuBar());
-    homeView.setJMenuBar(null);
+    HomeView homeView = this.controller.getHomeController().getView();
+    if (homeView instanceof JRootPane) {
+      JRootPane homePane = (JRootPane)homeView;
+      setJMenuBar(homePane.getJMenuBar());
+      homePane.setJMenuBar(null);
+    }
+    
     // Add listeners to model and frame    
     addListeners(this.home, this.application, this.controller.getHomeController(), homeFrame);
     
@@ -190,7 +202,7 @@ public class HomeFramePane extends JRootPane implements View {
             this.mostRecentFocusOwner = mostRecentFocusOwner;
           }
         }
-        
+
         @Override
         public void windowActivated(WindowEvent ev) {                    
           // Java 3D 1.5 bug : let's request focus in window for the most recent focus owner when
