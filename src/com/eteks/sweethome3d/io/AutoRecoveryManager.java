@@ -176,7 +176,7 @@ public class AutoRecoveryManager {
   }
 
   /**
-   * Returns <code>true</code> if the given file is locked or can't accessed.
+   * Returns <code>true</code> if the given file is locked or can't be accessed.
    */
   private boolean isFileLocked(final File file) {
     FileOutputStream out = null;
