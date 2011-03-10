@@ -320,7 +320,8 @@ public class SweetHome3DApplet extends JApplet {
         showError(getLocalizedString("signatureError"));
       } else {
         showError("<html>" + getLocalizedString("startError") 
-            + "<br>Exception" + ex.getClass().getName() + " " + ex.getMessage());
+            + "<br>Exception " + ex.getClass().getName() 
+            + (ex.getMessage() != null ? " " + ex.getMessage() : ""));
         ex.printStackTrace();
       }
     }
