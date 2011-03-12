@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- build.xml
 
-     Copyright (c) 2007-2010 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+     Copyright (c) 2007-2011 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
      
      Ant build file. Available targets :
      - build       : Builds SweetHome3D.jar file in build directory
@@ -27,7 +27,7 @@
 -->
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="3.1"/>
+  <property name="version" value="3.2"/>
 
   <target name="build" 
   	      description="Builds build/SweetHome3D.jar with all its classes">
