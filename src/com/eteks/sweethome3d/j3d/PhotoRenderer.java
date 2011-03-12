@@ -1197,9 +1197,9 @@ public class PhotoRenderer {
           }
           float transparency = 1 - transparencyAttributes.getTransparency();
           this.sunflow.parameter("color", null, 
-              new float [] {transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [0]), 
-                            transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [1]), 
-                            transparency + (1 - transparency) * (float)Math.sqrt(diffuseColor [2])});
+              new float [] {(1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [0]), 
+                            (1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [1]), 
+                            (1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [2])});
           this.sunflow.parameter("transparency", transparency);
           this.sunflow.shader(appearanceName, "glass");
         } else if (material.getLightingEnable()
