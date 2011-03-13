@@ -1196,11 +1196,14 @@ public class PhotoRenderer {
             this.sunflow.parameter("eta", 1.55f);
           }
           float transparency = 1 - transparencyAttributes.getTransparency();
-          this.sunflow.parameter("color", null, 
-              new float [] {(1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [0]), 
-                            (1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [1]), 
-                            (1 - transparency) + transparency * (float)Math.sqrt(diffuseColor [2])});
-          this.sunflow.parameter("transparency", transparency);
+          this.sunflow.parameter("color", null,
+              new float [] {(1 - transparency) + transparency * diffuseColor [0], 
+                            (1 - transparency) + transparency * diffuseColor [1], 
+                            (1 - transparency) + transparency * diffuseColor [2]});
+          this.sunflow.parameter("absorption.color", null, 
+              new float [] {transparency * (1 - diffuseColor [0]), 
+                            transparency * (1 - diffuseColor [1]), 
+                            transparency * (1 - diffuseColor [2])});
           this.sunflow.shader(appearanceName, "glass");
         } else if (material.getLightingEnable()
                    || ignoreConstantShader) {  
