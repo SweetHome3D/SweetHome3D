@@ -203,11 +203,15 @@ public class SwingTools {
     feedbackComponent.setBorder(unfocusedViewBorder);
     component.addFocusListener(new FocusListener() {
         public void focusLost(FocusEvent ev) {
-          feedbackComponent.setBorder(unfocusedViewBorder);
+          if (feedbackComponent.getBorder() == focusedViewBorder) {
+            feedbackComponent.setBorder(unfocusedViewBorder);
+          }
         }
         
         public void focusGained(FocusEvent ev) {
-          feedbackComponent.setBorder(focusedViewBorder);
+          if (feedbackComponent.getBorder() == unfocusedViewBorder) {
+            feedbackComponent.setBorder(focusedViewBorder);
+          }
         }
       });
   }
