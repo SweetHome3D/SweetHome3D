@@ -95,7 +95,7 @@ public class PhotoController implements Controller {
       } else {
         ((Camera)ev.getOldValue()).removePropertyChangeListener(controller.cameraChangeListener);
         controller.updateProperties();
-        ((Camera)ev.getNewValue()).removePropertyChangeListener(controller.cameraChangeListener);
+        ((Camera)ev.getNewValue()).addPropertyChangeListener(controller.cameraChangeListener);
       }
     }
   }
