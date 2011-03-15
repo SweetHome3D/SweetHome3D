@@ -333,6 +333,12 @@ public class HelpController implements Controller {
     URL helpIndex = getHelpIndexPageURL();
     String [] searchedWords = getLowerCaseSearchedWords(searchedText);
     List<HelpDocument> helpDocuments = searchInHelpDocuments(helpIndex, searchedWords);
+    URL applicationIconUrl = null;
+    try {
+      applicationIconUrl = new ResourceURLContent(HelpController.class, "resources/help/images/applicationIcon32.png").getURL();
+    } catch (Exception ex) {
+      // Ignore icon
+    }
     // Build dynamically the search result page
     final StringBuilder htmlText = new StringBuilder(
         "<html><head><meta http-equiv='content-type' content='text/html;charset=UTF-8'><link href='" 
@@ -346,9 +352,9 @@ public class HelpController implements Controller {
         + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
         + "    <tr valign='bottom' height='32'>"
         + "      <td width='3' height='32'>&nbsp;</td>"
-        + "      <td width='32' height='32'><img src='"  
-        + new ResourceURLContent(HelpController.class, "resources/help/images/applicationIcon32.png").getURL() 
-        + "' height='32' width='32'></td>"
+        + (applicationIconUrl != null 
+              ? "<td width='32' height='32'><img src='" + applicationIconUrl + "' height='32' width='32'></td>" 
+              : "")
         + "      <td width='8' height='32'>&nbsp;&nbsp;</td>"
         + "      <td valign='bottom' height='32'><font id='topic'>" 
         +            this.preferences.getLocalizedString(HelpController.class, "searchResult") + "</font></td>"
