@@ -58,15 +58,19 @@ public class Component3DManager {
 
 
   private Component3DManager() {
-    // Retrieve graphics configuration once 
-    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-    // Try to get antialiasing
-    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-    this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-            getDefaultScreenDevice().getBestConfiguration(gc);
-    if (this.configuration == null) {
+    if (!GraphicsEnvironment.isHeadless()) {
+      // Retrieve graphics configuration once 
+      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+      // Try to get antialiasing
+      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
       this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-          getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+              getDefaultScreenDevice().getBestConfiguration(gc);
+      if (this.configuration == null) {
+        this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
+            getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+      }
+    } else {
+      this.offScreenImageSupported = Boolean.FALSE;
     }
   }
   

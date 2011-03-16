@@ -35,6 +35,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -1191,6 +1192,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                       float xCursorHotSpot,
                                       String cursorName,
                                       Cursor defaultCursor) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return defaultCursor;
+    }
     // Retrieve system cursor size
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
     URL cursorImageResource;
