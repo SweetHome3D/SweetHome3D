@@ -83,6 +83,7 @@
 
   <target name="furniture"
   	      description="Builds build/Furniture.jar that contains the furniture files">
+    <mkdir dir="build"/>
     <zip destfile="build/Furniture.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*FurnitureCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/**"/>
@@ -93,6 +94,7 @@
 
   <target name="textures"
   	      description="Builds build/Textures.jar that contains the textures files">
+    <mkdir dir="build"/>
     <zip destfile="build/Textures.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*TexturesCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/textures/**"/>
@@ -101,6 +103,7 @@
 
   <target name="help"
   	      description="Builds build/Help.jar that contains the help files">
+    <mkdir dir="build"/>
     <zip destfile="build/Help.jar" basedir="src">
       <include name="**/help/**"/>
     </zip>
