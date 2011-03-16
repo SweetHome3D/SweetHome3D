@@ -425,7 +425,7 @@ public class HelpController implements Controller {
    * This method uses some Swing classes for their HTML parsing capabilities 
    * and not to create components.
    */
-  public List<HelpDocument> searchInHelpDocuments(URL helpIndex, String [] searchedWords) {
+  private List<HelpDocument> searchInHelpDocuments(URL helpIndex, String [] searchedWords) {
     List<URL> parsedDocuments = new ArrayList<URL>(); 
     parsedDocuments.add(helpIndex);
     
@@ -465,7 +465,7 @@ public class HelpController implements Controller {
   /**
    * A help HTML document parsed with <code>HTMLEditorKit</code>. 
    */
-  private static class HelpDocument extends HTMLDocument {
+  private class HelpDocument extends HTMLDocument {
     // Documents set referenced in this file 
     private Set<URL>     referencedDocuments = new HashSet<URL>();
     private String []    searchedWords;
@@ -525,8 +525,8 @@ public class HelpController implements Controller {
     
     private void addReferencedDocument(String referencedDocument) {
       try {        
-        if (!referencedDocument.startsWith("http:")) {
-          URL url = new URL(getBase(), referencedDocument);
+        URL url = new URL(getBase(), referencedDocument);
+        if (!isBrowserPage(url)) {
           URL urlWithNoAnchor = new URL(
               url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
           this.referencedDocuments.add(urlWithNoAnchor);
