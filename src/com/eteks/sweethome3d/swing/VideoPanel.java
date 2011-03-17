@@ -77,6 +77,7 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -741,7 +742,7 @@ public class VideoPanel extends JPanel implements DialogView {
               VideoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
     return qualitySlider.getMinimum()
-        + (float)(x - (qualitySlider.getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT 
+        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight() 
                           ? fastLabelOffset 
                           : bestLabelOffset))
         / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
@@ -825,6 +826,7 @@ public class VideoPanel extends JPanel implements DialogView {
       if (videoPanel == null) {
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
+        videoPanel.setComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         videoPanel.setComponentTexts(preferences);
         videoPanel.setMnemonics(preferences);
       }
@@ -948,6 +950,9 @@ public class VideoPanel extends JPanel implements DialogView {
       final JOptionPane optionPane = new JOptionPane(this, 
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
           null, new Object [] {this.createButton, this.saveButton, this.closeButton}, this.createButton);
+      if (parentView != null) {
+        optionPane.setComponentOrientation(((JComponent)parentView).getComponentOrientation());
+      }
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
       

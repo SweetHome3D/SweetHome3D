@@ -725,7 +725,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));    
     JPanel rotationButtonsPanel = new JPanel(new GridBagLayout()) {
         @Override
-        public void applyComponentOrientation(ComponentOrientation o) {
+        public void applyComponentOrientation(ComponentOrientation orientation) {
           // Ignore panel orientation to ensure left button is always at left of panel
         }
       };

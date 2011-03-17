@@ -26,8 +26,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
 import javax.swing.Action;
@@ -154,18 +152,16 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
     
     this.pageLabel = new JLabel();
     
-    this.toolBar = new JToolBar();
+    this.toolBar = new JToolBar() {
+        public void applyComponentOrientation(ComponentOrientation orientation) {
+          // Ignore orientation 
+        }
+      };
     this.toolBar.setFloatable(false);
     ActionMap actions = getActionMap();    
     this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS_PAGE));
     this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
     updateToolBarButtonsStyle(this.toolBar);
-    this.toolBar.addPropertyChangeListener("componentOrientation", 
-        new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent evt) {
-            updateToolBarButtonsStyle(toolBar);
-          }
-        });
     
     this.toolBar.add(Box.createHorizontalStrut(20));
     this.toolBar.add(this.pageLabel);
@@ -184,19 +180,12 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
-      ComponentOrientation orientation = toolBar.getComponentOrientation();
       JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
       previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      previousButton.putClientProperty("JButton.segmentPosition", 
-          orientation == ComponentOrientation.LEFT_TO_RIGHT 
-            ? "first"
-            : "last");
+      previousButton.putClientProperty("JButton.segmentPosition", "first");
       JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
       nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      nextButton.putClientProperty("JButton.segmentPosition", 
-          orientation == ComponentOrientation.LEFT_TO_RIGHT 
-            ? "last"
-            : "first");
+      nextButton.putClientProperty("JButton.segmentPosition", "last");
     }
   }
     
@@ -232,6 +221,9 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
     String dialogTitle = preferences.getLocalizedString(PrintPreviewPanel.class, "printPreview.title");
     JOptionPane optionPane = new JOptionPane(this, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
+    if (parentView != null) {
+      optionPane.setComponentOrientation(((JComponent)parentView).getComponentOrientation());
+    }
     JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     dialog.setResizable(true);

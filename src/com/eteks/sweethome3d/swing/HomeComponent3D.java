@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Composite;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -416,7 +417,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private JComponent createNavigationPanel(Home home, 
                                            UserPreferences preferences, 
                                            HomeController3D controller) {
-    JPanel navigationPanel = new JPanel(new GridBagLayout());
+    JPanel navigationPanel = new JPanel(new GridBagLayout()) {
+        @Override
+        public void applyComponentOrientation(ComponentOrientation o) {
+          // Ignore orientation
+        }
+      };
     String navigationPanelIconPath = preferences.getLocalizedString(HomeComponent3D.class, "navigationPanel.icon");
     final ImageIcon nagivationPanelIcon = navigationPanelIconPath.length() > 0
         ? new ImageIcon(HomeComponent3D.class.getResource(navigationPanelIconPath))

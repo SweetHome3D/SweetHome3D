@@ -46,7 +46,6 @@ import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -320,17 +319,15 @@ public class HelpPane extends JRootPane implements HelpView {
     // Change layout because BoxLayout glue doesn't work well under Linux
     toolBar.setLayout(new GridBagLayout());
     ActionMap actions = getActionMap();    
-    toolBar.add(new JButton(actions.get(ActionType.SHOW_PREVIOUS)),
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    toolBar.add(new JButton(actions.get(ActionType.SHOW_NEXT)),
-        new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-            GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    updateToolBarButtonsStyle(toolBar);
+    final JButton previousButton = new JButton(actions.get(ActionType.SHOW_PREVIOUS));
+    final JButton nextButton = new JButton(actions.get(ActionType.SHOW_NEXT));
+    toolBar.add(previousButton);
+    toolBar.add(nextButton);
+    layoutToolBarButtons(toolBar, previousButton, nextButton);
     toolBar.addPropertyChangeListener("componentOrientation", 
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent evt) {
-            updateToolBarButtonsStyle(toolBar);
+            layoutToolBarButtons(toolBar, previousButton, nextButton);
           }
         });
     toolBar.add(new JLabel(),
@@ -365,27 +362,32 @@ public class HelpPane extends JRootPane implements HelpView {
   }
 
   /**
-   * Under Mac OS X 10.5 use segmented buttons with properties 
+   * Updates buttons layout and under Mac OS X 10.5 use segmented buttons with properties 
    * depending on toolbar orientation.
    */
-  private void updateToolBarButtonsStyle(JToolBar toolBar) {
+  private void layoutToolBarButtons(JToolBar toolBar, 
+                                    JButton previousButton,
+                                    JButton nextButton) {
+    ComponentOrientation orientation = toolBar.getComponentOrientation();
+    GridBagLayout layout = (GridBagLayout)toolBar.getLayout();
+    GridBagConstraints firstButtonConstraints = new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+    GridBagConstraints secondButtonContraints = new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
+    layout.setConstraints(orientation.isLeftToRight() ? previousButton : nextButton, 
+        firstButtonConstraints);
+    layout.setConstraints(orientation.isLeftToRight() ? nextButton : previousButton, 
+        secondButtonContraints);
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
-      ComponentOrientation orientation = toolBar.getComponentOrientation();
-      JComponent previousButton = (JComponent)toolBar.getComponent(0);
       previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      previousButton.putClientProperty("JButton.segmentPosition", 
-          orientation == ComponentOrientation.LEFT_TO_RIGHT 
-            ? "first"
-            : "last");
-      JComponent nextButton = (JComponent)toolBar.getComponent(1);
+      previousButton.putClientProperty("JButton.segmentPosition", "first");
       nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      nextButton.putClientProperty("JButton.segmentPosition", 
-          orientation == ComponentOrientation.LEFT_TO_RIGHT 
-            ? "last"
-            : "first");
+      nextButton.putClientProperty("JButton.segmentPosition", "last");
     }
+    toolBar.revalidate();
   }
     
   /**

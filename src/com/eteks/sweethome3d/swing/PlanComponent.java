@@ -24,7 +24,6 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.ComponentOrientation;
 import java.awt.Composite;
 import java.awt.Container;
 import java.awt.Cursor;
@@ -4595,7 +4594,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float yMin = (float)planBounds.getMinY() - MARGIN;
       float xMax = convertXPixelToModel(getWidth());
       float yMax = convertYPixelToModel(getHeight());
-      boolean leftToRightOriented = getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT;
+      boolean leftToRightOriented = getComponentOrientation().isLeftToRight();
 
       FontMetrics metrics = getFontMetrics(getFont());
       int fontAscent = metrics.getAscent();

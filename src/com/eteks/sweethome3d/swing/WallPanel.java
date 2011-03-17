@@ -899,7 +899,11 @@ public class WallPanel extends JPanel implements DialogView {
     if (homeRoot != null) {
       JOptionPane optionPane = new JOptionPane(this, 
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-      JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
+      JComponent parentComponent = SwingUtilities.getRootPane((JComponent)parentView);
+      if (parentView != null) {
+        optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
+      }
+      JDialog dialog = optionPane.createDialog(parentComponent, this.dialogTitle);
       Dimension screenSize = getToolkit().getScreenSize();
       Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
       // Check dialog isn't too high

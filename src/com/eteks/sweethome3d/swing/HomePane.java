@@ -1867,9 +1867,9 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private JComponent createMainPane(Home home, UserPreferences preferences, 
                                     HomeController controller) {
-    JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-        createCatalogFurniturePane(home, preferences, controller), 
-        createPlanView3DPane(home, preferences, controller));
+    final JComponent catalogFurniturePane = createCatalogFurniturePane(home, preferences, controller);
+    final JComponent planView3DPane = createPlanView3DPane(home, preferences, controller);
+    final JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, catalogFurniturePane, planView3DPane);
     // Set default divider location
     mainPane.setDividerLocation(360);
     configureSplitPane(mainPane, home, 
@@ -2116,12 +2116,19 @@ public class HomePane extends JRootPane implements HomeView {
     planView.setComponentPopupMenu(planViewPopup);
     
     if (planView instanceof Scrollable) {
-      JScrollPane planScrollPane = new HomeScrollPane(planView);
+      final JScrollPane planScrollPane = new HomeScrollPane(planView);
       setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
-      JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
+      final JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
       if (lockUnlockBasePlanButton != null) {
-        planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, 
-            lockUnlockBasePlanButton);
+        planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
+        planScrollPane.addPropertyChangeListener("componentOrientation", 
+            new PropertyChangeListener () {
+              public void propertyChange(PropertyChangeEvent ev) {
+                if (lockUnlockBasePlanButton.getParent() != null) {
+                  planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
+                }
+              }
+            });
       }
       // Add a listener to update rulers visibility in preferences
       preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
