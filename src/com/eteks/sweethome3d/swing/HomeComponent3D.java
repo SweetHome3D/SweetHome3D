@@ -547,6 +547,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       setFocusable(false);
       setBorder(null);
       setContentAreaFilled(false);
+      // Force preferred size to ensure button isn't larger
+      setPreferredSize(new Dimension(getIcon().getIconWidth(), getIcon().getIconHeight()));
       addPropertyChangeListener(JButton.ICON_CHANGED_PROPERTY, new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // Reset border when icon is reset after a resource action change 
