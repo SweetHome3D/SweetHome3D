@@ -145,7 +145,13 @@ public class NullableSpinner extends AutoCommitSpinner {
       if (this.isNull) {
         return super.getValue();
       } 
-      return super.getNextValue();
+      Object nextValue = super.getNextValue();
+      if (nextValue == null) {
+        // Force to maximum value
+        return getMaximum();
+      } else {
+        return nextValue;
+      }
     }
 
     @Override
@@ -153,7 +159,13 @@ public class NullableSpinner extends AutoCommitSpinner {
       if (this.isNull) {
         return super.getValue();
       } 
-      return super.getPreviousValue();
+      Object previousValue = super.getPreviousValue();
+      if (previousValue == null) {
+        // Force to minimum value
+        return getMinimum();
+      } else {
+        return previousValue;
+      }
     }
 
     @Override
