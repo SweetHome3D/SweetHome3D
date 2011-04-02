@@ -36,7 +36,10 @@ import java.awt.geom.Line2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.swing.DefaultListCellRenderer;
@@ -242,9 +245,23 @@ public class CompassPanel extends JPanel implements DialogView {
       });
 
     this.timeZoneLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "timeZoneLabel.text"));
-    String [] timeZoneIDs = TimeZone.getAvailableIDs();
-    Arrays.sort(timeZoneIDs);
-    this.timeZoneComboBox = new JComboBox(timeZoneIDs);
+    List<String> timeZoneIds = new ArrayList<String>(Arrays.asList(TimeZone.getAvailableIDs()));
+    // Remove synonymous time zones
+    timeZoneIds.remove("GMT");
+    timeZoneIds.remove("GMT0");
+    timeZoneIds.remove("Etc/GMT0");
+    timeZoneIds.remove("Etc/GMT-0");
+    timeZoneIds.remove("Etc/GMT+0");
+    // Replace Etc/GMT... ids by their English value that are less misleading
+    for (int i = 0; i < timeZoneIds.size(); i++) {
+      String timeZoneId = timeZoneIds.get(i);
+      if (timeZoneId.startsWith("Etc/GMT")) {
+        timeZoneIds.set(i, TimeZone.getTimeZone(timeZoneId).getDisplayName(Locale.ENGLISH));
+      }
+    }
+    String [] timeZoneIdsArray = timeZoneIds.toArray(new String [timeZoneIds.size()]);
+    Arrays.sort(timeZoneIdsArray);
+    this.timeZoneComboBox = new JComboBox(timeZoneIdsArray);
     this.timeZoneComboBox.setSelectedItem(controller.getTimeZone());
     final PropertyChangeListener timeZoneChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -257,11 +274,18 @@ public class CompassPanel extends JPanel implements DialogView {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
           String timeZoneId = (String)value;
-          String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
-          if (OperatingSystem.isMacOSX()) {
-            value = timeZoneId + " - " + timeZoneDisplayName;
+          if (timeZoneId.startsWith("GMT")) {
+            if (!OperatingSystem.isMacOSX()) {
+              setToolTipText(timeZoneId);
+            }
           } else {
-            setToolTipText(timeZoneId + " - " + timeZoneDisplayName);
+            String timeZoneDisplayName = TimeZone.getTimeZone(timeZoneId).getDisplayName();
+            if (OperatingSystem.isMacOSX()) {
+              value = timeZoneId + " - " + timeZoneDisplayName;
+            } else {
+              // Use tool tip do display the complete time zone information
+              setToolTipText(timeZoneId + " - " + timeZoneDisplayName);
+            }
           }
           return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
