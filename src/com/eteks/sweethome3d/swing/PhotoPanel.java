@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -456,8 +457,36 @@ public class PhotoPanel extends JPanel implements DialogView {
     final SpinnerDateModel timeSpinnerModel = new SpinnerDateModel();
     timeSpinnerModel.setValue(time);
     this.timeSpinner = new JSpinner(timeSpinnerModel);
-    JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(this.timeSpinner, 
-        ((SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT)).toPattern());
+    // From http://en.wikipedia.org/wiki/12-hour_clock#Use_by_country
+    String [] twelveHoursCountries = { 
+        "AU",  // Australia
+        "BD",  // Bangladesh
+        "CA",  // Canada (excluding Quebec, in French)
+        "CO",  // Colombia
+        "EG",  // Egypt
+        "HN",  // Honduras
+        "JO",  // Jordan
+        "MX",  // Mexico
+        "MY",  // Malaysia
+        "NI",  // Nicaragua
+        "NZ",  // New Zealand
+        "PH",  // Philippines
+        "PK",  // Pakistan
+        "SA",  // Saudi Arabia
+        "SV",  // El Salvador
+        "US",  // United States
+        "VE"}; // Venezuela         
+    SimpleDateFormat timeInstance;
+    if ("en".equals(Locale.getDefault().getLanguage())) {
+      if (Arrays.binarySearch(twelveHoursCountries, Locale.getDefault().getCountry()) >= 0) {
+        timeInstance = (SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT, Locale.US); // 12 hours notation
+      } else {
+        timeInstance = (SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT, Locale.UK); // 24 hours notation
+      }
+    } else {
+      timeInstance = (SimpleDateFormat)DateFormat.getTimeInstance(DateFormat.SHORT);
+    }
+    JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(this.timeSpinner, timeInstance.toPattern());
     this.timeSpinner.setEditor(timeEditor);
     SwingTools.addAutoSelectionOnFocusGain(timeEditor.getTextField());
 
