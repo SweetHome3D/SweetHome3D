@@ -485,8 +485,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "widthLabel.text", unitName)); 
+    final float minimumLength = preferences.getLengthUnit().getMinimumLength();
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getWidth(), minimumLength), 100000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     widthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -501,13 +502,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If width changes update width spinner
             widthSpinnerModel.setLength(controller.getWidth());
+            widthSpinnerModel.setMinimum(Math.min(controller.getWidth(), minimumLength));
           }
         });
     
     this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "depthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getDepth(), minimumLength), 100000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
     depthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -522,13 +524,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If depth changes update depth spinner
             depthSpinnerModel.setLength(controller.getDepth());
+            depthSpinnerModel.setMinimum(Math.min(controller.getDepth(), minimumLength));
+            System.out.println(depthSpinnerModel.getNextValue());
           }
         });
     
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getHeight(), minimumLength), 100000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     heightSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -543,6 +547,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If height changes update height spinner
             heightSpinnerModel.setLength(controller.getHeight());
+            heightSpinnerModel.setMinimum(Math.min(controller.getHeight(), minimumLength));
           }
         });
     this.keepProportionsCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 

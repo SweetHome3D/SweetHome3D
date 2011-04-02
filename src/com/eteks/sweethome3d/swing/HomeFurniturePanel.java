@@ -295,17 +295,21 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Create width label and its spinner bound to WIDTH controller property
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "widthLabel.text", unitName));
+    final float minimumLength = preferences.getLengthUnit().getMinimumLength();
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
-    widthSpinnerModel.setNullable(controller.getWidth() == null);
-    widthSpinnerModel.setLength(controller.getWidth());
     final PropertyChangeListener widthChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        widthSpinnerModel.setNullable(ev.getNewValue() == null);
-        widthSpinnerModel.setLength((Float)ev.getNewValue());
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          Float width = controller.getWidth();
+          widthSpinnerModel.setNullable(width == null);
+          widthSpinnerModel.setLength(width);
+          if (width != null) {
+            widthSpinnerModel.setMinimum(Math.min(width, minimumLength));
+          }
+        }
+      };
+    widthChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(HomeFurnitureController.Property.WIDTH, widthChangeListener);
     widthSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -319,16 +323,19 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "depthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
-    depthSpinnerModel.setNullable(controller.getDepth() == null);
-    depthSpinnerModel.setLength(controller.getDepth());
     final PropertyChangeListener depthChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        depthSpinnerModel.setNullable(ev.getNewValue() == null);
-        depthSpinnerModel.setLength((Float)ev.getNewValue());
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          Float depth = controller.getDepth();
+          depthSpinnerModel.setNullable(depth == null);
+          depthSpinnerModel.setLength(depth);
+          if (depth != null) {
+            depthSpinnerModel.setMinimum(Math.min(depth, minimumLength));
+          }
+        }
+      };
+    depthChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(HomeFurnitureController.Property.DEPTH, depthChangeListener);
     depthSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -342,16 +349,19 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "heightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
-    heightSpinnerModel.setNullable(controller.getHeight() == null);
-    heightSpinnerModel.setLength(controller.getHeight());
     final PropertyChangeListener heightChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        heightSpinnerModel.setNullable(ev.getNewValue() == null);
-        heightSpinnerModel.setLength((Float)ev.getNewValue());
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          Float height = controller.getHeight();
+          heightSpinnerModel.setNullable(height == null);
+          heightSpinnerModel.setLength(height);
+          if (height != null) {
+            heightSpinnerModel.setMinimum(Math.min(height, minimumLength));
+          }
+        }
+      };
+    heightChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
     heightSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -389,11 +399,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
     this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
     final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        mirroredModelCheckBox.setNullable(ev.getNewValue() == null);
-        mirroredModelCheckBox.setValue((Boolean)ev.getNewValue());
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          mirroredModelCheckBox.setNullable(ev.getNewValue() == null);
+          mirroredModelCheckBox.setValue((Boolean)ev.getNewValue());
+        }
+      };
     controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
     this.mirroredModelCheckBox.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -515,11 +525,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.visibleCheckBox.setNullable(controller.getVisible() == null);
     this.visibleCheckBox.setValue(controller.getVisible());
     final PropertyChangeListener visibleChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        visibleCheckBox.setNullable(ev.getNewValue() == null);
-        visibleCheckBox.setValue((Boolean)ev.getNewValue());
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          visibleCheckBox.setNullable(ev.getNewValue() == null);
+          visibleCheckBox.setValue((Boolean)ev.getNewValue());
+        }
+      };
     controller.addPropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
     this.visibleCheckBox.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -558,10 +568,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     updateSizeComponents(controller);     
     // Add a listener that enables / disables size fields depending on furniture resizable and deformable
     PropertyChangeListener sizeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        updateSizeComponents(controller);     
-      }
-    };
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateSizeComponents(controller);     
+        }
+      };
     controller.addPropertyChangeListener(HomeFurnitureController.Property.RESIZABLE, sizeListener);
     controller.addPropertyChangeListener(HomeFurnitureController.Property.DEFORMABLE, sizeListener);
     

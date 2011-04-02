@@ -117,7 +117,7 @@ public class ModelManager {
 
   private static final Material               DEFAULT_MATERIAL = new Material();
   
-  private static final float MINIMUM_SIZE = 0.0001f;
+  private static final float MINIMUM_SIZE = 0.001f;
 
   private static final String ADDITIONAL_LOADER_CLASSES = "com.eteks.sweethome3d.j3d.additionalLoaderClasses";
   

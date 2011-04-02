@@ -211,8 +211,9 @@ public class WallPanel extends JPanel implements DialogView {
     // Create distance to end point label and its spinner bound to DISTANCE_TO_END_POINT controller property
     this.distanceToEndPointLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "distanceToEndPointLabel.text", unitName));
+    float minimumLength = preferences.getLengthUnit().getMinimumLength();
     final NullableSpinner.NullableSpinnerLengthModel distanceToEndPointSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
     this.distanceToEndPointSpinner = new NullableSpinner(distanceToEndPointSpinnerModel);
     distanceToEndPointSpinnerModel.setNullable(controller.getLength() == null);
     distanceToEndPointSpinnerModel.setLength(controller.getLength());
@@ -428,7 +429,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.rectangularWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 10000f);
     this.rectangularWallHeightSpinner = new NullableSpinner(rectangularWallHeightSpinnerModel);
     rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
     rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
@@ -468,7 +469,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.slopingWallHeightAtStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtStartLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 10000f);
     this.slopingWallHeightAtStartSpinner = new NullableSpinner(slopingWallHeightAtStartSpinnerModel);
     slopingWallHeightAtStartSpinnerModel.setNullable(controller.getSlopingWallHeightAtStart() == null);
     slopingWallHeightAtStartSpinnerModel.setLength(controller.getSlopingWallHeightAtStart());
@@ -494,7 +495,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.slopingWallHeightAtEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtEndLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 10000f);
     this.slopingWallHeightAtEndSpinner = new NullableSpinner(slopingWallHeightAtEndSpinnerModel);
     slopingWallHeightAtEndSpinnerModel.setNullable(controller.getSlopingWallHeightAtEnd() == null);
     slopingWallHeightAtEndSpinnerModel.setLength(controller.getSlopingWallHeightAtEnd());
@@ -520,7 +521,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "thicknessLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 10000f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
     thicknessSpinnerModel.setNullable(controller.getThickness() == null);
     thicknessSpinnerModel.setLength(controller.getThickness());
