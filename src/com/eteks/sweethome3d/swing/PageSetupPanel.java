@@ -324,6 +324,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
       this.footerFormatTextField.setText("");
     }
     this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
+    this.view3DPrintedCheckBox.setVisible(!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")));
   }
 
   /**
