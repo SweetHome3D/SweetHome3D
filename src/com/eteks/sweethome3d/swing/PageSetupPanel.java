@@ -282,7 +282,12 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private void updateComponents(HomePrint homePrint) {
     this.pageFormat = HomePrintableComponent.getPageFormat(homePrint);
     // Check if off screen image is supported 
-    boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
+    boolean offscreenCanvas3DSupported;
+    if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+      offscreenCanvas3DSupported = false;
+    } else { 
+      offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
+    }
     final NullableSpinnerNumberModel userPlanScaleSpinnerModel = 
         (NullableSpinner.NullableSpinnerNumberModel)this.userPlanScaleSpinner.getModel();
     if (homePrint != null) {

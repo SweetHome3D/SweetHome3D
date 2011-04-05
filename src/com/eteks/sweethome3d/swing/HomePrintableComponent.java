@@ -49,6 +49,7 @@ import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A printable component used to print or preview the furniture, the plan 
@@ -298,22 +299,29 @@ public class HomePrintableComponent extends JComponent implements Printable {
       this.furniturePageCount = 0;
       this.planPageCount = 0;
     }
-    if (homePrint == null || homePrint.isFurniturePrinted()) {
+    View furnitureView = this.controller.getFurnitureController().getView();
+    if (furnitureView != null 
+        && (homePrint == null || homePrint.isFurniturePrinted())) {
       // Try to print next furniture view page
-      pageExists = ((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, page);
+      pageExists = ((Printable)furnitureView).print(g2D, pageFormat, page);
       if (pageExists == PAGE_EXISTS) {
         this.furniturePageCount++;
       }
     }
-    if (pageExists == NO_SUCH_PAGE && (homePrint == null || homePrint.isPlanPrinted())) {
+    if (pageExists == NO_SUCH_PAGE 
+        && planView != null 
+        && (homePrint == null || homePrint.isPlanPrinted())) {
       // Try to print next plan view page
       pageExists = ((Printable)planView).print(g2D, pageFormat, page - this.furniturePageCount);
       if (pageExists == PAGE_EXISTS) {
         this.planPageCount++;
       }
     }
-    if (pageExists == NO_SUCH_PAGE && (homePrint == null || homePrint.isView3DPrinted())) {
-      pageExists = ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, page - this.planPageCount - this.furniturePageCount);
+    View view3D = this.controller.getHomeController3D().getView();
+    if (pageExists == NO_SUCH_PAGE
+        && view3D != null
+        && (homePrint == null || homePrint.isView3DPrinted())) {
+      pageExists = ((Printable)view3D).print(g2D, pageFormat, page - this.planPageCount - this.furniturePageCount);
     }
     
     // Print header and footer

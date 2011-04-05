@@ -1356,12 +1356,13 @@ public class PlanController extends FurnitureController implements Controller {
     scale = Math.max(getMinimumScale(), Math.min(scale, getMaximumScale()));
     if (scale != getView().getScale()) {
       float oldScale = getView().getScale();
-      int x = getView().convertXModelToScreen(getXLastMouseMove());
-      int y = getView().convertXModelToScreen(getYLastMouseMove());
-      getView().setScale(scale);
-      // Update mouse location
-      moveMouse(getView().convertXPixelToModel(x), getView().convertYPixelToModel(y));
-      
+      if (getView() != null) {
+        int x = getView().convertXModelToScreen(getXLastMouseMove());
+        int y = getView().convertXModelToScreen(getYLastMouseMove());
+        getView().setScale(scale);
+        // Update mouse location
+        moveMouse(getView().convertXPixelToModel(x), getView().convertYPixelToModel(y));
+      }
       this.propertyChangeSupport.firePropertyChange(Property.SCALE.name(), oldScale, scale);
       this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
     }
@@ -1408,7 +1409,9 @@ public class PlanController extends FurnitureController implements Controller {
   private void addModelListeners() {
     this.selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          getView().makeSelectionVisible();
+          if (getView() != null) {
+            getView().makeSelectionVisible();
+          }
         }
       };
     this.home.addSelectionListener(this.selectionListener);
@@ -1416,7 +1419,9 @@ public class PlanController extends FurnitureController implements Controller {
     this.home.getObserverCamera().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (home.getSelectedItems().contains(ev.getSource())) {
-            getView().makeSelectionVisible();
+            if (getView() != null) {
+              getView().makeSelectionVisible();
+            }
           }
         }
       });
@@ -4570,9 +4575,11 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void enter() {
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
-      home.addSelectionListener(this.selectionListener);
-      this.selectionListener.selectionChanged(null);
+      if (getView() != null) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        home.addSelectionListener(this.selectionListener);
+        this.selectionListener.selectionChanged(null);
+      }
     }
     
     @Override
@@ -4684,8 +4691,10 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void exit() {
-      home.removeSelectionListener(this.selectionListener);
-      getView().setResizeIndicatorVisible(false);
+      if (getView() != null) {
+        home.removeSelectionListener(this.selectionListener);
+        getView().setResizeIndicatorVisible(false);
+      }
     }
   }
 

@@ -287,6 +287,8 @@ public class PluginManager {
             pluginClassName + " constructor not accessible");
       }
       return pluginClass;
+    } catch (NoClassDefFoundError ex) {
+      throw new IllegalArgumentException(ex.getMessage(), ex);
     } catch (ClassNotFoundException ex) {
       throw new IllegalArgumentException(ex.getMessage(), ex);
     } catch (NoSuchMethodException ex) {

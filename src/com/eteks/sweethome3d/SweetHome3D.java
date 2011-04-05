@@ -50,7 +50,6 @@ import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
-import javax.media.j3d.IllegalRenderingStateException;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -106,6 +105,9 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * write access rights on this folder otherwise the program won't be able to save his preferences
  * and the files he imported in furniture and textures catalogs. This folder may be the same as the
  * folder cited in <code>com.eteks.sweethome3d.applicationFolders</code> property.</li>
+ * 
+ * <li><code>com.eteks.sweethome3d.no3D</code> should be set to <code>true</code> 
+ * if 3D capabilities (including 3D view and importing furniture 3D models) shouldn't be used in Sweet Home 3D. 
  * 
  * <li><code>com.eteks.sweethome3d.j3d.checkOffScreenSupport</code> should be set to <code>false</code> 
  * when editing preferences, printing, creating a photo or creating a video always lead to a crash of Sweet Home 3D. 
@@ -346,10 +348,15 @@ public class SweetHome3D extends HomeApplication {
 
               JFrame homeFrame = (JFrame) SwingUtilities.getRoot((JComponent) controller.getView());
               homeFrames.put(home, homeFrame);
-            } catch (IllegalRenderingStateException ex) {
-              ex.printStackTrace();
-              // In case of a problem in Java 3D, simply exit with a message.
-              exitAfter3DError();
+            } catch (IllegalStateException ex) {
+              // Check exception by class name to avoid a mandatory bind to Java 3D
+              if ("javax.media.j3d.IllegalRenderingStateException".equals(ex.getClass().getName())) {
+                ex.printStackTrace();
+                // In case of a problem in Java 3D, simply exit with a message.
+                exitAfter3DError();
+              } else {
+                throw ex;
+              }
             }
             break;
           case DELETE:
@@ -478,18 +485,20 @@ public class SweetHome3D extends HomeApplication {
    * exit in case of error during 3D rendering.
    */
   private void addComponent3DRenderingErrorObserver() {
-    // Add a RenderingErrorObserver to Canvas3DManager, because offscreen
-    // rendering needs to check rendering errors with its own RenderingErrorListener
-    Component3DManager.getInstance().setRenderingErrorObserver(new Component3DManager.RenderingErrorObserver() {
-      public void errorOccured(int errorCode, String errorMessage) {
-        System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
-        EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            exitAfter3DError();
+    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+      // Add a RenderingErrorObserver to Component3DManager, because offscreen
+      // rendering needs to check rendering errors with its own RenderingErrorListener
+      Component3DManager.getInstance().setRenderingErrorObserver(new Component3DManager.RenderingErrorObserver() {
+          public void errorOccured(int errorCode, String errorMessage) {
+            System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
+            EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                exitAfter3DError();
+              }
+            });
           }
         });
-      }
-    });
+    }
   }
 
   /**

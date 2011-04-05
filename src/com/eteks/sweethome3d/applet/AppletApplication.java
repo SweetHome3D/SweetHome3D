@@ -39,7 +39,6 @@ import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.UnavailableServiceException;
-import javax.media.j3d.IllegalRenderingStateException;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -168,9 +167,14 @@ public class AppletApplication extends HomeApplication {
                     controller.open(defaultHome);
                   }
                 }
-              } catch (IllegalRenderingStateException ex) {
-                ex.printStackTrace();
-                show3DError();
+              } catch (IllegalStateException ex) {
+                // Check exception by class name to avoid a mandatory bind to Java 3D
+                if ("javax.media.j3d.IllegalRenderingStateException".equals(ex.getClass().getName())) {
+                  ex.printStackTrace();
+                  show3DError();
+                } else {
+                  throw ex;
+                }
               }
               break;
           }
@@ -222,8 +226,10 @@ public class AppletApplication extends HomeApplication {
     System.gc();
     // Stop managers threads
     IconManager.getInstance().clear();
-    TextureManager.getInstance().clear();
-    ModelManager.getInstance().clear();
+    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+      TextureManager.getInstance().clear();
+      ModelManager.getInstance().clear();
+    }
     // Delete temporary files
     OperatingSystem.deleteTemporaryFiles();
   }
@@ -613,20 +619,22 @@ public class AppletApplication extends HomeApplication {
    * to avoid default System exit in case of error during 3D rendering. 
    */
   private void addComponent3DRenderingErrorObserver() {
-    // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
-    // we add it through Canvas3DManager, because offscreen rendering needs to check 
-    // rendering errors with its own RenderingErrorListener
-    Component3DManager.getInstance().setRenderingErrorObserver(
-        new Component3DManager.RenderingErrorObserver() {
-          public void errorOccured(int errorCode, String errorMessage) {
-            System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  show3DError();
-                }
-              });
-          }
-        });
+    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+      // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
+      // we add it through Component3DManager, because offscreen rendering needs to check 
+      // rendering errors with its own RenderingErrorListener
+      Component3DManager.getInstance().setRenderingErrorObserver(
+          new Component3DManager.RenderingErrorObserver() {
+            public void errorOccured(int errorCode, String errorMessage) {
+              System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    show3DError();
+                  }
+                });
+            }
+          });
+    }
   }
 
   /**

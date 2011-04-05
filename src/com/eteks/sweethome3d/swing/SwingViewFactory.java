@@ -97,7 +97,11 @@ public class SwingViewFactory implements ViewFactory {
    */
   public View createView3D(Home home, UserPreferences preferences,
                            HomeController3D homeController3D) {
-    return new HomeComponent3D(home, preferences, homeController3D);
+    if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+      return null;
+    } else {
+      return new HomeComponent3D(home, preferences, homeController3D);
+    }
   }
 
   /**

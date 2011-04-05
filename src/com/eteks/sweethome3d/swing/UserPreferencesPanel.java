@@ -249,7 +249,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
 
-    if (controller.isPropertyEditable(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE)) {
+    if (controller.isPropertyEditable(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE)
+        && !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
       // Create navigation panel label and check box bound to controller NAVIGATION_PANEL_VISIBLE property
       this.navigationPanelLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "navigationPanelLabel.text"));
@@ -342,27 +343,32 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "topViewRadioButton.text"), 
           controller.isFurnitureViewedFromTop());
-      if (Component3DManager.getInstance().isOffScreenImageSupported()) {
-        ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
-        furnitureAppearanceButtonGroup.add(this.catalogIconRadioButton);
-        furnitureAppearanceButtonGroup.add(this.topViewRadioButton);
-    
-        ItemListener furnitureAppearanceChangeListener = new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-              controller.setFurnitureViewedFromTop(topViewRadioButton.isSelected());
-            }
-          };
-        this.catalogIconRadioButton.addItemListener(furnitureAppearanceChangeListener);
-        this.topViewRadioButton.addItemListener(furnitureAppearanceChangeListener);
-        controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP, 
-            new PropertyChangeListener() {
-              public void propertyChange(PropertyChangeEvent ev) {
-                topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
-              }
-            });
-      } else {
+      if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
         this.catalogIconRadioButton.setEnabled(false);
         this.topViewRadioButton.setEnabled(false);
+      } else { 
+        if (Component3DManager.getInstance().isOffScreenImageSupported()) {
+          ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
+          furnitureAppearanceButtonGroup.add(this.catalogIconRadioButton);
+          furnitureAppearanceButtonGroup.add(this.topViewRadioButton);
+      
+          ItemListener furnitureAppearanceChangeListener = new ItemListener() {
+              public void itemStateChanged(ItemEvent ev) {
+                controller.setFurnitureViewedFromTop(topViewRadioButton.isSelected());
+              }
+            };
+          this.catalogIconRadioButton.addItemListener(furnitureAppearanceChangeListener);
+          this.topViewRadioButton.addItemListener(furnitureAppearanceChangeListener);
+          controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP, 
+              new PropertyChangeListener() {
+                public void propertyChange(PropertyChangeEvent ev) {
+                  topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
+                }
+              });
+        } else {
+          this.catalogIconRadioButton.setEnabled(false);
+          this.topViewRadioButton.setEnabled(false);
+        }
       }
     }
 

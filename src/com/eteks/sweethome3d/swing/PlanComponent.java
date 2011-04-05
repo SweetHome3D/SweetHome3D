@@ -288,6 +288,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   private static final float       WALL_STROKE_WIDTH = 1.5f;
   private static final float       BORDER_STROKE_WIDTH = 1f;
+  
+  private static final BufferedImage ERROR_TEXTURE_IMAGE;
+  private static final BufferedImage WAIT_TEXTURE_IMAGE;
 
   static {
     POINT_INDICATOR = new Ellipse2D.Float(-1.5f, -1.5f, 3, 3);
@@ -500,6 +503,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     COMPASS_RESIZE_INDICATOR.moveTo(9, -1.5f);
     COMPASS_RESIZE_INDICATOR.lineTo(12, 0);
     COMPASS_RESIZE_INDICATOR.lineTo(9, 1.5f);
+    
+    ERROR_TEXTURE_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+    Graphics g = ERROR_TEXTURE_IMAGE.getGraphics();
+    g.setColor(Color.RED);
+    g.drawLine(0, 0, 0, 0);
+    g.dispose();
+
+    WAIT_TEXTURE_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+    g = WAIT_TEXTURE_IMAGE.getGraphics();
+    g.setColor(Color.WHITE);
+    g.drawLine(0, 0, 0, 0);
+    g.dispose();
   }
 
   /**
@@ -2238,18 +2253,38 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 this.floorTextureImagesCache = new WeakHashMap<Content, BufferedImage>();
               }
               BufferedImage textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
-              if (textureImage == null) {
+              if (textureImage == null
+                  || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
-                TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
-                    new TextureManager.TextureObserver() {
-                      public void textureUpdated(Texture texture) {
-                        floorTextureImagesCache.put(floorTexture.getImage(), 
-                            ((ImageComponent2D)texture.getImage(0)).getImage());
-                        if (!waitForTexture) {
-                          repaint();
+                if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+                  // Use icon manager if texture manager should be ignored
+                  Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(), 
+                      waitForTexture ? null : this);
+                  if (IconManager.getInstance().isWaitIcon(textureIcon)) {
+                    floorTextureImagesCache.put(floorTexture.getImage(), WAIT_TEXTURE_IMAGE);                    
+                  } else if (IconManager.getInstance().isErrorIcon(textureIcon)) {
+                    floorTextureImagesCache.put(floorTexture.getImage(), ERROR_TEXTURE_IMAGE);                    
+                  } else {
+                    BufferedImage textureIconImage = new BufferedImage(
+                        textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
+                    textureIcon.paintIcon(this, g2DIcon, 0, 0);
+                    g2DIcon.dispose();
+                    floorTextureImagesCache.put(floorTexture.getImage(), textureIconImage);
+                  } 
+                } else { 
+                  // Prefer to share textures images with texture manager if it's available
+                  TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
+                      new TextureManager.TextureObserver() {
+                        public void textureUpdated(Texture texture) {
+                          floorTextureImagesCache.put(floorTexture.getImage(), 
+                              ((ImageComponent2D)texture.getImage(0)).getImage());
+                          if (!waitForTexture) {
+                            repaint();
+                          }
                         }
-                      }
-                    });                
+                      });
+                }
                 textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
               }
               g2D.setPaint(new TexturePaint(textureImage, 
@@ -2683,9 +2718,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               PaintMode paintMode, boolean paintIcon) {    
     if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-      final boolean allFurnitureViewedFromTop = 
-          this.preferences.isFurnitureViewedFromTop()
-          && Component3DManager.getInstance().isOffScreenImageSupported();
+      boolean allFurnitureViewedFromTop;
+      if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+        allFurnitureViewedFromTop = false;
+      } else { 
+        allFurnitureViewedFromTop = this.preferences.isFurnitureViewedFromTop()
+            && Component3DManager.getInstance().isOffScreenImageSupported();
+      }
       
       // Draw furniture
       for (HomePieceOfFurniture piece : furniture) {
@@ -4800,31 +4839,49 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Don't need color information anymore
           this.pieceColor = null;
         } else if (this.pieceTexture != null) {
-          TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
-              new TextureManager.TextureObserver() {
-                public void textureUpdated(Texture texture) {                  
-                  // Paint plan icon in an image
-                  BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-                  final Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-                  PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);                  
-                  // Fill the pixels of plan icon with texture image
-                  BufferedImage textureImage = ((ImageComponent2D)texture.getImage(0)).getImage();
-                  imageGraphics.setPaint(new TexturePaint(textureImage, 
-                      new Rectangle2D.Float(0, 0, -getIconWidth() / pieceWidth * pieceTexture.getWidth(), 
-                          -getIconHeight() / pieceDepth * pieceTexture.getHeight())));
-                  imageGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
-                  imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());                  
-                  imageGraphics.dispose();
-                  
-                  setIcon(new ImageIcon(image));
-                }
-              });                
+          if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+            Icon textureIcon = IconManager.getInstance().getIcon(this.pieceTexture.getImage(), null);
+            if (IconManager.getInstance().isErrorIcon(textureIcon)) {
+              setTexturedIcon(c, ERROR_TEXTURE_IMAGE);                    
+            } else {
+              BufferedImage textureIconImage = new BufferedImage(
+                  textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+              Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
+              textureIcon.paintIcon(c, g2DIcon, 0, 0);
+              g2DIcon.dispose();
+              setTexturedIcon(c, textureIconImage);
+            } 
+          } else { 
+            // Prefer to share textures images with texture manager if it's available
+            TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
+                new TextureManager.TextureObserver() {
+                  public void textureUpdated(Texture texture) {                  
+                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage());
+                  }
+                });
+          }
   
           // Don't need texture information anymore
           this.pieceTexture = null;
         }
       }
       super.paintIcon(c, g, x, y);
+    }
+    
+    private void setTexturedIcon(Component c, BufferedImage textureImage) {
+      // Paint plan icon in an image
+      BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+      PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);                  
+      // Fill the pixels of plan icon with texture image
+      imageGraphics.setPaint(new TexturePaint(textureImage, 
+          new Rectangle2D.Float(0, 0, -getIconWidth() / pieceWidth * pieceTexture.getWidth(), 
+              -getIconHeight() / pieceDepth * pieceTexture.getHeight())));
+      imageGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
+      imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());                  
+      imageGraphics.dispose();
+      
+      setIcon(new ImageIcon(image));
     }
   }
   
