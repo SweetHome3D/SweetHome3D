@@ -525,7 +525,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             // If depth changes update depth spinner
             depthSpinnerModel.setLength(controller.getDepth());
             depthSpinnerModel.setMinimum(Math.min(controller.getDepth(), minimumLength));
-            System.out.println(depthSpinnerModel.getNextValue());
           }
         });
     
