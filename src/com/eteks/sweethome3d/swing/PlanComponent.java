@@ -2718,13 +2718,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               PaintMode paintMode, boolean paintIcon) {    
     if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-      boolean allFurnitureViewedFromTop;
-      if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
-        allFurnitureViewedFromTop = false;
-      } else { 
-        allFurnitureViewedFromTop = this.preferences.isFurnitureViewedFromTop()
-            && Component3DManager.getInstance().isOffScreenImageSupported();
-      }
+      boolean allFurnitureViewedFromTop = 
+          !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")) 
+          && this.preferences.isFurnitureViewedFromTop()
+          && Component3DManager.getInstance().isOffScreenImageSupported();
       
       // Draw furniture
       for (HomePieceOfFurniture piece : furniture) {
@@ -2755,7 +2752,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (paintIcon 
                 && (allFurnitureViewedFromTop
                     || this.preferences.isFurnitureViewedFromTop()
-                        && piece.getPlanIcon() != null)) {
+                        && (piece.getPlanIcon() != null
+                            || piece instanceof HomeDoorOrWindow))) {
               if (piece instanceof HomeDoorOrWindow) {
                 // Draw doors and windows border
                 g2D.setPaint(backgroundColor);
