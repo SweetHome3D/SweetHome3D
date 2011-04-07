@@ -387,7 +387,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds a <code>piece</code> in parameter.
+   * Adds the <code>piece</code> in parameter to this home.
    * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
@@ -501,7 +501,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds a given <code>wall</code> to the set of walls of this home.
+   * Adds the given <code>wall</code> to the set of walls of this home.
    * Once the <code>wall</code> is added, wall listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
@@ -515,7 +515,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Removes a given <code>wall</code> from the set of walls of this home.
+   * Removes the given <code>wall</code> from the set of walls of this home.
    * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
@@ -561,7 +561,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds a given <code>room</code> to the list of rooms of this home.
+   * Adds the given <code>room</code> to the list of rooms of this home.
    * Once the <code>room</code> is added, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
@@ -586,7 +586,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Removes a given <code>room</code> from the set of rooms of this home.
+   * Removes the given <code>room</code> from the set of rooms of this home.
    * Once the <code>room</code> is removed, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
@@ -626,7 +626,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds a given dimension line to the set of dimension lines of this home.
+   * Adds the given dimension line to the set of dimension lines of this home.
    * Once <code>dimensionLine</code> is added, dimension line listeners added 
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
@@ -641,7 +641,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Removes a given dimension line from the set of dimension lines of this home.
+   * Removes the given dimension line from the set of dimension lines of this home.
    * Once <code>dimensionLine</code> is removed, dimension line listeners added 
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
@@ -679,7 +679,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds a given label to the set of labels of this home.
+   * Adds the given label to the set of labels of this home.
    * Once <code>label</code> is added, label listeners added 
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
@@ -694,7 +694,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Removes a given label from the set of labels of this home.
+   * Removes the given label from the set of labels of this home.
    * Once <code>label</code> is removed, label listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
