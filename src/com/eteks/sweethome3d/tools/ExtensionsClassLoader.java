@@ -23,14 +23,17 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -45,21 +48,41 @@ public class ExtensionsClassLoader extends ClassLoader {
   private final ProtectionDomain protectionDomain;
   private final String []        applicationPackages;
 
-  private final Map  extensionDlls = new HashMap();
-  private JarFile [] extensionJars = null;
+  private final Map    extensionDlls = new HashMap();
+  private JarFile []   extensionJars = null;
 
   /**
-   * Creates a class loader. It will consider JARs and DLLs of <code>extensionJarsAndDlls</code>
+   * Creates a class loader. It will consider JARs and DLLs of <code>extensionJarsAndDlls</code> accessed as resources
    * as classpath and libclasspath elements with a higher priority than the ones of default classpath, 
    * and will load itself all the classes belonging to packages of <code>applicationPackages</code>.
+   * No cache will be used.
    */
   public ExtensionsClassLoader(ClassLoader parent, 
                                ProtectionDomain protectionDomain, 
                                String [] extensionJarsAndDlls,
                                String [] applicationPackages) {
+    this(parent, protectionDomain, extensionJarsAndDlls, new URL [0], applicationPackages, null, null);
+  }
+  
+  /**
+   * Creates a class loader. It will consider JARs and DLLs of <code>extensionJarAndDllResources</code>
+   * and <code>extensionJarAndDllUrls</code> as classpath and libclasspath elements with a higher priority 
+   * than the ones of default classpath, and will load itself all the classes belonging to packages of 
+   * <code>applicationPackages</code>.<br>
+   * Copies of <code>extensionJarAndDllResources</code> and <code>extensionJarAndDllUrls</code> will be stored 
+   * in the given cache folder, each file being prefixed by <code>cachedFilesPrefix</code>.
+   */
+  public ExtensionsClassLoader(ClassLoader parent, 
+                               ProtectionDomain protectionDomain, 
+                               String [] extensionJarAndDllResources,
+                               URL [] extensionJarAndDllUrls,
+                               String [] applicationPackages,
+                               File cacheFolder,
+                               String cachedFilesPrefix) {
     super(parent);
     this.protectionDomain = protectionDomain;
     this.applicationPackages = applicationPackages;
+    String extensionPrefix = cachedFilesPrefix == null ? "" : cachedFilesPrefix;
 
     // Compute DLLs prefix and suffix
     String dllSuffix;
@@ -77,31 +100,96 @@ public class ExtensionsClassLoader extends ClassLoader {
       dllPrefix = "lib";
     }
     
+    // Create a list containing only URLs
+    ArrayList extensionJarsAndDlls = new ArrayList();
+    for (int i = 0; i < extensionJarAndDllResources.length; i++) {
+      URL extensionJarOrDllUrl = getResource(extensionJarAndDllResources [i]);
+      if (extensionJarOrDllUrl != null) {
+        extensionJarsAndDlls.add(extensionJarOrDllUrl);
+      }
+    }
+    extensionJarsAndDlls.addAll(Arrays.asList(extensionJarAndDllUrls));
+    
     // Find extension Jars and DLLs
     ArrayList extensionJars = new ArrayList();
-    for (int i = 0; i < extensionJarsAndDlls.length; i++) {
-      String extensionJarOrDll = extensionJarsAndDlls [i];
+    for (int i = 0; i < extensionJarsAndDlls.size(); i++) {
+      URL extensionJarOrDllUrl = (URL)extensionJarsAndDlls.get(i);
       try {
-        URL extensionJarOrDllUrl = getResource(extensionJarOrDll);
-        if (extensionJarOrDllUrl != null) {
-          if (extensionJarOrDll.endsWith(".jar")) {
-            // Copy jar to a tmp file
-            String extensionJar = copyInputStreamToTmpFile(extensionJarOrDllUrl.openStream(), ".jar");
-            // Add tmp file to extension jars list
-            extensionJars.add(new JarFile(extensionJar, false));
-          } else if (extensionJarOrDll.endsWith(dllSuffix)) {
-            int lastSlashIndex  = extensionJarOrDll.lastIndexOf('/');
-            // Copy DLL to a tmp file
-            String extensionDll = copyInputStreamToTmpFile(extensionJarOrDllUrl.openStream(), dllSuffix);
-            // Add tmp file to extension DLLs map
-            this.extensionDlls.put(extensionJarOrDll.substring(lastSlashIndex + 1 + dllPrefix.length(), 
-                extensionJarOrDll.indexOf(dllSuffix)), extensionDll);
-          }          
+        String extensionJarOrDllUrlFile = extensionJarOrDllUrl.getFile();
+        URLConnection connection = null;
+        long extensionJarOrDllFileDate;
+        String extensionJarOrDllFile;
+        if (extensionJarOrDllUrl.getProtocol().equals("jar")) {
+          // Don't instantiate connection to a file accessed by jar protocol otherwise it might download again its jar container
+          URL jarEntryUrl = new URL(extensionJarOrDllUrlFile.substring(0, extensionJarOrDllUrlFile.indexOf('!')));
+          URLConnection jarEntryUrlConnection = jarEntryUrl.openConnection(); 
+          // As connection.getLastModified() on an entry returns get modification date of the jar file itself 
+          extensionJarOrDllFileDate = jarEntryUrlConnection.getLastModified();
+          extensionJarOrDllFile = extensionJarOrDllUrlFile.substring(extensionJarOrDllUrlFile.indexOf('!') + 2);
+        } else {
+          connection = extensionJarOrDllUrl.openConnection();
+          extensionJarOrDllFileDate = connection.getLastModified();
+          extensionJarOrDllFile = extensionJarOrDllUrlFile;
+        }        
+        String extensionJarOrDllFileName;
+        int lastSlashIndex = extensionJarOrDllFile.lastIndexOf('/');
+        if (extensionJarOrDllFile.endsWith(".jar")) {
+          extensionJarOrDllFileName = extensionPrefix 
+              + extensionJarOrDllFile.substring(lastSlashIndex + 1);
+        } else {
+          extensionJarOrDllFileName = extensionPrefix 
+              + extensionJarOrDllFile.substring(lastSlashIndex + 1 + dllPrefix.length());
         }
+        
+        if (cacheFolder != null 
+            && ((cacheFolder.exists()
+                  && cacheFolder.isDirectory())
+                || cacheFolder.mkdirs())) {
+          try {
+            File cachedFile = new File(cacheFolder, extensionJarOrDllFileName);            
+            if (!cachedFile.exists() 
+                || cachedFile.lastModified() < extensionJarOrDllFileDate) {
+              // Copy jar to cache
+              if (connection == null) {
+                connection = extensionJarOrDllUrl.openConnection();
+              }
+              copyInputStreamToFile(connection.getInputStream(), cachedFile);
+            }
+            if (extensionJarOrDllFile.endsWith(".jar")) {
+              // Add tmp file to extension jars list
+              extensionJars.add(new JarFile(cachedFile.toString(), false));
+            } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
+              // Add tmp file to extension DLLs map
+              this.extensionDlls.put(extensionJarOrDllFileName.substring(extensionPrefix.length(), 
+                  extensionJarOrDllFileName.indexOf(dllSuffix)), cachedFile.toString());
+            }
+            continue;
+          } catch (IOException ex) {
+            // Try without cache
+          }          
+        } 
+        
+        if (connection == null) {
+          connection = extensionJarOrDllUrl.openConnection();
+        }
+        InputStream input = connection.getInputStream();          
+        if (extensionJarOrDllFile.endsWith(".jar")) {
+          // Copy jar to a tmp file
+          String extensionJar = copyInputStreamToTmpFile(input, ".jar");
+          // Add tmp file to extension jars list
+          extensionJars.add(new JarFile(extensionJar, false));
+        } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
+          // Copy DLL to a tmp file
+          String extensionDll = copyInputStreamToTmpFile(input, dllSuffix);
+          // Add tmp file to extension DLLs map
+          this.extensionDlls.put(extensionJarOrDllFileName.substring(extensionPrefix.length(), 
+              extensionJarOrDllFileName.indexOf(dllSuffix)), extensionDll);
+        }          
       } catch (IOException ex) {
         throw new RuntimeException("Couldn't extract extension jars", ex);
       }
     }
+    
     // Create extensionJars array
     if (extensionJars.size() > 0) {
       this.extensionJars = (JarFile [])extensionJars.toArray(new JarFile [extensionJars.size()]);                    
@@ -115,9 +203,17 @@ public class ExtensionsClassLoader extends ClassLoader {
                                           String suffix) throws IOException {
     File tmpFile = File.createTempFile("extension", suffix);
     tmpFile.deleteOnExit();
+    copyInputStreamToFile(input, tmpFile);
+    return tmpFile.toString();
+  }
+
+  /**
+   * Copies the <code>input</code> content to the given file.
+   */
+  public void copyInputStreamToFile(InputStream input, File file) throws FileNotFoundException, IOException {
     OutputStream output = null;
     try {
-      output = new BufferedOutputStream(new FileOutputStream(tmpFile));
+      output = new BufferedOutputStream(new FileOutputStream(file));
       byte [] buffer = new byte [8192];
       int size; 
       while ((size = input.read(buffer)) != -1) {
@@ -131,7 +227,6 @@ public class ExtensionsClassLoader extends ClassLoader {
         output.close();
       }
     }
-    return tmpFile.toString();
   }
   
   /**
