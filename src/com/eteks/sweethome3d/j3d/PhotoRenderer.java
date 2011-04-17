@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.AlphaComposite;
 import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -125,7 +126,7 @@ public class PhotoRenderer {
   private boolean useAmbientOcclusion;
   private String sunSkyLightName;
   private String sunLightName;
-  private final Map<Texture, String> textureImagesCache = new HashMap<Texture, String>();
+  private final Map<TransparentTextureKey, String> textureImagesCache = new HashMap<TransparentTextureKey, String>();
   private Thread renderingThread;
 
   static {
@@ -525,7 +526,7 @@ public class PhotoRenderer {
           ? appearance.getRenderingAttributes() : null;
       TransparencyAttributes transparencyAttributes = appearance != null 
           ? appearance.getTransparencyAttributes() : null;
-      // Ignore invisible shapes and fully transparent shapes without a texture 
+      // Ignore invisible shapes and fully transparency shapes without a texture 
       if ((renderingAttributes == null
               || renderingAttributes.getVisible())
           && (transparencyAttributes == null
@@ -1140,19 +1141,43 @@ public class PhotoRenderer {
       }
       this.sunflow.shader(appearanceName, "mirror");
     } else if (texture != null) {
-      String imagePath = texture.getUserData() instanceof URL
-          ? texture.getUserData().toString()
-          : this.textureImagesCache.get(texture);
+      // Check shape transparency 
+      TransparencyAttributes transparencyAttributes = appearance.getTransparencyAttributes();
+      float transparency;
+      if (transparencyAttributes != null
+          && transparencyAttributes.getTransparency() > 0
+          && !ignoreTransparency) {
+        transparency = 1 - transparencyAttributes.getTransparency();
+      } else {
+        transparency = 1;
+      }
+      
+      TransparentTextureKey key = new TransparentTextureKey(texture, transparency);      
+      String imagePath = this.textureImagesCache.get(key);
       if (imagePath == null) {
-        ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
-        RenderedImage image = imageComponent.getRenderedImage();
-        String fileFormat = texture.getFormat() == Texture.RGBA 
-            ? "png"
-            : "jpg";
-        File imageFile = OperatingSystem.createTemporaryFile("texture", "." + fileFormat);
-        ImageIO.write(image, fileFormat, imageFile);
-        imagePath = imageFile.getAbsolutePath();
-        this.textureImagesCache.put(texture, imagePath);
+        if (texture.getUserData() instanceof URL && transparency == 1) {
+          imagePath = texture.getUserData().toString();
+        } else {
+          ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
+          RenderedImage image = imageComponent.getRenderedImage();
+          String fileFormat = texture.getFormat() == Texture.RGBA || transparency < 1 
+              ? "png"
+              : "jpg";
+          if (transparency < 1) {
+            // Compute a partially transparent image
+            BufferedImage transparentImage = new BufferedImage(image.getWidth(), 
+                image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2D = (Graphics2D)transparentImage.getGraphics();
+            g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency));
+            g2D.drawRenderedImage(image, null);
+            g2D.dispose();
+            image = transparentImage;
+          }
+          File imageFile = OperatingSystem.createTemporaryFile("texture", "." + fileFormat);
+          ImageIO.write(image, fileFormat, imageFile);
+          imagePath = imageFile.getAbsolutePath();
+        }
+        this.textureImagesCache.put(key, imagePath);
       }
       Material material = appearance.getMaterial();
       float shininess;
@@ -1385,6 +1410,30 @@ public class PhotoRenderer {
                && Arrays.equals(this.point3, triangle.point3);
       }
       return false;
+    }
+  }
+  
+  /**
+   * A key used to manage textures at different levels of transparency. 
+   */
+  private static class TransparentTextureKey {
+    private Texture texture;
+    private float   transparency;
+
+    public TransparentTextureKey(Texture texture, float transparency) {
+      this.texture = texture;
+      this.transparency = transparency;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      return ((TransparentTextureKey)obj).texture.equals(this.texture) 
+          && ((TransparentTextureKey)obj).transparency == this.transparency;
+    }
+    
+    @Override
+    public int hashCode() {
+      return this.texture.hashCode() + Float.floatToIntBits(this.transparency);
     }
   }
 }
