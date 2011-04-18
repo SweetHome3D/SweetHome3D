@@ -175,7 +175,7 @@ public class ImportedFurnitureWizardController extends WizardController
   }
 
   /**
-   * Changes background image in model and posts an undoable operation.
+   * Imports piece in catalog and/or home and posts an undoable operation.
    */
   @Override
   public void finish() {
