@@ -126,6 +126,12 @@ public class AppletApplication extends HomeApplication {
 
     URL codeBase = applet.getCodeBase();
 
+    // Force offscreen in 3D view under Plugin 2 and Mac OS X
+    System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
+        String.valueOf(OperatingSystem.isMacOSX()            
+            && applet.getAppletContext() != null
+            && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
+    
     // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
     boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
     if (serviceManagerAvailable) {

@@ -264,7 +264,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.displayShadowOnFloor = displayShadowOnFloor;
     this.object3dFactory = object3DFactory;
 
-    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.useOffScreenCanvas3D", "false"))) {
+    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
       this.component3D = new JCanvas3D(gc) {
@@ -320,6 +320,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
       });
+    
     canvasPanel.add(this.component3D);    
     setLayout(new GridLayout());
     add(canvasPanel);
