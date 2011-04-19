@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.swing.ThreadedTaskPanel;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
 import com.eteks.sweethome3d.viewcontroller.CompassController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
@@ -277,7 +278,13 @@ public final class ViewerHelper {
           throw new UnsupportedOperationException();
         }
       };
-  
+
+    // Force offscreen in 3D view under Plugin 2 and Mac OS X
+    System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
+        String.valueOf(OperatingSystem.isMacOSX()            
+            && applet.getAppletContext() != null
+            && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
+
     initLookAndFeel();
 
     addComponent3DRenderingErrorObserver(applet.getRootPane(), preferences);
