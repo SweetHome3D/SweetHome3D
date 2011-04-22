@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- build.xml
 
-     Copyright (c) 2007-2011 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+	 Sweet Home 3D, Copyright (c) 2007-2011 Emmanuel PUYBARET / eTeks <info@eteks.com>. 
      
      Ant build file. Available targets :
      - build       : Builds SweetHome3D.jar file in build directory
@@ -808,7 +808,7 @@
       <footer><![CDATA[<a href='http://www.sweethome3d.com' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
       <bottom><![CDATA[<table align='center'><tr>
                        <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.com/images/eteks.gif' border='0'><a></td>
-                       <td>© Copyrights 2006-2010 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
+                       <td>© Copyrights 2006-2011 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
                            <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
       <link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
       <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>

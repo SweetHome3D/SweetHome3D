@@ -1,6 +1,6 @@
 ; installerInnoSetup.iss
 ;
-; Copyright (c) 2007-2011 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+; Sweet Home 3D, Copyright (c) 2007-2011 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
 ; SweetHome3D-3.2-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php

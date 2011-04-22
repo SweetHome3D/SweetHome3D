@@ -1,4 +1,6 @@
-This software is licensed by eTeks under GNU General Public License.
+Sweet Home 3D version 3.2, Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks
+ 
+This software is licensed by Emmanuel PUYBARET / eTeks under GNU General Public License.
 Please, read COPYING.TXT file for more details about GNU General Public License.
 
 
