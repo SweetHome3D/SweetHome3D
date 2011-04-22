@@ -62,4 +62,4 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-(C) 2006-2011 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
+Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks. Distributed under GNU General Public License    
