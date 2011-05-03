@@ -130,22 +130,23 @@ public class SweetHome3DViewer extends JApplet {
           "j3dcore.jar", // Main Java 3D jars
           "vecmath.jar",
           "j3dutils.jar",
-          "windows/j3dcore-d3d.dll", // Windows DLLs
-          "windows/j3dcore-ogl.dll",
-          "windows/j3dcore-ogl-cg.dll",
-          "windows/j3dcore-ogl-chk.dll",
+
           "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
           "macosx/jogl.jar",
           "macosx/libgluegen-rt.jnilib",
           "macosx/libjogl.jnilib",
           "macosx/libjogl_awt.jnilib",
           "macosx/libjogl_cg.jnilib"}));
-      if (System.getProperty("os.name").startsWith("Linux")
-          && "64".equals(System.getProperty("sun.arch.data.model"))) {
-        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
+      if ("64".equals(System.getProperty("sun.arch.data.model"))) {
+        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLL
+        java3DFiles.add("windows/x64/j3dcore-ogl.dll"); // Windows DLL
       } else {
-        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); 
+        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
         java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+        java3DFiles.add("windows/i386/j3dcore-d3d.dll"); // Windows DLLs
+        java3DFiles.add("windows/i386/j3dcore-ogl.dll");
+        java3DFiles.add("windows/i386/j3dcore-ogl-cg.dll");
+        java3DFiles.add("windows/i386/j3dcore-ogl-chk.dll");
       }
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
