@@ -1,5 +1,5 @@
-SWEET HOME 3D VIEWER v 3.2
---------------------------
+SWEET HOME 3D VIEWER v 3.2.1
+----------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
 applet able to display the 3D view of a Sweet Home 3D file from its URL.
@@ -46,12 +46,12 @@ If the cache of the SH3D file returned by the "homeURL" value should never
 be used, add the parameter "ignoreCache" with a value equal to "true".
 For example, if your URL is the PHP request "http://www.mydomain.com/userHome.php"
 the parameters list should become:
-  var parameters = {jnlp_href:"SweetHome3DViewer.jnlp", 
+  var parameters = {java_arguments:"-Xmx512m", 
                     navigationPanel:"true",
                     homeURL:"http://www.mydomain.com/userHome.php",
                     ignoreCache:"true"};
 
-If you don't want to display navigation arrows, remove simply the line
+If you don't want to display navigation arrows, simply remove the line
   navigationPanel:"true",
 from parameters list.
                      
@@ -59,5 +59,5 @@ from parameters list.
 Mentioning the following copyrights on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
 
-(C) 2009 Sweet Home 3D Viewer available at http://www.sweethome3d.com 
-    Distributed under GNU General Public License    
+Sweet Home 3D Viewer, Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks. 
+Distributed under GNU General Public License    

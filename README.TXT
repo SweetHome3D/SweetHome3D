@@ -1,5 +1,5 @@
-SWEET HOME 3D v 3.2
--------------------
+SWEET HOME 3D v 3.2.1
+---------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
 Please read http://www.sweethome3d.com/history.html for more information
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_3_2 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_3_2_1 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -62,4 +62,5 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks. Distributed under GNU General Public License    
+Sweet Home 3D, Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks. 
+Distributed under GNU General Public License    
