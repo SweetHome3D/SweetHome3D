@@ -874,6 +874,15 @@ public class HomeController implements Controller {
           home.setModified(true);
         }
       });
+   home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        if (!home.isModified()) {
+          // Change undo level and modification flag if home is set as unmodified
+          saveUndoLevel = 0;
+          notUndoableModifications = false;
+        }
+      }
+    });
   }
 
   /**
@@ -1108,7 +1117,7 @@ public class HomeController implements Controller {
       view.setUndoRedoName(null, this.undoManager.getRedoPresentationName());
     }
     this.saveUndoLevel--;
-    this.home.setModified(this.saveUndoLevel != 0 || notUndoableModifications);
+    this.home.setModified(this.saveUndoLevel != 0 || this.notUndoableModifications);
   }
   
   /**
@@ -1127,7 +1136,7 @@ public class HomeController implements Controller {
       view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
     }
     this.saveUndoLevel++;
-    this.home.setModified(this.saveUndoLevel != 0 || notUndoableModifications);
+    this.home.setModified(this.saveUndoLevel != 0 || this.notUndoableModifications);
   }
 
   /**
@@ -1624,8 +1633,6 @@ public class HomeController implements Controller {
     getView().invokeLater(new Runnable() {
         public void run() {
           home.setName(homeName);
-          saveUndoLevel = 0;
-          notUndoableModifications = false;
           home.setModified(false);
           home.setRecovered(false);
           // Update recent homes list
@@ -2001,6 +2008,7 @@ public class HomeController implements Controller {
     if (view != null) {
       getView().detachView(view);
       this.notUndoableModifications = true;
+      home.setModified(true);
     }
   }
       		
@@ -2011,6 +2019,7 @@ public class HomeController implements Controller {
     if (view != null) {
       getView().attachView(view);
       this.notUndoableModifications = true;
+      home.setModified(true);
     }
   }
                 
