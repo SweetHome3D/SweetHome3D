@@ -298,7 +298,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    * Language and catalog listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  
    */
-  public static class PreferencesChangeListener implements PropertyChangeListener, CollectionListener<CatalogPieceOfFurniture> {
+  private static class PreferencesChangeListener implements PropertyChangeListener, CollectionListener<CatalogPieceOfFurniture> {
     private final WeakReference<FurnitureCatalogListPanel> furnitureCatalogPanel;
 
     public PreferencesChangeListener(FurnitureCatalogListPanel furnitureCatalogPanel) {
