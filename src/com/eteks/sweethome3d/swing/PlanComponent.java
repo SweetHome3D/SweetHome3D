@@ -3401,7 +3401,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                           Stroke pointStroke) {
     // Paint wall location feedback
     if (locationFeedback != null) {
-      float margin = 1f / planScale;
+      float margin = 0.5f / planScale;
       // Search which wall start or end point is at locationFeedback abscissa or ordinate
       // ignoring the start and end point of alignedWall
       float x = (float)locationFeedback.getX(); 
@@ -3533,16 +3533,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                           Stroke pointStroke) {
     // Paint room location feedback
     if (locationFeedback != null) {
-      float margin = 1f / planScale;
+      float margin = 0.5f / planScale;
       // Search which room points are at locationFeedback abscissa or ordinate
       float x = (float)locationFeedback.getX(); 
       float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
       for (Room room : this.home.getRooms()) {
-        if (room != alignedRoom) {
-          float [][] roomPoints = room.getPoints();
+        float [][] roomPoints = room.getPoints();
+        int editedPointIndex = -1;
+        if (room == alignedRoom) {
+          // Search which room point could match location feedback 
           for (int i = 0; i < roomPoints.length; i++) {
+            if (roomPoints [i][0] == x && roomPoints [i][1] == y) {
+              editedPointIndex = i;
+              break;
+            }
+          }
+        }
+        for (int i = 0; i < roomPoints.length; i++) {
+          if (editedPointIndex == -1
+              || (i != editedPointIndex
+                  && roomPoints.length > 2)) {
             if (Math.abs(x - roomPoints [i][0]) < margin
                 && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i][1])) {
               deltaYToClosestObject = y - roomPoints [i][1];
@@ -3550,7 +3562,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (Math.abs(y - roomPoints [i][1]) < margin
                 && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i][0])) {
               deltaXToClosestObject = x - roomPoints [i][0];
-            } 
+            }
           }
         }
       }
@@ -3603,7 +3615,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Paints dimension line location feedback.
-   * @param showPointFeedback2 
    */
   private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
                                                    DimensionLine alignedDimensionLine, Point2D locationFeedback, 
@@ -3613,7 +3624,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                                    Stroke pointStroke) {
     // Paint dimension line location feedback
     if (locationFeedback != null) {      
-      float margin = 1f / planScale;
+      float margin = 0.5f / planScale;
       // Search which room points are at locationFeedback abscissa or ordinate
       float x = (float)locationFeedback.getX(); 
       float y = (float)locationFeedback.getY();
