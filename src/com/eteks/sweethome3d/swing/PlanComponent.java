@@ -2242,7 +2242,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (paintMode != PaintMode.CLIPBOARD
           || selectedRoom) {
         g2D.setPaint(defaultFillPaint);
-        if (this.preferences.isRoomFloorColoredOrTextured()) {
+        if (this.preferences.isRoomFloorColoredOrTextured()
+            && room.isFloorVisible()) {
           // Use room floor color or texture image
           if (room.getFloorColor() != null) {
             g2D.setPaint(new Color(room.getFloorColor()));
