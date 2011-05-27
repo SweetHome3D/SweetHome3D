@@ -91,7 +91,7 @@ import com.sun.j3d.loaders.lw3d.Lw3dLoader;
 
 /**
  * Singleton managing 3D models cache.
- * This manager supports 3D models with an OBJ, 3DS or LWS format by default. 
+ * This manager supports 3D models with an OBJ, DAE, 3DS or LWS format by default. 
  * Additional classes implementing Java 3D <code>Loader</code> interface may be 
  * specified in the <code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code>
  * (separated by a space or a colon :) to enable the support of other formats.<br> 
