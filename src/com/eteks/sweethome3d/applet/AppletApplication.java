@@ -346,10 +346,13 @@ public class AppletApplication extends HomeApplication {
     
     // As the applet has no menu, activate accelerators directly on home view
     for (HomeView.ActionType actionType : HomeView.ActionType.values()) {
-      ResourceAction.MenuItemAction menuAction = new ResourceAction.MenuItemAction(homeView.getActionMap().get(actionType));
-      KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
-      if (accelerator != null) {
-        homeView.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(accelerator, actionType);
+      Action action = homeView.getActionMap().get(actionType);
+      if (action != null) {
+        ResourceAction.MenuItemAction menuAction = new ResourceAction.MenuItemAction(action);
+        KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
+        if (accelerator != null) {
+          homeView.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(accelerator, actionType);
+        }
       }
     }
     
@@ -369,19 +372,19 @@ public class AppletApplication extends HomeApplication {
     toolBar.removeAll();
     // Add New, Open, Save, Save as buttons if they are enabled
     Action newHomeAction = getToolBarAction(homeView, HomeView.ActionType.NEW_HOME);
-    if (newHomeAction.isEnabled()) {
+    if (newHomeAction != null && newHomeAction.isEnabled()) {
       toolBar.add(newHomeAction);
     }
     Action openAction = getToolBarAction(homeView, HomeView.ActionType.OPEN);
-    if (openAction.isEnabled()) {
+    if (openAction != null && openAction.isEnabled()) {
       toolBar.add(openAction);
     }
     Action saveAction = getToolBarAction(homeView, HomeView.ActionType.SAVE);
-    if (saveAction.isEnabled()) {
+    if (saveAction != null && saveAction.isEnabled()) {
       toolBar.add(saveAction);
     }
     Action saveAsAction = getToolBarAction(homeView, HomeView.ActionType.SAVE_AS);
-    if (saveAsAction.isEnabled()) {
+    if (saveAsAction != null && saveAsAction.isEnabled()) {
       toolBar.add(saveAsAction);
     }
     
@@ -400,24 +403,30 @@ public class AppletApplication extends HomeApplication {
     if (toolBar.getComponentCount() > 0) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     }
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT));
-    if (getAppletBooleanParameter(this.applet, ENABLE_PRINT_TO_PDF) && !OperatingSystem.isMacOSX()) {
+    addToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP, toolBar);
+    addToolBarAction(homeView, HomeView.ActionType.PRINT, toolBar);
+    Action printToPdfAction = getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF);
+    if (printToPdfAction != null 
+        && getAppletBooleanParameter(this.applet, ENABLE_PRINT_TO_PDF) 
+        && !OperatingSystem.isMacOSX()) {
       controller.getView().setEnabled(HomeView.ActionType.PRINT_TO_PDF, true);
-      toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF));
+      toolBar.add(printToPdfAction);
     }
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PREFERENCES));
+    Action preferencesAction = getToolBarAction(homeView, HomeView.ActionType.PREFERENCES);
+    if (preferencesAction != null) {
+      toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+      toolBar.add(preferencesAction);
+    }
     toolBar.addSeparator();
 
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.UNDO));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.REDO));
+    addToolBarAction(homeView, HomeView.ActionType.UNDO, toolBar);
+    addToolBarAction(homeView, HomeView.ActionType.REDO, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.CUT));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.COPY));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PASTE));
+    addToolBarAction(homeView, HomeView.ActionType.CUT, toolBar);
+    addToolBarAction(homeView, HomeView.ActionType.COPY, toolBar);
+    addToolBarAction(homeView, HomeView.ActionType.PASTE, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.DELETE));
+    addToolBarAction(homeView, HomeView.ActionType.DELETE, toolBar);
     toolBar.addSeparator();
 
     final JToggleButton selectToggleButton = 
@@ -461,14 +470,17 @@ public class AppletApplication extends HomeApplication {
         });
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_IN));
+    addToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT, toolBar);
+    addToolBarAction(homeView, HomeView.ActionType.ZOOM_IN, toolBar);
 
-    boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
-    controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
-    if (enableCreatePhoto) {
-      toolBar.addSeparator();
-      toolBar.add(getToolBarAction(homeView, HomeView.ActionType.CREATE_PHOTO));
+    Action createPhotoAction = getToolBarAction(homeView, HomeView.ActionType.CREATE_PHOTO);
+    if (createPhotoAction != null) {
+      boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
+      controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
+      if (enableCreatePhoto) {
+        toolBar.addSeparator();
+        toolBar.add(createPhotoAction);
+      }
     }
 
     // Add plug-in buttons
@@ -479,8 +491,11 @@ public class AppletApplication extends HomeApplication {
       }
     }
     
-    toolBar.addSeparator();
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ABOUT));
+    Action aboutAction = getToolBarAction(homeView, HomeView.ActionType.ABOUT);
+    if (aboutAction != null) {
+      toolBar.addSeparator();
+      toolBar.add(aboutAction);
+    }
     
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
         getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SVG));
@@ -494,12 +509,25 @@ public class AppletApplication extends HomeApplication {
     
     return controller;
   }
+  
+  /**
+   * Adds the action matching the given <code>actionType</code> to the tool bar if it exists.
+   */
+  private void addToolBarAction(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
+    Action action = getToolBarAction(homeView, actionType);
+    if (action != null) {
+      toolBar.add(action);
+    }
+  }
 
   /**
    * Returns an action decorated for tool bar buttons.
    */
   private Action getToolBarAction(JComponent homeView, HomeView.ActionType actionType) {
-    return new ResourceAction.ToolBarAction(homeView.getActionMap().get(actionType));
+    Action action = homeView.getActionMap().get(actionType);    
+    return action != null 
+        ? new ResourceAction.ToolBarAction(action)
+        : null;
   }
   
   /**
