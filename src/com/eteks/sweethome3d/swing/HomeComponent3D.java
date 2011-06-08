@@ -1314,7 +1314,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     BranchGroup root = new BranchGroup();
     // Build scene tree
     root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
-    root.addChild(createBackgroundNode(listenToHomeUpdates));
+    root.addChild(createBackgroundNode(listenToHomeUpdates, waitForLoading));
     root.addChild(createGroundNode(-1E5f / 2, -1E5f / 2, 1E5f, 1E5f, listenToHomeUpdates, waitForLoading));
 
     // Add default lights
@@ -1328,7 +1328,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns a new background node.  
    */
-  private Node createBackgroundNode(boolean listenToHomeUpdates) {
+  private Node createBackgroundNode(boolean listenToHomeUpdates, final boolean waitForLoading) {
     final Appearance backgroundAppearance = new Appearance();
     ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
     backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
@@ -1343,7 +1343,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     backgroundBranch.addChild(halfSphere);
     
     final Background background = new Background(backgroundBranch);
-    updateBackgroundColorAndTexture(backgroundAppearance, this.home);
+    updateBackgroundColorAndTexture(backgroundAppearance, this.home, waitForLoading);
     background.setImageScaleMode(Background.SCALE_FIT_ALL);
     background.setApplicationBounds(new BoundingBox(
         new Point3d(-1E6, -1E6, -1E6), 
@@ -1353,7 +1353,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Add a listener on sky color and texture properties change 
       this.skyColorListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateBackgroundColorAndTexture(backgroundAppearance, home);
+            updateBackgroundColorAndTexture(backgroundAppearance, home, waitForLoading);
           }
         };
       this.home.getEnvironment().addPropertyChangeListener(
@@ -1415,13 +1415,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates<code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.
    */
-  private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home) {
+  private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home, 
+                                               boolean waitForLoading) {
     Color3f skyColor = new Color3f(new Color(home.getEnvironment().getSkyColor()));
     backgroundAppearance.getColoringAttributes().setColor(skyColor);
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (skyTexture != null) {
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(skyTexture.getImage(), 
+      textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 backgroundAppearance.setTexture(texture);
