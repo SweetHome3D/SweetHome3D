@@ -1421,13 +1421,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     backgroundAppearance.getColoringAttributes().setColor(skyColor);
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (skyTexture != null) {
-      final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
-          new TextureManager.TextureObserver() {
-              public void textureUpdated(Texture texture) {
-                backgroundAppearance.setTexture(texture);
-              }
-            });
+      TextureManager textureManager = TextureManager.getInstance();
+      if (waitForLoading) {
+        // Don't share the background texture otherwise if might not be rendered correctly
+        backgroundAppearance.setTexture(textureManager.loadTexture(skyTexture.getImage()));
+      } else {
+        textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
+            new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {
+                  backgroundAppearance.setTexture(texture);
+                }
+              });
+      }
     } else {
       backgroundAppearance.setTexture(null);
     }

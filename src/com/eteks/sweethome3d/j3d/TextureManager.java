@@ -153,7 +153,7 @@ public class TextureManager {
     }
     if (texture == null) {
       if (synchronous) {
-        texture = shareTexture(readTexture(content), content);
+        texture = shareTexture(loadTexture(content), content);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
       } else if (!EventQueue.isDispatchThread()) {
@@ -179,7 +179,7 @@ public class TextureManager {
           // Load the image in a different thread
           this.texturesLoader.execute(new Runnable () {
               public void run() {
-                final Texture texture = shareTexture(readTexture(content), content);
+                final Texture texture = shareTexture(loadTexture(content), content);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       // Notify loaded texture to observer
@@ -201,7 +201,7 @@ public class TextureManager {
   /**
    * Returns a texture created from the image from <code>content</code>. 
    */
-  private Texture readTexture(final Content content) {
+  public Texture loadTexture(final Content content) {
     BufferedImage image = null;
     try {
       // Read the image 
