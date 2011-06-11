@@ -442,9 +442,11 @@ public class OBJWriter extends FilterWriter {
       int [] vertexIndexSubstitutes = new int [geometryArray.getVertexCount()];
       
       boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
+      Map<Vector3f, Integer> previousNormalIndices = null;
       StringBuilder normalsBuffer;
       if (normalsDefined) {
-        normalsBuffer = new StringBuilder(geometryArray.getVertexCount() * 3 * 10); 
+        normalsBuffer = new StringBuilder(geometryArray.getVertexCount() * 3 * 10);
+        previousNormalIndices = new HashMap<Vector3f, Integer>(this.normalIndices);
       } else {
         normalsBuffer = null;
       }
@@ -589,6 +591,8 @@ public class OBJWriter extends FilterWriter {
       if (normalsDefined) {
         // Write normals only if they all contain valid values 
         out.write(normalsBuffer.toString());
+      } else if (previousNormalIndices != null) {
+        this.normalIndices = previousNormalIndices;
       }
 
       checkCurrentThreadIsntInterrupted();
