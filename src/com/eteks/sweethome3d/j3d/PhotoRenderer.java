@@ -210,8 +210,8 @@ public class PhotoRenderer {
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
       g2D.drawRenderedImage(skyImage, null);
       g2D.dispose();
-      File imageFile = OperatingSystem.createTemporaryFile("ibl", ".jpg");
-      ImageIO.write(imageBaseLightImage, "JPEG", imageFile);
+      File imageFile = OperatingSystem.createTemporaryFile("ibl", ".png");
+      ImageIO.write(imageBaseLightImage, "png", imageFile);
       
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
@@ -1160,9 +1160,6 @@ public class PhotoRenderer {
         } else {
           ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
           RenderedImage image = imageComponent.getRenderedImage();
-          String fileFormat = texture.getFormat() == Texture.RGBA || transparency < 1 
-              ? "png"
-              : "jpg";
           if (transparency < 1) {
             // Compute a partially transparent image
             BufferedImage transparentImage = new BufferedImage(image.getWidth(), 
@@ -1173,8 +1170,8 @@ public class PhotoRenderer {
             g2D.dispose();
             image = transparentImage;
           }
-          File imageFile = OperatingSystem.createTemporaryFile("texture", "." + fileFormat);
-          ImageIO.write(image, fileFormat, imageFile);
+          File imageFile = OperatingSystem.createTemporaryFile("texture", ".png");
+          ImageIO.write(image, "png", imageFile);
           imagePath = imageFile.getAbsolutePath();
         }
         this.textureImagesCache.put(key, imagePath);

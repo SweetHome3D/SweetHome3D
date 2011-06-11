@@ -376,11 +376,8 @@ public class OBJWriter extends FilterWriter {
                 File textureFile = this.textures.get(texture);
                 if (textureFile == null) {
                   // Store texture
-                  String fileFormat = texture.getFormat() == Texture.RGBA 
-                      ? "png"
-                      : "jpg";
                   textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
-                      + "_" + appearanceName + "." + fileFormat);
+                      + "_" + appearanceName + ".png");
                   this.textures.put(texture, textureFile);
                 }
               }
@@ -1230,10 +1227,7 @@ public class OBJWriter extends FilterWriter {
         Texture texture = textureEntry.getKey();
         ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
         RenderedImage image = imageComponent.getRenderedImage();
-        String fileFormat = texture.getFormat() == Texture.RGBA 
-            ? "png"
-            : "jpg";
-        ImageIO.write(image, fileFormat, textureEntry.getValue());        
+        ImageIO.write(image, "png", textureEntry.getValue());        
       }
     } finally {
       if (writer != null) {
