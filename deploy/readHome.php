@@ -20,7 +20,7 @@
    */
    
   // Returns the home matching the parameter "home"
-  $homesDir = "../persistent/homes";
+  $homesDir = ".";
   $homeFile = $homesDir."/".$_GET['home'].".sh3d"; 
   
   $homeContent = file_get_contents($homeFile);

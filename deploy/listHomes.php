@@ -21,7 +21,7 @@
    
   // Returns the list of available homes without their extension 
   // in homes directory 
-  $homesDir = "../persistent/homes";
+  $homesDir = ".";
   $handler = opendir($homesDir);
   
   while ($file = readdir($handler)) {
