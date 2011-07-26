@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
@@ -60,11 +61,22 @@ public class Component3DManager {
   private Component3DManager() {
     if (!GraphicsEnvironment.isHeadless()) {
       // Retrieve graphics configuration once 
-      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+      GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
       // Try to get antialiasing
-      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      
+      // From http://www.java.net/node/683852
+      // Check if the user has set the Java 3D stereo option.
+      String stereo = System.getProperty("j3d.stereo");
+      if (stereo != null) {
+        if ("REQUIRED".equals(stereo))
+          template.setStereo(GraphicsConfigTemplate.REQUIRED);
+        else if ("PREFERRED".equals(stereo))
+          template.setStereo(GraphicsConfigTemplate.PREFERRED);
+      }
+      
       this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-              getDefaultScreenDevice().getBestConfiguration(gc);
+              getDefaultScreenDevice().getBestConfiguration(template);
       if (this.configuration == null) {
         this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
             getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
