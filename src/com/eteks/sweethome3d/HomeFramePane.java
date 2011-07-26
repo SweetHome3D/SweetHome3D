@@ -279,8 +279,8 @@ public class HomeFramePane extends JRootPane implements View {
     if (x != null && y != null 
         && width != null && height != null 
         && screenWidth != null && screenHeight != null
-        && screenWidth >= screenSize.width
-        && screenHeight >= screenSize.height) {
+        && screenWidth <= screenSize.width
+        && screenHeight <= screenSize.height) {
       final Rectangle frameBounds = new Rectangle(x, y, width, height);
       if (maximized != null && maximized) {
         // Display first the frame at its maximum size to keep splitters location 
