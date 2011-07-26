@@ -1,5 +1,5 @@
-SWEET HOME 3D VIEWER v 3.2.1
-----------------------------
+SWEET HOME 3D VIEWER v 3.3
+--------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
 applet able to display the 3D view of a Sweet Home 3D file from its URL.
