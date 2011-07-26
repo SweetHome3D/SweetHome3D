@@ -429,6 +429,12 @@ public class AppletApplication extends HomeApplication {
     addToolBarAction(homeView, HomeView.ActionType.DELETE, toolBar);
     toolBar.addSeparator();
 
+    Action addHomeFurnitureAction = getToolBarAction(homeView, HomeView.ActionType.ADD_HOME_FURNITURE);
+    if (addHomeFurnitureAction != null) {
+      toolBar.add(addHomeFurnitureAction);
+      toolBar.addSeparator();
+    }
+    
     final JToggleButton selectToggleButton = 
         new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.SELECT));
     selectToggleButton.setSelected(true);
