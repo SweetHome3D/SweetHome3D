@@ -3197,7 +3197,7 @@ public class HomePane extends JRootPane implements HomeView {
           public void propertyChange(PropertyChangeEvent ev) {
             String propertyName = ev.getPropertyName();
             Object oldValue = ev.getOldValue();
-            Object newValue = getValue(propertyName);
+            Object newValue = ev.getNewValue();
             if (PluginAction.Property.ENABLED.name().equals(propertyName)) {
               propertyChangeSupport.firePropertyChange(
                   new PropertyChangeEvent(ev.getSource(), "enabled", oldValue, newValue));
@@ -3210,7 +3210,7 @@ public class HomePane extends JRootPane implements HomeView {
                       Action.NAME, oldValue, newValue));
                 } else if (PluginAction.Property.SHORT_DESCRIPTION.name().equals(propertyName)) {
                   propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                      Action.NAME, oldValue, newValue));
+                      Action.SHORT_DESCRIPTION, oldValue, newValue));
                 } else if (PluginAction.Property.MNEMONIC.name().equals(propertyName)) {
                   propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
                       Action.MNEMONIC_KEY, 
