@@ -549,7 +549,7 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns the wall pattern in plan.
+   * Returns the wall pattern in plan used by default.
    * @since 2.0
    */
   public TextureImage getWallPattern() {
@@ -557,7 +557,7 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Sets how walls should be displayed in plan, and notifies
+   * Sets how walls should be displayed in plan by default, and notifies
    * listeners of this change.
    * @since 2.0 
    */

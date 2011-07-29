@@ -91,6 +91,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -180,6 +181,7 @@ import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TextStyle;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -242,21 +244,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private boolean               resizeIndicatorVisible;
   
   private Map<PlanController.EditableProperty, JFormattedTextField> toolTipEditableTextFields;
-  private KeyListener                 toolTipKeyListener;
+  private KeyListener                       toolTipKeyListener;
   
-  private List<HomePieceOfFurniture>  sortedHomeFurniture;
-  private List<Room>                  sortedHomeRooms;
-  private Map<TextStyle, Font>        fonts;
-  private Map<TextStyle, FontMetrics> fontsMetrics;
+  private List<HomePieceOfFurniture>        sortedHomeFurniture;
+  private List<Room>                        sortedHomeRooms;
+  private Map<TextStyle, Font>              fonts;
+  private Map<TextStyle, FontMetrics>       fontsMetrics;
   
-  private Rectangle2D                 planBoundsCache;  
-  private boolean                     planBoundsCacheValid = false;  
-  private BufferedImage               backgroundImageCache;
-  private BufferedImage               wallsPatternImageCache;
-  private Color                       wallsPatternBackgroundCache;
-  private Color                       wallsPatternForegroundCache;
-  private Area                        wallsAreaCache;
-  private Map<Content, BufferedImage> floorTextureImagesCache;
+  private Rectangle2D                       planBoundsCache;  
+  private boolean                           planBoundsCacheValid = false;  
+  private BufferedImage                     backgroundImageCache;
+  private Map<TextureImage, BufferedImage>  patternImagesCache;
+  private Color                             wallsPatternBackgroundCache;
+  private Color                             wallsPatternForegroundCache;
+  private Map<Collection<Wall>, Area>       wallAreasCache;
+  private Map<Content, BufferedImage>       floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
   private static final Shape       POINT_INDICATOR;
@@ -550,6 +552,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     this.panningCursor = createCustomCursor("resources/cursors/panning16x16.png",
         "resources/cursors/panning32x32.png", "Panning cursor", Cursor.HAND_CURSOR);
     this.duplicationCursor = DragSource.DefaultCopyDrop;
+    this.patternImagesCache = new HashMap<TextureImage, BufferedImage>();
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
     super.setBackground(UIManager.getColor("window"));
@@ -610,8 +613,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Wall.Property.WALL_AT_START.name().equals(propertyName)
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
               || Wall.Property.THICKNESS.name().equals(propertyName)
-              || Wall.Property.ARC_EXTENT.name().equals(propertyName)) {
-            wallsAreaCache = null;
+              || Wall.Property.ARC_EXTENT.name().equals(propertyName)
+              || Wall.Property.PATTERN.name().equals(propertyName)) {
+            wallAreasCache = null;
             revalidate();
           }
         }
@@ -626,7 +630,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(wallChangeListener);
           }
-          wallsAreaCache = null;
+          wallAreasCache = null;
           revalidate();
         }
       });
@@ -809,7 +813,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }
             break;
           case WALL_PATTERN :
-            planComponent.wallsPatternImageCache = null;
+            planComponent.wallAreasCache = null;
             break;
           case FURNITURE_VIEWED_FROM_TOP :
             if (planComponent.furnitureTopViewIconsCache != null
@@ -2507,25 +2511,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintWalls(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
                           Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     Collection<Wall> paintedWalls;
-    Shape wallsArea;
+    Map<Collection<Wall>, Area> wallAreas;
     if (paintMode != PaintMode.CLIPBOARD) {
-      wallsArea = getWallsArea();
+      wallAreas = getWallAreas();
     } else {
       // In clipboard paint mode, paint only selected walls
       paintedWalls = Home.getWallsSubList(selectedItems);
-      wallsArea = getWallsArea(paintedWalls);
+      wallAreas = getWallAreas(paintedWalls);
     }
-    // Fill walls area
     float wallPaintScale = paintMode == PaintMode.PRINT 
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale;
-    g2D.setPaint(getWallPaint(wallPaintScale, backgroundColor, foregroundColor));
-    g2D.fill(wallsArea);
-    
-    // Draw walls area
-    g2D.setPaint(foregroundColor);
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
-    g2D.draw(wallsArea);
+    for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
+      // Fill walls area
+      TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
+      g2D.setPaint(getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
+          wallPattern != null ? wallPattern : this.preferences.getWallPattern()));
+      g2D.fill(areaEntry.getValue());
+      // Draw walls area
+      g2D.setPaint(foregroundColor);
+      g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
+      g2D.draw(areaEntry.getValue());
+    }
   }
 
   /**
@@ -2537,7 +2544,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                           Paint indicatorPaint, float planScale, Color foregroundColor) {
     float scaleInverse = 1 / planScale;
     Collection<Wall> walls = Home.getWallsSubList(items);
-    Shape wallsArea = getWallsArea(walls);
     AffineTransform previousTransform = g2D.getTransform();
     for (Wall wall : walls) {
       // Draw selection border
@@ -2617,7 +2623,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Draw walls area
     g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
-    g2D.draw(wallsArea);
+    for (Area area : getWallAreas(walls).values()) {
+      g2D.draw(area);
+    }
     
     // Paint resize indicator of the wall if indicator paint exists
     if (items.size() == 1 
@@ -2673,13 +2681,54 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Returns an area matching the union of all home wall shapes. 
+   * Returns areas matching the union of home wall shapes sorted by pattern. 
    */
-  private Area getWallsArea() {
-    if (this.wallsAreaCache == null) {
-      this.wallsAreaCache = getWallsArea(this.home.getWalls());
+  private Map<Collection<Wall>, Area> getWallAreas() {
+    if (this.wallAreasCache == null) {
+      this.wallAreasCache = getWallAreas(this.home.getWalls());
     }
-    return this.wallsAreaCache;
+    return this.wallAreasCache;
+  }
+  
+  /**
+   * Returns areas matching the union of <code>walls</code> shapes sorted by pattern. 
+   */
+  private Map<Collection<Wall>, Area> getWallAreas(Collection<Wall> walls) {
+    if (walls.size() == 0) {
+      return Collections.emptyMap();
+    }
+    // Check if all walls use the same pattern
+    TextureImage pattern = walls.iterator().next().getPattern();
+    boolean samePattern = true;
+    for (Wall wall : walls) {
+      if (pattern != wall.getPattern()) {
+        samePattern = false;
+        break;
+      }
+    }
+    Map<Collection<Wall>, Area> wallAreas = new LinkedHashMap<Collection<Wall>, Area>();
+    if (samePattern) {
+      wallAreas.put(walls, getWallsArea(walls));
+    } else {
+      // Create walls sublists by pattern
+      Map<TextureImage, Collection<Wall>> sortedWalls = new LinkedHashMap<TextureImage, Collection<Wall>>();
+      for (Wall wall : walls) {
+        TextureImage wallPattern = wall.getPattern();
+        if (wallPattern == null) {
+          wallPattern = this.preferences.getWallPattern();
+        }
+        Collection<Wall> patternWalls = sortedWalls.get(wallPattern);
+        if (patternWalls == null) {
+          patternWalls = new ArrayList<Wall>();
+          sortedWalls.put(wallPattern, patternWalls);
+        }
+        patternWalls.add(wall);
+      }
+      for (Collection<Wall> patternWalls : sortedWalls.values()) {
+        wallAreas.put(patternWalls, getWallsArea(patternWalls));
+      }
+    }
+    return wallAreas;
   }
   
   /**
@@ -2692,20 +2741,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return wallsArea;
   }
-  
+
   /**
    * Returns the <code>Paint</code> object used to fill walls.
    */
-  private Paint getWallPaint(float planScale, Color backgroundColor, Color foregroundColor) {
-    if (this.wallsPatternImageCache == null
+  private Paint getWallPaint(float planScale, Color backgroundColor, Color foregroundColor, TextureImage wallPattern) {
+    BufferedImage patternImage = this.patternImagesCache.get(wallPattern);
+    if (patternImage == null
         || !backgroundColor.equals(this.wallsPatternBackgroundCache)
         || !foregroundColor.equals(this.wallsPatternForegroundCache)) {
-      this.wallsPatternImageCache = SwingTools.getPatternImage(this.preferences.getWallPattern(), 
-          backgroundColor, foregroundColor);
+      patternImage = SwingTools.getPatternImage(wallPattern, backgroundColor, foregroundColor);
+      this.patternImagesCache.put(wallPattern, patternImage);
       this.wallsPatternBackgroundCache = backgroundColor;
       this.wallsPatternForegroundCache = foregroundColor;
     }
-    return new TexturePaint(this.wallsPatternImageCache, 
+    return new TexturePaint(patternImage, 
         new Rectangle2D.Float(0, 0, 10 / planScale, 10 / planScale));
   }
   

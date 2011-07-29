@@ -44,27 +44,29 @@ public class Wall implements Serializable, Selectable {
   public enum Property {X_START, Y_START, X_END, Y_END, ARC_EXTENT, WALL_AT_START, WALL_AT_END, 
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
-                        RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS}
+                        RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS,
+                        PATTERN}
   
   private static final long serialVersionUID = 1L;
   
-  private float       xStart;
-  private float       yStart;
-  private float       xEnd;
-  private float       yEnd; 
-  private Float       arcExtent; 
-  private Wall        wallAtStart;
-  private Wall        wallAtEnd;
-  private float       thickness;
-  private Float       height;
-  private Float       heightAtEnd;
-  private Integer     leftSideColor;
-  private HomeTexture leftSideTexture;
-  private float       leftSideShininess;
-  private Integer     rightSideColor;
-  private HomeTexture rightSideTexture;
-  private float       rightSideShininess;
-  private boolean     symmetric = true;
+  private float        xStart;
+  private float        yStart;
+  private float        xEnd;
+  private float        yEnd; 
+  private Float        arcExtent; 
+  private Wall         wallAtStart;
+  private Wall         wallAtEnd;
+  private float        thickness;
+  private Float        height;
+  private Float        heightAtEnd;
+  private Integer      leftSideColor;
+  private HomeTexture  leftSideTexture;
+  private float        leftSideShininess;
+  private Integer      rightSideColor;
+  private HomeTexture  rightSideTexture;
+  private float        rightSideShininess;
+  private boolean      symmetric = true;
+  private TextureImage pattern;  
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
@@ -575,6 +577,28 @@ public class Wall implements Serializable, Selectable {
       float oldRightSideShininess = this.rightSideShininess;
       this.rightSideShininess = rightSideShininess;
       this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_SHININESS.name(), oldRightSideShininess, rightSideShininess);
+    }
+  }
+
+  /**
+   * Returns the wall pattern in plan.
+   * @since 3.3
+   */
+  public TextureImage getPattern() {
+    return this.pattern;
+  }
+  
+  /**
+   * Sets how walls should be displayed in plan, and notifies
+   * listeners of this change.
+   * @since 3.3 
+   */
+  public void setPattern(TextureImage pattern) {
+    if (this.pattern != pattern) {
+      TextureImage oldPattern = this.pattern;
+      this.pattern = pattern;
+      this.propertyChangeSupport.firePropertyChange(Property.PATTERN.name(), 
+          oldPattern, pattern);
     }
   }
 

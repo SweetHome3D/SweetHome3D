@@ -19,11 +19,13 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.Serializable;
+
 /**
  * An image used as texture.
  * @author Emmanuel Puybaret
  */
-public interface TextureImage {
+public interface TextureImage extends Serializable {
   /**
    * Returns the name of this texture image.
    */
