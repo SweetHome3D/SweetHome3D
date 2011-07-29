@@ -1,4 +1,4 @@
-SWEET HOME 3D VIEWER v 3.3
+SWEET HOME 3D VIEWER v 3.4
 --------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 

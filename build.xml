@@ -27,7 +27,7 @@
 -->
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="3.3"/>
+  <property name="version" value="3.4"/>
 
   <target name="build" 
   	      description="Builds build/SweetHome3D.jar with all its classes">
