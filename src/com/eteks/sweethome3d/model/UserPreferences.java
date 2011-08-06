@@ -47,7 +47,8 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
-                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AUTO_SAVE_DELAY_FOR_RECOVERY}
+                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+                        AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
   private static final String [] SUPPORTED_LANGUAGES; 
   private static final List<ClassLoader> DEFAULT_CLASS_LOADER = 
@@ -84,6 +85,7 @@ public abstract class UserPreferences {
   private float            newWallHeight;
   private List<String>     recentHomes;
   private int              autoSaveDelayForRecovery;
+  private List<String>     autoCompletionStrings;
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -646,7 +648,7 @@ public abstract class UserPreferences {
     if (!recentHomes.equals(this.recentHomes)) {
       List<String> oldRecentHomes = this.recentHomes;
       this.recentHomes = new ArrayList<String>(recentHomes);
-      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_COMPLETION_STRINGS.name(), 
           oldRecentHomes, getRecentHomes());
     }
   }
@@ -697,6 +699,41 @@ public abstract class UserPreferences {
     }
   }
 
+  /**
+   * Returns the strings that may be used for auto completion.
+   */
+  public List<String> getAutoCompletionStrings() {
+    if (this.autoCompletionStrings != null) {
+      return Collections.unmodifiableList(this.autoCompletionStrings);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  /**
+   * Adds the given string to the list of the strings used in auto completion
+   * and notifies listeners of this change.
+   */
+  public void addAutoCompletionString(String autoCompletionString) {
+    if (autoCompletionString.length() > 0 && !this.autoCompletionStrings.contains(autoCompletionString)) {
+      List<String> autoCompletionStrings = new ArrayList<String>(this.autoCompletionStrings);
+      autoCompletionStrings.add(0, autoCompletionString);
+      setAutoCompletionStrings(autoCompletionStrings);
+    }    
+  }
+  
+  /**
+   * Sets the auto completion strings list and notifies listeners of this change.
+   */
+  public void setAutoCompletionStrings(List<String> autoCompletionStrings) {
+    if (!autoCompletionStrings.equals(this.autoCompletionStrings)) {
+      List<String> oldAutoCompletionStrings = this.autoCompletionStrings;
+      this.autoCompletionStrings = new ArrayList<String>(autoCompletionStrings);
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
+          oldAutoCompletionStrings, getAutoCompletionStrings());
+    }
+  }
+  
   /**
    * Adds <code>languageLibraryName</code> to language catalog  
    * to make the language library it contains available available to supported languages.

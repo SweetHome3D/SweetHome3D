@@ -89,6 +89,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
   private static final String AUTO_SAVE_DELAY_FOR_RECOVERY          = "autoSaveDelayForRecovery";
+  private static final String AUTO_COMPLETION_STRING                = "autoCompletionString#";
   private static final String RECENT_HOMES                          = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";  
 
@@ -223,7 +224,7 @@ public class FileUserPreferences extends UserPreferences {
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
         defaultPreferences.getNewWallHeight()));    
     setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
-        defaultPreferences.getAutoSaveDelayForRecovery()));    
+        defaultPreferences.getAutoSaveDelayForRecovery()));
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
@@ -242,6 +243,21 @@ public class FileUserPreferences extends UserPreferences {
       } else {
         this.ignoredActionTips.put(ignoredActionTip, true);
       }
+    }
+    // Read auto completion strings list
+    List<String> autoCompletionStrings = new ArrayList<String>();
+    for (int i = 1; ; i++) {
+      String autoCompletionString = preferences.get(AUTO_COMPLETION_STRING + i, null);
+      if (autoCompletionString != null) {
+        autoCompletionStrings.add(autoCompletionString);
+      } else {
+        break;
+      }
+    }
+    if (autoCompletionStrings.size() > 0) {
+      setAutoCompletionStrings(autoCompletionStrings);
+    } else {
+      setAutoCompletionStrings(defaultPreferences.getAutoCompletionStrings());
     }
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
@@ -594,6 +610,15 @@ public class FileUserPreferences extends UserPreferences {
     // Remove obsolete keys
     for ( ; i <= this.ignoredActionTips.size(); i++) {
       preferences.remove(IGNORED_ACTION_TIP + i);
+    }
+    // Write auto completion strings list
+    i = 1;
+    for (Iterator<String> it = getAutoCompletionStrings().iterator(); i <= 1000; i++) {
+      if (it.hasNext()) {
+        preferences.put(AUTO_COMPLETION_STRING + i, it.next());
+      } else {
+        preferences.remove(AUTO_COMPLETION_STRING + i);
+      }
     }
     
     try {

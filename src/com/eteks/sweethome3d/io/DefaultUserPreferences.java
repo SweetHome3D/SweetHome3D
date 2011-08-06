@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.io;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Content;
@@ -77,6 +78,15 @@ public class DefaultUserPreferences extends UserPreferences {
       setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
     } catch (IllegalArgumentException ex) {
       // Don't use currency and prices in program
+    }
+    try {
+      String [] autoCompletionStrings = getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings").split(",");
+      for (int i = 0; i < autoCompletionStrings.length; i++) {
+        autoCompletionStrings [i] = autoCompletionStrings [i].trim();
+      }
+      setAutoCompletionStrings(Arrays.asList(autoCompletionStrings));
+    } catch (IllegalArgumentException ex) {
+      // No default auto completion strings
     }
   }
 

@@ -77,7 +77,7 @@ public class LabelPanel extends JPanel implements DialogView {
     // Create text label and its text field bound to NAME controller property
     this.textLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         LabelPanel.class, "textLabel.text"));
-    this.textTextField = new JTextField(controller.getText(), 20);
+    this.textTextField = new AutoCompleteTextField(controller.getText(), 20, preferences);
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.textTextField);
     }
