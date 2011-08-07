@@ -19,6 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.TreeSet;
+
 import javax.swing.JTextField;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -28,7 +32,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A text field that suggests to the user strings stored in auto completion strings in the user preferences.
- * From the code released in public domain by Samuel Sjoberg on his 
+ * Inspired from the code released in public domain by Samuel Sjoberg on his 
  * <a href="http://samuelsjoberg.com/archive/2009/10/autocompletion-in-swing">blog</a>.
  * @author Emmanuel Puybaret
  */
@@ -71,17 +75,26 @@ public class AutoCompleteTextField extends JTextField {
 
     private String autoComplete(String stringStart) {
       stringStart = stringStart.toLowerCase();
-      String matchingString = null;
+      // Keep suggestions in alphabetical order
+      final Collator comparator = Collator.getInstance();
+      comparator.setStrength(Collator.TERTIARY);
+      TreeSet<String> matchingStrings = new TreeSet<String>(new Comparator<String>() {
+          public int compare(String s1, String s2) {
+            return comparator.compare(s1, s2);
+          }
+        });
+      // Find matching strings
       for (String s : preferences.getAutoCompletionStrings()) {
         if (s.toLowerCase().startsWith(stringStart)) {
-          if (matchingString == null) {
-            matchingString = s;
-          } else {
-            return null;
-          }
+          matchingStrings.add(s);
         }
       }
-      return matchingString;
+      if (matchingStrings.size() > 0) {
+        // Return the first found one
+        return matchingStrings.first();
+      } else {
+        return null;
+      }
     }
   }
 }
