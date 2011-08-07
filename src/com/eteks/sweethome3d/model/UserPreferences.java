@@ -701,6 +701,7 @@ public abstract class UserPreferences {
 
   /**
    * Returns the strings that may be used for auto completion.
+   * @since 3.4
    */
   public List<String> getAutoCompletionStrings() {
     if (this.autoCompletionStrings != null) {
@@ -713,6 +714,7 @@ public abstract class UserPreferences {
   /**
    * Adds the given string to the list of the strings used in auto completion
    * and notifies listeners of this change.
+   * @since 3.4
    */
   public void addAutoCompletionString(String autoCompletionString) {
     if (autoCompletionString.length() > 0 && !this.autoCompletionStrings.contains(autoCompletionString)) {
@@ -724,6 +726,7 @@ public abstract class UserPreferences {
   
   /**
    * Sets the auto completion strings list and notifies listeners of this change.
+   * @since 3.4
    */
   public void setAutoCompletionStrings(List<String> autoCompletionStrings) {
     if (!autoCompletionStrings.equals(this.autoCompletionStrings)) {
