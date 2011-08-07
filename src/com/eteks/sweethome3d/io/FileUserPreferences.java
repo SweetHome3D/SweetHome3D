@@ -89,7 +89,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
   private static final String AUTO_SAVE_DELAY_FOR_RECOVERY          = "autoSaveDelayForRecovery";
-  private static final String AUTO_COMPLETION_STRING                = "autoCompletionString#";
+  private static final String AUTO_COMPLETION_PROPERTY              = "autoCompletionProperty#";
+  private static final String AUTO_COMPLETION_STRINGS               = "autoCompletionStrings#";
   private static final String RECENT_HOMES                          = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";  
 
@@ -244,26 +245,26 @@ public class FileUserPreferences extends UserPreferences {
         this.ignoredActionTips.put(ignoredActionTip, true);
       }
     }
+    // Get default auto completion strings
+    for (String property : defaultPreferences.getAutoCompletedProperties()) {
+      setAutoCompletionStrings(property, defaultPreferences.getAutoCompletionStrings(property));
+    }
     // Read auto completion strings list
-    List<String> autoCompletionStrings = new ArrayList<String>();
     for (int i = 1; ; i++) {
-      String autoCompletionString = preferences.get(AUTO_COMPLETION_STRING + i, null);
-      if (autoCompletionString != null) {
-        autoCompletionStrings.add(autoCompletionString);
+      String autoCompletionProperty = preferences.get(AUTO_COMPLETION_PROPERTY + i, null);
+      String autoCompletionStrings = preferences.get(AUTO_COMPLETION_STRINGS + i, null);
+      if (autoCompletionProperty != null && autoCompletionStrings != null) {
+        setAutoCompletionStrings(autoCompletionProperty, Arrays.asList(autoCompletionStrings.split(",")));
       } else {
         break;
       }
     }
-    if (autoCompletionStrings.size() > 0) {
-      setAutoCompletionStrings(autoCompletionStrings);
-    } else {
-      setAutoCompletionStrings(defaultPreferences.getAutoCompletionStrings());
-    }
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
+        public void propertyChange(PropertyChangeEvent ev) {
           updateFurnitureDefaultCatalog();
           updateTexturesDefaultCatalog();
+          updateAutoCompletionStrings();
         }
       });
     
@@ -425,6 +426,18 @@ public class FileUserPreferences extends UserPreferences {
         } catch (IllegalHomonymException ex) {
           // Ignore textures that have the same name as an existing piece
         }
+      }
+    }
+  }
+
+  /**
+   * Adds to auto completion strings the default strings of the new chosen language.
+   */
+  private void updateAutoCompletionStrings() {
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false);
+    for (String property : defaultPreferences.getAutoCompletedProperties()) {
+      for (String autoCompletionString : defaultPreferences.getAutoCompletionStrings(property)) {
+        addAutoCompletionString(property, autoCompletionString);
       }
     }
   }
@@ -611,14 +624,27 @@ public class FileUserPreferences extends UserPreferences {
     for ( ; i <= this.ignoredActionTips.size(); i++) {
       preferences.remove(IGNORED_ACTION_TIP + i);
     }
-    // Write auto completion strings list
+    // Write auto completion strings lists
     i = 1;
-    for (Iterator<String> it = getAutoCompletionStrings().iterator(); i <= 1000; i++) {
-      if (it.hasNext()) {
-        preferences.put(AUTO_COMPLETION_STRING + i, it.next());
-      } else {
-        preferences.remove(AUTO_COMPLETION_STRING + i);
+    for (String property : getAutoCompletedProperties()) {
+      StringBuilder autoCompletionStrings = new StringBuilder();
+      Iterator<String> it = getAutoCompletionStrings(property).iterator();
+      for (int j = 0; j < 1000 && it.hasNext(); j++) {
+        String autoCompletionString = it.next();
+        // As strings are comma separated, accept only the ones without a comma 
+        if (autoCompletionString.indexOf(',') < 0) {
+          if (autoCompletionStrings.length() > 0) {
+            autoCompletionStrings.append(",");
+          } 
+          autoCompletionStrings.append(autoCompletionString);
+        }
       }
+      preferences.put(AUTO_COMPLETION_PROPERTY + i, property);
+      preferences.put(AUTO_COMPLETION_STRINGS + i++, autoCompletionStrings.toString());
+    }
+    for ( ; preferences.get(AUTO_COMPLETION_PROPERTY + i, null) != null; i++) {
+      preferences.remove(AUTO_COMPLETION_PROPERTY + i);
+      preferences.remove(AUTO_COMPLETION_STRINGS + i);
     }
     
     try {

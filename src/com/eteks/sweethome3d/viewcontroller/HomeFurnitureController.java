@@ -956,7 +956,7 @@ public class HomeFurnitureController implements Controller {
             defaultColorsAndTextures, color, texture, defaultShininess, shininess, visible, modelMirrored, lightPower);
         this.undoSupport.postEdit(undoableEdit);
       }
-      this.preferences.addAutoCompletionString(name);
+      this.preferences.addAutoCompletionString("HomePieceOfFurnitureName", name);
     }
   }
   

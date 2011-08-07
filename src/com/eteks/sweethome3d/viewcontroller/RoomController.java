@@ -529,7 +529,7 @@ public class RoomController implements Controller {
             ceilingColor, ceilingTexture, ceilingVisible, ceilingShininess);
         this.undoSupport.postEdit(undoableEdit);
       }
-      this.preferences.addAutoCompletionString(name);
+      this.preferences.addAutoCompletionString("RoomName", name);
     }
   }
 

@@ -26,10 +26,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
+import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
@@ -42,10 +44,22 @@ public class DefaultUserPreferences extends UserPreferences {
    * Creates default user preferences read from resource files.
    */
   public DefaultUserPreferences() {
+    this(true);
+  }
+  
+  /**
+   * Creates default user preferences read from resource files.
+   * @param readCatalogs if <code>false</code> furniture and texture catalog won't be read
+   */
+  DefaultUserPreferences(boolean readCatalogs) {
     // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog());
+    setFurnitureCatalog(readCatalogs 
+        ? new DefaultFurnitureCatalog() 
+        : new FurnitureCatalog() { });
     // Read default textures catalog
-    setTexturesCatalog(new DefaultTexturesCatalog());
+    setTexturesCatalog(readCatalogs 
+        ? new DefaultTexturesCatalog()
+        : new TexturesCatalog() { });
     // Build default patterns catalog
     List<TextureImage> patterns = new ArrayList<TextureImage>();
     patterns.add(new DefaultPatternTexture("foreground"));
@@ -79,14 +93,18 @@ public class DefaultUserPreferences extends UserPreferences {
     } catch (IllegalArgumentException ex) {
       // Don't use currency and prices in program
     }
-    try {
-      String [] autoCompletionStrings = getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings").split(",");
-      for (int i = 0; i < autoCompletionStrings.length; i++) {
-        autoCompletionStrings [i] = autoCompletionStrings [i].trim();
+    for (String property : new String [] {"HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
+      try {
+        String [] autoCompletionStrings = getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings#" + property).trim().split(",");
+        if (autoCompletionStrings.length > 0) {
+          for (int i = 0; i < autoCompletionStrings.length; i++) {
+            autoCompletionStrings [i] = autoCompletionStrings [i].trim();
+          }
+          setAutoCompletionStrings(property, Arrays.asList(autoCompletionStrings));
+        }
+      } catch (IllegalArgumentException ex) {
+        // No default auto completion strings
       }
-      setAutoCompletionStrings(Arrays.asList(autoCompletionStrings));
-    } catch (IllegalArgumentException ex) {
-      // No default auto completion strings
     }
   }
 

@@ -182,7 +182,7 @@ public class LabelController implements Controller {
             this.home, this.preferences, oldSelection, basePlanLocked, label, newBasePlanLocked);
         this.undoSupport.postEdit(undoableEdit);
       }
-      this.preferences.addAutoCompletionString(text);
+      this.preferences.addAutoCompletionString("LabelText", text);
     }
   }
 
@@ -278,7 +278,7 @@ public class LabelController implements Controller {
             this.preferences, oldSelection, modifiedLabels, text);
         this.undoSupport.postEdit(undoableEdit);
       }
-      this.preferences.addAutoCompletionString(text);
+      this.preferences.addAutoCompletionString("LabelText", text);
     }
   }
   

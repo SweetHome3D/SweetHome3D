@@ -85,12 +85,13 @@ public abstract class UserPreferences {
   private float            newWallHeight;
   private List<String>     recentHomes;
   private int              autoSaveDelayForRecovery;
-  private List<String>     autoCompletionStrings;
+  private Map<String, List<String>>  autoCompletionStrings;
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.classResourceBundles = new HashMap<Class<?>, ResourceBundle>();
     this.resourceBundles = new HashMap<String, ResourceBundle>();
+    this.autoCompletionStrings = new HashMap<String, List<String>>();
 
     this.defaultCountry = Locale.getDefault().getCountry();    
     String defaultLanguage = Locale.getDefault().getLanguage();
@@ -648,7 +649,7 @@ public abstract class UserPreferences {
     if (!recentHomes.equals(this.recentHomes)) {
       List<String> oldRecentHomes = this.recentHomes;
       this.recentHomes = new ArrayList<String>(recentHomes);
-      this.propertyChangeSupport.firePropertyChange(Property.AUTO_COMPLETION_STRINGS.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
           oldRecentHomes, getRecentHomes());
     }
   }
@@ -700,40 +701,57 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns the strings that may be used for auto completion.
+   * Returns the strings that may be used for the auto completion of the given <code>property</code>.
    * @since 3.4
    */
-  public List<String> getAutoCompletionStrings() {
-    if (this.autoCompletionStrings != null) {
-      return Collections.unmodifiableList(this.autoCompletionStrings);
+  public List<String> getAutoCompletionStrings(String property) {
+    List<String> propertyAutoCompletionStrings = this.autoCompletionStrings.get(property);
+    if (propertyAutoCompletionStrings != null) {
+      return Collections.unmodifiableList(propertyAutoCompletionStrings);
     } else {
       return Collections.emptyList();
     }
   }
 
   /**
-   * Adds the given string to the list of the strings used in auto completion
+   * Adds the given string to the list of the strings used in auto completion of a <code>property</code>
    * and notifies listeners of this change.
    * @since 3.4
    */
-  public void addAutoCompletionString(String autoCompletionString) {
-    if (autoCompletionString.length() > 0 && !this.autoCompletionStrings.contains(autoCompletionString)) {
-      List<String> autoCompletionStrings = new ArrayList<String>(this.autoCompletionStrings);
-      autoCompletionStrings.add(0, autoCompletionString);
-      setAutoCompletionStrings(autoCompletionStrings);
-    }    
+  public void addAutoCompletionString(String property, String autoCompletionString) {
+    if (autoCompletionString.length() > 0) {
+      List<String> propertyAutoCompletionStrings = this.autoCompletionStrings.get(property);
+      if (propertyAutoCompletionStrings != null
+          && !propertyAutoCompletionStrings.contains(autoCompletionString)) {
+        propertyAutoCompletionStrings = new ArrayList<String>(propertyAutoCompletionStrings);
+        propertyAutoCompletionStrings.add(0, autoCompletionString);
+        setAutoCompletionStrings(property, propertyAutoCompletionStrings);
+      }
+    }
   }
   
   /**
-   * Sets the auto completion strings list and notifies listeners of this change.
+   * Sets the auto completion strings list of the given <code>property</code> and notifies listeners of this change.
    * @since 3.4
    */
-  public void setAutoCompletionStrings(List<String> autoCompletionStrings) {
-    if (!autoCompletionStrings.equals(this.autoCompletionStrings)) {
-      List<String> oldAutoCompletionStrings = this.autoCompletionStrings;
-      this.autoCompletionStrings = new ArrayList<String>(autoCompletionStrings);
-      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
-          oldAutoCompletionStrings, getAutoCompletionStrings());
+  public void setAutoCompletionStrings(String property, List<String> autoCompletionStrings) {
+    List<String> propertyAutoCompletionStrings = this.autoCompletionStrings.get(property);
+    if (!autoCompletionStrings.equals(propertyAutoCompletionStrings)) {
+      this.autoCompletionStrings.put(property, new ArrayList<String>(autoCompletionStrings));
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_COMPLETION_STRINGS.name(), 
+          null, property);
+    }
+  }
+  
+  /**
+   * Returns the list of properties with auto completion strings. 
+   * @since 3.4
+   */
+  public List<String> getAutoCompletedProperties() {
+    if (this.autoCompletionStrings != null) {
+      return Arrays.asList(this.autoCompletionStrings.keySet().toArray(new String [this.autoCompletionStrings.size()]));
+    } else {
+      return Collections.emptyList();
     }
   }
   

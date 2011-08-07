@@ -21,14 +21,13 @@ package com.eteks.sweethome3d.swing;
 
 import java.text.Collator;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeSet;
 
 import javax.swing.JTextField;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-
-import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A text field that suggests to the user strings stored in auto completion strings in the user preferences.
@@ -37,11 +36,11 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class AutoCompleteTextField extends JTextField {
-  private UserPreferences preferences;
+  private List<String> autoCompletionStrings;
   
-  public AutoCompleteTextField(String text, int preferredLength, UserPreferences preferences) {
+  public AutoCompleteTextField(String text, int preferredLength, List<String> autoCompletionStrings) {
     super(preferredLength);
-    this.preferences = preferences;    
+    this.autoCompletionStrings = autoCompletionStrings;
     setDocument(new AutoCompleteDocument(text));    
   }
   
@@ -60,17 +59,21 @@ public class AutoCompleteTextField extends JTextField {
     @Override
     public void insertString(int offset, String string, AttributeSet attr) throws BadLocationException {
       if (string != null && string.length() > 0) {
-        String text = getText(0, offset); 
-        String completion = autoComplete(text + string);
-        int length = offset + string.length();
-        if (completion != null && text.length() > 0) {
-          string = completion.substring(length - 1);
-          super.insertString(offset, string, attr);
-          select(length, getLength());
-        } else {
-          super.insertString(offset, string, attr);
+        int length = getLength();
+        if (offset == length || (offset == getSelectionStart() && length - 1 == getSelectionEnd())) {
+          String textAtOffset = getText(0, offset); 
+          String completion = autoComplete(textAtOffset + string);
+          if (completion != null) {
+            int completionIndex = offset + string.length();
+            super.remove(offset, length - offset);
+            super.insertString(offset, string, attr);
+            super.insertString(completionIndex, completion.substring(completionIndex), attr);
+            select(completionIndex, getLength());
+            return;
+          }
         }
       }
+      super.insertString(offset, string, attr);
     }
 
     private String autoComplete(String stringStart) {
@@ -84,7 +87,7 @@ public class AutoCompleteTextField extends JTextField {
           }
         });
       // Find matching strings
-      for (String s : preferences.getAutoCompletionStrings()) {
+      for (String s : autoCompletionStrings) {
         if (s.toLowerCase().startsWith(stringStart)) {
           matchingStrings.add(s);
         }
