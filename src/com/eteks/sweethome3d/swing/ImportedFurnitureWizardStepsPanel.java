@@ -690,6 +690,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                 new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null, ev.getWhen(), ActionEvent.SHIFT_MASK));
           }
         });
+      timer.setInitialDelay(250);
       
       // Update timer when button is armed
       addChangeListener(new ChangeListener() {
