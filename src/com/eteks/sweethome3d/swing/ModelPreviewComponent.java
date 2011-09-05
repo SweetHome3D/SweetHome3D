@@ -463,7 +463,7 @@ public class ModelPreviewComponent extends JComponent {
   
   /**
    * Sets the <code>model</code> displayed by this component. 
-   * The model is shown at its default orientation and in a box of 1 unit wide.
+   * The model is shown at its default orientation and in a box 1 unit wide.
    */
   public void setModel(BranchGroup model) {
     TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
@@ -635,46 +635,20 @@ public class ModelPreviewComponent extends JComponent {
                                          float width, float depth, float height) {
     BranchGroup model = getModel();
     if (model != null && model.numChildren() > 0) {
-      BoundingBox bounds = ModelManager.getInstance().getBounds(model);
-      Point3d lower = new Point3d();
-      bounds.getLower(lower);
-      Point3d upper = new Point3d();
-      bounds.getUpper(upper);
-      
-      // Translate model to center
-      Transform3D translation = new Transform3D ();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                       -lower.y - (upper.y - lower.y) / 2, 
-                       -lower.z - (upper.z - lower.z) / 2));
-      // Scale model to make it fill a 1 unit wide box
-      Transform3D scaleOneTransform = new Transform3D();
-      scaleOneTransform.setScale (
-          new Vector3d(1 / Math.max(0.0001, upper.x -lower.x), 
-              1 / Math.max(0.0001, upper.y - lower.y), 
-              1 / Math.max(0.0001, upper.z - lower.z)));
-      scaleOneTransform.mul(translation);
-      // Apply model rotation
-      Transform3D rotationTransform = new Transform3D();
-      if (modelRotation != null) {
-        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-        rotationTransform.setRotation(modelRotationMatrix);
-      }
-      rotationTransform.mul(scaleOneTransform);
+      Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(model, modelRotation, 1f);
       // Scale model to its size
       Transform3D scaleTransform = new Transform3D();
       if (width != 0 && depth != 0 && height != 0) {
         scaleTransform.setScale(new Vector3d(width, height, depth));
       }
-      scaleTransform.mul(rotationTransform);
+      scaleTransform.mul(normalization);
       // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
       if (width != 0 && depth != 0 && height != 0) {
         modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
       } else {
-        modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
+        Vector3f size = ModelManager.getInstance().getSize(model);
+        modelTransform.setScale(1.8 / Math.max(Math.max(size.x, size.z), size.y));
       }
       modelTransform.mul(scaleTransform);
       

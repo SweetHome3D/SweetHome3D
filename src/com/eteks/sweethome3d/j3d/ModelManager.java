@@ -204,13 +204,23 @@ public class ModelManager {
   }
   
   /**
-   * Returns the size of 3D shapes under <code>node</code>.
+   * Returns the size of 3D shapes of <code>node</code>.
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
    * sphere for a scene.
    */
   public Vector3f getSize(Node node) {
-    BoundingBox bounds = getBounds(node);
+    return getSize(node, new Transform3D());
+  }
+  
+  /**
+   * Returns the size of 3D shapes of <code>node</code> after an additional <code>transformation</code>.
+   * This method computes the exact box that contains all the shapes,
+   * contrary to <code>node.getBounds()</code> that returns a bounding 
+   * sphere for a scene.
+   */
+  public Vector3f getSize(Node node, Transform3D transformation) {
+    BoundingBox bounds = getBounds(node, transformation);
     Point3d lower = new Point3d();
     bounds.getLower(lower);
     Point3d upper = new Point3d();
@@ -221,16 +231,25 @@ public class ModelManager {
   }
   
   /**
-   * Returns the bounds of 3D shapes under <code>node</code>.
+   * Returns the bounds of the 3D shapes of <code>node</code>.
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
    * sphere for a scene.
    */
   public BoundingBox getBounds(Node node) {
+    return getBounds(node, new Transform3D());
+  }
+  
+  /**
+   * Returns the bounds of the 3D shapes of <code>node</code> with an additional <code>transformation</code>.
+   * This method computes the exact box that contains all the shapes, contrary to <code>node.getBounds()</code> 
+   * that returns a bounding sphere for a scene.
+   */
+  public BoundingBox getBounds(Node node, Transform3D transformation) {
     BoundingBox objectBounds = new BoundingBox(
         new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
         new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-    computeBounds(node, objectBounds, new Transform3D());
+    computeBounds(node, objectBounds, transformation, !isOrthogonalRotation(transformation));
     Point3d lower = new Point3d();
     objectBounds.getLower(lower);
     if (lower.x == Double.POSITIVE_INFINITY) {
@@ -239,7 +258,28 @@ public class ModelManager {
     return objectBounds;
   }
   
-  private void computeBounds(Node node, BoundingBox bounds, Transform3D parentTransformations) {
+  /**
+   * Returns <code>true</code> if the rotation matrix matches only rotations of 
+   * a multiple of 90° degrees around x, y or z axis.
+   */
+  private boolean isOrthogonalRotation(Transform3D transformation) {
+    Matrix3f matrix = new Matrix3f();
+    transformation.get(matrix);
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        // Return false if the matrix contains a value different from 0 1 or -1
+        if (Math.abs(matrix.getElement(i, j)) > 1E-6
+            && Math.abs(matrix.getElement(i, j) - 1) > 1E-6
+            && Math.abs(matrix.getElement(i, j) + 1) > 1E-6) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private void computeBounds(Node node, BoundingBox bounds, 
+                             Transform3D parentTransformations, boolean transformShapeGeometry) {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
         parentTransformations = new Transform3D(parentTransformations);
@@ -250,14 +290,86 @@ public class ModelManager {
       // Compute the bounds of all the node children
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements ()) {
-        computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations);
+        computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations, transformShapeGeometry);
       }
     } else if (node instanceof Link) {
-      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations);
+      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations, transformShapeGeometry);
     } else if (node instanceof Shape3D) {
-      Bounds shapeBounds = ((Shape3D)node).getBounds();
-      shapeBounds.transform(parentTransformations);
+      Shape3D shape = (Shape3D)node;
+      Bounds shapeBounds;
+      if (transformShapeGeometry) {
+        shapeBounds = computeTransformedGeometryBounds(shape, parentTransformations);
+      } else {
+        shapeBounds = shape.getBounds();
+        shapeBounds.transform(parentTransformations);
+      }
       bounds.combine(shapeBounds);
+    }
+  }
+
+  private Bounds computeTransformedGeometryBounds(Shape3D shape, Transform3D transformation) {
+    Point3d lower = new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+    Point3d upper = new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);    
+    for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+      Geometry geometry = shape.getGeometry(i);
+      if (geometry instanceof GeometryArray) {
+        GeometryArray geometryArray = (GeometryArray)geometry;      
+        int vertexCount = geometryArray.getVertexCount();
+        Point3f vertex = new Point3f();
+        if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+          if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+            float [] vertexData = geometryArray.getInterleavedVertices();
+            int vertexSize = vertexData.length / vertexCount;
+            for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+              vertex.x = vertexData [j];
+              vertex.y = vertexData [j + 1];
+              vertex.z = vertexData [j + 2];
+              updateBounds(vertex, transformation, lower, upper);
+            }
+          } else {
+            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+            for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+              vertex.x = vertexCoordinates [j];
+              vertex.y = vertexCoordinates [j + 1];
+              vertex.z = vertexCoordinates [j + 2];
+              updateBounds(vertex, transformation, lower, upper);
+            }
+          }
+        } else {
+          for (int index = 0; index < vertexCount; index++) {
+            geometryArray.getCoordinate(index, vertex);
+            updateBounds(vertex, transformation, lower, upper);
+          }
+        }
+      } else {
+        Bounds shapeBounds = shape.getBounds();
+        shapeBounds.transform(transformation);
+        return shapeBounds;
+      }
+    }
+    Bounds shapeBounds = new BoundingBox(lower, upper);
+    return shapeBounds;
+  }
+
+  private void updateBounds(Point3f vertex, Transform3D transformation, Point3d lower, Point3d upper) {
+    transformation.transform(vertex);
+    if (lower.x > vertex.x) {
+      lower.x = vertex.x;
+    }
+    if (lower.y > vertex.y) {
+      lower.y = vertex.y;
+    }
+    if (lower.z > vertex.z) {
+      lower.z = vertex.z;
+    }
+    if (upper.x < vertex.x) {
+      upper.x = vertex.x;
+    }
+    if (upper.y < vertex.y) {
+      upper.y = vertex.y;
+    }
+    if (upper.z < vertex.z) {
+      upper.z = vertex.z;
     }
   }
 
@@ -265,42 +377,60 @@ public class ModelManager {
    * Returns a transform group that will transform the model <code>node</code>
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
-   * @param modelRotation the rotation applied to the model at the end 
+   * @param modelRotation the rotation applied to the model before normalization 
    *                 or <code>null</code> if no transformation should be applied to node.
    * @param width    the width of the box
    */
   public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
-    // Get model bounding box size
+    return new TransformGroup(getNormalizedTransform(node, modelRotation, width));
+  }
+  
+  /**
+   * Returns a transform that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model before normalization 
+   *                 or <code>null</code> if no transformation should be applied to node.
+   * @param width    the width of the box
+   */
+  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width) {
+    // Get model bounding box size 
     BoundingBox modelBounds = getBounds(node);
     Point3d lower = new Point3d();
     modelBounds.getLower(lower);
     Point3d upper = new Point3d();
     modelBounds.getUpper(upper);
-    
     // Translate model to its center
     Transform3D translation = new Transform3D();
     translation.setTranslation(
         new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
             -lower.y - (upper.y - lower.y) / 2, 
-            -lower.z - (upper.z - lower.z) / 2));      
+            -lower.z - (upper.z - lower.z) / 2));
+    
+    Transform3D modelTransform;
+    if (modelRotation != null) {
+      // Get model bounding box size with model rotation
+      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+      modelTransform = new Transform3D();
+      modelTransform.setRotation(modelRotationMatrix);
+      modelTransform.mul(translation);
+      BoundingBox rotatedModelBounds = getBounds(node, modelTransform);
+      rotatedModelBounds.getLower(lower);
+      rotatedModelBounds.getUpper(upper);
+    } else {
+      modelTransform = translation;
+    }
+
     // Scale model to make it fill a 1 unit wide box
     Transform3D scaleOneTransform = new Transform3D();
     scaleOneTransform.setScale (
         new Vector3d(width / Math.max(MINIMUM_SIZE, upper.x -lower.x), 
             width / Math.max(MINIMUM_SIZE, upper.y - lower.y), 
             width / Math.max(MINIMUM_SIZE, upper.z - lower.z)));
-    scaleOneTransform.mul(translation);
-    Transform3D modelTransform = new Transform3D();
-    if (modelRotation != null) {
-      // Apply model rotation
-      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-      modelTransform.setRotation(modelRotationMatrix);
-    }
-    modelTransform.mul(scaleOneTransform);
-    
-    return new TransformGroup(modelTransform);
+    scaleOneTransform.mul(modelTransform);
+    return scaleOneTransform;
   }
   
   /**

@@ -37,6 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -60,6 +62,7 @@ import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.View;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
@@ -76,6 +79,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
@@ -86,6 +90,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.vecmath.Matrix3f;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -117,6 +122,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private JLabel                            modelChoiceErrorLabel;
   private ModelPreviewComponent             modelPreviewComponent;
   private JLabel                            orientationLabel;
+  private JButton                           defaultOrientationButton;
   private JButton                           turnLeftButton;
   private JButton                           turnRightButton;
   private JButton                           turnUpButton;
@@ -292,50 +298,66 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     // Orientation panel components
     this.orientationLabel = new JLabel(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "orientationLabel.text"));
-    this.turnLeftButton = new JButton(new ResourceAction(preferences, 
+    this.defaultOrientationButton = new JButton(new ResourceAction(preferences, 
+            ImportedFurnitureWizardStepsPanel.class, "DEFAULT_ORIENTATION", true) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          updateModelRotation(new Transform3D());
+        }
+      });
+    this.turnLeftButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_LEFT", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D leftRotation = new Transform3D();
-          leftRotation.rotY(-Math.PI / 2);
+          leftRotation.rotY((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? -Math.PI / 2 
+              : Math.toRadians(-1));
           leftRotation.mul(oldTransform);
           updateModelRotation(leftRotation);
         }
       });
-    this.turnRightButton = new JButton(new ResourceAction(preferences, 
+    this.turnRightButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_RIGHT", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D rightRotation = new Transform3D();
-          rightRotation.rotY(Math.PI / 2);
+          rightRotation.rotY((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? Math.PI / 2 
+              : Math.toRadians(1));
           rightRotation.mul(oldTransform);
           updateModelRotation(rightRotation);
         }
       });
-    this.turnUpButton = new JButton(new ResourceAction(preferences, 
+    this.turnUpButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_UP", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D upRotation = new Transform3D();
-          upRotation.rotX(-Math.PI / 2);
+          upRotation.rotX((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? -Math.PI / 2 
+              : Math.toRadians(-1));
           upRotation.mul(oldTransform);
           updateModelRotation(upRotation);
         }
       });
-    this.turnDownButton = new JButton(new ResourceAction(preferences, 
+    this.turnDownButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_DOWN", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D downRotation = new Transform3D();
-          downRotation.rotX(Math.PI / 2);
+          downRotation.rotX((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? Math.PI / 2 
+              : Math.toRadians(1));
           downRotation.mul(oldTransform);
           updateModelRotation(downRotation);
         }
       });
+    
     this.backFaceShownLabel = new JLabel(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "backFaceShownLabel.text"));
     this.backFaceShownCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
@@ -654,6 +676,49 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   }
 
   /**
+   * A button that repeats its action when kept pressed.
+   */
+  private static class AutoRepeatButton extends JButton {
+    private boolean shiftPressed;
+
+    public AutoRepeatButton(final Action action) {
+      super(action);
+      // Create a timer that will repeat action each 40 ms when SHIFT is pressed
+      final Timer timer = new Timer(40, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            action.actionPerformed(
+                new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null, ev.getWhen(), ActionEvent.SHIFT_MASK));
+          }
+        });
+      
+      // Update timer when button is armed
+      addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  if (shiftPressed) {
+                    if (getModel().isArmed()
+                        && !timer.isRunning()) {
+                      timer.restart();
+                    } else if (!getModel().isArmed()
+                               && timer.isRunning()) {
+                      timer.stop();
+                    }
+                  }
+                }
+              });
+          }
+        });
+      addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent ev) {
+            shiftPressed = ev.isShiftDown();
+          }
+        });
+    }
+  }
+  
+  /**
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics(UserPreferences preferences) {
@@ -739,6 +804,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     rotationButtonsPanel.add(this.turnLeftButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.EAST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    rotationButtonsPanel.add(this.defaultOrientationButton, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     rotationButtonsPanel.add(this.turnRightButton, new GridBagConstraints(
         2, 1, 1, 1, 1, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 5, 5, 0), 0, 0));
@@ -1234,7 +1302,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
      * displayed by this component.
      */
     protected void addRotationListener(final ImportedFurnitureWizardController controller) {
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN, 
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN,  
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               setBackFaceShown(controller.isBackFaceShown());
@@ -1245,38 +1313,41 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             setModelRotation(controller.getModelRotation());
             
             // Update size when a new rotation is provided
-            if (ev.getOldValue() != null) {
-              float width = controller.getWidth();
-              float depth = controller.getDepth();
-              float height = controller.getHeight();
-              
-              // Compute size before old model rotation
-              float [][] oldModelRotation = (float [][])ev.getOldValue();
-              Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
-                  oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
-                  oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
-              oldModelRotationMatrix.invert();
-              float oldWidth = oldModelRotationMatrix.m00 * width 
-                  + oldModelRotationMatrix.m01 * height 
-                  + oldModelRotationMatrix.m02 * depth;
-              float oldHeight = oldModelRotationMatrix.m10 * width 
-                  + oldModelRotationMatrix.m11 * height 
-                  + oldModelRotationMatrix.m12 * depth;
-              float oldDepth = oldModelRotationMatrix.m20 * width 
-                  + oldModelRotationMatrix.m21 * height 
-                  + oldModelRotationMatrix.m22 * depth;
-              
-              // Compute size after new model rotation
-              float [][] newModelRotation = (float [][])ev.getNewValue();
-              controller.setWidth(Math.abs(newModelRotation [0][0] * oldWidth 
-                  + newModelRotation [0][1] * oldHeight 
-                  + newModelRotation [0][2] * oldDepth));
-              controller.setHeight(Math.abs(newModelRotation [1][0] * oldWidth 
-                  + newModelRotation [1][1] * oldHeight 
-                  + newModelRotation [1][2] * oldDepth));
-              controller.setDepth(Math.abs(newModelRotation [2][0] * oldWidth 
-                  + newModelRotation [2][1] * oldHeight 
-                  + newModelRotation [2][2] * oldDepth));
+            BranchGroup model = getModel();
+            if (ev.getOldValue() != null
+                && model != null) {
+              try {
+                float [][] oldModelRotation = (float [][])ev.getOldValue();
+                Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(model, oldModelRotation, 1f);
+                Transform3D scaleTransform = new Transform3D();
+                scaleTransform.setScale(new Vector3d(controller.getWidth(), controller.getHeight(), controller.getDepth()));
+                scaleTransform.mul(normalization);
+                
+                // Compute rotation before old model rotation
+                Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
+                    oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
+                    oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
+                oldModelRotationMatrix.invert();
+                Transform3D backRotationTransform = new Transform3D();
+                backRotationTransform.setRotation(oldModelRotationMatrix);
+                backRotationTransform.mul(scaleTransform);
+                
+                // Compute size after new model rotation
+                float [][] newModelRotation = (float [][])ev.getNewValue();
+                Matrix3f newModelRotationMatrix = new Matrix3f(newModelRotation [0][0], newModelRotation [0][1], newModelRotation [0][2],
+                    newModelRotation [1][0], newModelRotation [1][1], newModelRotation [1][2],
+                    newModelRotation [2][0], newModelRotation [2][1], newModelRotation [2][2]);
+                Transform3D transform = new Transform3D();
+                transform.setRotation(newModelRotationMatrix);
+                transform.mul(backRotationTransform);
+                
+                Vector3f newSize = ModelManager.getInstance().getSize(model, transform);
+                controller.setWidth(newSize.x);
+                controller.setHeight(newSize.y);
+                controller.setDepth(newSize.z);
+              } catch (IllegalArgumentException ex) {
+                // Model is empty
+              }
             }
           }
         };
@@ -1295,7 +1366,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               setBackFaceShown(controller.isBackFaceShown());
             }
           });
-      PropertyChangeListener sizeChangeListener = new PropertyChangeListener () {
+      PropertyChangeListener sizeChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             setModelRotationAndSize(controller.getModelRotation(),
                 controller.getWidth(), controller.getDepth(), controller.getHeight());
