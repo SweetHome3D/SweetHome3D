@@ -1265,21 +1265,31 @@ public class OBJLoader extends LoaderBase implements Loader {
                                URL baseUrl) throws IOException {
     if ("v".equals(tokenizer.sval)) {
       // Read vertex v x y z
-      this.vertices.add(new Point3f(
-          parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer)));
+      float x = parseNumber(tokenizer);
+      skipBackSlash(tokenizer);
+      float y = parseNumber(tokenizer);
+      skipBackSlash(tokenizer);
+      float z = parseNumber(tokenizer);
+      this.vertices.add(new Point3f(x, y, z));
       // Skip next number if it exists
       if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
         tokenizer.pushBack();
       }
     } else if ("vn".equals(tokenizer.sval)) {
       // Read normal vn x y z
-      this.normals.add(new Vector3f(
-          parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer)));      
+      float x = parseNumber(tokenizer);
+      skipBackSlash(tokenizer);
+      float y = parseNumber(tokenizer);
+      skipBackSlash(tokenizer);
+      float z = parseNumber(tokenizer);
+      this.normals.add(new Vector3f(x, y, z));      
     } else if ("vt".equals(tokenizer.sval)) {
       // Read texture coordinate vt x y 
       //                       or vt x y z
-      this.textureCoodinates.add(new TexCoord2f(
-          parseNumber(tokenizer), parseNumber(tokenizer)));    
+      float x = parseNumber(tokenizer);
+      skipBackSlash(tokenizer);
+      float y = parseNumber(tokenizer);
+      this.textureCoodinates.add(new TexCoord2f(x, y));    
       // Skip next number if it exists
       if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
         tokenizer.pushBack();
@@ -1290,8 +1300,14 @@ public class OBJLoader extends LoaderBase implements Loader {
       //        or l v/vt    v/vt    v/vt    ...
       List<Integer> vertexIndices = new ArrayList<Integer>(2);
       List<Integer> textureCoordinateIndices = new ArrayList<Integer>(2); 
+      boolean first = true;
       while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {      
         tokenizer.pushBack();        
+        if (!first) {
+          skipBackSlash(tokenizer);
+        } else {
+          first = false;
+        }
         // Read vertex index
         int vertexIndex = parseInteger(tokenizer) - 1;
         if (vertexIndex < 0) {
@@ -1331,8 +1347,14 @@ public class OBJLoader extends LoaderBase implements Loader {
       List<Integer> vertexIndices = new ArrayList<Integer>(4);
       List<Integer> textureCoordinateIndices = new ArrayList<Integer>(4); 
       List<Integer> normalIndices = new ArrayList<Integer>(4);
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {      
-        tokenizer.pushBack();        
+      boolean first = true;
+      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
+        tokenizer.pushBack();
+        if (!first) {
+          skipBackSlash(tokenizer);
+        } else {
+          first = false;
+        }
         // Read vertex index
         int vertexIndex = parseInteger(tokenizer) - 1;
         if (vertexIndex < 0) {
@@ -1499,6 +1521,21 @@ public class OBJLoader extends LoaderBase implements Loader {
             " instead of a number at line " + tokenizer.lineno()); 
       }
     }
+  }
+
+  /**
+   * Skips the back slash in the next token if it's followed by a new line.  
+   */
+  private static void skipBackSlash(StreamTokenizer tokenizer) throws IOException {
+    tokenizer.ordinaryChar('\\');
+    if (tokenizer.nextToken() == '\\') {
+      if (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
+        throw new IncorrectFormatException("Expected new line after \\ character");
+      }
+    } else {
+      tokenizer.pushBack();
+    }
+    tokenizer.wordChars('\\', '\\');
   }
 
   /**
