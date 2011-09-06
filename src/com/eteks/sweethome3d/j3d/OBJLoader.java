@@ -1301,12 +1301,16 @@ public class OBJLoader extends LoaderBase implements Loader {
       List<Integer> vertexIndices = new ArrayList<Integer>(2);
       List<Integer> textureCoordinateIndices = new ArrayList<Integer>(2); 
       boolean first = true;
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {      
-        tokenizer.pushBack();        
-        if (!first) {
-          skipBackSlash(tokenizer);
-        } else {
+      while (true) {      
+        if (first) {
           first = false;
+        } else {
+          skipBackSlash(tokenizer);
+        }
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
+          break;
+        } else {
+          tokenizer.pushBack();
         }
         // Read vertex index
         int vertexIndex = parseInteger(tokenizer) - 1;
@@ -1348,12 +1352,16 @@ public class OBJLoader extends LoaderBase implements Loader {
       List<Integer> textureCoordinateIndices = new ArrayList<Integer>(4); 
       List<Integer> normalIndices = new ArrayList<Integer>(4);
       boolean first = true;
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
-        tokenizer.pushBack();
-        if (!first) {
-          skipBackSlash(tokenizer);
-        } else {
+      while (true) {
+        if (first) {
           first = false;
+        } else {
+          skipBackSlash(tokenizer);
+        }
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
+          break;
+        } else {
+          tokenizer.pushBack();
         }
         // Read vertex index
         int vertexIndex = parseInteger(tokenizer) - 1;
