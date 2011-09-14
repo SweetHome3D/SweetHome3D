@@ -311,7 +311,7 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns a new home piece of furniture created from an other the given <code>piece</code> of furniture.
+   * Returns a new home piece of furniture created from an other given <code>piece</code> of furniture.
    */
   public HomePieceOfFurniture createHomePieceOfFurniture(PieceOfFurniture piece) {
     if (piece instanceof DoorOrWindow) {
