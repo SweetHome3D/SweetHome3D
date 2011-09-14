@@ -584,7 +584,8 @@ public class HomePane extends JRootPane implements HomeView {
   private void createTransferHandlers(Home home, 
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new FurnitureCatalogTransferHandler(controller.getContentManager(), controller.getFurnitureCatalogController());
+        new FurnitureCatalogTransferHandler(controller.getContentManager(), 
+            controller.getFurnitureCatalogController(), controller.getFurnitureController());
     this.furnitureTransferHandler = 
         new FurnitureTransferHandler(home, controller.getContentManager(), controller);
     this.planTransferHandler = 

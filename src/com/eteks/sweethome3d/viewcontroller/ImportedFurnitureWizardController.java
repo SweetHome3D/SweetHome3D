@@ -36,11 +36,9 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.Selectable;
@@ -62,6 +60,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private final CatalogPieceOfFurniture          piece;
   private final String                           modelName;
   private final UserPreferences                  preferences;
+  private final FurnitureController              furnitureController;
   private final ContentManager                   contentManager;
   private final UndoableEditSupport              undoSupport;
   private final PropertyChangeSupport            propertyChangeSupport;
@@ -95,7 +94,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public ImportedFurnitureWizardController(UserPreferences preferences,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager) {
-    this(null, null, null, preferences, viewFactory, contentManager, null);
+    this(null, null, null, preferences, null, viewFactory, contentManager, null);
   }
   
   /**
@@ -106,7 +105,7 @@ public class ImportedFurnitureWizardController extends WizardController
                                            UserPreferences preferences,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager) {
-    this(null, null, modelName, preferences, viewFactory, contentManager, null);
+    this(null, null, modelName, preferences, null, viewFactory, contentManager, null);
   }
   
   /**
@@ -116,7 +115,7 @@ public class ImportedFurnitureWizardController extends WizardController
                                            UserPreferences preferences,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager) {
-    this(null, piece, null, preferences, viewFactory, contentManager, null);
+    this(null, piece, null, preferences, null, viewFactory, contentManager, null);
   }
   
   /**
@@ -124,10 +123,11 @@ public class ImportedFurnitureWizardController extends WizardController
    */
   public ImportedFurnitureWizardController(Home home, 
                                            UserPreferences preferences,
+                                           FurnitureController furnitureController,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager,
                                            UndoableEditSupport undoSupport) {
-    this(home, null, null, preferences, viewFactory, contentManager, undoSupport);
+    this(home, null, null, preferences, furnitureController, viewFactory, contentManager, undoSupport);
   }
   
   /**
@@ -137,10 +137,11 @@ public class ImportedFurnitureWizardController extends WizardController
   public ImportedFurnitureWizardController(Home home,
                                            String modelName,
                                            UserPreferences preferences,
+                                           FurnitureController furnitureController,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager,
                                            UndoableEditSupport undoSupport) {
-    this(home, null, modelName, preferences, viewFactory, contentManager, undoSupport);
+    this(home, null, modelName, preferences, furnitureController, viewFactory, contentManager, undoSupport);
   }
   
   /**
@@ -150,6 +151,7 @@ public class ImportedFurnitureWizardController extends WizardController
                                             CatalogPieceOfFurniture piece,
                                             String modelName,
                                             UserPreferences preferences,
+                                            FurnitureController furnitureController,
                                             ViewFactory    viewFactory,
                                             ContentManager contentManager,
                                             UndoableEditSupport undoSupport) {
@@ -158,6 +160,7 @@ public class ImportedFurnitureWizardController extends WizardController
     this.piece = piece;
     this.modelName = modelName;
     this.preferences = preferences;
+    this.furnitureController = furnitureController;
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.contentManager = contentManager;
@@ -196,9 +199,7 @@ public class ImportedFurnitureWizardController extends WizardController
     
     if (this.home != null) {
       // Add new piece to home
-      addPieceOfFurniture(isDoorOrWindow() 
-          ? new HomeDoorOrWindow((DoorOrWindow)newPiece)
-          : new HomePieceOfFurniture(newPiece));
+      addPieceOfFurniture(this.furnitureController.createHomePieceOfFurniture(newPiece));
     }
     // Remove the edited piece from catalog
     FurnitureCatalog catalog = this.preferences.getFurnitureCatalog();

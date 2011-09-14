@@ -32,18 +32,13 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
-import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
-import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.DoorOrWindow;
-import com.eteks.sweethome3d.model.HomeDoorOrWindow;
-import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.Light;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 
 /**
  * Catalog transfer handler.
@@ -52,14 +47,17 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 public class FurnitureCatalogTransferHandler extends VisualTransferHandler {
   private final ContentManager             contentManager;
   private final FurnitureCatalogController catalogController;
+  private final FurnitureController        furnitureController;
   
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
   public FurnitureCatalogTransferHandler(ContentManager contentManager,
-                                         FurnitureCatalogController catalogController) {
+                                         FurnitureCatalogController catalogController,
+                                         FurnitureController furnitureController) {
     this.contentManager = contentManager;
     this.catalogController = catalogController;
+    this.furnitureController = furnitureController;
   }
 
   /**
@@ -108,14 +106,8 @@ public class FurnitureCatalogTransferHandler extends VisualTransferHandler {
     List<CatalogPieceOfFurniture> selectedCatalogFurniture = this.catalogController.getSelectedFurniture();
     List<HomePieceOfFurniture> transferedFurniture = 
         new ArrayList<HomePieceOfFurniture>(selectedCatalogFurniture.size());
-    for (CatalogPieceOfFurniture piece : selectedCatalogFurniture) {
-      if (piece instanceof CatalogDoorOrWindow) {
-        transferedFurniture.add(new HomeDoorOrWindow((DoorOrWindow)piece));
-      } else if (piece instanceof CatalogLight) {
-        transferedFurniture.add(new HomeLight((Light)piece));
-      } else {
-        transferedFurniture.add(new HomePieceOfFurniture(piece));
-      }
+    for (CatalogPieceOfFurniture catalogPiece : selectedCatalogFurniture) {
+      transferedFurniture.add(this.furnitureController.createHomePieceOfFurniture(catalogPiece));
     }
     return new HomeTransferableList(transferedFurniture);
   }

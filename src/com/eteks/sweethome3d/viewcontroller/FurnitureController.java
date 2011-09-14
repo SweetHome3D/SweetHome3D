@@ -36,10 +36,15 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
+import com.eteks.sweethome3d.model.Light;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -306,6 +311,19 @@ public class FurnitureController implements Controller {
   }
 
   /**
+   * Returns a new home piece of furniture created from an other the given <code>piece</code> of furniture.
+   */
+  public HomePieceOfFurniture createHomePieceOfFurniture(PieceOfFurniture piece) {
+    if (piece instanceof DoorOrWindow) {
+      return new HomeDoorOrWindow((DoorOrWindow)piece);
+    } else if (piece instanceof Light) {
+      return new HomeLight((Light)piece);
+    } else {
+      return new HomePieceOfFurniture(piece);
+    }
+  }
+
+  /**
    * Returns the furniture among the given list that are not part of the base plan.
    */
   private List<HomePieceOfFurniture> getFurnitureNotPartOfBasePlan(List<HomePieceOfFurniture> furniture) {
@@ -464,9 +482,7 @@ public class FurnitureController implements Controller {
         groupPiecesVisible [i++] = pieceEntry.getValue().isVisible();
       }
 
-      String furnitureGroupName = this.preferences.getLocalizedString(
-          FurnitureController.class, "groupName", getFurnitureGroupCount(homeFurniture) + 1);
-      final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(selectedFurniture, furnitureGroupName);
+      final HomeFurnitureGroup furnitureGroup = createHomeFurnitureGroup(selectedFurniture);
       final int furnitureGroupIndex = homeFurniture.size() - groupPieces.length;
       final boolean movable = furnitureGroup.isMovable();
       
@@ -503,6 +519,16 @@ public class FurnitureController implements Controller {
         this.undoSupport.postEdit(undoableEdit);
       }
     }
+  }
+
+  /**
+   * Returns a new furniture group for the given furniture list.
+   */
+  protected HomeFurnitureGroup createHomeFurnitureGroup(List<HomePieceOfFurniture> furniture) {
+    String furnitureGroupName = this.preferences.getLocalizedString(
+        FurnitureController.class, "groupName", getFurnitureGroupCount(this.home.getFurniture()) + 1);
+    final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(furniture, furnitureGroupName);
+    return furnitureGroup;
   }
 
   /**
@@ -611,7 +637,7 @@ public class FurnitureController implements Controller {
    * Displays the wizard that helps to import furniture to home. 
    */
   public void importFurniture() {
-    new ImportedFurnitureWizardController(this.home, this.preferences, this.viewFactory, 
+    new ImportedFurnitureWizardController(this.home, this.preferences, this, this.viewFactory, 
         this.contentManager, this.undoSupport).displayView(getView());
   }
   
@@ -620,7 +646,7 @@ public class FurnitureController implements Controller {
    * given model name. 
    */
   public void importFurniture(String modelName) {
-    new ImportedFurnitureWizardController(this.home, modelName, this.preferences, 
+    new ImportedFurnitureWizardController(this.home, modelName, this.preferences, this, 
         this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
   }
   

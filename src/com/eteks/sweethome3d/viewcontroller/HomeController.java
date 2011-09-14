@@ -46,27 +46,21 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
-import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
-import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.DimensionLine;
-import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
-import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
-import com.eteks.sweethome3d.model.Light;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -955,14 +949,7 @@ public class HomeController implements Controller {
       List<HomePieceOfFurniture> newFurniture = 
           new ArrayList<HomePieceOfFurniture>();
       for (CatalogPieceOfFurniture piece : selectedFurniture) {
-        HomePieceOfFurniture homePiece;
-        if (piece instanceof CatalogDoorOrWindow) {
-          homePiece = new HomeDoorOrWindow((DoorOrWindow)piece);
-        } else if (piece instanceof CatalogLight) {
-          homePiece = new HomeLight((Light)piece);
-        } else {
-          homePiece = new HomePieceOfFurniture(piece);
-        }
+        HomePieceOfFurniture homePiece = getFurnitureController().createHomePieceOfFurniture(piece);
         // If magnetism is enabled, adjust piece size and elevation
         if (this.preferences.isMagnetismEnabled()) {
           if (homePiece.isResizable()) {

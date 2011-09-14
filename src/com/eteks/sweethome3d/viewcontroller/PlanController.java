@@ -1019,7 +1019,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Controls the creation of new labels.
+   * Returns a new label. The new label isn't added to home.
    */
   private void createLabel(float x, float y) {
     new LabelController(this.home, x, y, this.preferences, this.viewFactory,
