@@ -964,7 +964,10 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
         this.viewFromObserverToggleModel, true, preview3DMenu);
     addActionToMenu(ActionType.STORE_POINT_OF_VIEW, preview3DMenu);
-    preview3DMenu.add(createGoToPointOfViewMenu(home, preferences, controller));
+    JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
+    if (goToPointOfViewMenu != null) {
+      preview3DMenu.add(goToPointOfViewMenu);
+    }
     preview3DMenu.addSeparator();
     JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, false);
     if (attachDetach3DViewMenuItem != null) {
@@ -1032,14 +1035,14 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Adds the given action to <code>menu</code> and returns <code>true</code> if it was added.
+   * Adds the given action to <code>menu</code>.
    */
   private void addActionToMenu(ActionType actionType, JMenu menu) {
     addActionToMenu(actionType, false, menu);
   }
 
   /**
-   * Adds the given action to <code>menu</code> and returns <code>true</code> if it was added.
+   * Adds the given action to <code>menu</code>.
    */
   private void addActionToMenu(ActionType actionType, 
                                boolean popup,
@@ -1053,8 +1056,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code> 
-   * and returns <code>true</code> if it was added.
+   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code>.
    */
   private void addToggleActionToMenu(ActionType actionType,
                                      JToggleButton.ToggleButtonModel toggleButtonModel,
@@ -1064,8 +1066,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code> 
-   * and returns <code>true</code> if it was added.
+   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code>.
    */
   private void addToggleActionToMenu(ActionType actionType,
                                      boolean popup,
@@ -1618,16 +1619,20 @@ public class HomePane extends JRootPane implements HomeView {
   private JMenu createGoToPointOfViewMenu(final Home home,
                                           UserPreferences preferences,
                                           final HomeController controller) {
-    final JMenu goToPointOfViewMenu = 
-        new JMenu(this.menuActionMap.get(MenuActionType.GO_TO_POINT_OF_VIEW));
-    updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
-    home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
-          }
-        });
-    return goToPointOfViewMenu;
+    Action goToPointOfViewAction = this.menuActionMap.get(MenuActionType.GO_TO_POINT_OF_VIEW);
+    if (goToPointOfViewAction.getValue(Action.NAME) != null) {
+      final JMenu goToPointOfViewMenu = new JMenu(goToPointOfViewAction);
+      updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
+      home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              updateGoToPointOfViewMenu(goToPointOfViewMenu, home, controller);
+            }
+          });
+      return goToPointOfViewMenu;
+    } else {
+      return null;
+    }
   }
   
   /**
@@ -2213,7 +2218,10 @@ public class HomePane extends JRootPane implements HomeView {
       addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
           this.viewFromObserverToggleModel, true, view3DPopup);
       addActionToPopupMenu(ActionType.STORE_POINT_OF_VIEW, view3DPopup);
-      view3DPopup.add(createGoToPointOfViewMenu(home, preferences, controller));
+      JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
+      if (goToPointOfViewMenu != null) {
+        view3DPopup.add(goToPointOfViewMenu);
+      }
       view3DPopup.addSeparator();
       JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
       if (attachDetach3DViewMenuItem != null) {
