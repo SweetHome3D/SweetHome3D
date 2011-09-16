@@ -277,7 +277,7 @@ public class LabelController implements Controller {
         UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home, 
             this.preferences, oldSelection, modifiedLabels, text);
         this.undoSupport.postEdit(undoableEdit);
-      }
+      }      
       this.preferences.addAutoCompletionString("LabelText", text);
     }
   }
