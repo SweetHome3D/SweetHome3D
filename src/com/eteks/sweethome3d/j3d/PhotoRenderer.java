@@ -185,7 +185,7 @@ public class PhotoRenderer {
     for (Room room : home.getRooms()) {
       exportNode((Node)object3DFactory.createObject3D(home, room, true), true, false, silk);
     } 
-    // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
+    // Create a dummy home to export a 3D ground 3D cut by rooms and large enough to join the sky at the horizon  
     Home groundHome = new Home();
     groundHome.getEnvironment().setGroundColor(home.getEnvironment().getGroundColor());
     groundHome.getEnvironment().setGroundTexture(home.getEnvironment().getGroundTexture());
@@ -490,7 +490,7 @@ public class PhotoRenderer {
   }
 
   /**
-   * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
+   * Exports the given Java 3D <code>node</code> and its children with SunFlow API.  
    */
   private void exportNode(Node node, boolean ignoreTransparency, 
                           boolean ignoreConstantShader, boolean silk) throws IOException {
@@ -498,7 +498,7 @@ public class PhotoRenderer {
   }
 
   /**
-   * Exports all the 3D shapes children of <code>node</code> at OBJ format.
+   * Exports all the 3D shapes children of <code>node</code> with SunFlow API.
    */ 
   private void exportNode(Node node, 
                           boolean ignoreTransparency,
@@ -565,7 +565,7 @@ public class PhotoRenderer {
   }
   
   /**
-   * Returns the names of the exported 3D geometries in Sunflow API.
+   * Returns the names of the exported 3D geometries with SunFlow API.
    */
   private String [] exportNodeGeometry(Geometry geometry, 
                                        Transform3D parentTransformations, 
@@ -574,7 +574,7 @@ public class PhotoRenderer {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;
       
-      // Create vertices indices array depending on geometry class
+      // Create vertices indices array according to geometry class
       int [] verticesIndices = null;
       int [] stripVertexCount = null;
       if (geometryArray instanceof IndexedGeometryArray) {
@@ -752,7 +752,7 @@ public class PhotoRenderer {
           }
         }
 
-        // Export lines, triangles or quadrilaterals depending on the geometry
+        // Export lines, triangles or quadrilaterals according to the geometry
         if (geometryArray instanceof IndexedGeometryArray) {
           int [] normalsIndices = normals != null
               ? new int [verticesIndices.length]
@@ -821,7 +821,7 @@ public class PhotoRenderer {
           if (normalsIndices != null && !Arrays.equals(verticesIndices, normalsIndices)
               || uvsIndices != null && !Arrays.equals(verticesIndices, uvsIndices)) {
             // Remove indirection in verticesIndices, normals and uvsIndices
-            // because SunFlow use only verticesIndices
+            // because SunFlow uses only verticesIndices
             float [] directVertices = new float [verticesIndices.length * 3];
             float [] directNormals =  normalsIndices != null
                 ? new float [verticesIndices.length * 3]
@@ -1095,7 +1095,7 @@ public class PhotoRenderer {
   }
     
   /**
-   * Stores in <code>verticesIndices</code> the indices vertexIndex1, vertexIndex2, vertexIndex3. 
+   * Stores in <code>verticesIndices</code> the indices vertexIndex1 and vertexIndex2. 
    */
   private void exportLine(GeometryArray geometryArray, 
                           int vertexIndex1, int vertexIndex2, 
@@ -1123,7 +1123,7 @@ public class PhotoRenderer {
   }
     
   /**
-   * Stores an appearance as a Sunflow shader.  
+   * Exports a Java3D appearance as a SunFlow shader.  
    */
   private void exportAppearance(Appearance appearance,
                                 String appearanceName, 
@@ -1360,7 +1360,7 @@ public class PhotoRenderer {
   }
   
   /**
-   * A triangle used to remove faces cited for that once (opposite faces included).
+   * A triangle used to remove faces cited more that once (opposite faces included).
    */
   private static class Triangle {
     private float [] point1;
