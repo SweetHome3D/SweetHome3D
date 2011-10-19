@@ -38,9 +38,6 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.Locale;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
@@ -105,7 +102,7 @@ public class HelpPane extends JRootPane implements HelpView {
     controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            setBrowserPage(controller.getBrowserPage());
+            SwingTools.showDocumentInBrowser(controller.getBrowserPage());
           }
         });
   }
@@ -468,19 +465,6 @@ public class HelpPane extends JRootPane implements HelpView {
       this.helpEditorPane.setPage(url);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
-    }
-  }
-
-  /**
-   * Displays <code>url</code> in standard browser.
-   */
-  private void setBrowserPage(URL url) {
-    try { 
-      // Lookup the javax.jnlp.BasicService object 
-      BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      service.showDocument(url); 
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable 
     }
   }
 }

@@ -51,6 +51,9 @@ import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -635,5 +638,26 @@ public class SwingTools {
 
     public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
     }
+  }
+  
+  /**
+   * Attempts to display the given <code>url</code> in a browser and returns <code>true</code>
+   * if it was done successfully.
+   */
+  public static boolean showDocumentInBrowser(URL url) {
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      BasicService basicService = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      // Ignore the basic service, if it doesn't support web browser
+      if (basicService.isWebBrowserSupported()) {
+        return basicService.showDocument(url); 
+      }
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable
+    } catch (LinkageError ex) {
+      // JNLP classes not available in classpath
+      System.err.println("Can't show document in browser. JNLP classes not available in classpath.");
+    }
+    return false;
   }
 }

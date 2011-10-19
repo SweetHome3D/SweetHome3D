@@ -23,10 +23,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Callable;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
-
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
@@ -34,6 +30,7 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
@@ -112,12 +109,8 @@ public class HomeAppletController extends HomeController {
   @Override
   public void help() {
     try { 
-      // Lookup the javax.jnlp.BasicService object 
-      final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
       String helpIndex = this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "helpIndex");
-      service.showDocument(new URL(helpIndex)); 
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable             
+      SwingTools.showDocumentInBrowser(new URL(helpIndex)); 
     } catch (MalformedURLException ex) {
       ex.printStackTrace();
     } 

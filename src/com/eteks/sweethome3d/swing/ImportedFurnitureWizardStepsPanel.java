@@ -55,9 +55,6 @@ import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.Transform3D;
@@ -213,31 +210,17 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       });
     this.findModelsButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "findModelsButton.text"));
-    BasicService basicService = null;
-    try { 
-      // Lookup the javax.jnlp.BasicService object 
-      basicService = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      // Ignore the basic service, if it doesn't support web browser
-      if (!basicService.isWebBrowserSupported()) {
-        basicService = null;
-      }
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable
-    }
-    final BasicService service = basicService;
     this.findModelsButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           boolean documentShown = false;
-          if (service != null) {
-            try { 
-              // Display Find models page in browser
-              final URL findModelsUrl = new URL(preferences.getLocalizedString(
-                  ImportedFurnitureWizardStepsPanel.class, "findModelsButton.url"));
-              documentShown = service.showDocument(findModelsUrl); 
-            } catch (MalformedURLException ex) {
-              // Document isn't shown
-            }
-          } 
+          try { 
+            // Display Find models page in browser
+            final URL findModelsUrl = new URL(preferences.getLocalizedString(
+                ImportedFurnitureWizardStepsPanel.class, "findModelsButton.url"));
+            documentShown = SwingTools.showDocumentInBrowser(findModelsUrl); 
+          } catch (MalformedURLException ex) {
+            // Document isn't shown
+          }
           if (!documentShown) {
             // If the document wasn't shown, display a message 
             // with a copiable URL in a message box 
