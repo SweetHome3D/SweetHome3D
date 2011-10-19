@@ -101,10 +101,11 @@ public class Component3DManager {
    */
   public void setRenderingErrorObserver(RenderingErrorObserver observer) {
     try {
+      Class.forName("javax.media.j3d.RenderingErrorListener");
       this.renderingErrorListener = RenderingErrorListenerManager.setRenderingErrorObserver(
           observer, this.renderingErrorListener);
       this.renderingErrorObserver = observer;
-    } catch (LinkageError ex) {
+    } catch (ClassNotFoundException ex) {
       // As RenderingErrorListener and addRenderingErrorListener are available since Java 3D 1.5, 
       // use the default rendering error reporting if Sweet Home 3D is linked to a previous version
     }
