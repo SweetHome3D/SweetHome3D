@@ -267,13 +267,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-      this.component3D = new JCanvas3D(gc) {
-          public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            g.drawImage(navigationPanelImage, 0, 0, this);
-          }
-        };
-      this.component3D.setSize(1, 1);
+      try {
+        // Instantiate JCanvas3DWithNavigationPanel inner class by reflection
+        // to be able to run under Java 3D 1.3
+        this.component3D = (Component)Class.forName(getClass().getName() + "$JCanvas3DWithNavigationPanel").
+            getConstructor(getClass(), GraphicsConfigTemplate3D.class).newInstance(this, gc);
+        this.component3D.setSize(1, 1);
+      } catch (ClassNotFoundException ex) {
+        throw new UnsupportedOperationException("Java 3D 1.5 required to display an offscreen 3D view");
+      } catch (Exception ex) {
+        throw new UnsupportedOperationException();
+      }
     } else {
       this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
         public void canvas3DSwapped(Canvas3D canvas3D) {
@@ -350,6 +354,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
+   * A <code>JCanvas</code> canvas that displays the navigation panel of a home component 3D upon it.
+   */
+  private static class JCanvas3DWithNavigationPanel extends JCanvas3D {
+    private final HomeComponent3D homeComponent3D;
+
+    private JCanvas3DWithNavigationPanel(HomeComponent3D homeComponent3D,
+                                         GraphicsConfigTemplate3D template) {
+      super(template);
+      this.homeComponent3D = homeComponent3D;
+    }
+
+    public void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      g.drawImage(this.homeComponent3D.navigationPanelImage, 0, 0, this);
+    }
+  }
+
+  /**
    * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
    */
@@ -362,9 +384,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
           // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(component3D instanceof Canvas3D
-              ? (Canvas3D)component3D
-              : ((JCanvas3D)component3D).getOffscreenCanvas3D());
+          onscreenUniverse.getViewer().getView().addCanvas3D(
+               (Canvas3D)component3D);
           component3D.setFocusable(false);
           updateNavigationPanelImage();
         }
