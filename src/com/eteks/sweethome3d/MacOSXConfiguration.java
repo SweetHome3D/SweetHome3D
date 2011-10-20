@@ -194,7 +194,7 @@ class MacOSXConfiguration {
     });
     
     // Set application icon if program wasn't launch from bundle
-    if (!"true".equalsIgnoreCase(System.getProperty("sweethome3d.bundle", "false"))) {
+    if (!Boolean.getBoolean("sweethome3d.bundle")) {
       try {
         String iconPath = homeApplication.getUserPreferences().getLocalizedString(HomePane.class, "about.icon");
         Image icon = ImageIO.read(HomePane.class.getResource(iconPath));

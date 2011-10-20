@@ -485,7 +485,7 @@ public class SweetHome3D extends HomeApplication {
    * exit in case of error during 3D rendering.
    */
   private void addComponent3DRenderingErrorObserver() {
-    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+    if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) { 
       // Add a RenderingErrorObserver to Component3DManager, because offscreen
       // rendering needs to check rendering errors with its own RenderingErrorListener
       Component3DManager.getInstance().setRenderingErrorObserver(new Component3DManager.RenderingErrorObserver() {

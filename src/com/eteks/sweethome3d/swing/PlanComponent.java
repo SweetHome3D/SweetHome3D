@@ -2322,9 +2322,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private static boolean isTextureManagerAvailable() {
     try {
-      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
-        return true;
-      }
+      return !Boolean.getBoolean("com.eteks.sweethome3d.no3D");
     } catch (AccessControlException ex) {
       // If com.eteks.sweethome3d.no3D can't be read, 
       // security manager won't allow to access to Java 3D DLLs required by TextureManager class too 
@@ -2824,7 +2822,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 if (allFurnitureViewedFromTop == null) {
                   try {
                     // Evaluate allFurnitureViewedFromTop value as late as possible to avoid mandatory dependency towards Java 3D 
-                    allFurnitureViewedFromTop = !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")) 
+                    allFurnitureViewedFromTop = !Boolean.getBoolean("com.eteks.sweethome3d.no3D") 
                         && Component3DManager.getInstance().isOffScreenImageSupported();
                   } catch (AccessControlException ex) {
                     // If com.eteks.sweethome3d.no3D property can't be read, 

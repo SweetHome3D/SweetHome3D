@@ -223,7 +223,7 @@ public class AppletApplication extends HomeApplication {
     // Stop managers threads
     IconManager.getInstance().clear();
     try {
-      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+      if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) { 
         TextureManager.getInstance().clear();
         ModelManager.getInstance().clear();
       }
@@ -659,7 +659,7 @@ public class AppletApplication extends HomeApplication {
    */
   private void addComponent3DRenderingErrorObserver() {
     try {
-      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+      if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
         // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
         // we add it through Component3DManager, because offscreen rendering needs to check 
         // rendering errors with its own RenderingErrorListener
