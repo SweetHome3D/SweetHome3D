@@ -255,7 +255,10 @@ public abstract class UserPreferences {
    */
   public boolean isLanguageEditable() {
     try {
-      System.getSecurityManager().checkPermission(new PropertyPermission("user.language", "write"));
+      SecurityManager securityManager = System.getSecurityManager();
+      if (securityManager != null) {
+        securityManager.checkPermission(new PropertyPermission("user.language", "write"));
+      }
       return true;
     } catch (AccessControlException ex) {
       return false;
