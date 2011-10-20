@@ -59,6 +59,7 @@ import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -276,7 +277,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       } catch (ClassNotFoundException ex) {
         throw new UnsupportedOperationException("Java 3D 1.5 required to display an offscreen 3D view");
       } catch (Exception ex) {
-        throw new UnsupportedOperationException();
+        UnsupportedOperationException ex2 = new UnsupportedOperationException();
+        ex2.initCause(ex);
+        throw ex2;
       }
     } else {
       this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
@@ -359,8 +362,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private static class JCanvas3DWithNavigationPanel extends JCanvas3D {
     private final HomeComponent3D homeComponent3D;
 
-    private JCanvas3DWithNavigationPanel(HomeComponent3D homeComponent3D,
-                                         GraphicsConfigTemplate3D template) {
+    public JCanvas3DWithNavigationPanel(HomeComponent3D homeComponent3D,
+                                 GraphicsConfigTemplate3D template) {
       super(template);
       this.homeComponent3D = homeComponent3D;
     }
@@ -383,9 +386,21 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
           }
           onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
+          Canvas3D canvas3D;
+          if (component3D instanceof Canvas3D) {
+            canvas3D = (Canvas3D)component3D;
+          } else {
+            try {
+              // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+              canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
+            } catch (Exception ex) {
+              UnsupportedOperationException ex2 = new UnsupportedOperationException();
+              ex2.initCause(ex);
+              throw ex2;
+            }
+          }
           // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(
-               (Canvas3D)component3D);
+          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D );
           component3D.setFocusable(false);
           updateNavigationPanelImage();
         }
