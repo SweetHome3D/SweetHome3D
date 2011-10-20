@@ -156,9 +156,14 @@ public class HomeAppletController extends HomeController {
     new UserPreferencesController(this.application.getUserPreferences(), 
         this.viewFactory, this.contentManager) {
       public boolean isPropertyEditable(UserPreferencesController.Property property) {
-        // No auto recovery with applet
-        return property != UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY
-            && property != UserPreferencesController.Property.AUTO_SAVE_FOR_RECOVERY_ENABLED;
+        switch (property) {
+          case AUTO_SAVE_DELAY_FOR_RECOVERY :
+          case AUTO_SAVE_FOR_RECOVERY_ENABLED :
+            // No auto recovery with applet
+            return false;
+          default :
+            return super.isPropertyEditable(property);
+        }
       }
     }.displayView(getView());
   }

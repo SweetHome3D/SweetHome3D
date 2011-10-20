@@ -32,6 +32,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,27 +128,16 @@ public class AppletApplication extends HomeApplication {
     URL codeBase = applet.getCodeBase();
 
     // Force offscreen in 3D view under Plugin 2 and Mac OS X
-    System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
-        String.valueOf(OperatingSystem.isMacOSX()            
-            && applet.getAppletContext() != null
-            && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
-    
-    // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
-    boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
-    if (serviceManagerAvailable) {
-      try { 
-        ServiceManager.lookup("javax.jnlp.BasicService");
-      } catch (UnavailableServiceException ex) {
-        serviceManagerAvailable = false;
-      }
+    try {
+      System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
+          String.valueOf(OperatingSystem.isMacOSX()            
+              && applet.getAppletContext() != null
+              && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
+    } catch (AccessControlException ex) {
+      // Unsigned applet
     }
-
-    if (!serviceManagerAvailable) {
-      // Create JNLP services required by Sweet Home 3D 
-      ServiceManager.setServiceManagerStub(
-          new StandaloneServiceManager(applet.getAppletContext(), codeBase));
-      // Caution: setting a new service manager stub won't replace the existing one,
-    }          
+    
+    checkJavaWebStartBasicService(applet, codeBase);          
  
     initLookAndFeel();
    
@@ -213,7 +203,7 @@ public class AppletApplication extends HomeApplication {
         }
       });
   }
-  
+
   /**
    * Deletes open homes and clears all the resources used by this application.
    * This method is called when an applet is destroyed.  
@@ -232,9 +222,14 @@ public class AppletApplication extends HomeApplication {
     System.gc();
     // Stop managers threads
     IconManager.getInstance().clear();
-    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
-      TextureManager.getInstance().clear();
-      ModelManager.getInstance().clear();
+    try {
+      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
+        TextureManager.getInstance().clear();
+        ModelManager.getInstance().clear();
+      }
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required by previous classes too
     }
     // Delete temporary files
     OperatingSystem.deleteTemporaryFiles();
@@ -627,9 +622,13 @@ public class AppletApplication extends HomeApplication {
   public String getVersion() {
     String applicationVersion = getUserPreferences().getLocalizedString(
         AppletApplication.class, "applicationVersion");
-    String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
-    if (versionInformation != null) {
-      applicationVersion += " " + versionInformation;
+    try {
+      String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
+      if (versionInformation != null) {
+        applicationVersion += " " + versionInformation;
+      }
+    } catch (AccessControlException ex) {
+      // Ignore com.eteks.sweethome3d.deploymentInformation property since it can't be read
     }
     return applicationVersion;
   }
@@ -659,21 +658,26 @@ public class AppletApplication extends HomeApplication {
    * to avoid default System exit in case of error during 3D rendering. 
    */
   private void addComponent3DRenderingErrorObserver() {
-    if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) { 
-      // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
-      // we add it through Component3DManager, because offscreen rendering needs to check 
-      // rendering errors with its own RenderingErrorListener
-      Component3DManager.getInstance().setRenderingErrorObserver(
-          new Component3DManager.RenderingErrorObserver() {
-            public void errorOccured(int errorCode, String errorMessage) {
-              System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    show3DError();
-                  }
-                });
-            }
-          });
+    try {
+      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+        // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
+        // we add it through Component3DManager, because offscreen rendering needs to check 
+        // rendering errors with its own RenderingErrorListener
+        Component3DManager.getInstance().setRenderingErrorObserver(
+            new Component3DManager.RenderingErrorObserver() {
+              public void errorOccured(int errorCode, String errorMessage) {
+                System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      show3DError();
+                    }
+                  });
+              }
+            });
+      }
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required by Component3DManager class too
     }
   }
 
@@ -685,6 +689,31 @@ public class AppletApplication extends HomeApplication {
     String title = getUserPreferences().getLocalizedString(AppletApplication.class, "3DError.title");
     JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
         message, title, JOptionPane.ERROR_MESSAGE);
+  }
+
+  /**
+   * Checks whether Java Web Start basic service is available to be able to display document from the applet.
+   */
+  private void checkJavaWebStartBasicService(final JApplet applet, URL codeBase) {
+    boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
+    if (serviceManagerAvailable) {
+      try { 
+        ServiceManager.lookup("javax.jnlp.BasicService");
+      } catch (Exception ex) {
+        if ("javax.jnlp.UnavailableServiceException".equals(ex.getClass().getName())) {
+          serviceManagerAvailable = false;
+        } else {
+          throw new RuntimeException(ex);
+        }
+      }
+    }
+
+    if (!serviceManagerAvailable) {
+      // Create JNLP services required by Sweet Home 3D 
+      ServiceManager.setServiceManagerStub(
+          new StandaloneServiceManager(applet.getAppletContext(), codeBase));
+      // Caution: setting a new service manager stub won't replace the existing one
+    }
   }
 
   /**

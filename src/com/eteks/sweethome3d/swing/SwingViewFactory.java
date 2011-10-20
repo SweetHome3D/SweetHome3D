@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.security.AccessControlException;
+
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
@@ -97,11 +99,15 @@ public class SwingViewFactory implements ViewFactory {
    */
   public View createView3D(Home home, UserPreferences preferences,
                            HomeController3D homeController3D) {
-    if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
-      return null;
-    } else {
-      return new HomeComponent3D(home, preferences, homeController3D);
+    try {
+      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+        return new HomeComponent3D(home, preferences, homeController3D);
+      }
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required by HomeComponent3D class too
     }
+    return null;
   }
 
   /**

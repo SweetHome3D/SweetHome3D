@@ -35,6 +35,7 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.security.AccessControlException;
 
 import javax.swing.ActionMap;
 import javax.swing.ButtonGroup;
@@ -281,9 +282,17 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   private void updateComponents(HomePrint homePrint) {
     this.pageFormat = HomePrintableComponent.getPageFormat(homePrint);
+    boolean no3D;
+    try {
+      no3D = "true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"));
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required to print 3D images too
+      no3D = true;
+    }
     // Check if off screen image is supported 
     boolean offscreenCanvas3DSupported;
-    if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+    if (no3D) {
       offscreenCanvas3DSupported = false;
     } else { 
       offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
@@ -324,7 +333,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
       this.footerFormatTextField.setText("");
     }
     this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
-    this.view3DPrintedCheckBox.setVisible(!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")));
+    this.view3DPrintedCheckBox.setVisible(!no3D);
   }
 
   /**

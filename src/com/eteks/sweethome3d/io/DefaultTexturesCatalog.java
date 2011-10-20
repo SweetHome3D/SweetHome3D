@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -145,15 +146,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
     
-    // Try to load com.eteks.sweethome3d.io.DefaultTexturesCatalog property file from classpath 
-    final String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
-    readTexturesCatalog(defaultTexturesCatalogFamily, 
-        preferences, textureHomonymsCounter, identifiedTextures);
-
-    // Try to load com.eteks.sweethome3d.io.AdditionalTexturesCatalog property file from classpath 
-    String classPackage = defaultTexturesCatalogFamily.substring(0, defaultTexturesCatalogFamily.lastIndexOf("."));
-    readTexturesCatalog(classPackage + "." + ADDITIONAL_TEXTURES_CATALOG_FAMILY, 
-        preferences, textureHomonymsCounter, identifiedTextures);
+    readDefaultTexturesCatalogs(preferences, textureHomonymsCounter, identifiedTextures);
 
     if (texturesPluginFolders != null) {
       for (File texturesPluginFolder : texturesPluginFolders) {
@@ -176,7 +169,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       }
     }
   }
-  
+
   /**
    * Creates a default textures catalog read only from resources in the given URLs.
    */
@@ -193,6 +186,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
+    
+    readDefaultTexturesCatalogs(null, textureHomonymsCounter, identifiedTextures);
 
     for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
       try {
@@ -203,6 +198,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         // Ignore malformed textures catalog
       } catch (IllegalArgumentException ex) {
         // Ignore malformed textures catalog
+      } catch (AccessControlException ex) {
+        // Use only default texture catalogs
       }
     }
   }
@@ -243,6 +240,23 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     } catch (IOException ex) {
       // Ignore unaccessible catalog
     }
+  }
+  
+  /**
+   * Reads the default textures described in properties files accessible through classpath.
+   */
+  private void readDefaultTexturesCatalogs(final UserPreferences preferences,
+                                           Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
+                                           List<String> identifiedTextures) {
+    // Try to load com.eteks.sweethome3d.io.DefaultTexturesCatalog property file from classpath 
+    final String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
+    readTexturesCatalog(defaultTexturesCatalogFamily, 
+        preferences, textureHomonymsCounter, identifiedTextures);
+
+    // Try to load com.eteks.sweethome3d.io.AdditionalTexturesCatalog property file from classpath 
+    String classPackage = defaultTexturesCatalogFamily.substring(0, defaultTexturesCatalogFamily.lastIndexOf("."));
+    readTexturesCatalog(classPackage + "." + ADDITIONAL_TEXTURES_CATALOG_FAMILY, 
+        preferences, textureHomonymsCounter, identifiedTextures);
   }
   
   /**

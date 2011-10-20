@@ -62,6 +62,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -202,6 +203,7 @@ public class HomePane extends JRootPane implements HomeView {
   private TransferHandler                       planTransferHandler;
   private ActionMap                             menuActionMap;
   private List<Action>                          pluginActions;
+  private boolean                               clipboardEmpty = true;
   
   /**
    * Creates home view associated with its controller.
@@ -309,9 +311,9 @@ public class HomePane extends JRootPane implements HomeView {
     
     createAction(ActionType.UNDO, preferences, controller, "undo");
     createAction(ActionType.REDO, preferences, controller, "redo");
-    createClipboardAction(ActionType.CUT, preferences, TransferHandler.getCutAction());
-    createClipboardAction(ActionType.COPY, preferences, TransferHandler.getCopyAction());
-    createClipboardAction(ActionType.PASTE, preferences, TransferHandler.getPasteAction());
+    createClipboardAction(ActionType.CUT, preferences, TransferHandler.getCutAction(), true);
+    createClipboardAction(ActionType.COPY, preferences, TransferHandler.getCopyAction(), true);
+    createClipboardAction(ActionType.PASTE, preferences, TransferHandler.getPasteAction(), false);
     createAction(ActionType.DELETE, preferences, controller, "delete");
     createAction(ActionType.SELECT_ALL, preferences, controller, "selectAll");
     
@@ -522,10 +524,14 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void createClipboardAction(ActionType actionType,
                                      UserPreferences preferences,
-                                     final Action clipboardAction) {
+                                     final Action clipboardAction,
+                                     final boolean copyAction) {
     getActionMap().put(actionType,
         new ResourceAction (preferences, HomePane.class, actionType.name()) {
           public void actionPerformed(ActionEvent ev) {
+            if (copyAction) {
+              clipboardEmpty = false;
+            }
             ev = new ActionEvent(lastFocusedComponent, ActionEvent.ACTION_PERFORMED, null);
             clipboardAction.actionPerformed(ev);
           }
@@ -3167,9 +3173,14 @@ public class HomePane extends JRootPane implements HomeView {
    * components are able to handle.
    */
   public boolean isClipboardEmpty() {
-    Clipboard clipboard = getToolkit().getSystemClipboard();
-    return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
-        || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));    
+    try {
+      Clipboard clipboard = getToolkit().getSystemClipboard();
+      return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
+          || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
+    } catch (AccessControlException ex) {
+      // AWT uses a private clipboard that won't be empty as soon as a copy action will be done
+      return this.clipboardEmpty;
+    }    
   }
 
   /**

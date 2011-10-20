@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -291,19 +292,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
     
-    // Try to load com.eteks.sweethome3d.io.DefaultFurnitureCatalog property file from classpath 
-    final String defaultFurnitureCatalogFamily = DefaultFurnitureCatalog.class.getName();
-    readFurnitureCatalog(defaultFurnitureCatalogFamily, 
-        preferences, furnitureHomonymsCounter, identifiedFurniture);
-    
-    // Try to load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
-    String classPackage = defaultFurnitureCatalogFamily.substring(0, defaultFurnitureCatalogFamily.lastIndexOf("."));
-    readFurnitureCatalog(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY, 
-        preferences, furnitureHomonymsCounter, identifiedFurniture);
-    
-    // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
-    readFurnitureCatalog(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY, 
-        preferences, furnitureHomonymsCounter, identifiedFurniture);
+    readDefaultFurnitureCatalogs(preferences, furnitureHomonymsCounter, identifiedFurniture);
     
     if (furniturePluginFolders != null) {
       for (File furniturePluginFolder : furniturePluginFolders) {
@@ -326,7 +315,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
     }
   }
-  
+
   /**
    * Creates a default furniture catalog read only from resources in the given URLs.
    */
@@ -344,6 +333,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
 
+    readDefaultFurnitureCatalogs(null, furnitureHomonymsCounter, identifiedFurniture);
+    
     for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
       try {
         readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
@@ -353,6 +344,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         // Ignore malformed furniture catalog
       } catch (IllegalArgumentException ex) {
         // Ignore malformed furniture catalog
+      } catch (AccessControlException ex) {
+        // Use only default furniture catalogs
       }
     }
   }
@@ -393,6 +386,27 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     } catch (IOException ex) {
       // Ignore unaccessible catalog
     }
+  }
+  
+  /**
+   * Reads the default furniture described in properties files accessible through classpath.
+   */
+  private void readDefaultFurnitureCatalogs(UserPreferences preferences,
+                                            Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
+                                            List<String> identifiedFurniture) {
+    // Try to load com.eteks.sweethome3d.io.DefaultFurnitureCatalog property file from classpath 
+    String defaultFurnitureCatalogFamily = DefaultFurnitureCatalog.class.getName();
+    readFurnitureCatalog(defaultFurnitureCatalogFamily, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
+    
+    // Try to load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
+    String classPackage = defaultFurnitureCatalogFamily.substring(0, defaultFurnitureCatalogFamily.lastIndexOf("."));
+    readFurnitureCatalog(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
+    
+    // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
+    readFurnitureCatalog(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
   }
   
   /**

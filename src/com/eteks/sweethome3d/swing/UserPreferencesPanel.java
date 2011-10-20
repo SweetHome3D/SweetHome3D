@@ -31,6 +31,7 @@ import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.security.AccessControlException;
 import java.util.List;
 import java.util.Locale;
 
@@ -249,8 +250,16 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
 
+    boolean no3D;
+    try {
+      no3D = "true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"));
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required by 3D view too
+      no3D = true;
+    }
     if (controller.isPropertyEditable(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE)
-        && !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+        && !no3D) {
       // Create navigation panel label and check box bound to controller NAVIGATION_PANEL_VISIBLE property
       this.navigationPanelLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "navigationPanelLabel.text"));
@@ -343,7 +352,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "topViewRadioButton.text"), 
           controller.isFurnitureViewedFromTop());
-      if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+      if (no3D) {
         this.catalogIconRadioButton.setEnabled(false);
         this.topViewRadioButton.setEnabled(false);
       } else { 

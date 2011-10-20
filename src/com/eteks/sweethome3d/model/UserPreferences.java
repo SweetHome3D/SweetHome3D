@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.PropertyPermission;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
@@ -118,12 +120,17 @@ public abstract class UserPreferences {
    * Updates default locale from preferences language.
    */
   private void updateDefaultLocale() {
-    int underscoreIndex = this.language.indexOf("_");
-    if (underscoreIndex != -1) {
-      Locale.setDefault(new Locale(this.language.substring(0, underscoreIndex), 
-          this.language.substring(underscoreIndex + 1)));
-    } else {
-      Locale.setDefault(new Locale(this.language, this.defaultCountry));
+    try {
+      int underscoreIndex = this.language.indexOf("_");
+      if (underscoreIndex != -1) {
+        Locale.setDefault(new Locale(this.language.substring(0, underscoreIndex), 
+            this.language.substring(underscoreIndex + 1)));
+      } else {
+        Locale.setDefault(new Locale(this.language, this.defaultCountry));
+      }
+    } catch (AccessControlException ex) {
+      // Let's keep default language even if it's not supported
+      this.language = Locale.getDefault().getLanguage();
     }
   }
 
@@ -223,13 +230,14 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets the preferred language to display information, changes current default locale accordingly 
-   * and notifies listeners of this change.
+   * If {@linkplain #isLanguageEditable() language can be changed}, sets the preferred language to display information, 
+   * changes current default locale accordingly and notifies listeners of this change.
    * @param language an ISO 639 code that may be followed by an underscore and an ISO 3166 code
    *            (for example fr, de, it, en_US, zh_CN). 
    */
   public void setLanguage(String language) {
-    if (!language.equals(this.language)) {
+    if (!language.equals(this.language)
+        && isLanguageEditable()) {
       String oldLanguage = this.language;
       this.language = language;      
       updateDefaultLocale();
@@ -240,6 +248,20 @@ public abstract class UserPreferences {
     }
   }
 
+  /**
+   * Returns <code>true</code> if the language in preferences can be set.
+   * @return <code>true</code> except if <code>user.language</code> System property isn't writable.
+   * @since 3.4 
+   */
+  public boolean isLanguageEditable() {
+    try {
+      System.getSecurityManager().checkPermission(new PropertyPermission("user.language", "write"));
+      return true;
+    } catch (AccessControlException ex) {
+      return false;
+    }
+  }
+  
   /**
    * Returns the array of available languages in Sweet Home 3D.
    */

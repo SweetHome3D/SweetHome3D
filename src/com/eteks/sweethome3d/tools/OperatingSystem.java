@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.tools;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -64,8 +65,12 @@ public class OperatingSystem {
     } catch (MissingResourceException ex) {
       temporarySubFolder = "work";
     }
-    temporarySubFolder = System.getProperty(
-        "com.eteks.sweethome3d.tools.temporarySubFolder", temporarySubFolder);
+    try {
+      temporarySubFolder = System.getProperty(
+          "com.eteks.sweethome3d.tools.temporarySubFolder", temporarySubFolder);
+    } catch (AccessControlException ex) {
+      // Don't change temporarySubFolder value
+    }
     TEMPORARY_SUB_FOLDER = temporarySubFolder;
     TEMPORARY_SESSION_SUB_FOLDER = UUID.randomUUID().toString();
   }
@@ -137,6 +142,7 @@ public class OperatingSystem {
       }
     } catch (IOException ex) {
       // Ignore temporary folder that can't be found
+    } catch (AccessControlException ex) {
     }
   }
 

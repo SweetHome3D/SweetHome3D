@@ -81,6 +81,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -522,7 +523,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Creates a new plan that displays <code>home</code>.
    */
-  public PlanComponent(Home home, UserPreferences preferences,
+  public PlanComponent(Home home, 
+                       UserPreferences preferences,
                        PlanController controller) {
     this.home = home;
     this.preferences = preferences;
@@ -2261,7 +2263,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (textureImage == null
                   || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
-                if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+                if (!isTextureManagerAvailable()) {
+                  // Prefer to share textures images with texture manager if it's available
+                  TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
+                      new TextureManager.TextureObserver() {
+                        public void textureUpdated(Texture texture) {
+                          floorTextureImagesCache.put(floorTexture.getImage(), 
+                              ((ImageComponent2D)texture.getImage(0)).getImage());
+                          if (!waitForTexture) {
+                            repaint();
+                          }
+                        }
+                      });
+                } else {
                   // Use icon manager if texture manager should be ignored
                   Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(), 
                       waitForTexture ? null : this);
@@ -2277,21 +2291,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                     g2DIcon.dispose();
                     floorTextureImagesCache.put(floorTexture.getImage(), textureIconImage);
                   } 
-                } else { 
-                  // Prefer to share textures images with texture manager if it's available
-                  TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
-                      new TextureManager.TextureObserver() {
-                        public void textureUpdated(Texture texture) {
-                          floorTextureImagesCache.put(floorTexture.getImage(), 
-                              ((ImageComponent2D)texture.getImage(0)).getImage());
-                          if (!waitForTexture) {
-                            repaint();
-                          }
-                        }
-                      });
                 }
                 textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
               }
+              
               g2D.setPaint(new TexturePaint(textureImage, 
                   new Rectangle2D.Float(0, 0, floorTexture.getWidth(), floorTexture.getHeight())));
             }
@@ -2313,6 +2316,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
   }
 
+  /**
+   * Returns <code>true</code> if <code>TextureManager</code> can be used to manage textures.
+   * @return
+   */
+  private static boolean isTextureManagerAvailable() {
+    try {
+      if (!"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+        return true;
+      }
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required by TextureManager class too 
+    }
+    return false;
+  }
+  
   /**
    * Paints rooms name and area. 
    */
@@ -2769,11 +2788,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               PaintMode paintMode, boolean paintIcon) {    
     if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-      boolean allFurnitureViewedFromTop = 
-          !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")) 
-          && this.preferences.isFurnitureViewedFromTop()
-          && Component3DManager.getInstance().isOffScreenImageSupported();
-      
+      Boolean allFurnitureViewedFromTop = null;
       // Draw furniture
       for (HomePieceOfFurniture piece : furniture) {
         if (piece.isVisible()) {
@@ -2799,12 +2814,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             } else {
               pieceShape2D = pieceShape;
             }
-                      
+
+            boolean viewedFromTop;
+            if (this.preferences.isFurnitureViewedFromTop()) {
+              if (piece.getPlanIcon() != null
+                  || piece instanceof HomeDoorOrWindow) {
+                viewedFromTop = true;
+              } else {
+                if (allFurnitureViewedFromTop == null) {
+                  try {
+                    // Evaluate allFurnitureViewedFromTop value as late as possible to avoid mandatory dependency towards Java 3D 
+                    allFurnitureViewedFromTop = !"true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D")) 
+                        && Component3DManager.getInstance().isOffScreenImageSupported();
+                  } catch (AccessControlException ex) {
+                    // If com.eteks.sweethome3d.no3D property can't be read, 
+                    // security manager won't allow to access to Java 3D DLLs required by PieceOfFurnitureModelIcon class too
+                    allFurnitureViewedFromTop = false;
+                  }
+                }
+                viewedFromTop = allFurnitureViewedFromTop.booleanValue();
+              }                
+            } else {
+              viewedFromTop = false;
+            }
             if (paintIcon 
-                && (allFurnitureViewedFromTop
-                    || this.preferences.isFurnitureViewedFromTop()
-                        && (piece.getPlanIcon() != null
-                            || piece instanceof HomeDoorOrWindow))) {
+                && viewedFromTop) {
               if (piece instanceof HomeDoorOrWindow) {
                 // Draw doors and windows border
                 g2D.setPaint(backgroundColor);
@@ -4837,7 +4871,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * A proxy for the furniture plan icon. 
+   * A proxy for the furniture plan icon generated from its plan icon. 
    */
   private static class PieceOfFurniturePlanIcon extends PieceOfFurnitureTopViewIcon {
     private final float pieceWidth;
@@ -4899,7 +4933,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Don't need color information anymore
           this.pieceColor = null;
         } else if (this.pieceTexture != null) {
-          if ("true".equalsIgnoreCase(System.getProperty("com.eteks.sweethome3d.no3D"))) {
+          if (isTextureManagerAvailable()) {
+            // Prefer to share textures images with texture manager if it's available
+            TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
+                new TextureManager.TextureObserver() {
+                  public void textureUpdated(Texture texture) {                  
+                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage());
+                  }
+                });
+          } else { 
             Icon textureIcon = IconManager.getInstance().getIcon(this.pieceTexture.getImage(), null);
             if (IconManager.getInstance().isErrorIcon(textureIcon)) {
               setTexturedIcon(c, ERROR_TEXTURE_IMAGE);                    
@@ -4910,15 +4952,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               textureIcon.paintIcon(c, g2DIcon, 0, 0);
               g2DIcon.dispose();
               setTexturedIcon(c, textureIconImage);
-            } 
-          } else { 
-            // Prefer to share textures images with texture manager if it's available
-            TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
-                new TextureManager.TextureObserver() {
-                  public void textureUpdated(Texture texture) {                  
-                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage());
-                  }
-                });
+            }
           }
   
           // Don't need texture information anymore
@@ -4946,7 +4980,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * A proxy for the furniture top view icon. 
+   * A proxy for the furniture top view icon generated from its 3D model. 
    */
   private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
     private static Canvas3D        canvas3D;

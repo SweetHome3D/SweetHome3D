@@ -128,10 +128,15 @@ public class UserPreferencesController implements Controller {
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
    * may render it differently.
-   * The implementation of this method always returns <code>true</code>. 
+   * The implementation of this method always returns <code>true</code> except for <code>LANGUAGE</code> if it's not editable. 
    */
   public boolean isPropertyEditable(Property property) {
-    return true;
+    switch (property) {
+      case LANGUAGE :
+        return this.preferences.isLanguageEditable();
+      default :
+        return true;
+    }
   }
   
   /**
