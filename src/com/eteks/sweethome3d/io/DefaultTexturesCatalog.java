@@ -186,21 +186,28 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
-    
-    readDefaultTexturesCatalogs(null, textureHomonymsCounter, identifiedTextures);
 
-    for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
-      try {
-        readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
-                new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})),
-            pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
-      } catch (MissingResourceException ex) {
-        // Ignore malformed textures catalog
-      } catch (IllegalArgumentException ex) {
-        // Ignore malformed textures catalog
-      } catch (AccessControlException ex) {
-        // Use only default texture catalogs
+    try {
+      SecurityManager securityManager = System.getSecurityManager();
+      if (securityManager != null) {
+        securityManager.checkCreateClassLoader();
       }
+
+      for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
+        try {
+          ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
+                  new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));
+          readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
+        } catch (MissingResourceException ex) {
+          // Ignore malformed textures catalog
+        } catch (IllegalArgumentException ex) {
+          // Ignore malformed textures catalog
+        }
+      }
+    } catch (AccessControlException ex) {
+      // Use only textures accessible through classpath
+      ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault());
+      readTextures(resource, null, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
     }
   }
 

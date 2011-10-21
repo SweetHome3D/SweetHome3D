@@ -324,7 +324,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
-   * Creates a default furniture catalog read only from resources in the given URLs.
+   * Creates a default furniture catalog read only from resources in the given URLs 
+   * or in the classpath if the security manager doesn't allow to create class loaders.
    * Model and icon URLs will built from <code>furnitureResourcesUrlBase</code> if it isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls,
@@ -333,20 +334,27 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
 
-    readDefaultFurnitureCatalogs(null, furnitureHomonymsCounter, identifiedFurniture);
-    
-    for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
-      try {
-        readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
-            pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
-      } catch (MissingResourceException ex) {
-        // Ignore malformed furniture catalog
-      } catch (IllegalArgumentException ex) {
-        // Ignore malformed furniture catalog
-      } catch (AccessControlException ex) {
-        // Use only default furniture catalogs
+    try {
+      SecurityManager securityManager = System.getSecurityManager();
+      if (securityManager != null) {
+        securityManager.checkCreateClassLoader();
       }
+
+      for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
+        try {        
+          ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
+              new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+          readFurniture(resource, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
+        } catch (MissingResourceException ex) {
+          // Ignore malformed furniture catalog
+        } catch (IllegalArgumentException ex) {
+          // Ignore malformed furniture catalog
+        }
+      }
+    } catch (AccessControlException ex) {
+      // Use only furniture accessible through classpath
+      ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault());
+      readFurniture(resource, null, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
     }
   }
 
