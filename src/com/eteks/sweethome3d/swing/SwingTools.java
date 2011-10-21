@@ -42,8 +42,10 @@ import java.awt.image.RGBImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -659,5 +661,25 @@ public class SwingTools {
       System.err.println("Can't show document in browser. JNLP classes not available in classpath.");
     }
     return false;
+  }
+
+  /**
+   * Returns the children of a component of the given class.
+   */
+  public static <T extends JComponent> List<T> findChildren(JComponent parent, Class<T> childrenClass) {
+    List<T> children = new ArrayList<T>();
+    findChildren(parent, childrenClass, children); 
+    return children;
+  }
+
+  private static <T extends JComponent> void findChildren(JComponent parent, Class<T> childrenClass, List<T> children) {
+    for (int i = 0; i < parent.getComponentCount(); i++) {
+      Component child = parent.getComponent(i);
+      if (childrenClass.isInstance(child)) {
+        children.add((T)child);
+      } else if (child instanceof JComponent) {
+        findChildren((JComponent)child, childrenClass, children);
+      }            
+    }
   }
 }
