@@ -474,13 +474,23 @@ public class AppletApplication extends HomeApplication {
     addToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT, toolBar);
     addToolBarAction(homeView, HomeView.ActionType.ZOOM_IN, toolBar);
 
-    Action createPhotoAction = getToolBarAction(homeView, HomeView.ActionType.CREATE_PHOTO);
-    if (createPhotoAction != null) {
-      boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
-      controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
-      if (enableCreatePhoto) {
-        toolBar.addSeparator();
-        toolBar.add(createPhotoAction);
+    boolean no3D;
+    try {
+      no3D = Boolean.getBoolean("com.eteks.sweethome3d.no3D");
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // security manager won't allow to access to Java 3D DLLs required to manage 3D too
+      no3D = true;
+    }
+    if (!no3D) {
+      Action createPhotoAction = getToolBarAction(homeView, HomeView.ActionType.CREATE_PHOTO);
+      if (createPhotoAction != null) {
+        boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
+        controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
+        if (enableCreatePhoto) {
+          toolBar.addSeparator();
+          toolBar.add(createPhotoAction);
+        }
       }
     }
 
@@ -501,9 +511,9 @@ public class AppletApplication extends HomeApplication {
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
         getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SVG));
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
-        getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_OBJ));
+        getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_OBJ) && !no3D);
     controller.getView().setEnabled(HomeView.ActionType.CREATE_VIDEO, 
-        getAppletBooleanParameter(this.applet, ENABLE_CREATE_VIDEO));
+        getAppletBooleanParameter(this.applet, ENABLE_CREATE_VIDEO) && !no3D);
     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
