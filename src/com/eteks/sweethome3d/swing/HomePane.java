@@ -1902,7 +1902,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
       if (!dragAndDropWithTransferHandlerSupported) {
         if (catalogView != null) {
-          // Check if catalog isn't handled by a subcomponent
+          // Check if furniture catalog is handled by a subcomponent
           List<JViewport> viewports = SwingTools.findChildren(catalogView, JViewport.class);
           JComponent catalogComponent;
           if (viewports.size() > 0) {
