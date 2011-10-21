@@ -23,6 +23,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
@@ -37,6 +38,8 @@ import java.awt.Point;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -64,6 +67,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.security.AccessControlException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -119,6 +123,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.SwingPropertyChangeSupport;
 import javax.swing.text.JTextComponent;
 
@@ -129,6 +134,7 @@ import com.eteks.sweethome3d.j3d.Room3D;
 import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
@@ -152,6 +158,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -201,15 +208,17 @@ public class HomePane extends JRootPane implements HomeView {
   private TransferHandler                       catalogTransferHandler;
   private TransferHandler                       furnitureTransferHandler;
   private TransferHandler                       planTransferHandler;
+  private boolean                               transferHandlerEnabled;
+  private MouseInputAdapter                     furnitureCatalogDragAndDropListener;
+  private boolean                               clipboardEmpty = true;
   private ActionMap                             menuActionMap;
   private List<Action>                          pluginActions;
-  private boolean                               clipboardEmpty = true;
   
   /**
    * Creates home view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, 
-                  HomeController controller) {
+                  final HomeController controller) {
     this.home = home;
     this.preferences = preferences;
     this.controller = controller;
@@ -1867,6 +1876,14 @@ public class HomePane extends JRootPane implements HomeView {
    * Enables or disables transfer between components.  
    */
   public void setTransferEnabled(boolean enabled) {
+    boolean dragAndDropWithTransferHandlerSupported;
+    try {
+      // Don't use transfer handlers for drag and drop with Plugin2 under Mac OS X or when in an unsigned applet
+      dragAndDropWithTransferHandlerSupported = !Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView");
+    } catch (AccessControlException ex1) {
+      dragAndDropWithTransferHandlerSupported = false;
+    }
+    
     JComponent catalogView = (JComponent)this.controller.getFurnitureCatalogController().getView();
     JComponent furnitureView = (JComponent)this.controller.getFurnitureController().getView();
     JComponent planView = (JComponent)this.controller.getPlanController().getView();
@@ -1883,6 +1900,23 @@ public class HomePane extends JRootPane implements HomeView {
       if (planView != null) {
         planView.setTransferHandler(this.planTransferHandler);
       }
+      if (!dragAndDropWithTransferHandlerSupported) {
+        if (catalogView != null) {
+          // Check if catalog isn't handled by a subcomponent
+          List<JViewport> viewports = SwingTools.findChildren(catalogView, JViewport.class);
+          JComponent catalogComponent;
+          if (viewports.size() > 0) {
+            catalogComponent = (JComponent)viewports.get(0).getView();
+          } else {
+            catalogComponent = catalogView;
+          }
+          if (this.furnitureCatalogDragAndDropListener == null) {
+            this.furnitureCatalogDragAndDropListener = createFurnitureCatalogMouseListener();
+          }
+          catalogComponent.addMouseListener(this.furnitureCatalogDragAndDropListener);
+          catalogComponent.addMouseMotionListener(this.furnitureCatalogDragAndDropListener);
+        }
+      }
     } else {
       if (catalogView != null) {
         catalogView.setTransferHandler(null);
@@ -1896,7 +1930,161 @@ public class HomePane extends JRootPane implements HomeView {
       if (planView != null) {
         planView.setTransferHandler(null);
       }
+      if (!dragAndDropWithTransferHandlerSupported) {
+        if (catalogView != null) {
+          List<JViewport> viewports = SwingTools.findChildren(catalogView, JViewport.class);
+          JComponent catalogComponent;
+          if (viewports.size() > 0) {
+            catalogComponent = (JComponent)viewports.get(0).getView();
+          } else {
+            catalogComponent = catalogView;
+          }
+          catalogComponent.removeMouseListener(this.furnitureCatalogDragAndDropListener);
+          catalogComponent.removeMouseMotionListener(this.furnitureCatalogDragAndDropListener);
+        }
+      }        
     }
+    this.transferHandlerEnabled = enabled;
+  }
+
+  /**
+   * Returns a mouse listener for catalog that acts as catalog view, furniture view and plan transfer handlers 
+   * for drag and drop operations.
+   */
+  private MouseInputAdapter createFurnitureCatalogMouseListener() {
+    return new MouseInputAdapter() {
+        private CatalogPieceOfFurniture selectedPiece;
+        private TransferHandler         transferHandler;
+        private Cursor                  previousCursor;
+        private View                    previousView;
+    
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          if (SwingUtilities.isLeftMouseButton(ev)) {
+            List<CatalogPieceOfFurniture> selectedFurniture = controller.getFurnitureCatalogController().getSelectedFurniture();
+            if (selectedFurniture.size() > 0) {
+              this.transferHandler = ((JComponent)ev.getSource()).getTransferHandler();
+              ((JComponent)ev.getSource()).setTransferHandler(null);
+              this.selectedPiece = selectedFurniture.get(0);
+              this.previousCursor = null;
+              this.previousView = null;
+            }
+          }
+        }
+        
+        @Override
+        public void mouseDragged(MouseEvent ev) {
+          if (SwingUtilities.isLeftMouseButton(ev)
+              && this.selectedPiece != null) {
+            View view;
+            float [] pointInView = getPointInPlanView(ev);
+            if (pointInView != null) {
+              view = controller.getPlanController().getView();
+            } else {
+              view = controller.getFurnitureController().getView();
+              pointInView = getPointInFurnitureView(ev);
+            }
+
+            List<Selectable> transferedFurniture = new ArrayList<Selectable>();
+            transferedFurniture.add(controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece));
+
+            if (this.previousView != view) {
+              if (this.previousView != null) {
+                if (this.previousView == controller.getPlanController().getView()) {
+                  controller.getPlanController().stopDraggedItems();
+                }
+                ((JComponent)this.previousView).setCursor(this.previousCursor);
+                this.previousCursor = null;
+                this.previousView = null;
+              }
+              if (view != null) {
+                JComponent component = (JComponent)view;
+                this.previousCursor = component.getCursor();
+                this.previousView = view;
+                component.setCursor(DragSource.DefaultCopyDrop);
+                if (component.getParent() instanceof JViewport) {
+                  ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
+                }
+                if (view == controller.getPlanController().getView()) {
+                  controller.getPlanController().startDraggedItems(transferedFurniture, pointInView [0], pointInView [1]);
+                }
+              }
+            } else if (pointInView != null) {
+              controller.getPlanController().moveMouse(pointInView [0], pointInView [1]);
+            }
+            // Force selection again
+            List<CatalogPieceOfFurniture> emptyList = Collections.emptyList();
+            controller.getFurnitureCatalogController().setSelectedFurniture(emptyList);
+            controller.getFurnitureCatalogController().setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {this.selectedPiece}));
+          }
+        }
+        
+        private float [] getPointInPlanView(MouseEvent ev) {
+          PlanView planView = controller.getPlanController().getView();
+          if (planView != null) {
+            JComponent planComponent = (JComponent)planView;
+            Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), 
+                planComponent.getParent() instanceof JViewport
+                    ? planComponent.getParent()
+                    : planComponent);
+            if (planComponent.getParent() instanceof JViewport 
+                    && ((JViewport)planComponent.getParent()).contains(point)
+                || !(planComponent.getParent() instanceof JViewport)
+                    && planComponent.contains(point)) {
+              point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), planComponent);
+              return new float [] {planView.convertXPixelToModel(point.x), planView.convertYPixelToModel(point.y)};
+            }
+          } 
+          return null;
+        }
+        
+        private float [] getPointInFurnitureView(MouseEvent ev) {
+          View furnitureView = controller.getFurnitureController().getView();
+          if (furnitureView != null) {
+            JComponent furnitureComponent = (JComponent)furnitureView;
+            Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), 
+                furnitureComponent.getParent() instanceof JViewport
+                   ? furnitureComponent.getParent()
+                   : furnitureComponent);
+            if (furnitureComponent.getParent() instanceof JViewport 
+                && ((JViewport)furnitureComponent.getParent()).contains(point)
+            || !(furnitureComponent.getParent() instanceof JViewport)
+                && furnitureComponent.contains(point)) {
+              return new float [] {0, 0};
+            }
+          } 
+          return null;
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          if (SwingUtilities.isLeftMouseButton(ev)
+              && this.selectedPiece != null) {
+            View view;
+            float [] pointInView = getPointInPlanView(ev);
+            if (pointInView != null) {
+              controller.getPlanController().stopDraggedItems();
+              view = controller.getPlanController().getView();
+            } else {
+              view = controller.getFurnitureController().getView();
+              pointInView = getPointInFurnitureView(ev);
+            }
+            if (pointInView != null) {
+              try {                  
+                List<Selectable> transferedFurniture = new ArrayList<Selectable>();
+                transferedFurniture.add(controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece));
+                controller.drop((List<? extends Selectable>)new HomeTransferableList(transferedFurniture).getTransferData(HomeTransferableList.HOME_FLAVOR), 
+                    view, pointInView [0], pointInView [1]);
+              } catch (UnsupportedFlavorException ex) {
+                ex.printStackTrace();
+              }
+              ((JComponent)this.previousView).setCursor(this.previousCursor);
+            }
+            this.selectedPiece = null;
+            ((JComponent)ev.getSource()).setTransferHandler(this.transferHandler);
+          }
+        }
+      };
   }
 
   /**
@@ -2088,10 +2276,11 @@ public class HomePane extends JRootPane implements HomeView {
         // Replace previous furniture catalog view by the new one
         JComponent oldFurnitureCatalogView = this.furnitureCatalogView.get();        
         if (oldFurnitureCatalogView != null) {
+          boolean transferHandlerEnabled = homePane.transferHandlerEnabled; 
+          homePane.setTransferEnabled(false);
           JComponent newFurnitureCatalogView = (JComponent)homePane.controller.getFurnitureCatalogController().getView();
           newFurnitureCatalogView.setComponentPopupMenu(oldFurnitureCatalogView.getComponentPopupMenu());
-          TransferHandler transferHandler = oldFurnitureCatalogView.getTransferHandler();
-          newFurnitureCatalogView.setTransferHandler(transferHandler);
+          homePane.setTransferEnabled(transferHandlerEnabled);
           JComponent splitPaneTopComponent = newFurnitureCatalogView; 
           if (newFurnitureCatalogView instanceof Scrollable) {
             splitPaneTopComponent = new HomeScrollPane(newFurnitureCatalogView);
