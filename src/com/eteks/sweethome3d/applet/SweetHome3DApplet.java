@@ -177,7 +177,7 @@ public class SweetHome3DApplet extends JApplet {
    
   public void init() {
     if (!isJava5OrSuperior()) {
-      showError(getLocalizedString("requirementsMessage"));
+      showText(getLocalizedString("requirementsMessage"));
     } else {
       createAppletApplication();
     }
@@ -244,16 +244,28 @@ public class SweetHome3DApplet extends JApplet {
   /**
    * Shows the given text in a label.
    */
-  private void showError(String text) {
+  private void showText(String text) {
     JLabel label = new JLabel(text, JLabel.CENTER);
     setContentPane(label);
   }
   
   /**
+   * Reports the given exception at screen.
+   */
+  private void showError(Throwable ex) {
+    showText("<html>" + getLocalizedString("startError") 
+        + "<br>Exception " + ex.getClass().getName() 
+        + (ex.getMessage() != null ? " " + ex.getMessage() : ""));
+    ex.printStackTrace();
+  }
+
+  /**
    * Creates a new <code>AppletApplication</code> instance that manages this applet content.
    */
   private void createAppletApplication() {
+    String applicationClassName = null;
     try {
+      applicationClassName = getApplicationClassName();
       Class sweetHome3DAppletClass = SweetHome3DApplet.class;
       List java3DFiles = new ArrayList(Arrays.asList(new String [] {
           "j3dcore.jar", // Main Java 3D jars
@@ -291,7 +303,6 @@ public class SweetHome3DApplet extends JApplet {
           "org.sunflow"}));
       applicationPackages.addAll(getPluginsPackages());
       
-      String applicationClassName = getApplicationClassName();
       if (!applicationClassName.startsWith((String)applicationPackages.get(0))) {
         String [] applicationClassParts = applicationClassName.split("\\.");
         String applicationClassPackageBase = ""; 
@@ -309,21 +320,28 @@ public class SweetHome3DApplet extends JApplet {
           sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
           (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
           (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
-      
+      startApplication(applicationClassName, extensionsClassLoader);
+    } catch (AccessControlException ex) {
+      String runWithoutSignature = getParameter("runWithoutSignature");
+      if (runWithoutSignature != null && Boolean.parseBoolean(runWithoutSignature)) {
+        // Try to run application without 3D
+        startApplication(applicationClassName, getClass().getClassLoader());
+      } else {
+        showText(getLocalizedString("signatureError"));
+      }
+    } catch (Throwable ex) {
+      showError(ex);
+    }
+  }
+
+  private void startApplication(String applicationClassName, ClassLoader extensionsClassLoader) {
+    try {
       // Call application constructor with reflection
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
-      Constructor applicationConstructor = 
-          applicationClass.getConstructor(new Class [] {JApplet.class});
+      Constructor applicationConstructor = applicationClass.getConstructor(new Class [] {JApplet.class});
       this.appletApplication = applicationConstructor.newInstance(new Object [] {this});
-    } catch (Throwable ex) {
-      if (ex instanceof AccessControlException) {
-        showError(getLocalizedString("signatureError"));
-      } else {
-        showError("<html>" + getLocalizedString("startError") 
-            + "<br>Exception " + ex.getClass().getName() 
-            + (ex.getMessage() != null ? " " + ex.getMessage() : ""));
-        ex.printStackTrace();
-      }
+    } catch (Exception ex) {
+      showError(ex);
     }
   }
 
@@ -333,6 +351,13 @@ public class SweetHome3DApplet extends JApplet {
    */
   protected String getApplicationClassName() {
     return "com.eteks.sweethome3d.applet.AppletApplication";
+  }  
+  
+  /**
+   * Returns the application instance created by the applet. 
+   */
+  protected Object getApplication() {
+    return this.appletApplication;
   }  
   
   /**
