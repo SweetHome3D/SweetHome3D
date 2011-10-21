@@ -220,13 +220,13 @@ public class AppletApplication extends HomeApplication {
     }
     // Collect deleted objects (seems to be required under Mac OS X when the applet is being reloaded)
     System.gc();
-    // Stop managers threads
-    IconManager.getInstance().clear();
     try {
       if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) { 
+        // Stop managers threads
         TextureManager.getInstance().clear();
         ModelManager.getInstance().clear();
       }
+      IconManager.getInstance().clear();
     } catch (AccessControlException ex) {
       // If com.eteks.sweethome3d.no3D property can't be read, 
       // security manager won't allow to access to Java 3D DLLs required by previous classes too
