@@ -451,7 +451,12 @@ public enum LengthUnit {
       } else if  (maxDelta > 0.25f) {
         precision = 0.25f;
       }
-      return inchToCentimeter(Math.round(centimeterToInch(length) / precision) * precision);
+      float magnetizedLength = inchToCentimeter(Math.round(centimeterToInch(length) / precision) * precision);
+      if (magnetizedLength == 0 && length > 0) {
+        return length;
+      } else {
+        return magnetizedLength;
+      }
     }
 
     @Override
@@ -593,7 +598,12 @@ public enum LengthUnit {
     } else if  (maxDelta > 0.5f) {
       precision = 0.5f;
     } 
-    return Math.round(length / precision) * precision;
+    float magnetizedLength = Math.round(length / precision) * precision;
+    if (magnetizedLength == 0 && length > 0) {
+      return length;
+    } else {
+      return magnetizedLength;
+    }
   }
 
   /**
