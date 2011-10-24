@@ -75,8 +75,11 @@ public class ImportedFurnitureWizardController extends WizardController
   private String                           name;
   private Content                          model;
   private float                            width;
+  private float                            proportionalWidth;
   private float                            depth;
+  private float                            proportionalDepth;
   private float                            height;
+  private float                            proportionalHeight;
   private float                            elevation;
   private boolean                          movable;
   private boolean                          doorOrWindow;
@@ -448,10 +451,21 @@ public class ImportedFurnitureWizardController extends WizardController
    * Sets the width of the imported piece.
    */
   public void setWidth(float width) {
-    if (width != this.width) {
+    setWidth(width, false);
+  }
+
+  /**
+   * Sets the width of the imported piece.
+   */
+  private void setWidth(float width, boolean keepProportionalWidthUnchanged) {
+    float adjustedWidth = Math.max(width, 0.001f);
+    if (adjustedWidth == width || !keepProportionalWidthUnchanged) {
+      this.proportionalWidth = width;
+    }
+    if (adjustedWidth != this.width) {
       float oldWidth = this.width;
-      this.width = width;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
+      this.width = adjustedWidth;
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, adjustedWidth);
     }
   }
 
@@ -466,10 +480,21 @@ public class ImportedFurnitureWizardController extends WizardController
    * Sets the depth of the imported piece.
    */
   public void setDepth(float depth) {
-    if (depth != this.depth) {
+    setDepth(depth, false);
+  }
+
+  /**
+   * Sets the depth of the imported piece.
+   */
+  private void setDepth(float depth, boolean keepProportionalDepthUnchanged) {
+    float adjustedDepth = Math.max(depth, 0.001f);
+    if (adjustedDepth == depth || !keepProportionalDepthUnchanged) {
+      this.proportionalDepth = depth;
+    }
+    if (adjustedDepth != this.depth) {
       float oldDepth = this.depth;
-      this.depth = depth;
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
+      this.depth = adjustedDepth;
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, adjustedDepth);
     }
   }
 
@@ -484,10 +509,21 @@ public class ImportedFurnitureWizardController extends WizardController
    * Sets the size of the imported piece.
    */
   public void setHeight(float height) {
-    if (height != this.height) {
+    setHeight(height, false);
+  }
+
+  /**
+   * Sets the size of the imported piece.
+   */
+  private void setHeight(float height, boolean keepProportionalHeightUnchanged) {
+    float adjustedHeight = Math.max(height, 0.001f);
+    if (adjustedHeight == height || !keepProportionalHeightUnchanged) {
+      this.proportionalHeight = height;
+    }
+    if (adjustedHeight != this.height) {
       float oldHeight = this.height;
-      this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
+      this.height = adjustedHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, adjustedHeight);
     }
   }
 
@@ -742,8 +778,8 @@ public class ImportedFurnitureWizardController extends WizardController
             
             // If proportions should be kept, update depth and height
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setDepth(getDepth() * ratio); 
-            setHeight(getHeight() * ratio);
+            setDepth(proportionalDepth * ratio, true); 
+            setHeight(proportionalHeight * ratio, true);
             
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.DEPTH, depthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.HEIGHT, heightChangeListener);
@@ -758,8 +794,8 @@ public class ImportedFurnitureWizardController extends WizardController
             
             // If proportions should be kept, update width and height
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setWidth(getWidth() * ratio); 
-            setHeight(getHeight() * ratio);
+            setWidth(proportionalWidth * ratio, true); 
+            setHeight(proportionalHeight * ratio, true);
             
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.HEIGHT, heightChangeListener);
@@ -774,8 +810,8 @@ public class ImportedFurnitureWizardController extends WizardController
             
             // If proportions should be kept, update width and depth
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setWidth(getWidth() * ratio); 
-            setDepth(getDepth() * ratio);
+            setWidth(proportionalWidth * ratio, true); 
+            setDepth(proportionalDepth * ratio, true);
             
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.DEPTH, depthChangeListener);

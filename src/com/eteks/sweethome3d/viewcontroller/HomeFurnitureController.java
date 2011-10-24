@@ -80,8 +80,11 @@ public class HomeFurnitureController implements Controller {
   private Float   elevation;
   private Integer angleInDegrees;
   private Float   width;
+  private Float   proportionalWidth;
   private Float   depth;
+  private Float   proportionalDepth;
   private Float   height;
+  private Float   proportionalHeight;
   private boolean proportional;
   private Integer color;
   private FurniturePaint     paint;
@@ -193,9 +196,9 @@ public class HomeFurnitureController implements Controller {
       setY(null);
       setElevation(null);
       this.basePlanItemEditable = false;
-      setWidth(null, false);
-      setDepth(null, false);
-      setHeight(null, false);
+      setWidth(null, true, false);
+      setDepth(null, true, false);
+      setHeight(null, true, false);
       setColor(null);
       if (textureController != null) {
         textureController.setTexture(null);
@@ -308,7 +311,7 @@ public class HomeFurnitureController implements Controller {
           break;
         }
       }
-      setWidth(width, false);
+      setWidth(width, true, false);
 
       Float depth = firstPiece.getDepth();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -317,7 +320,7 @@ public class HomeFurnitureController implements Controller {
           break;
         }
       }
-      setDepth(depth, false);
+      setDepth(depth, true, false);
 
       Float height = firstPiece.getHeight();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -326,7 +329,7 @@ public class HomeFurnitureController implements Controller {
           break;
         }
       }
-      setHeight(height, false);
+      setHeight(height, true, false);
 
       Integer color = firstPiece.getColor();
       if (color != null) {
@@ -617,21 +620,30 @@ public class HomeFurnitureController implements Controller {
    * Sets the edited width.
    */
   public void setWidth(Float width) {
-    setWidth(width, isProportional());
+    setWidth(width, false, isProportional());
   }
 
-  private void setWidth(Float width, boolean updateDepthAndHeight) {
-    if (width != this.width) {
+  private void setWidth(Float width, boolean keepProportionalWidthUnchanged, boolean updateDepthAndHeight) {
+    Float adjustedWidth = width != null 
+        ? Math.max(width, 0.001f)
+        : null;
+    if (adjustedWidth == width 
+        || adjustedWidth != null && adjustedWidth.equals(width)
+        || !keepProportionalWidthUnchanged) {
+      this.proportionalWidth = width;
+    }
+    if (adjustedWidth == null && this.width != null
+        || adjustedWidth != null && !adjustedWidth.equals(this.width)) {
       Float oldWidth = this.width;
-      this.width = width;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
-      if (oldWidth != null && width != null && updateDepthAndHeight) {
-        float ratio = width / oldWidth;
-        if (getDepth() != null) {
-          setDepth(getDepth() * ratio, false);
+      this.width = adjustedWidth;
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, adjustedWidth);
+      if (oldWidth != null && adjustedWidth != null && updateDepthAndHeight) {
+        float ratio = adjustedWidth / oldWidth;
+        if (this.proportionalDepth != null) {
+          setDepth(this.proportionalDepth * ratio, true, false);
         }
-        if (getHeight() != null) {
-          setHeight(getHeight() * ratio, false);
+        if (this.proportionalHeight != null) {
+          setHeight(this.proportionalHeight * ratio, true, false);
         }
       }
     }
@@ -648,21 +660,30 @@ public class HomeFurnitureController implements Controller {
    * Sets the edited depth.
    */
   public void setDepth(Float depth) {
-    setDepth(depth, isProportional());
+    setDepth(depth, false, isProportional());
   }
 
-  private void setDepth(Float depth, boolean updateWidthAndHeight) {
-    if (depth != this.depth) {
+  private void setDepth(Float depth, boolean keepProportionalDepthUnchanged, boolean updateWidthAndHeight) {
+    Float adjustedDepth = depth != null 
+        ? Math.max(depth, 0.001f)
+        : null;
+    if (adjustedDepth == depth 
+        || adjustedDepth != null && adjustedDepth.equals(depth)
+        || !keepProportionalDepthUnchanged) {
+      this.proportionalDepth = depth;
+    }
+    if (adjustedDepth == null && this.depth != null
+        || adjustedDepth != null && !adjustedDepth.equals(this.depth)) {
       Float oldDepth = this.depth;
-      this.depth = depth;
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
-      if (oldDepth != null && depth != null && updateWidthAndHeight) {
-        float ratio = depth / oldDepth;
-        if (getWidth() != null) {
-          setWidth(getWidth() * ratio, false);
+      this.depth = adjustedDepth;
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, adjustedDepth);
+      if (oldDepth != null && adjustedDepth != null && updateWidthAndHeight) {
+        float ratio = adjustedDepth / oldDepth;
+        if (this.proportionalWidth != null) {
+          setWidth(this.proportionalWidth * ratio, true, false);
         }
-        if (getHeight() != null) {
-          setHeight(getHeight() * ratio, false);
+        if (this.proportionalHeight != null) {
+          setHeight(this.proportionalHeight * ratio, true, false);
         }
       }
     }
@@ -679,21 +700,30 @@ public class HomeFurnitureController implements Controller {
    * Sets the edited height.
    */
   public void setHeight(Float height) {
-    setHeight(height, isProportional());
+    setHeight(height, false, isProportional());
   }
 
-  public void setHeight(Float height, boolean updateWidthAndDepth) {
-    if (height != this.height) {
+  private void setHeight(Float height, boolean keepProportionalHeightUnchanged, boolean updateWidthAndDepth) {
+    Float adjustedHeight = height != null 
+        ? Math.max(height, 0.001f)
+        : null;
+    if (adjustedHeight == height 
+        || adjustedHeight != null && adjustedHeight.equals(height)
+        || !keepProportionalHeightUnchanged) {
+      this.proportionalHeight = height;
+    }
+    if (adjustedHeight == null && this.height != null
+        || adjustedHeight != null && !adjustedHeight.equals(this.height)) {
       Float oldHeight = this.height;
-      this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
-      if (oldHeight != null && height != null && updateWidthAndDepth) {
-        float ratio = height / oldHeight;
-        if (getWidth() != null) {
-          setWidth(getWidth() * ratio, false);
+      this.height = adjustedHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, adjustedHeight);
+      if (oldHeight != null && adjustedHeight != null && updateWidthAndDepth) {
+        float ratio = adjustedHeight / oldHeight;
+        if (this.proportionalWidth != null) {
+          setWidth(this.proportionalWidth * ratio, true, false);
         }
-        if (getDepth() != null) {
-          setDepth(getDepth() * ratio, false);
+        if (this.proportionalDepth != null) {
+          setDepth(this.proportionalDepth * ratio, true, false);
         }
       }
     }
