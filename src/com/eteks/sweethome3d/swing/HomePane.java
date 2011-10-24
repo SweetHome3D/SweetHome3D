@@ -38,7 +38,6 @@ import java.awt.Point;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
@@ -1955,6 +1954,7 @@ public class HomePane extends JRootPane implements HomeView {
     return new MouseInputAdapter() {
         private CatalogPieceOfFurniture selectedPiece;
         private TransferHandler         transferHandler;
+        private boolean                 autoscrolls;
         private Cursor                  previousCursor;
         private View                    previousView;
     
@@ -1963,8 +1963,11 @@ public class HomePane extends JRootPane implements HomeView {
           if (SwingUtilities.isLeftMouseButton(ev)) {
             List<CatalogPieceOfFurniture> selectedFurniture = controller.getFurnitureCatalogController().getSelectedFurniture();
             if (selectedFurniture.size() > 0) {
-              this.transferHandler = ((JComponent)ev.getSource()).getTransferHandler();
-              ((JComponent)ev.getSource()).setTransferHandler(null);
+              JComponent source = (JComponent)ev.getSource();
+              this.transferHandler = source.getTransferHandler();
+              source.setTransferHandler(null);
+              this.autoscrolls = source.getAutoscrolls();
+              source.setAutoscrolls(false);
               this.selectedPiece = selectedFurniture.get(0);
               this.previousCursor = null;
               this.previousView = null;
@@ -1976,17 +1979,21 @@ public class HomePane extends JRootPane implements HomeView {
         public void mouseDragged(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)
               && this.selectedPiece != null) {
+            // Force selection again
+            List<CatalogPieceOfFurniture> emptyList = Collections.emptyList();
+            controller.getFurnitureCatalogController().setSelectedFurniture(emptyList);
+            controller.getFurnitureCatalogController().setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {this.selectedPiece}));
+            
+            List<Selectable> transferredFurniture = Arrays.asList(
+                new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
             View view;
-            float [] pointInView = getPointInPlanView(ev);
+            float [] pointInView = getPointInPlanView(ev, transferredFurniture);
             if (pointInView != null) {
               view = controller.getPlanController().getView();
             } else {
               view = controller.getFurnitureController().getView();
               pointInView = getPointInFurnitureView(ev);
             }
-
-            List<Selectable> transferedFurniture = new ArrayList<Selectable>();
-            transferedFurniture.add(controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece));
 
             if (this.previousView != view) {
               if (this.previousView != null) {
@@ -2006,20 +2013,16 @@ public class HomePane extends JRootPane implements HomeView {
                   ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
                 }
                 if (view == controller.getPlanController().getView()) {
-                  controller.getPlanController().startDraggedItems(transferedFurniture, pointInView [0], pointInView [1]);
+                  controller.getPlanController().startDraggedItems(transferredFurniture, pointInView [0], pointInView [1]);
                 }
               }
             } else if (pointInView != null) {
               controller.getPlanController().moveMouse(pointInView [0], pointInView [1]);
             }
-            // Force selection again
-            List<CatalogPieceOfFurniture> emptyList = Collections.emptyList();
-            controller.getFurnitureCatalogController().setSelectedFurniture(emptyList);
-            controller.getFurnitureCatalogController().setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {this.selectedPiece}));
           }
         }
         
-        private float [] getPointInPlanView(MouseEvent ev) {
+        private float [] getPointInPlanView(MouseEvent ev, List<Selectable> transferredFurniture) {
           PlanView planView = controller.getPlanController().getView();
           if (planView != null) {
             JComponent planComponent = (JComponent)planView;
@@ -2047,9 +2050,9 @@ public class HomePane extends JRootPane implements HomeView {
                    ? furnitureComponent.getParent()
                    : furnitureComponent);
             if (furnitureComponent.getParent() instanceof JViewport 
-                && ((JViewport)furnitureComponent.getParent()).contains(point)
-            || !(furnitureComponent.getParent() instanceof JViewport)
-                && furnitureComponent.contains(point)) {
+                    && ((JViewport)furnitureComponent.getParent()).contains(point)
+                || !(furnitureComponent.getParent() instanceof JViewport)
+                    && furnitureComponent.contains(point)) {
               return new float [] {0, 0};
             }
           } 
@@ -2060,8 +2063,10 @@ public class HomePane extends JRootPane implements HomeView {
         public void mouseReleased(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)
               && this.selectedPiece != null) {
+            List<Selectable> transferredFurniture = Arrays.asList(
+                new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
             View view;
-            float [] pointInView = getPointInPlanView(ev);
+            float [] pointInView = getPointInPlanView(ev, transferredFurniture);
             if (pointInView != null) {
               controller.getPlanController().stopDraggedItems();
               view = controller.getPlanController().getView();
@@ -2070,18 +2075,13 @@ public class HomePane extends JRootPane implements HomeView {
               pointInView = getPointInFurnitureView(ev);
             }
             if (pointInView != null) {
-              try {                  
-                List<Selectable> transferedFurniture = new ArrayList<Selectable>();
-                transferedFurniture.add(controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece));
-                controller.drop((List<? extends Selectable>)new HomeTransferableList(transferedFurniture).getTransferData(HomeTransferableList.HOME_FLAVOR), 
-                    view, pointInView [0], pointInView [1]);
-              } catch (UnsupportedFlavorException ex) {
-                ex.printStackTrace();
-              }
+              controller.drop(transferredFurniture, view, pointInView [0], pointInView [1]);
               ((JComponent)this.previousView).setCursor(this.previousCursor);
             }
             this.selectedPiece = null;
-            ((JComponent)ev.getSource()).setTransferHandler(this.transferHandler);
+            JComponent source = (JComponent)ev.getSource();
+            source.setTransferHandler(this.transferHandler);
+            source.setAutoscrolls(this.autoscrolls);
           }
         }
       };
