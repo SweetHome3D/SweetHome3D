@@ -196,7 +196,6 @@ public class RoomTest extends ComponentTestFixture {
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
-   * @param tester TODO
    */
   private void runAction(final HomeController controller,
                          final HomePane.ActionType actionType, JComponentTester tester) {
