@@ -271,15 +271,9 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
-    homeView.setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, true);
-    BackgroundImage backgroundImage = this.home.getBackgroundImage();
-    boolean homeHasBackgroundImage = backgroundImage != null;
-    homeView.setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
-    homeView.setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
-        homeHasBackgroundImage && backgroundImage.isVisible());
-    homeView.setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
-        homeHasBackgroundImage && !backgroundImage.isVisible());
-    homeView.setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
+    enableBackgroungImageActions(homeView, this.home.getSelectedLevel() != null
+        ? this.home.getSelectedLevel().getBackgroundImage()
+        : this.home.getBackgroundImage());
     homeView.setEnabled(HomeView.ActionType.CREATE_LEVEL, true);
     List<Level> levels = this.home.getLevels();
     homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, 
@@ -604,17 +598,24 @@ public class HomeController implements Controller {
       this.home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              BackgroundImage backgroundImage = (BackgroundImage)ev.getNewValue();
-              boolean homeHasBackgroundImage = backgroundImage != null;
-              getView().setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
-              getView().setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
-                  homeHasBackgroundImage && backgroundImage.isVisible());
-              getView().setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
-                  homeHasBackgroundImage && !backgroundImage.isVisible());
-              getView().setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
+              enableBackgroungImageActions(getView(), (BackgroundImage)ev.getNewValue());
             }
           });
     }
+  }
+
+  /**
+   * Enables background image actions.
+   */
+  private void enableBackgroungImageActions(HomeView homeView, BackgroundImage backgroundImage) {
+    boolean homeHasBackgroundImage = backgroundImage != null;
+    getView().setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, !homeHasBackgroundImage);
+    getView().setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
+    getView().setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
+        homeHasBackgroundImage && backgroundImage.isVisible());
+    getView().setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
+        homeHasBackgroundImage && !backgroundImage.isVisible());
+    getView().setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
   }
 
   /**
@@ -934,12 +935,29 @@ public class HomeController implements Controller {
             }
           }
           home.setSelectedItems(selectedItemsAtLevel);
-          getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, 
-              home.getLevels().size() > 1 && home.getSelectedLevel() != null);
+          enableBackgroungImageActions(getView(), selectedLevel.getBackgroundImage());
         }
       });
+    final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
+            enableBackgroungImageActions(getView(), (BackgroundImage)ev.getNewValue());
+          }
+        }
+      };
+    for (Level level : this.home.getLevels()) {
+      level.addPropertyChangeListener(levelChangeListener);
+    }
     this.home.addLevelsListener(new CollectionListener<Level>() {
         public void collectionChanged(CollectionEvent<Level> ev) {
+          switch (ev.getType()) {
+            case ADD :
+              ev.getItem().addPropertyChangeListener(levelChangeListener);
+              break;
+            case DELETE :
+              ev.getItem().removePropertyChangeListener(levelChangeListener);
+              break;
+          }
           getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, home.getLevels().size() > 1);
         }
       });
@@ -1962,31 +1980,52 @@ public class HomeController implements Controller {
    * Toggles visibility of the background image.
    */
   private void doToggleBackgroundImageVisibility() {
-    BackgroundImage backgroundImage = this.home.getBackgroundImage();
-    this.home.setBackgroundImage(new BackgroundImage(backgroundImage.getImage(),
+    BackgroundImage backgroundImage = this.home.getSelectedLevel() != null
+        ? this.home.getSelectedLevel().getBackgroundImage()
+        : this.home.getBackgroundImage();
+    backgroundImage = new BackgroundImage(backgroundImage.getImage(),
         backgroundImage.getScaleDistance(), 
         backgroundImage.getScaleDistanceXStart(), backgroundImage.getScaleDistanceYStart(), 
         backgroundImage.getScaleDistanceXEnd(), backgroundImage.getScaleDistanceYEnd(),
-        backgroundImage.getXOrigin(), backgroundImage.getYOrigin(), !backgroundImage.isVisible()));
+        backgroundImage.getXOrigin(), backgroundImage.getYOrigin(), !backgroundImage.isVisible());
+    if (this.home.getSelectedLevel() != null) {
+      this.home.getSelectedLevel().setBackgroundImage(backgroundImage);
+    } else {
+      this.home.setBackgroundImage(backgroundImage);
+    }
   }
   
   /**
    * Deletes home background image and posts and posts an undoable operation. 
    */
   public void deleteBackgroundImage() {
-    final BackgroundImage oldImage = this.home.getBackgroundImage();
-    this.home.setBackgroundImage(null);
+    final BackgroundImage oldImage;
+    if (this.home.getSelectedLevel() != null) {
+      oldImage = this.home.getSelectedLevel().getBackgroundImage();
+      this.home.getSelectedLevel().setBackgroundImage(null);
+    } else {
+      oldImage = this.home.getBackgroundImage();
+      this.home.setBackgroundImage(null);
+    }
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        home.setBackgroundImage(oldImage); 
+        if (home.getSelectedLevel() != null) {
+          home.getSelectedLevel().setBackgroundImage(oldImage);
+        } else {
+          home.setBackgroundImage(oldImage);
+        }
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        home.setBackgroundImage(null);
+        if (home.getSelectedLevel() != null) {
+          home.getSelectedLevel().setBackgroundImage(null);
+        } else {
+          home.setBackgroundImage(null);
+        }
       }
       
       @Override

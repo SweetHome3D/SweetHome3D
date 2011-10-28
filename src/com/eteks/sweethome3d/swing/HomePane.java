@@ -134,6 +134,8 @@ import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
@@ -141,6 +143,7 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -1570,15 +1573,38 @@ public class HomePane extends JRootPane implements HomeView {
         && modifyBackgroundImageAction.getValue(Action.NAME) != null) {
       final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem(
           createImportModifyBackgroundImageAction(home, popup));
-      // Add a listener to home on backgroundImage property change to 
+      // Add a listener to home and levels on backgroundImage property change to 
       // switch action according to backgroundImage change
-      home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              importModifyBackgroundImageMenuItem.setAction(
-                  createImportModifyBackgroundImageAction(home, popup));
+      final PropertyChangeListener listener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            importModifyBackgroundImageMenuItem.setAction(
+                createImportModifyBackgroundImageAction(home, popup));
+          }
+        };
+      home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, listener);    
+      home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, listener);
+      final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
+              listener.propertyChange(ev);
             }
-          });    
+          }
+        };
+      for (Level level : this.home.getLevels()) {
+        level.addPropertyChangeListener(levelChangeListener);
+      }
+      this.home.addLevelsListener(new CollectionListener<Level>() {
+          public void collectionChanged(CollectionEvent<Level> ev) {
+            switch (ev.getType()) {
+              case ADD :
+                ev.getItem().addPropertyChangeListener(levelChangeListener);
+                break;
+              case DELETE :
+                ev.getItem().removePropertyChangeListener(levelChangeListener);
+                break;
+            }
+          }
+        });
       return importModifyBackgroundImageMenuItem;
     } else {
       return null;
@@ -1589,7 +1615,10 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns the action active on Import / Modify menu item.
    */
   private Action createImportModifyBackgroundImageAction(Home home, boolean popup) {
-    ActionType backgroundImageActionType = home.getBackgroundImage() == null 
+    BackgroundImage backgroundImage = home.getSelectedLevel() != null
+        ? home.getSelectedLevel().getBackgroundImage()
+        : home.getBackgroundImage();
+    ActionType backgroundImageActionType = backgroundImage == null 
         ? ActionType.IMPORT_BACKGROUND_IMAGE
         : ActionType.MODIFY_BACKGROUND_IMAGE;
     Action backgroundImageAction = getActionMap().get(backgroundImageActionType);
@@ -1602,7 +1631,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns Hide / Show background image menu item.
    */
   private JMenuItem createHideShowBackgroundImageMenuItem(final Home home, 
-                                                            final boolean popup) {
+                                                          final boolean popup) {
     ActionMap actionMap = getActionMap();
     Action hideBackgroundImageAction = actionMap.get(ActionType.HIDE_BACKGROUND_IMAGE);
     Action showBackgroundImageAction = actionMap.get(ActionType.SHOW_BACKGROUND_IMAGE);
@@ -1611,15 +1640,38 @@ public class HomePane extends JRootPane implements HomeView {
         && showBackgroundImageAction.getValue(Action.NAME) != null) {
       final JMenuItem hideShowBackgroundImageMenuItem = new JMenuItem(
           createHideShowBackgroundImageAction(home, popup));
-      // Add a listener to home on backgroundImage property change to 
+      // Add a listener to home and levels on backgroundImage property change to 
       // switch action according to backgroundImage change
-      home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              hideShowBackgroundImageMenuItem.setAction(
-                  createHideShowBackgroundImageAction(home, popup));
+      final PropertyChangeListener listener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            hideShowBackgroundImageMenuItem.setAction(
+                createHideShowBackgroundImageAction(home, popup));
+          }
+        };
+      home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, listener);    
+      home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, listener);
+      final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
+              listener.propertyChange(ev);
             }
-          });    
+          }
+        };
+      for (Level level : this.home.getLevels()) {
+        level.addPropertyChangeListener(levelChangeListener);
+      }
+      this.home.addLevelsListener(new CollectionListener<Level>() {
+          public void collectionChanged(CollectionEvent<Level> ev) {
+            switch (ev.getType()) {
+              case ADD :
+                ev.getItem().addPropertyChangeListener(levelChangeListener);
+                break;
+              case DELETE :
+                ev.getItem().removePropertyChangeListener(levelChangeListener);
+                break;
+            }
+          }
+        });
       return hideShowBackgroundImageMenuItem;
     } else {
       return null;
@@ -1630,7 +1682,9 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns the action active on Hide / Show menu item.
    */
   private Action createHideShowBackgroundImageAction(Home home, boolean popup) {
-    BackgroundImage backgroundImage = home.getBackgroundImage();
+    BackgroundImage backgroundImage = home.getSelectedLevel() != null
+        ? home.getSelectedLevel().getBackgroundImage()
+        : home.getBackgroundImage();
     ActionType backgroundImageActionType = backgroundImage == null || backgroundImage.isVisible()        
         ? ActionType.HIDE_BACKGROUND_IMAGE
         : ActionType.SHOW_BACKGROUND_IMAGE;

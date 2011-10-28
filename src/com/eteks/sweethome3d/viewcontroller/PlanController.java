@@ -2007,7 +2007,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (levels.isEmpty()) {
       // Create level 0
       String newLevelName = this.preferences.getLocalizedString(PlanController.class, "levelName", 0);
-      createLevel(newLevelName, 0, newFloorThickness, newWallHeight);
+      createLevel(newLevelName, 0, newFloorThickness, newWallHeight).setBackgroundImage(this.home.getBackgroundImage());
       levels = this.home.getLevels();
     }
     String newLevelName = this.preferences.getLocalizedString(PlanController.class, "levelName", levels.size());
