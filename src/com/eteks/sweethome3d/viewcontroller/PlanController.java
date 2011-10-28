@@ -4674,10 +4674,19 @@ public class PlanController extends FurnitureController implements Controller {
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
       float xClosestWall = 0;
       float yClosestWall = 0;
+      List<Level> levels = home.getLevels();
       Level selectedLevel = home.getSelectedLevel();
+      Level otherLevel;
+      if (levels.size() > 1) {
+        otherLevel = levels.get(levels.get(0) == selectedLevel ? 1 : levels.indexOf(selectedLevel) - 1);
+      } else {
+        otherLevel = null;
+      }
       for (Wall wall : home.getWalls()) {
         if (wall != alignedWall
-            && wall.isAtLevel(selectedLevel)) {
+            && (wall.isAtLevel(selectedLevel)
+                || otherLevel != null 
+                   && wall.isAtLevel(otherLevel))) {
           if (Math.abs(getX() - wall.getXStart()) < margin
               && (alignedWall == null
                   || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
