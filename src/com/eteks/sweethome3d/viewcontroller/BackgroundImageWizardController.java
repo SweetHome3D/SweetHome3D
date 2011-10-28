@@ -110,7 +110,8 @@ public class BackgroundImageWizardController extends WizardController
     }
     boolean modification = oldImage == null;
     UndoableEdit undoableEdit = 
-        new BackgroundImageUndoableEdit(this.home, this.preferences,modification, oldImage, image);
+        new BackgroundImageUndoableEdit(this.home, selectedLevel, 
+            this.preferences, modification, oldImage, image);
     this.undoSupport.postEdit(undoableEdit);
   }
 
@@ -120,17 +121,20 @@ public class BackgroundImageWizardController extends WizardController
    */
   private static class BackgroundImageUndoableEdit extends AbstractUndoableEdit {
     private final Home            home;
+    private final Level           level;
     private final UserPreferences preferences;
     private final boolean         modification;
     private final BackgroundImage oldImage;
     private final BackgroundImage image;
 
     private BackgroundImageUndoableEdit(Home home,
+                                        Level level, 
                                         UserPreferences preferences,
                                         boolean modification,
                                         BackgroundImage oldImage,
                                         BackgroundImage image) {
       this.home = home;
+      this.level = level;
       this.preferences = preferences;
       this.modification = modification;
       this.oldImage = oldImage;
@@ -140,8 +144,9 @@ public class BackgroundImageWizardController extends WizardController
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      if (this.home.getSelectedLevel() != null) {
-        this.home.getSelectedLevel().setBackgroundImage(image);
+      this.home.setSelectedLevel(this.level);
+      if (this.level != null) {
+        this.level.setBackgroundImage(this.oldImage);
       } else {
         this.home.setBackgroundImage(this.oldImage);
       } 
@@ -150,8 +155,9 @@ public class BackgroundImageWizardController extends WizardController
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      if (this.home.getSelectedLevel() != null) {
-        this.home.getSelectedLevel().setBackgroundImage(this.image);
+      this.home.setSelectedLevel(this.level);
+      if (this.level != null) {
+        this.level.setBackgroundImage(this.image);
       } else {
         this.home.setBackgroundImage(this.image);
       } 

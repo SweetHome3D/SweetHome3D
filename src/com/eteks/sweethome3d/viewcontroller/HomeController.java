@@ -1954,25 +1954,28 @@ public class HomeController implements Controller {
    * Toggles visibility of the background image and posts an undoable operation.
    */
   private void toggleBackgroundImageVisibility(final String presentationName) {
+    final Level selectedLevel = this.home.getSelectedLevel();
     doToggleBackgroundImageVisibility(); 
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doToggleBackgroundImageVisibility(); 
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doToggleBackgroundImageVisibility();
-      }
-      
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(HomeController.class, presentationName);
-      }
-    };
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setSelectedLevel(selectedLevel);
+          doToggleBackgroundImageVisibility(); 
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setSelectedLevel(selectedLevel);
+          doToggleBackgroundImageVisibility();
+        }
+        
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(HomeController.class, presentationName);
+        }
+      };
     getUndoableEditSupport().postEdit(undoableEdit);
   }
 
@@ -1999,10 +2002,11 @@ public class HomeController implements Controller {
    * Deletes home background image and posts and posts an undoable operation. 
    */
   public void deleteBackgroundImage() {
+    final Level selectedLevel = this.home.getSelectedLevel();
     final BackgroundImage oldImage;
-    if (this.home.getSelectedLevel() != null) {
-      oldImage = this.home.getSelectedLevel().getBackgroundImage();
-      this.home.getSelectedLevel().setBackgroundImage(null);
+    if (selectedLevel != null) {
+      oldImage = selectedLevel.getBackgroundImage();
+      selectedLevel.setBackgroundImage(null);
     } else {
       oldImage = this.home.getBackgroundImage();
       this.home.setBackgroundImage(null);
@@ -2011,8 +2015,9 @@ public class HomeController implements Controller {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        if (home.getSelectedLevel() != null) {
-          home.getSelectedLevel().setBackgroundImage(oldImage);
+        home.setSelectedLevel(selectedLevel);
+        if (selectedLevel != null) {
+          selectedLevel.setBackgroundImage(oldImage);
         } else {
           home.setBackgroundImage(oldImage);
         }
@@ -2021,8 +2026,9 @@ public class HomeController implements Controller {
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        if (home.getSelectedLevel() != null) {
-          home.getSelectedLevel().setBackgroundImage(null);
+        home.setSelectedLevel(selectedLevel);
+        if (selectedLevel != null) {
+          selectedLevel.setBackgroundImage(null);
         } else {
           home.setBackgroundImage(null);
         }
