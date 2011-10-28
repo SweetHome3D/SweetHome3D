@@ -188,8 +188,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     orientation.mul(scale);
     // Translate it to its location
     Transform3D pieceTransform = new Transform3D();
-    pieceTransform.setTranslation(new Vector3f(
-        piece.getX(), piece.getElevation() + piece.getHeight() / 2, piece.getY()));      
+    float z = piece.getElevation() + piece.getHeight() / 2;
+    if (piece.getLevel() != null) {
+      z += piece.getLevel().getElevation();
+    }
+    pieceTransform.setTranslation(new Vector3f(piece.getX(), z, piece.getY()));      
     pieceTransform.mul(orientation);
     
     // Change model transformation      

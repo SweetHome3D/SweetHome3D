@@ -174,4 +174,9 @@ public interface PlanView extends View {
    * Returns the component used as a vertical ruler for this plan.
    */
   public abstract View getVerticalRuler();
+
+  /**
+   * Returns <code>true</code> if this plan accepts to import dragged items at the given coordinates.
+   */
+  public abstract boolean canImportDraggedItems(List<Selectable> items, int x, int y);
 }

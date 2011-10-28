@@ -220,7 +220,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     if (isDrop()) {
       Point2D dropLocation = getDropModelLocation(destination);
       if (destination instanceof View) {
-        this.homeController.drop(transferedItems, (View)destination, 
+        this.homeController.drop(transferedItems, this.homeController.getPlanController().getView(), 
             (float)dropLocation.getX(), (float)dropLocation.getY());
       } else {
         this.homeController.drop(transferedItems,  

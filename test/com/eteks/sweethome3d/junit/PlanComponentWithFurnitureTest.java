@@ -55,6 +55,8 @@ import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -572,7 +574,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
       this.home = new Home();
       this.home.getCompass().setVisible(false);
       UserPreferences preferences = new DefaultUserPreferences();      
-      ViewFactory viewFactory = new SwingViewFactory();
+      ViewFactory viewFactory = new SwingViewFactory() {
+          @Override
+          public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
+            return new PlanComponent(home, preferences, controller);
+          }
+        };
       this.homeController = new HomeController(home, preferences, viewFactory);
       JComponent homeView = (JComponent)this.homeController.getView();
       ActionMap actions = homeView.getActionMap();

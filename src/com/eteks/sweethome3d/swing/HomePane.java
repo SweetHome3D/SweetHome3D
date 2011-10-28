@@ -365,6 +365,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ELEVATION);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_ANGLE, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ANGLE);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_LEVEL, preferences, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.LEVEL);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.COLOR);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, preferences, 
@@ -403,6 +405,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ELEVATION);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_ANGLE, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ANGLE);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_LEVEL, preferences, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.LEVEL);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.COLOR);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, preferences, 
@@ -471,6 +475,12 @@ public class HomePane extends JRootPane implements HomeView {
           controller, "showBackgroundImage");
       createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, 
           controller, "deleteBackgroundImage");
+      createAction(ActionType.CREATE_LEVEL, preferences, 
+          controller.getPlanController(), "createLevel");
+      createAction(ActionType.MODIFY_LEVEL, preferences, 
+          controller.getPlanController(), "modifySelectedLevel");
+      createAction(ActionType.DELETE_LEVEL, preferences, 
+          controller.getPlanController(), "deleteSelectedLevel");
       createAction(ActionType.ZOOM_IN, preferences, controller, "zoomIn");
       createAction(ActionType.ZOOM_OUT, preferences, controller, "zoomOut");
       createAction(ActionType.EXPORT_TO_SVG, preferences, controller, "exportToSVG");
@@ -963,6 +973,10 @@ public class HomePane extends JRootPane implements HomeView {
     }
     addActionToMenu(ActionType.DELETE_BACKGROUND_IMAGE, planMenu);
     planMenu.addSeparator();
+    addActionToMenu(ActionType.CREATE_LEVEL, planMenu);
+    addActionToMenu(ActionType.MODIFY_LEVEL, planMenu);
+    addActionToMenu(ActionType.DELETE_LEVEL, planMenu);
+    planMenu.addSeparator();
     addActionToMenu(ActionType.ZOOM_IN, planMenu);
     addActionToMenu(ActionType.ZOOM_OUT, planMenu);
     planMenu.addSeparator();
@@ -1294,6 +1308,8 @@ public class HomePane extends JRootPane implements HomeView {
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.ELEVATION);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_ANGLE, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.ANGLE);
+    addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_LEVEL, 
+        displayPropertyActions, HomePieceOfFurniture.SortableProperty.LEVEL);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_COLOR, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.COLOR);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, 
@@ -2026,16 +2042,13 @@ public class HomePane extends JRootPane implements HomeView {
           PlanView planView = controller.getPlanController().getView();
           if (planView != null) {
             JComponent planComponent = (JComponent)planView;
-            Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), 
-                planComponent.getParent() instanceof JViewport
-                    ? planComponent.getParent()
-                    : planComponent);
+            Point pointInPlanComponent = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), planComponent);
             if (planComponent.getParent() instanceof JViewport 
-                    && ((JViewport)planComponent.getParent()).contains(point)
+                    && ((JViewport)planComponent.getParent()).contains(
+                        SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), planComponent.getParent()))
                 || !(planComponent.getParent() instanceof JViewport)
-                    && planComponent.contains(point)) {
-              point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), planComponent);
-              return new float [] {planView.convertXPixelToModel(point.x), planView.convertYPixelToModel(point.y)};
+                    && planView.canImportDraggedItems(transferredFurniture, pointInPlanComponent.x, pointInPlanComponent.y)) {
+              return new float [] {planView.convertXPixelToModel(pointInPlanComponent.x), planView.convertYPixelToModel(pointInPlanComponent.y)};
             }
           } 
           return null;
@@ -2050,9 +2063,9 @@ public class HomePane extends JRootPane implements HomeView {
                    ? furnitureComponent.getParent()
                    : furnitureComponent);
             if (furnitureComponent.getParent() instanceof JViewport 
-                    && ((JViewport)furnitureComponent.getParent()).contains(point)
-                || !(furnitureComponent.getParent() instanceof JViewport)
-                    && furnitureComponent.contains(point)) {
+                && ((JViewport)furnitureComponent.getParent()).contains(point)
+            || !(furnitureComponent.getParent() instanceof JViewport)
+                && furnitureComponent.contains(point)) {
               return new float [] {0, 0};
             }
           } 
@@ -2352,6 +2365,10 @@ public class HomePane extends JRootPane implements HomeView {
       }
       addActionToPopupMenu(ActionType.DELETE_BACKGROUND_IMAGE, planViewPopup);
       planViewPopup.addSeparator();
+      addActionToPopupMenu(ActionType.CREATE_LEVEL, planViewPopup);
+      addActionToPopupMenu(ActionType.MODIFY_LEVEL, planViewPopup);
+      addActionToPopupMenu(ActionType.DELETE_LEVEL, planViewPopup);
+      planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.ZOOM_OUT, planViewPopup);
       addActionToPopupMenu(ActionType.ZOOM_IN, planViewPopup);
       planViewPopup.addSeparator();
@@ -2359,20 +2376,33 @@ public class HomePane extends JRootPane implements HomeView {
       SwingTools.hideDisabledMenuItems(planViewPopup);
       planView.setComponentPopupMenu(planViewPopup);
       
+      final JScrollPane planScrollPane;
       if (planView instanceof Scrollable) {
-        final JScrollPane planScrollPane = new HomeScrollPane(planView);
+        planView = planScrollPane
+                 = new HomeScrollPane(planView);
+      } else {
+        List<JScrollPane> scrollPanes = SwingTools.findChildren(planView, JScrollPane.class);
+        if (scrollPanes.size() == 1) {
+          planScrollPane = scrollPanes.get(0);
+        } else {
+          planScrollPane = null;
+        }
+      }
+      
+      if (planScrollPane != null) {
         setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
-        final JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
-        if (lockUnlockBasePlanButton != null) {
-          planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
-          planScrollPane.addPropertyChangeListener("componentOrientation", 
-              new PropertyChangeListener () {
-                public void propertyChange(PropertyChangeEvent ev) {
-                  if (lockUnlockBasePlanButton.getParent() != null) {
-                    planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
-                  }
+        if (planScrollPane.getCorner(JScrollPane.UPPER_LEADING_CORNER) == null) {
+          final JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
+          if (lockUnlockBasePlanButton != null) {
+            planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
+            planScrollPane.addPropertyChangeListener("componentOrientation", new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                if (lockUnlockBasePlanButton.getParent() != null) {
+                  planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, lockUnlockBasePlanButton);
                 }
-              });
+              }
+            });
+          }
         }
         // Add a listener to update rulers visibility in preferences
         preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
@@ -2391,7 +2421,6 @@ public class HomePane extends JRootPane implements HomeView {
               controller.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
             }
           });
-        planView = planScrollPane;
       }
     }
 
@@ -2527,7 +2556,7 @@ public class HomePane extends JRootPane implements HomeView {
       planScrollPane.setRowHeaderView(null);
     }
   }
-  
+
   /**
    * Adds to <code>view</code> a mouse listener that disables all menu items of
    * <code>menuBar</code> during a drag and drop operation in <code>view</code>.

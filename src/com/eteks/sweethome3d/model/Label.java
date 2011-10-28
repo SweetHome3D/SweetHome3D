@@ -30,19 +30,20 @@ import java.io.Serializable;
  * A free label.
  * @author Emmanuel Puybaret
  */
-public class Label implements Selectable, Serializable {
+public class Label implements Selectable, Serializable, Elevatable {
   private static final long serialVersionUID = 1L;
   
   /**
    * The properties of a label that may change. <code>PropertyChangeListener</code>s added 
    * to a label will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {TEXT, X, Y, STYLE};
+  public enum Property {TEXT, X, Y, STYLE, LEVEL};
   
   private String    text;
   private float     x;
   private float     y;
   private TextStyle style;
+  private Level     level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -153,6 +154,35 @@ public class Label implements Selectable, Serializable {
   }
 
   /**
+   * Returns the level which this label belongs to. 
+   * @since 3.4
+   */
+  public Level getLevel() {
+    return this.level;
+  }
+
+  /**
+   * Sets the level of this label. Once this label is updated, 
+   * listeners added to this label will receive a change notification.
+   * @since 3.4
+   */
+  public void setLevel(Level level) {
+    if (level != this.level) {
+      Level oldLevel = this.level;
+      this.level = level;
+      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this label is at the given level.
+   * @since 3.4
+   */
+  public boolean isAtLevel(Level level) {
+    return this.level == level;
+  }
+  
+  /**
    * Returns the point of this label.
    * @return an array of the (x,y) coordinates of this label.
    */
@@ -196,6 +226,7 @@ public class Label implements Selectable, Serializable {
     try {
       Label clone = (Label)super.clone();
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      clone.level = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 

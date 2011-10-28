@@ -48,7 +48,7 @@ public abstract class UserPreferences {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
                         AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
@@ -85,6 +85,7 @@ public abstract class UserPreferences {
   private TextureImage     wallPattern;
   private float            newWallThickness;
   private float            newWallHeight;
+  private float            newFloorThickness;
   private List<String>     recentHomes;
   private int              autoSaveDelayForRecovery;
   private Map<String, List<String>>  autoCompletionStrings;
@@ -635,6 +636,28 @@ public abstract class UserPreferences {
       this.newWallHeight = newWallHeight;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.name(), 
           oldWallHeight, newWallHeight);
+    }
+  }
+
+  /**
+   * Returns default thickness of the floor of new levels in home. 
+   * @since 3.4
+   */
+  public float getNewFloorThickness() {
+    return this.newFloorThickness;
+  }
+
+  /**
+   * Sets default thickness of the floor of new levels in home, and notifies
+   * listeners of this change.  
+   * @since 3.4
+   */
+  public void setNewFloorThickness(float newFloorThickness) {
+    if (this.newFloorThickness != newFloorThickness) {
+      float oldDefaultThickness = this.newFloorThickness;
+      this.newFloorThickness = newFloorThickness;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_FLOOR_THICKNESS.name(), 
+          oldDefaultThickness, newFloorThickness);
     }
   }
 

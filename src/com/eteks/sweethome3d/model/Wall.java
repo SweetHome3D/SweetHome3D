@@ -36,7 +36,7 @@ import java.util.List;
  * A wall of a home plan.
  * @author Emmanuel Puybaret
  */
-public class Wall implements Serializable, Selectable {
+public class Wall implements Serializable, Selectable, Elevatable {
   /**
    * The properties of a wall that may change. <code>PropertyChangeListener</code>s added 
    * to a wall will be notified under a property name equal to the string value of one these properties.
@@ -45,7 +45,7 @@ public class Wall implements Serializable, Selectable {
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS,
-                        PATTERN}
+                        PATTERN, LEVEL}
   
   private static final long serialVersionUID = 1L;
   
@@ -67,14 +67,17 @@ public class Wall implements Serializable, Selectable {
   private float        rightSideShininess;
   private boolean      symmetric = true;
   private TextureImage pattern;  
+  private Level        level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
+
 
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
    * to (<code>xEnd</code>, <code>yEnd</code>), 
    * with given thickness. Height, left and right colors are <code>null</code>.
+   * @deprecated specify a height with the {@linkplain #Wall(float, float, float, float, float, float) other constructor}.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness) {
     this.xStart = xStart;
@@ -603,6 +606,52 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
+   * Returns the level which this wall belongs to. 
+   * @since 3.4
+   */
+  public Level getLevel() {
+    return this.level;
+  }
+
+  /**
+   * Sets the level of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * @since 3.4
+   */
+  public void setLevel(Level level) {
+    if (level != this.level) {
+      Level oldLevel = this.level;
+      this.level = level;
+      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this wall is visible at the given level.
+   * @since 3.4
+   */
+  public boolean isAtLevel(Level level) {
+    return this.level == null && level == null
+        || this.level != null && level != null
+            && this.level.getElevation() <= level.getElevation()
+            && this.level.getElevation() + getWallMaximumHeight() > level.getElevation();
+  }
+  
+  /**
+   * Returns the maximum height of the given wall.
+   */
+  private float getWallMaximumHeight() {
+    if (this.height == null) {
+      // Shouldn't happen
+      return 0; 
+    } else if (isTrapezoidal()) {
+      return Math.max(this.height, this.heightAtEnd);
+    } else {
+      return this.height;
+    }
+  }
+
+  /**
    * Clears the points cache of this wall and of the walls attached to it.
    */
   private void clearPointsCache() {
@@ -987,6 +1036,7 @@ public class Wall implements Serializable, Selectable {
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
       clone.wallAtStart = null;
       clone.wallAtEnd = null;
+      clone.level = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 

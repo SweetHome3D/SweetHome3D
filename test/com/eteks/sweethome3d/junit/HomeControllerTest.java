@@ -193,7 +193,7 @@ public class HomeControllerTest extends TestCase {
     secondPiece.setAngle(15);
     this.home.addPieceOfFurniture(secondPiece);
     // Add a wall to home
-    this.home.addWall(new Wall(0, 0, 100, 0, 7));
+    this.home.addWall(new Wall(0, 0, 100, 0, 7, this.home.getWallHeight()));
     
     PlanController planController = this.homeController.getPlanController();
     float scale = planController.getScale();

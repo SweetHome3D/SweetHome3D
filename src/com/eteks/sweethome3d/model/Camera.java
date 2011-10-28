@@ -61,7 +61,6 @@ public class Camera implements Serializable, Cloneable {
   // if new constants are added to Lens enum in future versions
   private String         lensName;
 
-  
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**

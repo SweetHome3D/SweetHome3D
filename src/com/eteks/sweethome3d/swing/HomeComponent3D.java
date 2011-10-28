@@ -135,6 +135,7 @@ import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -174,6 +175,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   lightColorListener;
   private PropertyChangeListener                   wallsAlphaListener;
   private PropertyChangeListener                   drawingModeListener;
+  private CollectionListener<Level>                levelListener;
+  private PropertyChangeListener                   levelChangeListener;
   private CollectionListener<Wall>                 wallListener;
   private PropertyChangeListener                   wallChangeListener;
   private CollectionListener<HomePieceOfFurniture> furnitureListener;
@@ -723,6 +726,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
     this.home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
+    this.home.removeLevelsListener(this.levelListener);
+    for (Level level : this.home.getLevels()) {
+      level.removePropertyChangeListener(this.levelChangeListener);
+    }
     this.home.removeWallsListener(this.wallListener);
     for (Wall wall : this.home.getWalls()) {
       wall.removePropertyChangeListener(this.wallChangeListener);
@@ -1586,7 +1593,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     
     if (listenToHomeUpdates) {
-      // Add wall, furniture, room listeners to home for further update    
+      // Add level, wall, furniture, room listeners to home for further update    
+      addLevelListener(homeRoot);
       addWallListener(homeRoot);
       addFurnitureListener(homeRoot);
       addRoomListener(homeRoot);
@@ -1608,6 +1616,44 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
     homeGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
     return homeGroup;
+  }
+
+  /**
+   * Adds a wall listener to home levels that updates the children of the given 
+   * <code>group</code>, each time a level is added, updated or deleted. 
+   */
+  private void addLevelListener(final Group group) {
+    this.levelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+            updateObjects(home.getWalls());          
+            updateObjects(home.getRooms());
+            updateObjects(home.getFurniture());
+          } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
+            updateObjects(home.getWalls());          
+          } else if (Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+            updateObjects(home.getRooms());
+          }  
+        }
+      };
+    for (Level level : this.home.getLevels()) {
+      level.addPropertyChangeListener(this.levelChangeListener);
+    }      
+    this.levelListener = new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          Level level = ev.getItem();
+          switch (ev.getType()) {
+            case ADD :
+              level.addPropertyChangeListener(levelChangeListener);
+              break;
+            case DELETE :
+              level.removePropertyChangeListener(levelChangeListener);
+              break;
+          }
+          updateObjects(home.getRooms());
+        }
+      };
+    this.home.addLevelsListener(this.levelListener);
   }
 
   /**
@@ -1803,6 +1849,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.wallsAlphaListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
+          updateObjects(home.getRooms());
         }
       };
     this.home.getEnvironment().addPropertyChangeListener(

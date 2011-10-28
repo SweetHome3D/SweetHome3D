@@ -138,7 +138,9 @@ public class Ground3D extends Object3DBranch {
     // Compute the union of the rooms
     Area roomsArea = new Area();
     for (Room room : home.getRooms()) {
-      if (room.isFloorVisible()) {
+      if (room.isFloorVisible()
+          && (room.getLevel() == null
+              || room.getLevel().getElevation() <= 0)) {
         float [][] points = room.getPoints();
         if (points.length > 2) {
           roomsArea.add(new Area(getShape(points)));

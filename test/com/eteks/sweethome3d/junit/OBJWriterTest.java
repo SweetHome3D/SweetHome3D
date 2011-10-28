@@ -87,7 +87,7 @@ public class OBJWriterTest extends TestCase {
         new HomeController(home, preferences, viewFactory);
     
     // 2. Add to home a wall and a piece of furniture
-    home.addWall(new Wall(0, 0, 0, 1000, 10));
+    home.addWall(new Wall(0, 0, 0, 1000, 10, home.getWallHeight()));
     HomePieceOfFurniture piece = new HomePieceOfFurniture(
         preferences.getFurnitureCatalog().getCategory(0).getPieceOfFurniture(0));
     home.addPieceOfFurniture(piece);

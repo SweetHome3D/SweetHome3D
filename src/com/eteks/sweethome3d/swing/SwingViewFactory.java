@@ -43,6 +43,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
+import com.eteks.sweethome3d.viewcontroller.LevelController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
@@ -91,7 +92,7 @@ public class SwingViewFactory implements ViewFactory {
    */
   public PlanView createPlanView(Home home, UserPreferences preferences,
                                  PlanController planController) {
-    return new PlanComponent(home, preferences, planController);
+    return new MultipleLevelsPlanPanel(home, preferences, planController);
   }
 
   /**
@@ -175,9 +176,16 @@ public class SwingViewFactory implements ViewFactory {
                                           UserPreferencesController userPreferencesController) {
     return new UserPreferencesPanel(preferences, userPreferencesController);
   }
-  
+
   /**
-   * Returns a new view that edits the selected furniture in <code>home</code>.
+   * Returns a new view that edits level values.
+   */
+  public DialogView createLevelView(UserPreferences preferences, LevelController levelController) {
+    return new LevelPanel(preferences, levelController);
+  }
+
+  /**
+   * Returns a new view that edits furniture values.
    */
   public DialogView createHomeFurnitureView(UserPreferences preferences,
                                HomeFurnitureController homeFurnitureController) {

@@ -73,6 +73,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -302,7 +303,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     home.addPropertyChangeListener(Home.Property.FURNITURE_SORTED_PROPERTY, sortListener);
     home.addPropertyChangeListener(Home.Property.FURNITURE_DESCENDING_SORTED, sortListener);
     
-    final PropertyChangeListener furnitureChangeListener = 
+    final PropertyChangeListener changeListener = 
       new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
           // As furniture properties values change may alter sort order, update sort and whole table
@@ -312,14 +313,26 @@ public class FurnitureTable extends JTable implements View, Printable {
         }
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      piece.addPropertyChangeListener(furnitureChangeListener);
+      piece.addPropertyChangeListener(changeListener);
     }
     home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
-        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+      public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+            ev.getItem().addPropertyChangeListener(changeListener);
           } else {
-            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+            ev.getItem().removePropertyChangeListener(changeListener);
+          }
+        }
+      });
+    for (Level level : home.getLevels()) {
+      level.addPropertyChangeListener(changeListener);
+    }
+    home.addLevelsListener(new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(changeListener);
+          } else {
+            ev.getItem().removePropertyChangeListener(changeListener);
           }
         }
       });
@@ -552,6 +565,12 @@ public class FurnitureTable extends JTable implements View, Printable {
               // Copy piece name
               csv.append(copiedPiece.getName());
               break;
+            case LEVEL :
+              // Copy level name
+              csv.append(copiedPiece.getLevel() != null 
+                  ? copiedPiece.getLevel().getName() 
+                  : "");
+              break;
             case COLOR :
               if (copiedPiece.getColor() != null) {
                 // Copy piece color at #xxxxxx format              
@@ -751,6 +770,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "elevationColumn");
         case ANGLE :
           return preferences.getLocalizedString(FurnitureTable.class, "angleColumn");
+        case LEVEL :
+          return preferences.getLocalizedString(FurnitureTable.class, "levelColumn");
         case COLOR :
           return preferences.getLocalizedString(FurnitureTable.class, "colorColumn");
         case TEXTURE :
@@ -791,6 +812,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return 50;
         case ANGLE :
           return 35;        
+        case LEVEL :
+          return 70;        
         case COLOR :
         case TEXTURE :
           return 30;        
@@ -832,6 +855,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.ELEVATION, preferences);
         case ANGLE :
           return getAngleRenderer();        
+        case LEVEL :
+          return getLevelRenderer();        
         case COLOR :
           return getColorRenderer();        
         case TEXTURE :
@@ -871,6 +896,22 @@ public class FurnitureTable extends JTable implements View, Printable {
       };
     }
 
+    /**
+     * Returns a renderer that displays the level name of a piece of furniture. 
+     */
+    private TableCellRenderer getLevelRenderer() {
+      return new DefaultTableCellRenderer() { 
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
+          Level level = piece.getLevel();
+          return super.getTableCellRendererComponent(
+              table, level != null  ? level.getName()  : "", isSelected, hasFocus, row, column); 
+        }
+      };
+    }
     /**
      * Returns a renderer that displays the name of a piece of furniture with its icon ahead. 
      */

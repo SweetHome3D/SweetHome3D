@@ -37,7 +37,7 @@ import java.util.List;
  * A room or a polygon in a home plan. 
  * @author Emmanuel Puybaret
  */
-public class Room implements Serializable, Selectable {
+public class Room implements Serializable, Selectable, Elevatable {
   /**
    * The properties of a room that may change. <code>PropertyChangeListener</code>s added 
    * to a room will be notified under a property name equal to the string value of one these properties.
@@ -45,7 +45,7 @@ public class Room implements Serializable, Selectable {
   public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
       POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE,
       FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, FLOOR_SHININESS,
-      CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE, CEILING_SHININESS}
+      CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE, CEILING_SHININESS, LEVEL}
   
   private static final long serialVersionUID = 1L;
   
@@ -66,6 +66,7 @@ public class Room implements Serializable, Selectable {
   private Integer     ceilingColor;
   private HomeTexture ceilingTexture;
   private float       ceilingShininess;
+  private Level       level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -571,6 +572,35 @@ public class Room implements Serializable, Selectable {
   }
 
   /**
+   * Returns the level which this room belongs to. 
+   * @since 3.4
+   */
+  public Level getLevel() {
+    return this.level;
+  }
+
+  /**
+   * Sets the level of this room. Once this room is updated, 
+   * listeners added to this room will receive a change notification.
+   * @since 3.4
+   */
+  public void setLevel(Level level) {
+    if (level != this.level) {
+      Level oldLevel = this.level;
+      this.level = level;
+      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this room is at the given level.
+   * @since 3.4
+   */
+  public boolean isAtLevel(Level level) {
+    return this.level == level;
+  }
+  
+  /**
    * Returns the area of this room.
    */
   public float getArea() {
@@ -738,6 +768,7 @@ public class Room implements Serializable, Selectable {
     try {
       Room clone = (Room)super.clone();
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      clone.level = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 

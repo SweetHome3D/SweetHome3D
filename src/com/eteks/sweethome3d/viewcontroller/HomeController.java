@@ -52,6 +52,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
@@ -61,6 +62,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -229,6 +231,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_Y, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_ELEVATION, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_ANGLE, true);
+    homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_LEVEL, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_COLOR, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, true);
@@ -249,6 +252,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_Y, true); 
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_ELEVATION, true); 
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_ANGLE, true); 
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_LEVEL, true); 
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_COLOR, true); 
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, true); 
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, true); 
@@ -276,6 +280,11 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
         homeHasBackgroundImage && !backgroundImage.isVisible());
     homeView.setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
+    homeView.setEnabled(HomeView.ActionType.CREATE_LEVEL, true);
+    List<Level> levels = this.home.getLevels();
+    homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, 
+        levels.size() > 1 && this.home.getSelectedLevel() != null);
+    homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomeView.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
@@ -404,6 +413,7 @@ public class HomeController implements Controller {
     addFurnitureSortListener();
     addUndoSupportListener();
     addHomeItemsListener();
+    addLevelListeners();
     addPlanControllerListeners();
     addLanguageListener();
   }
@@ -903,6 +913,34 @@ public class HomeController implements Controller {
           if (Compass.Property.VISIBLE.equals(ev.getPropertyName())) {
             enableSelectAllAction();
           }
+        }
+      });
+  }
+
+  /**
+   * Adds a property change listener to home to
+   * enable/disable authorized actions according to selected level.
+   */
+  private void addLevelListeners() {
+    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          // Keep in selection only items that are at this level
+          List<Selectable> selectedItemsAtLevel = new ArrayList<Selectable>();
+          Level selectedLevel = home.getSelectedLevel();
+          for (Selectable item : home.getSelectedItems()) {
+            if (!(item instanceof Elevatable)
+                || ((Elevatable)item).isAtLevel(selectedLevel)) {
+              selectedItemsAtLevel.add(item);
+            }
+          }
+          home.setSelectedItems(selectedItemsAtLevel);
+          getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, 
+              home.getLevels().size() > 1 && home.getSelectedLevel() != null);
+        }
+      });
+    this.home.addLevelsListener(new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, home.getLevels().size() > 1);
         }
       });
   }

@@ -25,17 +25,32 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 /**
  * Observer camera characteristics in home.
  * @author Emmanuel Puybaret
  */
 public class ObserverCamera extends Camera implements Selectable {
+  /**
+   * The additional properties of an observer camera that may change. <code>PropertyChangeListener</code>s added 
+   * to a camera will be notified under a property name equal to the string value of one these properties.
+   * @since 3.4
+   */
+  public enum Property {WIDTH, DEPTH, HEIGHT}
+  
   private static final long serialVersionUID = 1L;
 
+  private boolean fixedSize;
+  
   private transient Shape shapeCache;
   private transient Shape rectangleShapeCache;
-  
+
+  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
   /**
    * Creates a camera at given location and angle.
    */
@@ -43,6 +58,62 @@ public class ObserverCamera extends Camera implements Selectable {
     super(x, y, z, yaw, pitch, fieldOfView);
   }
 
+  /**
+   * Initializes new camera transient fields  
+   * and reads its properties from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    in.defaultReadObject();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this camera.
+   * @since 3.4
+   */
+  @Override
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+    super.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this camera.
+   * @since 3.4
+   */
+  @Override
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+    super.removePropertyChangeListener(listener);
+  }
+
+  /**
+   * Sets whether camera size should depends on its elevation and will notify listeners
+   * bound to size properties of the size change.
+   * @since 3.4
+   */
+  public void setFixedSize(boolean fixedSize) {
+    if (this.fixedSize != fixedSize) {
+      float oldWidth = getWidth();
+      float oldDepth = getDepth();
+      float oldHeight = getHeight();
+      this.fixedSize = fixedSize;
+      this.shapeCache = null;
+      this.rectangleShapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the camera size doesn't change according to its elevation.
+   * @since 3.4
+   */
+  public boolean isFixedSize() {
+    return this.fixedSize;
+  }
+  
   /**
    * Sets the yaw angle in radians of this camera.
    */
@@ -74,9 +145,15 @@ public class ObserverCamera extends Camera implements Selectable {
    * Sets the elevation of this camera.
    */
   public void setZ(float z) {
+    float oldWidth = getWidth();
+    float oldDepth = getDepth();
+    float oldHeight = getHeight();
     super.setZ(z);
     this.shapeCache = null;
     this.rectangleShapeCache = null;
+    this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
+    this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
+    this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
   }
   
   /**
@@ -84,9 +161,13 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getWidth() {
-    // Adult width is 4 times the distance between head and eyes location
-    float width = getZ() * 4 / 14;
-    return Math.min(Math.max(width, 20), 62.5f);
+    if (this.fixedSize) {
+      return 46.6f;
+    } else {
+      // Adult width is 4 times the distance between head and eyes location    
+      float width = getZ() * 4 / 14;
+      return Math.min(Math.max(width, 20), 62.5f);
+    }
   }
   
   /**
@@ -94,9 +175,13 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getDepth() {
-    // Adult depth is equal to the 2 / 5 of its width 
-    float depth = getZ() * 8 / 70;
-    return Math.min(Math.max(depth, 8), 25);
+    if (this.fixedSize) {
+      return 18.6f;
+    } else {
+      // Adult depth is equal to the 2 / 5 of its width 
+      float depth = getZ() * 8 / 70;
+      return Math.min(Math.max(depth, 8), 25);
+    }
   }
   
   /**
@@ -104,8 +189,12 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getHeight() {
-    // Eyes are 14 / 15 of an adult height
-    return getZ() * 15 / 14;
+    if (this.fixedSize) {
+      return 175f;
+    } else {
+      // Eyes are 14 / 15 of an adult height
+      return getZ() * 15 / 14;
+    }
   }
   
   /**

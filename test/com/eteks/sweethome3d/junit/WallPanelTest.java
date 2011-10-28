@@ -51,7 +51,7 @@ public class WallPanelTest extends TestCase {
     ViewFactory viewFactory = new SwingViewFactory();
     // Create a home and add a selected wall to it
     Home home = new Home();
-    Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f);
+    Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f, home.getWallHeight());
     home.addWall(wall1);
     wall1.setLeftSideColor(10);
     wall1.setRightSideColor(20);
@@ -91,7 +91,7 @@ public class WallPanelTest extends TestCase {
     assertTrue("Wrong Y end", Math.abs(wall1.getYEnd() + 20f * (float)Math.sin(Math.PI / 4) - wallController.getYEnd()) < 1E-5);
     
     // 5. Add a second selected wall to home
-    Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
+    Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f, home.getWallHeight());
     home.addWall(wall2);
     wall2.setHeight(300f);
     wall2.setLeftSideColor(10);
@@ -144,7 +144,7 @@ public class WallPanelTest extends TestCase {
   public static void main(String [] args) {
     // Create a selected wall in a home and display it in a wall panel
     Home home = new Home();
-    Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f);
+    Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f, home.getWallHeight());
     home.addWall(wall1);
     wall1.setLeftSideColor(null);
     wall1.setRightSideColor(0xFFFF00);

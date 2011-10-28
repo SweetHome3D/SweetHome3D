@@ -106,6 +106,12 @@ public interface ViewFactory {
   public abstract DialogView createUserPreferencesView(
                                           UserPreferences preferences,
                                           UserPreferencesController userPreferencesController);
+  
+  /**
+   * Returns a new view that edits level values.
+   */
+  public abstract DialogView createLevelView(UserPreferences preferences, LevelController levelController);
+
   /**
    * Returns a new view that edits furniture values.
    */

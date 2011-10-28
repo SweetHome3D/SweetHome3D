@@ -46,7 +46,7 @@ public class HomeFileRecorderTest extends TestCase {
     // 1. Create an empty home
     Home home1 = new Home();
     // Add to home a wall and a piece of furniture
-    Wall wall = new Wall(0, 10, 100, 80, 10);
+    Wall wall = new Wall(0, 10, 100, 80, 10, home1.getWallHeight());
     home1.addWall(wall);
     FurnitureCatalog catalog = new DefaultFurnitureCatalog();
     HomePieceOfFurniture piece = new HomePieceOfFurniture(

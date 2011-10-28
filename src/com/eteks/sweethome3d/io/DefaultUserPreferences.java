@@ -82,6 +82,11 @@ public class DefaultUserPreferences extends UserPreferences {
     setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
     setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
     try {
+      setNewFloorThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newFloorThickness")));
+    } catch (IllegalArgumentException ex) {
+      setNewFloorThickness(12);
+    }
+    try {
       setAutoSaveDelayForRecovery(Integer.parseInt(getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
     } catch (IllegalArgumentException ex) {
       // Disable auto save
@@ -93,7 +98,7 @@ public class DefaultUserPreferences extends UserPreferences {
     } catch (IllegalArgumentException ex) {
       // Don't use currency and prices in program
     }
-    for (String property : new String [] {"HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
+    for (String property : new String [] {"LevelName", "HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
       try {
         String [] autoCompletionStrings = getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings#" + property).trim().split(",");
         if (autoCompletionStrings.length > 0) {

@@ -33,6 +33,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -93,13 +94,20 @@ public class BackgroundImageWizardController extends WizardController
    */
   @Override
   public void finish() {
-    BackgroundImage oldImage = this.home.getBackgroundImage();
+    Level selectedLevel = this.home.getSelectedLevel();
+    BackgroundImage oldImage = selectedLevel != null
+        ? selectedLevel.getBackgroundImage()
+        : this.home.getBackgroundImage();
     float [][] scaleDistancePoints = getScaleDistancePoints();
     BackgroundImage image = new BackgroundImage(getImage(),
         getScaleDistance(), scaleDistancePoints [0][0], scaleDistancePoints [0][1],
         scaleDistancePoints [1][0], scaleDistancePoints [1][1], 
         getXOrigin(), getYOrigin());
-    this.home.setBackgroundImage(image);
+    if (selectedLevel != null) {
+      selectedLevel.setBackgroundImage(image);
+    } else {
+      this.home.setBackgroundImage(image);
+    }
     boolean modification = oldImage == null;
     UndoableEdit undoableEdit = 
         new BackgroundImageUndoableEdit(this.home, this.preferences,modification, oldImage, image);
@@ -132,13 +140,21 @@ public class BackgroundImageWizardController extends WizardController
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      this.home.setBackgroundImage(this.oldImage); 
+      if (this.home.getSelectedLevel() != null) {
+        this.home.getSelectedLevel().setBackgroundImage(image);
+      } else {
+        this.home.setBackgroundImage(this.oldImage);
+      } 
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.home.setBackgroundImage(this.image);
+      if (this.home.getSelectedLevel() != null) {
+        this.home.getSelectedLevel().setBackgroundImage(this.image);
+      } else {
+        this.home.setBackgroundImage(this.image);
+      } 
     }
 
     @Override
@@ -192,8 +208,11 @@ public class BackgroundImageWizardController extends WizardController
   protected View getStepsView() {
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
+      BackgroundImage image = this.home.getSelectedLevel() != null
+          ? this.home.getSelectedLevel().getBackgroundImage()
+          : this.home.getBackgroundImage();
       this.stepsView = this.viewFactory.createBackgroundImageWizardStepsView(
-          this.home.getBackgroundImage(), this.preferences, this);
+          image, this.preferences, this);
     }
     return this.stepsView;
   }

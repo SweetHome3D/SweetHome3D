@@ -497,7 +497,7 @@ public class WallController implements Controller {
     Float xEnd = getXEnd();
     Float yEnd = getYEnd();    
     if (xStart != null && yStart != null && xEnd != null && yEnd != null) {
-      Wall wall = new Wall(xStart, yStart, xEnd, yEnd, 0);
+      Wall wall = new Wall(xStart, yStart, xEnd, yEnd, 0, 0);
       Float arcExtent = getArcExtentInDegrees();
       if (arcExtent != null) {
         wall.setArcExtent((float)Math.toRadians(arcExtent));

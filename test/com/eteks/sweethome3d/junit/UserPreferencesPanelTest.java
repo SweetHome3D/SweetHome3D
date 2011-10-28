@@ -55,6 +55,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
+import com.eteks.sweethome3d.viewcontroller.LevelController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
@@ -330,6 +331,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new PrintPreviewController(home, preferences, homeController, viewFactory).getView();
       new UserPreferencesController(preferences, viewFactory, contentManager).getView();
       new HomeFurnitureController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
+      new LevelController(home, preferences, viewFactory, undoableEditSupport).getView();
       new WallController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new RoomController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();

@@ -64,8 +64,8 @@ public class HomeTest extends TestCase {
     });
     
     // Create 2 walls
-    Wall wall1 = new Wall(0, 0, 100, 0, 0);
-    Wall wall2 = new Wall(100, 0, 100, 100, 0);
+    Wall wall1 = new Wall(0, 0, 100, 0, 0, home.getWallHeight());
+    Wall wall2 = new Wall(100, 0, 100, 100, 0, home.getWallHeight());
     // Add them to home
     home.addWall(wall1);
     home.addWall(wall2);

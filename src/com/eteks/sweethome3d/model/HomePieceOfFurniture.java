@@ -41,7 +41,7 @@ import java.util.Map;
  * A piece of furniture in {@linkplain Home home}.
  * @author Emmanuel Puybaret
  */
-public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable {
+public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable, Elevatable {
   private static final long serialVersionUID = 1L;
   
   private static final double TWICE_PI = 2 * Math.PI;
@@ -51,14 +51,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
    */
   public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
                                 DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE,
-                                PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED};
+                                PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED, LEVEL};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   
@@ -154,6 +154,11 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
           return HomePieceOfFurniture.compare(piece1.angle, piece2.angle);
         }
       });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.LEVEL, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.getLevel(), piece2.getLevel());
+        }
+      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.PRICE, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           return HomePieceOfFurniture.compare(piece1.price, piece2.price);
@@ -177,10 +182,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   private static int compare(float value1, float value2) {
-    return value1 < value2 
-               ? -1
-               : (value1 == value2
-                   ? 0 : 1);
+    return Float.compare(value1, value2);
   }
   
   private static int compare(boolean value1, boolean value2) {
@@ -196,6 +198,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       return 1; 
     } else {
       return value1.compareTo(value2);
+    }
+  }
+  
+  private static int compare(Level level1, Level level2) {
+    if (level1 == null) {
+      return -1;
+    } else if (level2 == null) {
+      return 1; 
+    } else {
+      return Float.compare(level1.getElevation(), level2.getElevation());
     }
   }
   
@@ -230,6 +242,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float                  y;
   private float                  angle;
   private boolean                modelMirrored;
+  private Level                  level;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -509,14 +522,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
 
   /**
-   * Returns the elevation of the bottom of this piece of furniture. 
+   * Returns the elevation of the bottom of this piece of furniture on its level. 
    */
   public float getElevation() {
     return this.elevation;
   }
 
   /**
-   * Sets the elevation of this piece of furniture. Once this piece is updated, 
+   * Sets the elevation of this piece of furniture on its level. Once this piece is updated, 
    * listeners added to this piece will receive a change notification.
    */
   public void setElevation(float elevation) {
@@ -841,6 +854,38 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public boolean isBackFaceShown() {
     return this.backFaceShown;
   }
+
+  /**
+   * Returns the level which this piece belongs to. 
+   * @since 3.4
+   */
+  public Level getLevel() {
+    return this.level;
+  }
+
+  /**
+   * Sets the level of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.4
+   */
+  public void setLevel(Level level) {
+    if (level != this.level) {
+      Level oldLevel = this.level;
+      this.level = level;
+      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if this piece is visible at the given level.
+   * @since 3.4
+   */
+  public boolean isAtLevel(Level level) {
+    return this.level == null && level == null
+        || this.level != null && level != null
+            && this.level.getElevation() <= level.getElevation()
+            && this.level.getElevation() + this.elevation + this.height > level.getElevation();
+  }
   
   /**
    * Returns the points of each corner of a piece.
@@ -994,6 +1039,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     try {
       HomePieceOfFurniture clone = (HomePieceOfFurniture)super.clone();
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      clone.level = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 

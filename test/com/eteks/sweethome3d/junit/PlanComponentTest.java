@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -412,13 +413,13 @@ public class PlanComponentTest extends ComponentTestFixture {
    */
   private void assertCoordinatesEqualWallPoints(float xStart, float yStart, float xEnd, float yEnd, Wall wall) {
     assertTrue("Incorrect X start " + xStart + " " + wall.getXStart(), 
-        Math.abs(xStart - wall.getXStart()) < 1E-10);
+        Math.abs(xStart - wall.getXStart()) < 1E-4);
     assertTrue("Incorrect Y start " + yStart + " " + wall.getYStart(), 
-        Math.abs(yStart - wall.getYStart()) < 1E-10);
+        Math.abs(yStart - wall.getYStart()) < 1E-4);
     assertTrue("Incorrect X end " + xEnd + " " + wall.getXEnd(), 
-        Math.abs(xEnd - wall.getXEnd()) < 1E-10);
+        Math.abs(xEnd - wall.getXEnd()) < 1E-4);
     assertTrue("Incorrect Y end " + yEnd + " " + wall.getYEnd(), 
-        Math.abs(yEnd - wall.getYEnd()) < 1E-10);
+        Math.abs(yEnd - wall.getYEnd()) < 1E-4);
   }
 
   /**
@@ -477,7 +478,12 @@ public class PlanComponentTest extends ComponentTestFixture {
       this.home.getCompass().setVisible(false);
       Locale.setDefault(Locale.FRANCE);
       this.preferences = new DefaultUserPreferences();
-      ViewFactory viewFactory = new SwingViewFactory();
+      ViewFactory viewFactory = new SwingViewFactory() {
+          @Override
+          public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
+            return new PlanComponent(home, preferences, controller);
+          }
+        };
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);

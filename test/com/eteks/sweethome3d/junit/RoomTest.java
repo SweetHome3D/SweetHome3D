@@ -50,6 +50,7 @@ import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -95,7 +96,7 @@ public class RoomTest extends ComponentTestFixture {
     // Check room point count and area
     Room room = frame.home.getRooms().get(0);
     assertEquals("Wrong point count", 5, room.getPoints().length);
-    assertEquals("Wrong room area", 69273.02f, room.getArea());
+    assertEquals("Wrong room area", 69244.76f, room.getArea());
     
     // 4. Edit created room
     JDialog attributesDialog = showRoomPanel(frame.preferences, frame.homeController, frame, tester);
@@ -250,7 +251,12 @@ public class RoomTest extends ComponentTestFixture {
           public void write() throws RecorderException {
           }
         };
-      ViewFactory viewFactory = new SwingViewFactory();
+      ViewFactory viewFactory = new SwingViewFactory() {
+          @Override
+          public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
+            return new PlanComponent(home, preferences, controller);
+          }
+        };
       FileContentManager contentManager = new FileContentManager(this.preferences);
       this.homeController = new HomeController(this.home, this.preferences, viewFactory, contentManager);
       setRootPane((JRootPane)this.homeController.getView());

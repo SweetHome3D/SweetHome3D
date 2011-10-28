@@ -35,6 +35,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -398,19 +399,27 @@ public class HomeController3D implements Controller {
         // If home contains no wall, search the max height of the highest piece
         for (HomePieceOfFurniture piece : home.getFurniture()) {
           if (piece.isVisible()) {
-            maxHeight = Math.max(maxHeight, piece.getElevation() + piece.getHeight());
+            Level pieceLevel = piece.getLevel();
+            float levelElevation = pieceLevel == null 
+                ? 0
+                : pieceLevel.getElevation(); 
+            maxHeight = Math.max(maxHeight, levelElevation + piece.getElevation() + piece.getHeight());
           }
         }
       } else {
          // Search the max height of the highest wall
         for (Wall wall : walls) {
           Float height = wall.getHeight();
+          Level wallLevel = wall.getLevel();
+          float levelElevation = wallLevel == null 
+              ? 0
+              : wallLevel.getElevation(); 
           if (height != null) {
-            maxHeight = Math.max(maxHeight, height);
+            maxHeight = Math.max(maxHeight, levelElevation + height);
           }
           Float heightAtEnd = wall.getHeightAtEnd();
           if (heightAtEnd != null) {
-            maxHeight = Math.max(maxHeight, heightAtEnd);
+            maxHeight = Math.max(maxHeight, levelElevation + heightAtEnd);
           }
         }
       }

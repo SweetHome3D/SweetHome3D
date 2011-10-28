@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,19 +49,28 @@ public class Home implements Serializable, Cloneable {
   public static final long CURRENT_VERSION = 3400;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
-  
+
+  private static final Comparator<Level> LEVEL_ELEVATION_COMPARATOR = new Comparator<Level>() {
+      public int compare(Level level1, Level level2) {
+        return Float.compare(level1.getElevation(), level2.getElevation());
+      }
+    };
+
   /**
    * The properties of a home that may change. <code>PropertyChangeListener</code>s added 
    * to a home will be notified under a property name equal to the name value of one these properties.
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED};
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED, SELECTED_LEVEL};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
   private transient List<Selectable>                  selectedItems;
   private transient List<SelectionListener>           selectionListeners;
+  private List<Level>                                 levels;
+  private Level                                       selectedLevel;
+  private transient CollectionChangeSupport<Level>    levelsChangeSupport;
   private List<Wall>                                  walls;
   private transient CollectionChangeSupport<Wall>     wallsChangeSupport;
   private List<Room>                                  rooms;
@@ -70,7 +81,7 @@ public class Home implements Serializable, Cloneable {
   private transient CollectionChangeSupport<Label>    labelsChangeSupport;
   private Camera                                      camera;
   private String                                      name;
-  private float                                       wallHeight;
+  private final float                                 wallHeight;
   private transient boolean                           modified;
   private transient boolean                           recovered;
   private BackgroundImage                             backgroundImage;
@@ -138,6 +149,7 @@ public class Home implements Serializable, Cloneable {
         HomePieceOfFurniture.SortableProperty.VISIBLE});
     // Init transient lists and other fields
     init(true);
+    addModelListeners();
   }
 
   /**
@@ -147,6 +159,7 @@ public class Home implements Serializable, Cloneable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     init(false);
     in.defaultReadObject();
+    addModelListeners();
     
     if (KEEP_BACKWARD_COMPATIBLITY) {
       // Restore furnitureSortedProperty from furnitureSortedPropertyName
@@ -173,6 +186,13 @@ public class Home implements Serializable, Cloneable {
         this.furnitureVisiblePropertyNames = null;
       }
   
+      // Ensure all wall have an height
+      for (Wall wall : this.walls) {
+        if (wall.getHeight() == null) {
+          wall.setHeight(this.wallHeight);
+        }
+      }
+      
       // Restore referenced HomeDoorOrWindow instances stored in a separate field 
       // for backward compatibility reasons
       if (this.furnitureWithDoorsAndWindows != null) {
@@ -186,7 +206,7 @@ public class Home implements Serializable, Cloneable {
         this.furniture = this.furnitureWithGroups;
         this.furnitureWithGroups = null;
       }
-
+      
       // Restore environment fields from home fields for compatibility reasons
       this.environment.setGroundColor(this.groundColor);
       this.environment.setGroundTexture(this.groundTexture);
@@ -201,6 +221,7 @@ public class Home implements Serializable, Cloneable {
     this.selectedItems = new ArrayList<Selectable>();
     this.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(this);
     this.selectionListeners = new ArrayList<SelectionListener>();
+    this.levelsChangeSupport = new CollectionChangeSupport<Level>(this);
     this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
     this.roomsChangeSupport = new CollectionChangeSupport<Room>(this);
     this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
@@ -232,11 +253,42 @@ public class Home implements Serializable, Cloneable {
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.labels = new ArrayList<Label>();
     this.compass = new Compass(-100, 50, 100);
+    this.levels = new ArrayList<Level>();
     // Let compass be visible only on new homes
     this.compass.setVisible(newHome);
     this.visualProperties = new HashMap<String, Object>();
     
     this.version = CURRENT_VERSION;
+  }
+
+  /**
+   * Adds listeners to model.
+   */
+  private void addModelListeners() {
+    // Add listeners to levels to maintain its elevation order
+    final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+            levels = new ArrayList<Level>(levels);
+            Collections.sort(levels, LEVEL_ELEVATION_COMPARATOR);
+          }
+        }
+      };
+    for (Level level : this.levels) {
+      level.addPropertyChangeListener(levelElevationChangeListener);
+    }
+    addLevelsListener(new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          switch (ev.getType()) {
+            case ADD :
+              ev.getItem().addPropertyChangeListener(levelElevationChangeListener);
+              break;
+            case DELETE :
+              ev.getItem().removePropertyChangeListener(levelElevationChangeListener);
+              break;
+          }
+        }
+      });
   }
 
   /**
@@ -365,6 +417,124 @@ public class Home implements Serializable, Cloneable {
   }
   
   /**
+   * Adds the level <code>listener</code> in parameter to this home.
+   * @since 3.4
+   */
+  public void addLevelsListener(CollectionListener<Level> listener) {
+    this.levelsChangeSupport.addCollectionListener(listener);
+  }
+  
+  /**
+   * Removes the level <code>listener</code> in parameter from this home.
+   * @since 3.4
+   */
+  public void removeLevelsListener(CollectionListener<Level> listener) {
+    this.levelsChangeSupport.removeCollectionListener(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the levels of this home.
+   * @since 3.4
+   */
+  public List<Level> getLevels() {
+    return Collections.unmodifiableList(this.levels);
+  }
+
+  /**
+   * Adds the given <code>level</code> to the list of levels of this home.
+   * Once the <code>level</code> is added, level listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * @since 3.4
+   */
+  public void addLevel(Level level) {
+    // Make a copy of the list to avoid conflicts in the list returned by getLevels
+    this.levels = new ArrayList<Level>(this.levels);
+    // Search at which index should be inserted the new level
+    int index = Collections.binarySearch(this.levels, level, LEVEL_ELEVATION_COMPARATOR);
+    int levelIndex;
+    if (index >= 0) {
+      levelIndex = index; 
+    } else {
+      levelIndex = -(index + 1);
+    }
+    this.levels.add(levelIndex, level);
+    this.levelsChangeSupport.fireCollectionChanged(level, levelIndex, CollectionEvent.Type.ADD);
+  }
+
+  /**
+   * Removes the given <code>level</code> from the set of levels of this home 
+   * and all the furniture, walls, rooms, dimension lines and labels that belong to this level.
+   * Once the <code>level</code> is removed, level listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   * @since 3.4
+   */
+  public void deleteLevel(Level level) {
+    int index = this.levels.indexOf(level);
+    if (index != -1) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        if (piece.getLevel() == level) {
+          deletePieceOfFurniture(piece);
+        }
+      }
+      for (Room room : this.rooms) {
+        if (room.getLevel() == level) {
+          deleteRoom(room);
+        }
+      }
+      for (Wall wall : this.walls) {
+        if (wall.getLevel() == level) {
+          deleteWall(wall);
+        }
+      }
+      for (DimensionLine dimensionLine : this.dimensionLines) {
+        if (dimensionLine.getLevel() == level) {
+          deleteDimensionLine(dimensionLine);
+        }
+      }
+      for (Label label : this.labels) {
+        if (label.getLevel() == level) {
+          deleteLabel(label);
+        }
+      }
+      if (this.selectedLevel == level) {
+        if (this.levels.size() == 1) {
+          setSelectedLevel(null);
+        } else {
+          setSelectedLevel(this.levels.get(index >= 1 ? index - 1 : index + 1));
+        }
+      }
+      // Make a copy of the list to avoid conflicts in the list returned by getLevels
+      this.levels = new ArrayList<Level>(this.levels);
+      this.levels.remove(index);
+      this.levelsChangeSupport.fireCollectionChanged(level, index, CollectionEvent.Type.DELETE);
+    }
+  }
+  
+  /**
+   * Returns the selected level in home or <code>null</code> if home has no level.
+   * @since 3.4
+   */
+  public Level getSelectedLevel() {
+    return this.selectedLevel;
+  }
+  
+  /**
+   * Sets the selected level in home and notifies listeners of the change.
+   * @since 3.4
+   */
+  public void setSelectedLevel(Level selectedLevel) {
+    if (selectedLevel != this.selectedLevel) {
+      Level oldSelectedLevel = this.selectedLevel;
+      this.selectedLevel = selectedLevel;
+      this.propertyChangeSupport.firePropertyChange(Property.SELECTED_LEVEL.name(), oldSelectedLevel, selectedLevel);
+    }
+  }
+  
+  /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
   public void addFurnitureListener(CollectionListener<HomePieceOfFurniture> listener) {
@@ -405,6 +575,7 @@ public class Home implements Serializable, Cloneable {
   public void addPieceOfFurniture(HomePieceOfFurniture piece, int index) {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
+    piece.setLevel(this.selectedLevel);
     this.furniture.add(index, piece);
     this.furnitureChangeSupport.fireCollectionChanged(piece, index, CollectionEvent.Type.ADD);
   }
@@ -420,6 +591,7 @@ public class Home implements Serializable, Cloneable {
     deselectItem(piece);
     int index = this.furniture.indexOf(piece);
     if (index != -1) {
+      piece.setLevel(null);
       // Make a copy of the list to avoid conflicts in the list returned by getFurniture
       this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
       this.furniture.remove(index);
@@ -480,66 +652,6 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Adds the wall <code>listener</code> in parameter to this home.
-   */
-  public void addWallsListener(CollectionListener<Wall> listener) {
-    this.wallsChangeSupport.addCollectionListener(listener);
-  }
-  
-  /**
-   * Removes the wall <code>listener</code> in parameter from this home.
-   */
-  public void removeWallsListener(CollectionListener<Wall> listener) {
-    this.wallsChangeSupport.removeCollectionListener(listener);
-  } 
-
-  /**
-   * Returns an unmodifiable collection of the walls of this home.
-   */
-  public Collection<Wall> getWalls() {
-    return Collections.unmodifiableCollection(this.walls);
-  }
-
-  /**
-   * Adds the given <code>wall</code> to the set of walls of this home.
-   * Once the <code>wall</code> is added, wall listeners added to this home will receive a
-   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
-   */
-  public void addWall(Wall wall) {
-    // Make a copy of the list to avoid conflicts in the list returned by getWalls
-    this.walls = new ArrayList<Wall>(this.walls);
-    this.walls.add(wall);
-    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.ADD);
-  }
-
-  /**
-   * Removes the given <code>wall</code> from the set of walls of this home.
-   * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
-   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
-   * If any wall is attached to <code>wall</code> they will be detached from it.
-   */
-  public void deleteWall(Wall wall) {
-    //  Ensure selectedItems don't keep a reference to wall
-    deselectItem(wall);
-    // Detach any other wall attached to wall
-    for (Wall otherWall : getWalls()) {
-      if (wall.equals(otherWall.getWallAtStart())) {
-        otherWall.setWallAtStart(null);
-      } else if (wall.equals(otherWall.getWallAtEnd())) {
-        otherWall.setWallAtEnd(null);
-      }
-    }
-    // Make a copy of the list to avoid conflicts in the list returned by getWalls
-    this.walls = new ArrayList<Wall>(this.walls);
-    this.walls.remove(wall);
-    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
-  }
-
-  /**
    * Adds the room <code>listener</code> in parameter to this home.
    */
   public void addRoomsListener(CollectionListener<Room> listener) {
@@ -582,6 +694,7 @@ public class Home implements Serializable, Cloneable {
     // Make a copy of the list to avoid conflicts in the list returned by getRooms
     this.rooms = new ArrayList<Room>(this.rooms);
     this.rooms.add(index, room);
+    room.setLevel(this.selectedLevel);
     this.roomsChangeSupport.fireCollectionChanged(room, index, CollectionEvent.Type.ADD);
   }
 
@@ -597,11 +710,74 @@ public class Home implements Serializable, Cloneable {
     deselectItem(room);
     int index = this.rooms.indexOf(room);
     if (index != -1) {
+      room.setLevel(null);
       // Make a copy of the list to avoid conflicts in the list returned by getRooms
       this.rooms = new ArrayList<Room>(this.rooms);
       this.rooms.remove(index);
       this.roomsChangeSupport.fireCollectionChanged(room, index, CollectionEvent.Type.DELETE);
     }
+  }
+
+  /**
+   * Adds the wall <code>listener</code> in parameter to this home.
+   */
+  public void addWallsListener(CollectionListener<Wall> listener) {
+    this.wallsChangeSupport.addCollectionListener(listener);
+  }
+  
+  /**
+   * Removes the wall <code>listener</code> in parameter from this home.
+   */
+  public void removeWallsListener(CollectionListener<Wall> listener) {
+    this.wallsChangeSupport.removeCollectionListener(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the walls of this home.
+   */
+  public Collection<Wall> getWalls() {
+    return Collections.unmodifiableCollection(this.walls);
+  }
+
+  /**
+   * Adds the given <code>wall</code> to the set of walls of this home.
+   * Once the <code>wall</code> is added, wall listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   */
+  public void addWall(Wall wall) {
+    // Make a copy of the list to avoid conflicts in the list returned by getWalls
+    this.walls = new ArrayList<Wall>(this.walls);
+    this.walls.add(wall);
+    wall.setLevel(this.selectedLevel);
+    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.ADD);
+  }
+
+  /**
+   * Removes the given <code>wall</code> from the set of walls of this home.
+   * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   * If any wall is attached to <code>wall</code> they will be detached from it.
+   */
+  public void deleteWall(Wall wall) {
+    //  Ensure selectedItems don't keep a reference to wall
+    deselectItem(wall);
+    // Detach any other wall attached to wall
+    for (Wall otherWall : getWalls()) {
+      if (wall.equals(otherWall.getWallAtStart())) {
+        otherWall.setWallAtStart(null);
+      } else if (wall.equals(otherWall.getWallAtEnd())) {
+        otherWall.setWallAtEnd(null);
+      }
+    }
+    wall.setLevel(null);
+    // Make a copy of the list to avoid conflicts in the list returned by getWalls
+    this.walls = new ArrayList<Wall>(this.walls);
+    this.walls.remove(wall);
+    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
   }
 
   /**
@@ -637,6 +813,7 @@ public class Home implements Serializable, Cloneable {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.add(dimensionLine);
+    dimensionLine.setLevel(this.selectedLevel);
     this.dimensionLinesChangeSupport.fireCollectionChanged(dimensionLine, CollectionEvent.Type.ADD);
   }
 
@@ -651,6 +828,7 @@ public class Home implements Serializable, Cloneable {
   public void deleteDimensionLine(DimensionLine dimensionLine) {
     //  Ensure selectedItems don't keep a reference to dimension line
     deselectItem(dimensionLine);
+    dimensionLine.setLevel(null);
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.remove(dimensionLine);
@@ -690,6 +868,7 @@ public class Home implements Serializable, Cloneable {
     // Make a copy of the list to avoid conflicts in the list returned by getLabels
     this.labels = new ArrayList<Label>(this.labels);
     this.labels.add(label);
+    label.setLevel(this.selectedLevel);
     this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.ADD);
   }
 
@@ -703,6 +882,7 @@ public class Home implements Serializable, Cloneable {
   public void deleteLabel(Label label) {
     //  Ensure selectedItems don't keep a reference to label
     deselectItem(label);
+    label.setLevel(null);
     // Make a copy of the list to avoid conflicts in the list returned by getLabels
     this.labels = new ArrayList<Label>(this.labels);
     this.labels.remove(label);
@@ -1056,6 +1236,31 @@ public class Home implements Serializable, Cloneable {
           clone.selectedItems.add(clone.walls.get(i));
         }
       }
+      // Clone levels and set the level of cloned objects 
+      clone.levels = new ArrayList<Level>();
+      if (this.levels.size() > 0) {
+        for (Level level : this.levels) {
+          clone.levels.add(level.clone());
+        }
+        for (int i = 0; i < this.furniture.size(); i++) {
+          clone.furniture.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.furniture.get(i).getLevel())));
+        }
+        for (int i = 0; i < this.rooms.size(); i++) {
+          clone.rooms.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.rooms.get(i).getLevel())));
+        }
+        for (int i = 0; i < this.dimensionLines.size(); i++) {
+          clone.dimensionLines.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.dimensionLines.get(i).getLevel())));
+        }
+        for (int i = 0; i < this.labels.size(); i++) {
+          clone.labels.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.labels.get(i).getLevel())));
+        }
+        for (int i = 0; i < this.walls.size(); i++) {
+          clone.walls.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.walls.get(i).getLevel())));
+        }
+        if (this.selectedLevel != null) {
+          clone.selectedLevel = clone.levels.get(this.levels.indexOf(this.selectedLevel));
+        }
+      }
       // Clone cameras
       clone.observerCamera = this.observerCamera.clone();
       clone.topCamera = this.topCamera.clone();
@@ -1161,6 +1366,14 @@ public class Home implements Serializable, Cloneable {
    */
   public static List<Label> getLabelsSubList(List<? extends Selectable> items) {
     return getSubList(items, Label.class);
+  }
+  
+  /**
+   * Returns a sub list of <code>items</code> that contains only levels.
+   * @since 3.4
+   */
+  public static List<Level> getLevelsSubList(List<? extends Selectable> items) {
+    return getSubList(items, Level.class);
   }
   
   /**
