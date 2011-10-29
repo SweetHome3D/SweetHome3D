@@ -265,8 +265,9 @@ public class Room3D extends Object3DBranch {
         roomElevation = 0;
       }
       List<Level> levels = this.home.getLevels();
-      boolean firstfloorUnderground = roomLevel == null
-          || roomPart == FLOOR_PART && levels.indexOf(roomLevel) == 0 && roomElevation <= 0;
+      boolean computeFloorBorder = roomLevel != null
+          && roomPart == FLOOR_PART 
+          && levels.indexOf(roomLevel) > 0;
       for (int i = 0; i < geometries.length; i++) {
         float [][] geometryPoints = roomPoints.get(i);
         List<float [][]> geometryHoles = roomHoles.get(i);
@@ -274,11 +275,11 @@ public class Room3D extends Object3DBranch {
           geometryHoles = Collections.emptyList();
         }
         
-        int [] contourCounts = new int [(firstfloorUnderground ? 0 : geometryPoints.length) + 1];
+        int [] contourCounts = new int [(computeFloorBorder ? geometryPoints.length : 0) + 1];
         int [] stripCounts = new int [contourCounts.length + geometryHoles.size()];
         int j = 0;
         int vertexCount = geometryPoints.length;
-        if (!firstfloorUnderground) {
+        if (computeFloorBorder) {
           vertexCount *= 5;
           Arrays.fill(contourCounts, 0, geometryPoints.length, 1);
           Arrays.fill(stripCounts, 0, j = geometryPoints.length, 4);
@@ -292,8 +293,8 @@ public class Room3D extends Object3DBranch {
         
         j = 0;
         Point3f [] coords = new Point3f [vertexCount];
-        if (!firstfloorUnderground) {
-          // Compute room borders
+        if (computeFloorBorder) {
+          // Compute room borders coordinates
           for (int k = 0; k < geometryPoints.length; k++) {
             coords [j++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
             coords [j++] = new Point3f(geometryPoints [k][0], roomElevation - roomLevel.getFloorThickness(), geometryPoints [k][1]);
@@ -327,7 +328,7 @@ public class Room3D extends Object3DBranch {
         if (texture != null) {
           TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
           j = 0;
-          if (!firstfloorUnderground) {
+          if (computeFloorBorder) {
             // Compute room border texture coordinates
             for (int k = 0; k < geometryPoints.length; k++) {
               textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), -geometryPoints [k][1] / texture.getHeight());
