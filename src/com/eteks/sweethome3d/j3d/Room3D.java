@@ -389,7 +389,7 @@ public class Room3D extends Object3DBranch {
         ? roomLevel.getElevation()
         : 0;
     float roomHeight = roomElevation + 
-        (roomLevel == null ?this.home.getWallHeight() : roomLevel.getHeight());
+        (roomLevel == null ? this.home.getWallHeight() : roomLevel.getHeight());
     List<Level> levels = this.home.getLevels();
     if (roomLevel == null || levels.indexOf(roomLevel) == levels.size() - 1) {
       // Search the closest wall point to x, y at last level
