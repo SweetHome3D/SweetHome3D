@@ -566,6 +566,17 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Set the level of this group and the furniture it contains.
+   */
+  @Override
+  public void setLevel(Level level) {
+    super.setLevel(level);
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.setLevel(level);
+    }
+  }
+  
+  /**
    * Returns a clone of this group with cloned furniture.
    */
   @Override
