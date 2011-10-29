@@ -1037,6 +1037,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
       clone.wallAtStart = null;
       clone.wallAtEnd = null;
       clone.level = null;
+      clone.pointsCache = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 
