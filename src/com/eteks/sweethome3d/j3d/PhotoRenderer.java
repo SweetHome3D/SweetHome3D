@@ -101,6 +101,7 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
@@ -232,24 +233,35 @@ public class PhotoRenderer {
           float yCenter = room.getYCenter();
           
           double smallestDistance = Float.POSITIVE_INFINITY;
-          float roomHeight = home.getWallHeight();
-          
-          // Search the height of the wall closest to the point xCenter, yCenter
-          for (Wall wall : home.getWalls()) {
-            Float wallHeightAtStart = wall.getHeight();
-            float [][] points = wall.getPoints();
-            for (int i = 0; i < points.length; i++) {
-              double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], xCenter, yCenter);
-              if (distanceToWallPoint < smallestDistance) {
-                smallestDistance = distanceToWallPoint; 
-                if (i == 0 || i == 3) { // Wall start
-                  roomHeight = wallHeightAtStart != null 
-                      ? wallHeightAtStart 
-                      : home.getWallHeight();
-                } else { // Wall end
-                  roomHeight = wall.isTrapezoidal() 
-                      ? wall.getHeightAtEnd() 
-                      : (wallHeightAtStart != null ? wallHeightAtStart : home.getWallHeight());
+          Level roomLevel = room.getLevel();
+          float roomElevation = roomLevel != null
+              ? roomLevel.getElevation()
+              : 0;
+          float roomHeight = roomElevation + 
+              (roomLevel == null ? home.getWallHeight() : roomLevel.getHeight());
+          List<Level> levels = home.getLevels();
+          if (roomLevel == null || levels.indexOf(roomLevel) == levels.size() - 1) {
+            // Search the height of the wall closest to the point xCenter, yCenter
+            for (Wall wall : home.getWalls()) {
+              if (wall.isAtLevel(roomLevel)) {
+                float wallElevation = wall.getLevel() == null ? 0 : wall.getLevel().getElevation();
+                Float wallHeightAtStart = wall.getHeight();
+                float [][] points = wall.getPoints();
+                for (int i = 0; i < points.length; i++) {
+                  double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], xCenter, yCenter);
+                  if (distanceToWallPoint < smallestDistance) {
+                    smallestDistance = distanceToWallPoint; 
+                    if (i == 0 || i == points.length - 1) { // Wall start
+                      roomHeight = wallHeightAtStart != null 
+                          ? wallHeightAtStart 
+                          : home.getWallHeight();
+                    } else { // Wall end
+                      roomHeight = wall.isTrapezoidal() 
+                          ? wall.getHeightAtEnd() 
+                          : (wallHeightAtStart != null ? wallHeightAtStart : home.getWallHeight());
+                    }
+                    roomHeight += wallElevation;
+                  }
                 }
               }
             }
@@ -288,9 +300,13 @@ public class PhotoRenderer {
               power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
           float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
           float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
+          float lightElevation = light.getElevation();
+          if (light.getLevel() != null) {
+            lightElevation += light.getLevel().getElevation();
+          }
           this.sunflow.parameter("center",
               new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
-                  light.getElevation() + (lightSource.getZ() * light.getHeight()),
+                  lightElevation + (lightSource.getZ() * light.getHeight()),
                   light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos));                    
           this.sunflow.parameter("radius", lightRadius);
           this.sunflow.parameter("samples", 4);
