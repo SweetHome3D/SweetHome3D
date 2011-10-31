@@ -111,7 +111,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  private static final int PIXEL_MARGIN      = 3;
+  private static final int PIXEL_MARGIN      = 4;
   private static final int PIXEL_WALL_MARGIN = 2;
 
   private final Home                  home;
@@ -4665,10 +4665,10 @@ public class PlanController extends FurnitureController implements Controller {
       this(null, x, y, x, y);
     }
 
-    public WallPointWithAngleMagnetism(Wall alignedWall, float xWall, float yWall, float x, float y) {
+    public WallPointWithAngleMagnetism(Wall editedWall, float xWall, float yWall, float x, float y) {
       super(xWall, yWall, x, y, preferences.getLengthUnit(), planView.getPixelLength());
       float margin = PIXEL_MARGIN / getScale();
-      // Search which wall start or end point is at locationFeedback abscissa or ordinate
+      // Search which wall start or end point is close to (x, y)
       // ignoring the start and end point of alignedWall
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
@@ -4683,20 +4683,20 @@ public class PlanController extends FurnitureController implements Controller {
         otherLevel = null;
       }
       for (Wall wall : home.getWalls()) {
-        if (wall != alignedWall
+        if (wall != editedWall
             && (wall.isAtLevel(selectedLevel)
                 || otherLevel != null 
                    && wall.isAtLevel(otherLevel))) {
           if (Math.abs(getX() - wall.getXStart()) < margin
-              && (alignedWall == null
-                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
+              && (editedWall == null
+                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), editedWall))) {
             if (Math.abs(deltaYToClosestWall) > Math.abs(getY() - wall.getYStart())) {
               xClosestWall = wall.getXStart();
               deltaYToClosestWall = getY() - yClosestWall;
             }
           } else if (Math.abs(getX() - wall.getXEnd()) < margin
-                    && (alignedWall == null
-                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
+                    && (editedWall == null
+                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), editedWall))) {
             if (Math.abs(deltaYToClosestWall) > Math.abs(getY() - wall.getYEnd())) {
               xClosestWall = wall.getXEnd();
               deltaYToClosestWall = getY() - yClosestWall;
@@ -4704,15 +4704,15 @@ public class PlanController extends FurnitureController implements Controller {
           }
           
           if (Math.abs(getY() - wall.getYStart()) < margin
-              && (alignedWall == null
-                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
+              && (editedWall == null
+                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), editedWall))) {
             if (Math.abs(deltaXToClosestWall) > Math.abs(getX() - wall.getXStart())) {
               yClosestWall = wall.getYStart();
               deltaXToClosestWall = getX() - xClosestWall;
             }
           } else if (Math.abs(getY() - wall.getYEnd()) < margin
-                    && (alignedWall == null
-                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
+                    && (editedWall == null
+                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), editedWall))) {
             if (Math.abs(deltaXToClosestWall) > Math.abs(getX() - wall.getXEnd())) {
               yClosestWall = wall.getYEnd();
               deltaXToClosestWall = getX() - xClosestWall;
@@ -4721,7 +4721,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }
 
-      if (alignedWall != null) {
+      if (editedWall != null) {
         double alpha = -Math.tan(getAngle());
         double beta = Math.abs(alpha) < 1E10 
             ? yWall - alpha * xWall 
@@ -4731,10 +4731,10 @@ public class PlanController extends FurnitureController implements Controller {
           if (Point2D.distanceSq(getX(), getY(), newX, yClosestWall) <= margin * margin) {
             setX(newX);
             setY(yClosestWall);
+            return;
           }
         }
         if (deltaYToClosestWall != Float.POSITIVE_INFINITY 
-            && Math.abs(deltaYToClosestWall) < Math.abs(deltaXToClosestWall) 
             && beta != Double.POSITIVE_INFINITY) {
           float newY = (float)(alpha * xClosestWall + beta);
           if (Point2D.distanceSq(getX(), getY(), xClosestWall, newY) <= margin * margin) {
@@ -4763,6 +4763,114 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * A point with coordinates computed with angle and room points magnetism. 
+   */
+  private class RoomPointWithAngleMagnetism extends PointWithAngleMagnetism {
+    public RoomPointWithAngleMagnetism(float x, float y) {
+      this(null, -1, x, y, x, y);
+    }
+
+    public RoomPointWithAngleMagnetism(Room editedRoom, int editedPointIndex, float xRoom, float yRoom, float x, float y) {
+      super(xRoom, yRoom, x, y, preferences.getLengthUnit(), planView.getPixelLength());
+      float planScale = getScale();
+      float margin = PIXEL_MARGIN / planScale;
+      // Search which room points are close to (x, y)
+      // ignoring the start and end point of alignedRoom
+      float deltaXToClosestObject = Float.POSITIVE_INFINITY;
+      float deltaYToClosestObject = Float.POSITIVE_INFINITY;
+      float xClosestObject = 0;
+      float yClosestObject = 0;
+      List<Level> levels = home.getLevels();
+      Level selectedLevel = home.getSelectedLevel();
+      Level otherLevel;
+      boolean level0;
+      if (levels.size() > 1) {
+        level0 = levels.get(0) == selectedLevel;
+        otherLevel = levels.get(level0 ? 1 : levels.indexOf(selectedLevel) - 1);
+      } else {
+        level0 = true;
+        otherLevel = null;
+      }
+      for (Room room : home.getRooms()) {
+        if (room.isAtLevel(selectedLevel)
+            || otherLevel != null 
+                && room.isAtLevel(otherLevel)
+                && (level0 && room.isFloorVisible()
+                    || !level0 && room.isCeilingVisible())) {
+          float [][] roomPoints = room.getPoints();
+          for (int i = 0; i < roomPoints.length; i++) {
+            if (editedPointIndex == -1 || (i != editedPointIndex && roomPoints.length > 2)) {
+              if (Math.abs(getX() - roomPoints [i][0]) < margin
+                  && Math.abs(deltaYToClosestObject) > Math.abs(getY() - roomPoints [i][1])) {
+                xClosestObject = roomPoints [i][0];
+                deltaYToClosestObject = getY() - roomPoints [i][1];
+              }
+              if (Math.abs(getY() - roomPoints [i][1]) < margin
+                  && Math.abs(deltaXToClosestObject) > Math.abs(getX() - roomPoints [i][0])) {
+                yClosestObject = roomPoints [i][1];
+                deltaXToClosestObject = getX() - roomPoints [i][0];
+              }
+            }
+          }
+        }
+      }
+      // Search which wall points are close to (x, y)
+      for (Wall wall : home.getWalls()) {
+        if (wall.isAtLevel(selectedLevel)
+            || otherLevel != null 
+               && wall.isAtLevel(otherLevel)) {
+          float [][] wallPoints = wall.getPoints();
+          // Take into account only points at start and end of the wall
+          wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
+                                       wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
+          for (int i = 0; i < wallPoints.length; i++) {
+            if (Math.abs(getX() - wallPoints [i][0]) < margin
+                && Math.abs(deltaYToClosestObject) > Math.abs(getY() - wallPoints [i][1])) {
+              xClosestObject = wallPoints [i][0];
+              deltaYToClosestObject = getY() - wallPoints [i][1];
+            }
+            if (Math.abs(getY() - wallPoints [i][1]) < margin
+                && Math.abs(deltaXToClosestObject) > Math.abs(getX() - wallPoints [i][0])) {
+              yClosestObject = wallPoints [i][1];
+              deltaXToClosestObject = getX() - wallPoints [i][0];
+            }
+          }
+        }
+      }
+
+      if (editedRoom != null) {
+        double alpha = -Math.tan(getAngle());
+        double beta = Math.abs(alpha) < 1E10 
+            ? yRoom - alpha * xRoom 
+            : Double.POSITIVE_INFINITY;  
+        if (deltaXToClosestObject != Float.POSITIVE_INFINITY && Math.abs(alpha) > 1E-10) {
+          float newX = (float)((yClosestObject - beta) / alpha);
+          if (Point2D.distanceSq(getX(), getY(), newX, yClosestObject) <= margin * margin) {
+            setX(newX);
+            setY(yClosestObject);
+            return;
+          }
+        }
+        if (deltaYToClosestObject != Float.POSITIVE_INFINITY 
+            && beta != Double.POSITIVE_INFINITY) {
+          float newY = (float)(alpha * xClosestObject + beta);
+          if (Point2D.distanceSq(getX(), getY(), xClosestObject, newY) <= margin * margin) {
+            setX(xClosestObject);
+            setY(newY);
+          }
+        }
+      } else {
+        if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
+          setY(yClosestObject);
+        }
+        if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
+          setX(xClosestObject);
+        }
+      }
+    }
+  }
+  
+  /**
    * A point which coordinates are equal to the closest point of a wall or a room.
    */
   private class PointMagnetizedToClosestWallOrRoomPoint {
@@ -4775,7 +4883,8 @@ public class PlanController extends FurnitureController implements Controller {
      * If this point point is close to a point of a wall corner or of a room 
      * within the given <code>margin</code>, the magnetized point will be the closest one.
      */
-    public PointMagnetizedToClosestWallOrRoomPoint(Collection<Room> rooms, float x, float y, float margin) {
+    public PointMagnetizedToClosestWallOrRoomPoint(Collection<Room> rooms, float x, float y) {
+      float margin = PIXEL_MARGIN / getScale();
       // Find the closest wall point to (x,y)
       double smallestDistance = Double.MAX_VALUE;
       for (GeneralPath roomPath : getRoomPathsFromWalls()) {
@@ -7940,7 +8049,6 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
       toggleMagnetism(wasShiftDownLastMousePress());
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -7948,9 +8056,16 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            home.getRooms(), x, y, PIXEL_WALL_MARGIN / getScale());
-        getView().setAlignmentFeedback(Room.class, null, point.getX(), 
-            point.getY(), point.isMagnetized());
+            home.getRooms(), x, y);
+        if (point.isMagnetized()) {
+          getView().setAlignmentFeedback(Room.class, null, point.getX(), 
+              point.getY(), point.isMagnetized());
+        } else { 
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
+              getXLastMouseMove(), getYLastMouseMove());
+          getView().setAlignmentFeedback(Room.class, null, pointWithAngleMagnetism.getX(), 
+              pointWithAngleMagnetism.getY(), point.isMagnetized());
+        }
       } else {
         getView().setAlignmentFeedback(Room.class, null, x, y, false);
       } 
@@ -8125,13 +8240,18 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, getXLastMouseMove(), getYLastMouseMove(), 
-            PIXEL_WALL_MARGIN / getScale());
-        this.xPreviousPoint = point.getX();
-        this.yPreviousPoint = point.getY();
+            this.rooms, getXLastMouseMove(), getYLastMouseMove());
+        if (point.isMagnetized()) {
+          this.xPreviousPoint = point.getX();
+          this.yPreviousPoint = point.getY();
+        } else {
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
+              getXLastMouseMove(), getYLastMouseMove());
+          this.xPreviousPoint = pointWithAngleMagnetism.getX();
+          this.yPreviousPoint = pointWithAngleMagnetism.getY();
+        }
         getView().setAlignmentFeedback(Room.class, null, 
-            point.getX(), point.getY(), point.isMagnetized());
-        
+            this.xPreviousPoint, this.yPreviousPoint, point.isMagnetized());
       } else {
         this.xPreviousPoint = getXLastMousePress();
         this.yPreviousPoint = getYLastMousePress();
@@ -8151,15 +8271,18 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, x, y, PIXEL_WALL_MARGIN / getScale());
+            this.rooms, x, y);
         magnetizedPoint = point.isMagnetized();
         if (magnetizedPoint) {
           xEnd = point.getX();
           yEnd = point.getY();
         } else {
           // Use magnetism if closest wall point is too far
-          PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
-              this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getLengthUnit(), planView.getPixelLength());
+          int editedPointIndex = this.newRoom != null 
+              ? this.newRoom.getPointCount() - 1 
+              : -1;
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
+              this.newRoom, editedPointIndex, this.xPreviousPoint, this.yPreviousPoint, x, y);
           xEnd = pointWithAngleMagnetism.getX();
           yEnd = pointWithAngleMagnetism.getY();
         }
@@ -8573,7 +8696,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, newX, newY, PIXEL_WALL_MARGIN / getScale());
+            this.rooms, newX, newY);
         magnetizedPoint = point.isMagnetized();
         if (magnetizedPoint) {
           newX = point.getX();
@@ -8586,8 +8709,8 @@ public class PlanController extends FurnitureController implements Controller {
               : this.roomPointIndex - 1;
           float xPreviousPoint = roomPoints [previousPointIndex][0];
           float yPreviousPoint = roomPoints [previousPointIndex][1];
-          PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
-              xPreviousPoint, yPreviousPoint, newX, newY, preferences.getLengthUnit(), planView.getPixelLength());
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
+              this.selectedRoom, this.roomPointIndex, xPreviousPoint, yPreviousPoint, newX, newY);
           newX = pointWithAngleMagnetism.getX();
           newY = pointWithAngleMagnetism.getY();
         }

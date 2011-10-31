@@ -2007,7 +2007,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         Level otherLevel = levels.get(level0 ? 1 : levels.indexOf(selectedLevel) - 1);
         List<Room> otherLevelRooms = new ArrayList<Room>();
         for (Room room : this.home.getRooms()) {
-          if (room.getLevel() == otherLevel
+          if (room.isAtLevel(otherLevel)
               && (level0 && room.isFloorVisible()
                   || !level0 && room.isCeilingVisible())) {
             otherLevelRooms.add(room);
@@ -3580,7 +3580,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
           }
           float [][] labelBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, 0);
-          float labelWidth = labelBounds [2] [0] - labelBounds [0] [0];
+          float labelWidth = labelBounds [2][0] - labelBounds [0][0];
           // Draw label text
           g2D.setFont(getFont(previousFont, labelStyle));
           g2D.drawString(labelText, xLabel - labelWidth / 2, yLabel);
@@ -3849,7 +3849,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (room == alignedRoom) {
           // Search which room point could match location feedback 
           for (int i = 0; i < roomPoints.length; i++) {
-            if (roomPoints [i] [0] == x && roomPoints [i] [1] == y) {
+            if (roomPoints [i][0] == x && roomPoints [i][1] == y) {
               editedPointIndex = i;
               break;
             }
@@ -3857,13 +3857,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         for (int i = 0; i < roomPoints.length; i++) {
           if (editedPointIndex == -1 || (i != editedPointIndex && roomPoints.length > 2)) {
-            if (Math.abs(x - roomPoints [i] [0]) < margin
-                && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i] [1])) {
-              deltaYToClosestObject = y - roomPoints [i] [1];
+            if (Math.abs(x - roomPoints [i][0]) < margin
+                && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i][1])) {
+              deltaYToClosestObject = y - roomPoints [i][1];
             }
-            if (Math.abs(y - roomPoints [i] [1]) < margin
-                && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i] [0])) {
-              deltaXToClosestObject = x - roomPoints [i] [0];
+            if (Math.abs(y - roomPoints [i][1]) < margin
+                && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i][0])) {
+              deltaXToClosestObject = x - roomPoints [i][0];
             }
           }
         }
@@ -3935,13 +3935,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       for (Room room : getViewedItems(this.home.getRooms(), this.otherLevelRoomsCache)) {
         float [][] roomPoints = room.getPoints();
         for (int i = 0; i < roomPoints.length; i++) {
-          if (Math.abs(x - roomPoints [i] [0]) < margin
-              && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i] [1])) {
-            deltaYToClosestObject = y - roomPoints [i] [1];
+          if (Math.abs(x - roomPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i][1])) {
+            deltaYToClosestObject = y - roomPoints [i][1];
           }
-          if (Math.abs(y - roomPoints [i] [1]) < margin
-              && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i] [0])) {
-            deltaXToClosestObject = x - roomPoints [i] [0];
+          if (Math.abs(y - roomPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i][0])) {
+            deltaXToClosestObject = x - roomPoints [i][0];
           }
         }
       }
@@ -4005,13 +4005,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             && isViewableAtSelectedLevel(piece)) {
           float [][] piecePoints = piece.getPoints();
           for (int i = 0; i < piecePoints.length; i++) {
-            if (Math.abs(x - piecePoints [i] [0]) < margin
-                && Math.abs(deltaYToClosestObject) > Math.abs(y - piecePoints [i] [1])) {
-              deltaYToClosestObject = y - piecePoints [i] [1];
+            if (Math.abs(x - piecePoints [i][0]) < margin
+                && Math.abs(deltaYToClosestObject) > Math.abs(y - piecePoints [i][1])) {
+              deltaYToClosestObject = y - piecePoints [i][1];
             }
-            if (Math.abs(y - piecePoints [i] [1]) < margin
-                && Math.abs(deltaXToClosestObject) > Math.abs(x - piecePoints [i] [0])) {
-              deltaXToClosestObject = x - piecePoints [i] [0];
+            if (Math.abs(y - piecePoints [i][1]) < margin
+                && Math.abs(deltaXToClosestObject) > Math.abs(x - piecePoints [i][0])) {
+              deltaXToClosestObject = x - piecePoints [i][0];
             }
 
           }
