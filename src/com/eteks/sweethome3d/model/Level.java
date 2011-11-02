@@ -37,13 +37,14 @@ public class Level implements Serializable, Cloneable {
    * The properties of a level that may change. <code>PropertyChangeListener</code>s added 
    * to a level will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, ELEVATION, HEIGHT, FLOOR_THICKNESS, BACKGROUND_IMAGE};
+  public enum Property {NAME, ELEVATION, HEIGHT, FLOOR_THICKNESS, BACKGROUND_IMAGE, VISIBLE};
       
   private String           name;
   private float            elevation;
   private float            floorThickness;
   private float            height;
   private BackgroundImage  backgroundImage;
+  private boolean          visible;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -60,6 +61,7 @@ public class Level implements Serializable, Cloneable {
     this.elevation = elevation;
     this.floorThickness = floorThickness;
     this.height = height;
+    this.visible = true;
   }
 
   /**
@@ -68,6 +70,7 @@ public class Level implements Serializable, Cloneable {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.visible = true;
     in.defaultReadObject();
   }
 
@@ -163,20 +166,38 @@ public class Level implements Serializable, Cloneable {
   }
 
   /**
-   * Returns the plan background image of this home.
+   * Returns the plan background image of this level.
    */
   public BackgroundImage getBackgroundImage() {
     return this.backgroundImage;
   }
 
   /**
-   * Sets the plan background image of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the plan background image of this level and fires a <code>PropertyChangeEvent</code>.
    */
   public void setBackgroundImage(BackgroundImage backgroundImage) {
     if (backgroundImage != this.backgroundImage) {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
       this.propertyChangeSupport.firePropertyChange(Property.BACKGROUND_IMAGE.name(), oldBackgroundImage, backgroundImage);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this level is visible.
+   */
+  public boolean isVisible() {
+    return this.visible;
+  }
+  
+  /**
+   * Sets whether this level is visible or not. Once this level is updated, 
+   * listeners added to this level will receive a change notification.
+   */
+  public void setVisible(boolean visible) {
+    if (visible != this.visible) {
+      this.visible = visible;
+      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), !visible, visible);
     }
   }
 

@@ -205,6 +205,10 @@ public class HomePane extends JRootPane implements HomeView {
   // the matching tool bar buttons
   private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
   private final JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
+  // Button models shared by Display all levels and Display selected level menu items and
+  // the matching tool bar buttons
+  private final JToggleButton.ToggleButtonModel displayAllLevelsToggleModel;
+  private final JToggleButton.ToggleButtonModel displaySelectedLevelToggleModel;
   private JComponent                            lastFocusedComponent;
   private PlanController.Mode                   previousPlanControllerMode;
   private TransferHandler                       catalogTransferHandler;
@@ -265,10 +269,23 @@ public class HomePane extends JRootPane implements HomeView {
     this.viewFromTopToggleModel.setSelected(home.getCamera() == home.getTopCamera());
     this.viewFromObserverToggleModel = new JToggleButton.ToggleButtonModel();
     this.viewFromObserverToggleModel.setSelected(home.getCamera() == home.getObserverCamera());
-
+    
     ButtonGroup viewGroup = new ButtonGroup();
     this.viewFromTopToggleModel.setGroup(viewGroup);
     this.viewFromObserverToggleModel.setGroup(viewGroup);
+
+    // Create unique toggle button models for level display management
+    // so the matching menu items and tool bar buttons 
+    // always reflect the same toggle state at screen
+    this.displayAllLevelsToggleModel = new JToggleButton.ToggleButtonModel();
+    boolean allLevelsVisible = allLevelsVisible(home);
+    this.displayAllLevelsToggleModel.setSelected(allLevelsVisible);
+    this.displaySelectedLevelToggleModel = new JToggleButton.ToggleButtonModel();
+    this.displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
+    
+    ButtonGroup displayLevelGroup = new ButtonGroup();
+    this.displayAllLevelsToggleModel.setGroup(displayLevelGroup);
+    this.displaySelectedLevelToggleModel.setGroup(displayLevelGroup);
 
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
@@ -278,6 +295,7 @@ public class HomePane extends JRootPane implements HomeView {
     createPluginActions(controller.getPlugins());
     createTransferHandlers(home, controller);
     addHomeListener(home);
+    addLevelListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
     addFocusListener();
@@ -496,6 +514,10 @@ public class HomePane extends JRootPane implements HomeView {
           controller.getHomeController3D(), "viewFromObserver");
       createAction(ActionType.STORE_POINT_OF_VIEW, preferences, 
           controller, "storeCamera");
+      createAction(ActionType.DISPLAY_ALL_LEVELS, preferences, 
+          controller.getHomeController3D(), "displayAllLevels");
+      createAction(ActionType.DISPLAY_SELECTED_LEVEL, preferences, 
+          controller.getHomeController3D(), "displaySelectedLevel");
       getActionMap().put(ActionType.DETACH_3D_VIEW, 
           new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
             @Override
@@ -630,6 +652,38 @@ public class HomePane extends JRootPane implements HomeView {
                 home.getCamera() == home.getObserverCamera());
           }
         });
+  }
+
+  /**
+   * Adds listeners to <code>home</code> levels to update
+   * Display all levels and Display selected level toggle models 
+   * according their visibility.
+   */
+  private void addLevelListener(final Home home) {
+    final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
+            boolean allLevelsVisible = allLevelsVisible(home);
+            displayAllLevelsToggleModel.setSelected(allLevelsVisible);
+            displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
+          }
+        }
+      };
+    for (Level level : this.home.getLevels()) {
+      level.addPropertyChangeListener(levelChangeListener);
+    }
+    this.home.addLevelsListener(new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          switch (ev.getType()) {
+            case ADD :
+              ev.getItem().addPropertyChangeListener(levelChangeListener);
+              break;
+            case DELETE :
+              ev.getItem().removePropertyChangeListener(levelChangeListener);
+              break;
+          }
+        }
+      });
   }
 
   /**
@@ -1001,6 +1055,10 @@ public class HomePane extends JRootPane implements HomeView {
     if (attachDetach3DViewMenuItem != null) {
       preview3DMenu.add(attachDetach3DViewMenuItem);
     }
+    addToggleActionToMenu(ActionType.DISPLAY_ALL_LEVELS, 
+        this.displayAllLevelsToggleModel, true, preview3DMenu);
+    addToggleActionToMenu(ActionType.DISPLAY_SELECTED_LEVEL, 
+        this.displaySelectedLevelToggleModel, true, preview3DMenu);
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
@@ -1722,6 +1780,18 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
 
+  /**
+   * Returns <code>true</code> if all levels are visible.
+   */
+  private boolean allLevelsVisible(Home home) {
+    for (Level level : home.getLevels()) {
+      if (!level.isVisible()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
   /**
    * Returns Attach / Detach menu item for the 3D view.
    */
@@ -2484,6 +2554,10 @@ public class HomePane extends JRootPane implements HomeView {
       if (attachDetach3DViewMenuItem != null) {
         view3DPopup.add(attachDetach3DViewMenuItem);
       }
+      addToggleActionToPopupMenu(ActionType.DISPLAY_ALL_LEVELS, 
+          this.displayAllLevelsToggleModel, true, view3DPopup);
+      addToggleActionToPopupMenu(ActionType.DISPLAY_SELECTED_LEVEL, 
+          this.displaySelectedLevelToggleModel, true, view3DPopup);
       addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
       view3DPopup.addSeparator();
       addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);

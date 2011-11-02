@@ -33,6 +33,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Level;
@@ -58,6 +59,7 @@ public class HomeController3D implements Controller {
   private final CameraControllerState observerCameraState;
   // Current state
   private CameraControllerState       cameraState;
+  private PropertyChangeListener      selectedLevelListener;
 
   /**
    * Creates the controller of home 3D view.
@@ -87,6 +89,13 @@ public class HomeController3D implements Controller {
               : observerCameraState);
         }
       });
+    
+    for (Level level : home.getLevels()) {
+      if (!level.isVisible()) {
+        addSelectedLevelListener();
+        break;
+      }
+    }
   }
 
   /**
@@ -161,6 +170,49 @@ public class HomeController3D implements Controller {
     storedCameras.remove(camera);
     storedCameras.add(0, camera);
     this.home.setStoredCameras(storedCameras);
+  }
+  
+  /**
+   * Makes all levels visible.
+   */
+  public void displayAllLevels() {
+    if (this.selectedLevelListener == null) {
+      this.home.removePropertyChangeListener(Home.Property.SELECTED_LEVEL, this.selectedLevelListener);
+      this.selectedLevelListener = null;
+    }
+    for (Level level : this.home.getLevels()) {
+      level.setVisible(true);
+    }
+  }
+  
+  /**
+   * Makes the selected level and below visible.
+   */
+  public void displaySelectedLevel() {
+    if (this.selectedLevelListener == null) {
+      addSelectedLevelListener();
+    }
+    this.selectedLevelListener.propertyChange(null);
+  }
+
+  /**
+   * Adds a listener to home to update visible levels according to selected level.
+   */
+  private void addSelectedLevelListener() {
+    this.selectedLevelListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          List<Level> levels = home.getLevels();
+          Level selectedLevel = home.getSelectedLevel();
+          boolean visible = true;
+          for (int i = 0; i < levels.size(); i++) {
+            levels.get(i).setVisible(visible);
+            if (levels.get(i) == selectedLevel) {
+              visible = false;
+            }
+          }
+        }
+      };
+    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, this.selectedLevelListener);
   }
   
   /**
@@ -261,12 +313,29 @@ public class HomeController3D implements Controller {
     private Camera      topCamera;
     private Rectangle2D homeBounds;
     private float       minDistanceToHomeCenter;
-    private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
+    private PropertyChangeListener levelVisibilityChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
+            updateCameraFromHomeBounds();
+          }
+        }
+      };
+    private CollectionListener<Level> levelsListener = new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(levelVisibilityChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(levelVisibilityChangeListener);
+          } 
           updateCameraFromHomeBounds();
         }
       };
-    private CollectionListener<Wall> wallListener = new CollectionListener<Wall>() {
+    private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateCameraFromHomeBounds();
+        }
+      };
+    private CollectionListener<Wall> wallsListener = new CollectionListener<Wall>() {
         public void collectionChanged(CollectionEvent<Wall> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
             ev.getItem().addPropertyChangeListener(objectChangeListener);
@@ -301,10 +370,14 @@ public class HomeController3D implements Controller {
     public void enter() {
       this.topCamera = home.getCamera();
       updateCameraFromHomeBounds();
+      for (Level level : home.getLevels()) {
+        level.addPropertyChangeListener(this.levelVisibilityChangeListener);
+      }
+      home.addLevelsListener(this.levelsListener);
       for (Wall wall : home.getWalls()) {
         wall.addPropertyChangeListener(this.objectChangeListener);
       }
-      home.addWallsListener(this.wallListener);
+      home.addWallsListener(this.wallsListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         piece.addPropertyChangeListener(this.objectChangeListener);
       }
@@ -336,27 +409,32 @@ public class HomeController3D implements Controller {
     private Rectangle2D getHomeBounds() {
       // Compute plan bounds to include rooms, walls and furniture
       Rectangle2D homeBounds = null;
-      Collection<Wall> walls = home.getWalls();
-      for (Wall wall : walls) {
-        for (float [] point : wall.getPoints()) {
-          homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+      boolean containsVisibleWalls = false;
+      for (Wall wall : home.getWalls()) {
+        if (isItemAtAVisibleLevel(wall)) {
+          containsVisibleWalls = true;
+          for (float [] point : wall.getPoints()) {
+            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+          }
         }
       }
       for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible()) {
+        if (piece.isVisible() && isItemAtAVisibleLevel(piece)) {
           for (float [] point : piece.getPoints()) {
             homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
           }
         }
       }
       for (Room room : home.getRooms()) {
-        for (float [] point : room.getPoints()) {
-          homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+        if (isItemAtAVisibleLevel(room)) {
+          for (float [] point : room.getPoints()) {
+            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+          }
         }
       }
 
       if (homeBounds != null) {
-        if (walls.isEmpty()) {
+        if (containsVisibleWalls) {
           // If home contains only rooms and furniture don't fix minimum size
           return homeBounds;
         } else {
@@ -376,6 +454,13 @@ public class HomeController3D implements Controller {
       }
     }
 
+    /**
+     * Returns <code>true</code> if the given <code>item</code> is at a visible level.
+     */
+    private boolean isItemAtAVisibleLevel(Elevatable item) {
+      return item.getLevel() == null || item.getLevel().isVisible();
+    }
+    
     /**
      * Adds the point at the given coordinates to <code>homeBounds</code>.
      */
@@ -500,7 +585,7 @@ public class HomeController3D implements Controller {
       for (Wall wall : home.getWalls()) {
         wall.removePropertyChangeListener(this.objectChangeListener);
       }
-      home.removeWallsListener(wallListener);
+      home.removeWallsListener(wallsListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         piece.removePropertyChangeListener(this.objectChangeListener);
       }
@@ -509,6 +594,10 @@ public class HomeController3D implements Controller {
         room.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeRoomsListener(this.roomsListener);
+      for (Level room : home.getLevels()) {
+        room.removePropertyChangeListener(this.levelVisibilityChangeListener);
+      }
+      home.removeLevelsListener(this.levelsListener);
     }
   }
   

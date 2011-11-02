@@ -159,11 +159,14 @@ public class Wall3D extends Object3DBranch {
         ? (Shape3D)getChild(wallSide + 2)
         : null; 
     int currentGeometriesCount = wallFilledShape.numGeometries();
-    for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
-      if (wallGeometry != null) {
-        wallFilledShape.addGeometry(wallGeometry);
-        if (wallOutlineShape != null) {
-          wallOutlineShape.addGeometry(wallGeometry);
+    Wall wall = (Wall)getUserData();
+    if (wall.getLevel() == null || wall.getLevel().isVisible()) {
+      for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
+        if (wallGeometry != null) {
+          wallFilledShape.addGeometry(wallGeometry);
+          if (wallOutlineShape != null) {
+            wallOutlineShape.addGeometry(wallGeometry);
+          }
         }
       }
     }

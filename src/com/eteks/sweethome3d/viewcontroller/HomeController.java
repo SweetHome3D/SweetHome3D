@@ -271,20 +271,23 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
-    enableBackgroungImageActions(homeView, this.home.getSelectedLevel() != null
-        ? this.home.getSelectedLevel().getBackgroundImage()
+    Level selectedLevel = this.home.getSelectedLevel();
+    enableBackgroungImageActions(homeView, selectedLevel != null
+        ? selectedLevel.getBackgroundImage()
         : this.home.getBackgroundImage());
     homeView.setEnabled(HomeView.ActionType.CREATE_LEVEL, true);
     List<Level> levels = this.home.getLevels();
-    homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, 
-        levels.size() > 1 && this.home.getSelectedLevel() != null);
-    homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, levels.size() > 1);
+    boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
+    homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomeView.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, true);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, homeContainsOneSelectedLevel);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.ATTACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
@@ -923,7 +926,7 @@ public class HomeController implements Controller {
    * enable/disable authorized actions according to selected level.
    */
   private void addLevelListeners() {
-    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
+    final PropertyChangeListener selectedLevelListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           // Keep in selection only items that are at this level
           List<Selectable> selectedItemsAtLevel = new ArrayList<Selectable>();
@@ -936,29 +939,24 @@ public class HomeController implements Controller {
           }
           home.setSelectedItems(selectedItemsAtLevel);
           enableBackgroungImageActions(getView(), selectedLevel.getBackgroundImage());
-        }
-      });
-    final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
-            enableBackgroungImageActions(getView(), (BackgroundImage)ev.getNewValue());
-          }
+          List<Level> levels = home.getLevels();
+          boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
+          getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
+          getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
+          getView().setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, homeContainsOneSelectedLevel);
         }
       };
-    for (Level level : this.home.getLevels()) {
-      level.addPropertyChangeListener(levelChangeListener);
-    }
+    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
     this.home.addLevelsListener(new CollectionListener<Level>() {
         public void collectionChanged(CollectionEvent<Level> ev) {
           switch (ev.getType()) {
             case ADD :
-              ev.getItem().addPropertyChangeListener(levelChangeListener);
+              home.setSelectedLevel(ev.getItem());
               break;
             case DELETE :
-              ev.getItem().removePropertyChangeListener(levelChangeListener);
+              selectedLevelListener.propertyChange(null);
               break;
           }
-          getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, home.getLevels().size() > 1);
         }
       });
   }

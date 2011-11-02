@@ -1625,7 +1625,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addLevelListener(final Group group) {
     this.levelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
+              || Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());          
             updateObjects(home.getRooms());
             updateObjects(home.getFurniture());

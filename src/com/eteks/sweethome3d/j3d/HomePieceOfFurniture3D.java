@@ -254,13 +254,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       drawingMode = null; 
     }
     // Update visibility of filled model shapes
-    setVisible(getFilledModelNode(), piece.isVisible()
+    boolean visible = piece.isVisible() 
+        && (piece.getLevel() == null
+            || piece.getLevel().isVisible()); 
+    setVisible(getFilledModelNode(), visible
         && (drawingMode == null
             || drawingMode == HomeEnvironment.DrawingMode.FILL 
             || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
     if (outlineModelNode != null) {
       // Update visibility of outline model shapes
-      setVisible(outlineModelNode, piece.isVisible()
+      setVisible(outlineModelNode, visible
           && (drawingMode == HomeEnvironment.DrawingMode.OUTLINE
               || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
     }

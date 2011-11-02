@@ -153,8 +153,11 @@ public class Room3D extends Object3DBranch {
   private void updateRoomPartGeometry(int roomPart, HomeTexture texture) {
     Shape3D roomShape = (Shape3D)getChild(roomPart);
     int currentGeometriesCount = roomShape.numGeometries();
-    for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
-      roomShape.addGeometry(roomGeometry);
+    Room room = (Room)getUserData();
+    if (room.getLevel() == null || room.getLevel().isVisible()) {
+      for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
+        roomShape.addGeometry(roomGeometry);
+      }
     }
     for (int i = currentGeometriesCount - 1; i >= 0; i--) {
       roomShape.removeGeometry(i);
