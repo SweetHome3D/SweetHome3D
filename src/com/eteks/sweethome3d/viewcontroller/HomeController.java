@@ -275,7 +275,7 @@ public class HomeController implements Controller {
     enableBackgroungImageActions(homeView, selectedLevel != null
         ? selectedLevel.getBackgroundImage()
         : this.home.getBackgroundImage());
-    homeView.setEnabled(HomeView.ActionType.CREATE_LEVEL, true);
+    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL, true);
     List<Level> levels = this.home.getLevels();
     boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
     homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);

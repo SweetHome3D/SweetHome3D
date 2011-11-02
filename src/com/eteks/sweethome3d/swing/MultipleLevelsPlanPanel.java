@@ -111,7 +111,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         public void stateChanged(ChangeEvent ev) {
           int selectedIndex = multipleLevelsTabbedPane.getSelectedIndex();
           if (selectedIndex == multipleLevelsTabbedPane.getTabCount() - 1) {
-            controller.createLevel();
+            controller.addLevel();
           } else {
             controller.setSelectedLevel(home.getLevels().get(selectedIndex));
           }
@@ -208,7 +208,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
         // Update create level tooltip in new locale
-        String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "CREATE_LEVEL.ShortDescription");
+        String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.ShortDescription");
         planPanel.multipleLevelsTabbedPane.setToolTipTextAt(planPanel.multipleLevelsTabbedPane.getTabCount() - 1, createNewLevelTooltip);
       }
     }
@@ -221,8 +221,8 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     for (Level level : home.getLevels()) {
       this.multipleLevelsTabbedPane.add(level.getName(), new JLabel());
     }
-    String createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "CREATE_LEVEL.SmallIcon");
-    String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "CREATE_LEVEL.ShortDescription");
+    String createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.SmallIcon");
+    String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.ShortDescription");
     this.multipleLevelsTabbedPane.addTab("", new ImageIcon(MultipleLevelsPlanPanel.class.getResource(createNewLevelIcon)), 
         new JLabel(), createNewLevelTooltip);
   }

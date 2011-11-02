@@ -1996,7 +1996,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Controls the creation of a new level.
    */
-  public void createLevel() {
+  public void addLevel() {
     List<Selectable> oldSelection = this.home.getSelectedItems();
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
@@ -2033,7 +2033,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return preferences.getLocalizedString(PlanController.class, "undoCreateLevel");
+        return preferences.getLocalizedString(PlanController.class, "undoAddLevel");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);

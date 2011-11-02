@@ -496,8 +496,8 @@ public class HomePane extends JRootPane implements HomeView {
           controller, "showBackgroundImage");
       createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, 
           controller, "deleteBackgroundImage");
-      createAction(ActionType.CREATE_LEVEL, preferences, 
-          controller.getPlanController(), "createLevel");
+      createAction(ActionType.ADD_LEVEL, preferences, 
+          controller.getPlanController(), "addLevel");
       createAction(ActionType.MODIFY_LEVEL, preferences, 
           controller.getPlanController(), "modifySelectedLevel");
       createAction(ActionType.DELETE_LEVEL, preferences, 
@@ -1030,7 +1030,7 @@ public class HomePane extends JRootPane implements HomeView {
     }
     addActionToMenu(ActionType.DELETE_BACKGROUND_IMAGE, planMenu);
     planMenu.addSeparator();
-    addActionToMenu(ActionType.CREATE_LEVEL, planMenu);
+    addActionToMenu(ActionType.ADD_LEVEL, planMenu);
     addActionToMenu(ActionType.MODIFY_LEVEL, planMenu);
     addActionToMenu(ActionType.DELETE_LEVEL, planMenu);
     planMenu.addSeparator();
@@ -2471,7 +2471,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
       addActionToPopupMenu(ActionType.DELETE_BACKGROUND_IMAGE, planViewPopup);
       planViewPopup.addSeparator();
-      addActionToPopupMenu(ActionType.CREATE_LEVEL, planViewPopup);
+      addActionToPopupMenu(ActionType.ADD_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.DELETE_LEVEL, planViewPopup);
       planViewPopup.addSeparator();
