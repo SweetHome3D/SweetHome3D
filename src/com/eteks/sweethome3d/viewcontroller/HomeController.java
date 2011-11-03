@@ -947,14 +947,26 @@ public class HomeController implements Controller {
         }
       };
     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
+    final PropertyChangeListener backgroundImageChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
+            enableBackgroungImageActions(getView(), (BackgroundImage)ev.getNewValue());
+          }
+        }
+      };
+    for (Level level : home.getLevels()) {
+      level.addPropertyChangeListener(backgroundImageChangeListener);
+    }
     this.home.addLevelsListener(new CollectionListener<Level>() {
         public void collectionChanged(CollectionEvent<Level> ev) {
           switch (ev.getType()) {
             case ADD :
               home.setSelectedLevel(ev.getItem());
+              ev.getItem().addPropertyChangeListener(backgroundImageChangeListener);
               break;
             case DELETE :
               selectedLevelListener.propertyChange(null);
+              ev.getItem().removePropertyChangeListener(backgroundImageChangeListener);
               break;
           }
         }
