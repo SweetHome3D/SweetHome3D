@@ -2016,12 +2016,12 @@ public class PlanController extends FurnitureController implements Controller {
     float newLevelElevation = levels.get(levels.size() - 1).getElevation() 
         + newWallHeight + newFloorThickness;
     final Level newLevel = createLevel(newLevelName, newLevelElevation, newFloorThickness, newWallHeight);
-    this.home.setSelectedLevel(newLevel);
+    setSelectedLevel(newLevel);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        home.setSelectedLevel(oldSelectedLevel);
+        setSelectedLevel(oldSelectedLevel);
         home.deleteLevel(newLevel);
         selectAndShowItems(Arrays.asList(oldSelectedItems));        
       }
@@ -2030,7 +2030,7 @@ public class PlanController extends FurnitureController implements Controller {
       public void redo() throws CannotRedoException {
         super.redo();
         home.addLevel(newLevel);
-        home.setSelectedLevel(newLevel);
+        setSelectedLevel(newLevel);
       }      
 
       @Override
@@ -2109,7 +2109,7 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           home.addLevel(oldSelectedLevel);
-          home.setSelectedLevel(oldSelectedLevel);
+          setSelectedLevel(oldSelectedLevel);
         }
         
         @Override
@@ -2933,14 +2933,15 @@ public class PlanController extends FurnitureController implements Controller {
     List<Label> deletedLabels = Home.getLabelsSubList(deletedItems);
     final Label [] labels = deletedLabels.toArray(new Label [deletedLabels.size()]);
     
+    final Level level = this.home.getSelectedLevel();
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
         doAddWalls(joinedDeletedWalls, basePlanLocked);       
-        doAddRooms(rooms, roomsIndex, basePlanLocked);
-        doAddDimensionLines(dimensionLines, basePlanLocked);
-        doAddLabels(labels, basePlanLocked);
+        doAddRooms(rooms, roomsIndex, level, basePlanLocked);
+        doAddDimensionLines(dimensionLines, level, basePlanLocked);
+        doAddLabels(labels, level, basePlanLocked);
         selectAndShowItems(deletedItems);
       }
       
@@ -3313,6 +3314,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Level roomsLevel = this.home.getSelectedLevel();
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -3324,7 +3326,7 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddRooms(newRooms, roomsIndex, newBasePlanLocked);       
+          doAddRooms(newRooms, roomsIndex, roomsLevel,  newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(newRooms));
         }      
   
@@ -3356,13 +3358,14 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Adds the <code>rooms</code> to plan component.
-   * @param oldBasePlanLocked 
    */
   private void doAddRooms(Room [] rooms,
                           int [] roomsIndex, 
+                          Level roomsLevel, 
                           boolean basePlanLocked) {
     for (int i = 0; i < roomsIndex.length; i++) {
       this.home.addRoom (rooms [i], roomsIndex [i]);
+      rooms [i].setLevel(roomsLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -3410,6 +3413,7 @@ public class PlanController extends FurnitureController implements Controller {
           new DimensionLine [newDimensionLines.size()]);
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Level dimensionLinesLevel = this.home.getSelectedLevel();
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -3421,7 +3425,7 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddDimensionLines(dimensionLines, newBasePlanLocked);       
+          doAddDimensionLines(dimensionLines, dimensionLinesLevel, newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(dimensionLines));
         }      
   
@@ -3439,9 +3443,10 @@ public class PlanController extends FurnitureController implements Controller {
    * Adds the dimension lines in <code>dimensionLines</code> to plan component.
    */
   private void doAddDimensionLines(DimensionLine [] dimensionLines, 
-                                   boolean basePlanLocked) {
+                                   Level dimensionLinesLevel, boolean basePlanLocked) {
     for (DimensionLine dimensionLine : dimensionLines) {
       this.home.addDimensionLine(dimensionLine);
+      dimensionLine.setLevel(dimensionLinesLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -3487,6 +3492,7 @@ public class PlanController extends FurnitureController implements Controller {
       final Label [] labels = newLabels.toArray(new Label [newLabels.size()]);
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Level labelsLevel = this.home.getSelectedLevel();
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -3498,7 +3504,7 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddLabels(labels, newBasePlanLocked);       
+          doAddLabels(labels, labelsLevel, newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(labels));
         }      
   
@@ -3515,9 +3521,10 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Adds the labels in <code>labels</code> to plan component.
    */
-  private void doAddLabels(Label [] labels, boolean basePlanLocked) {
+  private void doAddLabels(Label [] labels, Level labelsLevel, boolean basePlanLocked) {
     for (Label label : labels) {
       this.home.addLabel(label);
+      label.setLevel(labelsLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -4324,7 +4331,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (item instanceof Elevatable) {
         Elevatable elevatableItem = (Elevatable)item;
         if (!elevatableItem.isAtLevel(home.getSelectedLevel())) {
-          home.setSelectedLevel(elevatableItem.getLevel());
+          setSelectedLevel(elevatableItem.getLevel());
           break;
         }
       }
