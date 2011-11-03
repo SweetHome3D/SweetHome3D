@@ -35,6 +35,7 @@ import javax.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 
@@ -47,6 +48,9 @@ public class Ground3D extends Object3DBranch {
   private final float originY;
   private final float width;
   private final float depth;
+  
+  private HomeTexture groundTexture;
+  private Area        roomsAreaCache;
 
   /**
    * Creates a 3D ground for the given <code>home</code>.
@@ -105,42 +109,30 @@ public class Ground3D extends Object3DBranch {
     final Appearance groundAppearance = groundShape.getAppearance();
     groundAppearance.getColoringAttributes().setColor(groundColor);
     HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
-    if (groundTexture != null) {
-      final TextureManager imageManager = TextureManager.getInstance();
-      imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
-          new TextureManager.TextureObserver() {
-              public void textureUpdated(Texture texture) {
-                groundAppearance.setTexture(texture);
-              }
-            });
-    } else {
-      groundAppearance.setTexture(null);
+    boolean groundTextureChanged = this.groundTexture != groundTexture;
+    if (groundTextureChanged) {
+      this.groundTexture = groundTexture;
+      if (groundTexture != null) {
+        final TextureManager imageManager = TextureManager.getInstance();
+        imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
+            new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {
+                  groundAppearance.setTexture(texture);
+                }
+              });
+      } else {
+        groundAppearance.setTexture(null);
+      }
     }
     
-    // Create ground geometry
-    List<Point3f> coords = new ArrayList<Point3f>();
-    List<Integer> stripCounts = new ArrayList<Integer>();
-    // First add the coordinates of the ground rectangle
-    coords.add(new Point3f(this.originX, 0, this.originY)); 
-    coords.add(new Point3f(this.originX, 0, this.originY + this.depth));
-    coords.add(new Point3f(this.originX + this.width, 0, this.originY + this.depth));
-    coords.add(new Point3f(this.originX + this.width, 0, this.originY));
-    // Compute ground texture coordinates if necessary
-    List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
-    if (groundTexture != null) {
-      textureCoords.add(new TexCoord2f(0, 0));
-      textureCoords.add(new TexCoord2f(0, -this.depth / groundTexture.getHeight()));
-      textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), -this.depth / groundTexture.getHeight()));
-      textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), 0));
-    }
-    stripCounts.add(4);
-
     // Compute the union of the rooms
     Area roomsArea = new Area();
     for (Room room : home.getRooms()) {
+      Level roomLevel = room.getLevel();
       if (room.isFloorVisible()
-          && (room.getLevel() == null
-              || room.getLevel().getElevation() <= 0)) {
+          && (roomLevel == null
+              || (roomLevel.getElevation() <= 0
+                  && roomLevel.isVisible()))) {
         float [][] points = room.getPoints();
         if (points.length > 2) {
           roomsArea.add(new Area(getShape(points)));
@@ -148,88 +140,109 @@ public class Ground3D extends Object3DBranch {
       }
     }
 
-    // Retrieve points
-    List<float [][]> roomParts = new ArrayList<float [][]>();
-    List<float []>   roomPart  = new ArrayList<float[]>();
-    float [] previousRoomPoint = null;
-    for (PathIterator it = roomsArea.getPathIterator(null); !it.isDone(); ) {
-      float [] roomPoint = new float[2];
-      if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
-        if (roomPart.get(0) [0] == previousRoomPoint [0] 
-            && roomPart.get(0) [1] == previousRoomPoint [1]) {
-          roomPart.remove(roomPart.size() - 1);
-        }
-        if (roomPart.size() > 2) {
-          roomParts.add(roomPart.toArray(new float [roomPart.size()][]));
-        }
-        roomPart.clear();
-        previousRoomPoint = null;
-      } else {
-        if (previousRoomPoint == null
-            || roomPoint [0] != previousRoomPoint [0] 
-            || roomPoint [1] != previousRoomPoint [1]) {
-          roomPart.add(roomPoint);
-        }
-        previousRoomPoint = roomPoint;
-      }
-      it.next();
-    }
-    
-    for (float [][] points : roomParts) {
-      if (!new Room(points).isClockwise()) {
-        // Define a hole in ground
-        for (float [] point : points) {
-          coords.add(new Point3f(point [0], 0, point [1]));
-          if (groundTexture != null) {
-            textureCoords.add(new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-                (this.originY - point [1]) / groundTexture.getHeight()));
+    if (this.roomsAreaCache == null || !roomsArea.equals(this.roomsAreaCache) || groundTextureChanged) {
+      this.roomsAreaCache = roomsArea;
+      // Retrieve points
+      List<float [][]> roomParts = new ArrayList<float [][]>();
+      List<float []>   roomPart  = new ArrayList<float[]>();
+      float [] previousRoomPoint = null;
+      for (PathIterator it = roomsArea.getPathIterator(null); !it.isDone(); ) {
+        float [] roomPoint = new float[2];
+        if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
+          if (roomPart.get(0) [0] == previousRoomPoint [0] 
+              && roomPart.get(0) [1] == previousRoomPoint [1]) {
+            roomPart.remove(roomPart.size() - 1);
           }
-        }
-        stripCounts.add(points.length);
-      } else {
-        // Define an inner surface in ground
-        Point3f [] innerSurfaceCoords = new Point3f [points.length];
-        TexCoord2f [] innerSurfaceTextureCoords = groundTexture != null 
-            ? new TexCoord2f [points.length]
-            : null;
-        for (int i = 0, j = points.length - 1; i < points.length; i++, j--) {
-          float [] point = points [i];
-          innerSurfaceCoords [j] = new Point3f(point [0], 0, point [1]);
-          if (groundTexture != null) {
-            innerSurfaceTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-                (this.originY - point [1]) / groundTexture.getHeight());
+          if (roomPart.size() > 2) {
+            roomParts.add(roomPart.toArray(new float [roomPart.size()][]));
           }
+          roomPart.clear();
+          previousRoomPoint = null;
+        } else {
+          if (previousRoomPoint == null
+              || roomPoint [0] != previousRoomPoint [0] 
+              || roomPoint [1] != previousRoomPoint [1]) {
+            roomPart.add(roomPoint);
+          }
+          previousRoomPoint = roomPoint;
         }
-        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-        geometryInfo.setCoordinates (innerSurfaceCoords);
-        if (groundTexture != null) {
-          geometryInfo.setTextureCoordinateParams(1, 2);
-          geometryInfo.setTextureCoordinates(0, innerSurfaceTextureCoords);
-        }
-        geometryInfo.setStripCounts(new int [] {points.length});
-        geometryInfo.setContourCounts(new int [] {1});
-        groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
+        it.next();
       }
-    }
+      
+      // Create ground geometry
+      List<Point3f> coords = new ArrayList<Point3f>();
+      List<Integer> stripCounts = new ArrayList<Integer>();
+      // First add the coordinates of the ground rectangle
+      coords.add(new Point3f(this.originX, 0, this.originY)); 
+      coords.add(new Point3f(this.originX, 0, this.originY + this.depth));
+      coords.add(new Point3f(this.originX + this.width, 0, this.originY + this.depth));
+      coords.add(new Point3f(this.originX + this.width, 0, this.originY));
+      // Compute ground texture coordinates if necessary
+      List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
+      if (groundTexture != null) {
+        textureCoords.add(new TexCoord2f(0, 0));
+        textureCoords.add(new TexCoord2f(0, -this.depth / groundTexture.getHeight()));
+        textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), -this.depth / groundTexture.getHeight()));
+        textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), 0));
+      }
+      stripCounts.add(4);
 
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-    geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
-    int [] stripCountsArray = new int [stripCounts.size()];
-    for (int i = 0; i < stripCountsArray.length; i++) {
-      stripCountsArray [i] = stripCounts.get(i);
-    }
-    geometryInfo.setStripCounts(stripCountsArray);
-    geometryInfo.setContourCounts(new int [] {stripCountsArray.length});
+      for (float [][] points : roomParts) {
+        if (!new Room(points).isClockwise()) {
+          // Define a hole in ground
+          for (float [] point : points) {
+            coords.add(new Point3f(point [0], 0, point [1]));
+            if (groundTexture != null) {
+              textureCoords.add(new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
+                  (this.originY - point [1]) / groundTexture.getHeight()));
+            }
+          }
+          stripCounts.add(points.length);
+        } else {
+          // Define an inner surface in ground
+          Point3f [] innerSurfaceCoords = new Point3f [points.length];
+          TexCoord2f [] innerSurfaceTextureCoords = groundTexture != null 
+              ? new TexCoord2f [points.length]
+              : null;
+          for (int i = 0, j = points.length - 1; i < points.length; i++, j--) {
+            float [] point = points [i];
+            innerSurfaceCoords [j] = new Point3f(point [0], 0, point [1]);
+            if (groundTexture != null) {
+              innerSurfaceTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
+                  (this.originY - point [1]) / groundTexture.getHeight());
+            }
+          }
+          GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+          geometryInfo.setCoordinates (innerSurfaceCoords);
+          if (groundTexture != null) {
+            geometryInfo.setTextureCoordinateParams(1, 2);
+            geometryInfo.setTextureCoordinates(0, innerSurfaceTextureCoords);
+          }
+          geometryInfo.setStripCounts(new int [] {points.length});
+          geometryInfo.setContourCounts(new int [] {1});
+          groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
+        }
+      }
 
-    if (groundTexture != null) {
-      geometryInfo.setTextureCoordinateParams(1, 2);
-      geometryInfo.setTextureCoordinates(0, textureCoords.toArray(new TexCoord2f [textureCoords.size()]));
-    }    
-    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
-    
-    // Remove old geometries
-    for (int i = currentGeometriesCount - 1; i >= 0; i--) {
-      groundShape.removeGeometry(i);
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+      geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
+      int [] stripCountsArray = new int [stripCounts.size()];
+      for (int i = 0; i < stripCountsArray.length; i++) {
+        stripCountsArray [i] = stripCounts.get(i);
+      }
+      geometryInfo.setStripCounts(stripCountsArray);
+      geometryInfo.setContourCounts(new int [] {stripCountsArray.length});
+  
+      if (groundTexture != null) {
+        geometryInfo.setTextureCoordinateParams(1, 2);
+        geometryInfo.setTextureCoordinates(0, textureCoords.toArray(new TexCoord2f [textureCoords.size()]));
+      }    
+      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
+      
+      // Remove old geometries
+      for (int i = currentGeometriesCount - 1; i >= 0; i--) {
+        groundShape.removeGeometry(i);
+      }
     }
   }
 }
