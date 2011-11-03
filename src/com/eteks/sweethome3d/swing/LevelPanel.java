@@ -259,10 +259,10 @@ public class LevelPanel extends JPanel implements DialogView {
       // Third row
       add(this.floorThicknessLabel, new GridBagConstraints(
           0, 2, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.floorThicknessSpinner, new GridBagConstraints(
           1, 2, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), -15, 0));
+          GridBagConstraints.NONE, rightComponentInsets, -15, 0));
     }
     if (this.heightLabel != null) {
       // Last row
