@@ -35,6 +35,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -59,7 +60,6 @@ public class HomeController3D implements Controller {
   private final CameraControllerState observerCameraState;
   // Current state
   private CameraControllerState       cameraState;
-  private PropertyChangeListener      selectedLevelListener;
 
   /**
    * Creates the controller of home 3D view.
@@ -89,13 +89,23 @@ public class HomeController3D implements Controller {
               : observerCameraState);
         }
       });
-    
-    for (Level level : home.getLevels()) {
-      if (!level.isVisible()) {
-        addSelectedLevelListener();
-        break;
-      }
-    }
+    // Add a listener to home to update visible levels according to selected level.
+    PropertyChangeListener selectedLevelListener = new PropertyChangeListener() {
+         public void propertyChange(PropertyChangeEvent ev) {
+           List<Level> levels = home.getLevels();
+           Level selectedLevel = home.getSelectedLevel();
+           boolean visible = true;
+           for (int i = 0; i < levels.size(); i++) {
+             levels.get(i).setVisible(visible);
+             if (levels.get(i) == selectedLevel
+                 && !home.getEnvironment().isAllLevelsVisible()) {
+               visible = false;
+             }
+           }
+         }
+       };
+     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
+     this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.ALL_LEVELS_VISIBLE, selectedLevelListener);
   }
 
   /**
@@ -176,43 +186,14 @@ public class HomeController3D implements Controller {
    * Makes all levels visible.
    */
   public void displayAllLevels() {
-    if (this.selectedLevelListener == null) {
-      this.home.removePropertyChangeListener(Home.Property.SELECTED_LEVEL, this.selectedLevelListener);
-      this.selectedLevelListener = null;
-    }
-    for (Level level : this.home.getLevels()) {
-      level.setVisible(true);
-    }
+    this.home.getEnvironment().setAllLevelsVisible(true);
   }
   
   /**
    * Makes the selected level and below visible.
    */
   public void displaySelectedLevel() {
-    if (this.selectedLevelListener == null) {
-      addSelectedLevelListener();
-    }
-    this.selectedLevelListener.propertyChange(null);
-  }
-
-  /**
-   * Adds a listener to home to update visible levels according to selected level.
-   */
-  private void addSelectedLevelListener() {
-    this.selectedLevelListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          List<Level> levels = home.getLevels();
-          Level selectedLevel = home.getSelectedLevel();
-          boolean visible = true;
-          for (int i = 0; i < levels.size(); i++) {
-            levels.get(i).setVisible(visible);
-            if (levels.get(i) == selectedLevel) {
-              visible = false;
-            }
-          }
-        }
-      };
-    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, this.selectedLevelListener);
+    this.home.getEnvironment().setAllLevelsVisible(false);
   }
   
   /**

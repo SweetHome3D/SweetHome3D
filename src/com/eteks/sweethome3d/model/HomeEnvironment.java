@@ -37,7 +37,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE,
+  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE, ALL_LEVELS_VISIBLE,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
@@ -55,6 +55,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private int                             ceilingLightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
+  private boolean                         allLevelsVisible; 
   private int                             photoWidth;
   private int                             photoHeight;
   private transient AspectRatio           photoAspectRatio;
@@ -124,6 +125,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.ceilingLightColor = 0xD0D0D0;
+    this.allLevelsVisible = true;
     this.photoWidth = 400;
     this.photoHeight = 300;
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
@@ -322,6 +324,24 @@ public class HomeEnvironment implements Serializable, Cloneable {
       this.drawingMode = drawingMode;
       this.propertyChangeSupport.firePropertyChange(
           Property.DRAWING_MODE.name(), oldDrawingMode, drawingMode);
+    }
+  }
+
+  /**
+   * Returns whether all levels should be displayed or not.
+   */
+  public boolean isAllLevelsVisible() {
+    return this.allLevelsVisible;
+  }
+  
+  /**
+   * Sets whether all levels should be displayed or not and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setAllLevelsVisible(boolean allLevelsVisible) {
+    if (allLevelsVisible != this.allLevelsVisible) {
+      this.allLevelsVisible = allLevelsVisible;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.ALL_LEVELS_VISIBLE.name(), !allLevelsVisible, allLevelsVisible);
     }
   }
 

@@ -139,6 +139,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
@@ -278,7 +279,7 @@ public class HomePane extends JRootPane implements HomeView {
     // so the matching menu items and tool bar buttons 
     // always reflect the same toggle state at screen
     this.displayAllLevelsToggleModel = new JToggleButton.ToggleButtonModel();
-    boolean allLevelsVisible = allLevelsVisible(home);
+    boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
     this.displayAllLevelsToggleModel.setSelected(allLevelsVisible);
     this.displaySelectedLevelToggleModel = new JToggleButton.ToggleButtonModel();
     this.displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
@@ -295,7 +296,7 @@ public class HomePane extends JRootPane implements HomeView {
     createPluginActions(controller.getPlugins());
     createTransferHandlers(home, controller);
     addHomeListener(home);
-    addLevelListener(home);
+    addLevelVisibilityListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
     addFocusListener();
@@ -655,35 +656,19 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Adds listeners to <code>home</code> levels to update
+   * Adds listener to <code>home</code> to update
    * Display all levels and Display selected level toggle models 
    * according their visibility.
    */
-  private void addLevelListener(final Home home) {
-    final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
-            boolean allLevelsVisible = allLevelsVisible(home);
+  private void addLevelVisibilityListener(final Home home) {
+    home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.ALL_LEVELS_VISIBLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
             displayAllLevelsToggleModel.setSelected(allLevelsVisible);
             displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
           }
-        }
-      };
-    for (Level level : this.home.getLevels()) {
-      level.addPropertyChangeListener(levelChangeListener);
-    }
-    this.home.addLevelsListener(new CollectionListener<Level>() {
-        public void collectionChanged(CollectionEvent<Level> ev) {
-          switch (ev.getType()) {
-            case ADD :
-              ev.getItem().addPropertyChangeListener(levelChangeListener);
-              break;
-            case DELETE :
-              ev.getItem().removePropertyChangeListener(levelChangeListener);
-              break;
-          }
-        }
-      });
+        });
   }
 
   /**
@@ -1780,18 +1765,6 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
 
-  /**
-   * Returns <code>true</code> if all levels are visible.
-   */
-  private boolean allLevelsVisible(Home home) {
-    for (Level level : home.getLevels()) {
-      if (!level.isVisible()) {
-        return false;
-      }
-    }
-    return true;
-  }
-  
   /**
    * Returns Attach / Detach menu item for the 3D view.
    */
