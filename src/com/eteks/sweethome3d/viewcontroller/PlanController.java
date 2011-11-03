@@ -111,8 +111,9 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  private static final int PIXEL_MARGIN      = 4;
-  private static final int PIXEL_WALL_MARGIN = 2;
+  private static final int PIXEL_MARGIN           = 4;
+  private static final int INDICATOR_PIXEL_MARGIN = 4;
+  private static final int WALL_ENDS_PIXEL_MARGIN = 2;
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -1912,18 +1913,19 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private DimensionLine getMeasuringDimensionLineAt(float x, float y, 
                                                     boolean magnetismEnabled) {
+    float margin = PIXEL_MARGIN / getScale();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)) {
-        DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(piece.getPoints(), x, y, magnetismEnabled);
+        DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(piece.getPoints(), x, y, margin, magnetismEnabled);
         if (dimensionLine != null) {
           return dimensionLine;
         }
       }
     }
     for (GeneralPath roomPath : getRoomPathsFromWalls()) {
-      if (roomPath.intersects(x - PIXEL_MARGIN, y - PIXEL_MARGIN, 2 * PIXEL_MARGIN, 2 * PIXEL_MARGIN)) {
+      if (roomPath.intersects(x - margin, y - margin, 2 * margin, 2 * margin)) {
         DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(
-            getPathPoints(roomPath, true), x, y, magnetismEnabled);
+            getPathPoints(roomPath, true), x, y, margin, magnetismEnabled);
         if (dimensionLine != null) {
           return dimensionLine;
         }
@@ -1931,7 +1933,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
     for (Room room : this.home.getRooms()) {
       if (room.isAtLevel(this.home.getSelectedLevel())) {
-        DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(room.getPoints(), x, y, magnetismEnabled);
+        DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(room.getPoints(), x, y, margin, magnetismEnabled);
         if (dimensionLine != null) {
           return dimensionLine;
         }
@@ -1945,7 +1947,7 @@ public class PlanController extends FurnitureController implements Controller {
    * or <code>null</code> if it doesn't exist. 
    */
   private DimensionLine getDimensionLineBetweenPointsAt(float [][] points, float x, float y, 
-                                                        boolean magnetismEnabled) {
+                                                        float margin, boolean magnetismEnabled) {
     for (int i = 0; i < points.length; i++) {
       int nextPointIndex = (i + 1) % points.length;
       // Ignore sides with a length smaller than 0.1 cm
@@ -1954,7 +1956,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (distanceBetweenPointsSq > 0.01
           && Line2D.ptSegDistSq(points [i][0], points [i][1], 
               points [nextPointIndex][0], points [nextPointIndex][1], 
-              x, y) <= PIXEL_MARGIN * PIXEL_MARGIN) {
+              x, y) <= margin * margin) {
         double angle = Math.atan2(points [i][1] - points [nextPointIndex][1], 
             points [nextPointIndex][0] - points [i][0]);
         boolean reverse = angle < -Math.PI / 2 || angle > Math.PI / 2;
@@ -2189,7 +2191,7 @@ public class PlanController extends FurnitureController implements Controller {
    * which has a start point not joined to any wall. 
    */
   private Wall getWallStartAt(float x, float y, Wall ignoredWall) {
-    float margin = PIXEL_WALL_MARGIN / getScale();
+    float margin = WALL_ENDS_PIXEL_MARGIN / getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.isAtLevel(this.home.getSelectedLevel())
@@ -2205,7 +2207,7 @@ public class PlanController extends FurnitureController implements Controller {
    * which has a end point not joined to any wall. 
    */
   private Wall getWallEndAt(float x, float y, Wall ignoredWall) {
-    float margin = PIXEL_WALL_MARGIN / getScale();
+    float margin = WALL_ENDS_PIXEL_MARGIN / getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.isAtLevel(this.home.getSelectedLevel())
@@ -2226,7 +2228,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallStartAt(x, y, margin)) {
         return wall;
@@ -2244,7 +2246,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallEndAt(x, y, margin)) {
         return wall;
@@ -2271,7 +2273,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room) {
       Room room = (Room)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getPointIndexAt(x, y, margin) != -1) {
         return room;
@@ -2289,7 +2291,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getName() != null
           && room.getName().trim().length() > 0
@@ -2309,7 +2311,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.isAreaVisible() 
           && room.isAreaCenterPointAt(x, y, margin)) {
@@ -2342,7 +2344,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
         return dimensionLine;
@@ -2361,7 +2363,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
         return dimensionLine;
@@ -2380,7 +2382,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.isMiddlePointAt(x, y, margin)) {
         return dimensionLine;
@@ -2603,7 +2605,7 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isTopLeftPointAt(x, y, margin)
           // Keep a free zone around piece center
@@ -2626,7 +2628,7 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isTopRightPointAt(x, y, margin)
           // Keep a free zone around piece center
@@ -2649,7 +2651,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isResizable()
           && isItemResizable(piece) 
@@ -2675,7 +2677,7 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemResizable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isResizable()
           && isItemResizable(piece) 
@@ -2699,7 +2701,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomeLight) {
       HomeLight light = (HomeLight)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(light)
           && light.isBottomLeftPointAt(x, y, margin)
           // Keep a free zone around piece center
@@ -2722,7 +2724,7 @@ public class PlanController extends FurnitureController implements Controller {
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float scaleInverse = 1 / getScale();
-      float margin = PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isNameVisible()
           && piece.getName().trim().length() > 0
@@ -2743,7 +2745,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the last points 
       // of the rectangle surrounding camera
@@ -2767,7 +2769,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the second and the third points
       // of the rectangle surrounding camera
@@ -2791,7 +2793,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the second points 
       // of the rectangle surrounding camera
@@ -2815,7 +2817,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the third and the fourth points (South point) 
       // of the rectangle surrounding compass
@@ -2839,7 +2841,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the second and the third points (East point) 
       // of the rectangle surrounding compass
@@ -8671,7 +8673,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
       this.rooms = new ArrayList<Room>(home.getRooms());
       this.rooms.remove(this.selectedRoom);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       this.roomPointIndex = this.selectedRoom.getPointIndexAt( 
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] roomPoints = this.selectedRoom.getPoints();
