@@ -186,11 +186,8 @@ public class PhotoRenderer {
     for (Room room : home.getRooms()) {
       exportNode((Node)object3DFactory.createObject3D(home, room, true), true, false, silk);
     } 
-    // Create a dummy home to export a 3D ground 3D cut by rooms and large enough to join the sky at the horizon  
-    Home groundHome = new Home();
-    groundHome.getEnvironment().setGroundColor(home.getEnvironment().getGroundColor());
-    groundHome.getEnvironment().setGroundTexture(home.getEnvironment().getGroundTexture());
-    Ground3D ground = new Ground3D(groundHome, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
+    // Create a 3D ground large enough to join the sky at the horizon  
+    Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
     Transform3D translation = new Transform3D();
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
