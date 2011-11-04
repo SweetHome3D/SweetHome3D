@@ -117,13 +117,12 @@ public class LevelPanel extends JPanel implements DialogView {
         });
     }
         
-    final float minimumLength = preferences.getLengthUnit().getMinimumLength();
     if (controller.isPropertyEditable(LevelController.Property.ELEVATION)) {
       // Create elevation label and its spinner bound to ELEVATION controller property
       this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           LevelPanel.class, "elevationLabel.text", unitName));
       final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-          new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 2500f);
+          new NullableSpinner.NullableSpinnerLengthModel(preferences, -1000f, 2500f);
       this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
       elevationSpinnerModel.setNullable(controller.getElevation() == null);
       elevationSpinnerModel.setLength(controller.getElevation());
@@ -146,6 +145,7 @@ public class LevelPanel extends JPanel implements DialogView {
         });
     }
     
+    final float minimumLength = preferences.getLengthUnit().getMinimumLength();
     if (controller.isPropertyEditable(LevelController.Property.FLOOR_THICKNESS)) {
       // Create floor thickness label and its spinner bound to FLOOR_THICKNESS controller property
       this.floorThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 

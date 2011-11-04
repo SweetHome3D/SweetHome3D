@@ -171,7 +171,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   cameraChangeListener;
   private PropertyChangeListener                   homeCameraListener;
   private PropertyChangeListener                   skyColorListener;
-  private PropertyChangeListener                   groundColorAndTextureListener;
+  private PropertyChangeListener                   groundChangeListener;
   private PropertyChangeListener                   lightColorListener;
   private PropertyChangeListener                   wallsAlphaListener;
   private PropertyChangeListener                   drawingModeListener;
@@ -720,8 +720,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
-    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener);
-    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
@@ -1500,17 +1500,26 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     
     if (listenToHomeUpdates) {
       // Add a listener on ground color and texture properties change 
-      this.groundColorAndTextureListener = new PropertyChangeListener() {
+      this.groundChangeListener = new PropertyChangeListener() {
+          private Runnable updater;
           public void propertyChange(PropertyChangeEvent ev) {
-            ground3D.update();
+            if (this.updater == null) {
+              // Group updates
+              EventQueue.invokeLater(this.updater = new Runnable () {
+                public void run() {
+                  ground3D.update();
+                  updater = null;
+                }
+              });
+            }
             clearPrintedImageCache();
           }
         };
       HomeEnvironment homeEnvironment = this.home.getEnvironment();
       homeEnvironment.addPropertyChangeListener(
-          HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
+          HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener); 
       homeEnvironment.addPropertyChangeListener(
-          HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
+          HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
     }
     
     return transformGroup;
@@ -1630,6 +1639,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updateObjects(home.getWalls());          
             updateObjects(home.getRooms());
             updateObjects(home.getFurniture());
+            groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());          
           } else if (Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
@@ -1664,8 +1674,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addWallListener(final Group group) {
     this.wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateWall((Wall)ev.getSource());          
+          Wall updatedWall = (Wall)ev.getSource();
+          updateWall(updatedWall);          
           updateObjects(home.getRooms());
+          if (updatedWall.getLevel() != null && updatedWall.getLevel().getElevation() < 0) {
+            groundChangeListener.propertyChange(null);
+          }
         }
       };
     for (Wall wall : this.home.getWalls()) {
@@ -1685,6 +1699,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               break;
           }
           updateObjects(home.getRooms());
+          groundChangeListener.propertyChange(null);
         }
       };
     this.home.addWallsListener(this.wallListener);
@@ -1710,11 +1725,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(ev.getPropertyName())
             || HomePieceOfFurniture.Property.VISIBLE.name().equals(ev.getPropertyName())) {
-              HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
-              updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+              HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
+              updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
               // If piece is or contains a door or a window, update walls that intersect with piece
-              if (containsDoorsAndWindows(piece)) {
+              if (containsDoorsAndWindows(updatedPiece)) {
                 updateObjects(home.getWalls());
+              }
+              if (updatedPiece.getLevel() != null && updatedPiece.getLevel().getElevation() < 0) {
+                groundChangeListener.propertyChange(null);
               }
           }
         }
@@ -1739,6 +1757,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (containsDoorsAndWindows(piece)) {
             updateObjects(home.getWalls());
           }
+          groundChangeListener.propertyChange(null);
         }
       };
     this.home.addFurnitureListener(this.furnitureListener);
@@ -1767,28 +1786,30 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addRoomListener(final Group group) {
     this.roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
+          Room updatedRoom = (Room)ev.getSource();
           if (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
               || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
               || Room.Property.FLOOR_SHININESS.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_COLOR.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_TEXTURE.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_SHININESS.name().equals(ev.getPropertyName())) {
-            updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
+            updateObjects(Arrays.asList(new Room [] {updatedRoom}));
           } else if (Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName())
               || Room.Property.CEILING_VISIBLE.name().equals(ev.getPropertyName())) {   
             updateObjects(home.getRooms());
-            groundColorAndTextureListener.propertyChange(null);
+            groundChangeListener.propertyChange(null);
           } else if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {   
             if (homeObjectsToUpdate != null) {
               // Don't try to optimize if more than one room to update
               updateObjects(home.getRooms());
             } else {
-              updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
+              updateObjects(Arrays.asList(new Room [] {updatedRoom}));
               // Search the rooms that overlap the updated one
               Area oldArea = getArea((float [][])ev.getOldValue());
               Area newArea = getArea((float [][])ev.getNewValue());
               for (Room room : home.getRooms()) {
-                if (room != ev.getSource()) {
+                if (room != updatedRoom
+                    && room.isAtLevel(updatedRoom.getLevel())) {
                   Area roomAreaIntersectionWithOldArea = getArea(room.getPoints());
                   Area roomAreaIntersectionWithNewArea = new Area(roomAreaIntersectionWithOldArea);
                   roomAreaIntersectionWithNewArea.intersect(newArea);                  
@@ -1803,7 +1824,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 }
               }              
             }
-            groundColorAndTextureListener.propertyChange(null);
+            groundChangeListener.propertyChange(null);
           }            
         }
         
@@ -1836,7 +1857,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               break;
           }
           updateObjects(home.getRooms());
-          groundColorAndTextureListener.propertyChange(null);
+          groundChangeListener.propertyChange(null);
         }
       };
     this.home.addRoomsListener(this.roomListener);
