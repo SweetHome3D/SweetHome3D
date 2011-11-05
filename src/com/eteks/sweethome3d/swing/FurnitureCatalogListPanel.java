@@ -484,12 +484,14 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           }
         }
       }
-      int [] indices = new int [selectedIndices.size()];
-      for (int i = 0; i < indices.length; i++) {
-        indices [i] = selectedIndices.get(i);
+      if (selectedIndices.size() > 0) {
+        int [] indices = new int [selectedIndices.size()];
+        for (int i = 0; i < indices.length; i++) {
+          indices [i] = selectedIndices.get(i);
+        }
+        this.catalogFurnitureList.setSelectedIndices(indices);
+        this.catalogFurnitureList.ensureIndexIsVisible(indices [0]);
       }
-      this.catalogFurnitureList.setSelectedIndices(indices);
-      this.catalogFurnitureList.ensureIndexIsVisible(indices [0]);
     }
     
     if (this.listSelectionListener != null) {
