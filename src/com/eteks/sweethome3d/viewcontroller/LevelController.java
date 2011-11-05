@@ -130,13 +130,15 @@ public class LevelController implements Controller {
    * and <code>HEIGHT</code> if the selected level is the last level. 
    */
   public boolean isPropertyEditable(Property property) {
-    List<Level> levels = this.home.getLevels();
     switch (property) {
       case FLOOR_THICKNESS :
-        return levels.indexOf(this.home.getSelectedLevel()) != 0 
-            || this.home.getSelectedLevel().getElevation() > 0;
-      case HEIGHT :
-        return levels.indexOf(this.home.getSelectedLevel()) != levels.size() - 1;
+        List<Level> levels = this.home.getLevels();
+        Level selectedLevel = this.home.getSelectedLevel();
+        int selectedLevelIndex;
+        return selectedLevel != null
+            && (selectedLevel.getElevation() > 0
+                || ((selectedLevelIndex = levels.indexOf(selectedLevel)) != 0
+                    && levels.get(selectedLevelIndex - 1).getElevation() != selectedLevel.getElevation()));
       default :
         return true;
     }
