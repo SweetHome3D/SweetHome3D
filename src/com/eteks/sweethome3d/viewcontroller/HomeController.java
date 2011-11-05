@@ -286,8 +286,8 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
-    homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, true);
-    homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.ATTACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
@@ -938,12 +938,15 @@ public class HomeController implements Controller {
             }
           }
           home.setSelectedItems(selectedItemsAtLevel);
-          enableBackgroungImageActions(getView(), selectedLevel.getBackgroundImage());
+          enableBackgroungImageActions(getView(), selectedLevel == null 
+              ? home.getBackgroundImage()
+              : selectedLevel.getBackgroundImage());
           List<Level> levels = home.getLevels();
           boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
           getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
           getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, homeContainsOneSelectedLevel);
+          getView().setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
+          getView().setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
         }
       };
     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
