@@ -125,7 +125,6 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.ceilingLightColor = 0xD0D0D0;
-    this.allLevelsVisible = true;
     this.photoWidth = 400;
     this.photoHeight = 300;
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
