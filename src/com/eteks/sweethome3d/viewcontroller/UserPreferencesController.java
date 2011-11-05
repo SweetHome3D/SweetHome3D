@@ -36,7 +36,7 @@ public class UserPreferencesController implements Controller {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
-      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
       AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
   
   private final UserPreferences         preferences;
@@ -56,6 +56,7 @@ public class UserPreferencesController implements Controller {
   private TextureImage                  wallPattern;
   private float                         newWallThickness;
   private float                         newWallHeight;
+  private float                         newFloorThickness;
   private int                           autoSaveDelayForRecovery;
   private boolean                       autoSaveForRecoveryEnabled;
 
@@ -118,8 +119,10 @@ public class UserPreferencesController implements Controller {
     setFurnitureViewedFromTop(this.preferences.isFurnitureViewedFromTop());
     setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
     setWallPattern(this.preferences.getWallPattern());
-    setNewWallThickness(this.preferences.getNewWallThickness());
-    setNewWallHeight(this.preferences.getNewWallHeight());
+    float minimumLength = getUnit().getMinimumLength();
+    setNewWallThickness(Math.max(minimumLength, this.preferences.getNewWallThickness()));
+    setNewWallHeight(Math.max(minimumLength, this.preferences.getNewWallHeight()));
+    setNewFloorThickness(Math.max(minimumLength, this.preferences.getNewFloorThickness()));
     setAutoSaveDelayForRecovery(this.preferences.getAutoSaveDelayForRecovery());
     setAutoSaveForRecoveryEnabled(this.preferences.getAutoSaveDelayForRecovery() > 0);
   }  
@@ -355,6 +358,24 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
+   * Sets the edited new floor thickness.
+   */
+  public void setNewFloorThickness(float newFloorThickness) {
+    if (newFloorThickness != this.newFloorThickness) {
+      float oldNewFloorThickness = this.newFloorThickness;
+      this.newFloorThickness = newFloorThickness;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_FLOOR_THICKNESS.name(), oldNewFloorThickness, newFloorThickness);
+    }
+  }
+
+  /**
+   * Returns the edited new floor thickness.
+   */
+  public float getNewFloorThickness() {
+    return this.newFloorThickness;
+  }
+
+  /**
    * Sets the edited auto recovery save delay.
    */
   public void setAutoSaveDelayForRecovery(int autoSaveDelayForRecovery) {
@@ -407,6 +428,7 @@ public class UserPreferencesController implements Controller {
     this.preferences.setWallPattern(getWallPattern());
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
+    this.preferences.setNewFloorThickness(getNewFloorThickness());
     this.preferences.setAutoSaveDelayForRecovery(isAutoSaveForRecoveryEnabled()
         ? getAutoSaveDelayForRecovery() : 0);
   }

@@ -99,6 +99,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newWallHeightLabel;
   private JSpinner       newWallHeightSpinner;
+  private JLabel         newFloorThicknessLabel;
+  private JSpinner       newFloorThicknessSpinner;
   private JCheckBox      autoSaveDelayForRecoveryCheckBox;
   private JSpinner       autoSaveDelayForRecoverySpinner;
   private JLabel         autoSaveDelayForRecoveryUnitLabel;
@@ -501,6 +503,27 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
     
+    if (controller.isPropertyEditable(UserPreferencesController.Property.NEW_FLOOR_THICKNESS)) {
+      // Create wall thickness label and spinner bound to controller NEW_FLOOR_THICKNESS property
+      this.newFloorThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "newFloorThicknessLabel.text"));
+      final SpinnerLengthModel newFloorThicknessSpinnerModel = new SpinnerLengthModel(
+          0.5f, 0.125f, 5f, 0.005f, controller);
+      this.newFloorThicknessSpinner = new AutoCommitSpinner(newFloorThicknessSpinnerModel);
+      newFloorThicknessSpinnerModel.setLength(controller.getNewFloorThickness());
+      newFloorThicknessSpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setNewFloorThickness(newFloorThicknessSpinnerModel.getLength());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_FLOOR_THICKNESS, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              newFloorThicknessSpinnerModel.setLength(controller.getNewFloorThickness());
+            }
+          });
+    }
+    
     if (controller.isPropertyEditable(UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY)) {
       this.autoSaveDelayForRecoveryCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.text"));
@@ -636,6 +659,11 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             UserPreferencesPanel.class, "newWallHeightLabel.mnemonic")).getKeyCode());
         this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
       }      
+      if (this.newFloorThicknessLabel != null) {
+        this.newFloorThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "newFloorThicknessLabel.mnemonic")).getKeyCode());
+        this.newFloorThicknessLabel.setLabelFor(this.newFloorThicknessSpinner);
+      }
       if (this.autoSaveDelayForRecoveryCheckBox != null) {
         this.autoSaveDelayForRecoveryCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.mnemonic")).getKeyCode());
@@ -781,14 +809,23 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           1, 12, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
+    if (this.newFloorThicknessLabel != null) {
+      // Fourteenth  row
+      add(this.newFloorThicknessLabel, new GridBagConstraints(
+          0, 13, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newFloorThicknessSpinner, new GridBagConstraints(
+          1, 13, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
     if (this.autoSaveDelayForRecoveryCheckBox != null) {
       JPanel autoSaveDelayForRecoveryPanel = new JPanel();
-      // Fourteenth  row
+      // Fifteenth  row
       autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryCheckBox);
       autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoverySpinner);
       autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryUnitLabel);
       add(autoSaveDelayForRecoveryPanel, new GridBagConstraints(
-          0, 13, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+          0, 14, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     // Last row
@@ -796,7 +833,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 14, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 15, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }
