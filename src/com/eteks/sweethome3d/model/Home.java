@@ -52,7 +52,12 @@ public class Home implements Serializable, Cloneable {
 
   private static final Comparator<Level> LEVEL_ELEVATION_COMPARATOR = new Comparator<Level>() {
       public int compare(Level level1, Level level2) {
-        return Float.compare(level1.getElevation(), level2.getElevation());
+        int elevationComparison = Float.compare(level1.getElevation(), level2.getElevation());
+        if (elevationComparison != 0) {
+          return elevationComparison;
+        } else {
+          return -Float.compare(level1.getHeight(), level2.getHeight());
+        }
       }
     };
 

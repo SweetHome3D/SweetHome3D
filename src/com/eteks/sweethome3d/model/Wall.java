@@ -631,7 +631,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    * @since 3.4
    */
   public boolean isAtLevel(Level level) {
-    return this.level == null && level == null
+    return this.level == level
         || this.level != null && level != null
             && this.level.getElevation() <= level.getElevation()
             && this.level.getElevation() + getWallMaximumHeight() > level.getElevation();

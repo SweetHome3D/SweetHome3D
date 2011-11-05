@@ -881,9 +881,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * @since 3.4
    */
   public boolean isAtLevel(Level level) {
-    return this.level == null && level == null
+    return this.level == level 
         || this.level != null && level != null
-            && this.level.getElevation() <= level.getElevation()
+            && this.level.getElevation() < level.getElevation()
             && this.level.getElevation() + this.elevation + this.height > level.getElevation();
   }
   
