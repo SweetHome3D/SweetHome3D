@@ -76,10 +76,11 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToolTip;
+import javax.swing.JWindow;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
@@ -129,6 +130,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private JButton                           turnDownButton;
   private int                               horizontalAngle;
   private int                               verticalAngle;
+  private JToolTip                          orientationToolTip;
+  private JWindow                           orientationToolTipWindow;
   private RotationPreviewComponent          rotationPreviewComponent;
   private JLabel                            backFaceShownLabel;
   private JCheckBox                         backFaceShownCheckBox;
@@ -297,6 +300,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       });
     final String angleTooltipFormat = preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "angleTooltipFeedback");
+    this.orientationToolTip = new JToolTip();
     this.turnLeftButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_LEFT", true) {
         @Override
@@ -310,7 +314,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           leftRotation.mul(oldTransform);
           updateModelRotation(leftRotation);
           horizontalAngle = (horizontalAngle + deltaAngle) % 360;
-          turnLeftButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
+          orientationToolTip.setTipText(String.format(angleTooltipFormat, horizontalAngle));
           verticalAngle = 0;
         }
       });
@@ -327,7 +331,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           rightRotation.mul(oldTransform);
           updateModelRotation(rightRotation);
           horizontalAngle = (horizontalAngle + deltaAngle) % 360;
-          turnRightButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
+          orientationToolTip.setTipText(String.format(angleTooltipFormat, horizontalAngle));
           verticalAngle = 0;
         }
       });
@@ -344,7 +348,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           upRotation.mul(oldTransform);
           updateModelRotation(upRotation);
           verticalAngle = (verticalAngle + deltaAngle) % 360;
-          turnUpButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
+          orientationToolTip.setTipText(String.format(angleTooltipFormat, verticalAngle));
           horizontalAngle = 0;
         }
       });
@@ -361,7 +365,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           downRotation.mul(oldTransform);
           updateModelRotation(downRotation);
           verticalAngle = (verticalAngle + deltaAngle) % 360;
-          turnDownButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
+          orientationToolTip.setTipText(String.format(angleTooltipFormat, verticalAngle));
           horizontalAngle = 0;
         }
       });
@@ -686,7 +690,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * A button that repeats its action when kept pressed.
    */
-  private static class AutoRepeatButton extends JButton {
+  private class AutoRepeatButton extends JButton {
     private boolean shiftPressed;
 
     public AutoRepeatButton(final Action action) {
@@ -696,11 +700,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void actionPerformed(final ActionEvent ev) {
             action.actionPerformed(
                 new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null, ev.getWhen(), ActionEvent.SHIFT_MASK));
-            // Update tool tip
-            Point location = MouseInfo.getPointerInfo().getLocation();
-            SwingUtilities.convertPointFromScreen(location, AutoRepeatButton.this);
-            ToolTipManager.sharedInstance().mouseMoved(new MouseEvent(AutoRepeatButton.this, 
-                MouseEvent.MOUSE_MOVED, ev.getWhen(), 0, location.x, location.y, 0, false));
+            showOrientationToolTip();
           }
         });
       timer.setInitialDelay(250);
@@ -724,39 +724,21 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
       addMouseListener(new MouseAdapter() {
-          private int initialDelay;
-          private int dismissDelay;
-          
           @Override
           public void mousePressed(final MouseEvent ev) {
             shiftPressed = ev.isShiftDown();
-            
-            ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-            this.initialDelay = toolTipManager.getInitialDelay();
-            this.dismissDelay = toolTipManager.getDismissDelay();
-            toolTipManager.setInitialDelay(0);
-            toolTipManager.setDismissDelay(Integer.MAX_VALUE);
-            new Timer(10, new ActionListener() {
-                public void actionPerformed(final ActionEvent aev) {
-                  // Display the tool tip when user clicks on the button
-                  ToolTipManager.sharedInstance().mouseMoved(new MouseEvent(AutoRepeatButton.this, 
-                      MouseEvent.MOUSE_MOVED, aev.getWhen(), 0, ev.getX(), ev.getY(), 0, false));
-                  ((Timer)aev.getSource()).stop();
-                }
-              }).start();
+          }
+          
+          @Override
+          public void mouseClicked(final MouseEvent ev) {
+            showOrientationToolTip();
           }
           
           @Override
           public void mouseReleased(MouseEvent ev) {
             new Timer(500, new ActionListener() {
                 public void actionPerformed(final ActionEvent ev) {
-                  // Restore tool tip manager default values and hide tool tip
-                  ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-                  toolTipManager.setInitialDelay(initialDelay);
-                  toolTipManager.setDismissDelay(dismissDelay);
-                  toolTipManager.setEnabled(false);
-                  setToolTipText(null);
-                  toolTipManager.setEnabled(true);
+                  deleteOrientationToolTip();
                   ((Timer)ev.getSource()).stop();
                 }
               }).start();
@@ -764,7 +746,47 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         });
     }
   }
+
+  /**
+   * Shows the orientation tool tip.
+   */
+  private void showOrientationToolTip() {
+    if (this.orientationToolTipWindow == null) {
+      // Show tool tip in a window (we don't use a Swing Popup because 
+      // we require the tool tip window to resize itself depending on the content)
+      this.orientationToolTipWindow = new JWindow(SwingUtilities.getWindowAncestor(this));
+      this.orientationToolTipWindow.setFocusableWindowState(false);
+      this.orientationToolTipWindow.add(this.orientationToolTip);
+    } else {
+      this.orientationToolTip.revalidate();
+    }
+    Point point = MouseInfo.getPointerInfo().getLocation();
+    // Add to point the half of cursor size
+    Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
+    if (cursorSize.width != 0) {
+      point.x += cursorSize.width + 2;
+      point.y += cursorSize.height + 2;
+    } else {
+      // If custom cursor isn't supported let's consider 
+      // default cursor size is 16 pixels wide
+      point.x += 18;
+      point.y += 18;
+    }
+    this.orientationToolTipWindow.setLocation(point);
+    this.orientationToolTipWindow.pack();
+    this.orientationToolTipWindow.setVisible(true);
+    this.orientationToolTip.paintImmediately(this.orientationToolTip.getBounds());
+  }
   
+  /**
+   * Deletes tool tip text window from screen. 
+   */
+  private void deleteOrientationToolTip() {
+    if (this.orientationToolTipWindow != null) {
+      this.orientationToolTipWindow.setVisible(false);
+    }
+  }
+
   /**
    * Sets components mnemonics and label / component associations.
    */
