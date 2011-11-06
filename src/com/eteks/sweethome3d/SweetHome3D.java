@@ -36,6 +36,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -608,8 +609,16 @@ public class SweetHome3D extends HomeApplication {
         final String languageLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
+            List<String> supportedLanguages = Arrays.asList(getUserPreferences().getSupportedLanguages());
             // Import language library with a dummy controller
             createHomeFrameController(createHome()).getHomeController().importLanguageLibrary(languageLibraryName);
+            // Switch to the first language added to supported languages
+            for (String language : getUserPreferences().getSupportedLanguages()) {
+              if (!supportedLanguages.contains(language)) {
+                getUserPreferences().setLanguage(language);
+                break;
+              }
+            }
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
