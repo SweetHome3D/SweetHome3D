@@ -30,6 +30,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -77,6 +79,7 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
@@ -124,6 +127,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private JButton                           turnRightButton;
   private JButton                           turnUpButton;
   private JButton                           turnDownButton;
+  private int                               horizontalAngle;
+  private int                               verticalAngle;
   private RotationPreviewComponent          rotationPreviewComponent;
   private JLabel                            backFaceShownLabel;
   private JCheckBox                         backFaceShownCheckBox;
@@ -286,19 +291,27 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         @Override
         public void actionPerformed(ActionEvent ev) {
           updateModelRotation(new Transform3D());
+          horizontalAngle = 0;
+          verticalAngle = 0;
         }
       });
+    final String angleTooltipFormat = preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "angleTooltipFeedback");
     this.turnLeftButton = new AutoRepeatButton(new ResourceAction(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "TURN_LEFT", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D leftRotation = new Transform3D();
-          leftRotation.rotY((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? -Math.PI / 2 
-              : Math.toRadians(-1));
+          int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? -90 
+              : -1;
+          leftRotation.rotY(Math.toRadians(deltaAngle));
           leftRotation.mul(oldTransform);
           updateModelRotation(leftRotation);
+          horizontalAngle = (horizontalAngle + deltaAngle) % 360;
+          turnLeftButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
+          verticalAngle = 0;
         }
       });
     this.turnRightButton = new AutoRepeatButton(new ResourceAction(preferences, 
@@ -307,11 +320,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D rightRotation = new Transform3D();
-          rightRotation.rotY((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? Math.PI / 2 
-              : Math.toRadians(1));
+          int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? 90 
+              : 1;
+          rightRotation.rotY(Math.toRadians(deltaAngle));
           rightRotation.mul(oldTransform);
           updateModelRotation(rightRotation);
+          horizontalAngle = (horizontalAngle + deltaAngle) % 360;
+          turnRightButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
+          verticalAngle = 0;
         }
       });
     this.turnUpButton = new AutoRepeatButton(new ResourceAction(preferences, 
@@ -320,11 +337,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D upRotation = new Transform3D();
-          upRotation.rotX((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? -Math.PI / 2 
-              : Math.toRadians(-1));
+          int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? -90 
+              : -1;
+          upRotation.rotX(Math.toRadians(deltaAngle));
           upRotation.mul(oldTransform);
           updateModelRotation(upRotation);
+          verticalAngle = (verticalAngle + deltaAngle) % 360;
+          turnUpButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
+          horizontalAngle = 0;
         }
       });
     this.turnDownButton = new AutoRepeatButton(new ResourceAction(preferences, 
@@ -333,11 +354,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D downRotation = new Transform3D();
-          downRotation.rotX((ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? Math.PI / 2 
-              : Math.toRadians(1));
+          int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
+              ? 90 
+              : 1;
+          downRotation.rotX(Math.toRadians(deltaAngle));
           downRotation.mul(oldTransform);
           updateModelRotation(downRotation);
+          verticalAngle = (verticalAngle + deltaAngle) % 360;
+          turnDownButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
+          horizontalAngle = 0;
         }
       });
     
@@ -668,9 +693,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       super(action);
       // Create a timer that will repeat action each 40 ms when SHIFT is pressed
       final Timer timer = new Timer(40, new ActionListener() {
-          public void actionPerformed(ActionEvent ev) {
+          public void actionPerformed(final ActionEvent ev) {
             action.actionPerformed(
                 new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null, ev.getWhen(), ActionEvent.SHIFT_MASK));
+            // Update tool tip
+            Point location = MouseInfo.getPointerInfo().getLocation();
+            SwingUtilities.convertPointFromScreen(location, AutoRepeatButton.this);
+            ToolTipManager.sharedInstance().mouseMoved(new MouseEvent(AutoRepeatButton.this, 
+                MouseEvent.MOUSE_MOVED, ev.getWhen(), 0, location.x, location.y, 0, false));
           }
         });
       timer.setInitialDelay(250);
@@ -694,9 +724,42 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
       addMouseListener(new MouseAdapter() {
+          private int initialDelay;
+          private int dismissDelay;
+          
           @Override
-          public void mousePressed(MouseEvent ev) {
+          public void mousePressed(final MouseEvent ev) {
             shiftPressed = ev.isShiftDown();
+            
+            ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+            this.initialDelay = toolTipManager.getInitialDelay();
+            this.dismissDelay = toolTipManager.getDismissDelay();
+            toolTipManager.setInitialDelay(0);
+            toolTipManager.setDismissDelay(Integer.MAX_VALUE);
+            new Timer(10, new ActionListener() {
+                public void actionPerformed(final ActionEvent aev) {
+                  // Display the tool tip when user clicks on the button
+                  ToolTipManager.sharedInstance().mouseMoved(new MouseEvent(AutoRepeatButton.this, 
+                      MouseEvent.MOUSE_MOVED, aev.getWhen(), 0, ev.getX(), ev.getY(), 0, false));
+                  ((Timer)aev.getSource()).stop();
+                }
+              }).start();
+          }
+          
+          @Override
+          public void mouseReleased(MouseEvent ev) {
+            new Timer(500, new ActionListener() {
+                public void actionPerformed(final ActionEvent ev) {
+                  // Restore tool tip manager default values and hide tool tip
+                  ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+                  toolTipManager.setInitialDelay(initialDelay);
+                  toolTipManager.setDismissDelay(dismissDelay);
+                  toolTipManager.setEnabled(false);
+                  setToolTipText(null);
+                  toolTipManager.setEnabled(true);
+                  ((Timer)ev.getSource()).stop();
+                }
+              }).start();
           }
         });
     }
@@ -893,7 +956,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Switches to the component card matching current step.   
    */
-  public void updateStep(ImportedFurnitureWizardController controller) {
+  private void updateStep(ImportedFurnitureWizardController controller) {
     ImportedFurnitureWizardController.Step step = controller.getStep();
     this.cardLayout.show(this, step.name());
     switch (step) {
