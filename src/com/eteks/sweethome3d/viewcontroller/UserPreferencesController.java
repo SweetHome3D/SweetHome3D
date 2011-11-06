@@ -41,6 +41,7 @@ public class UserPreferencesController implements Controller {
   
   private final UserPreferences         preferences;
   private final ViewFactory             viewFactory;
+  private final HomeController          homeController;
   private final PropertyChangeSupport   propertyChangeSupport;
   private DialogView                    userPreferencesView;
 
@@ -66,8 +67,19 @@ public class UserPreferencesController implements Controller {
   public UserPreferencesController(UserPreferences preferences,
                                    ViewFactory viewFactory, 
                                    ContentManager contentManager) {
+    this(preferences, viewFactory, contentManager, null);
+  }
+
+  /**
+   * Creates the controller of user preferences view.
+   */
+  public UserPreferencesController(UserPreferences preferences,
+                                   ViewFactory viewFactory, 
+                                   ContentManager contentManager,
+                                   HomeController homeController) {
     this.preferences = preferences;
     this.viewFactory = viewFactory;
+    this.homeController = homeController;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
     updateProperties();
@@ -410,6 +422,22 @@ public class UserPreferencesController implements Controller {
    */
   public boolean isAutoSaveForRecoveryEnabled() {
     return this.autoSaveForRecoveryEnabled;
+  }
+
+  /**
+   * Returns <code>true</code> if language libraries can be imported.
+   */
+  public boolean mayImportLanguageLibrary() {
+    return this.homeController != null;
+  }
+  
+  /**
+   * Imports a language library chosen by the user.
+   */
+  public void importLanguageLibrary() {
+    if (this.homeController != null) {
+      this.homeController.importLanguageLibrary();
+    }
   }
 
   /**

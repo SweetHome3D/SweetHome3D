@@ -1049,6 +1049,20 @@ public class HomeController implements Controller {
   }
   
   /**
+   * Imports a language library chosen by the user.  
+   */
+  public void importLanguageLibrary() {
+    getView().invokeLater(new Runnable() {
+        public void run() {
+          final String languageLibraryName = getView().showImportLanguageLibraryDialog();
+          if (languageLibraryName != null) {
+            importLanguageLibrary(languageLibraryName);
+          }
+        }
+      });
+  }
+
+  /**
    * Imports a given language library. 
    */
   public void importLanguageLibrary(String languageLibraryName) {
@@ -1897,7 +1911,7 @@ public class HomeController implements Controller {
    */
   public void editPreferences() {
     new UserPreferencesController(this.preferences, 
-        this.viewFactory, this.contentManager).displayView(getView());
+        this.viewFactory, this.contentManager, this).displayView(getView());
   }
   
   /**

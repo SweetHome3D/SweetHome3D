@@ -101,6 +101,11 @@ public interface HomeView extends View {
   public abstract String showOpenDialog();
 
   /**
+   * Displays a content chooser open dialog to choose a language library.
+   */
+  public abstract String showImportLanguageLibraryDialog();
+
+  /**
    * Displays a dialog that lets user choose whether he wants to overwrite
    * an existing language library or not. 
    */

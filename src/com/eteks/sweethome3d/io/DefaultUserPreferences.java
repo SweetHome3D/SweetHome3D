@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
@@ -26,10 +27,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
+import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
@@ -39,13 +42,32 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  */
 public class DefaultUserPreferences extends UserPreferences {
   /**
-   * Creates default user preferences read from resource files.
+   * Creates default user preferences read from resource files in the default language.
    */
   public DefaultUserPreferences() {
+    this(true, null);
+  }
+  
+  /**
+   * Creates default user preferences read from resource files.
+   * @param readCatalogs          if <code>false</code> furniture and texture catalog won't be read
+   * @param localizedPreferences  preferences used to read localized resource files
+   */
+  DefaultUserPreferences(boolean readCatalogs,
+                         UserPreferences localizedPreferences) {
+    if (localizedPreferences == null) {
+      localizedPreferences = this;
+    } else {
+      setLanguage(localizedPreferences.getLanguage());
+    }
     // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog());
+    setFurnitureCatalog(readCatalogs 
+        ? new DefaultFurnitureCatalog(localizedPreferences, (File)null) 
+        : new FurnitureCatalog() { });
     // Read default textures catalog
-    setTexturesCatalog(new DefaultTexturesCatalog());
+    setTexturesCatalog(readCatalogs 
+        ? new DefaultTexturesCatalog(localizedPreferences, (File)null)
+        : new TexturesCatalog() { });
     // Build default patterns catalog
     List<TextureImage> patterns = new ArrayList<TextureImage>();
     patterns.add(new DefaultPatternTexture("foreground"));
@@ -57,36 +79,36 @@ public class DefaultUserPreferences extends UserPreferences {
     setPatternsCatalog(patternsCatalog);
     // Read other preferences from resource bundle
     setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
-        getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
-    setNavigationPanelVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));    
-    setUnit(LengthUnit.valueOf(getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
-    setRulersVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
-    setGridVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
-    setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
-    setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
-    setWallPattern(patternsCatalog.getPattern(getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
-    setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
-    setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
+        localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
+    setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));    
+    setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
+    setRulersVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
+    setGridVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
+    setFurnitureViewedFromTop(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
+    setFloorColoredOrTextured(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
+    setWallPattern(patternsCatalog.getPattern(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
+    setNewWallThickness(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
+    setNewWallHeight(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
     try {
-      setNewFloorThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newFloorThickness")));
+      setNewFloorThickness(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newFloorThickness")));
     } catch (IllegalArgumentException ex) {
       setNewFloorThickness(12);
     }
     try {
-      setAutoSaveDelayForRecovery(Integer.parseInt(getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
+      setAutoSaveDelayForRecovery(Integer.parseInt(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
     } catch (IllegalArgumentException ex) {
       // Disable auto save
       setAutoSaveDelayForRecovery(0);
     }
     setRecentHomes(new ArrayList<String>());
     try {
-      setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
+      setCurrency(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "currency"));
     } catch (IllegalArgumentException ex) {
       // Don't use currency and prices in program
     }
     for (String property : new String [] {"LevelName", "HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
       try {
-        String [] autoCompletionStrings = getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings#" + property).trim().split(",");
+        String [] autoCompletionStrings = localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings#" + property).trim().split(",");
         if (autoCompletionStrings.length > 0) {
           for (int i = 0; i < autoCompletionStrings.length; i++) {
             autoCompletionStrings [i] = autoCompletionStrings [i].trim();

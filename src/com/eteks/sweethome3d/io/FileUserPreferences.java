@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -128,7 +129,6 @@ public class FileUserPreferences extends UserPreferences {
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   private List<ClassLoader>          resourceClassLoaders;
-  private String []                  supportedLanguages;
   private final File                 preferencesFolder;
   private final File []              applicationFolders;
   private Preferences                preferences;
@@ -178,7 +178,12 @@ public class FileUserPreferences extends UserPreferences {
       preferences = portablePreferences;
     }
     
-    setLanguage(preferences.get(LANGUAGE, getLanguage()));    
+    String language = preferences.get(LANGUAGE, getLanguage());
+    // Check language is still supported
+    if (!Arrays.asList(getSupportedLanguages()).contains(language)) {
+      language = Locale.ENGLISH.getLanguage();  
+    }
+    setLanguage(language);    
     
     // Fill default furniture catalog 
     setFurnitureCatalog(new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders()));
@@ -190,9 +195,7 @@ public class FileUserPreferences extends UserPreferences {
     // Read additional textures
     readTexturesCatalog(preferences);
 
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
-    // Share same language settings 
-    defaultPreferences.setLanguage(getLanguage());
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false, this);
     
     // Fill default patterns catalog 
     PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();
@@ -267,6 +270,7 @@ public class FileUserPreferences extends UserPreferences {
         public void propertyChange(PropertyChangeEvent ev) {
           updateFurnitureDefaultCatalog();
           updateTexturesDefaultCatalog();
+          updateAutoCompletionStrings();
         }
       });
     
@@ -282,7 +286,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateSupportedLanguages() {
     List<ClassLoader> resourceClassLoaders = new ArrayList<ClassLoader>();
-    String [] defaultSupportedLanguages = super.getSupportedLanguages();
+    String [] defaultSupportedLanguages = getDefaultSupportedLanguages();
     Set<String> supportedLanguages = new TreeSet<String>(Arrays.asList(defaultSupportedLanguages));
    
     File [] languageLibrariesPluginFolders = getLanguageLibrariesPluginFolders();
@@ -319,9 +323,7 @@ public class FileUserPreferences extends UserPreferences {
     resourceClassLoaders.addAll(super.getResourceClassLoaders());
     this.resourceClassLoaders = Collections.unmodifiableList(resourceClassLoaders);
     if (defaultSupportedLanguages.length < supportedLanguages.size()) {
-      this.supportedLanguages = supportedLanguages.toArray(new String [supportedLanguages.size()]);
-    } else {
-      this.supportedLanguages = defaultSupportedLanguages;
+      setSupportedLanguages(supportedLanguages.toArray(new String [supportedLanguages.size()]));
     }
   }
 
@@ -357,14 +359,6 @@ public class FileUserPreferences extends UserPreferences {
         zipIn.close();
       }
     }
-  }
-  
-  /**
-   * Returns the default languages supported in Sweet Home 3D and languages in plugin libraries.
-   */
-  @Override
-  public String [] getSupportedLanguages() {    
-    return this.supportedLanguages;
   }
   
   /**
@@ -428,6 +422,18 @@ public class FileUserPreferences extends UserPreferences {
         } catch (IllegalHomonymException ex) {
           // Ignore textures that have the same name as an existing piece
         }
+      }
+    }
+  }
+
+  /**
+   * Adds to auto completion strings the default strings of the new chosen language.
+   */
+  private void updateAutoCompletionStrings() {
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false, this);
+    for (String property : defaultPreferences.getAutoCompletedProperties()) {
+      for (String autoCompletionString : defaultPreferences.getAutoCompletionStrings(property)) {
+        addAutoCompletionString(property, autoCompletionString);
       }
     }
   }
@@ -1030,11 +1036,6 @@ public class FileUserPreferences extends UserPreferences {
       File languageLibraryFile = new File(languageLibraryName);
       copyToLibraryFolder(languageLibraryFile, languageLibrariesPluginFolders [0]);
       updateSupportedLanguages();
-      // Switch automatically to the first language contained in library
-      Set<String> languages = getLanguages(languageLibraryFile);
-      if (!languages.isEmpty()) {
-        setLanguage(languages.iterator().next());
-      }
     } catch (IOException ex) {
       throw new RecorderException(
           "Can't write " + languageLibraryName +  " in language libraries plugin folder", ex);

@@ -31,7 +31,9 @@ import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.security.AccessControlException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,6 +73,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private final UserPreferencesController controller;
   private JLabel         languageLabel;
   private JComboBox      languageComboBox;
+  private JButton        languageLibraryImportButton;
   private JLabel         unitLabel;
   private JRadioButton   centimeterRadioButton;
   private JRadioButton   inchRadioButton;
@@ -152,7 +155,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                 cellHasFocus);
           }
         });
-      this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
+      this.languageComboBox.setMaximumRowCount(Integer.MAX_VALUE);
       this.languageComboBox.setSelectedItem(controller.getLanguage());
       this.languageComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
@@ -165,6 +168,20 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               languageComboBox.setSelectedItem(controller.getLanguage());
             }
           });
+      preferences.addPropertyChangeListener(UserPreferences.Property.SUPPORTED_LANGUAGES, 
+          new SupportedLanguagesChangeListener(this));
+    }
+    
+    if (controller.mayImportLanguageLibrary()) {
+      this.languageLibraryImportButton = new JButton(new ResourceAction(
+          preferences, UserPreferencesPanel.class, "IMPORT_LANGUAGE_LIBRARY", true) {
+            @Override
+            public void actionPerformed(ActionEvent ev) {
+              controller.importLanguageLibrary();
+            }
+          });
+      this.languageLibraryImportButton.setToolTipText(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "IMPORT_LANGUAGE_LIBRARY.tooltip"));
     }
     
     if (controller.isPropertyEditable(UserPreferencesController.Property.UNIT)) {
@@ -580,6 +597,40 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     this.dialogTitle = preferences.getLocalizedString(UserPreferencesPanel.class, "preferences.title");
   }
 
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class SupportedLanguagesChangeListener implements PropertyChangeListener {
+    private WeakReference<UserPreferencesPanel> userPreferencesPanel;
+
+    public SupportedLanguagesChangeListener(UserPreferencesPanel userPreferencesPanel) {
+      this.userPreferencesPanel = new WeakReference<UserPreferencesPanel>(userPreferencesPanel);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If panel was garbage collected, remove this listener from preferences
+      UserPreferencesPanel userPreferencesPanel = this.userPreferencesPanel.get();
+      if (userPreferencesPanel == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.SUPPORTED_LANGUAGES, this);
+      } else {
+        JComboBox languageComboBox = userPreferencesPanel.languageComboBox;
+        List<String> oldSupportedLanguages = Arrays.asList((String [])ev.getOldValue());
+        String [] supportedLanguages = (String [])ev.getNewValue();
+        languageComboBox.setModel(new DefaultComboBoxModel(supportedLanguages));
+        // Select the first language added to supported languages
+        for (String language : supportedLanguages) {
+          if (!oldSupportedLanguages.contains(language)) {
+            languageComboBox.setSelectedItem(language);
+            return;
+          }
+        }
+        languageComboBox.setSelectedItem(userPreferencesPanel.controller.getLanguage());
+      }
+    }
+  }
+
   private void updateAutoSaveDelayForRecoveryComponents(UserPreferencesController controller) {
     int autoSaveDelayForRecoveryInMinutes = controller.getAutoSaveDelayForRecovery() / 60000;
     boolean autoSaveForRecoveryEnabled = controller.isAutoSaveForRecoveryEnabled();
@@ -689,7 +740,12 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.languageComboBox, new GridBagConstraints(
           1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+          GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 0), 0, 0));
+      if (this.languageLibraryImportButton != null) {
+        add(this.languageLibraryImportButton, new GridBagConstraints(
+            2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      }
     }
     if (this.unitLabel != null) {
       // Second row

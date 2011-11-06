@@ -2901,6 +2901,15 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
+   * Displays a content chooser open dialog to choose a language library.
+   */
+  public String showImportLanguageLibraryDialog() {
+    return this.controller.getContentManager().showOpenDialog(this, 
+        this.preferences.getLocalizedString(HomePane.class, "importLanguageLibraryDialog.title"), 
+        ContentManager.ContentType.LANGUAGE_LIBRARY);
+  }
+
+  /**
    * Displays a dialog that lets user choose whether he wants to overwrite
    * an existing language library or not. 
    */

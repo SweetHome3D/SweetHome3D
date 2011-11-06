@@ -46,13 +46,13 @@ public abstract class UserPreferences {
    * The properties of user preferences that may change. <code>PropertyChangeListener</code>s added 
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
+  public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
                         AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
-  private static final String [] SUPPORTED_LANGUAGES; 
+  private static final String [] DEFAULT_SUPPORTED_LANGUAGES; 
   private static final List<ClassLoader> DEFAULT_CLASS_LOADER = 
       Arrays.asList(new ClassLoader [] {UserPreferences.class.getClassLoader()});
 
@@ -61,7 +61,7 @@ public abstract class UserPreferences {
 
   static {
     ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
-    SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
+    DEFAULT_SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
   }
   
   private final PropertyChangeSupport          propertyChangeSupport;
@@ -72,6 +72,7 @@ public abstract class UserPreferences {
   private TexturesCatalog  texturesCatalog;
   private PatternsCatalog  patternsCatalog;
   private final String     defaultCountry;
+  private String []        supportedLanguages;
   private String           language;
   private String           currency;
   private LengthUnit       unit;
@@ -100,12 +101,13 @@ public abstract class UserPreferences {
     this.resourceBundles = new HashMap<String, ResourceBundle>();
     this.autoCompletionStrings = new HashMap<String, List<String>>();
 
+    this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();    
     String defaultLanguage = Locale.getDefault().getLanguage();
     // Find closest language among supported languages in Sweet Home 3D
     // For example, use simplified Chinese even for Chinese users (zh_?) not from China (zh_CN)
     // unless their exact locale is supported as in Taiwan (zh_TW)
-    for (String supportedLanguage : SUPPORTED_LANGUAGES) {
+    for (String supportedLanguage : this.supportedLanguages) {
       if (supportedLanguage.equals(defaultLanguage + "_" + this.defaultCountry)) {
         this.language = supportedLanguage;
         break; // Found the exact supported language
@@ -271,10 +273,31 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Returns the array of available languages in Sweet Home 3D.
+   * Returns the array of default available languages in Sweet Home 3D.
+   */
+  public String [] getDefaultSupportedLanguages() {
+    return DEFAULT_SUPPORTED_LANGUAGES.clone();
+  }
+
+  /**
+   * Returns the array of available languages in Sweet Home 3D including languages in libraries.
+   * @since 3.4
    */
   public String [] getSupportedLanguages() {
-    return SUPPORTED_LANGUAGES.clone();
+    return this.supportedLanguages.clone();
+  }
+
+  /**
+   * Returns the array of available languages in Sweet Home 3D.
+   * @since 3.4
+   */
+  protected void setSupportedLanguages(String [] supportedLanguages) {
+    if (!Arrays.deepEquals(this.supportedLanguages, supportedLanguages)) {
+      String [] oldSupportedLanguages = this.supportedLanguages;
+      this.supportedLanguages = supportedLanguages.clone();
+      this.propertyChangeSupport.firePropertyChange(Property.SUPPORTED_LANGUAGES.name(), 
+          oldSupportedLanguages, supportedLanguages);
+    }
   }
 
   /**
@@ -808,8 +831,8 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Adds <code>languageLibraryName</code> to language catalog  
-   * to make the language library it contains available available to supported languages.
+   * Adds <code>languageLibraryName</code> to the first language libraries folder
+   * to make the language library it contains available to supported languages.
    * @param languageLibraryName  the name of the resource in which the library will be written. 
    * @since 2.3 
    */
