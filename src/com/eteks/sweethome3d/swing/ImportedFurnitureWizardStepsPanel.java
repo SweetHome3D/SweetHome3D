@@ -304,12 +304,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D leftRotation = new Transform3D();
           int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? 90 
-              : 1;
+              ? -90 
+              : -1;
           leftRotation.rotY(Math.toRadians(deltaAngle));
           leftRotation.mul(oldTransform);
           updateModelRotation(leftRotation);
-          horizontalAngle = (horizontalAngle - deltaAngle) % 360;
+          horizontalAngle = (horizontalAngle + deltaAngle) % 360;
           turnLeftButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
           verticalAngle = 0;
         }
@@ -321,12 +321,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D rightRotation = new Transform3D();
           int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? -90 
-              : -1;
+              ? 90 
+              : 1;
           rightRotation.rotY(Math.toRadians(deltaAngle));
           rightRotation.mul(oldTransform);
           updateModelRotation(rightRotation);
-          horizontalAngle = (horizontalAngle - deltaAngle) % 360;
+          horizontalAngle = (horizontalAngle + deltaAngle) % 360;
           turnRightButton.setToolTipText(String.format(angleTooltipFormat, horizontalAngle));
           verticalAngle = 0;
         }
@@ -338,12 +338,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D upRotation = new Transform3D();
           int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? 90 
-              : 1;
+              ? -90 
+              : -1;
           upRotation.rotX(Math.toRadians(deltaAngle));
           upRotation.mul(oldTransform);
           updateModelRotation(upRotation);
-          verticalAngle = (verticalAngle - deltaAngle) % 360;
+          verticalAngle = (verticalAngle + deltaAngle) % 360;
           turnUpButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
           horizontalAngle = 0;
         }
@@ -355,12 +355,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D downRotation = new Transform3D();
           int deltaAngle = (ev.getModifiers() & ActionEvent.SHIFT_MASK) == 0 
-              ? -90 
-              : -1;
+              ? 90 
+              : 1;
           downRotation.rotX(Math.toRadians(deltaAngle));
           downRotation.mul(oldTransform);
           updateModelRotation(downRotation);
-          verticalAngle = (verticalAngle - deltaAngle) % 360;
+          verticalAngle = (verticalAngle + deltaAngle) % 360;
           turnDownButton.setToolTipText(String.format(angleTooltipFormat, verticalAngle));
           horizontalAngle = 0;
         }
