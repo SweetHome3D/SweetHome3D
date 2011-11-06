@@ -26,12 +26,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
-import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
@@ -44,22 +42,10 @@ public class DefaultUserPreferences extends UserPreferences {
    * Creates default user preferences read from resource files.
    */
   public DefaultUserPreferences() {
-    this(true);
-  }
-  
-  /**
-   * Creates default user preferences read from resource files.
-   * @param readCatalogs if <code>false</code> furniture and texture catalog won't be read
-   */
-  DefaultUserPreferences(boolean readCatalogs) {
     // Read default furniture catalog
-    setFurnitureCatalog(readCatalogs 
-        ? new DefaultFurnitureCatalog() 
-        : new FurnitureCatalog() { });
+    setFurnitureCatalog(new DefaultFurnitureCatalog());
     // Read default textures catalog
-    setTexturesCatalog(readCatalogs 
-        ? new DefaultTexturesCatalog()
-        : new TexturesCatalog() { });
+    setTexturesCatalog(new DefaultTexturesCatalog());
     // Build default patterns catalog
     List<TextureImage> patterns = new ArrayList<TextureImage>();
     patterns.add(new DefaultPatternTexture("foreground"));

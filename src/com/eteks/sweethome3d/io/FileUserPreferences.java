@@ -267,7 +267,6 @@ public class FileUserPreferences extends UserPreferences {
         public void propertyChange(PropertyChangeEvent ev) {
           updateFurnitureDefaultCatalog();
           updateTexturesDefaultCatalog();
-          updateAutoCompletionStrings();
         }
       });
     
@@ -429,18 +428,6 @@ public class FileUserPreferences extends UserPreferences {
         } catch (IllegalHomonymException ex) {
           // Ignore textures that have the same name as an existing piece
         }
-      }
-    }
-  }
-
-  /**
-   * Adds to auto completion strings the default strings of the new chosen language.
-   */
-  private void updateAutoCompletionStrings() {
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false);
-    for (String property : defaultPreferences.getAutoCompletedProperties()) {
-      for (String autoCompletionString : defaultPreferences.getAutoCompletionStrings(property)) {
-        addAutoCompletionString(property, autoCompletionString);
       }
     }
   }
