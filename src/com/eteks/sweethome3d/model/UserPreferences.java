@@ -116,7 +116,7 @@ public abstract class UserPreferences {
     }
     // If no language was found, let's use English by default
     if (this.language == null) {
-      this.language = "en";
+      this.language = Locale.ENGLISH.getLanguage();
     }
     updateDefaultLocale();
   }
