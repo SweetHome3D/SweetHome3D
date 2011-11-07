@@ -1442,6 +1442,64 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the visible (fully or partially) rooms at the selected level in home.
+   */
+  private List<Room> getDetectableRoomsAtSelectedLevel() {
+    List<Room> rooms = this.home.getRooms();
+    Level selectedLevel = this.home.getSelectedLevel();
+    List<Level> levels = this.home.getLevels();
+    if (selectedLevel == null || levels.size() <= 1) {
+      return rooms; 
+    } else {
+      List<Room> visibleRooms = new ArrayList<Room>(rooms.size());
+      int selectedLevelIndex = levels.indexOf(selectedLevel);
+      boolean level0 = levels.get(0) == selectedLevel
+          || levels.get(selectedLevelIndex - 1).getElevation() == selectedLevel.getElevation();
+      Level otherLevel = levels.get(level0 && selectedLevelIndex < levels.size() - 1 
+          ? selectedLevelIndex + 1 
+          : selectedLevelIndex  - 1);
+      for (Room room : rooms) {
+        if (room.isAtLevel(selectedLevel)
+            || otherLevel != null 
+                && room.isAtLevel(otherLevel)
+                && (level0 && room.isFloorVisible()
+                    || !level0 && room.isCeilingVisible())) {
+          visibleRooms.add(room);
+        }
+      }      
+      return visibleRooms;
+    }
+  }
+  
+  /**
+   * Returns the visible (fully or partially) walls at the selected level in home.
+   */
+  private Collection<Wall> getDetectableWallsAtSelectedLevel() {
+    Collection<Wall> walls = this.home.getWalls();
+    Level selectedLevel = this.home.getSelectedLevel();
+    List<Level> levels = this.home.getLevels();
+    if (selectedLevel == null || levels.size() <= 1) {
+      return walls; 
+    } else {
+      Collection<Wall> visibleWalls = new ArrayList<Wall>(walls.size());
+      int selectedLevelIndex = levels.indexOf(selectedLevel);
+      boolean level0 = levels.get(0) == selectedLevel
+          || levels.get(selectedLevelIndex - 1).getElevation() == selectedLevel.getElevation();
+      Level otherLevel = levels.get(level0 && selectedLevelIndex < levels.size() - 1 
+          ? selectedLevelIndex + 1 
+          : selectedLevelIndex  - 1);
+      for (Wall wall : walls) {
+        if (wall.isAtLevel(selectedLevel)
+            || otherLevel != null 
+               && wall.isAtLevel(otherLevel)) {
+          visibleWalls.add(wall);
+        }
+      }
+      return visibleWalls;
+    }
+  }
+
+  /**
    * Returns the horizontal ruler of the plan view. 
    */
   public View getHorizontalRulerView() {
@@ -4683,19 +4741,8 @@ public class PlanController extends FurnitureController implements Controller {
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
       float xClosestWall = 0;
       float yClosestWall = 0;
-      List<Level> levels = home.getLevels();
-      Level selectedLevel = home.getSelectedLevel();
-      Level otherLevel;
-      if (levels.size() > 1) {
-        otherLevel = levels.get(levels.get(0) == selectedLevel ? 1 : levels.indexOf(selectedLevel) - 1);
-      } else {
-        otherLevel = null;
-      }
-      for (Wall wall : home.getWalls()) {
-        if (wall != editedWall
-            && (wall.isAtLevel(selectedLevel)
-                || otherLevel != null 
-                   && wall.isAtLevel(otherLevel))) {
+      for (Wall wall : getDetectableWallsAtSelectedLevel()) {
+        if (wall != editedWall) {
           if (Math.abs(getX() - wall.getXStart()) < margin
               && (editedWall == null
                   || !equalsWallPoint(wall.getXStart(), wall.getYStart(), editedWall))) {
@@ -4789,60 +4836,39 @@ public class PlanController extends FurnitureController implements Controller {
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
       float xClosestObject = 0;
       float yClosestObject = 0;
-      List<Level> levels = home.getLevels();
-      Level selectedLevel = home.getSelectedLevel();
-      Level otherLevel;
-      boolean level0;
-      if (levels.size() > 1) {
-        level0 = levels.get(0) == selectedLevel;
-        otherLevel = levels.get(level0 ? 1 : levels.indexOf(selectedLevel) - 1);
-      } else {
-        level0 = true;
-        otherLevel = null;
-      }
-      for (Room room : home.getRooms()) {
-        if (room.isAtLevel(selectedLevel)
-            || otherLevel != null 
-                && room.isAtLevel(otherLevel)
-                && (level0 && room.isFloorVisible()
-                    || !level0 && room.isCeilingVisible())) {
-          float [][] roomPoints = room.getPoints();
-          for (int i = 0; i < roomPoints.length; i++) {
-            if (editedPointIndex == -1 || (i != editedPointIndex && roomPoints.length > 2)) {
-              if (Math.abs(getX() - roomPoints [i][0]) < margin
-                  && Math.abs(deltaYToClosestObject) > Math.abs(getY() - roomPoints [i][1])) {
-                xClosestObject = roomPoints [i][0];
-                deltaYToClosestObject = getY() - roomPoints [i][1];
-              }
-              if (Math.abs(getY() - roomPoints [i][1]) < margin
-                  && Math.abs(deltaXToClosestObject) > Math.abs(getX() - roomPoints [i][0])) {
-                yClosestObject = roomPoints [i][1];
-                deltaXToClosestObject = getX() - roomPoints [i][0];
-              }
+      for (Room room : getDetectableRoomsAtSelectedLevel()) {
+        float [][] roomPoints = room.getPoints();
+        for (int i = 0; i < roomPoints.length; i++) {
+          if (editedPointIndex == -1 || (i != editedPointIndex && roomPoints.length > 2)) {
+            if (Math.abs(getX() - roomPoints [i][0]) < margin
+                && Math.abs(deltaYToClosestObject) > Math.abs(getY() - roomPoints [i][1])) {
+              xClosestObject = roomPoints [i][0];
+              deltaYToClosestObject = getY() - roomPoints [i][1];
+            }
+            if (Math.abs(getY() - roomPoints [i][1]) < margin
+                && Math.abs(deltaXToClosestObject) > Math.abs(getX() - roomPoints [i][0])) {
+              yClosestObject = roomPoints [i][1];
+              deltaXToClosestObject = getX() - roomPoints [i][0];
             }
           }
         }
       }
       // Search which wall points are close to (x, y)
-      for (Wall wall : home.getWalls()) {
-        if (wall.isAtLevel(selectedLevel)
-            || otherLevel != null 
-               && wall.isAtLevel(otherLevel)) {
-          float [][] wallPoints = wall.getPoints();
-          // Take into account only points at start and end of the wall
-          wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
-                                       wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
-          for (int i = 0; i < wallPoints.length; i++) {
-            if (Math.abs(getX() - wallPoints [i][0]) < margin
-                && Math.abs(deltaYToClosestObject) > Math.abs(getY() - wallPoints [i][1])) {
-              xClosestObject = wallPoints [i][0];
-              deltaYToClosestObject = getY() - wallPoints [i][1];
-            }
-            if (Math.abs(getY() - wallPoints [i][1]) < margin
-                && Math.abs(deltaXToClosestObject) > Math.abs(getX() - wallPoints [i][0])) {
-              yClosestObject = wallPoints [i][1];
-              deltaXToClosestObject = getX() - wallPoints [i][0];
-            }
+      for (Wall wall : getDetectableWallsAtSelectedLevel()) {
+        float [][] wallPoints = wall.getPoints();
+        // Take into account only points at start and end of the wall
+        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
+                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
+        for (int i = 0; i < wallPoints.length; i++) {
+          if (Math.abs(getX() - wallPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(getY() - wallPoints [i][1])) {
+            xClosestObject = wallPoints [i][0];
+            deltaYToClosestObject = getY() - wallPoints [i][1];
+          }
+          if (Math.abs(getY() - wallPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(getX() - wallPoints [i][0])) {
+            yClosestObject = wallPoints [i][1];
+            deltaXToClosestObject = getX() - wallPoints [i][0];
           }
         }
       }
@@ -4900,9 +4926,9 @@ public class PlanController extends FurnitureController implements Controller {
         smallestDistance = updateMagnetizedPoint(x, y,
             smallestDistance, getPathPoints(roomPath, false));
       }      
-      for (Room room : rooms) {
+      for (Room room : getDetectableRoomsAtSelectedLevel()) {
         smallestDistance = updateMagnetizedPoint(x, y,
-            smallestDistance, room.getPoints());
+        smallestDistance, room.getPoints());
       }      
       this.magnetized = smallestDistance <= margin * margin;
       if (!this.magnetized) {
