@@ -41,7 +41,7 @@ public class LevelController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {NAME, ELEVATION, FLOOR_THICKNESS, HEIGHT}
+  public enum Property {NAME, ELEVATION, FLOOR_THICKNESS, HEIGHT, LEVELS, SELECT_LEVEL_INDEX}
   
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -50,10 +50,12 @@ public class LevelController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeLevelView;
 
-  private String  name;
-  private Float   elevation;
-  private Float   floorThickness;
-  private Float   height;
+  private String   name;
+  private Float    elevation;
+  private Float    floorThickness;
+  private Float    height;
+  private Level [] levels;
+  private Integer  selectedLevelIndex;
   
   /**
    * Creates the controller of home levels view with undo support.
@@ -112,15 +114,25 @@ public class LevelController implements Controller {
       setName(null); // Nothing to edit
       setElevation(null);
       setFloorThickness(null);
-      setHeight(null);
+      setHeight(null);      
+      setSelectedLevelIndex(null);
     } else {
       setName(selectedLevel.getName());
       setElevation(selectedLevel.getElevation());
       setFloorThickness(selectedLevel.getFloorThickness());
       setHeight(selectedLevel.getHeight());
+      setSelectedLevelIndex(this.home.getLevels().indexOf(selectedLevel));
     }
+    setLevels(duplicate(this.home.getLevels().toArray(new Level [0])));
   }  
   
+  private Level [] duplicate(Level[] levels) {
+    for (int i = 0; i < levels.length; i++) {
+      levels [i] = levels [i].clone();
+    }
+    return levels;
+  }
+
   /**
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
@@ -214,6 +226,42 @@ public class LevelController implements Controller {
    */
   public Float getHeight() {
     return this.height;
+  }
+  
+  /**
+   * Sets home levels.
+   */
+  private void setLevels(Level [] levels) {
+    if (levels != this.levels) {
+      Level [] oldLevels = this.levels;
+      this.levels = levels;
+      this.propertyChangeSupport.firePropertyChange(Property.LEVELS.name(), oldLevels, levels);
+    }
+  }
+
+  /**
+   * Returns a copy of home levels.
+   */
+  public Level [] getLevels() {
+    return this.levels.clone();
+  }
+  
+  /**
+   * Sets the selected level index.
+   */
+  private void setSelectedLevelIndex(Integer selectedLevelIndex) {
+    if (selectedLevelIndex != this.selectedLevelIndex) {
+      Integer oldSelectedLevelIndex = this.selectedLevelIndex;
+      this.selectedLevelIndex = selectedLevelIndex;
+      this.propertyChangeSupport.firePropertyChange(Property.SELECT_LEVEL_INDEX.name(), oldSelectedLevelIndex, selectedLevelIndex);
+    }
+  }
+
+  /**
+   * Returns the selected level index.
+   */
+  public Integer getSelectedLevelIndex() {
+    return this.selectedLevelIndex;
   }
   
   /**
