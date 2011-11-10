@@ -54,6 +54,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Creates a group from the given <code>furniture</code> list. 
+   * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
+   * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
    */
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             String name) {
@@ -78,8 +80,30 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     boolean visible = false;
     boolean modelMirrored = true;
     this.valueAddedTaxPercentage = furniture.get(0).getValueAddedTaxPercentage();
+    // Search the lowest level elevation among grouped furniture
+    Level minLevel = null;
     for (HomePieceOfFurniture piece : furniture) {
-      elevation = Math.min(elevation, piece.getElevation());      
+      Level level = piece.getLevel();
+      if (level != null 
+          && (minLevel == null
+              || level.getElevation() < minLevel.getElevation())) {
+        minLevel = level;
+      }
+    }
+    for (HomePieceOfFurniture piece : furniture) {
+      Level level = piece.getLevel();
+      if (level != null) {
+        elevation = Math.min(elevation, piece.getElevation() + level.getElevation() - minLevel.getElevation());
+      } else {
+        elevation = Math.min(elevation, piece.getElevation());
+      }
+    }
+    for (HomePieceOfFurniture piece : furniture) {
+      Level level = piece.getLevel();
+      if (level != null) {
+        piece.setElevation(piece.getElevation() + level.getElevation() - minLevel.getElevation());
+      }
+      piece.setLevel(null);
       height = Math.max(height, piece.getElevation() + piece.getHeight());
       movable &= piece.isMovable();
       this.resizable &= piece.isResizable();

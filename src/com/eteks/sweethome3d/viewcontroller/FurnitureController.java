@@ -483,21 +483,36 @@ public class FurnitureController implements Controller {
           toArray(new HomePieceOfFurniture [sortedMap.size()]); 
       final int [] groupPiecesIndex = new int [groupPieces.length];
       final Level [] groupPiecesLevel = new Level [groupPieces.length];
+      final float [] groupPiecesElevation = new float [groupPieces.length];
       final boolean [] groupPiecesMovable = new boolean [groupPieces.length];
       final boolean [] groupPiecesVisible = new boolean [groupPieces.length];
+      Level minLevel = this.home.getSelectedLevel();
       int i = 0;
       for (Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMap.entrySet()) {
         groupPiecesIndex [i] = pieceEntry.getKey();
         HomePieceOfFurniture piece = pieceEntry.getValue();
         groupPiecesLevel [i] = piece.getLevel();
+        groupPiecesElevation [i] = piece.getElevation();
         groupPiecesMovable [i] = piece.isMovable();
-        groupPiecesVisible [i++] = piece.isVisible();
+        groupPiecesVisible [i] = piece.isVisible();
+        if (groupPiecesLevel [i] != null) {
+          if (minLevel == null
+              || groupPiecesLevel [i].getElevation() < minLevel.getElevation()) {
+            minLevel = groupPiecesLevel [i];
+          }
+        }
+        i++;
       }
 
       final HomeFurnitureGroup furnitureGroup = createHomeFurnitureGroup(selectedFurniture);
+      final float [] groupPiecesNewElevation = new float [groupPieces.length];
+      i = 0;
+      for (HomePieceOfFurniture piece : sortedMap.values()) {
+        groupPiecesNewElevation [i++] = piece.getElevation();
+      }
       final int furnitureGroupIndex = homeFurniture.size() - groupPieces.length;
       final boolean movable = furnitureGroup.isMovable();
-      final Level groupLevel = this.home.getSelectedLevel();
+      final Level groupLevel = minLevel;
       
       doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
           new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked);
@@ -509,6 +524,7 @@ public class FurnitureController implements Controller {
               doUngroupFurniture(groupPieces, groupPiecesIndex, 
                   new HomeFurnitureGroup [] {furnitureGroup}, groupPiecesLevel, basePlanLocked);
               for (int i = 0; i < groupPieces.length; i++) {
+                groupPieces [i].setElevation(groupPiecesElevation [i]);
                 groupPieces [i].setMovable(groupPiecesMovable [i]);
                 groupPieces [i].setVisible(groupPiecesVisible [i]);
               }
@@ -518,10 +534,14 @@ public class FurnitureController implements Controller {
             @Override
             public void redo() throws CannotRedoException {
               super.redo();
-              doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
-                  new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked);
+              for (int i = 0; i < groupPieces.length; i++) {
+                groupPieces [i].setElevation(groupPiecesNewElevation [i]);
+                groupPieces [i].setLevel(null);
+              }
               furnitureGroup.setMovable(movable);
               furnitureGroup.setVisible(true);
+              doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
+                  new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked);
             }
             
             @Override
