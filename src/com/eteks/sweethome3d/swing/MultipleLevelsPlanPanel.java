@@ -142,7 +142,8 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.NAME.name().equals(ev.getPropertyName())) {
             multipleLevelsTabbedPane.setTitleAt(home.getLevels().indexOf(ev.getSource()), (String)ev.getNewValue());
-          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
+              || Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
             multipleLevelsTabbedPane.removeChangeListener(changeListener);
             multipleLevelsTabbedPane.removeAll();
             createTabs(home, preferences);

@@ -273,7 +273,8 @@ public class Home implements Serializable, Cloneable {
     // Add listeners to levels to maintain its elevation order
     final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
+              || Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
             levels = new ArrayList<Level>(levels);
             Collections.sort(levels, LEVEL_ELEVATION_COMPARATOR);
           }
