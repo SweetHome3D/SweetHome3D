@@ -4912,23 +4912,26 @@ public class PlanController extends FurnitureController implements Controller {
     private float   x;
     private float   y;
     private boolean magnetized;
-    
+
     /**
-     * Create a point that applies magnetism to point (<code>x</code>, <code>y</code>).
-     * If this point point is close to a point of a wall corner or of a room 
-     * within the given <code>margin</code>, the magnetized point will be the closest one.
+     * Creates a point that applies magnetism to point (<code>x</code>, <code>y</code>).
+     * If this point is close to a point of a wall corner or of a room, it will be initialiazed to its coordinates.
      */
-    public PointMagnetizedToClosestWallOrRoomPoint(Collection<Room> rooms, float x, float y) {
+    public PointMagnetizedToClosestWallOrRoomPoint(float x, float y) {
+      this(null, -1, x, y);
+    }
+
+    public PointMagnetizedToClosestWallOrRoomPoint(Room editedRoom, int editedPointIndex, float x, float y) {
       float margin = PIXEL_MARGIN / getScale();
       // Find the closest wall point to (x,y)
       double smallestDistance = Double.MAX_VALUE;
       for (GeneralPath roomPath : getRoomPathsFromWalls()) {
-        smallestDistance = updateMagnetizedPoint(x, y,
+        smallestDistance = updateMagnetizedPoint(-1, x, y,
             smallestDistance, getPathPoints(roomPath, false));
       }      
       for (Room room : getDetectableRoomsAtSelectedLevel()) {
-        smallestDistance = updateMagnetizedPoint(x, y,
-        smallestDistance, room.getPoints());
+        smallestDistance = updateMagnetizedPoint(room == editedRoom ? editedPointIndex : - 1, 
+            x, y, smallestDistance, room.getPoints());
       }      
       this.magnetized = smallestDistance <= margin * margin;
       if (!this.magnetized) {
@@ -4938,15 +4941,18 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
-    private double updateMagnetizedPoint(float x, float y,
+    private double updateMagnetizedPoint(int editedPointIndex,
+                                         float x, float y,
                                          double smallestDistance,
-                                         float [][] roomPoints) {
-      for (int i = 0; i < roomPoints.length; i++) {
-        double distance = Point2D.distanceSq(roomPoints [i][0], roomPoints [i][1], x, y);
-        if (distance < smallestDistance) {
-          this.x = roomPoints [i][0];
-          this.y = roomPoints [i][1];
-          smallestDistance = distance;
+                                         float [][] points) {
+      for (int i = 0; i < points.length; i++) {
+        if (i != editedPointIndex) {
+          double distance = Point2D.distanceSq(points [i][0], points [i][1], x, y);
+          if (distance < smallestDistance) {
+            this.x = points [i][0];
+            this.y = points [i][1];
+            smallestDistance = distance;
+          }
         }
       }
       return smallestDistance;
@@ -5982,8 +5988,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
       toggleMagnetism(wasShiftDownLastMousePress());
-      this.xStart = getXLastMousePress();
-      this.yStart = getYLastMousePress();
+      this.xStart = getXLastMouseMove();
+      this.yStart = getYLastMouseMove();
       // If the start or end line of a wall close to (xStart, yStart) is
       // free, it will the wall at start of the new wall
       this.wallEndAtStart = getWallEndAt(this.xStart, this.yStart, null);
@@ -7490,8 +7496,8 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
-      this.xStart = getXLastMousePress();
-      this.yStart = getYLastMousePress();
+      this.xStart = getXLastMouseMove();
+      this.yStart = getYLastMouseMove();
       this.editingStartPoint = false;
       this.offsetChoice = false;
       this.newDimensionLine = null;
@@ -8090,8 +8096,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void moveMouse(float x, float y) {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
-        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            home.getRooms(), x, y);
+        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(x, y);
         if (point.isMagnetized()) {
           getView().setAlignmentFeedback(Room.class, null, point.getX(), 
               point.getY(), point.isMagnetized());
@@ -8227,7 +8232,6 @@ public class PlanController extends FurnitureController implements Controller {
    * Room drawing state. This state manages room creation at mouse press. 
    */
   private class RoomDrawingState extends AbstractRoomState {
-    private Collection<Room>       rooms;
     private float                  xPreviousPoint;
     private float                  yPreviousPoint;
     private Room                   newRoom;
@@ -8269,13 +8273,12 @@ public class PlanController extends FurnitureController implements Controller {
       super.enter();
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
-      this.rooms = home.getRooms();
       this.newRoom = null;
       toggleMagnetism(wasShiftDownLastMousePress());
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, getXLastMouseMove(), getYLastMouseMove());
+            getXLastMouseMove(), getYLastMouseMove());
         if (point.isMagnetized()) {
           this.xPreviousPoint = point.getX();
           this.yPreviousPoint = point.getY();
@@ -8305,8 +8308,9 @@ public class PlanController extends FurnitureController implements Controller {
       boolean magnetizedPoint = false;
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
-        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, x, y);
+        PointMagnetizedToClosestWallOrRoomPoint point = this.newRoom != null
+            ? new PointMagnetizedToClosestWallOrRoomPoint(this.newRoom, this.newRoom.getPointCount() - 1, x, y)
+            : new PointMagnetizedToClosestWallOrRoomPoint(x, y);
         magnetizedPoint = point.isMagnetized();
         if (magnetizedPoint) {
           xEnd = point.getX();
@@ -8520,7 +8524,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (editionActivated) {
         planView.deleteFeedback();
         if (this.newRoom == null) {
-          // Edit xStart and yStart
+          // Edit previous point
           planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.X,
                                                                        EditableProperty.Y},
               new Object [] {this.xPreviousPoint, this.yPreviousPoint},
@@ -8681,7 +8685,6 @@ public class PlanController extends FurnitureController implements Controller {
    * Room resize state. This state manages room resizing. 
    */
   private class RoomResizeState extends AbstractRoomState {
-    private Collection<Room> rooms;
     private Room             selectedRoom;
     private int              roomPointIndex;
     private float            oldX;
@@ -8704,8 +8707,6 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       super.enter();
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
-      this.rooms = new ArrayList<Room>(home.getRooms());
-      this.rooms.remove(this.selectedRoom);
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
       this.roomPointIndex = this.selectedRoom.getPointIndexAt( 
           getXLastMousePress(), getYLastMousePress(), margin);
@@ -8731,7 +8732,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
-            this.rooms, newX, newY);
+            this.selectedRoom, this.roomPointIndex, newX, newY);
         magnetizedPoint = point.isMagnetized();
         if (magnetizedPoint) {
           newX = point.getX();
