@@ -1516,7 +1516,7 @@ public class PlanController extends FurnitureController implements Controller {
   private void addModelListeners() {
     this.selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          selectFirstItemLevel();
+          selectLevelFromSelectedItems();
           if (getView() != null) {
             getView().makeSelectionVisible();
           }
@@ -3203,7 +3203,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected void selectAndShowItems(List<? extends Selectable> items) {
     selectItems(items);
-    selectFirstItemLevel();
+    selectLevelFromSelectedItems();
     getView().makeSelectionVisible();
   }
   
@@ -4382,16 +4382,23 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Selects the level of the first elevatable item in the current selection.
+   * Selects the level of the first elevatable item in the current selection 
+   * if no selected item is visible at the selected level.
    */
-  private void selectFirstItemLevel() {
-    for (Object item : home.getSelectedItems()) {
+  private void selectLevelFromSelectedItems() {
+    Level selectedLevel = this.home.getSelectedLevel();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    for (Object item : selectedItems) {
+      if (item instanceof Elevatable
+          && ((Elevatable)item).isAtLevel(selectedLevel)) {
+        return;
+      }
+    }
+    
+    for (Object item : selectedItems) {
       if (item instanceof Elevatable) {
-        Elevatable elevatableItem = (Elevatable)item;
-        if (!elevatableItem.isAtLevel(home.getSelectedLevel())) {
-          setSelectedLevel(elevatableItem.getLevel());
-          break;
-        }
+        setSelectedLevel(((Elevatable)item).getLevel());
+        break;
       }
     }
   }
