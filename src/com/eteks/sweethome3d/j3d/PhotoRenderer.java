@@ -225,12 +225,13 @@ public class PhotoRenderer {
     if (ceillingLightColor > 0) {
       // Add lights at the top of each room 
       for (Room room : home.getRooms()) {
-        if (room.isCeilingVisible()) {
+        Level roomLevel = room.getLevel();
+        if (room.isCeilingVisible() 
+            && (roomLevel == null || roomLevel.isVisible())) {
           float xCenter = room.getXCenter();
           float yCenter = room.getYCenter();
           
           double smallestDistance = Float.POSITIVE_INFINITY;
-          Level roomLevel = room.getLevel();
           float roomElevation = roomLevel != null
               ? roomLevel.getElevation()
               : 0;
@@ -280,8 +281,11 @@ public class PhotoRenderer {
     // Add visible and turned on lights
     for (HomeLight light : getLights(home.getFurniture())) {
       float lightPower = light.getPower();
+      Level level = light.getLevel();
       if (light.isVisible()
-          && lightPower > 0f) {
+          && lightPower > 0f
+          && (level == null
+              || level.isVisible())) {
         float angle = light.getAngle();
         float cos = (float)Math.cos(angle);
         float sin = (float)Math.sin(angle);
@@ -298,8 +302,8 @@ public class PhotoRenderer {
           float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
           float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
           float lightElevation = light.getElevation();
-          if (light.getLevel() != null) {
-            lightElevation += light.getLevel().getElevation();
+          if (level != null) {
+            lightElevation += level.getElevation();
           }
           this.sunflow.parameter("center",
               new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
