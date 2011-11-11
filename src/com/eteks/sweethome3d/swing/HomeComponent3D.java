@@ -1712,19 +1712,21 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group group) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-        if (HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(ev.getPropertyName())
-            || HomePieceOfFurniture.Property.VISIBLE.name().equals(ev.getPropertyName())) {
+        String propertyName = ev.getPropertyName();
+        if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.X.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
+            || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
               HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
               updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
               // If piece is or contains a door or a window, update walls that intersect with piece
@@ -1787,18 +1789,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           Room updatedRoom = (Room)ev.getSource();
-          if (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
-              || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
-              || Room.Property.FLOOR_SHININESS.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_COLOR.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_TEXTURE.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_SHININESS.name().equals(ev.getPropertyName())) {
+          String propertyName = ev.getPropertyName();
+          if (Room.Property.FLOOR_COLOR.name().equals(propertyName)
+              || Room.Property.FLOOR_TEXTURE.name().equals(propertyName)
+              || Room.Property.FLOOR_SHININESS.name().equals(propertyName)
+              || Room.Property.CEILING_COLOR.name().equals(propertyName)
+              || Room.Property.CEILING_TEXTURE.name().equals(propertyName)
+              || Room.Property.CEILING_SHININESS.name().equals(propertyName)) {
             updateObjects(Arrays.asList(new Room [] {updatedRoom}));
-          } else if (Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName())
-              || Room.Property.CEILING_VISIBLE.name().equals(ev.getPropertyName())) {   
+          } else if (Room.Property.FLOOR_VISIBLE.name().equals(propertyName)
+              || Room.Property.CEILING_VISIBLE.name().equals(propertyName)
+              || Room.Property.LEVEL.name().equals(propertyName)) {   
             updateObjects(home.getRooms());
             groundChangeListener.propertyChange(null);
-          } else if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {   
+          } else if (Room.Property.POINTS.name().equals(propertyName)) {   
             if (homeObjectsToUpdate != null) {
               // Don't try to optimize if more than one room to update
               updateObjects(home.getRooms());
