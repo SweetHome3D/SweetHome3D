@@ -415,7 +415,7 @@ public class HomeController3D implements Controller {
       }
 
       if (homeBounds != null) {
-        if (containsVisibleWalls) {
+        if (!containsVisibleWalls) {
           // If home contains only rooms and furniture don't fix minimum size
           return homeBounds;
         } else {
