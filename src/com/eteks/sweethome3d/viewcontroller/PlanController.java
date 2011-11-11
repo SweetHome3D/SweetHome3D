@@ -3232,9 +3232,30 @@ public class PlanController extends FurnitureController implements Controller {
     List<Selectable> emptyList = Collections.emptyList(); 
     selectItems(emptyList);
   }
-
+  
   /**
-   * Add <code>walls</code> to home and post an undoable new wall operation.
+   * Adds furniture to home and updates door and window flags if they intersect with walls and magnestism is enabled. 
+   */
+  @Override
+  public void addFurniture(List<HomePieceOfFurniture> furniture) {
+    super.addFurniture(furniture);
+    if (this.preferences.isMagnetismEnabled()) {
+      Area wallsArea = getWallsArea();
+      for (HomePieceOfFurniture piece : furniture) {
+        if (piece instanceof HomeDoorOrWindow) {
+          float [][] piecePoints = piece.getPoints();
+          Area pieceAreaIntersection = new Area(getPath(piecePoints));
+          pieceAreaIntersection.intersect(wallsArea);
+          if (new Room(piecePoints).getArea() / new Room(getPathPoints(getPath(pieceAreaIntersection), false)).getArea() > 0.999) {
+            ((HomeDoorOrWindow) piece).setBoundToWall(true);
+          }
+        }
+      }
+    }
+  }
+  
+  /**
+   * Adds <code>walls</code> to home and post an undoable new wall operation.
    */
   public void addWalls(List<Wall> walls) {
     for (Wall wall : walls) {
