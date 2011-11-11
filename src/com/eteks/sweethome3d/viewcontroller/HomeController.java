@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -1254,7 +1255,7 @@ public class HomeController implements Controller {
         }
       }
     }
-    addItems(items, pastedItemsDelta, pastedItemsDelta, false, "undoPasteName");
+    addPastedItems(items, pastedItemsDelta, pastedItemsDelta, false, "undoPasteName");
   }
 
   /**
@@ -1270,15 +1271,15 @@ public class HomeController implements Controller {
    * and posts a drop operation to undo support.
    */
   public void drop(final List<? extends Selectable> items, View destinationView, float dx, float dy) {
-    addItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
+    addPastedItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
   }
 
   /**
    * Adds items to home.
    */
-  private void addItems(final List<? extends Selectable> items, 
-                        float dx, float dy, final boolean isDropInPlanView, 
-                        final String presentationNameKey) {
+  private void addPastedItems(final List<? extends Selectable> items, 
+                              float dx, float dy, final boolean isDropInPlanView, 
+                              final String presentationNameKey) {
     if (items.size() > 1
         || (items.size() == 1
             && !(items.get(0) instanceof Compass))) {
@@ -1293,7 +1294,10 @@ public class HomeController implements Controller {
         for (HomePieceOfFurniture piece : addedFurniture) {
           if (piece.isResizable()) {
             piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
-            piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+            // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
+            if (!(piece instanceof HomeDoorOrWindow) || dx != 0 || dy != 0) {
+              piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+            }
             piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
           }
           piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
