@@ -2162,10 +2162,24 @@ public class PlanController extends FurnitureController implements Controller {
     doDeleteItems(levelOtherItems);
 
     this.home.deleteLevel(oldSelectedLevel);
+    List<Level> levels = this.home.getLevels();
+    final Level remainingLevel;
+    final Float remainingLevelElevation;
+    if (levels.size() == 1) {
+      remainingLevel = levels.get(0);
+      remainingLevelElevation = remainingLevel.getElevation();
+      remainingLevel.setElevation(0);
+    } else {
+      remainingLevel = null;
+      remainingLevelElevation = null;
+    }    
     undoSupport.postEdit(new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
+          if (remainingLevel != null) {
+            remainingLevel.setElevation(remainingLevelElevation);
+          }
           home.addLevel(oldSelectedLevel);
           setSelectedLevel(oldSelectedLevel);
         }
@@ -2174,6 +2188,9 @@ public class PlanController extends FurnitureController implements Controller {
         public void redo() throws CannotRedoException {
           super.redo();
           home.deleteLevel(oldSelectedLevel);
+          if (remainingLevel != null) {
+            remainingLevel.setElevation(0);
+          }
         }
 
         @Override
