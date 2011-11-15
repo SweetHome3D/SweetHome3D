@@ -549,15 +549,14 @@ public class HelpController implements Controller {
       @Override
       public void handleStartTag(HTML.Tag tag,
                                  MutableAttributeSet att, int pos) {
-        String attribute;
         if (tag.equals(HTML.Tag.A)) { // <a href=...> tag
-          attribute = (String)att.getAttribute(HTML.Attribute.HREF);
+          String attribute = (String)att.getAttribute(HTML.Attribute.HREF);
           if (attribute != null) {
             addReferencedDocument(attribute);
           }
         } else if (tag.equals(HTML.Tag.TITLE)) {
           this.inTitle = true;
-        }
+        } 
       }
       
       @Override
@@ -568,12 +567,27 @@ public class HelpController implements Controller {
       }
       
       @Override
+      public void handleSimpleTag(Tag tag, MutableAttributeSet att, int pos) {
+        if (tag.equals(HTML.Tag.META)) {
+          String nameAttribute = (String)att.getAttribute(HTML.Attribute.NAME); 
+          String contentAttribute = (String)att.getAttribute(HTML.Attribute.CONTENT);
+          if ("keywords".equalsIgnoreCase(nameAttribute)
+              && contentAttribute != null) {
+            searchWords(contentAttribute);
+          }
+        }
+      }
+      
+      @Override
       public void handleText(char [] data, int pos) {
         String text = new String(data);
         if (this.inTitle) {
           title += text;
         }
-        
+        searchWords(text);
+      }
+
+      private void searchWords(String text) {
         String lowerCaseText = text.toLowerCase();
         for (String searchedWord : searchedWords) {
           for (int index = 0; index < lowerCaseText.length(); index += searchedWord.length() + 1) {
