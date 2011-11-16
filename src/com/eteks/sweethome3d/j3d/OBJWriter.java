@@ -339,8 +339,9 @@ public class OBJWriter extends FilterWriter {
       Appearance appearance = shape.getAppearance();
       RenderingAttributes renderingAttributes = appearance != null 
           ? appearance.getRenderingAttributes() : null;
-      if (renderingAttributes == null
-          || renderingAttributes.getVisible()) {
+      if (shape.numGeometries() >= 1 
+          && (renderingAttributes == null
+              || renderingAttributes.getVisible())) {
         // Build a unique human readable object name
         String objectName = "";
         if (accept(nodeName)) {
