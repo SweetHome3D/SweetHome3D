@@ -138,6 +138,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
@@ -3370,13 +3371,11 @@ public class HomePane extends JRootPane implements HomeView {
       // Compute bounds that include walls and furniture
       Rectangle2D homeBounds = updateObjectsBounds(null, home.getWalls());
       for (HomePieceOfFurniture piece : getVisibleFurniture(home.getFurniture())) {
-        if (piece.isVisible()) {
-          for (float [] point : piece.getPoints()) {
-            if (homeBounds == null) {
-              homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-            } else {
-              homeBounds.add(point [0], point [1]);
-            }
+        for (float [] point : piece.getPoints()) {
+          if (homeBounds == null) {
+            homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            homeBounds.add(point [0], point [1]);
           }
         }
       }
@@ -3389,7 +3388,9 @@ public class HomePane extends JRootPane implements HomeView {
     private static List<HomePieceOfFurniture> getVisibleFurniture(List<HomePieceOfFurniture> furniture) {
       List<HomePieceOfFurniture> visibleFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
       for (HomePieceOfFurniture piece : furniture) {
-        if (piece.isVisible()) {
+        if (piece.isVisible()
+            && (piece.getLevel() == null
+                || piece.getLevel().isVisible())) {
           if (piece instanceof HomeFurnitureGroup) {
             visibleFurniture.addAll(getVisibleFurniture(((HomeFurnitureGroup)piece).getFurniture()));
           } else {
@@ -3406,11 +3407,15 @@ public class HomePane extends JRootPane implements HomeView {
     private static Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
                                             Collection<? extends Selectable> items) {
       for (Selectable item : items) {
-        for (float [] point : item.getPoints()) {
-          if (objectBounds == null) {
-            objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            objectBounds.add(point [0], point [1]);
+        if (!(item instanceof Elevatable)
+            || ((Elevatable)item).getLevel() == null
+            || ((Elevatable)item).getLevel().isVisible()) {
+          for (float [] point : item.getPoints()) {
+            if (objectBounds == null) {
+              objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+            } else {
+              objectBounds.add(point [0], point [1]);
+            }
           }
         }
       }
