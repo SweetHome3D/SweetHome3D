@@ -72,13 +72,13 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -243,7 +243,25 @@ public class FurnitureTable extends JTable implements View, Printable {
     addMouseListener(new MouseAdapter () {
         @Override
         public void mouseClicked(MouseEvent ev) {
-          if (ev.getClickCount() == 2) {
+          int column = columnAtPoint(ev.getPoint());
+          int row = rowAtPoint(ev.getPoint());
+          boolean isVisibleColumn = false;
+          if (column >= 0
+              && row >= 0
+              && getColumnModel().getColumn(column).getIdentifier() == HomePieceOfFurniture.SortableProperty.VISIBLE) {
+            Component visibilityComponent = getCellRenderer(row, column).
+                getTableCellRendererComponent(FurnitureTable.this, getValueAt(row, column), false, false, row, column);
+            Rectangle cellRect = getCellRect(row, column, false);
+            // Center visibilityComponent in cell rect
+            visibilityComponent.setSize(visibilityComponent.getPreferredSize());
+            visibilityComponent.setLocation(cellRect.x + (cellRect.width - visibilityComponent.getWidth()) / 2, 
+                cellRect.y + (cellRect.height - visibilityComponent.getHeight()) / 2);
+            // Check if mouse point is exactly on the visibility component
+            isVisibleColumn = visibilityComponent.getBounds().contains(ev.getPoint());
+          }
+          if (isVisibleColumn) {
+            controller.toggleSelectedFurnitureVisibility();
+          } else if (ev.getClickCount() == 2) {
             controller.modifySelectedFurniture();
           }
         }
@@ -1204,20 +1222,27 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Renderer super class used to display booleans
       class BooleanRenderer implements TableCellRenderer {
         private TableCellRenderer booleanRenderer;
+        private final boolean enabled;
+
+        public BooleanRenderer(boolean enabled) {
+          this.enabled = enabled;
+        }
 
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, int row, int column) {
           if (this.booleanRenderer == null) {
             this.booleanRenderer = table.getDefaultRenderer(Boolean.class);
           }
-          return this.booleanRenderer.getTableCellRendererComponent(
+          Component component = this.booleanRenderer.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);
+          component.setEnabled(this.enabled);
+          return component;
         }
       };
       
       switch (property) {
         case MOVABLE :
-          return new BooleanRenderer() {
+          return new BooleanRenderer(false) {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -1226,7 +1251,7 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
             };
         case DOOR_OR_WINDOW :
-          return new BooleanRenderer() {
+          return new BooleanRenderer(false) {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -1235,7 +1260,7 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
             };
         case VISIBLE :
-          return new BooleanRenderer() {
+          return new BooleanRenderer(true) {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {

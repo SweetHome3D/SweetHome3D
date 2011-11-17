@@ -465,6 +465,18 @@ public class FurnitureController implements Controller {
   }
 
   /**
+   * Controls the modification of the visibility of the selected piece of furniture.
+   */
+  public void toggleSelectedFurnitureVisibility() {
+    if (Home.getFurnitureSubList(this.home.getSelectedItems()).size() == 1) {
+      HomeFurnitureController controller = new HomeFurnitureController(this.home, this.preferences,  
+          this.viewFactory, this.contentManager, this.undoSupport);
+      controller.setVisible(!controller.getVisible());
+      controller.modifyFurniture();
+    }
+  }
+
+  /**
    * Groups the selected furniture as one piece of furniture.
    */
   public void groupSelectedFurniture() {
