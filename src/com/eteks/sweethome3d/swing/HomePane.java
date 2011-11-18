@@ -2621,7 +2621,8 @@ public class HomePane extends JRootPane implements HomeView {
     ((JPopupMenu)selectObjectMenu.getParent()).addPopupMenuListener(new PopupMenuListener() {
         @SuppressWarnings({"rawtypes", "unchecked"})
         public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
-          if (lastMouseMoveLocation.getX() >= 0) {
+          if (lastMouseMoveLocation.getX() >= 0
+              && !planController.isModificationState()) {
             final List<Selectable> items = planController.getSelectableItemsAt(
                 planController.getView().convertXPixelToModel(lastMouseMoveLocation.x),
                 planController.getView().convertYPixelToModel(lastMouseMoveLocation.y));
