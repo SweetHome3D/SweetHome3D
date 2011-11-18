@@ -158,8 +158,8 @@ public class HomeController3D implements Controller {
       }
     }
     storedCameras.add(0, camera);
-    // Ensure home stored cameras don't contain more than 10 cameras
-    while (storedCameras.size() > 10) {
+    // Ensure home stored cameras don't contain more than 20 cameras
+    while (storedCameras.size() > 20) {
       storedCameras.remove(storedCameras.size() - 1);
     }
     this.home.setStoredCameras(storedCameras);
