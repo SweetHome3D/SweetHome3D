@@ -63,11 +63,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -1978,10 +1980,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds to <code>homeRoot</code> a shape matching the shadow of furniture at ground level.
+   * Adds to <code>homeRoot</code> shapes matching the shadow of furniture at their level.
    */
   private void addShadowOnFloor(Group homeRoot, Map<HomePieceOfFurniture, Node> pieces3D) {
-    Area areaOnFloor = new Area();
+    Comparator<Level> levelComparator = new Comparator<Level>() {
+        public int compare(Level level1, Level level2) {
+          return Float.compare(level1.getElevation(), level2.getElevation());
+        }
+      };
+    Map<Level, Area> areasOnLevel = new TreeMap<Level, Area>(levelComparator);
     // Compute union of the areas of pieces at ground level that are not lights, doors or windows
     for (Map.Entry<HomePieceOfFurniture, Node> object3DEntry : pieces3D.entrySet()) {
       if (object3DEntry.getKey() instanceof HomePieceOfFurniture) {
@@ -1994,42 +2001,56 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             && !piece.isDoorOrWindow()
             && !(piece instanceof com.eteks.sweethome3d.model.Light)) {
           Area pieceAreaOnFloor = ModelManager.getInstance().getAreaOnFloor(object3DEntry.getValue());
-          areaOnFloor.add(pieceAreaOnFloor);
+          Level level = piece.getLevel();
+          if (piece.getLevel() == null) {
+            level = new Level("Dummy", 0, 0, 0);
+          }
+          if (level.isVisible()) {
+            Area areaOnLevel = areasOnLevel.get(level);
+            if (areaOnLevel == null) {
+              areaOnLevel = new Area();
+              areasOnLevel.put(level, areaOnLevel);
+            }
+            areaOnLevel.add(pieceAreaOnFloor);
+          }
         }
       }
     }
     
-    // Create the 3D shape matching computed area
-    List<Point3f> coords = new ArrayList<Point3f>();
-    List<Integer> stripCounts = new ArrayList<Integer>();
-    int pointsCount = 0;
-    float [] modelPoint = new float[2];
-    for (PathIterator it = areaOnFloor.getPathIterator(null); !it.isDone(); ) {
-      if (it.currentSegment(modelPoint) == PathIterator.SEG_CLOSE) {
-        stripCounts.add(pointsCount);
-        pointsCount = 0;
-      } else {
-        coords.add(new Point3f(modelPoint [0], 0.49f, modelPoint [1]));
-        pointsCount++;
+    // Create the 3D shape matching computed areas
+    Shape3D shadow = new Shape3D();
+    for (Map.Entry<Level, Area> levelArea : areasOnLevel.entrySet()) {
+      List<Point3f> coords = new ArrayList<Point3f>();
+      List<Integer> stripCounts = new ArrayList<Integer>();
+      int pointsCount = 0;
+      float [] modelPoint = new float[2];
+      for (PathIterator it = levelArea.getValue().getPathIterator(null); !it.isDone(); ) {
+        if (it.currentSegment(modelPoint) == PathIterator.SEG_CLOSE) {
+          stripCounts.add(pointsCount);
+          pointsCount = 0;
+        } else {
+          coords.add(new Point3f(modelPoint [0], levelArea.getKey().getElevation() + 0.49f, modelPoint [1]));
+          pointsCount++;
+        }
+        it.next();
       }
-      it.next();
-    }
-
-    if (coords.size() > 0) {
-      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-      geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
-      int [] stripCountsArray = new int [stripCounts.size()];
-      for (int i = 0; i < stripCountsArray.length; i++) {
-        stripCountsArray [i] = stripCounts.get(i);
+  
+      if (coords.size() > 0) {
+        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+        geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
+        int [] stripCountsArray = new int [stripCounts.size()];
+        for (int i = 0; i < stripCountsArray.length; i++) {
+          stripCountsArray [i] = stripCounts.get(i);
+        }
+        geometryInfo.setStripCounts(stripCountsArray);
+        shadow.addGeometry(geometryInfo.getIndexedGeometryArray());
       }
-      geometryInfo.setStripCounts(stripCountsArray);
- 
-      Shape3D shadow = new Shape3D(geometryInfo.getIndexedGeometryArray());
-      Appearance shadowAppearance = new Appearance();
-      shadowAppearance.setColoringAttributes(new ColoringAttributes(new Color3f(), ColoringAttributes.SHADE_FLAT));
-      shadowAppearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 0.7f));
-      shadow.setAppearance(shadowAppearance);    
-      homeRoot.addChild(shadow);
     }
+    
+    Appearance shadowAppearance = new Appearance();
+    shadowAppearance.setColoringAttributes(new ColoringAttributes(new Color3f(), ColoringAttributes.SHADE_FLAT));
+    shadowAppearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 0.7f));
+    shadow.setAppearance(shadowAppearance);    
+    homeRoot.addChild(shadow);
   }
 }
