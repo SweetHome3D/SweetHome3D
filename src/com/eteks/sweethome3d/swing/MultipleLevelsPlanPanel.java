@@ -27,6 +27,8 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -284,6 +286,58 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   @Override
   public void setComponentPopupMenu(JPopupMenu popup) {
     this.planComponent.setComponentPopupMenu(popup);
+  }
+  
+  @Override
+  public void addMouseMotionListener(final MouseMotionListener l) {
+    this.planComponent.addMouseMotionListener(new MouseMotionListener() {
+        public void mouseMoved(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseMoved(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_MOVED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        public void mouseDragged(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseDragged(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_DRAGGED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+      });
+  }
+  
+  @Override
+  public void addMouseListener(final MouseListener l) {
+    this.planComponent.addMouseListener(new MouseListener() {
+        public void mouseReleased(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseReleased(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_RELEASED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        public void mousePressed(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mousePressed(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_PRESSED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        public void mouseExited(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseExited(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_EXITED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        public void mouseEntered(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseEntered(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_ENTERED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        public void mouseClicked(MouseEvent ev) {
+          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
+          l.mouseClicked(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_CLICKED, ev.getWhen(), 
+              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+      });
   }
   
   /**

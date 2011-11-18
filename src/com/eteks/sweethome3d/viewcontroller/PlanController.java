@@ -2467,9 +2467,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the item that will be selected by a click at (<code>x</code>, <code>y</code>) point.
+   * Returns the selectable item at (<code>x</code>, <code>y</code>) point.
    */
-  protected Selectable getSelectableItemAt(float x, float y) {
+  public Selectable getSelectableItemAt(float x, float y) {
     List<Selectable> selectableItems = getSelectableItemsAt(x, y, true);
     if (selectableItems.size() != 0) {
       return selectableItems.get(0);
@@ -2481,7 +2481,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selectable items at (<code>x</code>, <code>y</code>) point.
    */
-  protected List<Selectable> getSelectableItemsAt(float x, float y) {
+  public List<Selectable> getSelectableItemsAt(float x, float y) {
     return getSelectableItemsAt(x, y, false);
   }
   
@@ -3236,9 +3236,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Selects only a given <code>item</code>.
+   * Selects the given <code>item</code>.
    */
-  private void selectItem(Selectable item) {
+  public void selectItem(Selectable item) {
     selectItems(Arrays.asList(new Selectable [] {item}));
   }
 

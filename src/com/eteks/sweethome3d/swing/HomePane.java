@@ -49,6 +49,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
@@ -70,6 +71,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -123,6 +125,8 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 import javax.swing.text.JTextComponent;
 
@@ -136,6 +140,7 @@ import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Elevatable;
@@ -172,7 +177,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
       OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE, 
-      GO_TO_POINT_OF_VIEW}
+      GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -600,6 +605,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(preferences, MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
     createMenuAction(preferences, MenuActionType.MODIFY_TEXT_STYLE);
     createMenuAction(preferences, MenuActionType.GO_TO_POINT_OF_VIEW);
+    createMenuAction(preferences, MenuActionType.SELECT_OBJECT_MENU);
   }
   
   /**
@@ -2405,6 +2411,14 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.PASTE, planViewPopup);
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.DELETE, planViewPopup);
+      Action selectObjectAction = this.menuActionMap.get(MenuActionType.SELECT_OBJECT_MENU);
+      JMenu selectObjectMenu;
+      if (selectObjectAction.getValue(Action.NAME) != null) {
+        selectObjectMenu = new JMenu(selectObjectAction);
+        planViewPopup.add(selectObjectMenu);
+      } else {
+        selectObjectMenu = null;
+      }
       addActionToPopupMenu(ActionType.SELECT_ALL, planViewPopup);
       planViewPopup.addSeparator();
       addToggleActionToPopupMenu(ActionType.SELECT, 
@@ -2454,6 +2468,10 @@ public class HomePane extends JRootPane implements HomeView {
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.EXPORT_TO_SVG, planViewPopup);
       SwingTools.hideDisabledMenuItems(planViewPopup);
+      if (selectObjectMenu != null) {
+        // Add a second popup listener to manage Select object sub menu before the menu is hidden when empty
+        addSelectObjectMenuItems(selectObjectMenu, controller.getPlanController(), preferences);
+      }
       planView.setComponentPopupMenu(planViewPopup);
       
       final JScrollPane planScrollPane;
@@ -2589,6 +2607,117 @@ public class HomePane extends JRootPane implements HomeView {
     } else {
       return planView;
     }    
+  }
+
+  /**
+   * Adds to the menu a listener that will update the menu items able to select 
+   * the selectable items in plan at the location where the menu will be triggered.
+   */
+  private void addSelectObjectMenuItems(final JMenu            selectObjectMenu, 
+                                         final PlanController  planController, 
+                                         final UserPreferences preferences) {
+    JComponent planView = (JComponent)planController.getView();
+    final Point lastMouseMoveLocation = new Point(-1, -1);
+    ((JPopupMenu)selectObjectMenu.getParent()).addPopupMenuListener(new PopupMenuListener() {
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+          if (lastMouseMoveLocation.getX() >= 0) {
+            final List<Selectable> items = planController.getSelectableItemsAt(
+                planController.getView().convertXPixelToModel(lastMouseMoveLocation.x),
+                planController.getView().convertYPixelToModel(lastMouseMoveLocation.y));
+            // Prepare localized formatters
+            Map<Class<? extends Selectable>, SelectableFormat> formatters = 
+                new HashMap<Class<? extends Selectable>, SelectableFormat>();            
+            formatters.put(Compass.class, new SelectableFormat<Compass>() {
+                public String format(Compass compass) {
+                  return preferences.getLocalizedString(HomePane.class, "selectObject.compass");
+                }
+              });
+            formatters.put(HomePieceOfFurniture.class, new SelectableFormat<HomePieceOfFurniture>() {
+                public String format(HomePieceOfFurniture piece) {
+                  if (piece.getName().length() > 0) {
+                    return piece.getName();
+                  } else {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.furniture");
+                  }
+                }
+              });
+            formatters.put(Wall.class, new SelectableFormat<Wall>() {
+                public String format(Wall wall) {
+                  return preferences.getLocalizedString(HomePane.class, "selectObject.wall", 
+                      preferences.getLengthUnit().getFormatWithUnit().format(wall.getLength()));
+                }
+              });
+            formatters.put(Room.class, new SelectableFormat<Room>() {
+                public String format(Room room) {
+                  String roomInfo = room.getName() != null && room.getName().length() > 0
+                      ? room.getName()
+                      : (room.isAreaVisible() 
+                            ? preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea())
+                            : "");
+                  if (room.isFloorVisible() && !room.isCeilingVisible()) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.floor", roomInfo);
+                  } else if (!room.isFloorVisible() && room.isCeilingVisible()) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.ceiling", roomInfo);
+                  } else {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.room", roomInfo);
+                  }
+                }
+              });
+            formatters.put(DimensionLine.class, new SelectableFormat<DimensionLine>() {
+                public String format(DimensionLine dimensionLine) {
+                  return preferences.getLocalizedString(HomePane.class, "selectObject.dimensionLine", 
+                      preferences.getLengthUnit().getFormatWithUnit().format(dimensionLine.getLength()));
+                }
+              });
+            formatters.put(Label.class, new SelectableFormat<Label>() {
+                public String format(Label label) {
+                  if (label.getText().length() > 0) {
+                    return label.getText();
+                  } else {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.label");
+                  }
+                }
+              });
+            
+            for (final Selectable item : items) {
+              String format = null;
+              for (Map.Entry<Class<? extends Selectable>, SelectableFormat> entry : formatters.entrySet()) {
+                if (entry.getKey().isInstance(item)) {
+                  format = entry.getValue().format(item);
+                  break;
+                }
+              }
+              if (format != null) {
+                selectObjectMenu.add(new JMenuItem(new AbstractAction(format) {
+                    public void actionPerformed(ActionEvent ev) {
+                      planController.selectItem(item);
+                    }
+                  }));
+              }
+            }
+          }
+        }
+ 
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+          selectObjectMenu.removeAll();
+        }
+ 
+        public void popupMenuCanceled(PopupMenuEvent ev) {
+        }
+      });
+    planView.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent ev) {
+          lastMouseMoveLocation.setLocation(ev.getPoint());
+        }
+      });      
+    planView.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseExited(MouseEvent e) {
+          lastMouseMoveLocation.x = -1;
+        }
+      });
   }
   
   /**
@@ -3631,5 +3760,12 @@ public class HomePane extends JRootPane implements HomeView {
       SwingTools.installFocusBorder(view);
       setMinimumSize(new Dimension());
     }
+  }
+
+  /**
+   * An object able to format a selectable item;
+   */
+  private abstract interface SelectableFormat<T extends Selectable> {
+    public abstract String format(T item);
   }
 }
