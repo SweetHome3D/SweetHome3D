@@ -25,6 +25,8 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -338,6 +340,21 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
               ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
         }
       });
+  }
+  
+  @Override
+  public void addFocusListener(final FocusListener l) {
+    FocusListener componentFocusListener = new FocusListener() {
+        public void focusGained(FocusEvent ev) {
+          l.focusGained(new FocusEvent(MultipleLevelsPlanPanel.this, FocusEvent.FOCUS_GAINED, ev.isTemporary(), ev.getOppositeComponent()));
+        }
+        
+        public void focusLost(FocusEvent ev) {
+          l.focusLost(new FocusEvent(MultipleLevelsPlanPanel.this, FocusEvent.FOCUS_LOST, ev.isTemporary(), ev.getOppositeComponent()));
+        }
+      };
+    this.planComponent.addFocusListener(componentFocusListener);
+    this.multipleLevelsTabbedPane.addFocusListener(componentFocusListener);
   }
   
   /**
