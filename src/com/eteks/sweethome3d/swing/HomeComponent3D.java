@@ -144,7 +144,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
-import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.universe.SimpleUniverse;

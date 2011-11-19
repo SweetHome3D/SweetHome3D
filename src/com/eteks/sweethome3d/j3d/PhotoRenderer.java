@@ -107,8 +107,8 @@ import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.swing.Object3DFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
-import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
 /**
  * A renderer able to create a photo realistic image of a home.
