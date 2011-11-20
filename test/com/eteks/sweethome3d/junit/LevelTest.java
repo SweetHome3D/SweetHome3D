@@ -61,6 +61,7 @@ import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.LevelPanel;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WallPanel;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -77,7 +78,11 @@ public class LevelTest extends ComponentTestFixture {
         }
       };
     SwingViewFactory viewFactory = new SwingViewFactory();
-    Home home = new HomeFileRecorder().readHome(LevelTest.class.getResource("resources/home1.sh3d").getFile());
+    String testFile = LevelTest.class.getResource("resources/home1.sh3d").getFile();
+    if (OperatingSystem.isWindows()) {
+      testFile = testFile.substring(1).replace("%20", " ");
+    }
+    Home home = new HomeFileRecorder().readHome(testFile);
     HomeController homeController = new HomeController(home, preferences, viewFactory);
     
     final JComponent view = (JComponent)homeController.getView();
