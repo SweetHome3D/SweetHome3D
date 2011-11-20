@@ -307,7 +307,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
       FurnitureTable furnitureTable = null;
       final FurnitureTable.FurnitureFilter furnitureFilter;
       if (furnitureView instanceof FurnitureTable
-          && (homePrint.isPlanPrinted()
+          && (homePrint == null
+              || homePrint.isPlanPrinted()
               || homePrint.isView3DPrinted())) {
         final Level selectedLevel = home.getSelectedLevel();
         furnitureTable = (FurnitureTable)furnitureView;
