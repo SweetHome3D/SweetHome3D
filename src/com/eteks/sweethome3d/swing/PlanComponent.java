@@ -4502,11 +4502,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         
         @Override
         public void mouseMoved(MouseEvent ev) {
-          Point mouseLocationInPlan = SwingUtilities.convertPoint(toolTipWindow, 
-              ev.getX(), ev.getY(), PlanComponent.this);
-          dispatchEvent(new MouseEvent(PlanComponent.this, ev.getID(), ev.getWhen(),
-              ev.getModifiers(), mouseLocationInPlan.x, mouseLocationInPlan.y, 
-              ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          dispatchEvent(SwingUtilities.convertMouseEvent(toolTipWindow, ev, PlanComponent.this));
         }
         
         @Override

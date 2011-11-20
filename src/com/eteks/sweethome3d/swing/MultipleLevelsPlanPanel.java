@@ -294,15 +294,11 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   public void addMouseMotionListener(final MouseMotionListener l) {
     this.planComponent.addMouseMotionListener(new MouseMotionListener() {
         public void mouseMoved(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseMoved(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_MOVED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseMoved(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
         
         public void mouseDragged(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseDragged(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_DRAGGED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseDragged(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
       });
   }
@@ -311,33 +307,23 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   public void addMouseListener(final MouseListener l) {
     this.planComponent.addMouseListener(new MouseListener() {
         public void mouseReleased(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseReleased(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_RELEASED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseReleased(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
         
         public void mousePressed(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mousePressed(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_PRESSED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mousePressed(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
         
         public void mouseExited(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseExited(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_EXITED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseExited(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
         
         public void mouseEntered(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseEntered(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_ENTERED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseEntered(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
         
         public void mouseClicked(MouseEvent ev) {
-          Point point = SwingUtilities.convertPoint(planComponent, ev.getPoint(), MultipleLevelsPlanPanel.this);
-          l.mouseClicked(new MouseEvent(MultipleLevelsPlanPanel.this, MouseEvent.MOUSE_CLICKED, ev.getWhen(), 
-              ev.getModifiers(), point.x, point.y, ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+          l.mouseClicked(SwingUtilities.convertMouseEvent(planComponent, ev, MultipleLevelsPlanPanel.this));
         }
       });
   }
