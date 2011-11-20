@@ -649,6 +649,14 @@ public class FurnitureTable extends JTable implements View, Printable {
   }
   
   /**
+   * Returns the filter applied to the furniture displayed in this table.
+   */
+  public FurnitureTable.FurnitureFilter getFurnitureFilter() {
+    FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+    return tableModel.getFurnitureFilter();
+  }
+  
+  /**
    * Column table model used by this table.
    */
   private static class FurnitureTableColumnModel extends DefaultTableColumnModel {
@@ -1473,6 +1481,13 @@ public class FurnitureTable extends JTable implements View, Printable {
     public void setFurnitureFilter(FurnitureFilter furnitureFilter) {
       this.furnitureFilter = furnitureFilter;      
       filterAndSortFurniture();
+    }
+    
+    /**
+     * Returns the filter applied to the furniture listed in this model.
+     */
+    public FurnitureFilter getFurnitureFilter() {
+      return this.furnitureFilter;
     }
   }
   
