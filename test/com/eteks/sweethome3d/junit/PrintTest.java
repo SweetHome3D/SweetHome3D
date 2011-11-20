@@ -215,10 +215,11 @@ public class PrintTest extends ComponentTestFixture {
       });
     assertFalse("Print preview dialog still showing", printPreviewDialog.isShowing());
     
-    // 7. Check the created PDF file doesn't exist
-    String pdfFileBase = "testsdfghjk";
-    File pdfFile = new File(pdfFileBase + ".pdf");
-    assertFalse("PDF file already exists, delete it first", pdfFile.exists());
+    // 7. Check PDF creation
+    File tmpDirectory = File.createTempFile("print", "dir");
+    tmpDirectory.delete();    
+    assertTrue("Couldn't create tmp directory", tmpDirectory.mkdir());
+    String pdfFileBase = "test";
     // Show print to PDF dialog box
     tester.invokeLater(new Runnable() { 
         public void run() {
@@ -237,16 +238,18 @@ public class PrintTest extends ComponentTestFixture {
     final JFileChooserTester fileChooserTester = new JFileChooserTester();
     final JFileChooser fileChooser = (JFileChooser)new BasicFinder().find(printToPdfDialog, 
         new ClassMatcher(JFileChooser.class));
-    fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
+    fileChooserTester.actionSetDirectory(fileChooser, tmpDirectory.getAbsolutePath());
     fileChooserTester.actionSetFilename(fileChooser, pdfFileBase);
     // Select Ok option to hide dialog box
     fileChooserTester.actionApprove(fileChooser);
-    // Wait PDF generation  
-    Thread.sleep(2000);
     assertFalse("Print to pdf dialog still showing", printToPdfDialog.isShowing());
-    assertTrue("PDF file doesn't exist", pdfFile.exists());
+    // Wait PDF generation  
+    File pdfFile = new File(tmpDirectory, pdfFileBase + ".pdf");
+    Thread.sleep(2000);
+    assertTrue("PDF file " + pdfFile + " doesn't exist", pdfFile.exists());
     assertTrue("PDF file is empty", pdfFile.length() > 0);
     pdfFile.delete();
+    tmpDirectory.delete();
   }
   
   /**
