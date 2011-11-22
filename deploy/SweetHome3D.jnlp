@@ -9,6 +9,8 @@
     <description>Sweet Home 3D</description>
     <description kind="short">Arrange the furniture of your house</description>
     <icon href="SweetHome3DIcon.gif"/>
+    <icon kind="shortcut" href="SweetHome3DIcon32x32.png" width="32" height="32"/>
+    <icon kind="shortcut" href="SweetHome3DIcon48x48.png" width="48" height="48"/>
     <icon kind="splash" href="SweetHome3DSplashScreen.jpg"/>
     <offline-allowed/>
     <shortcut online="false">
