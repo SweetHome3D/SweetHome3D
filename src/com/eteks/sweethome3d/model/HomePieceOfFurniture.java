@@ -529,6 +529,19 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
 
   /**
+   * Returns the elevation of the bottom of this piece of furniture 
+   * from the ground according to the elevation of its level.
+   * @since 3.4 
+   */
+  public float getGroundElevation() {
+    if (this.level != null) {
+      return this.elevation + this.level.getElevation();
+    } else {
+      return this.elevation;
+    }
+  }
+
+  /**
    * Sets the elevation of this piece of furniture on its level. Once this piece is updated, 
    * listeners added to this piece will receive a change notification.
    */

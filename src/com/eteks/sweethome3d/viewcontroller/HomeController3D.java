@@ -465,11 +465,7 @@ public class HomeController3D implements Controller {
         // If home contains no wall, search the max height of the highest piece
         for (HomePieceOfFurniture piece : home.getFurniture()) {
           if (piece.isVisible()) {
-            Level pieceLevel = piece.getLevel();
-            float levelElevation = pieceLevel == null 
-                ? 0
-                : pieceLevel.getElevation(); 
-            maxHeight = Math.max(maxHeight, levelElevation + piece.getElevation() + piece.getHeight());
+            maxHeight = Math.max(maxHeight, piece.getGroundElevation() + piece.getHeight());
           }
         }
       } else {

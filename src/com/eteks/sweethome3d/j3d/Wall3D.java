@@ -215,7 +215,7 @@ public class Wall3D extends Object3DBranch {
     // Search which doors or windows intersect with this wall side
     List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(this.home.getFurniture())) {
-      float pieceElevation = getPieceOfFurnitureElevation(piece);
+      float pieceElevation = piece.getGroundElevation();
       if (pieceElevation + piece.getHeight() > wallElevation
           && pieceElevation < maxWallHeight) {
         Shape pieceShape = getShape(piece.getPoints());
@@ -312,8 +312,8 @@ public class Wall3D extends Object3DBranch {
                 Collections.sort(doorsOrWindows, 
                     new Comparator<HomePieceOfFurniture>() {
                       public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-                        float piece1Elevation = getPieceOfFurnitureElevation(piece1);
-                        float piece2Elevation = getPieceOfFurnitureElevation(piece2);
+                        float piece1Elevation = piece1.getGroundElevation();
+                        float piece2Elevation = piece2.getGroundElevation();
                         if (piece1Elevation < piece2Elevation) {
                           return -1;
                         } else if (piece1Elevation > piece2Elevation) {
@@ -325,7 +325,7 @@ public class Wall3D extends Object3DBranch {
                     });
               }
               HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);            
-              float lowestDoorOrWindowElevation = getPieceOfFurnitureElevation(lowestDoorOrWindow);
+              float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
               // Generate geometry for wall part below window
               if (lowestDoorOrWindowElevation > wallElevation) {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, wallElevation, 
@@ -339,9 +339,9 @@ public class Wall3D extends Object3DBranch {
               // Generate geometry for wall parts between superimposed windows
               for (int i = 0; i < doorsOrWindows.size() - 1; ) {
                 HomePieceOfFurniture lowerDoorOrWindow = doorsOrWindows.get(i);            
-                float lowerDoorOrWindowElevation = getPieceOfFurnitureElevation(lowerDoorOrWindow);
+                float lowerDoorOrWindowElevation = lowerDoorOrWindow.getGroundElevation();
                 HomePieceOfFurniture higherDoorOrWindow = doorsOrWindows.get(++i);
-                float higherDoorOrWindowElevation = getPieceOfFurnitureElevation(higherDoorOrWindow);
+                float higherDoorOrWindowElevation = higherDoorOrWindow.getGroundElevation();
                 // Ignore higher windows smaller than lower window
                 while (lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() >= higherDoorOrWindowElevation + higherDoorOrWindow.getHeight()
                     && ++i < doorsOrWindows.size()) {
@@ -358,10 +358,10 @@ public class Wall3D extends Object3DBranch {
               }
                 
               HomePieceOfFurniture highestDoorOrWindow = doorsOrWindows.get(doorsOrWindows.size() - 1);            
-              float highestDoorOrWindowElevation = getPieceOfFurnitureElevation(highestDoorOrWindow);
+              float highestDoorOrWindowElevation = highestDoorOrWindow.getGroundElevation();
               for (int i = doorsOrWindows.size() - 2; i >= 0; i--) {
                 HomePieceOfFurniture doorOrWindow = doorsOrWindows.get(i);            
-                if (getPieceOfFurnitureElevation(doorOrWindow) + doorOrWindow.getHeight() > highestDoorOrWindowElevation + highestDoorOrWindow.getHeight()) {
+                if (doorOrWindow.getGroundElevation() + doorOrWindow.getHeight() > highestDoorOrWindowElevation + highestDoorOrWindow.getHeight()) {
                   highestDoorOrWindow = doorOrWindow;
                 }
               }
@@ -394,14 +394,6 @@ public class Wall3D extends Object3DBranch {
       } 
     }
     return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
-  }
-
-  private float getPieceOfFurnitureElevation(HomePieceOfFurniture lowestDoorOrWindow) {
-    float lowestDoorOrWindowElevation = lowestDoorOrWindow.getElevation();
-    if (lowestDoorOrWindow.getLevel() != null) {
-      lowestDoorOrWindowElevation += lowestDoorOrWindow.getLevel().getElevation();
-    }
-    return lowestDoorOrWindowElevation;
   }
 
   /**

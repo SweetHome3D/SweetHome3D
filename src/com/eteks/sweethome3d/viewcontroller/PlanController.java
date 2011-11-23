@@ -2548,7 +2548,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (piece.containsPoint(x, y, margin)) {
           items.add(piece);
           if (foundPiece == null
-              || piece.getElevation() > foundPiece.getElevation()) {
+              || piece.getGroundElevation() > foundPiece.getGroundElevation()) {
             foundPiece = piece;
           }
         } else if (foundPiece == null) { 

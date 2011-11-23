@@ -93,15 +93,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     for (HomePieceOfFurniture piece : furniture) {
       Level level = piece.getLevel();
       if (level != null) {
-        elevation = Math.min(elevation, piece.getElevation() + level.getElevation() - minLevel.getElevation());
+        elevation = Math.min(elevation, piece.getGroundElevation() - minLevel.getElevation());
       } else {
         elevation = Math.min(elevation, piece.getElevation());
       }
     }
     for (HomePieceOfFurniture piece : furniture) {
-      Level level = piece.getLevel();
-      if (level != null) {
-        piece.setElevation(piece.getElevation() + level.getElevation() - minLevel.getElevation());
+      if (piece.getLevel() != null) {
+        piece.setElevation(piece.getGroundElevation() - minLevel.getElevation());
       }
       piece.setLevel(null);
       height = Math.max(height, piece.getElevation() + piece.getHeight());

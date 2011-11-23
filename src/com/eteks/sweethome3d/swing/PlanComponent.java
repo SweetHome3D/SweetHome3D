@@ -2284,17 +2284,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Collections.sort(this.sortedLevelFurniture,
           new Comparator<HomePieceOfFurniture>() {
             public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-              float piece1Elevation = piece1.getElevation();
-              Level piece1Level = piece1.getLevel();
-              if (piece1Level != null) {
-                piece1Elevation += piece1Level.getElevation();
-              }
-              float piece2Elevation = piece2.getElevation();
-              Level piece2Level = piece2.getLevel();
-              if (piece2Level != null) {
-                piece2Elevation += piece2Level.getElevation();
-              }
-              float elevationDelta = piece1Elevation - piece2Elevation;
+              float elevationDelta = piece1.getGroundElevation() - piece2.getGroundElevation();
               if (elevationDelta < 0) {
                 return -1;
               } else if (elevationDelta > 0) {

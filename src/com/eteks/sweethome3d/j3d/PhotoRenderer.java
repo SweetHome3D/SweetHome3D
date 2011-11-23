@@ -301,10 +301,7 @@ public class PhotoRenderer {
               power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
           float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
           float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
-          float lightElevation = light.getElevation();
-          if (level != null) {
-            lightElevation += level.getElevation();
-          }
+          float lightElevation = light.getGroundElevation();
           this.sunflow.parameter("center",
               new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
                   lightElevation + (lightSource.getZ() * light.getHeight()),
