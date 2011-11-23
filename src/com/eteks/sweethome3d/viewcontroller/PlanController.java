@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -2539,6 +2540,7 @@ public class PlanController extends FurnitureController implements Controller {
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
     // Search in home furniture in reverse order to give priority to last drawn piece
     // at highest elevation in case it covers an other piece
+    List<HomePieceOfFurniture> foundFurniture = new ArrayList<HomePieceOfFurniture>();
     HomePieceOfFurniture foundPiece = null;
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
@@ -2546,7 +2548,7 @@ public class PlanController extends FurnitureController implements Controller {
             || !isItemPartOfBasePlan(piece))
           && isPieceOfFurnitureVisibleAtSelectedLevel(piece)) {
         if (piece.containsPoint(x, y, margin)) {
-          items.add(piece);
+          foundFurniture.add(piece);
           if (foundPiece == null
               || piece.getGroundElevation() > foundPiece.getGroundElevation()) {
             foundPiece = piece;
@@ -2559,7 +2561,7 @@ public class PlanController extends FurnitureController implements Controller {
               && isItemTextAt(piece, pieceName, piece.getNameStyle(), 
                   piece.getX() + piece.getNameXOffset(), 
                   piece.getY() + piece.getNameYOffset(), x, y, textMargin)) {
-            items.add(piece);
+            foundFurniture.add(piece);
             foundPiece = piece;
           }
         }
@@ -2569,6 +2571,12 @@ public class PlanController extends FurnitureController implements Controller {
         && stopAtFirstItem) {
       return Arrays.asList(new Selectable [] {foundPiece});
     } else {
+      Collections.sort(foundFurniture, new Comparator<HomePieceOfFurniture>() {
+          public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
+            return -Float.compare(p1.getGroundElevation(), p2.getGroundElevation());
+          }
+        });
+      items.addAll(foundFurniture);
       for (Wall wall : this.home.getWalls()) {
         if ((!basePlanLocked 
               || !isItemPartOfBasePlan(wall))
