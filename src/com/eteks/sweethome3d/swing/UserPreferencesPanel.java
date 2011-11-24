@@ -739,8 +739,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           0, 0, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.languageComboBox, new GridBagConstraints(
-          1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 0), 0, 0));
+          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 5), 0, 0));
       if (this.languageLibraryImportButton != null) {
         add(this.languageLibraryImportButton, new GridBagConstraints(
             2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
