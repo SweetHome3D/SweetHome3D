@@ -76,6 +76,9 @@ public class Room implements Serializable, Selectable, Elevatable {
    * Creates a room from its name and the given coordinates.
    */
   public Room(float [][] points) {
+    if (points.length <= 1) {
+      throw new IllegalStateException("Room points must containt at least one point");
+    }
     this.points = deepCopy(points);
     this.areaVisible = true;
     this.nameYOffset = -40f;
@@ -289,6 +292,8 @@ public class Room implements Serializable, Selectable, Elevatable {
   public void removePoint(int index) {
     if (index < 0 || index >= this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
+    } else if (this.points.length <= 1) {
+      throw new IllegalStateException("Room points must containt at least one point");
     }
     
     float [][] newPoints = new float [this.points.length - 1][];
