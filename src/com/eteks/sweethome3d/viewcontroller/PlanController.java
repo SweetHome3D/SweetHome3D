@@ -3271,7 +3271,8 @@ public class PlanController extends FurnitureController implements Controller {
           float [][] piecePoints = piece.getPoints();
           Area pieceAreaIntersection = new Area(getPath(piecePoints));
           pieceAreaIntersection.intersect(wallsArea);
-          if (new Room(piecePoints).getArea() / new Room(getPathPoints(getPath(pieceAreaIntersection), false)).getArea() > 0.999) {
+          if (!pieceAreaIntersection.isEmpty()
+              && new Room(piecePoints).getArea() / new Room(getPathPoints(getPath(pieceAreaIntersection), false)).getArea() > 0.999) {
             ((HomeDoorOrWindow) piece).setBoundToWall(true);
           }
         }
