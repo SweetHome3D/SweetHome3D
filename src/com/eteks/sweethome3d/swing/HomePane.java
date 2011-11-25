@@ -27,14 +27,12 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -2582,22 +2580,17 @@ public class HomePane extends JRootPane implements HomeView {
         // Check 3D view can be viewed in one of the available screens      
         final Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
         final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
-        if (dialogX != null) {
-          for (GraphicsDevice screenDevice : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-            for (GraphicsConfiguration screenConfiguration : screenDevice.getConfigurations()) {
-              if (screenConfiguration.getBounds().contains(dialogX, dialogY)) {
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                      View view3D = controller.getHomeController3D().getView();
-                      detachView(view3D, dialogX, dialogY,
-                          (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY),
-                          (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
-                    }
-                  });
-                return planView3DPane;
+        final Integer dialogWidth = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
+        final Integer dialogHeight = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY);
+        if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null
+            && SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                View view3D = controller.getHomeController3D().getView();
+                detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
               }
-            }
-          }
+            });
+          return planView3DPane;
         }
         if (planView3DPane instanceof JSplitPane) {
           ((JSplitPane)planView3DPane).setDividerLocation(0.5);
