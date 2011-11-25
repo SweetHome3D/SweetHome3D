@@ -25,6 +25,9 @@ import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -36,6 +39,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
@@ -681,5 +685,17 @@ public class SwingTools {
         findChildren((JComponent)child, childrenClass, children);
       }            
     }
+  }
+
+  /**
+   * Returns <code>true</code> if the given rectangle is fully visible at screen.
+   */
+  public static boolean isRectangleVisibleAtScreen(Rectangle rectangle) {
+    Area devicesArea = new Area();
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    for (GraphicsDevice device : environment.getScreenDevices()) {
+      devicesArea.add(new Area(device.getDefaultConfiguration().getBounds()));
+    }
+    return devicesArea.contains(rectangle);
   }
 }

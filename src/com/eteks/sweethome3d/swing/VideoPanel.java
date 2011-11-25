@@ -37,6 +37,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -985,6 +987,7 @@ public class VideoPanel extends JPanel implements DialogView {
       dialog.setModal(false);
       
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);
+      Point dialogLocation = null;
       if (homeRoot != null) {
         // Restore location if it exists
         Integer x = (Integer)this.home.getVisualProperty(VIDEO_DIALOG_X_VISUAL_PROPERTY);
@@ -1009,18 +1012,20 @@ public class VideoPanel extends JPanel implements DialogView {
         if (x != null && y != null 
             && x + dialogWidth <= screenRightBorder
             && y + dialogHeight <= screenBottomBorder) {
-          dialog.setLocation(x, y);
+          dialogLocation = new Point(x, y);
         } else if (screenRightBorder - windowRightBorder > dialogWidth / 2
             || dialogHeight == screenHeight) {
           // If there some space left at the right of the window
           // move the dialog to the right of window
-          dialog.setLocationByPlatform(false);
-          dialog.setLocation(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
+          dialogLocation = new Point(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
               Math.max(Math.min(homeRoot.getY() + dialog.getInsets().top, 
                   screenSize.height - dialogHeight - screenInsets.bottom), screenInsets.top));
-        } else {
-          dialog.setLocationByPlatform(true);
         }
+      }
+      if (dialogLocation != null
+          && SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogLocation, dialog.getSize()))) {
+        dialog.setLocationByPlatform(false);
+        dialog.setLocation(dialogLocation);
       } else {
         dialog.setLocationByPlatform(true);
       }

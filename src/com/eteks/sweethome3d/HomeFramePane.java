@@ -48,6 +48,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -295,9 +296,11 @@ public class HomeFramePane extends JRootPane implements View {
               frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             }
           });
-      } else {
+      } else if (SwingTools.isRectangleVisibleAtScreen(frameBounds)) {
         // Reuse home bounds
         frame.setBounds(frameBounds);
+      } else {
+        frame.setLocationByPlatform(true);
       }
     } else {      
       frame.setLocationByPlatform(true);
