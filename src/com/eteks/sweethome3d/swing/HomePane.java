@@ -2969,6 +2969,7 @@ public class HomePane extends JRootPane implements HomeView {
       });
 
     separateDialog.setBounds(x, y, width, height);
+    separateDialog.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateDialog.getBounds()));
     separateDialog.setVisible(true);
     
     this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, true);

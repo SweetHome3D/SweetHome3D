@@ -296,11 +296,10 @@ public class HomeFramePane extends JRootPane implements View {
               frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             }
           });
-      } else if (SwingTools.isRectangleVisibleAtScreen(frameBounds)) {
+      } else {
         // Reuse home bounds
         frame.setBounds(frameBounds);
-      } else {
-        frame.setLocationByPlatform(true);
+        frame.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(frameBounds));
       }
     } else {      
       frame.setLocationByPlatform(true);
