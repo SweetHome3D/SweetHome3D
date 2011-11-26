@@ -2917,8 +2917,7 @@ public class HomePane extends JRootPane implements HomeView {
     }
     JFrame defaultFrame = (JFrame)window;
     // Create a dialog with the same title as home frame 
-    final JDialog separateDialog = new JDialog(defaultFrame, defaultFrame.getTitle(), false,
-        component.getGraphicsConfiguration());
+    final JDialog separateDialog = new JDialog(defaultFrame, defaultFrame.getTitle(), false);
     separateDialog.setResizable(true);
     defaultFrame.addPropertyChangeListener("title", new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
