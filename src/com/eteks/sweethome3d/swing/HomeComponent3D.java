@@ -29,6 +29,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -268,6 +269,74 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.displayShadowOnFloor = displayShadowOnFloor;
     this.object3dFactory = object3DFactory;
 
+    if (controller != null) {
+      createActions(controller);
+      installKeyboardActions();
+      // Let this component manage focus
+      setFocusable(true);
+      SwingTools.installFocusBorder(this);
+    }
+
+    // Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
+    // and clean up universe once its parent frame is disposed
+    addAncestorListener(preferences, controller, displayShadowOnFloor);
+  }
+
+  /**
+   * Adds an ancestor listener to this component to manage the creation of the canvas and its universe 
+   * and clean up the universe.  
+   */
+  private void addAncestorListener(final UserPreferences preferences, 
+                                   final HomeController3D controller, 
+                                   final boolean displayShadowOnFloor) {
+    addAncestorListener(new AncestorListener() {        
+        public void ancestorAdded(AncestorEvent ev) {
+          if (offscreenUniverse != null) {
+            throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
+          }
+          // Create component 3D only once the graphics configuration of its parent is known
+          if (component3D == null) {
+            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), preferences, controller);
+          }
+          onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
+          Canvas3D canvas3D;
+          if (component3D instanceof Canvas3D) {
+            canvas3D = (Canvas3D)component3D;
+          } else {
+            try {
+              // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+              canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
+            } catch (Exception ex) {
+              UnsupportedOperationException ex2 = new UnsupportedOperationException();
+              ex2.initCause(ex);
+              throw ex2;
+            }
+          }
+          // Bind universe to canvas3D
+          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D );
+          component3D.setFocusable(false);
+          updateNavigationPanelImage();
+        }
+        
+        public void ancestorRemoved(AncestorEvent ev) {
+          if (onscreenUniverse != null) {
+            onscreenUniverse.cleanup();
+            removeHomeListeners();
+            onscreenUniverse = null;
+          }
+        }
+        
+        public void ancestorMoved(AncestorEvent ev) {
+        }        
+      });
+  }
+
+  /**
+   * Creates the 3D component associated with the given <code>configuration</code> device.
+   */
+  private void createComponent3D(GraphicsConfiguration configuration, 
+                                 UserPreferences  preferences, 
+                                 HomeController3D controller) {
     if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -285,25 +354,26 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         throw ex2;
       }
     } else {
-      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
-        public void canvas3DSwapped(Canvas3D canvas3D) {
-        }
-        
-        public void canvas3DPreRendered(Canvas3D canvas3D) {
-        }
-        
-        public void canvas3DPostRendered(Canvas3D canvas3D) {
-          // Copy reference to navigation panel image to avoid concurrency problems 
-          // if it's modified in the EDT while this method draws it
-          BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
-          // Render navigation panel upon canvas 3D if it exists
-          if (navigationPanelImage != null) {
-            J3DGraphics2D g2D = canvas3D.getGraphics2D();
-            g2D.drawImage(navigationPanelImage, null, 0, 0);
-            g2D.flush(true);
-          }
-        }
-      });
+      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration,
+          new Component3DManager.RenderingObserver() {        
+              public void canvas3DSwapped(Canvas3D canvas3D) {
+              }
+              
+              public void canvas3DPreRendered(Canvas3D canvas3D) {
+              }
+              
+              public void canvas3DPostRendered(Canvas3D canvas3D) {
+                // Copy reference to navigation panel image to avoid concurrency problems 
+                // if it's modified in the EDT while this method draws it
+                BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
+                // Render navigation panel upon canvas 3D if it exists
+                if (navigationPanelImage != null) {
+                  J3DGraphics2D g2D = canvas3D.getGraphics2D();
+                  g2D.drawImage(navigationPanelImage, null, 0, 0);
+                  g2D.flush(true);
+                }
+              }
+            });
     }
     JPanel canvasPanel = new JPanel(new LayoutManager() {
         public void addLayoutComponent(String name, Component comp) {
@@ -334,7 +404,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     canvasPanel.add(this.component3D);    
     setLayout(new GridLayout());
     add(canvasPanel);
-
     if (controller != null) {
       addMouseListeners(controller, this.component3D);
       if (preferences != null
@@ -342,10 +411,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               || OperatingSystem.isMacOSXLeopardOrSuperior())) {
         // No support for navigation panel under Mac OS X Tiger 
         // (too unstable, may crash system at 3D view resizing)
-        this.navigationPanel = createNavigationPanel(home, preferences, controller);
+        this.navigationPanel = createNavigationPanel(this.home, preferences, controller);
         setNavigationPanelVisible(preferences.isNavigationPanelVisible() && isVisible());
         preferences.addPropertyChangeListener(UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, 
-            new NavigationPanelChangeListener(this, controller));
+            new NavigationPanelChangeListener(this));
       }
       createActions(controller);
       installKeyboardActions();
@@ -353,10 +422,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       setFocusable(true);
       SwingTools.installFocusBorder(this);
     }
-
-    // Add an ancestor listener to create canvas universe once this component is made visible 
-    // and clean up universe once its parent frame is disposed
-    addAncestorListener(this.component3D, displayShadowOnFloor);
   }
 
   /**
@@ -366,7 +431,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     private final HomeComponent3D homeComponent3D;
 
     public JCanvas3DWithNavigationPanel(HomeComponent3D homeComponent3D,
-                                 GraphicsConfigTemplate3D template) {
+                                        GraphicsConfigTemplate3D template) {
       super(template);
       this.homeComponent3D = homeComponent3D;
     }
@@ -377,54 +442,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
   }
 
-  /**
-   * Adds an ancestor listener to this component to manage canvas universe 
-   * creation and clean up.  
-   */
-  private void addAncestorListener(final Component component3D,
-                                   final boolean displayShadowOnFloor) {
-    addAncestorListener(new AncestorListener() {        
-        public void ancestorAdded(AncestorEvent event) {
-          if (offscreenUniverse != null) {
-            throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
-          }
-          onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
-          Canvas3D canvas3D;
-          if (component3D instanceof Canvas3D) {
-            canvas3D = (Canvas3D)component3D;
-          } else {
-            try {
-              // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
-              canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
-            } catch (Exception ex) {
-              UnsupportedOperationException ex2 = new UnsupportedOperationException();
-              ex2.initCause(ex);
-              throw ex2;
-            }
-          }
-          // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D );
-          component3D.setFocusable(false);
-          updateNavigationPanelImage();
-        }
-        
-        public void ancestorRemoved(AncestorEvent event) {
-          if (onscreenUniverse != null) {
-            onscreenUniverse.cleanup();
-            removeHomeListeners();
-            onscreenUniverse = null;
-          }
-        }
-        
-        public void ancestorMoved(AncestorEvent event) {
-        }        
-      });
-  }
-
   @Override
   public void setVisible(boolean visible) {
     super.setVisible(visible);
-    this.component3D.setVisible(visible);
+    if (this.component3D != null) {
+      this.component3D.setVisible(visible);
+    }
   }
   
   /**
@@ -434,8 +457,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private static class NavigationPanelChangeListener implements PropertyChangeListener {
     private final WeakReference<HomeComponent3D>  homeComponent3D;
 
-    public NavigationPanelChangeListener(HomeComponent3D homeComponent3D,
-                                         HomeController3D controller) {
+    public NavigationPanelChangeListener(HomeComponent3D homeComponent3D) {
       this.homeComponent3D = new WeakReference<HomeComponent3D>(homeComponent3D);
     }
     

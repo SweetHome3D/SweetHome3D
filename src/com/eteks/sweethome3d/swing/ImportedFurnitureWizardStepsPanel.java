@@ -26,6 +26,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -1486,10 +1487,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   private static class RotationPreviewComponent extends AbstractModelPreviewComponent {
     private JLabel   frontViewLabel;
+    private JPanel   frontViewPanel;
     private Canvas3D frontViewCanvas;
     private JLabel   sideViewLabel;
+    private JPanel   sideViewPanel;
     private Canvas3D sideViewCanvas;
     private JLabel   topViewLabel;
+    private JPanel   topViewPanel;
     private Canvas3D topViewCanvas;
     private JLabel   perspectiveViewLabel;
 
@@ -1506,20 +1510,19 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private void createComponents(UserPreferences preferences) {
       this.frontViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "frontViewLabel.text"));
-      Component3DManager canvas3DManager = Component3DManager.getInstance();
-      this.frontViewCanvas = canvas3DManager.getOnscreenCanvas3D();
+      this.frontViewPanel = new JPanel(new GridLayout());
       this.sideViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "sideViewLabel.text"));
-      this.sideViewCanvas = canvas3DManager.getOnscreenCanvas3D();
+      this.sideViewPanel = new JPanel(new GridLayout());
       this.topViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "topViewLabel.text"));
-      this.topViewCanvas = canvas3DManager.getOnscreenCanvas3D();
+      this.topViewPanel = new JPanel(new GridLayout());
       this.perspectiveViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "perspectiveViewLabel.text"));
       
       setBorder(null);
       // Add a hierarchy listener to link canvases to universe once this component is made visible 
-      addHierarchyListener();
+      addAncestorListener();
     }
 
     @Override
@@ -1528,21 +1531,35 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     }
 
     /**
-     * Adds a hierarchy listener to this component to manage canvases attachment to universe.  
+     * Adds an ancestor listener to this component to manage canvases attachment to universe.  
      */
-    private void addHierarchyListener() {
+    private void addAncestorListener() {
       addAncestorListener(new AncestorListener() {
-          public void ancestorAdded(AncestorEvent event) {
-            // Attach the 3 other canvases to super class universe with their own view
-            createView(0, 0, 1, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
-            createView(Locale.getDefault().equals(Locale.US) 
-                          ? -(float)Math.PI / 2 
+          public void ancestorAdded(AncestorEvent ev) {
+            if (frontViewCanvas == null) {
+              Component3DManager canvas3DManager = Component3DManager.getInstance();
+              GraphicsConfiguration configuration = ev.getAncestor().getGraphicsConfiguration();            
+              frontViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+              frontViewPanel.add(frontViewCanvas);
+              sideViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+              sideViewPanel.add(sideViewCanvas);
+              topViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+              topViewPanel.add(topViewCanvas);
+            }
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  // Attach the 3 other canvases to super class universe with their own view once main view is attached           
+                  createView(0, 0, 1, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
+                  createView(Locale.getDefault().equals(Locale.US) 
+                      ? -(float)Math.PI / 2 
                           : (float)Math.PI / 2, 
-                0, 1, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
-            createView(0, -(float)Math.PI / 2, 1, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
+                          0, 1, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
+                  createView(0, -(float)Math.PI / 2, 1, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
+                }
+              });
           }
           
-          public void ancestorRemoved(AncestorEvent event) {
+          public void ancestorRemoved(AncestorEvent ev) {
             // Detach the 3 canvases from their view
             frontViewCanvas.getView().removeCanvas3D(frontViewCanvas);
             sideViewCanvas.getView().removeCanvas3D(sideViewCanvas);
@@ -1550,18 +1567,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             // Super class did the remaining of clean up
           }
           
-          public void ancestorMoved(AncestorEvent event) {
+          public void ancestorMoved(AncestorEvent ev) {
           }        
         });
     }
     
     /**
-     * Returns a bordered panel that includes <code>canvas3D</code>.
+     * Returns a bordered panel that includes <code>component3D</code>.
      */
-    private JPanel getCanvas3DBorderedPanel(Canvas3D canvas3D) {
+    private JPanel getCanvas3DBorderedPanel(Component component3D) {
       JPanel canvasPanel = new JPanel(new GridLayout(1, 1));
-      canvasPanel.add(canvas3D);
-      canvas3D.setFocusable(false);      
+      canvasPanel.add(component3D);
+      component3D.setFocusable(false);      
       canvasPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));      
       return canvasPanel;
     }
@@ -1570,8 +1587,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
      * Layouts components. 
      */
     private void layoutComponents() {
-      // Remove default canvas 3D to put it in another place
-      Canvas3D defaultCanvas = getCanvas3D(); 
+      // Remove default component 3D to put it in another place
+      JComponent defaultCanvas = getComponent3D(); 
       remove(defaultCanvas);
       setLayout(new GridBagLayout());
       
@@ -1588,21 +1605,21 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         add(this.topViewLabel, new GridBagConstraints(
             1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getCanvas3DBorderedPanel(this.topViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.topViewPanel), new GridBagConstraints(
             1, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
         // Left view at bottom left
         add(this.sideViewLabel, new GridBagConstraints(
             0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getCanvas3DBorderedPanel(this.sideViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.sideViewPanel), new GridBagConstraints(
             0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
         // Front view at bottom right
         add(this.frontViewLabel, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getCanvas3DBorderedPanel(this.frontViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.frontViewPanel), new GridBagConstraints(
             1, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       } else {
@@ -1610,14 +1627,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         add(this.sideViewLabel, new GridBagConstraints(
             0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getCanvas3DBorderedPanel(this.sideViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.sideViewPanel), new GridBagConstraints(
             0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 5), 0, 0));
         // Front view at top right
         add(this.frontViewLabel, new GridBagConstraints(
             1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getCanvas3DBorderedPanel(this.frontViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.frontViewPanel), new GridBagConstraints(
             1, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
         // Default projection view at bottom left
@@ -1631,7 +1648,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         add(this.topViewLabel, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getCanvas3DBorderedPanel(this.topViewCanvas), new GridBagConstraints(
+        add(getCanvas3DBorderedPanel(this.topViewPanel), new GridBagConstraints(
             1, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       }

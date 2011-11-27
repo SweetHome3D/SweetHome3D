@@ -55,33 +55,9 @@ public class Component3DManager {
   // (use Object class to ensure Component3DManager class can run with Java 3D 1.3.1)
   private Object                 renderingErrorListener; 
   private Boolean                offScreenImageSupported;
-  private GraphicsConfiguration  configuration;
-
 
   private Component3DManager() {
-    if (!GraphicsEnvironment.isHeadless()) {
-      // Retrieve graphics configuration once 
-      GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
-      // Try to get antialiasing
-      template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-      
-      // From http://www.java.net/node/683852
-      // Check if the user has set the Java 3D stereo option.
-      String stereo = System.getProperty("j3d.stereo");
-      if (stereo != null) {
-        if ("REQUIRED".equals(stereo))
-          template.setStereo(GraphicsConfigTemplate.REQUIRED);
-        else if ("PREFERRED".equals(stereo))
-          template.setStereo(GraphicsConfigTemplate.PREFERRED);
-      }
-      
-      this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-              getDefaultScreenDevice().getBestConfiguration(template);
-      if (this.configuration == null) {
-        this.configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-            getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
-      }
-    } else {
+    if (GraphicsEnvironment.isHeadless()) {
       this.offScreenImageSupported = Boolean.FALSE;
     }
   }
@@ -156,19 +132,56 @@ public class Component3DManager {
 
   /**
    * Returns a new <code>canva3D</code> instance that will call <code>renderingObserver</code>
-   * methods during the rendering loop.
+   * methods during the rendering loop. The returned canvas 3D will be associated with the 
+   * graphics configuration of the default screen device.
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   private Canvas3D getCanvas3D(boolean offscreen,
                                final RenderingObserver renderingObserver) {
-    if (this.configuration == null) {
+    return getCanvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration(), 
+        offscreen, renderingObserver);
+  }
+  
+  /**
+   * Returns a new <code>canva3D</code> instance that will call <code>renderingObserver</code>
+   * methods during the rendering loop.
+   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
+   */
+  private Canvas3D getCanvas3D(GraphicsConfiguration deviceConfiguration,
+                               boolean offscreen,
+                               final RenderingObserver renderingObserver) {
+    GraphicsConfiguration configuration;
+    if (GraphicsEnvironment.isHeadless()) {
+      configuration = null;
+    } else {
+      // Retrieve graphics configuration once 
+      GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
+      // Try to get antialiasing
+      template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      
+      // From http://www.java.net/node/683852
+      // Check if the user has set the Java 3D stereo option.
+      String stereo = System.getProperty("j3d.stereo");
+      if (stereo != null) {
+        if ("REQUIRED".equals(stereo))
+          template.setStereo(GraphicsConfigTemplate.REQUIRED);
+        else if ("PREFERRED".equals(stereo))
+          template.setStereo(GraphicsConfigTemplate.PREFERRED);
+      }
+      
+      configuration = deviceConfiguration.getDevice().getBestConfiguration(template);
+      if (configuration == null) {
+        configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+      }
+    }
+    if (configuration == null) {
       throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
     }
     try {
       // Ensure unused canvases are freed
       System.gc();
       // Create a Java 3D canvas  
-      return new Canvas3D(this.configuration, offscreen) {
+      return new Canvas3D(configuration, offscreen) {
           @Override
           public void preRender() {
             if (renderingObserver != null) {
@@ -198,7 +211,8 @@ public class Component3DManager {
   }
   
   /**
-   * Returns a new on screen <code>canva3D</code> instance.
+   * Returns a new on screen <code>canva3D</code> instance. The returned canvas 3D will be associated 
+   * with the graphics configuration of the default screen device. 
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   public Canvas3D getOnscreenCanvas3D() {
@@ -207,7 +221,8 @@ public class Component3DManager {
   
   /**
    * Returns a new on screen <code>canva3D</code> instance which rendering will be observed
-   * with the given rendering observer.
+   * with the given rendering observer. The returned canvas 3D will be associated with the 
+   * graphics configuration of the default screen device. 
    * @param renderingObserver an observer of the 3D rendering process of the returned canvas.
    *            Caution: The methods of the observer will be called in 3D rendering loop thread. 
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
@@ -216,6 +231,18 @@ public class Component3DManager {
     return getCanvas3D(false, renderingObserver);
   }
   
+  /**
+   * Returns a new on screen <code>canva3D</code> instance which rendering will be observed
+   * with the given rendering observer.  
+   * @param renderingObserver an observer of the 3D rendering process of the returned canvas.
+   *            Caution: The methods of the observer will be called in 3D rendering loop thread. 
+   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
+   */
+  public Canvas3D getOnscreenCanvas3D(GraphicsConfiguration configuration, 
+                                      RenderingObserver renderingObserver) {
+    return getCanvas3D(configuration, false, renderingObserver);
+  }
+
   /**
    * Returns a new off screen <code>canva3D</code> at the given size. 
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
