@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
@@ -55,11 +56,40 @@ public class Component3DManager {
   // (use Object class to ensure Component3DManager class can run with Java 3D 1.3.1)
   private Object                 renderingErrorListener; 
   private Boolean                offScreenImageSupported;
+  private GraphicsConfiguration  defaultScreenConfiguration;
 
   private Component3DManager() {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (!GraphicsEnvironment.isHeadless()) {
+      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
+      GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+      this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
+      if (this.defaultScreenConfiguration == null) {
+        this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(new GraphicsConfigTemplate3D());
+      }
+    } else {
       this.offScreenImageSupported = Boolean.FALSE;
     }
+  }
+
+  /**
+   * Returns the template to configure the graphics of canvas 3D.
+   */
+  private GraphicsConfigTemplate3D createGraphicsConfigurationTemplate3D() {
+    // Retrieve graphics configuration once 
+    GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
+    // Try to get antialiasing
+    template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+    
+    // From http://www.java.net/node/683852
+    // Check if the user has set the Java 3D stereo option.
+    String stereo = System.getProperty("j3d.stereo");
+    if (stereo != null) {
+      if ("REQUIRED".equals(stereo))
+        template.setStereo(GraphicsConfigTemplate.REQUIRED);
+      else if ("PREFERRED".equals(stereo))
+        template.setStereo(GraphicsConfigTemplate.PREFERRED);
+    }
+    return template;
   }
   
   /**
@@ -132,18 +162,6 @@ public class Component3DManager {
 
   /**
    * Returns a new <code>canva3D</code> instance that will call <code>renderingObserver</code>
-   * methods during the rendering loop. The returned canvas 3D will be associated with the 
-   * graphics configuration of the default screen device.
-   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
-   */
-  private Canvas3D getCanvas3D(boolean offscreen,
-                               final RenderingObserver renderingObserver) {
-    return getCanvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration(), 
-        offscreen, renderingObserver);
-  }
-  
-  /**
-   * Returns a new <code>canva3D</code> instance that will call <code>renderingObserver</code>
    * methods during the rendering loop.
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
@@ -153,22 +171,10 @@ public class Component3DManager {
     GraphicsConfiguration configuration;
     if (GraphicsEnvironment.isHeadless()) {
       configuration = null;
+    } else if (deviceConfiguration == null) {
+      configuration = this.defaultScreenConfiguration;
     } else {
-      // Retrieve graphics configuration once 
-      GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
-      // Try to get antialiasing
-      template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-      
-      // From http://www.java.net/node/683852
-      // Check if the user has set the Java 3D stereo option.
-      String stereo = System.getProperty("j3d.stereo");
-      if (stereo != null) {
-        if ("REQUIRED".equals(stereo))
-          template.setStereo(GraphicsConfigTemplate.REQUIRED);
-        else if ("PREFERRED".equals(stereo))
-          template.setStereo(GraphicsConfigTemplate.PREFERRED);
-      }
-      
+      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();      
       configuration = deviceConfiguration.getDevice().getBestConfiguration(template);
       if (configuration == null) {
         configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
@@ -209,7 +215,7 @@ public class Component3DManager {
       throw ex2;
     }
   }
-  
+
   /**
    * Returns a new on screen <code>canva3D</code> instance. The returned canvas 3D will be associated 
    * with the graphics configuration of the default screen device. 
@@ -228,7 +234,7 @@ public class Component3DManager {
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   public Canvas3D getOnscreenCanvas3D(RenderingObserver renderingObserver) {
-    return getCanvas3D(false, renderingObserver);
+    return getCanvas3D(null, false, renderingObserver);
   }
   
   /**
@@ -238,9 +244,9 @@ public class Component3DManager {
    *            Caution: The methods of the observer will be called in 3D rendering loop thread. 
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
-  public Canvas3D getOnscreenCanvas3D(GraphicsConfiguration configuration, 
+  public Canvas3D getOnscreenCanvas3D(GraphicsConfiguration deviceConfiguration, 
                                       RenderingObserver renderingObserver) {
-    return getCanvas3D(configuration, false, renderingObserver);
+    return getCanvas3D(deviceConfiguration, false, renderingObserver);
   }
 
   /**
@@ -249,7 +255,7 @@ public class Component3DManager {
    *    To avoid this exception, call {@link #isOffScreenImageSupported() isOffScreenImageSupported()} first.
    */
   public Canvas3D getOffScreenCanvas3D(int width, int height) {
-    Canvas3D offScreenCanvas = getCanvas3D(true, null);
+    Canvas3D offScreenCanvas = getCanvas3D(null, true, null);
     // Configure canvas 3D for offscreen
     Screen3D screen3D = offScreenCanvas.getScreen3D();
     screen3D.setSize(width, height);
