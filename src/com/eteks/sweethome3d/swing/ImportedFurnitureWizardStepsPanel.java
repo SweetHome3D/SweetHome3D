@@ -1538,10 +1538,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private void createOtherViewsCanvas3D(GraphicsConfiguration configuration) {
       Component3DManager canvas3DManager = Component3DManager.getInstance();
       frontViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      Color backgroundColor = new Color(0xE5E5E5);
+      frontViewCanvas.setBackground(backgroundColor);
       frontViewPanel.add(frontViewCanvas);
       sideViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      sideViewCanvas.setBackground(backgroundColor);
       sideViewPanel.add(sideViewCanvas);
       topViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      topViewCanvas.setBackground(backgroundColor);
       topViewPanel.add(topViewCanvas);
     }
 

@@ -112,6 +112,7 @@ import javax.swing.KeyStroke;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
@@ -375,6 +376,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }
             });
     }
+    this.component3D.setBackground(Color.LIGHT_GRAY);
+
     JPanel canvasPanel = new JPanel(new LayoutManager() {
         public void addLayoutComponent(String name, Component comp) {
         }

@@ -197,6 +197,7 @@ public class ModelPreviewComponent extends JComponent {
               ModelPreviewComponent.this.canvas3DSwapped();
             }            
           });
+    this.canvas3D.setBackground(new Color(0xE5E5E5));
 
     // Layout canvas3D
     this.canvasPanel.setLayout(new GridLayout());
