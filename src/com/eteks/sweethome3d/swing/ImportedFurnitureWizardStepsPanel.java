@@ -27,6 +27,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -1502,6 +1503,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addRotationListener(controller);
       createComponents(preferences);
       layoutComponents();
+      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (graphicsEnvironment.getScreenDevices().length == 1) {
+        // If only one screen device is available, create canvases 3D immediately, 
+        // otherwise create it once the screen device of the parent is known
+        createOtherViewsCanvas3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration());
+      }
     }
 
     /**
@@ -1525,6 +1532,19 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addAncestorListener();
     }
 
+    /**
+     * Creates the 3D canvases for front, side and top view.
+     */
+    private void createOtherViewsCanvas3D(GraphicsConfiguration configuration) {
+      Component3DManager canvas3DManager = Component3DManager.getInstance();
+      frontViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      frontViewPanel.add(frontViewCanvas);
+      sideViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      sideViewPanel.add(sideViewCanvas);
+      topViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
+      topViewPanel.add(topViewCanvas);
+    }
+
     @Override
     public Dimension getPreferredSize() {
       return new Dimension(200, 204 + this.frontViewLabel.getPreferredSize().height * 2);
@@ -1537,14 +1557,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addAncestorListener(new AncestorListener() {
           public void ancestorAdded(AncestorEvent ev) {
             if (frontViewCanvas == null) {
-              Component3DManager canvas3DManager = Component3DManager.getInstance();
-              GraphicsConfiguration configuration = ev.getAncestor().getGraphicsConfiguration();            
-              frontViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
-              frontViewPanel.add(frontViewCanvas);
-              sideViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
-              sideViewPanel.add(sideViewCanvas);
-              topViewCanvas = canvas3DManager.getOnscreenCanvas3D(configuration, null);
-              topViewPanel.add(topViewCanvas);
+              createOtherViewsCanvas3D(ev.getAncestor().getGraphicsConfiguration());
             }
             EventQueue.invokeLater(new Runnable() {
                 public void run() {

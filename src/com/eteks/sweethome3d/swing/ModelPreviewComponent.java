@@ -27,6 +27,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -121,7 +122,14 @@ public class ModelPreviewComponent extends JComponent {
     this.canvasPanel = new JPanel();
     setLayout(new BorderLayout());
     add(this.canvasPanel);
-    
+
+    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (graphicsEnvironment.getScreenDevices().length == 1) {
+      // If only one screen device is available, create canvas 3D immediately, 
+      // otherwise create it once the screen device of the parent is known
+      createCanvas3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), pitchAndScaleChangeSupported);
+    }
+
     // Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
     addAncestorListener(pitchAndScaleChangeSupported);
