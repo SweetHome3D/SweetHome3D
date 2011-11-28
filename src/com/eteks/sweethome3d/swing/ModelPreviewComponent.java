@@ -203,7 +203,6 @@ public class ModelPreviewComponent extends JComponent {
     this.canvasPanel.add(this.canvas3D);
     this.canvas3D.setFocusable(false);      
     addMouseListeners(this.canvas3D, pitchAndScaleChangeSupported);
-    revalidate();
   }
 
   /**
@@ -305,6 +304,8 @@ public class ModelPreviewComponent extends JComponent {
     // Link scene to universe
     this.universe.addBranchGraph(this.sceneTree);
 
+    revalidate();
+    repaint();
     if (OperatingSystem.isMacOSX()) {
       final Component root = SwingUtilities.getRoot(this);
       EventQueue.invokeLater(new Runnable() {

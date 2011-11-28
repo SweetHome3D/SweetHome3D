@@ -1568,6 +1568,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                           : (float)Math.PI / 2, 
                           0, 1, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
                   createView(0, -(float)Math.PI / 2, 1, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
+                  revalidate();
+                  repaint();
                 }
               });
           }
