@@ -30,6 +30,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -275,6 +276,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Let this component manage focus
       setFocusable(true);
       SwingTools.installFocusBorder(this);
+    }
+
+    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (graphicsEnvironment.getScreenDevices().length == 1) {
+      // If only one screen device is available, create canvas 3D immediately, 
+      // otherwise create it once the screen device of the parent is known
+      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), preferences, controller);
     }
 
     // Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
