@@ -171,7 +171,8 @@ public class Component3DManager {
     GraphicsConfiguration configuration;
     if (GraphicsEnvironment.isHeadless()) {
       configuration = null;
-    } else if (deviceConfiguration == null) {
+    } else if (deviceConfiguration == null
+               || deviceConfiguration.getDevice() == this.defaultScreenConfiguration.getDevice()) {
       configuration = this.defaultScreenConfiguration;
     } else {
       GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();      
