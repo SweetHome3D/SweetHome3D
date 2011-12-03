@@ -601,8 +601,9 @@ public class ModelManager {
         try {
           // Check magic number 0x4D4D
           InputStream in = url.openStream();
-          if (in.read() != 0x4D
-              && in.read() != 0x4D) {
+          int b1 = in.read();
+          int b2 = in.read();
+          if (b1 != 0x4D || b2 != 0x4D) {
             throw new IncorrectFormatException("Bad magic number");
           }
           in.close();
