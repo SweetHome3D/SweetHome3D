@@ -655,14 +655,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       // Try first to interpret contentFile as an absolute URL 
       // or an URL relative to resourceUrlBase if it's not null
       URL url;
-      if (resourceUrlBase != null) {
-        if (contentFile.indexOf('!') < 0 || contentFile.startsWith("jar:")) {
-          url = new URL(resourceUrlBase, contentFile);
-        } else {
-          url = new URL("jar:" + new URL(resourceUrlBase, contentFile));
-        }
-      } else {
+      if (resourceUrlBase == null) {
         url = new URL(contentFile);
+      } else {
+        url = contentFile.startsWith("?") 
+            ? new URL(resourceUrlBase + contentFile)
+            : new URL(resourceUrlBase, contentFile);
+        if (contentFile.indexOf('!') >= 0 && !contentFile.startsWith("jar:")) {
+          url = new URL("jar:" + url);
+        }
       }
       return new URLContent(url);
     } catch (MalformedURLException ex) {
