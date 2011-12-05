@@ -71,6 +71,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String WALL_PATTERN                     = "wallPattern";
   private static final String NEW_WALL_HEIGHT                  = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS               = "newWallThickness";
+  private static final String NEW_FLOOR_THICKNESS              = "newFloorThickness";
   private static final String RECENT_HOMES                     = "recentHomes#";
   private static final String IGNORED_ACTION_TIP               = "ignoredActionTip#";
 
@@ -203,6 +204,8 @@ public class AppletUserPreferences extends UserPreferences {
             String.valueOf(defaultPreferences.getNewWallThickness()))));
     setNewWallHeight(Float.parseFloat(properties.getProperty(NEW_WALL_HEIGHT,
         String.valueOf(defaultPreferences.getNewWallHeight()))));    
+    setNewFloorThickness(Float.parseFloat(properties.getProperty(NEW_FLOOR_THICKNESS, 
+        String.valueOf(defaultPreferences.getNewFloorThickness()))));
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
@@ -299,6 +302,7 @@ public class AppletUserPreferences extends UserPreferences {
     properties.setProperty(WALL_PATTERN, getWallPattern().getName());
     properties.setProperty(NEW_WALL_THICKNESS, String.valueOf(getNewWallThickness()));   
     properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
+    properties.setProperty(NEW_FLOOR_THICKNESS, String.valueOf(getNewFloorThickness()));   
     // Write recent homes list
     int i = 1;
     for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
