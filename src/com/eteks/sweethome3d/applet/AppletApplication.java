@@ -127,12 +127,16 @@ public class AppletApplication extends HomeApplication {
 
     URL codeBase = applet.getCodeBase();
 
-    // Force offscreen in 3D view under Plugin 2 and Mac OS X
     try {
+      // Force offscreen in 3D view under Plugin 2 and Mac OS X
+      boolean plugin2 = applet.getAppletContext() != null
+                    && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager");
       System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
-          String.valueOf(OperatingSystem.isMacOSX()            
-              && applet.getAppletContext() != null
-              && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
+          String.valueOf(OperatingSystem.isMacOSX() && plugin2));
+      // Use DnD management without transfer handler under Plugin 2 and Mac OS X or Linux
+      System.setProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler", 
+          String.valueOf(OperatingSystem.isMacOSX() && plugin2 
+                        || OperatingSystem.isLinux()));
     } catch (AccessControlException ex) {
       // Unsigned applet
     }

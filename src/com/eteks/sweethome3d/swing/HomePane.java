@@ -1980,7 +1980,7 @@ public class HomePane extends JRootPane implements HomeView {
     boolean dragAndDropWithTransferHandlerSupported;
     try {
       // Don't use transfer handlers for drag and drop with Plugin2 under Mac OS X or when in an unsigned applet
-      dragAndDropWithTransferHandlerSupported = !Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView");
+      dragAndDropWithTransferHandlerSupported = !Boolean.getBoolean("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler");
     } catch (AccessControlException ex1) {
       dragAndDropWithTransferHandlerSupported = false;
     }
