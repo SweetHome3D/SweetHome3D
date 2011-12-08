@@ -133,10 +133,10 @@ public class AppletApplication extends HomeApplication {
                     && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager");
       System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
           String.valueOf(OperatingSystem.isMacOSX() && plugin2));
-      // Use DnD management without transfer handler under Plugin 2 and Mac OS X or Linux
+      // Use DnD management without transfer handler under Plugin 2 + Mac OS X or OpenJDK + Linux 
       System.setProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler", 
           String.valueOf(OperatingSystem.isMacOSX() && plugin2 
-                        || OperatingSystem.isLinux()));
+                        || (OperatingSystem.isLinux() && System.getProperty("java.runtime.name", "").startsWith("OpenJDK"))));
     } catch (AccessControlException ex) {
       // Unsigned applet
     }
