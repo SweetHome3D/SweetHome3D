@@ -68,6 +68,7 @@ public class PhotoController implements Controller {
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.view3DAspectRatio = 1;
     
     this.cameraChangeListener = new CameraChangeListener(this);
     home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
@@ -196,7 +197,6 @@ public class PhotoController implements Controller {
     setTime(this.home.getCamera().getTime());
     setLens(this.home.getCamera().getLens());
     setCeilingLightColor(homeEnvironment.getCeillingLightColor());
-    this.view3DAspectRatio = 1;
   }
   
   /**
@@ -209,7 +209,9 @@ public class PhotoController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, aspectRatio);
       this.home.getEnvironment().setPhotoAspectRatio(this.aspectRatio);
       if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
-        setHeight(Math.round(width / this.view3DAspectRatio), false);
+        if (this.view3DAspectRatio != Float.POSITIVE_INFINITY) {
+          setHeight(Math.round(width / this.view3DAspectRatio), false);
+        }
       } else if (this.aspectRatio.getValue() != null) {
         setHeight(Math.round(width / this.aspectRatio.getValue()), false);
       }
@@ -237,7 +239,9 @@ public class PhotoController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
       if (updateHeight) {
         if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
-          setHeight(Math.round(width / this.view3DAspectRatio), false);
+          if (this.view3DAspectRatio != Float.POSITIVE_INFINITY) {
+            setHeight(Math.round(width / this.view3DAspectRatio), false);
+          }
         } else if (this.aspectRatio.getValue() != null) {
           setHeight(Math.round(width / this.aspectRatio.getValue()), false);
         }
@@ -267,7 +271,9 @@ public class PhotoController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
       if (updateWidth) {
         if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
-          setWidth(Math.round(height * this.view3DAspectRatio), false);
+          if (this.view3DAspectRatio != Float.POSITIVE_INFINITY) {
+            setWidth(Math.round(height * this.view3DAspectRatio), false);
+          }
         } else if (this.aspectRatio.getValue() != null) {
           setWidth(Math.round(height * this.aspectRatio.getValue()), false);
         }
@@ -380,7 +386,8 @@ public class PhotoController implements Controller {
       float oldAspectRatio = this.view3DAspectRatio;
       this.view3DAspectRatio = view3DAspectRatio;
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, view3DAspectRatio);
-      if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
+      if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO
+          && this.view3DAspectRatio != Float.POSITIVE_INFINITY) {
         setHeight(Math.round(this.width / this.view3DAspectRatio), false);
       }
     }
