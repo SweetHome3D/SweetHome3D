@@ -726,8 +726,8 @@ public class OBJWriter extends FilterWriter {
   private TexCoord2f generateTextureCoordinates(float x, float y, float z, 
                                                 Vector4f planeS, 
                                                 Vector4f planeT) {
-    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z, 
-        x * planeT.x + y * planeT.y + z * planeT.z);
+    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z + planeS.w, 
+        x * planeT.x + y * planeT.y + z * planeT.z + planeT.w);
   }
 
   /**

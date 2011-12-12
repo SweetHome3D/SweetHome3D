@@ -1002,8 +1002,8 @@ public class PhotoRenderer {
   private TexCoord2f generateTextureCoordinates(float x, float y, float z, 
                                                 Vector4f planeS, 
                                                 Vector4f planeT) {
-    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z, 
-        x * planeT.x + y * planeT.y + z * planeT.z);
+    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z + planeS.w, 
+        x * planeT.x + y * planeT.y + z * planeT.z + planeT.w);
   }
 
   /**
@@ -1340,8 +1340,8 @@ public class PhotoRenderer {
 
     public synchronized void imageFill(int x, int y, int width, int height, Color c, float alpha) {
       int rgba = c.copy().mul(1.0f / alpha).toNonLinear().toRGBA(alpha);
-      for (int j = 0, index = 0; j < height; j++) {
-        for (int i = 0; i < width; i++, index++) {
+      for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
           this.image.setRGB(x + i, y + j, rgba);
         }
       }

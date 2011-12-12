@@ -560,6 +560,10 @@ public class Wall3D extends Object3DBranch {
               firstHorizontalTextureCoords = pointUCoordinates [index];
               secondHorizontalTextureCoords = pointUCoordinates [nextIndex];
             }
+            if (wallSide == LEFT_WALL_SIDE && texture.isLeftToRightOriented()) {
+              firstHorizontalTextureCoords = -firstHorizontalTextureCoords;
+              secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
+            }
             textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
             textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [nextIndex].y / texture.getHeight());

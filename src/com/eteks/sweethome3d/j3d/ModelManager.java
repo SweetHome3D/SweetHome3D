@@ -204,6 +204,13 @@ public class ModelManager {
   }
   
   /**
+   * Returns the minimum size of a model.
+   */
+  float getMinimumSize() {
+    return MINIMUM_SIZE;
+  }
+  
+  /**
    * Returns the size of 3D shapes of <code>node</code>.
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
@@ -225,9 +232,9 @@ public class ModelManager {
     bounds.getLower(lower);
     Point3d upper = new Point3d();
     bounds.getUpper(upper);
-    return new Vector3f(Math.max(MINIMUM_SIZE, (float)(upper.x - lower.x)), 
-        Math.max(MINIMUM_SIZE, (float)(upper.y - lower.y)), 
-        Math.max(MINIMUM_SIZE, (float)(upper.z - lower.z)));
+    return new Vector3f(Math.max(getMinimumSize(), (float)(upper.x - lower.x)), 
+        Math.max(getMinimumSize(), (float)(upper.y - lower.y)), 
+        Math.max(getMinimumSize(), (float)(upper.z - lower.z)));
   }
   
   /**
@@ -426,9 +433,9 @@ public class ModelManager {
     // Scale model to make it fill a 1 unit wide box
     Transform3D scaleOneTransform = new Transform3D();
     scaleOneTransform.setScale (
-        new Vector3d(width / Math.max(MINIMUM_SIZE, upper.x -lower.x), 
-            width / Math.max(MINIMUM_SIZE, upper.y - lower.y), 
-            width / Math.max(MINIMUM_SIZE, upper.z - lower.z)));
+        new Vector3d(width / Math.max(getMinimumSize(), upper.x -lower.x), 
+            width / Math.max(getMinimumSize(), upper.y - lower.y), 
+            width / Math.max(getMinimumSize(), upper.z - lower.z)));
     scaleOneTransform.mul(modelTransform);
     return scaleOneTransform;
   }
