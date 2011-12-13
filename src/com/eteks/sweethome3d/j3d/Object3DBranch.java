@@ -118,8 +118,12 @@ public abstract class Object3DBranch extends BranchGroup {
         pathParser.setPathHandler(pathProducer);
         pathParser.parse(svgPathShape);
         shape = pathProducer.getShape();
+      } catch (LinkageError ex) {
+        // Fallback to default square shape if batik classes aren't in classpath
       } catch (ParseException ex) {
-        // Fallback to default square shape
+        // Fallback to default square shape if shape is incorrect
+      }
+      if (shape == null) {
         shape = new Rectangle2D.Float(0, 0, 1, 1);
       }
       parsedShapes.put(svgPathShape, shape);

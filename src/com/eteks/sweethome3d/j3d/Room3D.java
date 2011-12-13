@@ -217,29 +217,29 @@ public class Room3D extends Object3DBranch {
           Shape shape = parseShape(staircase.getStaircaseCutOutShape());
           Area staircaseArea = new Area(shape);
           if (staircase.isModelMirrored()) {
-            // As applying a -1 scale transform reverses the holes / non holes order of the points, 
-            // we have to create a shape by parsing points
-           GeneralPath mirrorPath = new GeneralPath();
-           float [] point = new float[6];
-           for (PathIterator it = staircaseArea.getPathIterator(null); !it.isDone(); it.next()) {
-             switch (it.currentSegment(point)) {
-               case PathIterator.SEG_MOVETO :
-                 mirrorPath.moveTo(1 - point[0], point[1]);
-                 break;
-               case PathIterator.SEG_LINETO : 
-                 mirrorPath.lineTo(1 - point[0], point[1]);
-                 break;
-               case PathIterator.SEG_QUADTO : 
-                 mirrorPath.quadTo(1 - point[0], point[1], 1 - point[2], point[3]);
-                 break;
-               case PathIterator.SEG_CUBICTO : 
-                 mirrorPath.curveTo(1 - point[0], point[1], 1 - point[2], point[3], 1 - point[4], point[5]);
-                 break;
-               case PathIterator.SEG_CLOSE :
-                 mirrorPath.closePath();
-                 break;
-             }
-           }
+            // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
+            // we have to create a mirrored shape by parsing points
+            GeneralPath mirrorPath = new GeneralPath();
+            float [] point = new float[6];
+            for (PathIterator it = staircaseArea.getPathIterator(null); !it.isDone(); it.next()) {
+              switch (it.currentSegment(point)) {
+                case PathIterator.SEG_MOVETO :
+                  mirrorPath.moveTo(1 - point[0], point[1]);
+                  break;
+                case PathIterator.SEG_LINETO : 
+                  mirrorPath.lineTo(1 - point[0], point[1]);
+                  break;
+                case PathIterator.SEG_QUADTO : 
+                  mirrorPath.quadTo(1 - point[0], point[1], 1 - point[2], point[3]);
+                  break;
+                case PathIterator.SEG_CUBICTO : 
+                  mirrorPath.curveTo(1 - point[0], point[1], 1 - point[2], point[3], 1 - point[4], point[5]);
+                  break;
+                case PathIterator.SEG_CLOSE :
+                  mirrorPath.closePath();
+                  break;
+              }
+            }
             staircaseArea = new Area(mirrorPath);
           }
           AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
@@ -479,6 +479,7 @@ public class Room3D extends Object3DBranch {
         if (piece instanceof HomeFurnitureGroup) {
           visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel));
         } else if (piece.getStaircaseCutOutShape() != null
+            && !"false".equalsIgnoreCase(piece.getStaircaseCutOutShape())
             && ((roomPart == FLOOR_PART 
                     && piece.getGroundElevation() < roomLevel.getElevation()
                     && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation()
