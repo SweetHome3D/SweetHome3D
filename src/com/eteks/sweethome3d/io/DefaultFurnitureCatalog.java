@@ -195,7 +195,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      * The key for the shape used to cut out upper levels when they intersect with a piece   
      * like a staircase (optional). This shape should be defined with the syntax of 
      * the d attribute of a <a href="http://www.w3.org/TR/SVG/paths.html">SVG path element</a>
-     * and should fit in a 1 unit wide square which will be scaled to the real size of the piece. 
+     * and should fit in a square spreading from (0, 0) to (1, 1) which will be scaled afterwards 
+     * to the real size of the piece. 
      */
     STAIRCASE_CUT_OUT_SHAPE("staircaseCutOutShape"),
     /**
