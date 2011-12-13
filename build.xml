@@ -395,11 +395,11 @@
         <include name="COPYING.TXT"/>
         <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
+        <include name="THIRDPARTY-LICENSE-BATIK.TXT"/>
         <include name="THIRDPARTY-LICENSE-ITEXT.TXT"/>
         <include name="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"/>
         <include name="THIRDPARTY-LICENSE-SUNFLOW.TXT"/>
         <include name="THIRDPARTY-LICENSE-JMF.HTML"/>
-        <include name="THIRDPARTY-LICENSE-BATIK.TXT"/>
         <include name="THIRDPARTY-LICENSE-TANGO.TXT"/>
         <include name="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"/>
       </fileset>
@@ -438,11 +438,11 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/windows/tmp"/>
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/windows/tmp"/>
-    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/windows/tmp"/>
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/windows/tmp" />
@@ -562,10 +562,10 @@
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}"/>
-    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/macosx/SweetHome3D-${version}" />
  
@@ -616,11 +616,11 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/i386/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/i386/SweetHome3D-${version}"/>
-    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/i386/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/i386/SweetHome3D-${version}" />
 
@@ -694,11 +694,11 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/x64/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/x64/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/x64/SweetHome3D-${version}"/>
-    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/x64/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/x64/SweetHome3D-${version}" />
 
