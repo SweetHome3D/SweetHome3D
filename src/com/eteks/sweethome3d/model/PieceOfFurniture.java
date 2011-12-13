@@ -92,6 +92,13 @@ public interface PieceOfFurniture {
   public float [][] getModelRotation();
   
   /**
+   * Returns the shape used to cut out upper levels when they intersect with the piece   
+   * like a staircase.
+   * @since 3.4
+   */
+  public String getStaircaseCutOutShape();
+  
+  /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.
    */

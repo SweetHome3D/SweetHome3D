@@ -27,8 +27,6 @@ import java.math.BigDecimal;
  * @since  1.7
  */
 public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements DoorOrWindow {
-  private static final long serialVersionUID = 1L;
-
   private final float   wallThickness;
   private final float   wallDistance;
   private final Sash [] sashes;

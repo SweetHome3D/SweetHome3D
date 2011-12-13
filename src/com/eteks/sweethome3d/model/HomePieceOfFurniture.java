@@ -231,6 +231,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private HomeTexture            texture;
   private Float                  shininess;
   private float [][]             modelRotation;
+  private String                 staircaseCutOutShape;
   private boolean                backFaceShown;
   private boolean                resizable;
   private boolean                deformable;
@@ -246,6 +247,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
+
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -265,6 +267,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.doorOrWindow = piece.isDoorOrWindow();
     this.color = piece.getColor();
     this.modelRotation = piece.getModelRotation();
+    this.staircaseCutOutShape = piece.getStaircaseCutOutShape();
     this.backFaceShown = piece.isBackFaceShown();
     this.resizable = piece.isResizable();
     this.deformable = piece.isDeformable();
@@ -858,6 +861,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return new float [][] {{this.modelRotation[0][0], this.modelRotation[0][1], this.modelRotation[0][2]},
                            {this.modelRotation[1][0], this.modelRotation[1][1], this.modelRotation[1][2]},
                            {this.modelRotation[2][0], this.modelRotation[2][1], this.modelRotation[2][2]}};
+  }
+
+  /**
+   * Returns the shape used to cut out upper levels when they intersect with the piece   
+   * like a staircase.
+   * @since 3.4
+   */
+  public String getStaircaseCutOutShape() {
+    return this.staircaseCutOutShape;
   }
 
   /**

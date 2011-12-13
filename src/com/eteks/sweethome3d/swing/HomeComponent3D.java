@@ -1745,30 +1745,32 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group group) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-        String propertyName = ev.getPropertyName();
-        if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.X.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
-            || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
-              HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
-              updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
-              // If piece is or contains a door or a window, update walls that intersect with piece
-              if (containsDoorsAndWindows(updatedPiece)) {
-                updateObjects(home.getWalls());
-              }
-              if (updatedPiece.getLevel() != null && updatedPiece.getLevel().getElevation() < 0) {
-                groundChangeListener.propertyChange(null);
-              }
+          HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
+          String propertyName = ev.getPropertyName();
+          if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
+            updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
+            // If piece is or contains a door or a window, update walls that intersect with piece
+            if (containsDoorsAndWindows(updatedPiece)) {
+              updateObjects(home.getWalls());
+            } else if (containsStaircases(updatedPiece)) {
+              updateObjects(home.getRooms());
+            }
+            if (updatedPiece.getLevel() != null && updatedPiece.getLevel().getElevation() < 0) {
+              groundChangeListener.propertyChange(null);
+            }
+          } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)) {
+            updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           }
         }
       };
@@ -1791,6 +1793,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           // If piece is or contains a door or a window, update walls that intersect with piece
           if (containsDoorsAndWindows(piece)) {
             updateObjects(home.getWalls());
+          } else if (containsStaircases(piece)) {
+            updateObjects(home.getRooms());
           }
           groundChangeListener.propertyChange(null);
         }
@@ -1811,6 +1815,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       return false;
     } else {
       return piece.isDoorOrWindow();
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>piece</code> is or contains a staircase
+   * with a top cut out shape.  
+   */
+  private boolean containsStaircases(HomePieceOfFurniture piece) {
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        if (containsStaircases(groupPiece)) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return piece.getStaircaseCutOutShape() != null;
     }
   }
   

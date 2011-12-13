@@ -19,7 +19,10 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -42,6 +45,8 @@ import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
@@ -169,6 +174,7 @@ public class Room3D extends Object3DBranch {
    */
   private Geometry [] createRoomGeometries(int roomPart, HomeTexture texture) {
     Room room = (Room)getUserData();
+    Level roomLevel = room.getLevel();
     float [][] points = room.getPoints();
     if ((roomPart == FLOOR_PART && room.isFloorVisible()
          || roomPart == CEILING_PART && room.isCeilingVisible())
@@ -182,7 +188,18 @@ public class Room3D extends Object3DBranch {
           levelRooms.add(homeRoom);
         }
       }
-      if (!room.isSingular() || levelRooms.get(levelRooms.size() - 1) != room) {        
+      
+      List<HomePieceOfFurniture> visibleStaircases;
+      if (roomLevel == null
+          || roomPart == CEILING_PART
+              && isLastLevel(roomLevel)) {
+        visibleStaircases = Collections.emptyList();
+      } else {
+        visibleStaircases = getVisibleStaircases(this.home.getFurniture(), roomPart, roomLevel);
+      }
+      if (!room.isSingular() 
+          || levelRooms.get(levelRooms.size() - 1) != room
+          || visibleStaircases.size() > 0) {        
         Area roomArea = new Area(getShape(points));
         if (levelRooms.contains(room)) {
           // Remove other rooms surface that may overlap the current room
@@ -194,13 +211,54 @@ public class Room3D extends Object3DBranch {
             }
           }
         }
+        
+        // Remove from room area all the staircases that intersect it
+        for (HomePieceOfFurniture staircase : visibleStaircases) {
+          Shape shape = parseShape(staircase.getStaircaseCutOutShape());
+          Area staircaseArea = new Area(shape);
+          if (staircase.isModelMirrored()) {
+            // As applying a -1 scale transform reverses the holes / non holes order of the points, 
+            // we have to create a shape by parsing points
+           GeneralPath mirrorPath = new GeneralPath();
+           float [] point = new float[6];
+           for (PathIterator it = staircaseArea.getPathIterator(null); !it.isDone(); it.next()) {
+             switch (it.currentSegment(point)) {
+               case PathIterator.SEG_MOVETO :
+                 mirrorPath.moveTo(1 - point[0], point[1]);
+                 break;
+               case PathIterator.SEG_LINETO : 
+                 mirrorPath.lineTo(1 - point[0], point[1]);
+                 break;
+               case PathIterator.SEG_QUADTO : 
+                 mirrorPath.quadTo(1 - point[0], point[1], 1 - point[2], point[3]);
+                 break;
+               case PathIterator.SEG_CUBICTO : 
+                 mirrorPath.curveTo(1 - point[0], point[1], 1 - point[2], point[3], 1 - point[4], point[5]);
+                 break;
+               case PathIterator.SEG_CLOSE :
+                 mirrorPath.closePath();
+                 break;
+             }
+           }
+            staircaseArea = new Area(mirrorPath);
+          }
+          AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
+              staircase.getX() - staircase.getWidth() / 2, 
+              staircase.getY() - staircase.getDepth() / 2);
+          staircaseTransform.concatenate(AffineTransform.getRotateInstance(staircase.getAngle(),
+              staircase.getWidth() / 2, staircase.getDepth() / 2));
+          staircaseTransform.concatenate(AffineTransform.getScaleInstance(staircase.getWidth(), staircase.getDepth()));
+          staircaseArea.transform(staircaseTransform);
+          roomArea.subtract(staircaseArea);
+        }
+        
         // Retrieve the points of the different polygons 
         // and reverse their points order if necessary
         List<float []> currentPathPoints = new ArrayList<float[]>();
         roomPoints = new ArrayList<float[][]>();
         float [] previousRoomPoint = null;
         int i = 0;
-        for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
+        for (PathIterator it = roomArea.getPathIterator(null, 1); !it.isDone(); it.next()) {
           float [] roomPoint = new float[2];
           switch (it.currentSegment(roomPoint)) {
             case PathIterator.SEG_MOVETO :
@@ -247,7 +305,6 @@ public class Room3D extends Object3DBranch {
               previousRoomPoint = null;
               break;
           }
-          it.next();        
         }
       } else {
         boolean clockwise = room.isClockwise();
@@ -261,7 +318,6 @@ public class Room3D extends Object3DBranch {
       
       Geometry [] geometries = new Geometry [roomPoints.size()];
       float roomElevation;
-      Level roomLevel = room.getLevel();
       if (roomLevel != null) {
         roomElevation = roomLevel.getElevation();
       } else {
@@ -277,15 +333,20 @@ public class Room3D extends Object3DBranch {
         if (geometryHoles == null) {
           geometryHoles = Collections.emptyList();
         }
+        int geometryHolesPointCount = 0;
+        for (float [][] geometryHole : geometryHoles) {
+          geometryHolesPointCount += geometryHole.length;
+        }
         
-        int [] contourCounts = new int [(computeFloorBorder ? geometryPoints.length : 0) + 1];
+        int [] contourCounts = new int [(computeFloorBorder ? geometryPoints.length + geometryHolesPointCount : 0) + 1];
         int [] stripCounts = new int [contourCounts.length + geometryHoles.size()];
         int j = 0;
         int vertexCount = geometryPoints.length;
         if (computeFloorBorder) {
           vertexCount *= 5;
-          Arrays.fill(contourCounts, 0, geometryPoints.length, 1);
-          Arrays.fill(stripCounts, 0, j = geometryPoints.length, 4);
+          vertexCount += geometryHolesPointCount * 4;
+          Arrays.fill(contourCounts, 0, j = geometryPoints.length + geometryHolesPointCount, 1);
+          Arrays.fill(stripCounts, 0, j, 4);
         }
         contourCounts [contourCounts.length - 1] = 1 + geometryHoles.size();
         stripCounts [j++] = geometryPoints.length;
@@ -298,14 +359,27 @@ public class Room3D extends Object3DBranch {
         Point3f [] coords = new Point3f [vertexCount];
         if (computeFloorBorder) {
           // Compute room borders coordinates
+          float ceilingElevation = roomElevation - roomLevel.getFloorThickness();
           for (int k = 0; k < geometryPoints.length; k++) {
             coords [j++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
-            coords [j++] = new Point3f(geometryPoints [k][0], roomElevation - roomLevel.getFloorThickness(), geometryPoints [k][1]);
+            coords [j++] = new Point3f(geometryPoints [k][0], ceilingElevation, geometryPoints [k][1]);
             int nextPoint = k < geometryPoints.length - 1  
                 ? k + 1
                 : 0;
-            coords [j++] = new Point3f(geometryPoints [nextPoint][0], roomElevation - roomLevel.getFloorThickness(), geometryPoints [nextPoint][1]);
+            coords [j++] = new Point3f(geometryPoints [nextPoint][0], ceilingElevation, geometryPoints [nextPoint][1]);
             coords [j++] = new Point3f(geometryPoints [nextPoint][0], roomElevation, geometryPoints [nextPoint][1]);
+          }
+          // Compute holes borders coordinates
+          for (float [][] geometryHole : geometryHoles) {
+            for (int k = 0; k < geometryHole.length; k++) {
+              coords [j++] = new Point3f(geometryHole [k][0], roomElevation, geometryHole [k][1]);
+              int nextPoint = k < geometryHole.length - 1  
+                  ? k + 1
+                  : 0;
+              coords [j++] = new Point3f(geometryHole [nextPoint][0], roomElevation, geometryHole [nextPoint][1]);
+              coords [j++] = new Point3f(geometryHole [nextPoint][0], ceilingElevation, geometryHole [nextPoint][1]);
+              coords [j++] = new Point3f(geometryHole [k][0], ceilingElevation, geometryHole [k][1]);
+            }
           }
         }
         // Compute room coordinates
@@ -342,6 +416,18 @@ public class Room3D extends Object3DBranch {
               textureCoords [j++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -(geometryPoints [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
               textureCoords [j++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -geometryPoints [nextPoint][1] / texture.getHeight());
             }
+            // Compute holes borders texture coordinates
+            for (float [][] geometryHole : geometryHoles) {
+              for (int k = 0; k < geometryHole.length; k++) {
+                textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), -geometryHole [k][1] / texture.getHeight());
+                int nextPoint = k < geometryHole.length - 1  
+                    ? k + 1
+                    : 0;
+                textureCoords [j++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -geometryHole [nextPoint][1] / texture.getHeight());
+                textureCoords [j++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -(geometryHole [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+                textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), -(geometryHole [k][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+              }
+            }
           }
           // Compute room texture coordinates
           for (int k = 0; k < geometryPoints.length; k++) {
@@ -363,7 +449,7 @@ public class Room3D extends Object3DBranch {
         }
         
         // Generate normals
-        new NormalGenerator(0).generateNormals(geometryInfo);
+        new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
         geometries [i] = geometryInfo.getIndexedGeometryArray();
       }
       return geometries;
@@ -371,7 +457,7 @@ public class Room3D extends Object3DBranch {
       return new Geometry [0];
     }
   }
-  
+
   /**
    * Returns an array that cites <code>points</code> in reverse order.
    */
@@ -382,6 +468,30 @@ public class Room3D extends Object3DBranch {
     return points;
   }
   
+  /**
+   * Returns the visible staircases among the given <code>furniture</code>.  
+   */
+  private List<HomePieceOfFurniture> getVisibleStaircases(List<HomePieceOfFurniture> furniture, 
+                                                          int roomPart, Level roomLevel) {
+    List<HomePieceOfFurniture> visibleStaircases = new ArrayList<HomePieceOfFurniture>(furniture.size());
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece.isVisible()) {
+        if (piece instanceof HomeFurnitureGroup) {
+          visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel));
+        } else if (piece.getStaircaseCutOutShape() != null
+            && ((roomPart == FLOOR_PART 
+                    && piece.getGroundElevation() < roomLevel.getElevation()
+                    && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation()
+                || roomPart == CEILING_PART
+                    && piece.getGroundElevation() < roomLevel.getElevation() + roomLevel.getHeight()
+                    && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation() + roomLevel.getHeight()))) {
+          visibleStaircases.add(piece);
+        }
+      }
+    }
+    return visibleStaircases;
+  }
+
   /**
    * Returns the room height at the given point. 
    */
@@ -394,8 +504,7 @@ public class Room3D extends Object3DBranch {
         : 0;
     float roomHeight = roomElevation + 
         (roomLevel == null ? this.home.getWallHeight() : roomLevel.getHeight());
-    List<Level> levels = this.home.getLevels();
-    if (roomLevel == null || levels.indexOf(roomLevel) == levels.size() - 1) {
+    if (roomLevel == null || isLastLevel(roomLevel)) {
       // Search the closest wall point to x, y at last level
       for (Wall wall : this.home.getWalls()) {
         if (wall.isAtLevel(roomLevel)) {
@@ -422,6 +531,14 @@ public class Room3D extends Object3DBranch {
       }
     }
     return roomHeight;
+  }
+  
+  /**
+   * Returns <code>true</code> if the given level is the last level in home.
+   */
+  private boolean isLastLevel(Level level) {
+    List<Level> levels = this.home.getLevels();
+    return levels.indexOf(level) == levels.size() - 1;
   }
 
   /**

@@ -192,6 +192,13 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     LIGHT_SOURCE_DIAMETER("lightSourceDiameter"),
     /**
+     * The key for the shape used to cut out upper levels when they intersect with a piece   
+     * like a staircase (optional). This shape should be defined with the syntax of 
+     * the d attribute of a <a href="http://www.w3.org/TR/SVG/paths.html">SVG path element</a>
+     * and should fit in a 1 unit wide square which will be scaled to the real size of the piece. 
+     */
+    STAIRCASE_CUT_OUT_SHAPE("staircaseCutOutShape"),
+    /**
      * The key for the elevation in centimeters of a piece of furniture (optional).
      */
     ELEVATION("elevation"),
@@ -518,6 +525,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
     boolean movable = Boolean.parseBoolean(resource.getString(PropertyKey.MOVABLE.getKey(index)));
     boolean doorOrWindow = Boolean.parseBoolean(resource.getString(PropertyKey.DOOR_OR_WINDOW.getKey(index)));
+    String staircaseCutOutShape = getOptionalString(resource, PropertyKey.STAIRCASE_CUT_OUT_SHAPE.getKey(index), null);     
     float elevation = getOptionalFloat(resource, PropertyKey.ELEVATION.getKey(index), 0);
     float [][] modelRotation = getModelRotation(resource, PropertyKey.MODEL_ROTATION.getKey(index));
     // By default creator is eTeks
@@ -553,11 +561,11 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, icon, planIcon, model,
-            width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
+            width, depth, height, elevation, movable, lightSources, staircaseCutOutShape, modelRotation, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
-            width, depth, height, elevation, movable, modelRotation, creator, 
+            width, depth, height, elevation, movable, staircaseCutOutShape, modelRotation, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage);
       }
     }
@@ -612,15 +620,16 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         piece = new CatalogLight(light.getId(), suffixedName,
             light.getDescription(), light.getIcon(), light.getPlanIcon(), light.getModel(),
             light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
-            light.isMovable(), light.getLightSources(), 
+            light.isMovable(), light.getLightSources(), light.getStaircaseCutOutShape(), 
             light.getModelRotation(), light.getCreator(),
             light.isResizable(), light.isDeformable(), light.isTexturable(),
             light.getPrice(), light.getValueAddedTaxPercentage());
       } else {
         piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
             piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
-            piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
-            piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
+            piece.getWidth(), piece.getDepth(), piece.getHeight(), 
+            piece.getElevation(), piece.isMovable(), piece.getStaircaseCutOutShape(), 
+            piece.getModelRotation(), piece.getCreator(),
             piece.isResizable(), piece.isDeformable(), piece.isTexturable(),
             piece.getPrice(), piece.getValueAddedTaxPercentage());
       }

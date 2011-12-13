@@ -51,7 +51,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class ImportedFurnitureWizardController extends WizardController 
                                                implements Controller {
   public enum Property {STEP, NAME, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
-      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_ROTATION,  
+      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_ROTATION, STAIRCASE_CUT_OUT_SHAPE,
       ICON_YAW, PROPORTIONAL}
 
   public enum Step {MODEL, ROTATION, ATTRIBUTES, ICON};
@@ -83,6 +83,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private float                            elevation;
   private boolean                          movable;
   private boolean                          doorOrWindow;
+  private String                           staircaseCutOutShape;
   private Integer                          color;
   private FurnitureCategory                category;
   private boolean                          backFaceShown;
@@ -195,8 +196,8 @@ public class ImportedFurnitureWizardController extends WizardController
     } else {
       newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), 
           getWidth(), getDepth(), getHeight(), getElevation(), 
-          isMovable(), getColor(), 
-          getModelRotation(), isBackFaceShown(), 
+          isMovable(), getStaircaseCutOutShape(), 
+          getColor(), getModelRotation(), isBackFaceShown(), 
           getIconYaw(), isProportional());
     }
     
@@ -577,11 +578,37 @@ public class ImportedFurnitureWizardController extends WizardController
       this.doorOrWindow = doorOrWindow;
       this.propertyChangeSupport.firePropertyChange(Property.DOOR_OR_WINDOW.name(), !doorOrWindow, doorOrWindow);
       if (doorOrWindow) {
+        setStaircaseCutOutShape(null);
         setMovable(false);
       }
     }
   }
 
+  /**
+   * Returns the shape used to cut out upper levels at its intersection with a staircase.
+   */
+  public String getStaircaseCutOutShape() {
+    return this.staircaseCutOutShape;
+  }
+  
+  /**
+   * Sets the shape used to cut out upper levels at its intersection with a staircase.
+   */
+  public void setStaircaseCutOutShape(String staircaseCutOutShape) {
+    if (staircaseCutOutShape != this.staircaseCutOutShape
+        || (staircaseCutOutShape != null && !staircaseCutOutShape.equals(this.staircaseCutOutShape))) {
+      String oldStaircaseCutOutShape = this.staircaseCutOutShape;
+      this.staircaseCutOutShape = staircaseCutOutShape;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange(Property.STAIRCASE_CUT_OUT_SHAPE.name(), oldStaircaseCutOutShape, staircaseCutOutShape);
+      }
+      if (this.staircaseCutOutShape != null) {
+        setDoorOrWindow(false);
+        setMovable(false);
+      }
+    }
+  }
+  
   /**
    * Returns the color of the imported piece.
    */

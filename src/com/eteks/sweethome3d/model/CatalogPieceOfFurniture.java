@@ -28,8 +28,6 @@ import java.text.Collator;
  * @author Emmanuel Puybaret
  */
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
-  private static final long serialVersionUID = 1L;
-
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
   private final String                 id;
@@ -46,6 +44,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private final boolean                movable;
   private final boolean                doorOrWindow;
   private final float [][]             modelRotation;
+  private final String                 staircaseCutOutShape;
   private final String                 creator;
   private final boolean                backFaceShown;
   private final Integer                color;
@@ -60,6 +59,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private FurnitureCategory            category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
+
 
   /**
    * Creates a catalog piece of furniture.
@@ -79,7 +79,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float width, float depth, float height, 
                                  boolean movable, boolean doorOrWindow) {
     this(null, name, null, icon, null, model, width, depth, height, 0, movable, doorOrWindow, null,
-        INDENTITY_ROTATION, null, false, true, true, true, null, null, (float)Math.PI / 8, true, false);
+        null, INDENTITY_ROTATION, null, false, true, true, true, null, null, (float)Math.PI / 8, true, false);
   }
 
   /**
@@ -111,7 +111,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, String creator,
                                  boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
     this(id, name, description, icon, null, model, width, depth, height, elevation, movable, doorOrWindow, null,
-        modelRotation, creator, false, resizable, true, true, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
+        null, modelRotation, creator, false, resizable, true, true, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
   }
          
   /**
@@ -202,12 +202,50 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean movable, float [][] modelRotation, String creator,
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage) {
-    this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable, false, null,
-        modelRotation, creator, false, resizable, deformable, texturable,
-        price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
+    this(id, name, description, icon, planIcon, model, width, depth, height, elevation, 
+        movable, null, modelRotation, creator, resizable, deformable, texturable,
+        price, valueAddedTaxPercentage);
   }
   
   /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param icon content of the icon of the new piece
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @since 3.4
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, 
+                                 Content icon, Content planIcon, Content model, 
+                                 float width, float depth, float height, 
+                                 float elevation, boolean movable, String staircaseCutOutShape, 
+                                 float [][] modelRotation, String creator,
+                                 boolean resizable, boolean deformable, boolean texturable, 
+                                 BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+    this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable, false, staircaseCutOutShape,
+        null, modelRotation, creator, false, resizable, deformable, texturable,
+        price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
+  }
+  
+ /**
    * Creates a modifiable catalog piece of furniture with all its values.
    * @param name  the name of the new piece
    * @param icon content of the icon of the new piece
@@ -233,7 +271,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
     this(null, name, null, icon, null, model, width, depth, height, elevation, movable, doorOrWindow, 
-        color, modelRotation, null, backFaceShown, true, true, true, null, null, iconYaw, proportional, true);
+        null, color, modelRotation, null, backFaceShown, true, true, true, null, null, iconYaw, proportional, true);
   }
   
   /**
@@ -259,14 +297,44 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
     this(null, name, null, icon, null, model, width, depth, height, elevation, movable, false, 
-        color, modelRotation, null, backFaceShown, true, true, true, null, null, iconYaw, proportional, true);
+        null, color, modelRotation, null, backFaceShown, true, true, true, null, null, iconYaw, proportional, true);
+  }
+  
+  /**
+   * Creates a modifiable catalog piece of furniture with all its values.
+   * @param name  the name of the new piece
+   * @param icon content of the icon of the new piece
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param color the color of the piece as RGB code or <code>null</code> if piece color is unchanged
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param backFaceShown <code>true</code> if back face should be shown
+   * @param iconYaw the yaw angle used to create the piece icon
+   * @param proportional if <code>true</code>, size proportions will be kept
+   * @since 3.4 
+   */
+  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
+                                 float width, float depth, float height, float elevation, 
+                                 boolean movable, String staircaseCutOutShape,
+                                 Integer color, float [][] modelRotation, 
+                                 boolean backFaceShown,
+                                 float iconYaw, boolean proportional) {
+    this(null, name, null, icon, null, model, width, depth, height, elevation, movable, false, 
+        staircaseCutOutShape, color, modelRotation, null, backFaceShown, true, true, true, null, null, iconYaw, proportional, true);
   }
   
   private CatalogPieceOfFurniture(String id, String name, String description, 
                                   Content icon, Content planIcon, Content model, 
                                   float width, float depth, float height, float elevation, 
                                   boolean movable, boolean doorOrWindow, 
-                                  Integer color, float [][] modelRotation, String creator, boolean backFaceShown,
+                                  String staircaseCutOutShape, Integer color, float [][] modelRotation,
+                                  String creator, boolean backFaceShown,
                                   boolean resizable, boolean deformable, boolean texturable,
                                   BigDecimal price, BigDecimal valueAddedTaxPercentage,
                                   float iconYaw, boolean proportional, boolean modifiable) {
@@ -283,6 +351,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
     this.color = color;
+    this.staircaseCutOutShape = staircaseCutOutShape;
     this.creator = creator;
     this.price = price;
     this.valueAddedTaxPercentage = valueAddedTaxPercentage;
@@ -404,6 +473,15 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                            {modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]}};
   }
 
+  /**
+   * Returns the shape used to cut out upper levels when they intersect with the piece   
+   * like a staircase.
+   * @since 3.4
+   */
+  public String getStaircaseCutOutShape() {
+    return this.staircaseCutOutShape;
+  }
+  
   /**
    * Returns the creator of this piece.
    */

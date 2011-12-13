@@ -155,6 +155,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private AttributesPreviewComponent        attributesPreviewComponent;
   private JCheckBox                         movableCheckBox;
   private JCheckBox                         doorOrWindowCheckBox;
+  private JCheckBox                         staircaseCheckBox;
   private JLabel                            colorLabel;
   private ColorButton                       colorButton;
   private JButton                           clearColorButton;
@@ -648,7 +649,26 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             // If door or window changes update door or window check box
             boolean doorOrWindow = controller.isDoorOrWindow();
             doorOrWindowCheckBox.setSelected(doorOrWindow);
-            movableCheckBox.setEnabled(!doorOrWindow);
+            movableCheckBox.setEnabled(!doorOrWindow && controller.getStaircaseCutOutShape() == null);
+          }
+        });
+
+    this.staircaseCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        ImportedFurnitureWizardStepsPanel.class, "staircaseCheckBox.text"));
+    this.staircaseCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setStaircaseCutOutShape(staircaseCheckBox.isSelected() 
+              ? "M0,0 v1 h1 v-1 z" 
+              : null);
+        }
+      });
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.STAIRCASE_CUT_OUT_SHAPE,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If staircase cut out shape changes update its check box
+            String staircaseCutOutShape = controller.getStaircaseCutOutShape();
+            staircaseCheckBox.setSelected(staircaseCutOutShape != null);
+            movableCheckBox.setEnabled(!controller.isDoorOrWindow() && staircaseCutOutShape == null);
           }
         });
 
@@ -824,6 +844,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           ImportedFurnitureWizardStepsPanel.class, "movableCheckBox.mnemonic")).getKeyCode());;
       this.doorOrWindowCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "doorOrWindowCheckBox.mnemonic")).getKeyCode());;
+      this.staircaseCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "staircaseCheckBox.mnemonic")).getKeyCode());;
       this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
@@ -949,18 +971,21 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     attributesPanel.add(this.doorOrWindowCheckBox, new GridBagConstraints(
         1, 10, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+    attributesPanel.add(this.staircaseCheckBox, new GridBagConstraints(
+        1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
     attributesPanel.add(this.colorLabel, new GridBagConstraints(
-        1, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 12, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     attributesPanel.add(this.colorButton, new GridBagConstraints(
-        2, 11, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        2, 12, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     attributesPanel.add(this.clearColorButton, new GridBagConstraints(
-        2, 12, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        2, 13, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Add a dummy label to force components to be at top of panel
     attributesPanel.add(new JLabel(), new GridBagConstraints(
-        1, 13, 1, 1, 1, 1, GridBagConstraints.CENTER, 
+        1, 14, 1, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     JPanel iconPanel = new JPanel(new GridBagLayout());

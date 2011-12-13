@@ -108,6 +108,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_ELEVATION                   = "furnitureElevation#";
   private static final String FURNITURE_COLOR                       = "furnitureColor#";
   private static final String FURNITURE_MODEL_ROTATION              = "furnitureModelRotation#";
+  private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE           = "furnitureStaircaseCutOutShape#"; 
   private static final String FURNITURE_BACK_FACE_SHOWN             = "furnitureBackFaceShown#";
   private static final String FURNITURE_ICON_YAW                    = "furnitureIconYaw#";
   private static final String FURNITURE_PROPORTIONAL                = "furnitureProportional#";
@@ -461,6 +462,7 @@ public class FileUserPreferences extends UserPreferences {
       Integer color = colorString != null 
           ? Integer.valueOf(colorString) : null; 
       float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + i);
+      String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, null);
       boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + i, false);
       float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
@@ -474,7 +476,7 @@ public class FileUserPreferences extends UserPreferences {
       } else {
         piece = new CatalogPieceOfFurniture(name, icon, model,
             width, depth, height, elevation, movable, 
-            color, modelRotation, backFaceShown, iconYaw, proportional);
+            staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
       }
       try {        
         getFurnitureCatalog().add(pieceCategory, piece);
@@ -683,6 +685,9 @@ public class FileUserPreferences extends UserPreferences {
               floatToString(modelRotation[0][0]) + " " + floatToString(modelRotation[0][1]) + " " + floatToString(modelRotation[0][2]) + " "
               + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
               + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]));
+          if (piece.getStaircaseCutOutShape() != null) {
+            preferences.put(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, piece.getStaircaseCutOutShape());
+          }
           preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown());
           preferences.putFloat(FURNITURE_ICON_YAW + i, piece.getIconYaw());
           preferences.putBoolean(FURNITURE_PROPORTIONAL + i, piece.isProportional());
@@ -704,6 +709,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_ELEVATION + i);
       preferences.remove(FURNITURE_COLOR + i);
       preferences.remove(FURNITURE_MODEL_ROTATION + i);
+      preferences.remove(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i);
       preferences.remove(FURNITURE_BACK_FACE_SHOWN + i);
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
