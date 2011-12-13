@@ -34,6 +34,7 @@
     <cp>lib/freehep-vectorgraphics-svg-2.1.1.jar</cp>
     <cp>lib/sunflow-0.07.3g.jar</cp>
     <cp>lib/jmf.jar</cp>
+    <cp>lib/batik-svgpathparser-1.7.jar</cp>
     <cp>lib/j3dcore.jar</cp>
     <cp>lib/j3dutils.jar</cp>
     <cp>lib/vecmath.jar</cp>

@@ -44,6 +44,7 @@ public class SweetHome3DBootstrap {
         "Loader3DS1_2u.jar",
         "sunflow-0.07.3g.jar",
         "jmf.jar",
+        "batik-svgpathparser-1.7.jar",
         "jnlp.jar",
         "j3dcore.jar", // Main Java 3D jars
         "vecmath.jar",
