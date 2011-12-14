@@ -1865,9 +1865,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               // Search the rooms that overlap the updated one
               Area oldArea = getArea((float [][])ev.getOldValue());
               Area newArea = getArea((float [][])ev.getNewValue());
+              Level updatedRoomLevel = updatedRoom.getLevel(); 
               for (Room room : home.getRooms()) {
+                Level roomLevel = room.getLevel();
                 if (room != updatedRoom
-                    && room.isAtLevel(updatedRoom.getLevel())) {
+                    && (roomLevel == null
+                        || Math.abs(updatedRoomLevel.getElevation() + updatedRoomLevel.getHeight() - (roomLevel.getElevation() + roomLevel.getHeight())) < 1E-5
+                        || Math.abs(updatedRoomLevel.getElevation() + updatedRoomLevel.getHeight() - (roomLevel.getElevation() - roomLevel.getFloorThickness())) < 1E-5)) {
                   Area roomAreaIntersectionWithOldArea = getArea(room.getPoints());
                   Area roomAreaIntersectionWithNewArea = new Area(roomAreaIntersectionWithOldArea);
                   roomAreaIntersectionWithNewArea.intersect(newArea);                  

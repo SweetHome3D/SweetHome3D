@@ -174,115 +174,93 @@ public class Room3D extends Object3DBranch {
    */
   private Geometry [] createRoomGeometries(int roomPart, HomeTexture texture) {
     Room room = (Room)getUserData();
-    Level roomLevel = room.getLevel();
     float [][] points = room.getPoints();
     if ((roomPart == FLOOR_PART && room.isFloorVisible()
          || roomPart == CEILING_PART && room.isCeilingVisible())
         && points.length > 2) {
-      // If room isn't singular retrieve all the points of its different polygons 
-      List<float [][]> roomPoints = new ArrayList<float[][]>();
-      Map<Integer, List<float [][]>> roomHoles = new HashMap<Integer, List<float [][]>>();
-      List<Room> levelRooms = new ArrayList<Room>();
+      Level roomLevel = room.getLevel();
+      List<Level> levels = this.home.getLevels();
+      boolean lastLevel = isLastLevel(roomLevel, levels);
+      float floorBottomElevation;
+      float roomElevation;
+      if (roomLevel != null) {
+        roomElevation = roomLevel.getElevation();
+        floorBottomElevation = roomElevation - roomLevel.getFloorThickness();
+      } else {
+        roomElevation = 0;
+        floorBottomElevation = 0;
+      }
+
+      float firstLevelElevation;
+      if (levels.size() == 0) {
+        firstLevelElevation = 0;
+      } else {
+        firstLevelElevation = levels.get(0).getElevation();
+      }
+      boolean floorBottomVisible = roomPart == FLOOR_PART 
+          && roomLevel != null 
+          && roomElevation != firstLevelElevation;
+
+      // Find rooms at the same elevation 
+      /// and room ceilings at same elevation as the floor bottom  
+      List<Room> roomsAtSameElevation = new ArrayList<Room>();
+      List<Room> ceilingsAtSameFloorBottomElevation = new ArrayList<Room>();
       for (Room homeRoom : this.home.getRooms()) {
-        if (homeRoom.getLevel() == room.getLevel()) {
-          levelRooms.add(homeRoom);
+        Level homeRoomLevel = homeRoom.getLevel();
+        if (room == homeRoom // Store also the room itself to know its order among rooms at same elevation
+            || roomLevel == homeRoomLevel
+                && (roomPart == FLOOR_PART && homeRoom.isFloorVisible()
+                    || roomPart == CEILING_PART && homeRoom.isCeilingVisible()) 
+            || roomLevel != null 
+                && homeRoomLevel != null 
+                && (roomPart == FLOOR_PART 
+                        && homeRoom.isFloorVisible()
+                        && Math.abs(roomElevation - homeRoomLevel.getElevation()) < 1E-5
+                    || roomPart == CEILING_PART 
+                        && homeRoom.isCeilingVisible()
+                        && !lastLevel
+                        && !isLastLevel(homeRoomLevel, levels)
+                        && Math.abs(roomElevation + roomLevel.getHeight() - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-5)) {         
+          roomsAtSameElevation.add(homeRoom);
+        } else if (floorBottomVisible 
+                    && homeRoomLevel != null 
+                    && homeRoom.isCeilingVisible() 
+                    && !isLastLevel(homeRoomLevel, levels) 
+                    && Math.abs(floorBottomElevation - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-5) {
+          ceilingsAtSameFloorBottomElevation.add(homeRoom);
         }
       }
       
       List<HomePieceOfFurniture> visibleStaircases;
       if (roomLevel == null
           || roomPart == CEILING_PART
-              && isLastLevel(roomLevel)) {
+              && lastLevel) {
         visibleStaircases = Collections.emptyList();
       } else {
-        visibleStaircases = getVisibleStaircases(this.home.getFurniture(), roomPart, roomLevel);
+        visibleStaircases = getVisibleStaircases(this.home.getFurniture(), roomPart, roomLevel, 
+            roomLevel.getElevation() == firstLevelElevation);
       }
+
+      // Retrieve room points
+      List<float [][]> roomPoints;
+      Map<Integer, List<float [][]>> roomHoles;
+      Area roomVisibleArea;
+      // If room isn't singular retrieve all the points of its different polygons 
       if (!room.isSingular() 
-          || levelRooms.get(levelRooms.size() - 1) != room
+          || roomsAtSameElevation.get(roomsAtSameElevation.size() - 1) != room
           || visibleStaircases.size() > 0) {        
-        Area roomArea = new Area(getShape(points));
-        if (levelRooms.contains(room)) {
+        roomVisibleArea = new Area(getShape(points));
+        if (roomsAtSameElevation.contains(room)) {
           // Remove other rooms surface that may overlap the current room
-          for (int i = levelRooms.size() - 1; i > 0 && levelRooms.get(i) != room; i--) {
-            Room otherRoom = levelRooms.get(i);
-            if (roomPart == FLOOR_PART && otherRoom.isFloorVisible()
-                || roomPart == CEILING_PART && otherRoom.isCeilingVisible()) {
-              roomArea.subtract(new Area(getShape(otherRoom.getPoints())));
-            }
+          for (int i = roomsAtSameElevation.size() - 1; i > 0 && roomsAtSameElevation.get(i) != room; i--) {
+            Room otherRoom = roomsAtSameElevation.get(i);
+            roomVisibleArea.subtract(new Area(getShape(otherRoom.getPoints())));
           }
-        }
-        
-        // Remove from room area all the staircases that intersect it
-        for (HomePieceOfFurniture staircase : visibleStaircases) {
-          Shape shape = parseShape(staircase.getStaircaseCutOutShape());
-          Area staircaseArea = new Area(shape);
-          if (staircase.isModelMirrored()) {
-            staircaseArea = getMirroredArea(staircaseArea);
-          }
-          AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
-              staircase.getX() - staircase.getWidth() / 2, 
-              staircase.getY() - staircase.getDepth() / 2);
-          staircaseTransform.concatenate(AffineTransform.getRotateInstance(staircase.getAngle(),
-              staircase.getWidth() / 2, staircase.getDepth() / 2));
-          staircaseTransform.concatenate(AffineTransform.getScaleInstance(staircase.getWidth(), staircase.getDepth()));
-          staircaseArea.transform(staircaseTransform);
-          roomArea.subtract(staircaseArea);
-        }
-        
-        // Retrieve the points of the different polygons 
-        // and reverse their points order if necessary
-        List<float []> currentPathPoints = new ArrayList<float[]>();
+        }        
+        removeStaircasesFromArea(visibleStaircases, roomVisibleArea);
         roomPoints = new ArrayList<float[][]>();
-        float [] previousRoomPoint = null;
-        int i = 0;
-        for (PathIterator it = roomArea.getPathIterator(null, 1); !it.isDone(); it.next()) {
-          float [] roomPoint = new float[2];
-          switch (it.currentSegment(roomPoint)) {
-            case PathIterator.SEG_MOVETO :
-            case PathIterator.SEG_LINETO : 
-              if (previousRoomPoint == null
-                  || roomPoint [0] != previousRoomPoint [0] 
-                  || roomPoint [1] != previousRoomPoint [1]) {
-                currentPathPoints.add(roomPoint);
-              }
-              previousRoomPoint = roomPoint;
-              break;
-            case PathIterator.SEG_CLOSE :
-              if (currentPathPoints.get(0) [0] == previousRoomPoint [0] 
-                  && currentPathPoints.get(0) [1] == previousRoomPoint [1]) {
-                currentPathPoints.remove(currentPathPoints.size() - 1);
-              }
-              if (currentPathPoints.size() > 2) {
-                float [][] pathPoints = 
-                    currentPathPoints.toArray(new float [currentPathPoints.size()][]);
-                Room subRoom = new Room(pathPoints);
-                if (subRoom.getArea() > 0) {
-                  boolean pathPointsClockwise = subRoom.isClockwise();
-                  if (pathPointsClockwise) {
-                    // Store counter clockwise points as holes
-                    if (roomPart != CEILING_PART) {
-                      pathPoints = getReversedArray(pathPoints);
-                    }
-                    List<float [][]> holes = roomHoles.get(i);
-                    if (holes == null) {
-                      holes = new ArrayList<float [][]>(1);
-                      roomHoles.put(i, holes);
-                    }
-                    holes.add(pathPoints);
-                  } else {
-                    if (roomPart == CEILING_PART) {
-                      pathPoints = getReversedArray(pathPoints);
-                    }
-                    roomPoints.add(pathPoints);
-                    i++;
-                  }
-                }
-              }
-              currentPathPoints.clear();
-              previousRoomPoint = null;
-              break;
-          }
-        }
+        roomHoles = new HashMap<Integer, List<float [][]>>();
+        getAreaPoints(roomVisibleArea, roomPart == CEILING_PART, roomPoints, roomHoles);
       } else {
         boolean clockwise = room.isClockwise();
         if (clockwise && roomPart == FLOOR_PART
@@ -291,20 +269,40 @@ public class Room3D extends Object3DBranch {
           points = getReversedArray(points);
         }
         roomPoints = Arrays.asList(new float [][][] {points});
+        roomHoles = Collections.emptyMap();
+        roomVisibleArea = null;
       }
       
-      Geometry [] geometries = new Geometry [roomPoints.size()];
-      float roomElevation;
-      if (roomLevel != null) {
-        roomElevation = roomLevel.getElevation();
+      // Retrieve points of the room floor bottom
+      List<float [][]> floorBottomPoints;
+      Map<Integer, List<float [][]>> floorBottomHoles;
+      if (floorBottomVisible) {
+        if (roomVisibleArea != null 
+            || ceilingsAtSameFloorBottomElevation.size() > 0) {        
+          Area floorBottomVisibleArea = roomVisibleArea != null ? roomVisibleArea : new Area(getShape(points));
+          // Remove other rooms surface that may overlap the floor bottom
+          for (Room otherRoom : ceilingsAtSameFloorBottomElevation) {
+            floorBottomVisibleArea.subtract(new Area(getShape(otherRoom.getPoints())));
+          }          
+          floorBottomPoints = new ArrayList<float[][]>();
+          floorBottomHoles = new HashMap<Integer, List<float [][]>>();
+          getAreaPoints(floorBottomVisibleArea, true, floorBottomPoints, floorBottomHoles);
+        } else {
+          floorBottomPoints = Arrays.asList(new float [][][] {getReversedArray(points)});
+          floorBottomHoles = Collections.emptyMap();
+        }
       } else {
-        roomElevation = 0;
-      }
-      List<Level> levels = this.home.getLevels();
+        floorBottomPoints = Collections.emptyList();
+        floorBottomHoles = Collections.emptyMap();
+      }      
+      
+      Geometry [] geometries = new Geometry [roomPoints.size() + floorBottomPoints.size()];
       boolean computeFloorBorder = roomLevel != null
           && roomPart == FLOOR_PART 
-          && levels.indexOf(roomLevel) > 0;
-      for (int i = 0; i < geometries.length; i++) {
+          && roomLevel.getElevation() != firstLevelElevation;
+      // Compute room and border geometries
+      int i = 0;      
+      for ( ; i < roomPoints.size(); i++) {
         float [][] geometryPoints = roomPoints.get(i);
         List<float [][]> geometryHoles = roomHoles.get(i);
         if (geometryHoles == null) {
@@ -315,7 +313,11 @@ public class Room3D extends Object3DBranch {
           geometryHolesPointCount += geometryHole.length;
         }
         
-        int [] contourCounts = new int [(computeFloorBorder ? geometryPoints.length + geometryHolesPointCount : 0) + 1];
+        int contourLength = 1;
+        if (computeFloorBorder) {
+          contourLength += geometryPoints.length + geometryHolesPointCount;
+        }
+        int [] contourCounts = new int [contourLength];
         int [] stripCounts = new int [contourCounts.length + geometryHoles.size()];
         int j = 0;
         int vertexCount = geometryPoints.length;
@@ -336,14 +338,13 @@ public class Room3D extends Object3DBranch {
         Point3f [] coords = new Point3f [vertexCount];
         if (computeFloorBorder) {
           // Compute room borders coordinates
-          float ceilingElevation = roomElevation - roomLevel.getFloorThickness();
           for (int k = 0; k < geometryPoints.length; k++) {
             coords [j++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
-            coords [j++] = new Point3f(geometryPoints [k][0], ceilingElevation, geometryPoints [k][1]);
+            coords [j++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
             int nextPoint = k < geometryPoints.length - 1  
                 ? k + 1
                 : 0;
-            coords [j++] = new Point3f(geometryPoints [nextPoint][0], ceilingElevation, geometryPoints [nextPoint][1]);
+            coords [j++] = new Point3f(geometryPoints [nextPoint][0], floorBottomElevation, geometryPoints [nextPoint][1]);
             coords [j++] = new Point3f(geometryPoints [nextPoint][0], roomElevation, geometryPoints [nextPoint][1]);
           }
           // Compute holes borders coordinates
@@ -354,8 +355,8 @@ public class Room3D extends Object3DBranch {
                   ? k + 1
                   : 0;
               coords [j++] = new Point3f(geometryHole [nextPoint][0], roomElevation, geometryHole [nextPoint][1]);
-              coords [j++] = new Point3f(geometryHole [nextPoint][0], ceilingElevation, geometryHole [nextPoint][1]);
-              coords [j++] = new Point3f(geometryHole [k][0], ceilingElevation, geometryHole [k][1]);
+              coords [j++] = new Point3f(geometryHole [nextPoint][0], floorBottomElevation, geometryHole [nextPoint][1]);
+              coords [j++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
             }
           }
         }
@@ -429,16 +430,91 @@ public class Room3D extends Object3DBranch {
         new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
         geometries [i] = geometryInfo.getIndexedGeometryArray();
       }
+
+      // Compute floor bottom geometry
+      for (int l = 0 ; l < floorBottomPoints.size(); l++, i++) {
+        float [][] geometryPoints = floorBottomPoints.get(l);
+        List<float [][]> geometryHoles = floorBottomHoles.get(l);
+        if (geometryHoles == null) {
+          geometryHoles = Collections.emptyList();
+        }
+        int [] contourCounts = new int [1];
+        int [] stripCounts = new int [1 + geometryHoles.size()];
+        int j = 0;
+        int vertexCount = geometryPoints.length;
+        contourCounts [contourCounts.length - 1] = 1 + geometryHoles.size();
+        stripCounts [j++] = geometryPoints.length;
+        for (float [][] geometryHole : geometryHoles) {
+          vertexCount += geometryHole.length;
+          stripCounts [j++] = geometryHole.length;
+        }
+        
+        j = 0;
+        Point3f [] coords = new Point3f [vertexCount];
+        // Compute floor bottom coordinates
+        for (int k = 0; k < geometryPoints.length; k++) {
+          coords [j++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
+        }
+        for (float [][] geometryHole : geometryHoles) {
+          for (int k = 0; k < geometryHole.length; k++) {
+            coords [j++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
+          }
+        }
+        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+        geometryInfo.setCoordinates(coords);
+        geometryInfo.setStripCounts(stripCounts);
+        geometryInfo.setContourCounts(contourCounts);
+        
+        if (texture != null) {
+          TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
+          j = 0;
+          // Compute floor bottom texture coordinates
+          for (int k = 0; k < geometryPoints.length; k++) {
+            textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), geometryPoints [k][1] / texture.getHeight());
+          }
+          for (float [][] geometryHole : geometryHoles) {
+            for (int k = 0; k < geometryHole.length; k++) {
+              textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), geometryHole [k][1] / texture.getHeight());
+            }
+          }
+          geometryInfo.setTextureCoordinateParams(1, 2);
+          geometryInfo.setTextureCoordinates(0, textureCoords);
+        }
+        
+        // Generate normals
+        new NormalGenerator().generateNormals(geometryInfo);
+        geometries [i] = geometryInfo.getIndexedGeometryArray();
+      }
+
       return geometries;
     } else {
       return new Geometry [0];
     }
   }
 
+  private void removeStaircasesFromArea(List<HomePieceOfFurniture> visibleStaircases, Area area) {
+    // Remove from room area all the staircases that intersect it
+    for (HomePieceOfFurniture staircase : visibleStaircases) {
+      Shape shape = parseShape(staircase.getStaircaseCutOutShape());
+      Area staircaseArea = new Area(shape);
+      if (staircase.isModelMirrored()) {
+        staircaseArea = getMirroredArea(staircaseArea);
+      }
+      AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
+          staircase.getX() - staircase.getWidth() / 2, 
+          staircase.getY() - staircase.getDepth() / 2);
+      staircaseTransform.concatenate(AffineTransform.getRotateInstance(staircase.getAngle(),
+          staircase.getWidth() / 2, staircase.getDepth() / 2));
+      staircaseTransform.concatenate(AffineTransform.getScaleInstance(staircase.getWidth(), staircase.getDepth()));
+      staircaseArea.transform(staircaseTransform);
+      area.subtract(staircaseArea);
+    }
+  }
+
   /**
    * Returns the mirror area of the given <<code>area</code>.
    */
-  public Area getMirroredArea(Area area) {
+  private Area getMirroredArea(Area area) {
     // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
     // we have to create a mirrored shape by parsing points
     GeneralPath mirrorPath = new GeneralPath();
@@ -466,30 +542,21 @@ public class Room3D extends Object3DBranch {
   }
 
   /**
-   * Returns an array that cites <code>points</code> in reverse order.
-   */
-  private float [][] getReversedArray(float [][] points) {
-    List<float []> pointList = Arrays.asList(points);
-    Collections.reverse(pointList);
-    points = pointList.toArray(points);
-    return points;
-  }
-  
-  /**
    * Returns the visible staircases among the given <code>furniture</code>.  
    */
   private List<HomePieceOfFurniture> getVisibleStaircases(List<HomePieceOfFurniture> furniture, 
-                                                          int roomPart, Level roomLevel) {
+                                                          int roomPart, Level roomLevel,
+                                                          boolean firstLevel) {
     List<HomePieceOfFurniture> visibleStaircases = new ArrayList<HomePieceOfFurniture>(furniture.size());
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()) {
         if (piece instanceof HomeFurnitureGroup) {
-          visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel));
+          visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel, firstLevel));
         } else if (piece.getStaircaseCutOutShape() != null
             && !"false".equalsIgnoreCase(piece.getStaircaseCutOutShape())
             && ((roomPart == FLOOR_PART 
                     && piece.getGroundElevation() < roomLevel.getElevation()
-                    && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation()
+                    && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation() - (firstLevel ? 0 : roomLevel.getFloorThickness())
                 || roomPart == CEILING_PART
                     && piece.getGroundElevation() < roomLevel.getElevation() + roomLevel.getHeight()
                     && piece.getGroundElevation() + piece.getHeight() >= roomLevel.getElevation() + roomLevel.getHeight()))) {
@@ -500,6 +567,78 @@ public class Room3D extends Object3DBranch {
     return visibleStaircases;
   }
 
+  /**
+   * Fills <code>areaPoints</code> and <code>areaHoles</code> from the given area.
+   */
+  private void getAreaPoints(Area area, 
+                             boolean reversed, 
+                             List<float [][]> areaPoints,
+                             Map<Integer, List<float [][]>> areaHoles) {
+    // Retrieve the points of the different polygons 
+    // and reverse their points order if necessary
+    List<float []> currentPathPoints = new ArrayList<float[]>();
+    float [] previousRoomPoint = null;
+    int i = 0;
+    for (PathIterator it = area.getPathIterator(null, 1); !it.isDone(); it.next()) {
+      float [] roomPoint = new float[2];
+      switch (it.currentSegment(roomPoint)) {
+        case PathIterator.SEG_MOVETO :
+        case PathIterator.SEG_LINETO : 
+          if (previousRoomPoint == null
+              || roomPoint [0] != previousRoomPoint [0] 
+              || roomPoint [1] != previousRoomPoint [1]) {
+            currentPathPoints.add(roomPoint);
+          }
+          previousRoomPoint = roomPoint;
+          break;
+        case PathIterator.SEG_CLOSE :
+          if (currentPathPoints.get(0) [0] == previousRoomPoint [0] 
+              && currentPathPoints.get(0) [1] == previousRoomPoint [1]) {
+            currentPathPoints.remove(currentPathPoints.size() - 1);
+          }
+          if (currentPathPoints.size() > 2) {
+            float [][] pathPoints = 
+                currentPathPoints.toArray(new float [currentPathPoints.size()][]);
+            Room subRoom = new Room(pathPoints);
+            if (subRoom.getArea() > 0) {
+              boolean pathPointsClockwise = subRoom.isClockwise();
+              if (pathPointsClockwise) {
+                // Store counter clockwise points as holes
+                if (!reversed) {
+                  pathPoints = getReversedArray(pathPoints);
+                }
+                List<float [][]> holes = areaHoles.get(i);
+                if (holes == null) {
+                  holes = new ArrayList<float [][]>(1);
+                  areaHoles.put(i, holes);
+                }
+                holes.add(pathPoints);
+              } else {
+                if (reversed) {
+                  pathPoints = getReversedArray(pathPoints);
+                }
+                areaPoints.add(pathPoints);
+                i++;
+              }
+            }
+          }
+          currentPathPoints.clear();
+          previousRoomPoint = null;
+          break;
+      }
+    }
+  }
+
+  /**
+   * Returns an array that cites <code>points</code> in reverse order.
+   */
+  private float [][] getReversedArray(float [][] points) {
+    points = points.clone();
+    List<float []> pointList = Arrays.asList(points);
+    Collections.reverse(pointList);
+    return pointList.toArray(points);
+  }
+  
   /**
    * Returns the room height at the given point. 
    */
@@ -512,7 +651,8 @@ public class Room3D extends Object3DBranch {
         : 0;
     float roomHeight = roomElevation + 
         (roomLevel == null ? this.home.getWallHeight() : roomLevel.getHeight());
-    if (roomLevel == null || isLastLevel(roomLevel)) {
+    List<Level> levels = this.home.getLevels();
+    if (roomLevel == null || isLastLevel(roomLevel, levels)) {
       // Search the closest wall point to x, y at last level
       for (Wall wall : this.home.getWalls()) {
         if (wall.isAtLevel(roomLevel)) {
@@ -544,8 +684,7 @@ public class Room3D extends Object3DBranch {
   /**
    * Returns <code>true</code> if the given level is the last level in home.
    */
-  private boolean isLastLevel(Level level) {
-    List<Level> levels = this.home.getLevels();
+  private boolean isLastLevel(Level level, List<Level> levels) {
     return levels.indexOf(level) == levels.size() - 1;
   }
 
