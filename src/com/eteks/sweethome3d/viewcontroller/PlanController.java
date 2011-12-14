@@ -1700,7 +1700,7 @@ public class PlanController extends FurnitureController implements Controller {
       double yPiece;
       float halfWidth = piece.getWidth() / 2;
       if (piece.isDoorOrWindow()) {
-        final float thicknessEpsilon = 0.000225f;
+        final float thicknessEpsilon = 0.00025f;
         float wallDistance = thicknessEpsilon / 2;
         if (piece instanceof HomeDoorOrWindow) {
           HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow) piece;
