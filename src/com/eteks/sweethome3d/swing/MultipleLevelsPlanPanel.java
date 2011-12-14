@@ -26,6 +26,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -40,6 +41,9 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -114,21 +118,23 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     
     createTabs(home, preferences);
     final ChangeListener changeListener = new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
+        public void stateChanged(ChangeEvent ev) {          
           int selectedIndex = multipleLevelsTabbedPane.getSelectedIndex();
-          if (selectedIndex == multipleLevelsTabbedPane.getTabCount() - 1) {
-            controller.addLevel();
-          } else {
+          if (selectedIndex != multipleLevelsTabbedPane.getTabCount() - 1) {
             controller.setSelectedLevel(home.getLevels().get(selectedIndex));
           }
         }
       };
     this.multipleLevelsTabbedPane.addChangeListener(changeListener);
     // Add a mouse listener that will give focus to plan component only if a change in tabbed pane comes from the mouse
+    // and will add a level only if user clicks on the last tab 
     this.multipleLevelsTabbedPane.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent ev) {
           if (ev.getClickCount() == 1) {
+            if (multipleLevelsTabbedPane.indexAtLocation(ev.getX(), ev.getY()) == multipleLevelsTabbedPane.getTabCount() - 1) {
+              controller.addLevel();
+            }
             final Level oldSelectedLevel = home.getSelectedLevel();
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
@@ -142,6 +148,31 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
           }
         }
       });
+
+    // Change actions to forbid user to select the last tab    
+    ActionMap actionMap = this.multipleLevelsTabbedPane.getActionMap();
+    final Action navigateRightAction = actionMap.get("navigateRight");
+    if (navigateRightAction != null) {
+      actionMap.put("navigateRight", new AbstractAction() {
+          public void actionPerformed(ActionEvent ev) {
+            navigateRightAction.actionPerformed(ev);
+            if (multipleLevelsTabbedPane.getSelectedIndex() == multipleLevelsTabbedPane.getTabCount() - 1) {
+              navigateRightAction.actionPerformed(ev);
+            }
+          }
+        });
+    }
+    final Action navigateLeftAction = actionMap.get("navigateLeft");
+    if (navigateLeftAction != null) {
+      actionMap.put("navigateLeft", new AbstractAction() {
+          public void actionPerformed(ActionEvent ev) {
+            navigateLeftAction.actionPerformed(ev);
+            if (multipleLevelsTabbedPane.getSelectedIndex() == multipleLevelsTabbedPane.getTabCount() - 1) {
+              navigateLeftAction.actionPerformed(ev);
+            }
+          }
+        });
+    }
     
     // Add listeners to levels to maintain tabs name and order
     final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
@@ -181,9 +212,6 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     
     home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent ev) {
-        if (ev.getOldValue() != null) {
-          multipleLevelsTabbedPane.setComponentAt(home.getLevels().indexOf(ev.getOldValue()), new JLabel());
-        }
         multipleLevelsTabbedPane.removeChangeListener(changeListener);
         updateSelectedTab(home);
         multipleLevelsTabbedPane.addChangeListener(changeListener);
@@ -241,11 +269,22 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     List<Level> levels = home.getLevels();
     Level selectedLevel = home.getSelectedLevel();
     if (levels.size() >= 2 && selectedLevel != null) {
-      int levelIndex = levels.indexOf(selectedLevel);
-      this.multipleLevelsTabbedPane.setComponentAt(levelIndex, this.planScrollPane);
-      this.multipleLevelsTabbedPane.setSelectedIndex(levelIndex);
+      this.multipleLevelsTabbedPane.setSelectedIndex(levels.indexOf(selectedLevel));
+      displayPlanComponentAtSelectedIndex();
     }
     updateLayout(home);
+  }
+
+  /**
+   * Display the plan component at the selected tab index.
+   */
+  private void displayPlanComponentAtSelectedIndex() {
+    int planIndex = this.multipleLevelsTabbedPane.indexOfComponent(this.planScrollPane);
+    if (planIndex != -1) {
+      // Replace plan component by a dummy label to avoid losing tab
+      this.multipleLevelsTabbedPane.setComponentAt(planIndex, new JLabel());
+    }
+    this.multipleLevelsTabbedPane.setComponentAt(this.multipleLevelsTabbedPane.getSelectedIndex(), this.planScrollPane);
   }
 
   /**
