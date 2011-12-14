@@ -2528,7 +2528,7 @@ public class HomePane extends JRootPane implements HomeView {
       view3D.setPreferredSize(planView != null 
           ? planView.getPreferredSize()
           : new Dimension(400, 400));
-      view3D.setMinimumSize(new Dimension(0, 0));
+      view3D.setMinimumSize(new Dimension());
       
       // Create 3D view popup menu
       JPopupMenu view3DPopup = new JPopupMenu();

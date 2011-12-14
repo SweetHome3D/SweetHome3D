@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -105,6 +106,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     }
     List<Level> levels = home.getLevels();
     this.planScrollPane = new JScrollPane(this.planComponent);
+    this.planScrollPane.setMinimumSize(new Dimension());
     if (OperatingSystem.isMacOSX()) {
       this.planScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
       this.planScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -278,6 +280,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     
     SwingTools.installFocusBorder(this.planComponent);
     setFocusTraversalPolicyProvider(false);
+    setMinimumSize(new Dimension());
   }
 
   @Override
