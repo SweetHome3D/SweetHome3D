@@ -679,7 +679,7 @@ public class Wall3D extends Object3DBranch {
     } else {
       float floorThicknessBottomWall = getFloorThicknessBottomWall();
       if (floorThicknessBottomWall > 0) {
-        // Add a small value to wall elevation at upper floors to avoid their bottom part overlaps a room ceiling
+        // Shift a little wall elevation at upper floors to avoid their bottom part overlaps a room ceiling
         floorThicknessBottomWall -= LEVEL_ELEVATION_SHIFT;
       }
       return level.getElevation() - floorThicknessBottomWall;
@@ -724,6 +724,7 @@ public class Wall3D extends Object3DBranch {
     Level level = ((Wall)getUserData()).getLevel();
     if (level != null) {
       List<Level> levels = this.home.getLevels();
+      // Don't shift last level
       if (levels.get(levels.size() - 1) != level) {
         return LEVEL_ELEVATION_SHIFT;
       }
