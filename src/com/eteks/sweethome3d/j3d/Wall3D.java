@@ -57,6 +57,7 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  */
 public class Wall3D extends Object3DBranch {
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
+  private static final float LEVEL_ELEVATION_SHIFT = 0.1f;
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
@@ -261,7 +262,7 @@ public class Wall3D extends Object3DBranch {
     List<float[]> wallPoints = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
     float [] previousWallPoint = null;
-    for (PathIterator it = wallArea.getPathIterator(null, 0.1f); !it.isDone(); ) {
+    for (PathIterator it = wallArea.getPathIterator(null); !it.isDone(); ) {
       float [] wallPoint = new float[2];
       if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
         if (wallPoints.size() > 2) {
@@ -296,7 +297,7 @@ public class Wall3D extends Object3DBranch {
     previousWallPoint = null;
     for (DoorOrWindowArea windowIntersection : windowIntersections) {
       if (!windowIntersection.getArea().isEmpty()) {
-        for (PathIterator it = windowIntersection.getArea().getPathIterator(null, 0.1f); !it.isDone(); ) {
+        for (PathIterator it = windowIntersection.getArea().getPathIterator(null); !it.isDone(); ) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
             // Remove last point if it's equal to first point
@@ -676,7 +677,12 @@ public class Wall3D extends Object3DBranch {
     if (level == null) {
       return 0;
     } else {
-      return level.getElevation() - getFloorThicknessBottomWall();
+      float floorThicknessBottomWall = getFloorThicknessBottomWall();
+      if (floorThicknessBottomWall > 0) {
+        // Add a small value to wall elevation at upper floors to avoid their bottom part overlaps a room ceiling
+        floorThicknessBottomWall -= LEVEL_ELEVATION_SHIFT;
+      }
+      return level.getElevation() - floorThicknessBottomWall;
     }
   }
   
@@ -690,7 +696,7 @@ public class Wall3D extends Object3DBranch {
       return 0;
     } else {
       List<Level> levels = this.home.getLevels();
-      if (!levels.isEmpty() && levels.get(0) == level) {
+      if (!levels.isEmpty() && levels.get(0).getElevation() == level.getElevation()) {
         // Ignore floor thickness at first level 
         return 0;
       } else {
@@ -704,12 +710,25 @@ public class Wall3D extends Object3DBranch {
    */
   private float getWallHeightAtStart() {
     Float wallHeight = ((Wall)getUserData()).getHeight();      
+    float wallHeightAtStart;
     if (wallHeight != null) {
-      return wallHeight + getWallElevation() + getFloorThicknessBottomWall();
+      wallHeightAtStart = wallHeight + getWallElevation() + getFloorThicknessBottomWall();
     } else {
       // If wall height isn't set, use home wall height
-      return this.home.getWallHeight() + getWallElevation() + getFloorThicknessBottomWall();
+      wallHeightAtStart = this.home.getWallHeight() + getWallElevation() + getFloorThicknessBottomWall();
     }
+    return wallHeightAtStart + getHeightElevationShift();
+  }
+  
+  private float getHeightElevationShift() {
+    Level level = ((Wall)getUserData()).getLevel();
+    if (level != null) {
+      List<Level> levels = this.home.getLevels();
+      if (levels.get(levels.size() - 1) == level) {
+        return LEVEL_ELEVATION_SHIFT;
+      }
+    }
+    return 0;
   }
   
   /**
@@ -718,7 +737,7 @@ public class Wall3D extends Object3DBranch {
   private float getWallHeightAtEnd() {
     Wall wall = (Wall)getUserData();      
     if (wall.isTrapezoidal()) {
-      return wall.getHeightAtEnd() + getWallElevation() + getFloorThicknessBottomWall();
+      return wall.getHeightAtEnd() + getWallElevation() + getFloorThicknessBottomWall() + getHeightElevationShift();
     } else {
       // If the wall isn't trapezoidal, use same height as at wall start
       return getWallHeightAtStart();
