@@ -724,7 +724,7 @@ public class Wall3D extends Object3DBranch {
     Level level = ((Wall)getUserData()).getLevel();
     if (level != null) {
       List<Level> levels = this.home.getLevels();
-      if (levels.get(levels.size() - 1) == level) {
+      if (levels.get(levels.size() - 1) != level) {
         return LEVEL_ELEVATION_SHIFT;
       }
     }
