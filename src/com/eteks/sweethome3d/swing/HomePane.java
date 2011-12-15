@@ -27,6 +27,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -76,6 +77,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import javax.print.attribute.Attribute;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -1981,7 +1985,7 @@ public class HomePane extends JRootPane implements HomeView {
     try {
       // Don't use transfer handlers for drag and drop with Plugin2 under Mac OS X or when in an unsigned applet
       dragAndDropWithTransferHandlerSupported = !Boolean.getBoolean("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler");
-    } catch (AccessControlException ex1) {
+    } catch (AccessControlException ex) {
       dragAndDropWithTransferHandlerSupported = false;
     }
     
@@ -3299,7 +3303,26 @@ public class HomePane extends JRootPane implements HomeView {
           this.home.getName(), ContentManager.ContentType.SWEET_HOME_3D);
     }
     printerJob.setJobName(jobName);
-    if (printerJob.printDialog()) {
+    PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
+    Window ancestor = SwingUtilities.getWindowAncestor(this);
+    if (ancestor instanceof Frame) {
+      try {
+        // Force native dialog instead of cross platform one
+        Attribute nativeDialogAttribute;
+        try {
+          // Retrieve Java 7 field for native dialog by reflection 
+          nativeDialogAttribute = (Attribute)Class.forName("javax.print.attribute.standard.DialogTypeSelection").getField("NATIVE").get(null);
+        } catch (Exception ex) {
+          nativeDialogAttribute = sun.print.DialogTypeSelection.NATIVE;
+        }
+        attributes.add(nativeDialogAttribute); 
+        attributes.add(new sun.print.DialogOwner((Frame)ancestor));
+      } catch (LinkageError ex) {
+      } catch (AccessControlException ex) {
+        // Ignore dialog parent
+      }
+    }
+    if (printerJob.printDialog(attributes)) {
       return new Callable<Void>() {
           public Void call() throws RecorderException {
             try {
