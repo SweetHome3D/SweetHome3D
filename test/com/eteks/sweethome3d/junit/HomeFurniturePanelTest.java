@@ -27,8 +27,8 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
-import javax.swing.JTextField;
 import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.JTextField;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;

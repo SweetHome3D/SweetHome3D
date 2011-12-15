@@ -35,8 +35,8 @@ import javax.swing.tree.TreeModel;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 
