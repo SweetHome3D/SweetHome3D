@@ -294,6 +294,7 @@ public class Wall3D extends Object3DBranch {
     }
     
     // Generate geometry for each wall part above and below a window
+    Level level = wall.getLevel();
     previousWallPoint = null;
     for (DoorOrWindowArea windowIntersection : windowIntersections) {
       if (!windowIntersection.getArea().isEmpty()) {
@@ -329,6 +330,12 @@ public class Wall3D extends Object3DBranch {
               float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
               // Generate geometry for wall part below window
               if (lowestDoorOrWindowElevation > wallElevation) {
+                if (level != null 
+                    && level.getElevation() != wallElevation
+                    && lowestDoorOrWindow.getElevation() < LEVEL_ELEVATION_SHIFT) {
+                  // Give more chance to an overlapping room floor to be displayed
+                  lowestDoorOrWindowElevation -= LEVEL_ELEVATION_SHIFT;
+                }
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, wallElevation, 
                     cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindowElevation, texture, 
                     textureReferencePoint, wallSide));
