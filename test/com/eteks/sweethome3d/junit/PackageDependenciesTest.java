@@ -79,8 +79,13 @@ public class PackageDependenciesTest extends TestCase {
     // FreeHEP Vector Graphics for SVG
     JavaPackage vectorGraphicsUtil = constraint.addPackage("org.freehep.util");
     JavaPackage vectorGraphicsSvg = constraint.addPackage("org.freehep.graphicsio.svg");
+    // Batik for SVG path parsing
+    JavaPackage orgApacheBatikParser = constraint.addPackage("org.apache.batik.parser");
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
+    // Print attributes
+    JavaPackage javaxPrintAttribute = constraint.addPackage("javax.print.attribute");
+    JavaPackage sunPrint = constraint.addPackage("sun.print");
     // Mac OS X specific interfaces
     JavaPackage eawt = constraint.addPackage("com.applet.eawt");
     JavaPackage eio = constraint.addPackage("com.applet.eio");
@@ -121,6 +126,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(xmlParsers);
     sweetHome3DJava3D.dependsUpon(xmlSax);
     sweetHome3DJava3D.dependsUpon(xmlSaxHelpers);
+    sweetHome3DJava3D.dependsUpon(orgApacheBatikParser);
     
     sweetHome3DSwing.dependsUpon(sweetHome3DModel);
     sweetHome3DSwing.dependsUpon(sweetHome3DTools);
@@ -144,6 +150,8 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(vectorGraphicsUtil);
     sweetHome3DSwing.dependsUpon(vectorGraphicsSvg);
     sweetHome3DSwing.dependsUpon(jnlp);
+    sweetHome3DSwing.dependsUpon(javaxPrintAttribute);
+    sweetHome3DSwing.dependsUpon(sunPrint);
     
     sweetHome3DIO.dependsUpon(sweetHome3DModel);
     sweetHome3DIO.dependsUpon(sweetHome3DTools);
