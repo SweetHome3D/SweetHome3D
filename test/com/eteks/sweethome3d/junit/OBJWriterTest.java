@@ -21,6 +21,9 @@ package com.eteks.sweethome3d.junit;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.net.URL;
 
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -29,6 +32,7 @@ import javax.vecmath.Vector3f;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -36,6 +40,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.sun.j3d.utils.geometry.Box;
@@ -78,7 +83,7 @@ public class OBJWriterTest extends TestCase {
   /**
    * Tests home export to OBJ format.
    */
-  public void testHomeExportToOBJ() throws RecorderException {
+  public void testHomeExportToOBJ() throws RecorderException, IOException {
     // 1. Create an empty home and a 3D controller
     ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
@@ -97,12 +102,11 @@ public class OBJWriterTest extends TestCase {
     assertEquals("Incorrect furniture count", 1, home.getFurniture().size());
 
     // 3. Export home to OBJ file
-    File dir = new File("Tmp@#");
-    dir.mkdir();
+    File dir = File.createTempFile("Tmp@#", ".obj1");
+    dir.delete();
+    assertTrue("Can't create temporary directory", dir.mkdir());    
     File objFile = new File(dir, "Test.obj");
     File mtlFile = new File(dir, "Test.mtl");
-    assertFalse(objFile + " exists", objFile.exists());
-    assertFalse(mtlFile + " exists", mtlFile.exists());
     
     homeController.getView().exportToOBJ(objFile.toString());
     assertTrue(objFile + " wasn't created", objFile.exists());
@@ -116,5 +120,72 @@ public class OBJWriterTest extends TestCase {
     if (!dir.delete()) {
       fail("Couldn't delete test dir");
     }
+  }
+  
+  /**
+   * Tests if the content of an OBJ file is as expected after exporting a complex home
+   * (with holes for windows and staircase).
+   */
+  public void testExportToOBJContent() throws RecorderException, IOException {
+    // 1. Read an existing file
+    String testFile = OBJWriterTest.class.getResource("resources/holes.sh3d").getFile();
+    if (OperatingSystem.isWindows()) {
+      testFile = testFile.substring(1).replace("%20", " ");
+    }
+    Home home = new HomeFileRecorder().readHome(testFile);
+    
+    // 2. Export home to OBJ file
+    File dir = File.createTempFile("Tmp@#", ".obj2");
+    dir.delete();
+    assertTrue("Can't create temporary directory", dir.mkdir());    
+    File objFile = new File(dir, "holes.obj");
+    File mtlFile = new File(dir, "holes.mtl");
+    
+    ViewFactory viewFactory = new SwingViewFactory();
+    UserPreferences preferences = new DefaultUserPreferences() {
+      @Override
+      public String getLocalizedString(Class<?> resourceClass, String resourceKey, Object ... resourceParameters) {
+        if ("exportToOBJ.header".equals(resourceKey)) {
+          return ""; // Avoid header with a date to simply comparison
+        } else {
+          return super.getLocalizedString(resourceClass, resourceKey, resourceParameters);
+        }
+      }
+    };
+    HomeController homeController = new HomeController(home, preferences, viewFactory);
+    homeController.getView().exportToOBJ(objFile.toString());
+    
+    assertSameContent(OBJWriterTest.class.getResource("resources/holes.obj"), objFile.toURI().toURL());
+    assertSameContent(OBJWriterTest.class.getResource("resources/holes.mtl"), mtlFile.toURI().toURL());
+    
+    for (File file : dir.listFiles()) {
+      if (!file.delete()) {
+        fail("Couldn't delete test file " + file);
+      }
+    }
+    if (!dir.delete()) {
+      fail("Couldn't delete test dir");
+    }
+  }
+
+  /**
+   * Asserts both URLs content is the same.
+   */
+  private void assertSameContent(URL expectedContentUrl, URL actualContentUrl) throws IOException {
+    LineNumberReader expectedIn = new LineNumberReader(new InputStreamReader(expectedContentUrl.openStream(), "ISO-8859-1"));
+    LineNumberReader actualIn = new LineNumberReader(new InputStreamReader(actualContentUrl.openStream(), "ISO-8859-1"));
+    for (String expectedLine; (expectedLine = expectedIn.readLine()) != null; ) {
+      String actualLine = actualIn.readLine();
+      if (actualLine == null) {
+        fail("Unexpected end of file in " + actualContentUrl + " at row " + expectedIn.getLineNumber());
+      } else if (!expectedLine.equals(actualLine)) {
+        fail("Difference in " + actualContentUrl + " at row " + expectedIn.getLineNumber());
+      }
+    }
+    if (actualIn.readLine() != null) {
+      fail("Expected end of file in " + actualContentUrl + " at row " + actualIn.getLineNumber());
+    }
+    expectedIn.close();
+    actualIn.close();
   }
 }
