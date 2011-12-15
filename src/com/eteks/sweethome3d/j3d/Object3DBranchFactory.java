@@ -24,7 +24,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.Object3DFactory;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
 /**
  * A factory able to create instances of {@link Object3DBranch Object3DBranch} class.
