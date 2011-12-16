@@ -145,7 +145,7 @@ public class TextureManager {
     TextureKey textureKey;
     synchronized (this.textures) { // Use one mutex for both maps
       textureKey = this.contentTextureKeys.get(content);
-      if (textureKey == null) {
+      if (textureKey != null) {
         texture = this.textures.get(textureKey);
       } else {
         texture = null;
