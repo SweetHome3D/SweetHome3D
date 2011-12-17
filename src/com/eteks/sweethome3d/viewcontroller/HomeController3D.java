@@ -602,8 +602,8 @@ public class HomeController3D implements Controller {
     @Override
     public void elevateCamera(float delta) {
       float newElevation = this.observerCamera.getZ() + delta; 
-      newElevation = Math.max(newElevation, 10 * 14 / 15);
-      newElevation = Math.min(newElevation, 2500 * 14 / 15);
+      newElevation = Math.max(newElevation, 10f * 14 / 15);
+      newElevation = Math.min(newElevation, 100000f * 14 / 15);
       this.observerCamera.setZ(newElevation);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));

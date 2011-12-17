@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,8 +58,6 @@ public class Ground3D extends Object3DBranch {
   private final float originY;
   private final float width;
   private final float depth;
-  
-  private HomeTexture groundTexture;
 
   /**
    * Creates a 3D ground for the given <code>home</code>.
@@ -117,28 +116,20 @@ public class Ground3D extends Object3DBranch {
     final Appearance groundAppearance = groundShape.getAppearance();
     groundAppearance.getColoringAttributes().setColor(groundColor);
     HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
-    boolean groundTextureChanged = this.groundTexture != groundTexture;
-    if (groundTextureChanged) {
-      this.groundTexture = groundTexture;
-      if (groundTexture != null) {
-        final TextureManager imageManager = TextureManager.getInstance();
-        imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
-            new TextureManager.TextureObserver() {
-                public void textureUpdated(Texture texture) {
-                  groundAppearance.setTexture(texture);
-                }
-              });
-      } else {
-        groundAppearance.setTexture(null);
-      }
+    if (groundTexture != null) {
+      final TextureManager imageManager = TextureManager.getInstance();
+      imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
+          new TextureManager.TextureObserver() {
+              public void textureUpdated(Texture texture) {
+                groundAppearance.setTexture(texture);
+              }
+            });
+    } else {
+      groundAppearance.setTexture(null);
     }
     
-    Area groundArea = new Area(getShape(new float [][] {
-        {this.originX, this.originY}, 
-        {this.originX, this.originY + this.depth},
-        {this.originX + this.width, this.originY + this.depth},
-        {this.originX + this.width, this.originY}}));
-    // Compute the union of the rooms and the underground walls and furniture areas 
+    Area areaRemovedFromGround = new Area();
+    // Compute the union of the rooms, the underground walls and furniture areas 
     Comparator<Level> levelComparator = new Comparator<Level>() {
         public int compare(Level level1, Level level2) {
           return -Float.compare(level1.getElevation(), level2.getElevation());
@@ -156,7 +147,7 @@ public class Ground3D extends Object3DBranch {
               || (roomLevel.getElevation() <= 0
                   && roomLevel.isVisible())) {
             roomArea = new Area(getShape(roomPoints));
-            groundArea.subtract(roomArea);
+            areaRemovedFromGround.add(roomArea);
             updateUndergroundAreas(roomAreas, room.getLevel(), roomPoints, roomArea);
           }
           updateUndergroundAreas(undergroundAreas, room.getLevel(), roomPoints, roomArea);
@@ -205,7 +196,7 @@ public class Ground3D extends Object3DBranch {
         if (new Room(points).isClockwise()) {
           upperLevelAreas.get(level).add(new Area(getShape(points)));
         } else {
-          groundArea.subtract(new Area(getShape(points)));
+          areaRemovedFromGround.add(new Area(getShape(points)));
         }
       }
     }
@@ -220,20 +211,30 @@ public class Ground3D extends Object3DBranch {
     }
     
     // Define ground and underground levels surfaces
+    Area groundArea = new Area(getShape(new float [][] {
+        {this.originX, this.originY}, 
+        {this.originX, this.originY + this.depth},
+        {this.originX + this.width, this.originY + this.depth},
+        {this.originX + this.width, this.originY}}));
+    Rectangle2D removedAreaBounds = areaRemovedFromGround.getBounds2D();
+    if (!groundArea.getBounds2D().equals(removedAreaBounds)) {
+      Area outsideGroundArea = groundArea;
+      removedAreaBounds.add(Math.max(removedAreaBounds.getMinX() - 5E3, this.originX), 
+          Math.max(removedAreaBounds.getMinY() - 5E3, this.originY));
+      removedAreaBounds.add(Math.min(removedAreaBounds.getMaxX() + 5E3, this.originX + this.width), 
+          Math.min(removedAreaBounds.getMaxY() + 5E3, this.originY + this.depth));
+      groundArea = new Area(removedAreaBounds);
+      outsideGroundArea.subtract(groundArea);
+      // Divide the ground at level 0 in two geometries to limit visual artifacts on large zone  
+      addAreaGeometry(groundShape, groundTexture, outsideGroundArea, 0);
+    }
+    groundArea.subtract(areaRemovedFromGround);
     undergroundAreas.put(new Level("Ground", 0, 0, 0), groundArea);
     float previousLevelElevation = 0;
     for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
       Level level = undergroundAreaEntry.getKey();
       float elevation = level.getElevation();
-      List<float [][]> levelHolesPoints = new ArrayList<float[][]>();
-      for (float [][] points : getAreaPoints(undergroundAreaEntry.getValue())) {
-        if (new Room(points).isClockwise()) {
-          levelHolesPoints.add(points);
-        } else {
-          addAreaGeometry(groundShape, groundTexture, points, levelHolesPoints, elevation);
-          levelHolesPoints.clear();
-        }
-      }
+      addAreaGeometry(groundShape, groundTexture, undergroundAreaEntry.getValue(), elevation);
       if (previousLevelElevation - elevation > 0) {
         for (float [][] points : getAreaPoints(undergroundSideAreas.get(level))) {
           addAreaSidesGeometry(groundShape, groundTexture, points, elevation, previousLevelElevation - elevation);
@@ -305,6 +306,21 @@ public class Ground3D extends Object3DBranch {
 
   /**
    * Adds to ground shape the geometry matching the given area.
+   */
+  public void addAreaGeometry(Shape3D groundShape, HomeTexture groundTexture, Area area, float elevation) {
+    List<float [][]> levelHolesPoints = new ArrayList<float[][]>();
+    for (float [][] points : getAreaPoints(area)) {
+      if (new Room(points).isClockwise()) {
+        levelHolesPoints.add(points);
+      } else {
+        addAreaGeometry(groundShape, groundTexture, points, levelHolesPoints, elevation);
+        levelHolesPoints.clear();
+      }
+    }
+  }
+
+  /**
+   * Adds to ground shape the geometry matching the area defined by the given points and hole points.
    */
   private void addAreaGeometry(Shape3D groundShape, 
                                HomeTexture groundTexture, 

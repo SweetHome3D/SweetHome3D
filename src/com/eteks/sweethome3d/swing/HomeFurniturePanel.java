@@ -214,7 +214,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "elevationLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 2500f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 100000f);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
     elevationSpinnerModel.setNullable(controller.getElevation() == null);
     elevationSpinnerModel.setLength(controller.getElevation());
