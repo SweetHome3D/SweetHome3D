@@ -395,10 +395,13 @@ public abstract class UserPreferences {
                 setParent(parentResourceBundle);
               }
             };
+            break;
+          } catch (IllegalArgumentException ex) {
+            // May happen if the file contains some wrongly encoded characters
+            ex.printStackTrace();
           } finally {
             in.close();
           }
-          break;
         }
       }
     }
