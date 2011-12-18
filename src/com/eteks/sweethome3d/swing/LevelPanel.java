@@ -134,7 +134,7 @@ public class LevelPanel extends JPanel implements DialogView {
       this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           LevelPanel.class, "elevationLabel.text", unitName));
       final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-          new NullableSpinner.NullableSpinnerLengthModel(preferences, -1000f, maximumLength / 10);
+          new NullableSpinner.NullableSpinnerLengthModel(preferences, -1000f, preferences.getLengthUnit().getMaximumElevation());
       this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
       elevationSpinnerModel.setNullable(controller.getElevation() == null);
       elevationSpinnerModel.setLength(controller.getElevation());

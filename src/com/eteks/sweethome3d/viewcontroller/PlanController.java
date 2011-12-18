@@ -6773,12 +6773,12 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void moveMouse(float x, float y) {
-      // Compute the new height of the piece 
+      // Compute the new elevation of the piece 
       PlanView planView = getView();
       float [] topRightPoint = this.selectedPiece.getPoints() [1];
       float deltaY = y - this.deltaYToElevationPoint - topRightPoint[1];
       float newElevation = this.oldElevation - deltaY;
-      newElevation = Math.min(Math.max(newElevation, 0f), preferences.getLengthUnit().getMaximumLength() / 10);
+      newElevation = Math.min(Math.max(newElevation, 0f), preferences.getLengthUnit().getMaximumElevation());
       if (this.magnetismEnabled) {
         newElevation = preferences.getLengthUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
       }
@@ -7425,10 +7425,10 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void moveMouse(float x, float y) {      
-      // Compute the new angle of the camera
+      // Compute the new elevation of the camera
       float newElevation = (float)(this.oldElevation - (y - getYLastMousePress()));
-      // Check new angle is between -60° and 90°  
-      newElevation = Math.min(Math.max(newElevation, 10), preferences.getLengthUnit().getMaximumLength() / 10);
+      // Check new elevation is between 10 and max  
+      newElevation = Math.min(Math.max(newElevation, 10), preferences.getLengthUnit().getMaximumElevation());
       
       // Update camera elevation
       this.selectedCamera.setZ(newElevation);

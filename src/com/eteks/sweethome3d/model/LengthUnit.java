@@ -638,6 +638,14 @@ public enum LengthUnit {
   public abstract float getMaximumLength();
   
   /**
+   * Returns the maximum value for elevation in centimeter.
+   * @since 3.4
+   */
+  public float getMaximumElevation() {
+    return getMaximumLength() / 10;
+  }
+  
+  /**
    * Returns the <code>length</code> given in centimeters converted 
    * to a value expressed in this unit.
    * @since 2.0
