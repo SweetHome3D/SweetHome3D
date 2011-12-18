@@ -1338,7 +1338,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the minimum scale of the plan view.
    */
   public float getMinimumScale() {
-    return 0.05f;
+    return 0.01f;
   }
   
   /**
