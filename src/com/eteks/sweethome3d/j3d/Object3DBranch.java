@@ -113,21 +113,31 @@ public abstract class Object3DBranch extends BranchGroup {
     Shape shape = parsedShapes.get(svgPathShape);
     if (shape == null) {
       try {
-        AWTPathProducer pathProducer = new AWTPathProducer();
-        PathParser pathParser = new PathParser();
-        pathParser.setPathHandler(pathProducer);
-        pathParser.parse(svgPathShape);
-        shape = pathProducer.getShape();
+        shape = SVGPathSupport.parsePathShape(svgPathShape);
       } catch (LinkageError ex) {
         // Fallback to default square shape if batik classes aren't in classpath
-      } catch (ParseException ex) {
-        // Fallback to default square shape if shape is incorrect
-      }
-      if (shape == null) {
         shape = new Rectangle2D.Float(0, 0, 1, 1);
       }
       parsedShapes.put(svgPathShape, shape);
     }
     return shape;
+  }
+  
+  /**
+   * Separated static class to be able to exclude Batik library from classpath. 
+   */
+  private static class SVGPathSupport {
+    public static Shape parsePathShape(String svgPathShape) {
+      try {
+        AWTPathProducer pathProducer = new AWTPathProducer();
+        PathParser pathParser = new PathParser();
+        pathParser.setPathHandler(pathProducer);
+        pathParser.parse(svgPathShape);
+        return pathProducer.getShape();
+      } catch (ParseException ex) {
+        // Fallback to default square shape if shape is incorrect
+        return new Rectangle2D.Float(0, 0, 1, 1);
+      }
+    }
   }
 }
