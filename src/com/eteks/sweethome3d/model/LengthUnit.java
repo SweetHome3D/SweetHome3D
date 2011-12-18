@@ -90,6 +90,11 @@ public enum LengthUnit {
     }
     
     @Override
+    public float getMaximumLength() {
+      return 100000f;
+    }
+
+    @Override
     public float centimeterToUnit(float length) {
       return length;
     }
@@ -159,6 +164,11 @@ public enum LengthUnit {
     }
     
     @Override
+    public float getMaximumLength() {
+      return 100000f;
+    }
+
+    @Override
     public float centimeterToUnit(float length) {
       return length * 10;
     }
@@ -225,6 +235,11 @@ public enum LengthUnit {
     @Override
     public float getMinimumLength() {
       return 0.1f;
+    }
+
+    @Override
+    public float getMaximumLength() {
+      return 100000f;
     }
 
     @Override
@@ -465,6 +480,11 @@ public enum LengthUnit {
     }
 
     @Override
+    public float getMaximumLength() {
+      return LengthUnit.inchToCentimeter(99974.4f); // 3280 ft
+    }
+
+    @Override
     public float centimeterToUnit(float length) {
       return centimeterToInch(length);
     }
@@ -610,6 +630,12 @@ public enum LengthUnit {
    * Returns the minimum value for length in centimeter.
    */
   public abstract float getMinimumLength();
+  
+  /**
+   * Returns the maximum value for length in centimeter.
+   * @since 3.4
+   */
+  public abstract float getMaximumLength();
   
   /**
    * Returns the <code>length</code> given in centimeters converted 
