@@ -693,7 +693,7 @@ public class Room3D extends Object3DBranch {
    */
   private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
-    boolean ignoreTransparency = room.getLevel() != null && room.getLevel().getElevation() <= 0;
+    boolean ignoreTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
     updateRoomPartAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
         room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible(), ignoreTransparency);
     updateRoomPartAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
