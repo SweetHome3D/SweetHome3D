@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.CapabilityNotSetException;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
@@ -617,8 +618,13 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       
       // Change cull face 
-      if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
-        polygonAttributes.setCullFace(cullFace);
+      try {
+        if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
+          polygonAttributes.setCullFace(cullFace);
+        }
+      } catch (CapabilityNotSetException ex) {
+        // Shouldn't happen since capability is set but happens though with Java 3D 1.3
+        ex.printStackTrace();
       }
     }
   }
