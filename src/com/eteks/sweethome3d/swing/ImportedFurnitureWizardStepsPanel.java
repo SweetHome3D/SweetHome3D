@@ -523,8 +523,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final float minimumLength = preferences.getLengthUnit().getMinimumLength();
+    final float maximumLength = preferences.getLengthUnit().getMaximumLength();
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getWidth(), minimumLength), 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getWidth(), minimumLength), maximumLength);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     widthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -546,7 +547,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "depthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getDepth(), minimumLength), 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getDepth(), minimumLength), maximumLength);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
     depthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -568,7 +569,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getHeight(), minimumLength), 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, Math.min(controller.getHeight(), minimumLength), maximumLength);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     heightSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -604,7 +605,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "elevationLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength / 10);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
     elevationSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {

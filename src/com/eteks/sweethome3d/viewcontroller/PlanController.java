@@ -6417,15 +6417,16 @@ public class PlanController extends FurnitureController implements Controller {
     public void updateEditableProperty(EditableProperty editableProperty, Object value) {
       PlanView planView = getView();
       if (this.newWall == null) {
+        float maximumLength = preferences.getLengthUnit().getMaximumLength();
         // Update start point of the first wall
         switch (editableProperty) {
           case X : 
             this.xStart = value != null ? ((Number)value).floatValue() : 0;
-            this.xStart = Math.max(-100000f, Math.min(this.xStart, 100000f));
+            this.xStart = Math.max(-maximumLength, Math.min(this.xStart, maximumLength));
             break;      
           case Y : 
             this.yStart = value != null ? ((Number)value).floatValue() : 0;
-            this.yStart = Math.max(-100000f, Math.min(this.yStart, 100000f));
+            this.yStart = Math.max(-maximumLength, Math.min(this.yStart, maximumLength));
             break;      
         }
         planView.setAlignmentFeedback(Wall.class, null, this.xStart, this.yStart, true);
@@ -6445,7 +6446,7 @@ public class PlanController extends FurnitureController implements Controller {
           switch (editableProperty) {
             case LENGTH : 
               float length = value != null ? ((Number)value).floatValue() : 0;
-              length = Math.max(0.001f, Math.min(length, 100000f));
+              length = Math.max(0.001f, Math.min(length, preferences.getLengthUnit().getMaximumLength()));
               double wallAngle = Math.PI - Math.atan2(this.yStart - this.yLastEnd, this.xStart - this.xLastEnd);
               this.xLastEnd = (float)(this.xStart + length * Math.cos(wallAngle));
               this.yLastEnd = (float)(this.yStart - length * Math.sin(wallAngle));
@@ -6777,7 +6778,7 @@ public class PlanController extends FurnitureController implements Controller {
       float [] topRightPoint = this.selectedPiece.getPoints() [1];
       float deltaY = y - this.deltaYToElevationPoint - topRightPoint[1];
       float newElevation = this.oldElevation - deltaY;
-      newElevation = Math.max(newElevation, 0f);
+      newElevation = Math.min(Math.max(newElevation, 0f), preferences.getLengthUnit().getMaximumLength() / 10);
       if (this.magnetismEnabled) {
         newElevation = preferences.getLengthUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
       }
@@ -6875,7 +6876,8 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         newHeight = preferences.getLengthUnit().getMagnetizedLength(newHeight, planView.getPixelLength());
       }
-      newHeight = Math.max(newHeight, preferences.getLengthUnit().getMinimumLength());
+      newHeight = Math.min(Math.max(newHeight, preferences.getLengthUnit().getMinimumLength()), 
+          preferences.getLengthUnit().getMaximumLength());
 
       // Update piece new dimension
       selectedPiece.setHeight(newHeight);
@@ -6995,7 +6997,8 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.magnetismEnabled) {
         newWidth = preferences.getLengthUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
       }
-      newWidth = Math.max(newWidth, preferences.getLengthUnit().getMinimumLength());
+      newWidth = Math.min(Math.max(newWidth, preferences.getLengthUnit().getMinimumLength()), 
+          preferences.getLengthUnit().getMaximumLength());
       
       float newDepth;
       if (!this.resizedPiece.isDoorOrWindowBoundToWall()
@@ -7007,7 +7010,8 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.magnetismEnabled) {
           newDepth = preferences.getLengthUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
         }
-        newDepth = Math.max(newDepth, preferences.getLengthUnit().getMinimumLength());
+        newDepth = Math.min(Math.max(newDepth, preferences.getLengthUnit().getMinimumLength()), 
+            preferences.getLengthUnit().getMaximumLength());
       } else {
         newDepth = this.resizedPiece.getDepth();
       }
@@ -7424,8 +7428,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute the new angle of the camera
       float newElevation = (float)(this.oldElevation - (y - getYLastMousePress()));
       // Check new angle is between -60° and 90°  
-      newElevation = Math.max(newElevation, 10 * 14 / 15);
-      newElevation = Math.min(newElevation, 100000f);
+      newElevation = Math.min(Math.max(newElevation, 10), preferences.getLengthUnit().getMaximumLength() / 10);
       
       // Update camera elevation
       this.selectedCamera.setZ(newElevation);
@@ -7749,16 +7752,17 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void updateEditableProperty(EditableProperty editableProperty, Object value) {
       PlanView planView = getView();
+      float maximumLength = preferences.getLengthUnit().getMaximumLength();
       if (this.newDimensionLine == null) {
         // Update start point of the dimension line
         switch (editableProperty) {
           case X : 
             this.xStart = value != null ? ((Number)value).floatValue() : 0;
-            this.xStart = Math.max(-100000f, Math.min(this.xStart, 100000f));
+            this.xStart = Math.max(-maximumLength, Math.min(this.xStart, maximumLength));
             break;      
           case Y : 
             this.yStart = value != null ? ((Number)value).floatValue() : 0;
-            this.yStart = Math.max(-100000f, Math.min(this.yStart, 100000f));
+            this.yStart = Math.max(-maximumLength, Math.min(this.yStart, maximumLength));
             break;      
         }
         planView.setAlignmentFeedback(DimensionLine.class, null, this.xStart, this.yStart, true);
@@ -7767,7 +7771,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (editableProperty == EditableProperty.OFFSET) {
           // Update new dimension line offset 
           float offset = value != null ? ((Number)value).floatValue() : 0;
-          offset = Math.max(-100000f, Math.min(offset, 100000f));
+          offset = Math.max(-maximumLength, Math.min(offset, maximumLength));
           this.newDimensionLine.setOffset(offset);
         }
       } else {
@@ -7777,7 +7781,7 @@ public class PlanController extends FurnitureController implements Controller {
         switch (editableProperty) {
           case LENGTH : 
             float length = value != null ? ((Number)value).floatValue() : 0;
-            length = Math.max(0.001f, Math.min(length, 100000f));
+            length = Math.max(0.001f, Math.min(length, maximumLength));
             double dimensionLineAngle = getDimensionLineAngle();
             newX = (float)(this.xStart + length * Math.cos(dimensionLineAngle));
             newY = (float)(this.yStart - length * Math.sin(dimensionLineAngle));
@@ -8669,15 +8673,16 @@ public class PlanController extends FurnitureController implements Controller {
     public void updateEditableProperty(EditableProperty editableProperty, Object value) {
       PlanView planView = getView();
       if (this.newRoom == null) {
+        float maximumLength = preferences.getLengthUnit().getMaximumLength();
         // Update start point of the first wall
         switch (editableProperty) {
           case X : 
             this.xPreviousPoint = value != null ? ((Number)value).floatValue() : 0;
-            this.xPreviousPoint = Math.max(-100000f, Math.min(this.xPreviousPoint, 100000f));
+            this.xPreviousPoint = Math.max(-maximumLength, Math.min(this.xPreviousPoint, maximumLength));
             break;      
           case Y : 
             this.yPreviousPoint = value != null ? ((Number)value).floatValue() : 0;
-            this.yPreviousPoint = Math.max(-100000f, Math.min(this.yPreviousPoint, 100000f));
+            this.yPreviousPoint = Math.max(-maximumLength, Math.min(this.yPreviousPoint, maximumLength));
             break;      
         }
         planView.setAlignmentFeedback(Room.class, null, this.xPreviousPoint, this.yPreviousPoint, true);
@@ -8692,7 +8697,7 @@ public class PlanController extends FurnitureController implements Controller {
         switch (editableProperty) {
           case LENGTH : 
             float length = value != null ? ((Number)value).floatValue() : 0;
-            length = Math.max(0.001f, Math.min(length, 100000f));
+            length = Math.max(0.001f, Math.min(length, preferences.getLengthUnit().getMaximumLength()));
             double wallAngle = Math.PI - Math.atan2(previousPoint [1] - point [1], 
                 previousPoint [0] - point [0]);
             newX = (float)(previousPoint [0] + length * Math.cos(wallAngle));
@@ -9129,7 +9134,8 @@ public class PlanController extends FurnitureController implements Controller {
       float newDiameter = (float)Point2D.distance(this.selectedCompass.getX(), this.selectedCompass.getY(), 
           x - this.deltaXToResizePoint, y - this.deltaYToResizePoint) * 2;
       newDiameter = preferences.getLengthUnit().getMagnetizedLength(newDiameter, planView.getPixelLength());
-      newDiameter = Math.max(newDiameter, preferences.getLengthUnit().getMinimumLength());
+      newDiameter = Math.min(Math.max(newDiameter, preferences.getLengthUnit().getMinimumLength()), 
+          preferences.getLengthUnit().getMaximumLength() / 10);
       // Update piece size
       this.selectedCompass.setDiameter(newDiameter);
       // Ensure point at (x,y) is visible

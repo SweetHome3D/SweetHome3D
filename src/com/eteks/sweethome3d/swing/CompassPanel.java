@@ -115,8 +115,9 @@ public class CompassPanel extends JPanel implements DialogView {
     // Create X label and its spinner bound to X controller property
     this.xLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         CompassPanel.class, "xLabel.text", unitName));
+    float maximumLength = preferences.getLengthUnit().getMaximumLength();
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.xSpinner = new JSpinner(xSpinnerModel);
     xSpinnerModel.setLength(controller.getX());
     final PropertyChangeListener xChangeListener = new PropertyChangeListener() {
@@ -137,7 +138,7 @@ public class CompassPanel extends JPanel implements DialogView {
     this.yLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         CompassPanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.ySpinner = new NullableSpinner(ySpinnerModel);
     ySpinnerModel.setLength(controller.getY());
     final PropertyChangeListener yChangeListener = new PropertyChangeListener() {
@@ -158,7 +159,8 @@ public class CompassPanel extends JPanel implements DialogView {
     this.diameterLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         CompassPanel.class, "diameterLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel diameterSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 2500f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 
+            preferences.getLengthUnit().getMinimumLength(), preferences.getLengthUnit().getMaximumLength()  / 10);
     this.diameterSpinner = new NullableSpinner(diameterSpinnerModel);
     diameterSpinnerModel.setLength(controller.getDiameter());
     final PropertyChangeListener diameterChangeListener = new PropertyChangeListener() {

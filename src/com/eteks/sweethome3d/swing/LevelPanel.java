@@ -128,12 +128,13 @@ public class LevelPanel extends JPanel implements DialogView {
         });
     }
         
+    final float maximumLength = preferences.getLengthUnit().getMaximumLength();
     if (controller.isPropertyEditable(LevelController.Property.ELEVATION)) {
       // Create elevation label and its spinner bound to ELEVATION controller property
       this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           LevelPanel.class, "elevationLabel.text", unitName));
       final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-          new NullableSpinner.NullableSpinnerLengthModel(preferences, -1000f, 100000f);
+          new NullableSpinner.NullableSpinnerLengthModel(preferences, -1000f, maximumLength / 10);
       this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
       elevationSpinnerModel.setNullable(controller.getElevation() == null);
       elevationSpinnerModel.setLength(controller.getElevation());
@@ -162,7 +163,7 @@ public class LevelPanel extends JPanel implements DialogView {
       this.floorThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           LevelPanel.class, "floorThicknessLabel.text", unitName));
       final NullableSpinner.NullableSpinnerLengthModel floorThicknessSpinnerModel = 
-          new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 1000f);
+          new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength / 10);
       this.floorThicknessSpinner = new NullableSpinner(floorThicknessSpinnerModel);
       final PropertyChangeListener floorThicknessChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
@@ -187,7 +188,7 @@ public class LevelPanel extends JPanel implements DialogView {
       this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           LevelPanel.class, "heightLabel.text", unitName));
       final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-          new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
+          new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
       this.heightSpinner = new NullableSpinner(heightSpinnerModel);
       final PropertyChangeListener heightChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {

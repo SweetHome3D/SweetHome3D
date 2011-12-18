@@ -190,8 +190,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         BackgroundImageWizardStepsPanel.class, "scaleLabel.text"));
     this.scaleDistanceLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         BackgroundImageWizardStepsPanel.class, "scaleDistanceLabel.text", unitName));
+    final float maximumLength = preferences.getLengthUnit().getMaximumLength();
     final NullableSpinner.NullableSpinnerLengthModel scaleDistanceSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.99f, 1000000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), maximumLength);
     this.scaleDistanceSpinner = new NullableSpinner(scaleDistanceSpinnerModel);
     this.scaleDistanceSpinner.getModel().addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -218,10 +219,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.yOriginLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             BackgroundImageWizardStepsPanel.class, "yOriginLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength);
     this.xOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
     final NullableSpinner.NullableSpinnerLengthModel yOriginSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength);
     this.yOriginSpinner = new NullableSpinner(yOriginSpinnerModel);
     ChangeListener originSpinnersListener = new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {

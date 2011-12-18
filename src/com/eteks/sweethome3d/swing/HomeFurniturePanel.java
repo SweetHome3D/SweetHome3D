@@ -167,8 +167,9 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Create X label and its spinner bound to X controller property
     this.xLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "xLabel.text", unitName));
+    final float maximumLength = preferences.getLengthUnit().getMaximumLength();
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.xSpinner = new NullableSpinner(xSpinnerModel);
     xSpinnerModel.setNullable(controller.getX() == null);
     xSpinnerModel.setLength(controller.getX());
@@ -191,7 +192,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.yLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.ySpinner = new NullableSpinner(ySpinnerModel);
     ySpinnerModel.setNullable(controller.getY() == null);
     ySpinnerModel.setLength(controller.getY());
@@ -214,7 +215,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "elevationLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength / 10);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
     elevationSpinnerModel.setNullable(controller.getElevation() == null);
     elevationSpinnerModel.setLength(controller.getElevation());
@@ -297,7 +298,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         HomeFurniturePanel.class, "widthLabel.text", unitName));
     final float minimumLength = preferences.getLengthUnit().getMinimumLength();
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     final PropertyChangeListener widthChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -323,7 +324,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "depthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
     final PropertyChangeListener depthChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -349,7 +350,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         HomeFurniturePanel.class, "heightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 100000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     final PropertyChangeListener heightChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {

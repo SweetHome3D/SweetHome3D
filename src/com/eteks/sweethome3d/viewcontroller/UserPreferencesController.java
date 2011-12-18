@@ -132,9 +132,10 @@ public class UserPreferencesController implements Controller {
     setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
     setWallPattern(this.preferences.getWallPattern());
     float minimumLength = getUnit().getMinimumLength();
-    setNewWallThickness(Math.max(minimumLength, this.preferences.getNewWallThickness()));
-    setNewWallHeight(Math.max(minimumLength, this.preferences.getNewWallHeight()));
-    setNewFloorThickness(Math.max(minimumLength, this.preferences.getNewFloorThickness()));
+    float maximumLength = getUnit().getMaximumLength();
+    setNewWallThickness(Math.min(Math.max(minimumLength, this.preferences.getNewWallThickness()), maximumLength / 10));
+    setNewWallHeight(Math.min(Math.max(minimumLength, this.preferences.getNewWallHeight()), maximumLength));
+    setNewFloorThickness(Math.min(Math.max(minimumLength, this.preferences.getNewFloorThickness()), maximumLength / 10));
     setAutoSaveDelayForRecovery(this.preferences.getAutoSaveDelayForRecovery());
     setAutoSaveForRecoveryEnabled(this.preferences.getAutoSaveDelayForRecovery() > 0);
   }  
