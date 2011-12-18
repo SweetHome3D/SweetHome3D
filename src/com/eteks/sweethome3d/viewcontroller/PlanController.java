@@ -2065,11 +2065,16 @@ public class PlanController extends FurnitureController implements Controller {
     List<Level> levels = this.home.getLevels();
     float newWallHeight = this.preferences.getNewWallHeight();
     float newFloorThickness = this.preferences.getNewFloorThickness();
+    final Level level0;
     if (levels.isEmpty()) {
       // Create level 0
-      String newLevelName = this.preferences.getLocalizedString(PlanController.class, "levelName", 0);
-      createLevel(newLevelName, 0, newFloorThickness, newWallHeight).setBackgroundImage(this.home.getBackgroundImage());
+      String level0Name = this.preferences.getLocalizedString(PlanController.class, "levelName", 0);
+      level0 = createLevel(level0Name, 0, newFloorThickness, newWallHeight);
+      level0.setBackgroundImage(this.home.getBackgroundImage());
+      moveHomeItemsToLevel(level0);
       levels = this.home.getLevels();
+    } else {
+      level0 = null;
     }
     String newLevelName = this.preferences.getLocalizedString(PlanController.class, "levelName", levels.size());
     float newLevelElevation = levels.get(levels.size() - 1).getElevation() 
@@ -2082,12 +2087,22 @@ public class PlanController extends FurnitureController implements Controller {
         super.undo();
         setSelectedLevel(oldSelectedLevel);
         home.deleteLevel(newLevel);
+        if (level0 != null) {
+          home.setBackgroundImage(level0.getBackgroundImage());
+          moveHomeItemsToLevel(oldSelectedLevel);
+          home.deleteLevel(level0);
+        }
         selectAndShowItems(Arrays.asList(oldSelectedItems));        
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
+        if (level0 != null) {
+          home.addLevel(level0);
+          moveHomeItemsToLevel(level0);
+          level0.setBackgroundImage(home.getBackgroundImage());
+        }
         home.addLevel(newLevel);
         setSelectedLevel(newLevel);
       }      
@@ -2101,33 +2116,36 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns a new level added to home. If it's the first created level, 
-   * all existing furniture, walls, rooms, dimension lines and labels will be set on this level. 
+   * Returns a new level added to home.  
    */
   protected Level createLevel(String name, float elevation, float floorThickness, float height) {
     Level newLevel = new Level(name, elevation, floorThickness, height);
     this.home.addLevel(newLevel);
-    if (this.home.getLevels().size() == 1) {
-      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-        piece.setLevel(newLevel);
-      }
-      for (Wall wall : this.home.getWalls()) {
-        wall.setLevel(newLevel);
-      }
-      for (Room room : this.home.getRooms()) {
-        room.setLevel(newLevel);
-      }
-      for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
-        dimensionLine.setLevel(newLevel);
-      }
-      for (Label label : this.home.getLabels()) {
-        label.setLevel(newLevel);
-      }
-    }
     return newLevel;
   }
 
-  
+  /**
+   * Moves to the given level all existing furniture, walls, rooms, dimension lines 
+   * and labels. 
+   */
+  private void moveHomeItemsToLevel(Level level) {
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      piece.setLevel(level);
+    }
+    for (Wall wall : this.home.getWalls()) {
+      wall.setLevel(level);
+    }
+    for (Room room : this.home.getRooms()) {
+      room.setLevel(level);
+    }
+    for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
+      dimensionLine.setLevel(level);
+    }
+    for (Label label : this.home.getLabels()) {
+      label.setLevel(level);
+    }
+  }
+
   public void modifySelectedLevel() {
     if (this.home.getSelectedLevel() != null) {
       new LevelController(this.home, this.preferences, this.viewFactory,

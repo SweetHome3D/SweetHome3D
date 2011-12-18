@@ -166,7 +166,7 @@ public class LevelTest extends ComponentTestFixture {
     runAction(homeController, HomeView.ActionType.UNDO, tester);
     runAction(homeController, HomeView.ActionType.UNDO, tester);
     assertEquals("Wall height not restored", oldHeight, firstWall.getHeight());
-    assertEquals("Incorrect level count", 1, home.getLevels().size());
+    assertEquals("Incorrect level count", 0, home.getLevels().size());
     
     runAction(homeController, HomeView.ActionType.ADD_LEVEL, tester);
     runAction(homeController, HomeView.ActionType.DELETE_LEVEL, tester);
