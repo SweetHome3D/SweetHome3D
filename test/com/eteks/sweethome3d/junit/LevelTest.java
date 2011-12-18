@@ -49,8 +49,10 @@ import abbot.tester.JTabbedPaneTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
@@ -83,6 +85,7 @@ public class LevelTest extends ComponentTestFixture {
       testFile = testFile.substring(1).replace("%20", " ");
     }
     Home home = new HomeFileRecorder().readHome(testFile);
+    assertHomeItemsAtLevel(home, null);
     HomeController homeController = new HomeController(home, preferences, viewFactory);
     
     final JComponent view = (JComponent)homeController.getView();
@@ -152,6 +155,8 @@ public class LevelTest extends ComponentTestFixture {
     List<Level> levels = home.getLevels();
     assertEquals("No new level", 2, levels.size());
     assertSame("New level isn't selected", levels.get(levels.size() - 1), home.getSelectedLevel());
+    // Check all home items moved to level 0
+    assertHomeItemsAtLevel(home, levels.get(0));
     
     // Check visibility of modified wall and other walls
     for (Wall wall : walls) {
@@ -164,6 +169,8 @@ public class LevelTest extends ComponentTestFixture {
 
     // Test undo
     runAction(homeController, HomeView.ActionType.UNDO, tester);
+    // Check all home items moved back to no level
+    assertHomeItemsAtLevel(home, null);
     runAction(homeController, HomeView.ActionType.UNDO, tester);
     assertEquals("Wall height not restored", oldHeight, firstWall.getHeight());
     assertEquals("Incorrect level count", 0, home.getLevels().size());
@@ -234,6 +241,21 @@ public class LevelTest extends ComponentTestFixture {
           Math.abs(firstRoomPoints [i][0] - points [i][0]) < 1E-4);
       assertTrue("Incorrect Y [" + i + "] " + firstRoomPoints [i][1] + " " + points [i][1], 
           Math.abs(firstRoomPoints [i][1] - points [i][1]) < 1E-4);
+    }
+  }
+
+  private void assertHomeItemsAtLevel(Home home, Level level) {
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      assertSame("Piece not at expected level", level, piece.getLevel());
+    }
+    for (Wall wall : home.getWalls()) {
+      assertSame("Piece not at expected level", level, wall.getLevel());
+    }
+    for (DimensionLine line : home.getDimensionLines()) {
+      assertSame("Piece not at expected level", level, line.getLevel());
+    }
+    for (Label label : home.getLabels()) {
+      assertSame("Label not at expected level", level, label.getLevel());
     }
   }
 
