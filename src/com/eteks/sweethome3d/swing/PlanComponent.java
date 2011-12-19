@@ -769,6 +769,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       });
 
+    home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          revalidate();
+        }
+      });
     home.getObserverCamera().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
