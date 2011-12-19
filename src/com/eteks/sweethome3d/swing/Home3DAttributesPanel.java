@@ -57,6 +57,8 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private JSpinner      observerFieldOfViewSpinner;
   private JLabel        observerHeightLabel;
   private JSpinner      observerHeightSpinner;
+  private JLabel        observerCameraElevationLabel;
+  private JSpinner      observerCameraElevationSpinner;
   private JRadioButton  groundColorRadioButton;
   private ColorButton   groundColorButton;
   private JRadioButton  groundTextureRadioButton;
@@ -118,7 +120,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         Home3DAttributesPanel.class, "observerHeightLabel.text"), unitName));
     float maximumElevation = preferences.getLengthUnit().getMaximumElevation();
     final NullableSpinner.NullableSpinnerLengthModel observerHeightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, maximumElevation * 15 / 14);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getMinimumElevation(), maximumElevation * 15 / 14);
     this.observerHeightSpinner = new AutoCommitSpinner(observerHeightSpinnerModel);
     observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
     observerHeightSpinnerModel.addChangeListener(new ChangeListener() {
@@ -130,6 +132,45 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
+          }
+        });
+    
+    // Create camera elevation label and spinner bound to OBSERVER_CAMERA_ELEVATION controller property
+    this.observerCameraElevationLabel = new JLabel(String.format(SwingTools.getLocalizedLabelText(preferences, 
+        Home3DAttributesPanel.class, "observerCameraElevationLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel observerCameraElevationSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getMinimumElevation(), maximumElevation);
+    this.observerCameraElevationSpinner = new AutoCommitSpinner(observerCameraElevationSpinnerModel);    
+    observerCameraElevationSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setObserverCameraElevation(observerCameraElevationSpinnerModel.getLength());
+        }
+      });
+    PropertyChangeListener observerCameraElevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Float observerCameraElevation = controller.getObserverCameraElevation();
+          observerCameraElevationSpinnerModel.setNullable(observerCameraElevation == null);
+          observerCameraElevationSpinnerModel.setLength(observerCameraElevation != null
+              ? (float)Math.round(controller.getObserverCameraElevation() * 100) / 100
+              : null);
+          observerCameraElevationLabel.setVisible(observerCameraElevation != null);
+          observerCameraElevationSpinner.setVisible(observerCameraElevation != null);
+          observerHeightLabel.setVisible(observerCameraElevation == null);
+          observerHeightSpinner.setVisible(observerCameraElevation == null);
+        }
+      };
+    observerCameraElevationChangeListener.propertyChange(null);
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.OBSERVER_CAMERA_ELEVATION, observerCameraElevationChangeListener);
+    
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.MINIMUM_ELEVATION, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            observerHeightSpinnerModel.setLength(Math.min(observerHeightSpinnerModel.getLength(), controller.getMinimumElevation()));
+            observerHeightSpinnerModel.setMinimum(controller.getMinimumElevation());
+            if (observerCameraElevationSpinnerModel.getLength() != null) {
+              observerCameraElevationSpinnerModel.setLength(Math.min(observerCameraElevationSpinnerModel.getLength(), controller.getMinimumElevation()));
+            }
+            observerCameraElevationSpinnerModel.setMinimum(controller.getMinimumElevation());
           }
         });
     
@@ -331,6 +372,10 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class, "observerHeightLabel.mnemonic")).getKeyCode());
       this.observerHeightLabel.setLabelFor(this.observerHeightSpinner);
+      this.observerCameraElevationLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              Home3DAttributesPanel.class, "observerCameraElevationLabel.mnemonic")).getKeyCode());
+      this.observerCameraElevationLabel.setLabelFor(this.observerCameraElevationSpinner);
       this.groundColorRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class,"groundColorRadioButton.mnemonic")).getKeyCode());
@@ -375,6 +420,13 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.observerHeightSpinner, new GridBagConstraints(
+        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -25, 0));
+    // observerCameraElevation label and spinner at the same location but both are never visible at the same time 
+    add(this.observerCameraElevationLabel, new GridBagConstraints(
+        2, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.observerCameraElevationSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, -25, 0));
     // Second row

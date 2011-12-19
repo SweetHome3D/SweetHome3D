@@ -583,10 +583,31 @@ public class HomeController3D implements Controller {
    */
   private class ObserverCameraState extends CameraControllerState {
     private ObserverCamera observerCamera;
+    private PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+            updateCameraMinimumElevation();
+          }
+        }
+      };
+    private CollectionListener<Level> levelsListener = new CollectionListener<Level>() {
+        public void collectionChanged(CollectionEvent<Level> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(levelElevationChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(levelElevationChangeListener);
+          } 
+          updateCameraMinimumElevation();
+        }
+      };
 
     @Override
     public void enter() {
       this.observerCamera = (ObserverCamera)home.getCamera();
+      for (Level level : home.getLevels()) {
+        level.addPropertyChangeListener(this.levelElevationChangeListener);
+      }
+      home.addLevelsListener(this.levelsListener);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
@@ -602,12 +623,25 @@ public class HomeController3D implements Controller {
     @Override
     public void elevateCamera(float delta) {
       float newElevation = this.observerCamera.getZ() + delta; 
-      newElevation = Math.min(Math.max(newElevation, 10f), preferences.getLengthUnit().getMaximumElevation());
+      newElevation = Math.min(Math.max(newElevation, getMinimumElevation()), preferences.getLengthUnit().getMaximumElevation());
       this.observerCamera.setZ(newElevation);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
 
+    private void updateCameraMinimumElevation() {
+      observerCamera.setZ(Math.max(observerCamera.getZ(), getMinimumElevation()));
+    }
+
+    public float getMinimumElevation() {
+      List<Level> levels = home.getLevels();
+      if (levels.size() > 0) {
+        return 10 + levels.get(0).getElevation();
+      } else {
+        return 10;
+      }
+    }
+    
     @Override
     public void rotateCameraYaw(float delta) {
       this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
@@ -642,6 +676,10 @@ public class HomeController3D implements Controller {
         selectedItems.remove(this.observerCamera);
         home.setSelectedItems(selectedItems);
       }
+      for (Level room : home.getLevels()) {
+        room.removePropertyChangeListener(this.levelElevationChangeListener);
+      }
+      home.removeLevelsListener(this.levelsListener);
       this.observerCamera = null;
     }
   }

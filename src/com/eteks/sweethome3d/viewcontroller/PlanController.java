@@ -7427,12 +7427,13 @@ public class PlanController extends FurnitureController implements Controller {
     public void moveMouse(float x, float y) {      
       // Compute the new elevation of the camera
       float newElevation = (float)(this.oldElevation - (y - getYLastMousePress()));
-      // Check new elevation is between 10 and max  
-      newElevation = Math.min(Math.max(newElevation, 10), preferences.getLengthUnit().getMaximumElevation());
+      List<Level> levels = home.getLevels();
+      float minimumElevation = levels.size() == 0  ? 10  : 10 + levels.get(0).getElevation();
+      // Check new elevation is between min and max  
+      newElevation = Math.min(Math.max(newElevation, minimumElevation), preferences.getLengthUnit().getMaximumElevation());
       
       // Update camera elevation
       this.selectedCamera.setZ(newElevation);
-      
       getView().setToolTipFeedback(getToolTipFeedbackText(newElevation), x, y);
     }
 

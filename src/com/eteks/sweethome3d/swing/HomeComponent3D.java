@@ -160,7 +160,7 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
-      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN, 
+      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_FAST_UP, ROTATE_CAMERA_PITCH_DOWN, ROTATE_CAMERA_PITCH_FAST_DOWN, 
       ELEVATE_CAMERA_UP, ELEVATE_CAMERA_FAST_UP, ELEVATE_CAMERA_DOWN, ELEVATE_CAMERA_FAST_DOWN}
   
   private final Home                               home;
@@ -1304,7 +1304,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     inputMap.put(KeyStroke.getKeyStroke("shift D"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("D"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("shift PAGE_UP"), ActionType.ROTATE_CAMERA_PITCH_FAST_UP);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_UP"), ActionType.ROTATE_CAMERA_PITCH_UP);
+    inputMap.put(KeyStroke.getKeyStroke("shift PAGE_DOWN"), ActionType.ROTATE_CAMERA_PITCH_FAST_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_DOWN"), ActionType.ROTATE_CAMERA_PITCH_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("shift HOME"), ActionType.ELEVATE_CAMERA_FAST_UP);
     inputMap.put(KeyStroke.getKeyStroke("HOME"), ActionType.ELEVATE_CAMERA_UP);
@@ -1378,7 +1380,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     actionMap.put(ActionType.ROTATE_CAMERA_YAW_RIGHT, new RotateCameraYawAction((float)Math.PI / 60));
     actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT, new RotateCameraYawAction((float)Math.PI / 12));
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_UP, new RotateCameraPitchAction(-(float)Math.PI / 120));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_FAST_UP, new RotateCameraPitchAction(-(float)Math.PI / 24));
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 120));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_FAST_DOWN, new RotateCameraPitchAction((float)Math.PI / 24));
   }
 
   /**
@@ -1413,11 +1417,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     backgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
     backgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
     
-    Geometry halfSphereGeometry = createHalfSphereGeometry();   
+    Geometry halfSphereGeometry = createHalfSphereGeometry(true);   
     final Shape3D halfSphere = new Shape3D(halfSphereGeometry, backgroundAppearance);
     BranchGroup backgroundBranch = new BranchGroup();
     backgroundBranch.addChild(halfSphere);
-    
+    backgroundBranch.addChild(new Shape3D(createHalfSphereGeometry(false)));
+
     final Background background = new Background(backgroundBranch);
     updateBackgroundColorAndTexture(backgroundAppearance, this.home, waitForLoading);
     background.setImageScaleMode(Background.SCALE_FIT_ALL);
@@ -1444,10 +1449,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns a half sphere oriented inward and with texture ordinates 
    * that spread along an hemisphere. 
    */
-  private Geometry createHalfSphereGeometry() {
+  private Geometry createHalfSphereGeometry(boolean top) {
     final int divisionCount = 48; 
     Point3f [] coords = new Point3f [divisionCount * divisionCount];
-    TexCoord2f [] textureCoords = new TexCoord2f [divisionCount * divisionCount];
+    TexCoord2f [] textureCoords = top ? new TexCoord2f [divisionCount * divisionCount] : null;
+    Color3f [] colors = top ? null : new Color3f [divisionCount * divisionCount];
     for (int i = 0, k = 0; i < divisionCount; i++) {
       double alpha = i * 2 * Math.PI / divisionCount;
       float cosAlpha = (float)Math.cos(alpha);
@@ -1460,28 +1466,52 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         float cosBeta = (float)Math.cos(beta);
         float sinBeta = (float)Math.sin(beta);
         // Correct the bottom of the hemisphere to avoid seeing a black line at the horizon
-        float y = j != 0 ? sinBeta : -0.05f;
+        float y = j != 0 ? (top ? sinBeta : -sinBeta) : -0.01f;
         double nextBeta = 2 * (j + 1) * Math.PI / divisionCount;
+        if (!top) {
+          nextBeta = -nextBeta;
+        }
         float cosNextBeta = (float)Math.cos(nextBeta);
         float sinNextBeta = (float)Math.sin(nextBeta);
-        coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
-        textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinBeta); 
-        
-        coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
-        textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinBeta); 
-        
-        coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
-        textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinNextBeta); 
-        
-        coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
-        textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinNextBeta); 
+        if (top) {
+          coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinBeta); 
+          
+          coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinBeta); 
+          
+          coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinNextBeta); 
+          
+          coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinNextBeta);
+        } else {
+          coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
+          float color1 = .9f + y * .5f;
+          colors [k++] = new Color3f(color1, color1, color1);
+          
+          coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
+          float color2 = .9f + sinNextBeta * .5f;
+          colors [k++] = new Color3f(color2, color2, color2);
+          
+          coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
+          colors [k++] = new Color3f(color2, color2, color2);
+          
+          coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
+          colors [k++] = new Color3f(color1, color1, color1);
+        }
       }
     }
     
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates(coords);
-    geometryInfo.setTextureCoordinateParams(1, 2);
-    geometryInfo.setTextureCoordinates(0, textureCoords);
+    if (textureCoords != null) {
+      geometryInfo.setTextureCoordinateParams(1, 2);
+      geometryInfo.setTextureCoordinates(0, textureCoords);
+    }
+    if (colors != null) {
+      geometryInfo.setColors(colors);
+    }
     geometryInfo.indexify();
     geometryInfo.compact();
     Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray();
