@@ -83,9 +83,6 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage orgApacheBatikParser = constraint.addPackage("org.apache.batik.parser");
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
-    // Print attributes
-    JavaPackage javaxPrintAttribute = constraint.addPackage("javax.print.attribute");
-    JavaPackage sunPrint = constraint.addPackage("sun.print");
     // Mac OS X specific interfaces
     JavaPackage eawt = constraint.addPackage("com.applet.eawt");
     JavaPackage eio = constraint.addPackage("com.applet.eio");
@@ -150,8 +147,6 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(vectorGraphicsUtil);
     sweetHome3DSwing.dependsUpon(vectorGraphicsSvg);
     sweetHome3DSwing.dependsUpon(jnlp);
-    sweetHome3DSwing.dependsUpon(javaxPrintAttribute);
-    sweetHome3DSwing.dependsUpon(sunPrint);
     
     sweetHome3DIO.dependsUpon(sweetHome3DModel);
     sweetHome3DIO.dependsUpon(sweetHome3DTools);
