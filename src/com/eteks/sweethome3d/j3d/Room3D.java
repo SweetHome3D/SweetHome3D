@@ -693,11 +693,13 @@ public class Room3D extends Object3DBranch {
    */
   private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
-    boolean ignoreTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
+    boolean ignoreFloorTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
     updateRoomPartAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
-        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible(), ignoreTransparency);
+        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible(), ignoreFloorTransparency);
+    // Ignore ceiling transparency for rooms without level for backward compatibility 
+    boolean ignoreCeillingTransparency = room.getLevel() == null; 
     updateRoomPartAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
-        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(), room.isCeilingVisible(), false);
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(), room.isCeilingVisible(), ignoreCeillingTransparency);
   }
   
   /**
