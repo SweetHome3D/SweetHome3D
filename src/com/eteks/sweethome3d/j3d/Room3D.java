@@ -512,7 +512,7 @@ public class Room3D extends Object3DBranch {
   }
 
   /**
-   * Returns the mirror area of the given <<code>area</code>.
+   * Returns the mirror area of the given <code>area</code>.
    */
   private Area getMirroredArea(Area area) {
     // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
