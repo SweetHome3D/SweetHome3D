@@ -79,7 +79,8 @@ public class SweetHome3DBootstrap {
         "com.ibm.media",
         "jmpapps.util",
         "com.microcrowd.loader.java3d",
-        "org.sunflow"};
+        "org.sunflow",
+        "org.apache.batik"};
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),

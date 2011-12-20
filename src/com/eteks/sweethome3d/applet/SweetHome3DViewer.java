@@ -156,7 +156,8 @@ public class SweetHome3DViewer extends JApplet {
           "com.sun.opengl",
           "com.sun.gluegen.runtime",
           "javax.media.opengl",
-          "com.microcrowd.loader.java3d"}));
+          "com.microcrowd.loader.java3d",
+          "org.apache.batik"}));
       
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
           sweetHome3DViewerClass.getClassLoader(), sweetHome3DViewerClass.getProtectionDomain(),
