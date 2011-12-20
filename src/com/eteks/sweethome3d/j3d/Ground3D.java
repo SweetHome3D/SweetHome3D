@@ -219,10 +219,16 @@ public class Ground3D extends Object3DBranch {
     Rectangle2D removedAreaBounds = areaRemovedFromGround.getBounds2D();
     if (!groundArea.getBounds2D().equals(removedAreaBounds)) {
       Area outsideGroundArea = groundArea;
-      removedAreaBounds.add(Math.max(removedAreaBounds.getMinX() - 5E3, this.originX), 
-          Math.max(removedAreaBounds.getMinY() - 5E3, this.originY));
-      removedAreaBounds.add(Math.min(removedAreaBounds.getMaxX() + 5E3, this.originX + this.width), 
-          Math.min(removedAreaBounds.getMaxY() + 5E3, this.originY + this.depth));
+      if (areaRemovedFromGround.isEmpty()) {
+        removedAreaBounds = new Rectangle2D.Float(Math.max(-5E3f, this.originX), Math.max(-5E3f, this.originY), 0, 0);
+        removedAreaBounds.add(Math.min(5E3f, this.originX + this.width), 
+            Math.min(5E3f, this.originY + this.depth));            
+      } else {
+        removedAreaBounds.add(Math.max(removedAreaBounds.getMinX() - 5E3, this.originX), 
+            Math.max(removedAreaBounds.getMinY() - 5E3, this.originY));
+        removedAreaBounds.add(Math.min(removedAreaBounds.getMaxX() + 5E3, this.originX + this.width), 
+            Math.min(removedAreaBounds.getMaxY() + 5E3, this.originY + this.depth));
+      }
       groundArea = new Area(removedAreaBounds);
       outsideGroundArea.subtract(groundArea);
       // Divide the ground at level 0 in two geometries to limit visual artifacts on large zone  
