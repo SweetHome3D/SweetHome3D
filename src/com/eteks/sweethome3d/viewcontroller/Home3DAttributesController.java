@@ -385,8 +385,10 @@ public class Home3DAttributesController implements Controller {
    */
   public void modify3DAttributes() {
     float observerCameraFieldOfView = (float)Math.toRadians(getObserverFieldOfViewInDegrees());
-    float observerCameraZ = getObserverHeight() * 14 / 15;
     Float observerCameraElevation = getObserverCameraElevation();
+    float observerCameraZ = observerCameraElevation != null  
+        ? observerCameraElevation.floatValue()  
+        : getObserverHeight() * 14 / 15;
     int   groundColor = getGroundColor();
     HomeTexture groundTexture = getGroundPaint() == EnvironmentPaint.TEXTURED
         ? getGroundTextureController().getTexture()
@@ -416,8 +418,7 @@ public class Home3DAttributesController implements Controller {
           this.home, this.preferences,
           oldObserverCameraFieldOfView, oldObserverCameraZ,
           oldGroundColor, oldGroundTexture, oldSkyColor,
-          oldSkyTexture, oldLightColor, oldWallsAlpha, observerCameraFieldOfView,
-          observerCameraElevation != null  ? observerCameraElevation.floatValue()  : observerCameraZ, 
+          oldSkyTexture, oldLightColor, oldWallsAlpha, observerCameraFieldOfView, observerCameraZ, 
           groundColor, groundTexture, skyColor,
           skyTexture, lightColor, wallsAlpha);
       this.undoSupport.postEdit(undoableEdit);
