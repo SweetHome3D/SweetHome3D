@@ -238,6 +238,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private boolean                texturable;
   private BigDecimal             price;
   private BigDecimal             valueAddedTaxPercentage;
+  private String                 currency;
   private boolean                visible;
   private float                  x;
   private float                  y;
@@ -247,7 +248,6 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
-
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -274,6 +274,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.texturable = piece.isTexturable();
     this.price = piece.getPrice();
     this.valueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
+    this.currency = piece.getCurrency();
     if (piece instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture homePiece = 
           (HomePieceOfFurniture)piece;
@@ -746,6 +747,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     } else {
       return this.price;
     }
+  }
+
+  /**
+   * Returns the price currency, noted with ISO 4217 code, or <code>null</code> 
+   * if it has no price or default currency should be used.
+   * @since 3.4
+   */
+  public String getCurrency() {
+    return this.currency;
   }
 
   /**

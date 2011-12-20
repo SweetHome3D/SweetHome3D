@@ -240,7 +240,11 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     /**
      * The key for the VAT percentage of a piece of furniture (optional).
      */
-    VALUE_ADDED_TAX_PERCENTAGE("valueAddedTaxPercentage");
+    VALUE_ADDED_TAX_PERCENTAGE("valueAddedTaxPercentage"),
+    /**
+     * The key for the currency ISO 4217 code of the price of a piece of furniture (optional).
+     */
+    CURRENCY("currency");
     
     private String keyPrefix;
 
@@ -547,6 +551,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     } catch (MissingResourceException ex) {
       // By default price is null
     }
+    String currency = getOptionalString(resource, PropertyKey.CURRENCY.getKey(index), null);
 
     if (doorOrWindow) {
       float wallThicknessPercentage = getOptionalFloat(
@@ -557,17 +562,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
           width, depth, height, elevation, movable, 
           wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-          resizable, deformable, texturable, price, valueAddedTaxPercentage);
+          resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, lightSources, staircaseCutOutShape, modelRotation, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage);
+            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
             width, depth, height, elevation, movable, staircaseCutOutShape, modelRotation, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage);
+            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       }
     }
   }
@@ -615,7 +620,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
             doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
             doorOrWindow.isResizable(), doorOrWindow.isDeformable(), doorOrWindow.isTexturable(), 
-            doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
+            doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage(), doorOrWindow.getCurrency());
       } else if (piece instanceof CatalogLight) {
         CatalogLight light = (CatalogLight)piece;
         piece = new CatalogLight(light.getId(), suffixedName,
@@ -624,7 +629,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             light.isMovable(), light.getLightSources(), light.getStaircaseCutOutShape(), 
             light.getModelRotation(), light.getCreator(),
             light.isResizable(), light.isDeformable(), light.isTexturable(),
-            light.getPrice(), light.getValueAddedTaxPercentage());
+            light.getPrice(), light.getValueAddedTaxPercentage(), light.getCurrency());
       } else {
         piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
             piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
@@ -632,7 +637,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             piece.getElevation(), piece.isMovable(), piece.getStaircaseCutOutShape(), 
             piece.getModelRotation(), piece.getCreator(),
             piece.isResizable(), piece.isDeformable(), piece.isTexturable(),
-            piece.getPrice(), piece.getValueAddedTaxPercentage());
+            piece.getPrice(), piece.getValueAddedTaxPercentage(), piece.getCurrency());
       }
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }

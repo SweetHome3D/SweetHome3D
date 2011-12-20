@@ -136,4 +136,11 @@ public interface PieceOfFurniture {
    * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
    */
   public abstract BigDecimal getValueAddedTaxPercentage();
+  
+  /**
+   * Returns the price currency, noted with ISO 4217 code, or <code>null</code> 
+   * if it has no price or default currency should be used.
+   * @since 3.4
+   */
+  public abstract String getCurrency();
 }

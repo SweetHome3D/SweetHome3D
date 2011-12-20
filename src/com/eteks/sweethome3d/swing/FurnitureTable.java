@@ -1051,13 +1051,14 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Renderer super class used to display sizes
       class PriceRenderer extends DefaultTableCellRenderer {
         public Component getTableCellRendererComponent(JTable table, 
-             Object value, boolean isSelected, boolean hasFocus, 
+             BigDecimal price, String currency, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          String currency = preferences.getCurrency();
-          if (value != null && currency != null) {
+          String defaultCurrency = preferences.getCurrency();
+          String value;
+          if (price != null && defaultCurrency != null) {
             NumberFormat currencyFormat = DecimalFormat.getCurrencyInstance();
-            currencyFormat.setCurrency(Currency.getInstance(currency));
-            value = currencyFormat.format((BigDecimal)value);
+            currencyFormat.setCurrency(Currency.getInstance(currency != null ? currency : defaultCurrency));
+            value = currencyFormat.format(price);
           } else {
             value = "";
           }
@@ -1073,8 +1074,9 @@ public class FurnitureTable extends JTable implements View, Printable {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getPrice(), isSelected, hasFocus, row, column);
+                    piece.getPrice(), piece.getCurrency(), isSelected, hasFocus, row, column);
               }
             };
         case VALUE_ADDED_TAX :
@@ -1082,8 +1084,9 @@ public class FurnitureTable extends JTable implements View, Printable {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getValueAddedTax(), isSelected, hasFocus, row, column);
+                    piece.getValueAddedTax(), piece.getCurrency(), isSelected, hasFocus, row, column);
               }
             };
         case PRICE_VALUE_ADDED_TAX_INCLUDED :
@@ -1091,8 +1094,9 @@ public class FurnitureTable extends JTable implements View, Printable {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getPriceValueAddedTaxIncluded(), isSelected, hasFocus, row, column);
+                    piece.getPriceValueAddedTaxIncluded(), piece.getCurrency(), isSelected, hasFocus, row, column);
               }
             };
         default :

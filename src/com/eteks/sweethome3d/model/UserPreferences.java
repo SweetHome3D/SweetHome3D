@@ -439,7 +439,7 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Returns the currency in use, noted with ISO 4217 code, or <code>null</code> 
+   * Returns the default currency in use, noted with ISO 4217 code, or <code>null</code> 
    * if prices aren't used in application.
    */
   public String getCurrency() {
@@ -447,7 +447,7 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets currency in use.
+   * Sets the default currency in use.
    */
   protected void setCurrency(String currency) {
     this.currency = currency;

@@ -123,7 +123,7 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       boolean resizable, boolean deformable, boolean texturable,
                       BigDecimal price, BigDecimal valueAddedTaxPercentage) {
     this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable,   
-        lightSources, null, modelRotation, creator, resizable, true, true, price, valueAddedTaxPercentage);
+        lightSources, null, modelRotation, creator, resizable, true, true, price, valueAddedTaxPercentage, null);
   }
          
   /**
@@ -151,6 +151,7 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
    * @param price the price of the new light, or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new light or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code> 
    * @since 3.4           
    */
   public CatalogLight(String id, String name, String description, 
@@ -159,9 +160,10 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       LightSource [] lightSources, String staircaseCutOutShape,
                       float [][] modelRotation, String creator,
                       boolean resizable, boolean deformable, boolean texturable,
-                      BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+                      BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     super(id, name, description, icon, planIcon, model, width, depth, height, elevation,   
-        movable, staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage);
+        movable, staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, 
+        price, valueAddedTaxPercentage, currency);
     this.lightSources = lightSources;
   }
          
