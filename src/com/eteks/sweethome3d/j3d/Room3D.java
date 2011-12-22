@@ -19,10 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Shape;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -494,51 +491,10 @@ public class Room3D extends Object3DBranch {
 
   private void removeStaircasesFromArea(List<HomePieceOfFurniture> visibleStaircases, Area area) {
     // Remove from room area all the staircases that intersect it
+    ModelManager modelManager = ModelManager.getInstance();
     for (HomePieceOfFurniture staircase : visibleStaircases) {
-      Shape shape = parseShape(staircase.getStaircaseCutOutShape());
-      Area staircaseArea = new Area(shape);
-      if (staircase.isModelMirrored()) {
-        staircaseArea = getMirroredArea(staircaseArea);
-      }
-      AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
-          staircase.getX() - staircase.getWidth() / 2, 
-          staircase.getY() - staircase.getDepth() / 2);
-      staircaseTransform.concatenate(AffineTransform.getRotateInstance(staircase.getAngle(),
-          staircase.getWidth() / 2, staircase.getDepth() / 2));
-      staircaseTransform.concatenate(AffineTransform.getScaleInstance(staircase.getWidth(), staircase.getDepth()));
-      staircaseArea.transform(staircaseTransform);
-      area.subtract(staircaseArea);
+      area.subtract(modelManager.getAreaOnFloor(staircase));
     }
-  }
-
-  /**
-   * Returns the mirror area of the given <code>area</code>.
-   */
-  private Area getMirroredArea(Area area) {
-    // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
-    // we have to create a mirrored shape by parsing points
-    GeneralPath mirrorPath = new GeneralPath();
-    float [] point = new float[6];
-    for (PathIterator it = area.getPathIterator(null); !it.isDone(); it.next()) {
-      switch (it.currentSegment(point)) {
-        case PathIterator.SEG_MOVETO :
-          mirrorPath.moveTo(1 - point[0], point[1]);
-          break;
-        case PathIterator.SEG_LINETO : 
-          mirrorPath.lineTo(1 - point[0], point[1]);
-          break;
-        case PathIterator.SEG_QUADTO : 
-          mirrorPath.quadTo(1 - point[0], point[1], 1 - point[2], point[3]);
-          break;
-        case PathIterator.SEG_CUBICTO : 
-          mirrorPath.curveTo(1 - point[0], point[1], 1 - point[2], point[3], 1 - point[4], point[5]);
-          break;
-        case PathIterator.SEG_CLOSE :
-          mirrorPath.closePath();
-          break;
-      }
-    }
-    return new Area(mirrorPath);
   }
 
   /**

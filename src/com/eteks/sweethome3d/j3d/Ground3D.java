@@ -157,7 +157,11 @@ public class Ground3D extends Object3DBranch {
     
     // Search all items at negative levels that could dig the ground 
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
+      if (piece.getStaircaseCutOutShape() == null) {
+        updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
+      } else {
+        updateUndergroundAreas(undergroundAreas, piece.getLevel(), null, ModelManager.getInstance().getAreaOnFloor(piece));
+      }
     }
     Map<Level, Area> wallAreas = new HashMap<Level, Area>();
     for (Wall wall : home.getWalls()) {
@@ -265,7 +269,7 @@ public class Ground3D extends Object3DBranch {
     List<float [][]> areaPoints = new ArrayList<float [][]>();
     List<float []>   areaPartPoints  = new ArrayList<float[]>();
     float [] previousRoomPoint = null;
-    for (PathIterator it = area.getPathIterator(null); !it.isDone(); ) {
+    for (PathIterator it = area.getPathIterator(null, 1); !it.isDone(); ) {
       float [] roomPoint = new float[2];
       if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
         if (areaPartPoints.get(0) [0] == previousRoomPoint [0] 
@@ -427,3 +431,4 @@ public class Ground3D extends Object3DBranch {
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
 }
+

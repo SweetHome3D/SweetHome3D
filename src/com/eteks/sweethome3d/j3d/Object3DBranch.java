@@ -21,10 +21,8 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
@@ -32,10 +30,6 @@ import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.vecmath.Color3f;
-
-import org.apache.batik.parser.AWTPathProducer;
-import org.apache.batik.parser.ParseException;
-import org.apache.batik.parser.PathParser;
 
 /**
  * Root of a branch that matches a home object. 
@@ -54,8 +48,7 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
   private static final Map<Long, Material> materials = new HashMap<Long, Material>();
-  private static final Map<String, Shape>  parsedShapes = new WeakHashMap<String, Shape>();
-
+  
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
     DEFAULT_MATERIAL.setShininess(1);
@@ -103,41 +96,6 @@ public abstract class Object3DBranch extends BranchGroup {
       return material;
     } else {
       return getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess);
-    }
-  }
-
-  /**
-   * Returns the AWT shape matching the given <a href="http://www.w3.org/TR/SVG/paths.html">SVG path shape</a>.  
-   */
-  protected Shape parseShape(String svgPathShape) {
-    Shape shape = parsedShapes.get(svgPathShape);
-    if (shape == null) {
-      try {
-        shape = SVGPathSupport.parsePathShape(svgPathShape);
-      } catch (LinkageError ex) {
-        // Fallback to default square shape if batik classes aren't in classpath
-        shape = new Rectangle2D.Float(0, 0, 1, 1);
-      }
-      parsedShapes.put(svgPathShape, shape);
-    }
-    return shape;
-  }
-  
-  /**
-   * Separated static class to be able to exclude Batik library from classpath. 
-   */
-  private static class SVGPathSupport {
-    public static Shape parsePathShape(String svgPathShape) {
-      try {
-        AWTPathProducer pathProducer = new AWTPathProducer();
-        PathParser pathParser = new PathParser();
-        pathParser.setPathHandler(pathProducer);
-        pathParser.parse(svgPathShape);
-        return pathProducer.getShape();
-      } catch (ParseException ex) {
-        // Fallback to default square shape if shape is incorrect
-        return new Rectangle2D.Float(0, 0, 1, 1);
-      }
     }
   }
 }

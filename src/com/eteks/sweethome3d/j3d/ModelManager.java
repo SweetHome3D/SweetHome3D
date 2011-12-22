@@ -20,8 +20,12 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.EventQueue;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,7 +83,12 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
+import org.apache.batik.parser.AWTPathProducer;
+import org.apache.batik.parser.ParseException;
+import org.apache.batik.parser.PathParser;
+
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.microcrowd.loader.java3d.max3ds.Loader3DS;
@@ -131,11 +140,14 @@ public class ModelManager {
   private ExecutorService           modelsLoader;
   // List of additional loader classes
   private Class<Loader> []          additionalLoaderClasses;
-  
+  // SVG path Shapes 
+  private final Map<String, Shape>  parsedShapes;
+
   private ModelManager() {    
     // This class is a singleton
     this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
+    this.parsedShapes = new WeakHashMap<String, Shape>();
     // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
@@ -1315,6 +1327,93 @@ public class ModelManager {
          - (vertex2 [0] - vertex0 [0]) * (vertex1 [1] - vertex0 [1]);
   }
 
+  /**
+   * Returns the area on the floor of the given staircase.
+   */
+  public Area getAreaOnFloor(HomePieceOfFurniture staircase) {
+    if (staircase.getStaircaseCutOutShape() == null) {
+      throw new IllegalArgumentException("No cut out shape associated to piece");
+    }
+    Shape shape = parseShape(staircase.getStaircaseCutOutShape());
+    Area staircaseArea = new Area(shape);
+    if (staircase.isModelMirrored()) {
+      staircaseArea = getMirroredArea(staircaseArea);
+    }
+    AffineTransform staircaseTransform = AffineTransform.getTranslateInstance(
+        staircase.getX() - staircase.getWidth() / 2, 
+        staircase.getY() - staircase.getDepth() / 2);
+    staircaseTransform.concatenate(AffineTransform.getRotateInstance(staircase.getAngle(),
+        staircase.getWidth() / 2, staircase.getDepth() / 2));
+    staircaseTransform.concatenate(AffineTransform.getScaleInstance(staircase.getWidth(), staircase.getDepth()));
+    staircaseArea.transform(staircaseTransform);
+    return staircaseArea;
+  }
+
+  /**
+   * Returns the mirror area of the given <code>area</code>.
+   */
+  private Area getMirroredArea(Area area) {
+    // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
+    // we have to create a mirrored shape by parsing points
+    GeneralPath mirrorPath = new GeneralPath();
+    float [] point = new float[6];
+    for (PathIterator it = area.getPathIterator(null); !it.isDone(); it.next()) {
+      switch (it.currentSegment(point)) {
+        case PathIterator.SEG_MOVETO :
+          mirrorPath.moveTo(1 - point[0], point[1]);
+          break;
+        case PathIterator.SEG_LINETO : 
+          mirrorPath.lineTo(1 - point[0], point[1]);
+          break;
+        case PathIterator.SEG_QUADTO : 
+          mirrorPath.quadTo(1 - point[0], point[1], 1 - point[2], point[3]);
+          break;
+        case PathIterator.SEG_CUBICTO : 
+          mirrorPath.curveTo(1 - point[0], point[1], 1 - point[2], point[3], 1 - point[4], point[5]);
+          break;
+        case PathIterator.SEG_CLOSE :
+          mirrorPath.closePath();
+          break;
+      }
+    }
+    return new Area(mirrorPath);
+  }
+
+  /**
+   * Returns the AWT shape matching the given <a href="http://www.w3.org/TR/SVG/paths.html">SVG path shape</a>.  
+   */
+  private Shape parseShape(String svgPathShape) {
+    Shape shape = parsedShapes.get(svgPathShape);
+    if (shape == null) {
+      try {
+        shape = SVGPathSupport.parsePathShape(svgPathShape);
+      } catch (LinkageError ex) {
+        // Fallback to default square shape if batik classes aren't in classpath
+        shape = new Rectangle2D.Float(0, 0, 1, 1);
+      }
+      parsedShapes.put(svgPathShape, shape);
+    }
+    return shape;
+  }
+  
+  /**
+   * Separated static class to be able to exclude Batik library from classpath. 
+   */
+  private static class SVGPathSupport {
+    public static Shape parsePathShape(String svgPathShape) {
+      try {
+        AWTPathProducer pathProducer = new AWTPathProducer();
+        PathParser pathParser = new PathParser();
+        pathParser.setPathHandler(pathProducer);
+        pathParser.parse(svgPathShape);
+        return pathProducer.getShape();
+      } catch (ParseException ex) {
+        // Fallback to default square shape if shape is incorrect
+        return new Rectangle2D.Float(0, 0, 1, 1);
+      }
+    }
+  }
+  
   /**
    * An observer that receives model loading notifications. 
    */
