@@ -703,7 +703,7 @@ public class HomePane extends JRootPane implements HomeView {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        SwingTools.updateSwingResourceLanguage();
+        SwingTools.updateSwingResourceLanguage((UserPreferences)ev.getSource());
       }
     }
   }

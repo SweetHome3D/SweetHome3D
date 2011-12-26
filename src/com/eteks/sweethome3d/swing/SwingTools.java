@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -225,29 +226,53 @@ public class SwingTools {
   }
 
   /**
-   * Updates the Swing resource bundles in use from the current Locale. 
+   * Updates the Swing resource bundles in use from the current Locale and class loader. 
    */
   public static void updateSwingResourceLanguage() {
+    updateSwingResourceLanguage(Arrays.asList(new ClassLoader [] {SwingTools.class.getClassLoader()}));
+  }
+
+  /**
+   * Updates the Swing resource bundles in use from the current Locale and the class loaders of preferences.
+   */
+  public static void updateSwingResourceLanguage(UserPreferences preferences) {
+    updateSwingResourceLanguage(preferences.getResourceClassLoaders());
+  }
+
+  /**
+   * Updates the Swing resource bundles in use from the current Locale and class loaders.
+   */
+  private static void updateSwingResourceLanguage(List<ClassLoader> classLoaders) {
     // Read Swing localized properties because Swing doesn't update its internal strings automatically
     // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
-    updateSwingResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal");
-    updateSwingResourceBundle("com.sun.swing.internal.plaf.basic.resources.basic");
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal", classLoaders);
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.basic.resources.basic", classLoaders);
     if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
-      updateSwingResourceBundle("com.sun.java.swing.plaf.gtk.resources.gtk");
+      updateSwingResourceBundle("com.sun.java.swing.plaf.gtk.resources.gtk", classLoaders);
     } else if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.motif.MotifLookAndFeel")) {
-      updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif");
+      updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif", classLoaders);
     } 
   }
 
   /**
    * Updates a Swing resource bundle in use from the current Locale. 
    */
-  private static void updateSwingResourceBundle(String swingResource) {
-    ResourceBundle resource;
+  private static void updateSwingResourceBundle(String swingResource, List<ClassLoader> classLoaders) {
+    ResourceBundle resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
     try {
-      resource = ResourceBundle.getBundle(swingResource);
+      Locale defaultLocale = Locale.getDefault();
+      for (ClassLoader classLoader : classLoaders) {
+        ResourceBundle bundle = ResourceBundle.getBundle(swingResource, defaultLocale, classLoader);
+        if (defaultLocale.equals(bundle.getLocale())) {
+          resource = bundle;
+          break;
+        } else if (!resource.getLocale().getLanguage().equals(bundle.getLocale().getLanguage())
+                  && defaultLocale.getLanguage().equals(bundle.getLocale().getLanguage())) {
+          resource = bundle;
+          // Don't break in case a bundle with language + country is found with an other class loader
+        }
+      }
     } catch (MissingResourceException ex) {
-      resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
     }
     // Update UIManager properties
     for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {

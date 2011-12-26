@@ -443,7 +443,7 @@ public class SweetHome3D extends HomeApplication {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         UIManager.put("TitledBorder.border", UIManager.getBorder("TitledBorder.aquaVariant"));
       }
-      SwingTools.updateSwingResourceLanguage();
+      SwingTools.updateSwingResourceLanguage(getUserPreferences());
     } catch (Exception ex) {
       // Too bad keep current look and feel
     }
