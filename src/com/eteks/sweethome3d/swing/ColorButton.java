@@ -26,10 +26,7 @@ import java.awt.Graphics;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Enumeration;
 import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
@@ -41,7 +38,6 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -92,20 +88,6 @@ public class ColorButton extends JButton {
         // Create color chooser instance each time default locale changed 
         if (colorChooser == null
             || !Locale.getDefault().equals(colorChooserLocale)) {
-          try {
-            // Read Swing localized properties because Swing doesn't update its internal strings automatically
-            // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
-            ResourceBundle resource = 
-                ResourceBundle.getBundle("com.sun.swing.internal.plaf.basic.resources.basic");
-            // Update UIManager properties
-            for (Enumeration iter = resource.getKeys(); iter.hasMoreElements(); ) {
-              String property = (String)iter.nextElement();
-              UIManager.put(property, resource.getString(property));
-            }      
-          } catch (MissingResourceException ex) {
-            // Let labels unchanged
-          }
-          
           colorChooser = new JColorChooser();
           // Add auto selection to color chooser panels text fields
           addAutoSelectionOnTextFields(colorChooser);
