@@ -77,7 +77,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * Creates default environment.
    */
   public HomeEnvironment() {
-    this(0xE0E0E0, // Ground color
+    this(0xA8A8A8, // Ground color
         null,      // Ground texture
         (204 << 16) + (228 << 8) + 252, // Sky color
         0xD0D0D0,  // Light color

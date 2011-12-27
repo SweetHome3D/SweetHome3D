@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Color;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -34,10 +33,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
-import javax.vecmath.Color3f;
+import javax.media.j3d.TextureAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 
@@ -48,6 +46,7 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
 
 /**
  * Root of a the 3D ground.
@@ -63,25 +62,23 @@ public class Ground3D extends Object3DBranch {
    * Creates a 3D ground for the given <code>home</code>.
    */
   public Ground3D(Home home,
-                  float groundOriginX,
-                  float groundOriginY,
-                  float groundWidth,
-                  float groundDepth, 
+                  float originX,
+                  float originY,
+                  float width,
+                  float depth, 
                   boolean waitTextureLoadingEnd) {
     setUserData(home);
-    this.originX = groundOriginX;
-    this.originY = groundOriginY;
-    this.width = groundWidth;
-    this.depth = groundDepth;
+    this.originX = originX;
+    this.originY = originY;
+    this.width = width;
+    this.depth = depth;
 
-    // Use coloring attributes for ground to avoid ground lighting
-    ColoringAttributes groundColoringAttributes = new ColoringAttributes();
-    groundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
-    
     Appearance groundAppearance = new Appearance();
-    groundAppearance.setColoringAttributes(groundColoringAttributes);
-    groundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
+    groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    TextureAttributes textureAttributes = new TextureAttributes();
+    textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+    groundAppearance.setTextureAttributes(textureAttributes);
 
     final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
@@ -112,11 +109,14 @@ public class Ground3D extends Object3DBranch {
     Shape3D groundShape = (Shape3D)getChild(0);
     int currentGeometriesCount = groundShape.numGeometries();
     
-    Color3f groundColor = new Color3f(new Color(home.getEnvironment().getGroundColor()));
     final Appearance groundAppearance = groundShape.getAppearance();
-    groundAppearance.getColoringAttributes().setColor(groundColor);
     HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
-    if (groundTexture != null) {
+    if (groundTexture == null) {
+      int groundColor = home.getEnvironment().getGroundColor();
+      groundAppearance.setMaterial(getMaterial(groundColor, groundColor, 0));
+      groundAppearance.setTexture(null);
+    } else {
+      groundAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
       final TextureManager imageManager = TextureManager.getInstance();
       imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -124,8 +124,6 @@ public class Ground3D extends Object3DBranch {
                 groundAppearance.setTexture(texture);
               }
             });
-    } else {
-      groundAppearance.setTexture(null);
     }
     
     Area areaRemovedFromGround = new Area();
@@ -385,6 +383,7 @@ public class Ground3D extends Object3DBranch {
     }
     geometryInfo.setStripCounts(stripCounts);
     geometryInfo.setContourCounts(contourCounts);
+    new NormalGenerator(0).generateNormals(geometryInfo);
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
 
@@ -428,6 +427,7 @@ public class Ground3D extends Object3DBranch {
     }
     geometryInfo.setStripCounts(stripCounts);
     geometryInfo.setContourCounts(contourCounts);
+    new NormalGenerator(0).generateNormals(geometryInfo);
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
 }
