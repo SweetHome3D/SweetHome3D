@@ -228,6 +228,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private int     geometryNormalOffset;
     private int     geometryTextureCoordinatesOffset;
     private String  axis;
+    private float   meterScale = 1f;
     private float   floatValue;
     private String  opaque;
     private int     inputCount;
@@ -250,6 +251,11 @@ public class DAELoader extends LoaderBase implements Loader {
         }
       } else if ("COLLADA".equals(parent) && "asset".equals(name)) {
         this.inRootAsset = true;
+      } else if ("asset".equals(parent) && "unit".equals(name)) {
+        String value = attributes.getValue("meter");
+        if (value != null) {
+          this.meterScale = Float.parseFloat(value);
+        }
       } else if ("image".equals(name)) {
         this.imageId = attributes.getValue("id");
       } else if ("material".equals(name)) {
@@ -984,15 +990,7 @@ public class DAELoader extends LoaderBase implements Loader {
             new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
             new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
         computeBounds(this.visualScene, bounds, new Transform3D());
-
-        // Set orientation to Y_UP
-        Transform3D axisTransform = new Transform3D();
-        if ("Z_UP".equals(axis)) {
-          axisTransform.rotX(-Math.PI / 2);
-        } else if ("X_UP".equals(axis)) {
-          axisTransform.rotZ(Math.PI / 2);
-        }
-        rootTransform.mul(axisTransform);
+        
         // Translate model to its center
         Point3d lower = new Point3d();
         bounds.getLower(lower);
@@ -1004,10 +1002,25 @@ public class DAELoader extends LoaderBase implements Loader {
               new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
                   -lower.y - (upper.y - lower.y) / 2, 
                   -lower.z - (upper.z - lower.z) / 2));      
-          rootTransform.mul(translation);
+          translation.mul(rootTransform);
+          rootTransform = translation;
         }
-        
-        this.visualScene.setTransform(rootTransform);
+
+        // Scale model to cm
+        Transform3D scaleTransform = new Transform3D();
+        scaleTransform.setScale(this.meterScale * 100);
+        scaleTransform.mul(rootTransform);
+
+        // Set orientation to Y_UP
+        Transform3D axisTransform = new Transform3D();
+        if ("Z_UP".equals(axis)) {
+          axisTransform.rotX(-Math.PI / 2);
+        } else if ("X_UP".equals(axis)) {
+          axisTransform.rotZ(Math.PI / 2);
+        }
+        axisTransform.mul(scaleTransform);
+
+        this.visualScene.setTransform(axisTransform);
 
         BranchGroup sceneRoot = new BranchGroup();
         this.scene.setSceneGroup(sceneRoot);
