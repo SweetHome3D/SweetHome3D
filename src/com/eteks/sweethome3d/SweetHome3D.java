@@ -67,6 +67,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.plugin.HomePluginController;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingTools;
@@ -644,7 +645,10 @@ public class SweetHome3D extends HomeApplication {
         EventQueue.invokeLater(new Runnable() {
           public void run() {
             // Import plug-in with a dummy controller
-            createHomeFrameController(createHome()).getHomeController().importPlugin(pluginName);
+            HomeController homeController = createHomeFrameController(createHome()).getHomeController();
+            if (homeController instanceof HomePluginController) {
+              ((HomePluginController)homeController).importPlugin(pluginName);
+            }
           }
         });
       }

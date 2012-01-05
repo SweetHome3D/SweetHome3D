@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * Sweet Home 3D plug-ins manager.
@@ -302,8 +303,21 @@ public class PluginManager {
    */
   public List<Plugin> getPlugins(final HomeApplication application, 
                                  final Home home, 
-                                 UserPreferences preferences,
+                                 UserPreferences preferences,                                 
                                  UndoableEditSupport undoSupport) {
+    return getPlugins(application, home, preferences, null, undoSupport);
+  }
+    
+  /**
+   * Returns an unmodifiable list of plug-in instances initialized with the 
+   * given parameters.
+   * @since 3.5
+   */
+  List<Plugin> getPlugins(final HomeApplication application, 
+                          final Home home, 
+                          UserPreferences preferences,
+                          HomeController homeController,
+                          UndoableEditSupport undoSupport) {
     if (application.getHomes().contains(home)) {
       List<Plugin> plugins = this.homePlugins.get(home);
       if (plugins == null) {
@@ -320,6 +334,7 @@ public class PluginManager {
             plugin.setProvider(pluginDefinition.getProvider());
             plugin.setUserPreferences(preferences);
             plugin.setHome(home);
+            plugin.setHomeController(homeController);
             plugin.setUndoableEditSupport(undoSupport);
             plugins.add(plugin);
           } catch (InstantiationException ex) {

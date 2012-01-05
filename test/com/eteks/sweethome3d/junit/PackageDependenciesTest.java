@@ -95,10 +95,10 @@ public class PackageDependenciesTest extends TestCase {
     
     sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
+    sweetHome3DPlugin.dependsUpon(sweetHome3DViewController);   
     
     sweetHome3DViewController.dependsUpon(sweetHome3DModel);
     sweetHome3DViewController.dependsUpon(sweetHome3DTools);
-    sweetHome3DViewController.dependsUpon(sweetHome3DPlugin);   
     
     sweetHome3DJava3D.dependsUpon(sweetHome3DModel);
     sweetHome3DJava3D.dependsUpon(sweetHome3DTools);

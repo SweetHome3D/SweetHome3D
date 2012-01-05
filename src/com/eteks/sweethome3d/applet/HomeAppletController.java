@@ -28,11 +28,11 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.plugin.HomePluginController;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
-import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
@@ -42,7 +42,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * Home applet pane controller.
  * @author Emmanuel Puybaret
  */
-public class HomeAppletController extends HomeController {
+public class HomeAppletController extends HomePluginController {
   private final Home home;
   private final HomeApplication application;
   private final ViewFactory viewFactory;

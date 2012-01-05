@@ -127,7 +127,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
           }
         }
       };
-    this.homeController = new HomeController(homes.get(0), application, viewFactory, contentManager, null);
+    this.homeController = new HomeController(homes.get(0), application, viewFactory, contentManager);
   }
   
   public void testSunLocation() {

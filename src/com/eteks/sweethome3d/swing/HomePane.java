@@ -157,6 +157,7 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.plugin.HomePluginController;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -296,8 +297,10 @@ public class HomePane extends JRootPane implements HomeView {
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
     
     createActions(preferences, controller);
-    createMenuActions(preferences, controller);   
-    createPluginActions(controller.getPlugins());
+    createMenuActions(preferences, controller);
+    createPluginActions(controller instanceof HomePluginController
+        ? ((HomePluginController)controller).getPlugins()
+        : null);
     createTransferHandlers(home, controller);
     addHomeListener(home);
     addLevelVisibilityListener(home);

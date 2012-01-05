@@ -72,8 +72,6 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.plugin.Plugin;
-import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
@@ -86,7 +84,6 @@ public class HomeController implements Controller {
   private final HomeApplication       application;
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
-  private final PluginManager         pluginManager;
   private final UndoableEditSupport   undoSupport;
   private final UndoManager           undoManager;
   private HomeView                    homeView;
@@ -105,15 +102,13 @@ public class HomeController implements Controller {
    * @param application the instance of current application.
    * @param viewFactory a factory able to create views.
    * @param contentManager the content manager of the application.
-   * @param pluginManager  the plug-in manager of the application.
    */
   public HomeController(Home home, 
                         HomeApplication application,
                         ViewFactory    viewFactory, 
-                        ContentManager contentManager, 
-                        PluginManager pluginManager) {
+                        ContentManager contentManager) {
     this(home, application.getUserPreferences(), viewFactory, 
-        contentManager, application, pluginManager);
+        contentManager, application);
   }
 
   /**
@@ -125,7 +120,7 @@ public class HomeController implements Controller {
   public HomeController(Home home, 
                         HomeApplication application,
                         ViewFactory viewFactory) {
-    this(home, application.getUserPreferences(), viewFactory, null, application, null);
+    this(home, application.getUserPreferences(), viewFactory, null, application);
   }
 
   /**
@@ -137,7 +132,7 @@ public class HomeController implements Controller {
   public HomeController(Home home, 
                         UserPreferences preferences,
                         ViewFactory viewFactory) {
-    this(home, preferences, viewFactory, null, null, null);
+    this(home, preferences, viewFactory, null, null);
   }
 
   /**
@@ -151,21 +146,19 @@ public class HomeController implements Controller {
                         UserPreferences preferences,
                         ViewFactory    viewFactory,
                         ContentManager contentManager) {
-    this(home, preferences, viewFactory, contentManager, null, null);
+    this(home, preferences, viewFactory, contentManager, null);
   }
 
   private HomeController(final Home home, 
                          final UserPreferences preferences,
                          ViewFactory    viewFactory,
                          ContentManager contentManager,
-                         HomeApplication application,
-                         PluginManager pluginManager) {
+                         HomeApplication application) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.application = application;
-    this.pluginManager = pluginManager;
     this.undoSupport = new UndoableEditSupport() {
         @Override
         protected void _postEdit(UndoableEdit edit) {
@@ -311,20 +304,6 @@ public class HomeController implements Controller {
       addListeners();
     }
     return this.homeView;
-  }
-
-  /**
-   * Returns the plug-ins available with this controller.
-   */
-  public List<Plugin> getPlugins() {
-    if (this.application != null && this.pluginManager != null) {
-      // Retrieve home plug-ins
-      return this.pluginManager.getPlugins(
-          this.application, this.home, this.preferences, getUndoableEditSupport());
-    } else {
-      List<Plugin> plugins = Collections.emptyList();
-      return plugins;
-    }
   }
 
   /**
@@ -1152,26 +1131,6 @@ public class HomeController implements Controller {
     }
   }
 
-  /**
-   * Imports a given plugin.
-   */
-  public void importPlugin(String pluginName) {
-    if (this.pluginManager != null) {
-      try {
-        if (!this.pluginManager.pluginExists(pluginName) 
-            || getView().confirmReplacePlugin(pluginName)) {
-          this.pluginManager.addPlugin(pluginName);
-          getView().showMessage(this.preferences.getLocalizedString(HomeController.class, 
-              "importedPluginMessage"));
-        }
-      } catch (RecorderException ex) {
-        String message = this.preferences.getLocalizedString(HomeController.class, 
-            "importPluginError", pluginName);
-        getView().showError(message);
-      }
-    }
-  }
-  
   /**
    * Undoes last operation.
    */
