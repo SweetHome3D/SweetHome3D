@@ -218,6 +218,14 @@ public class Home implements Serializable, Cloneable {
       this.environment.setSkyColor(this.skyColor);
       this.environment.setLightColor(this.lightColor);
       this.environment.setWallsAlpha(this.wallsAlpha);
+      
+      if (this.version <= 3400) {
+        // Automatically adjust ground color to a darker color
+        int groundColor = this.environment.getGroundColor();
+        this.environment.setGroundColor(  ((((groundColor >> 16) & 0xFF) * 3 / 4) << 16)
+            | ((((groundColor >> 8) & 0xFF) * 3 / 4) << 8)
+            | ((groundColor & 0xFF) * 3 / 4));
+      }
     }
   }
 
