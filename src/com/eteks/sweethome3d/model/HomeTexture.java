@@ -79,6 +79,7 @@ public class HomeTexture implements TextureImage, Serializable {
   /**
    * Returns <code>true</code> if the objects using this texture should take into account 
    * the orientation of the texture.
+   * @since 3.5
    */
   public boolean isLeftToRightOriented() {
     return this.leftToRightOriented;
