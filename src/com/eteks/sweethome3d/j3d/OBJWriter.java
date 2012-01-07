@@ -270,6 +270,7 @@ public class OBJWriter extends FilterWriter {
    */
   private void checkCurrentThreadIsntInterrupted() throws InterruptedIOException {
     if (Thread.interrupted()) {
+      this.mtlFileName = null;
       throw new InterruptedIOException("Current thread interrupted");
     }
   }
