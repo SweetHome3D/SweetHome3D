@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -44,6 +45,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -88,7 +92,7 @@ public class LevelPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components and spinners model.
    */
-  private void createComponents(UserPreferences preferences, 
+  private void createComponents(final UserPreferences preferences, 
                                 final LevelController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
@@ -216,6 +220,22 @@ public class LevelPanel extends JPanel implements DialogView {
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "floorThicknessColumn"),
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "heightColumn")};
     this.levelsSummaryTable = new JTable(new LevelsTableModel(controller.getLevels(), columnNames));
+    // Display lengths according to the current length unit
+    TableColumnModel columnModel = this.levelsSummaryTable.getColumnModel();    
+    TableCellRenderer lengthRenderer = new DefaultTableCellRenderer() {
+        public Component getTableCellRendererComponent(JTable table, Object value, 
+                                                       boolean isSelected, boolean hasFocus, 
+                                                       int row, int column) {
+          if (value != null) {
+            value = preferences.getLengthUnit().getFormat().format((Float)value);
+            setHorizontalAlignment(JLabel.RIGHT);
+          }
+          return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+      };
+    columnModel.getColumn(1).setCellRenderer(lengthRenderer);
+    columnModel.getColumn(2).setCellRenderer(lengthRenderer);
+    columnModel.getColumn(3).setCellRenderer(lengthRenderer);
     // Ensure only selected level is selected in the table
     this.levelsSummaryTable.setSelectionModel(new DefaultListSelectionModel() {
         public void setSelectionInterval(int index0, int index1) {
@@ -409,15 +429,6 @@ public class LevelPanel extends JPanel implements DialogView {
     @Override
     public String getColumnName(int column) {
       return this.columnNames [column];
-    }
-
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == 0) {
-        return String.class;
-      } else {
-        return Float.class;
-      }
     }
   }
 }
