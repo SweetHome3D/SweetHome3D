@@ -3277,6 +3277,36 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Adds <code>items</code> to home and post an undoable operation.
+   */
+  public void addItems(final List<? extends Selectable> items) {
+    // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home
+    this.undoSupport.beginUpdate();
+    addFurniture(Home.getFurnitureSubList(items));
+    addWalls(Home.getWallsSubList(items));
+    addRooms(Home.getRoomsSubList(items));
+    addDimensionLines(Home.getDimensionLinesSubList(items));
+    addLabels(Home.getLabelsSubList(items));
+    this.home.setSelectedItems(items);
+    
+    // Add a undoable edit that will select all the items at redo
+    undoSupport.postEdit(new AbstractUndoableEdit() {      
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setSelectedItems(items);
+        }
+
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(PlanController.class, "undAddItemsName");
+        }      
+      });
+    // End compound edit
+    undoSupport.endUpdate();
+  }
+  
+  /**
    * Adds furniture to home and updates door and window flags if they intersect with walls and magnestism is enabled. 
    */
   @Override

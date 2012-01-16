@@ -1270,21 +1270,8 @@ public class HomeController implements Controller {
         // Adjust piece when it's dropped in plan view  
         getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
       } 
-      getPlanController().addFurniture(addedFurniture);
-      getPlanController().addWalls(Home.getWallsSubList(items));
-      getPlanController().addRooms(Home.getRoomsSubList(items));
-      getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
-      getPlanController().addLabels(Home.getLabelsSubList(items));
-      this.home.setSelectedItems(items);
-  
-      // Add a undoable edit that will select all the items at redo
+      getPlanController().addItems(items);
       undoSupport.postEdit(new AbstractUndoableEdit() {      
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(items);
-          }
-  
           @Override
           public String getPresentationName() {
             return preferences.getLocalizedString(HomeController.class, presentationNameKey);
