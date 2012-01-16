@@ -4835,7 +4835,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     public WallPointWithAngleMagnetism(Wall editedWall, float xWall, float yWall, float x, float y) {
-      super(xWall, yWall, x, y, preferences.getLengthUnit(), planView.getPixelLength());
+      super(xWall, yWall, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float margin = PIXEL_MARGIN / getScale();
       // Search which wall start or end point is close to (x, y)
       // ignoring the start and end point of alignedWall
@@ -4929,7 +4929,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     public RoomPointWithAngleMagnetism(Room editedRoom, int editedPointIndex, float xRoom, float yRoom, float x, float y) {
-      super(xRoom, yRoom, x, y, preferences.getLengthUnit(), planView.getPixelLength());
+      super(xRoom, yRoom, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float planScale = getScale();
       float margin = PIXEL_MARGIN / planScale;
       // Search which room points are close to (x, y)
