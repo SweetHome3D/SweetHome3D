@@ -621,7 +621,7 @@ public class WallController implements Controller {
   }
   
   /**
-   * Returns whether the edited wall is rectangular or not.
+   * Returns whether the point coordinates can be be edited or not.
    */
   public boolean isEditablePoints() {
     return this.editablePoints;
