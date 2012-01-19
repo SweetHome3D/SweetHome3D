@@ -178,13 +178,13 @@ public class PhotoRenderer {
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     for (Wall wall : home.getWalls()) {
-      exportNode((Node)object3DFactory.createObject3D(home, wall, true), true, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, wall, true), true, silk);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      exportNode((Node)object3DFactory.createObject3D(home, piece, true), false, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, piece, true), false, silk);
     }
     for (Room room : home.getRooms()) {
-      exportNode((Node)object3DFactory.createObject3D(home, room, true), true, false, silk);
+      exportNode((Node)object3DFactory.createObject3D(home, room, true), true, silk);
     } 
     // Create a 3D ground large enough to join the sky at the horizon  
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
@@ -192,7 +192,7 @@ public class PhotoRenderer {
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
     groundTransformGroup.addChild(ground);
-    exportNode(groundTransformGroup, true, true, silk);
+    exportNode(groundTransformGroup, true, silk);
 
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     this.useSunSky = skyTexture == null || !(home.getCamera() instanceof ObserverCamera);
@@ -506,9 +506,8 @@ public class PhotoRenderer {
   /**
    * Exports the given Java 3D <code>node</code> and its children with SunFlow API.  
    */
-  private void exportNode(Node node, boolean ignoreTransparency, 
-                          boolean ignoreConstantShader, boolean silk) throws IOException {
-    exportNode(node, ignoreTransparency, ignoreConstantShader, silk, new Transform3D());
+  private void exportNode(Node node, boolean ignoreTransparency, boolean silk) throws IOException {
+    exportNode(node, ignoreTransparency, silk, new Transform3D());
   }
 
   /**
@@ -516,7 +515,6 @@ public class PhotoRenderer {
    */ 
   private void exportNode(Node node, 
                           boolean ignoreTransparency,
-                          boolean ignoreConstantShader, 
                           boolean silk,
                           Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
@@ -529,10 +527,10 @@ public class PhotoRenderer {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode((Node)enumeration.nextElement(), ignoreTransparency, ignoreConstantShader, silk, parentTransformations);
+        exportNode((Node)enumeration.nextElement(), ignoreTransparency, silk, parentTransformations);
       }
     } else if (node instanceof Link) {
-      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, ignoreConstantShader, silk, parentTransformations);
+      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, silk, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -556,7 +554,7 @@ public class PhotoRenderer {
           appearanceName = "shader" + uuid;
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-          exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, ignoreConstantShader, silk);
+          exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, silk);
         }
 
         // Export object geometries
@@ -1143,7 +1141,6 @@ public class PhotoRenderer {
                                 String appearanceName, 
                                 boolean mirror,
                                 boolean ignoreTransparency,
-                                boolean ignoreConstantShader,
                                 boolean silk) throws IOException {
     Texture texture = appearance.getTexture();    
     if (mirror) {
@@ -1241,8 +1238,7 @@ public class PhotoRenderer {
                             transparency * (1 - diffuseColor [1]), 
                             transparency * (1 - diffuseColor [2])});
           this.sunflow.shader(appearanceName, "glass");
-        } else if (material.getLightingEnable()
-                   || ignoreConstantShader) {  
+        } else if (material.getLightingEnable()) {  
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 1) {
@@ -1270,13 +1266,8 @@ public class PhotoRenderer {
         if (coloringAttributes != null) {
           Color3f color = new Color3f();
           coloringAttributes.getColor(color);
-          if (ignoreConstantShader) {
-            this.sunflow.parameter("diffuse", null, new float [] {color.x, color.y, color.z});
-            this.sunflow.shader(appearanceName, "diffuse");
-          } else {
-            this.sunflow.parameter("color", null, new float [] {color.x, color.y, color.z});
-            this.sunflow.shader(appearanceName, "constant");
-          }
+          this.sunflow.parameter("color", null, new float [] {color.x, color.y, color.z});
+          this.sunflow.shader(appearanceName, "constant");
         }
       }
     }
