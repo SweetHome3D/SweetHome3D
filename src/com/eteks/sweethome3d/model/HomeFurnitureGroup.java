@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -41,6 +44,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private List<HomePieceOfFurniture> furniture;
   private boolean                    resizable;
   private boolean                    deformable;
+  private boolean                    texturable;
   private boolean                    doorOrWindow;
   private float                      fixedWidth;
   private float                      fixedDepth;
@@ -49,6 +53,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private BigDecimal                 valueAddedTaxPercentage;
   private BigDecimal                 valueAddedTax;
   private BigDecimal                 priceValueAddedTaxIncluded;
+  private String                     currency;
   private List<Integer>              furnitureDefaultColors;
   private List<HomeTexture>          furnitureDefaultTextures;
 
@@ -59,27 +64,44 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             String name) {
-    super(furniture.get(furniture.size() - 1));
-    this.furniture = Collections.unmodifiableList(furniture);    
-    Rectangle2D boundingRectangle = null;
+    super(furniture.get(0));
+    this.furniture = Collections.unmodifiableList(furniture); 
+    
+    // Search the size of the furniture group
+    HomePieceOfFurniture firstPiece = furniture.get(0);
+    AffineTransform rotation = new AffineTransform();
+    rotation.setToRotation(-firstPiece.getAngle());
+    Rectangle2D unrotatedBoundingRectangle = null;
     for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(furniture)) {
-      for (float [] point : piece.getPoints()) {
-        if (boundingRectangle == null) {
-          boundingRectangle = new Rectangle2D.Float(point [0], point [1], 0, 0);
-        } else {
-          boundingRectangle.add(point [0], point [1]);
-        }
+      GeneralPath pieceShape = new GeneralPath();
+      float [][] points = piece.getPoints();
+      pieceShape.moveTo(points [0][0], points [0][1]);
+      for (int i = 1; i < points.length; i++) {
+        pieceShape.lineTo(points [i][0], points [i][1]);
+      }
+      pieceShape.closePath();
+      if (unrotatedBoundingRectangle == null) {
+        unrotatedBoundingRectangle = pieceShape.createTransformedShape(rotation).getBounds2D();
+      } else {
+        unrotatedBoundingRectangle.add(pieceShape.createTransformedShape(rotation).getBounds2D());
       }
     }
+    // Search center of the group
+    Point2D center = new Point2D.Float((float)unrotatedBoundingRectangle.getCenterX(), (float)unrotatedBoundingRectangle.getCenterY());
+    rotation.setToRotation(firstPiece.getAngle());
+    rotation.transform(center, center);
+    
     float elevation = Float.MAX_VALUE;
     float height    = 0;
     boolean movable = true;
     this.resizable = true;
     this.deformable = true;
+    this.texturable = true;
     this.doorOrWindow = true;
     boolean visible = false;
     boolean modelMirrored = true;
-    this.valueAddedTaxPercentage = furniture.get(0).getValueAddedTaxPercentage();
+    this.valueAddedTaxPercentage = firstPiece.getValueAddedTaxPercentage();
+    this.currency = firstPiece.getCurrency();
     // Search the lowest level elevation among grouped furniture
     Level minLevel = null;
     for (HomePieceOfFurniture piece : furniture) {
@@ -107,6 +129,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       movable &= piece.isMovable();
       this.resizable &= piece.isResizable();
       this.deformable &= piece.isDeformable();
+      this.texturable &= piece.isTexturable();
       this.doorOrWindow &= piece.isDoorOrWindow();
       visible |= piece.isVisible();
       modelMirrored &= piece.isModelMirrored();
@@ -134,14 +157,20 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
           this.valueAddedTaxPercentage = null; 
         }
       }
+      if (this.currency != null) {
+        if (piece.getCurrency() == null
+            || !piece.getCurrency().equals(this.currency)) {
+          this.currency = null; 
+        }
+      }
     }
     if (this.resizable) {
-      super.setWidth((float)boundingRectangle.getWidth());
-      super.setDepth((float)boundingRectangle.getHeight());
+      super.setWidth((float)unrotatedBoundingRectangle.getWidth());
+      super.setDepth((float)unrotatedBoundingRectangle.getHeight());
       super.setHeight(height - elevation);
     } else {
-      this.fixedWidth = (float)boundingRectangle.getWidth();
-      this.fixedDepth = (float)boundingRectangle.getHeight();
+      this.fixedWidth = (float)unrotatedBoundingRectangle.getWidth();
+      this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
       this.fixedHeight = height - elevation;
     }
     setName(name);
@@ -154,10 +183,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setVisible(visible);
     super.setColor(null);
     super.setTexture(null);
-    super.setX((float)boundingRectangle.getCenterX());
-    super.setY((float)boundingRectangle.getCenterY());
+    super.setX((float)center.getX());
+    super.setY((float)center.getY());
+    super.setAngle(firstPiece.getAngle());
     super.setElevation(elevation);
-    super.setAngle(0);
     super.setModelMirrored(modelMirrored);
   }
 
@@ -167,6 +196,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.deformable = true;
+    this.texturable = true;
     in.defaultReadObject();
   }
 
@@ -246,6 +276,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns <code>true</code> if all furniture of this group are texturable.
+   * @since 3.5
+   */
+  @Override
+  public boolean isTexturable() {
+    return this.texturable;
+  }
+  
+  /**
    * Returns the width of this group.
    */
   @Override
@@ -311,6 +350,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns <code>null</code>.
+   * @since 3.5
+   */
+  @Override
+  public String getStaircaseCutOutShape() {
+    return null;
+  }
+  
+  /**
    * Returns the price of the furniture of this group with a price.
    */
   @Override
@@ -325,7 +373,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public BigDecimal getValueAddedTaxPercentage() {
-    return this.priceValueAddedTaxIncluded;
+    return this.valueAddedTaxPercentage;
+  }
+  
+  /**
+   * Returns the currency of the furniture of this group 
+   * or <code>null</code> if one piece has no currency 
+   * or has a currency different from the other furniture.
+   * @since 3.5
+   */
+  @Override
+  public String getCurrency() {
+    return this.currency;
   }
   
   /**
@@ -597,6 +656,39 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     for (HomePieceOfFurniture piece : this.furniture) {
       piece.setLevel(level);
     }
+  }
+  
+  /**
+   * Returns <code>true</code> if one of the pieces of this group intersects
+   * with the horizontal rectangle which opposite corners are at points
+   * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
+   * @since 3.5
+   */
+  @Override
+  public boolean intersectsRectangle(float x0, float y0, 
+                                     float x1, float y1) {
+    for (HomePieceOfFurniture piece : this.furniture) {
+      if (piece.intersectsRectangle(x0, y0, x1, y1)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Returns <code>true</code> if one of the pieces of this group contains 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   * @since 3.5
+   */
+  @Override
+  public boolean containsPoint(float x, float y, float margin) {
+    for (HomePieceOfFurniture piece : this.furniture) {
+      if (piece.containsPoint(x, y, margin)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   /**
