@@ -400,8 +400,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     WALL_AND_LINE_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
     
     // Create a path used as yaw rotation indicator for the camera
-    AffineTransform transform = new AffineTransform();
-    transform.rotate(-Math.PI / 4);
+    AffineTransform transform = AffineTransform.getRotateInstance(-Math.PI / 4);
     CAMERA_YAW_ROTATION_INDICATOR = FURNITURE_ROTATION_INDICATOR.createTransformedShape(transform);
     
     // Create a path used as pitch rotation indicator for the camera
@@ -1511,8 +1510,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Transform length text bounding rectangle corners to their real location
       double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
           dimensionLine.getXEnd() - dimensionLine.getXStart());
-      AffineTransform transform = new AffineTransform();
-      transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      AffineTransform transform = AffineTransform.getTranslateInstance(
+          dimensionLine.getXStart(), dimensionLine.getYStart());
       transform.rotate(angle);
       transform.translate(0, dimensionLine.getOffset());
       transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2, 
@@ -1528,8 +1527,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         it.next();
       }
       // Add to bounds the end lines drawn at dimension line start and end  
-      transform = new AffineTransform();
-      transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      transform.setToTranslation(dimensionLine.getXStart(), dimensionLine.getYStart());
       transform.rotate(angle);
       transform.translate(0, dimensionLine.getOffset());
       for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
@@ -3100,8 +3098,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
         doorOrWindow.getWidth(), wallThickness);
     // Apply rotation to the rectangle
-    AffineTransform rotation = new AffineTransform();
-    rotation.setToRotation(doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
+    AffineTransform rotation = AffineTransform.getRotateInstance(
+        doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
     PathIterator it = doorOrWindowRectangle.getPathIterator(rotation);
     GeneralPath doorOrWindowShape = new GeneralPath();
     doorOrWindowShape.append(it, false);
@@ -3139,8 +3137,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Arc2D arc = new Arc2D.Float(xAxis - sashWidth, yAxis - sashWidth, 
         2 * sashWidth, 2 * sashWidth, 
         startAngle, extentAngle, Arc2D.PIE);
-    AffineTransform transformation = new AffineTransform();
-    transformation.translate(doorOrWindow.getX(), doorOrWindow.getY());
+    AffineTransform transformation = AffineTransform.getTranslateInstance(doorOrWindow.getX(), doorOrWindow.getY());
     transformation.rotate(doorOrWindow.getAngle());
     transformation.translate(modelMirroredSign * -doorOrWindow.getWidth() / 2, -doorOrWindow.getDepth() / 2);
     PathIterator it = arc.getPathIterator(transformation);
@@ -4105,11 +4102,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.rotate(camera.getYaw());
   
       // Compute camera drawing at scale
-      AffineTransform cameraTransform = new AffineTransform();
       float [][] points = camera.getPoints();
       double yScale = Point2D.distance(points [0][0], points [0][1], points [3][0], points [3][1]);
       double xScale = Point2D.distance(points [0][0], points [0][1], points [1][0], points [1][1]);
-      cameraTransform.scale(xScale, yScale);    
+      AffineTransform cameraTransform = AffineTransform.getScaleInstance(xScale, yScale);    
       Shape scaledCameraBody = 
           new Area(CAMERA_BODY).createTransformedArea(cameraTransform);
       Shape scaledCameraHead = 

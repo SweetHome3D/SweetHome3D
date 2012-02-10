@@ -69,8 +69,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     
     // Search the size of the furniture group
     HomePieceOfFurniture firstPiece = furniture.get(0);
-    AffineTransform rotation = new AffineTransform();
-    rotation.setToRotation(-firstPiece.getAngle());
+    AffineTransform rotation = AffineTransform.getRotateInstance(-firstPiece.getAngle());
     Rectangle2D unrotatedBoundingRectangle = null;
     for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(furniture)) {
       GeneralPath pieceShape = new GeneralPath();

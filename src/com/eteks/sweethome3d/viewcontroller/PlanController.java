@@ -8580,9 +8580,8 @@ public class PlanController extends FurnitureController implements Controller {
                     
                     GeneralPath path = getPath(intersectionPoints);
                     // Enlarge the intersection path to ensure its union with room builds only one path
-                    AffineTransform transform = new AffineTransform();
                     Rectangle2D bounds2D = path.getBounds2D();                    
-                    transform.translate(bounds2D.getCenterX(), bounds2D.getCenterY());
+                    AffineTransform transform = AffineTransform.getTranslateInstance(bounds2D.getCenterX(), bounds2D.getCenterY());
                     double min = Math.min(bounds2D.getWidth(), bounds2D.getHeight());
                     double scale = (min + epsilon) / min;
                     transform.scale(scale, scale);

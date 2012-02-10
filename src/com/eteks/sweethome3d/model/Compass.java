@@ -281,8 +281,7 @@ public class Compass implements Serializable, Selectable {
           getY() - getDiameter() / 2,
           getDiameter(), getDiameter());
       // Apply rotation to the rectangle
-      AffineTransform rotation = new AffineTransform();
-      rotation.setToRotation(getNorthDirection(), getX(), getY());
+      AffineTransform rotation = AffineTransform.getRotateInstance(getNorthDirection(), getX(), getY());
       this.pointsCache = new float[4][2];
       PathIterator it = pieceRectangle.getPathIterator(rotation);
       for (int i = 0; i < this.pointsCache.length; i++) {

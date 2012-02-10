@@ -246,8 +246,7 @@ public class ObserverCamera extends Camera implements Selectable {
           getX() - getWidth() / 2, getY() - getDepth() / 2,
           getWidth(), getDepth());
       // Apply rotation to the rectangle
-      AffineTransform rotation = new AffineTransform();
-      rotation.setToRotation(getYaw(), getX(), getY());
+      AffineTransform rotation = AffineTransform.getRotateInstance(getYaw(), getX(), getY());
       PathIterator it = cameraEllipse.getPathIterator(rotation);
       GeneralPath pieceShape = new GeneralPath();
       pieceShape.append(it, false);
@@ -267,8 +266,7 @@ public class ObserverCamera extends Camera implements Selectable {
           getX() - getWidth() / 2, getY() - getDepth() / 2,
           getWidth(), getDepth());
       // Apply rotation to the rectangle
-      AffineTransform rotation = new AffineTransform();
-      rotation.setToRotation(getYaw(), getX(), getY());
+      AffineTransform rotation = AffineTransform.getRotateInstance(getYaw(), getX(), getY());
       PathIterator it = cameraRectangle.getPathIterator(rotation);
       GeneralPath cameraRectangleShape = new GeneralPath();
       cameraRectangleShape.append(it, false);

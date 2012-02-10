@@ -1047,8 +1047,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
           getY() - getDepth() / 2,
           getWidth(), getDepth());
       // Apply rotation to the rectangle
-      AffineTransform rotation = new AffineTransform();
-      rotation.setToRotation(getAngle(), getX(), getY());
+      AffineTransform rotation = AffineTransform.getRotateInstance(getAngle(), getX(), getY());
       PathIterator it = pieceRectangle.getPathIterator(rotation);
       GeneralPath pieceShape = new GeneralPath();
       pieceShape.append(it, false);
