@@ -975,7 +975,7 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Align the given <code>piece</code> along the rear of the lead piece and its side 
+   * Aligns the given <code>piece</code> along the rear of the lead piece and its side 
    * at a distance equal to <code>sideDistance</code>, and returns the width of the bounding box of 
    * the <code>piece</code> along the rear axis. 
    */
