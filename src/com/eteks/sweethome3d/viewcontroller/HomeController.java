@@ -794,6 +794,8 @@ public class HomeController implements Controller {
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_RIGHT,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE,
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.GROUP_FURNITURE,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,

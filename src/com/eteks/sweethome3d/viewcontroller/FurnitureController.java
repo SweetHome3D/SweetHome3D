@@ -19,10 +19,16 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -707,14 +713,14 @@ public class FurnitureController implements Controller {
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, false);
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
       doAlignFurnitureOnTop(alignedFurniture, leadPiece);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
           public void undo() throws CannotUndoException {
             super.undo();
-            undoAlignFurniture(alignedFurniture, false); 
+            undoAlignFurniture(alignedFurniture); 
           }
           
           @Override
@@ -757,15 +763,11 @@ public class FurnitureController implements Controller {
     }
   }
 
-  private void undoAlignFurniture(AlignedPieceOfFurniture [] alignedFurniture,
-                                  boolean alignX) {
+  private void undoAlignFurniture(AlignedPieceOfFurniture [] alignedFurniture) {
     for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
       HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      if (alignX) {
-        piece.setX(alignedPiece.getXOrY());
-      } else {
-        piece.setY(alignedPiece.getXOrY());
-      }
+      piece.setX(alignedPiece.getX());
+      piece.setY(alignedPiece.getY());
     }
   }
   
@@ -777,14 +779,14 @@ public class FurnitureController implements Controller {
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, false);
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
       doAlignFurnitureOnBottom(alignedFurniture, leadPiece);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
           public void undo() throws CannotUndoException {
             super.undo();
-            undoAlignFurniture(alignedFurniture, false); 
+            undoAlignFurniture(alignedFurniture); 
           }
           
           @Override
@@ -822,14 +824,14 @@ public class FurnitureController implements Controller {
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, true);
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
       doAlignFurnitureOnLeft(alignedFurniture, leadPiece);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
           public void undo() throws CannotUndoException {
             super.undo();
-            undoAlignFurniture(alignedFurniture, true); 
+            undoAlignFurniture(alignedFurniture); 
           }
           
           @Override
@@ -867,14 +869,14 @@ public class FurnitureController implements Controller {
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, true);
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
       doAlignFurnitureOnRight(alignedFurniture, leadPiece);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
           public void undo() throws CannotUndoException {
             super.undo();
-            undoAlignFurniture(alignedFurniture, true); 
+            undoAlignFurniture(alignedFurniture); 
           }
           
           @Override
@@ -905,7 +907,107 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns the minimum abcissa of the vertices of <code>piece</code>.  
+   * Controls the alignment of selected furniture on the sides of the first selected piece.
+   */
+  public void alignSelectedFurnitureSideBySide() {
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.size() >= 2) {
+      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
+      doAlignFurnitureSideBySide(alignedFurniture, leadPiece);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doAlignFurnitureSideBySide(alignedFurniture, leadPiece);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+  
+  private void doAlignFurnitureSideBySide(AlignedPieceOfFurniture [] alignedFurniture, 
+                                          HomePieceOfFurniture leadPiece) {
+    List<HomePieceOfFurniture> alignedFurnitureList = new ArrayList<HomePieceOfFurniture>(alignedFurniture.length + 1);
+    alignedFurnitureList.add(leadPiece);
+    for (AlignedPieceOfFurniture piece : alignedFurniture) {
+      alignedFurnitureList.add(piece.getPieceOfFurniture());
+    }
+    
+    float [][] points = leadPiece.getPoints();
+    final Line2D centerLine = new Line2D.Float(leadPiece.getX(), leadPiece.getY(), 
+        (points [0][0] + points [1][0]) / 2, (points [0][1] + points [1][1]) / 2);
+    // Sort aligned furniture in the order of their center spread along rear line 
+    Collections.sort(alignedFurnitureList, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
+          return Double.compare(centerLine.ptLineDistSq(p2.getX(), p2.getY()) * centerLine.relativeCCW(p2.getX(), p2.getY()),
+              centerLine.ptLineDistSq(p1.getX(), p1.getY()) * centerLine.relativeCCW(p1.getX(), p1.getY()));
+        }
+      });
+    
+    int leadPieceIndex = alignedFurnitureList.indexOf(leadPiece);    
+    Line2D rearLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
+    float sideDistance = leadPiece.getWidth() / 2;
+    for (int i = leadPieceIndex + 1; i < alignedFurnitureList.size(); i++) {
+      sideDistance += alignPieceOfFurnitureAlongSide(alignedFurnitureList.get(i), 
+          leadPiece, centerLine, rearLine, sideDistance);
+    }
+    sideDistance = -leadPiece.getWidth() / 2;
+    for (int i = leadPieceIndex - 1; i >= 0; i--) {
+      sideDistance -= alignPieceOfFurnitureAlongSide(alignedFurnitureList.get(i), 
+          leadPiece, centerLine, rearLine, sideDistance);
+    }
+  }
+
+  /**
+   * Align the given <code>piece</code> along the rear of the lead piece and its side 
+   * at a distance equal to <code>sideDistance</code>, and returns the width of the bounding box of 
+   * the <code>piece</code> along the rear axis. 
+   */
+  private double alignPieceOfFurnitureAlongSide(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
+                                               Line2D centerLine, Line2D rearLine, float sideDistance) {
+    Rectangle2D pieceBoundingBox = new Rectangle2D.Float(0, 0, piece.getWidth(), piece.getDepth());
+    AffineTransform rotation = AffineTransform.getRotateInstance(piece.getAngle() - leadPiece.getAngle());
+    GeneralPath rotatedBoundingBox = new GeneralPath();
+    rotatedBoundingBox.append(pieceBoundingBox.getPathIterator(rotation), false);
+    double rotatedBoundingBoxHeight = rotatedBoundingBox.getBounds2D().getHeight();
+
+    // Search the distance required to align piece on the rear line 
+    double distance = rearLine.relativeCCW(piece.getX(), piece.getY()) * rearLine.ptLineDist(piece.getX(), piece.getY()) 
+        + rotatedBoundingBoxHeight / 2;
+    double sinLeadPieceAngle = Math.sin(leadPiece.getAngle());
+    double cosLeadPieceAngle = Math.cos(leadPiece.getAngle());
+    float deltaX = (float)(-distance * sinLeadPieceAngle);
+    float deltaY = (float)(distance * cosLeadPieceAngle);
+
+    // Search the distance required to align piece on the side of the previous piece
+    double rotatedBoundingBoxWidth = rotatedBoundingBox.getBounds2D().getWidth();
+    distance = sideDistance + centerLine.relativeCCW(piece.getX(), piece.getY()) 
+        * (centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
+    deltaX += (float)(distance * cosLeadPieceAngle);
+    deltaY += (float)(distance * sinLeadPieceAngle);
+    
+    piece.move(deltaX, deltaY);
+    return rotatedBoundingBoxWidth;
+  }
+
+  /**
+   * Returns the minimum abscissa of the vertices of <code>piece</code>.  
    */
   private float getMinX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
@@ -957,24 +1059,25 @@ public class FurnitureController implements Controller {
    */
   private static class AlignedPieceOfFurniture {
     private HomePieceOfFurniture piece;
-    private float                xOrY;
+    private float                x;
+    private float                y;
     
-    public AlignedPieceOfFurniture(HomePieceOfFurniture piece, 
-                                   boolean alignX) {
+    public AlignedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
-      if (alignX) {
-        this.xOrY = piece.getX();
-      } else {
-        this.xOrY = piece.getY();
-      }
+      this.x = piece.getX();
+      this.y = piece.getY();
     }
 
     public HomePieceOfFurniture getPieceOfFurniture() {
       return this.piece;
     }
 
-    public float getXOrY() {
-      return this.xOrY;
+    public float getX() {
+      return this.x;
+    }
+
+    public float getY() {
+      return this.y;
     }
 
     /**
@@ -982,14 +1085,13 @@ public class FurnitureController implements Controller {
      * built from <code>furniture</code> pieces excepted for <code>leadPiece</code>.
      */
     public static AlignedPieceOfFurniture [] getAlignedFurniture(List<HomePieceOfFurniture> furniture, 
-                                                                 HomePieceOfFurniture leadPiece,
-                                                                 boolean alignX) {
+                                                                 HomePieceOfFurniture leadPiece) {
       final AlignedPieceOfFurniture[] alignedFurniture =
           new AlignedPieceOfFurniture[furniture.size() - 1];
       int i = 0;
       for (HomePieceOfFurniture piece : furniture) {
         if (piece != leadPiece) {
-          alignedFurniture[i++] = new AlignedPieceOfFurniture(piece, alignX);
+          alignedFurniture[i++] = new AlignedPieceOfFurniture(piece);
         }
       }
       return alignedFurniture;

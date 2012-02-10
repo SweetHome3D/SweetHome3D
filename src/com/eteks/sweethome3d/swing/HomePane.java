@@ -371,6 +371,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnLeft");
     createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, 
         furnitureController, "alignSelectedFurnitureOnRight");
+    createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, 
+        furnitureController, "alignSelectedFurnitureSideBySide");
     if (controller.getHomeController3D().getView() != null) {
       createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
     }
@@ -978,6 +980,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, furnitureMenu);
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
@@ -2444,6 +2447,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);
+      addActionToPopupMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_COMPASS, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
