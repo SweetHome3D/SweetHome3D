@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -159,16 +160,17 @@ public class PlanController extends FurnitureController implements Controller {
   private ControllerState             state;
   private ControllerState             previousState;
   // Mouse cursor position at last mouse press
-  private float                       xLastMousePress;
-  private float                       yLastMousePress;
-  private boolean                     shiftDownLastMousePress;
-  private boolean                     duplicationActivatedLastMousePress;
-  private float                       xLastMouseMove;
-  private float                       yLastMouseMove;
-  private Area                        wallsAreaCache;
-  private Area                        insideWallsAreaCache;
-  private List<GeneralPath>           roomPathsCache;
-  private List<Selectable>            draggedItems;
+  private float                           xLastMousePress;
+  private float                           yLastMousePress;
+  private boolean                         shiftDownLastMousePress;
+  private boolean                         duplicationActivatedLastMousePress;
+  private float                           xLastMouseMove;
+  private float                           yLastMouseMove;
+  private Area                            wallsAreaCache;
+  private Area                            insideWallsAreaCache;
+  private List<GeneralPath>               roomPathsCache;
+  private Map<HomePieceOfFurniture, Area> furnitureSidesCache;
+  private List<Selectable>                draggedItems;
 
   /**
    * Creates the controller of plan view. 
@@ -190,6 +192,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.furnitureSidesCache = new Hashtable<HomePieceOfFurniture, Area>();
     // Initialize states
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
@@ -1363,6 +1366,7 @@ public class PlanController extends FurnitureController implements Controller {
     scale = Math.max(getMinimumScale(), Math.min(scale, getMaximumScale()));
     if (scale != getView().getScale()) {
       float oldScale = getView().getScale();
+      this.furnitureSidesCache.clear();
       if (getView() != null) {
         int x = getView().convertXModelToScreen(getXLastMouseMove());
         int y = getView().convertXModelToScreen(getYLastMouseMove());
@@ -1561,7 +1565,7 @@ public class PlanController extends FurnitureController implements Controller {
           }
         }
       };
-    for (Wall wall : home.getWalls()) {
+    for (Wall wall : this.home.getWalls()) {
       wall.addPropertyChangeListener(wallChangeListener);
     }
     this.home.addWallsListener(new CollectionListener<Wall> () {
@@ -1574,12 +1578,38 @@ public class PlanController extends FurnitureController implements Controller {
           resetAreaCache();
         }
       });
+    // Add listener to update furnitureBordersCache when walls change
+    final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          String propertyName = ev.getPropertyName();
+          if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
+            furnitureSidesCache.remove((HomePieceOfFurniture)ev.getSource());
+          }
+        }
+      };
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      piece.addPropertyChangeListener(furnitureChangeListener);
+    }
+    this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture> () {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+            furnitureSidesCache.remove((HomePieceOfFurniture)ev.getSource());
+          }
+        }
+      });
+    
     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           resetAreaCache();
         }
       });
-    home.getObserverCamera().setFixedSize(home.getLevels().size() >= 2);
+    this.home.getObserverCamera().setFixedSize(home.getLevels().size() >= 2);
     this.home.addLevelsListener(new CollectionListener<Level>() {
         public void collectionChanged(CollectionEvent<Level> ev) {
           home.getObserverCamera().setFixedSize(home.getLevels().size() >= 2);
@@ -1981,7 +2011,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     // Search if the border of another piece at floor level intersects with the given piece
     float pieceElevation = piece.getGroundElevation();
-    BasicStroke stroke = new BasicStroke(2 * PIXEL_MARGIN / getScale());
+    float margin = 2 * PIXEL_MARGIN / getScale();
+    BasicStroke stroke = new BasicStroke(margin);
     HomePieceOfFurniture referencePiece = null;
     Area intersectionWithReferencePieceArea = null;
     float intersectionWithReferencePieceSurface = Float.MAX_VALUE;
@@ -2003,7 +2034,11 @@ public class PlanController extends FurnitureController implements Controller {
           marginArea.add(new Area(stroke.createStrokedShape(new Line2D.Float(
               points [3][0], points [3][1], points [0][0], points [0][1]))));
         } else {
-          marginArea = new Area(stroke.createStrokedShape(path));
+          marginArea = this.furnitureSidesCache.get(homePiece);
+          if (marginArea == null) {
+            marginArea = new Area(stroke.createStrokedShape(path));
+            this.furnitureSidesCache.put(homePiece, marginArea);
+          }
         }
         Area intersection = new Area(marginArea);
         intersection.intersect(pieceArea);
