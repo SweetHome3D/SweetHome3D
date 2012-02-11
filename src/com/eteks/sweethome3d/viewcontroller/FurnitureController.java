@@ -952,7 +952,7 @@ public class FurnitureController implements Controller {
     float [][] points = leadPiece.getPoints();
     final Line2D centerLine = new Line2D.Float(leadPiece.getX(), leadPiece.getY(), 
         (points [0][0] + points [1][0]) / 2, (points [0][1] + points [1][1]) / 2);
-    // Sort aligned furniture in the order of their center spread along rear line 
+    // Sort aligned furniture in the order of their center spread along back line 
     Collections.sort(alignedFurnitureList, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
           return Double.compare(centerLine.ptLineDistSq(p2.getX(), p2.getY()) * centerLine.relativeCCW(p2.getX(), p2.getY()),
@@ -961,34 +961,34 @@ public class FurnitureController implements Controller {
       });
     
     int leadPieceIndex = alignedFurnitureList.indexOf(leadPiece);    
-    Line2D rearLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
+    Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
     float sideDistance = leadPiece.getWidth() / 2;
     for (int i = leadPieceIndex + 1; i < alignedFurnitureList.size(); i++) {
       sideDistance += alignPieceOfFurnitureAlongSide(alignedFurnitureList.get(i), 
-          leadPiece, centerLine, rearLine, sideDistance);
+          leadPiece, centerLine, backLine, sideDistance);
     }
     sideDistance = -leadPiece.getWidth() / 2;
     for (int i = leadPieceIndex - 1; i >= 0; i--) {
       sideDistance -= alignPieceOfFurnitureAlongSide(alignedFurnitureList.get(i), 
-          leadPiece, centerLine, rearLine, sideDistance);
+          leadPiece, centerLine, backLine, sideDistance);
     }
   }
 
   /**
-   * Aligns the given <code>piece</code> along the rear of the lead piece and its side 
+   * Aligns the given <code>piece</code> along the back of the lead piece and its side 
    * at a distance equal to <code>sideDistance</code>, and returns the width of the bounding box of 
-   * the <code>piece</code> along the rear axis. 
+   * the <code>piece</code> along the back side axis. 
    */
   private double alignPieceOfFurnitureAlongSide(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
-                                               Line2D centerLine, Line2D rearLine, float sideDistance) {
+                                               Line2D centerLine, Line2D backLine, float sideDistance) {
     Rectangle2D pieceBoundingBox = new Rectangle2D.Float(0, 0, piece.getWidth(), piece.getDepth());
     AffineTransform rotation = AffineTransform.getRotateInstance(piece.getAngle() - leadPiece.getAngle());
     GeneralPath rotatedBoundingBox = new GeneralPath();
     rotatedBoundingBox.append(pieceBoundingBox.getPathIterator(rotation), false);
     double rotatedBoundingBoxHeight = rotatedBoundingBox.getBounds2D().getHeight();
 
-    // Search the distance required to align piece on the rear line 
-    double distance = rearLine.relativeCCW(piece.getX(), piece.getY()) * rearLine.ptLineDist(piece.getX(), piece.getY()) 
+    // Search the distance required to align piece on the back line 
+    double distance = backLine.relativeCCW(piece.getX(), piece.getY()) * backLine.ptLineDist(piece.getX(), piece.getY()) 
         + rotatedBoundingBoxHeight / 2;
     double sinLeadPieceAngle = Math.sin(leadPiece.getAngle());
     double cosLeadPieceAngle = Math.cos(leadPiece.getAngle());
