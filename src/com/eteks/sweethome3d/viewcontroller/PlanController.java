@@ -1599,7 +1599,7 @@ public class PlanController extends FurnitureController implements Controller {
             ev.getItem().addPropertyChangeListener(furnitureChangeListener);
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(furnitureChangeListener);
-            furnitureSidesCache.remove((HomePieceOfFurniture)ev.getSource());
+            furnitureSidesCache.remove(ev.getItem());
           }
         }
       });
