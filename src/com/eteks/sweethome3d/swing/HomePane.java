@@ -371,6 +371,10 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnLeft");
     createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, 
         furnitureController, "alignSelectedFurnitureOnRight");
+    createAction(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, preferences, 
+        furnitureController, "alignSelectedFurnitureOnFrontSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, preferences, 
+        furnitureController, "alignSelectedFurnitureOnBackSide");
     createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, 
         furnitureController, "alignSelectedFurnitureSideBySide");
     if (controller.getHomeController3D().getView() != null) {
@@ -980,6 +984,8 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, furnitureMenu);
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
