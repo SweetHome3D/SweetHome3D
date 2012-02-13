@@ -2173,7 +2173,7 @@ public class PlanController extends FurnitureController implements Controller {
                                       float deltaX, float deltaY) {
     Area intersection = new Area(getRotatedRectangle(piece1.getX() - piece1.getWidth() / 2 + deltaX, 
         piece1.getY() - piece1.getDepth() / 2 + deltaY, piece1.getWidth(), piece1.getDepth(), piece1.getAngle()));
-    float epsilon = 0.001f;
+    float epsilon = 0.01f;
     intersection.intersect(new Area(getRotatedRectangle(piece2.getX() - piece2.getWidth() / 2 - epsilon, 
         piece2.getY() - piece2.getDepth() / 2 - epsilon, 
         piece2.getWidth() + 2 * epsilon, piece2.getDepth() + 2 * epsilon, piece2.getAngle())));
