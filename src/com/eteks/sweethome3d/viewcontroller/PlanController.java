@@ -2064,39 +2064,27 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     if (referencePiece != null) {
-      boolean alignedOnFrontOrBackSide;
-      GeneralPath referencePieceLargerBoundingBox = getRotatedRectangle(referencePiece.getX() - referencePiece.getWidth(), 
-          referencePiece.getY() - referencePiece.getDepth(), referencePiece.getWidth() * 2, referencePiece.getDepth() * 2, 
-          referencePiece.getAngle());
+      boolean alignedOnReferencePieceFrontOrBackSide;
       if (doorOrWindowBoundToWall && referencePiece.isDoorOrWindow()) {
-        alignedOnFrontOrBackSide = false;
+        alignedOnReferencePieceFrontOrBackSide = false;
       } else {
+        GeneralPath referencePieceLargerBoundingBox = getRotatedRectangle(referencePiece.getX() - referencePiece.getWidth(), 
+            referencePiece.getY() - referencePiece.getDepth(), referencePiece.getWidth() * 2, referencePiece.getDepth() * 2, 
+            referencePiece.getAngle());
         float [][] pathPoints = getPathPoints(referencePieceLargerBoundingBox, false);
-        GeneralPath frontAndBackQuarters = new GeneralPath();
-        frontAndBackQuarters.moveTo(pathPoints [0][0], pathPoints [0][1]);
-        frontAndBackQuarters.lineTo(pathPoints [2][0], pathPoints [2][1]);
-        frontAndBackQuarters.lineTo(pathPoints [3][0], pathPoints [3][1]);
-        frontAndBackQuarters.lineTo(pathPoints [1][0], pathPoints [1][1]);
-        frontAndBackQuarters.closePath();
-        Area intersectionWithFrontOrBack = new Area(intersectionWithReferencePieceArea);
-        intersectionWithFrontOrBack.intersect(new Area(frontAndBackQuarters));
-        // Align along front or back side when the intersection with the border of the reference piece
-        // is larger on the front and back sides than on left and right sides
-        alignedOnFrontOrBackSide = !intersectionWithFrontOrBack.isEmpty()
-            && (new Room(getPathPoints(getPath(intersectionWithFrontOrBack), false)).getArea() 
-                / new Room(getPathPoints(getPath(intersectionWithReferencePieceArea), false)).getArea() > 0.5f);
+        alignedOnReferencePieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, pathPoints);
       }
       if (adjustOrientation) {  
         piece.setAngle(referencePiece.getAngle());
       }
-      Shape boundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), piece.getAngle() - referencePiece.getAngle());
+      Shape pieceBboundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), piece.getAngle() - referencePiece.getAngle());
       float deltaX;
       float deltaY;
-      if (alignedOnFrontOrBackSide) {
+      if (alignedOnReferencePieceFrontOrBackSide) {
         // Search the distance required to align piece on the front or back side of the reference piece
         Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
             (referencePiecePoints [2][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [2][1] + referencePiecePoints [1][1]) / 2);
-        double rotatedBoundingBoxHeight = boundingBox.getBounds2D().getHeight();
+        double rotatedBoundingBoxHeight = pieceBboundingBox.getBounds2D().getHeight();
         double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
             * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxHeight / 2);      
         deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
@@ -2105,7 +2093,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Search the distance required to align piece on the left or right side of the reference piece
         Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
             (referencePiecePoints [0][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [0][1] + referencePiecePoints [1][1]) / 2);
-        double rotatedBoundingBoxWidth = boundingBox.getBounds2D().getWidth();
+        double rotatedBoundingBoxWidth = pieceBboundingBox.getBounds2D().getWidth();
         double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
             * (-referencePiece.getWidth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
         deltaX = (float)(distance * Math.cos(referencePiece.getAngle()));
@@ -2113,20 +2101,85 @@ public class PlanController extends FurnitureController implements Controller {
       }
       
       // Accept move only if reference piece and moved piece share some points
-      Area intersection = new Area(getRotatedRectangle(piece.getX() - piece.getWidth() / 2 + deltaX, 
-          piece.getY() - piece.getDepth() / 2 + deltaY, piece.getWidth(), piece.getDepth(), piece.getAngle()));
-      float epsilon = 0.001f;
-      intersection.intersect(new Area(getRotatedRectangle(referencePiece.getX() - referencePiece.getWidth() / 2 - epsilon, 
-          referencePiece.getY() - referencePiece.getDepth() / 2 - epsilon, 
-          referencePiece.getWidth() + 2 * epsilon, referencePiece.getDepth() + 2 * epsilon, referencePiece.getAngle())));
-      if (!intersection.isEmpty()) {
+      if (!isIntersectionEmpty(piece, referencePiece, deltaX, deltaY)) {
         piece.move(deltaX, deltaY);
         return referencePiece;
+      } else {
+        if (adjustOrientation) {  
+          // Update points array
+          piecePoints = piece.getPoints();
+        }
+        boolean alignedOnPieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, piecePoints);        
+        Shape referencePieceBboundingBox = getRotatedRectangle(0, 0, referencePiece.getWidth(), referencePiece.getDepth(), 
+            referencePiece.getAngle() - piece.getAngle());        
+        if (alignedOnPieceFrontOrBackSide) {
+          // Search the distance required to align piece on its front or back side 
+          Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
+              (piecePoints [2][0] + piecePoints [1][0]) / 2, (piecePoints [2][1] + piecePoints [1][1]) / 2);
+          double rotatedBoundingBoxHeight = referencePieceBboundingBox.getBounds2D().getHeight();
+          double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
+              * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxHeight / 2);      
+          deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
+          deltaY = -(float)(distance * Math.cos(piece.getAngle()));
+        } else {
+          // Search the distance required to align piece on its left or right side 
+          Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
+              (piecePoints [0][0] + piecePoints [1][0]) / 2, (piecePoints [0][1] + piecePoints [1][1]) / 2);
+          double rotatedBoundingBoxWidth = referencePieceBboundingBox.getBounds2D().getWidth();
+          double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
+              * (-piece.getWidth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxWidth / 2);      
+          deltaX = -(float)(distance * Math.cos(piece.getAngle()));
+          deltaY = -(float)(distance * Math.sin(piece.getAngle()));
+        }
+
+        // Accept move only if reference piece and moved piece share some points
+        if (!isIntersectionEmpty(piece, referencePiece, deltaX, deltaY)) {
+          piece.move(deltaX, deltaY);
+          return referencePiece;
+        }
       }
+      return referencePiece;
     }
     return null;
   }
 
+  /**
+   * Returns <code>true</code> if the intersection between the given <code>area</code> and 
+   * the front or back sides of the rectangle defined by <code>piecePoints</code> is larger
+   * than with the left and right sides of this rectangle.
+   */
+  public boolean isAreaLargerOnFrontOrBackSide(Area area, float [][] piecePoints) {
+    GeneralPath pieceFrontAndBackQuarters = new GeneralPath();
+    pieceFrontAndBackQuarters.moveTo(piecePoints [0][0], piecePoints [0][1]);
+    pieceFrontAndBackQuarters.lineTo(piecePoints [2][0], piecePoints [2][1]);
+    pieceFrontAndBackQuarters.lineTo(piecePoints [3][0], piecePoints [3][1]);
+    pieceFrontAndBackQuarters.lineTo(piecePoints [1][0], piecePoints [1][1]);
+    pieceFrontAndBackQuarters.closePath();
+    Area intersectionWithFrontOrBack = new Area(area);
+    intersectionWithFrontOrBack.intersect(new Area(pieceFrontAndBackQuarters));
+    // Align along front or back side when the intersection with the border of the reference piece
+    // is larger on the front and back sides than on left and right sides
+    boolean alignedOnPieceFrontOrBackSide = !intersectionWithFrontOrBack.isEmpty()
+        && (new Room(getPathPoints(getPath(intersectionWithFrontOrBack), false)).getArea() 
+            / new Room(getPathPoints(getPath(area), false)).getArea() > 0.5f);
+    return alignedOnPieceFrontOrBackSide;
+  }
+
+  /**
+   * Returns <code>true</code> if the given pieces don't intersect once the first is moved from 
+   * (<code>deltaX</code>, <code>deltaY</code>) vector.
+   */
+  private boolean isIntersectionEmpty(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2,
+                                      float deltaX, float deltaY) {
+    Area intersection = new Area(getRotatedRectangle(piece1.getX() - piece1.getWidth() / 2 + deltaX, 
+        piece1.getY() - piece1.getDepth() / 2 + deltaY, piece1.getWidth(), piece1.getDepth(), piece1.getAngle()));
+    float epsilon = 0.001f;
+    intersection.intersect(new Area(getRotatedRectangle(piece2.getX() - piece2.getWidth() / 2 - epsilon, 
+        piece2.getY() - piece2.getDepth() / 2 - epsilon, 
+        piece2.getWidth() + 2 * epsilon, piece2.getDepth() + 2 * epsilon, piece2.getAngle())));
+    return intersection.isEmpty();
+  }
+  
   /**
    * Returns the shape of the given rectangle rotated of a given <code>angle</code>. 
    */
@@ -5580,14 +5633,14 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
         if (this.magnetismEnabled) {
           Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y);
+          if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
+            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false);
+          }
           if (magnetWall != null) {
             getView().setDimensionLinesFeedback(
                 getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
           } else {
             getView().setDimensionLinesFeedback(null);
-          }
-          if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
-            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false);
           }
         } 
       } else { 
@@ -6022,14 +6075,14 @@ public class PlanController extends FurnitureController implements Controller {
         this.draggedPieceOfFurniture.move(x, y);
 
         Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.draggedPieceOfFurniture, x, y);
+        if (adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) == null) {
+          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, true);
+        }
         if (magnetWall != null) {
           getView().setDimensionLinesFeedback(
               getDimensionLinesAlongWall(this.draggedPieceOfFurniture, magnetWall));
         } else {
           getView().setDimensionLinesFeedback(null);
-        }
-        if (adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) == null) {
-          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, true);
         }
       } 
       getView().setDraggedItemsFeedback(draggedItemsFeedback);
