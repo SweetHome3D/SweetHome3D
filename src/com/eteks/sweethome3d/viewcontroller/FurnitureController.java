@@ -115,8 +115,9 @@ public class FurnitureController implements Controller {
               Home.getFurnitureSubList(home.getSelectedItems());
           if (selectedFurniture.isEmpty()) {
             leadSelectedPieceOfFurniture = null;
-          } else if (leadSelectedPieceOfFurniture == null ||
-                     selectedFurniture.size() == 1) {
+          } else if (leadSelectedPieceOfFurniture == null 
+                     || selectedFurniture.size() == 1
+                     || selectedFurniture.indexOf(leadSelectedPieceOfFurniture) == -1) {
             leadSelectedPieceOfFurniture = selectedFurniture.get(0);
           }
         }
@@ -492,7 +493,7 @@ public class FurnitureController implements Controller {
       Map<Integer, HomePieceOfFurniture> sortedMap = 
           new TreeMap<Integer, HomePieceOfFurniture>(); 
       for (HomePieceOfFurniture piece : selectedFurniture) {
-          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        sortedMap.put(homeFurniture.indexOf(piece), piece);
       }
       final HomePieceOfFurniture [] groupPieces = sortedMap.values().
           toArray(new HomePieceOfFurniture [sortedMap.size()]); 
@@ -519,6 +520,12 @@ public class FurnitureController implements Controller {
         i++;
       }
 
+      // Ensure that the lead piece is first to force the angle of the group on this piece
+      int leadPieceIndex = selectedFurniture.indexOf(this.leadSelectedPieceOfFurniture);
+      if (leadPieceIndex > 0) {
+        selectedFurniture.remove(this.leadSelectedPieceOfFurniture);
+        selectedFurniture.add(0, this.leadSelectedPieceOfFurniture);
+      }
       final HomeFurnitureGroup furnitureGroup = createHomeFurnitureGroup(selectedFurniture);
       final float [] groupPiecesNewElevation = new float [groupPieces.length];
       i = 0;
