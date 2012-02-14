@@ -19,10 +19,7 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -806,6 +803,38 @@ public class FurnitureController implements Controller {
   }
 
   /**
+   * Controls the alignment of selected furniture on the left side of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnLeftSide() {
+    alignSelectedFurniture(new AlignmentAction() {
+        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
+                                   HomePieceOfFurniture leadPiece) {
+          float [][] points = leadPiece.getPoints();
+          Line2D leftLine = new Line2D.Float(points [3][0], points [3][1], points [0][0], points [0][1]);  
+          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+            alignPieceOfFurnitureAlongLeftOrRightSides(alignedPiece.getPieceOfFurniture(), leadPiece, leftLine, false);
+          }
+        }
+      });
+  }
+
+  /**
+   * Controls the alignment of selected furniture on the right side of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnRightSide() {
+    alignSelectedFurniture(new AlignmentAction() {
+        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
+                                   HomePieceOfFurniture leadPiece) {
+          float [][] points = leadPiece.getPoints();
+          Line2D rightLine = new Line2D.Float(points [1][0], points [1][1], points [2][0], points [2][1]);     
+          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+            alignPieceOfFurnitureAlongLeftOrRightSides(alignedPiece.getPieceOfFurniture(), leadPiece, rightLine, true);
+          }
+        }
+      });
+  }
+
+  /**
    * Controls the alignment of selected furniture on the sides of the first selected piece.
    */
   public void alignSelectedFurnitureSideBySide() {
@@ -816,38 +845,49 @@ public class FurnitureController implements Controller {
         }
       });
   }
-  
+
   private void alignFurnitureSideBySide(AlignedPieceOfFurniture [] alignedFurniture, 
                                         HomePieceOfFurniture leadPiece) {
-    List<HomePieceOfFurniture> alignedFurnitureList = new ArrayList<HomePieceOfFurniture>(alignedFurniture.length + 1);
-    alignedFurnitureList.add(leadPiece);
-    for (AlignedPieceOfFurniture piece : alignedFurniture) {
-      alignedFurnitureList.add(piece.getPieceOfFurniture());
-    }
-    
     float [][] points = leadPiece.getPoints();
     final Line2D centerLine = new Line2D.Float(leadPiece.getX(), leadPiece.getY(), 
         (points [0][0] + points [1][0]) / 2, (points [0][1] + points [1][1]) / 2);
-    // Sort aligned furniture in the order of their center spread along back line 
-    Collections.sort(alignedFurnitureList, new Comparator<HomePieceOfFurniture>() {
-        public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
-          return Double.compare(centerLine.ptLineDistSq(p2.getX(), p2.getY()) * centerLine.relativeCCW(p2.getX(), p2.getY()),
-              centerLine.ptLineDistSq(p1.getX(), p1.getY()) * centerLine.relativeCCW(p1.getX(), p1.getY()));
-        }
-      });
+    List<HomePieceOfFurniture> furnitureSortedAlongBackLine = sortFurniture(alignedFurniture, leadPiece, centerLine);
     
-    int leadPieceIndex = alignedFurnitureList.indexOf(leadPiece);    
+    int leadPieceIndex = furnitureSortedAlongBackLine.indexOf(leadPiece);    
     Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
     float sideDistance = leadPiece.getWidth() / 2;
-    for (int i = leadPieceIndex + 1; i < alignedFurnitureList.size(); i++) {
-      sideDistance += alignPieceOfFurnitureAlongSides(alignedFurnitureList.get(i), 
+    for (int i = leadPieceIndex + 1; i < furnitureSortedAlongBackLine.size(); i++) {
+      sideDistance += alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
           leadPiece, backLine, false, centerLine, sideDistance);
     }
     sideDistance = -leadPiece.getWidth() / 2;
     for (int i = leadPieceIndex - 1; i >= 0; i--) {
-      sideDistance -= alignPieceOfFurnitureAlongSides(alignedFurnitureList.get(i), 
+      sideDistance -= alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
           leadPiece, backLine, false, centerLine, sideDistance);
     }
+  }
+
+  /**
+   * Returns a list containing aligned furniture and lead piece sorted in the order of their distribution along
+   * a line orthogonal to the given axis.
+   */
+  public List<HomePieceOfFurniture> sortFurniture(AlignedPieceOfFurniture [] furniture,
+                                                  HomePieceOfFurniture leadPiece, 
+                                                  final Line2D orthogonalAxis) {
+    List<HomePieceOfFurniture> sortedFurniture = new ArrayList<HomePieceOfFurniture>(furniture.length + 1);
+    if (leadPiece != null) {
+      sortedFurniture.add(leadPiece);
+    }
+    for (AlignedPieceOfFurniture piece : furniture) {
+      sortedFurniture.add(piece.getPieceOfFurniture());
+    }
+    Collections.sort(sortedFurniture, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
+          return Double.compare(orthogonalAxis.ptLineDistSq(p2.getX(), p2.getY()) * orthogonalAxis.relativeCCW(p2.getX(), p2.getY()),
+              orthogonalAxis.ptLineDistSq(p1.getX(), p1.getY()) * orthogonalAxis.relativeCCW(p1.getX(), p1.getY()));
+        }
+      });
+    return sortedFurniture;
   }
 
   /**
@@ -858,12 +898,9 @@ public class FurnitureController implements Controller {
   private double alignPieceOfFurnitureAlongSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
                                                  Line2D frontOrBackLine, boolean frontLine, 
                                                  Line2D centerLine, float sideDistance) {
-    GeneralPath rotatedBoundingBox = getRotatedRectangle(piece, piece.getAngle() - leadPiece.getAngle());
-    double rotatedBoundingBoxHeight = rotatedBoundingBox.getBounds2D().getHeight();
-
     // Search the distance required to align piece on the front or back side 
     double distance = frontOrBackLine.relativeCCW(piece.getX(), piece.getY()) * frontOrBackLine.ptLineDist(piece.getX(), piece.getY()) 
-        + rotatedBoundingBoxHeight / 2;
+        + getPieceBoundingRectangleHeight(piece, -leadPiece.getAngle()) / 2;
     if (frontLine) {
       distance = -distance;
     }
@@ -872,7 +909,7 @@ public class FurnitureController implements Controller {
     float deltaX = (float)(-distance * sinLeadPieceAngle);
     float deltaY = (float)(distance * cosLeadPieceAngle);
 
-    double rotatedBoundingBoxWidth = rotatedBoundingBox.getBounds2D().getWidth();
+    double rotatedBoundingBoxWidth = getPieceBoundingRectangleWidth(piece, -leadPiece.getAngle());
     if (centerLine != null) {
       // Search the distance required to align piece on the side of the previous piece
       distance = sideDistance + centerLine.relativeCCW(piece.getX(), piece.getY()) 
@@ -886,14 +923,33 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns the shape of the given piece rotated of a given <code>angle</code>. 
+   * Aligns the given <code>piece</code> along the left or right side of the lead piece. 
    */
-  private GeneralPath getRotatedRectangle(HomePieceOfFurniture piece, float angle) {
-    Rectangle2D referencePieceLargerBoundingBox = new Rectangle2D.Float(0, 0, piece.getWidth(), piece.getDepth());
-    AffineTransform rotation = AffineTransform.getRotateInstance(angle);
-    GeneralPath rotatedBoundingBox = new GeneralPath();
-    rotatedBoundingBox.append(referencePieceLargerBoundingBox.getPathIterator(rotation), false);
-    return rotatedBoundingBox;
+  private void alignPieceOfFurnitureAlongLeftOrRightSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
+                                                          Line2D leftOrRightLine, boolean rightLine) {
+    // Search the distance required to align piece on the side of the lead piece
+    double distance = leftOrRightLine.relativeCCW(piece.getX(), piece.getY()) * leftOrRightLine.ptLineDist(piece.getX(), piece.getY())
+        + getPieceBoundingRectangleWidth(piece, -leadPiece.getAngle()) / 2;
+    if (rightLine) {
+      distance = -distance;
+    }
+    piece.move((float)(distance * Math.cos(leadPiece.getAngle())), (float)(distance * Math.sin(leadPiece.getAngle())));
+  }
+
+  /**
+   * Returns the bounding box width of the given piece when it's rotated of an additional angle.  
+   */
+  private double getPieceBoundingRectangleWidth(HomePieceOfFurniture piece, float additionalAngle) {
+    return Math.abs(piece.getWidth() * Math.cos(additionalAngle + piece.getAngle())) 
+        + Math.abs(piece.getDepth() * Math.sin(additionalAngle + piece.getAngle()));
+  }
+
+  /**
+   * Returns the bounding box height of the given piece when it's rotated of an additional angle.  
+   */
+  private double getPieceBoundingRectangleHeight(HomePieceOfFurniture piece, float additionalAngle) {
+    return Math.abs(piece.getWidth() * Math.sin(additionalAngle + piece.getAngle())) 
+        + Math.abs(piece.getDepth() * Math.cos(additionalAngle + piece.getAngle()));
   }
 
   /**
@@ -1001,6 +1057,87 @@ public class FurnitureController implements Controller {
   }
 
   /**
+   * Controls the distribution of the selected furniture along horizontal axis.
+   */
+  public void distributeSelectedFurnitureHorizontally() {
+    distributeSelectedFurniture(true);
+  }
+  
+  /**
+   * Controls the distribution of the selected furniture along vertical axis.
+   */
+  public void distributeSelectedFurnitureVertically() {
+    distributeSelectedFurniture(false);
+  }
+  
+  /**
+   * Controls the distribution of the selected furniture along the axis orthogonal to the given one.
+   */
+  public void distributeSelectedFurniture(final boolean horizontal) {
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.size() >= 3) {
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, null);
+      doDistributeFurnitureAlongAxis(alignedFurniture, horizontal);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doDistributeFurnitureAlongAxis(alignedFurniture, horizontal);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(FurnitureController.class, "undoDistributeName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  private void doDistributeFurnitureAlongAxis(AlignedPieceOfFurniture [] alignedFurniture,
+                                              boolean horizontal) {
+    Line2D orthogonalAxis = horizontal ? new Line2D.Float(0, 0, 0, -1) : new Line2D.Float(0, 0, 1, 0);
+    List<HomePieceOfFurniture> furnitureHorizontallySorted = sortFurniture(alignedFurniture, null, orthogonalAxis);
+    float axisAngle = (float)(horizontal ? 0 : Math.PI / 2);
+    HomePieceOfFurniture firstPiece = furnitureHorizontallySorted.get(0);
+    double firstPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(firstPiece, axisAngle) / 2;
+    HomePieceOfFurniture lastPiece = furnitureHorizontallySorted.get(furnitureHorizontallySorted.size() - 1);
+    double lastPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(lastPiece, axisAngle) / 2;
+    double gap = Math.abs(orthogonalAxis.ptLineDist(lastPiece.getX(), lastPiece.getY()) * orthogonalAxis.relativeCCW(lastPiece.getX(), lastPiece.getY()) 
+          - orthogonalAxis.ptLineDist(firstPiece.getX(), firstPiece.getY()) * orthogonalAxis.relativeCCW(firstPiece.getX(), firstPiece.getY()))
+        - lastPieceBoundingRectangleHalfWidth
+        - firstPieceBoundingRectangleHalfWidth;
+    double [] furnitureWidthsAlongAxis = new double [furnitureHorizontallySorted.size() - 2];
+    for (int i = 1; i < furnitureHorizontallySorted.size() - 1; i++) {
+      HomePieceOfFurniture piece = furnitureHorizontallySorted.get(i);
+      furnitureWidthsAlongAxis [i - 1] = getPieceBoundingRectangleWidth(piece, axisAngle);
+      gap -= furnitureWidthsAlongAxis [i - 1];
+    }
+    gap /= furnitureHorizontallySorted.size() - 1;
+    float xOrY = (horizontal ? firstPiece.getX() : firstPiece.getY()) 
+        + (float)(firstPieceBoundingRectangleHalfWidth + gap); 
+    for (int i = 1; i < furnitureHorizontallySorted.size() - 1; i++) {
+      HomePieceOfFurniture piece = furnitureHorizontallySorted.get(i);
+      if (horizontal) {
+        piece.setX((float)(xOrY + furnitureWidthsAlongAxis [i - 1] / 2));
+      } else {
+        piece.setY((float)(xOrY + furnitureWidthsAlongAxis [i - 1] / 2));
+      }
+      xOrY += gap + furnitureWidthsAlongAxis [i - 1];
+    }
+  }
+
+  /**
    * Stores the current x or y value of an aligned piece of furniture.
    */
   private static class AlignedPieceOfFurniture {
@@ -1033,7 +1170,7 @@ public class FurnitureController implements Controller {
     public static AlignedPieceOfFurniture [] getAlignedFurniture(List<HomePieceOfFurniture> furniture, 
                                                                  HomePieceOfFurniture leadPiece) {
       final AlignedPieceOfFurniture[] alignedFurniture =
-          new AlignedPieceOfFurniture[furniture.size() - 1];
+          new AlignedPieceOfFurniture[leadPiece == null  ? furniture.size()  : furniture.size() - 1];
       int i = 0;
       for (HomePieceOfFurniture piece : furniture) {
         if (piece != leadPiece) {

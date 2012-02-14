@@ -666,6 +666,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsDeletableFurniture = false;
     boolean homeSelectionContainsOneCopiableItemOrMore = false;
     boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
@@ -701,6 +702,9 @@ public class HomeController implements Controller {
           movablePiecesOfFurnitureCount++;
           if (movablePiecesOfFurnitureCount >= 2) {
             homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = true;
+          } 
+          if (movablePiecesOfFurnitureCount >= 3) {
+            homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = true;
             break;
           }
         }
@@ -798,8 +802,16 @@ public class HomeController implements Controller {
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_BACK_SIDE,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE,
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE,
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY,
+        homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.DISTRIBUTE_FURNITURE_VERTICALLY,
+        homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.GROUP_FURNITURE,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,

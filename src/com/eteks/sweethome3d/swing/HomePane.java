@@ -375,8 +375,16 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnFrontSide");
     createAction(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, preferences, 
         furnitureController, "alignSelectedFurnitureOnBackSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE, preferences, 
+        furnitureController, "alignSelectedFurnitureOnLeftSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE, preferences, 
+        furnitureController, "alignSelectedFurnitureOnRightSide");
     createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, 
         furnitureController, "alignSelectedFurnitureSideBySide");
+    createAction(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, preferences, 
+        furnitureController, "distributeSelectedFurnitureHorizontally");
+    createAction(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, preferences, 
+        furnitureController, "distributeSelectedFurnitureVertically");
     if (controller.getHomeController3D().getView() != null) {
       createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
     }
@@ -986,7 +994,11 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, furnitureMenu);
+    addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, furnitureMenu);
+    addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, furnitureMenu);
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
