@@ -2010,7 +2010,6 @@ public class PlanController extends FurnitureController implements Controller {
         && ((HomeDoorOrWindow)piece).isBoundToWall();
     
     // Search if the border of another piece at floor level intersects with the given piece
-    float pieceElevation = piece.getGroundElevation();
     float margin = 2 * PIXEL_MARGIN / getScale();
     BasicStroke stroke = new BasicStroke(margin);
     HomePieceOfFurniture referencePiece = null;
@@ -2018,11 +2017,8 @@ public class PlanController extends FurnitureController implements Controller {
     float intersectionWithReferencePieceSurface = Float.MAX_VALUE;
     float [][] referencePiecePoints = null;
     for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
-      float homePieceElevation = homePiece.getGroundElevation();
       if (homePiece != piece 
           && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
-          && (pieceElevation < homePieceElevation + homePiece.getHeight()
-              || pieceElevation + piece.getHeight() < homePieceElevation)
           && (!doorOrWindowBoundToWall // Ignore other furniture for doors and windows bound to a wall
               || homePiece.isDoorOrWindow())) {
         float [][] points = homePiece.getPoints();
