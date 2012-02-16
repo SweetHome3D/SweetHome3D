@@ -1839,7 +1839,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
         
       if (!piece.isDoorOrWindow()) {
-        // Search if piece intersects some other walls 
+        // Search if piece intersects some other walls and avoid it intersects the closest one 
         Area wallsAreaIntersection = new Area(getWallsArea());
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
                 yPiece - halfDepth, piece.getWidth(), piece.getDepth(), pieceAngle));
@@ -1889,7 +1889,7 @@ public class PlanController extends FurnitureController implements Controller {
         ((HomeDoorOrWindow) piece).setBoundToWall(true);
       }
       return referenceWall;
-    } else {
+    } else if (!piece.isDoorOrWindow()) {
       // Search if the border of a round wall at floor level intersects with the given piece
       Area roundWallAreaIntersection = null;
       float intersectionWithReferenceWallSurface = 0;
@@ -1930,8 +1930,8 @@ public class PlanController extends FurnitureController implements Controller {
         Rectangle2D adjustedPiecePathInAreaBounds = adjustedPiecePathInArea.createTransformedShape(rotation).getBounds2D();
         if (!adjustingAreaBounds.contains(adjustedPiecePathInAreaBounds)) {
           double adjustLeftBorder = Math.signum(adjustedPiecePathInAreaBounds.getCenterX() - adjustingAreaBounds.getCenterX());
-          piece.setX((float)(piece.getX() + adjustingAreaBounds.getWidth() * Math.cos(pieceAngle) * adjustLeftBorder));
-          piece.setY((float)(piece.getY() + adjustingAreaBounds.getWidth() * Math.sin(pieceAngle) * adjustLeftBorder));
+          piece.move((float)(adjustingAreaBounds.getWidth() * Math.cos(pieceAngle) * adjustLeftBorder),
+              (float)(adjustingAreaBounds.getWidth() * Math.sin(pieceAngle) * adjustLeftBorder));
         }
       } 
     }
