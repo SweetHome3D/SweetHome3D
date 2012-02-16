@@ -1783,6 +1783,7 @@ public class PlanController extends FurnitureController implements Controller {
                 && isItemResizable(piece)) {
               piece.setDepth(thicknessEpsilon 
                   + referenceWall.getThickness() / doorOrWindow.getWallThickness());
+              halfDepth = piece.getDepth() / 2;
             }
             wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();           
           } 
