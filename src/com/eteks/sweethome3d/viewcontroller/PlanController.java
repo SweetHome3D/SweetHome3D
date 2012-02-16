@@ -1685,12 +1685,14 @@ public class PlanController extends FurnitureController implements Controller {
     float [][] piecePoints = piece.getPoints();
     Area pieceArea = new Area(getPath(piecePoints));
     
+    Area wallsArea = getWallsArea();
+    Collection<Wall> walls = this.home.getWalls();
     Wall referenceWall = null;
     float [][] referenceWallPoints = null;
     if (forceOrientation
         || !piece.isDoorOrWindow()) {
       // Search if point (x, y) is contained in home walls with no margin
-      for (Wall wall : this.home.getWalls()) {
+      for (Wall wall : walls) {
         if (wall.getArcExtent() == null
             && wall.isAtLevel(selectedLevel)
             && wall.containsPoint(x, y, 0)
@@ -1703,7 +1705,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (referenceWall == null) {
         float margin = PIXEL_MARGIN / getScale();
         // If not found search if point (x, y) is contained in home walls with a margin
-        for (Wall wall : this.home.getWalls()) {
+        for (Wall wall : walls) {
           if (wall.getArcExtent() == null
               && wall.isAtLevel(selectedLevel)
               && wall.containsPoint(x, y, margin)
@@ -1721,7 +1723,7 @@ public class PlanController extends FurnitureController implements Controller {
       float margin = 2 * PIXEL_MARGIN / getScale();
       BasicStroke stroke = new BasicStroke(margin, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
       float intersectionWithReferenceWallSurface = 0;
-      for (Wall wall : this.home.getWalls()) {
+      for (Wall wall : walls) {
         if (wall.getArcExtent() == null
             && wall.isAtLevel(selectedLevel) 
             && wall.getStartPointToEndPointDistance() > 0) {
@@ -1840,7 +1842,7 @@ public class PlanController extends FurnitureController implements Controller {
         
       if (!piece.isDoorOrWindow()) {
         // Search if piece intersects some other walls and avoid it intersects the closest one 
-        Area wallsAreaIntersection = new Area(getWallsArea());
+        Area wallsAreaIntersection = new Area(wallsArea);
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
                 yPiece - halfDepth, piece.getWidth(), piece.getDepth(), pieceAngle));
         wallsAreaIntersection.subtract(new Area(getPath(referenceWallPoints)));
@@ -1851,7 +1853,7 @@ public class PlanController extends FurnitureController implements Controller {
           if (closestWallIntersectionPath != null) {           
             // In case the adjusted piece crosses a wall, search the area intersecting that wall 
             // + other parts which crossed the wall (the farthest ones from cursor)
-            adjustedPieceArea.subtract(getWallsArea()); 
+            adjustedPieceArea.subtract(wallsArea); 
             if (adjustedPieceArea.isEmpty()) {
               return null;
             } else {
@@ -1893,7 +1895,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Search if the border of a round wall at floor level intersects with the given piece
       Area roundWallAreaIntersection = null;
       float intersectionWithReferenceWallSurface = 0;
-      for (Wall wall : this.home.getWalls()) {
+      for (Wall wall : walls) {
         if (wall.getArcExtent() != null
             && wall.isAtLevel(selectedLevel) 
             && wall.getStartPointToEndPointDistance() > 0) {
