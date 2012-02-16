@@ -1668,9 +1668,9 @@ public class PlanController extends FurnitureController implements Controller {
    * to appear on the top of the latter. 
    */
   protected void adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture piece, float x, float y) {
-    adjustPieceOfFurnitureOnWallAt(piece, x, y);
+    Wall magnetWall = adjustPieceOfFurnitureOnWallAt(piece, x, y, true);
     if (adjustPieceOfFurnitureElevation(piece) == null) {
-      adjustPieceOfFurnitureSideBySideAt(piece, true);
+      adjustPieceOfFurnitureSideBySideAt(piece, magnetWall == null, magnetWall != null);
     }
   }
   
@@ -1679,137 +1679,237 @@ public class PlanController extends FurnitureController implements Controller {
    * point (<code>x</code>, <code>y</code>) and returns that wall it it exists.
    * @see #adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture, float, float)
    */
-  private Wall adjustPieceOfFurnitureOnWallAt(HomePieceOfFurniture piece, float x, float y) {
+  private Wall adjustPieceOfFurnitureOnWallAt(HomePieceOfFurniture piece, 
+                                              float x, float y, boolean forceOrientation) {
     Level selectedLevel = this.home.getSelectedLevel();
-    Wall wallAtPoint = null;
-    // Search if point (x, y) is contained in home walls with no margin
-    for (Wall wall : this.home.getWalls()) {
-      if (wall.getArcExtent() == null
-          && wall.isAtLevel(selectedLevel)
-          && wall.containsPoint(x, y, 0)
-          && wall.getStartPointToEndPointDistance() > 0) {
-        wallAtPoint = wall;
-        break;
-      }
-    }
-    if (wallAtPoint == null) {
-      float margin = PIXEL_MARGIN / getScale();
-      // If not found search if point (x, y) is contained in home walls with a margin
+    float [][] piecePoints = piece.getPoints();
+    Area pieceArea = new Area(getPath(piecePoints));
+    
+    Wall referenceWall = null;
+    float [][] referenceWallPoints = null;
+    if (forceOrientation
+        || !piece.isDoorOrWindow()) {
+      // Search if point (x, y) is contained in home walls with no margin
       for (Wall wall : this.home.getWalls()) {
         if (wall.getArcExtent() == null
             && wall.isAtLevel(selectedLevel)
-            && wall.containsPoint(x, y, margin)
+            && wall.containsPoint(x, y, 0)
             && wall.getStartPointToEndPointDistance() > 0) {
-          wallAtPoint = wall;
+          referenceWall = wall;
           break;
+        }
+      }
+      if (referenceWall == null) {
+        float margin = PIXEL_MARGIN / getScale();
+        // If not found search if point (x, y) is contained in home walls with a margin
+        for (Wall wall : this.home.getWalls()) {
+          if (wall.getArcExtent() == null
+              && wall.isAtLevel(selectedLevel)
+              && wall.containsPoint(x, y, margin)
+              && wall.getStartPointToEndPointDistance() > 0) {
+            referenceWall = wall;
+            break;
+          }
         }
       }
     }
 
-    if (wallAtPoint != null) {      
-      double wallAngle = Math.atan2(wallAtPoint.getYEnd() - wallAtPoint.getYStart(), 
-          wallAtPoint.getXEnd() - wallAtPoint.getXStart());
-      boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2; 
-      double cosAngle = Math.cos(wallAngle);
-      double sinAngle = Math.sin(wallAngle);
-      float [][] wallPoints = wallAtPoint.getPoints();
-      double distanceToLeftSide = Line2D.ptLineDist(
-          wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
-      double distanceToRightSide = Line2D.ptLineDist(
-          wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
-      
-      float [][] piecePoints = piece.getPoints();
-      float pieceAngle = piece.getAngle();
-      double distanceToPieceLeftSide = Line2D.ptLineDist(
-          piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
-      double distanceToPieceRightSide = Line2D.ptLineDist(
-          piecePoints [1][0], piecePoints [1][1], piecePoints [2][0], piecePoints [2][1], x, y);
-      double distanceToPieceSide = pieceAngle > (3 * Math.PI / 2 + 1E-6) || pieceAngle < (Math.PI / 2 + 1E-6)
-          ? distanceToPieceLeftSide
-          : distanceToPieceRightSide;
-      
-      double angle;
-      double xPiece;
-      double yPiece;
-      float halfWidth = piece.getWidth() / 2;
-      if (piece.isDoorOrWindow()) {
-        final float thicknessEpsilon = 0.00025f;
-        float wallDistance = thicknessEpsilon / 2;
-        if (piece instanceof HomeDoorOrWindow) {
-          HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow) piece;
-          if (piece.isResizable()
-              && isItemResizable(piece)) {
-            piece.setDepth(thicknessEpsilon 
-                + wallAtPoint.getThickness() / doorOrWindow.getWallThickness());
+    if (referenceWall == null) {
+      // Search if the border of a wall at floor level intersects with the given piece
+      float margin = 2 * PIXEL_MARGIN / getScale();
+      BasicStroke stroke = new BasicStroke(margin, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+      float intersectionWithReferenceWallSurface = 0;
+      for (Wall wall : this.home.getWalls()) {
+        if (wall.getArcExtent() == null 
+            && wall.isAtLevel(selectedLevel)
+            && wall.getStartPointToEndPointDistance() > 0) {
+          float [][] wallPoints = wall.getPoints();
+          Area marginArea = new Area(getPath(wallPoints));
+          Line2D leftBorder = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1]);
+          marginArea.add(new Area(stroke.createStrokedShape(leftBorder)));
+          Line2D rightBorder = new Line2D.Float(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1]);
+          marginArea.add(new Area(stroke.createStrokedShape(rightBorder)));
+          Area intersection = new Area(marginArea);
+          intersection.intersect(pieceArea);
+          if (!intersection.isEmpty()) {
+            float surface = getArea(intersection);
+            if (surface > intersectionWithReferenceWallSurface) {
+              surface = intersectionWithReferenceWallSurface;
+              referenceWall = wall;
+              referenceWallPoints = wallPoints;
+            }
           }
-          wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();           
-        } 
-        float halfDepth = piece.getDepth() / 2;
-        if (distanceToRightSide < distanceToLeftSide) {
-          angle = wallAngle;
-          xPiece = x + sinAngle * (distanceToLeftSide + wallDistance);
-          yPiece = y - cosAngle * (distanceToLeftSide + wallDistance);
+        }
+      }
+    } else {
+      referenceWallPoints = referenceWall.getPoints();
+    }
+    
+    if (referenceWall != null) {
+      float xPiece = x;
+      float yPiece = y;
+      float halfWidth = piece.getWidth() / 2;
+      float halfDepth = piece.getDepth() / 2;
+      double wallAngle = Math.atan2(referenceWall.getYEnd() - referenceWall.getYStart(), 
+          referenceWall.getXEnd() - referenceWall.getXStart());
+      boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2;
+      double cosWallAngle = Math.cos(wallAngle);
+      double sinWallAngle = Math.sin(wallAngle);
+      double distanceToLeftSide = Line2D.ptLineDist(
+          referenceWallPoints [0][0], referenceWallPoints [0][1], referenceWallPoints [1][0], referenceWallPoints [1][1], x, y);
+      double distanceToRightSide = Line2D.ptLineDist(
+          referenceWallPoints [2][0], referenceWallPoints [2][1], referenceWallPoints [3][0], referenceWallPoints [3][1], x, y);
+      float pieceAngle = piece.getAngle();
+      if (forceOrientation
+          || piece.isDoorOrWindow() 
+          || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale())) {
+        double distanceToPieceLeftSide = Line2D.ptLineDist(
+            piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
+        double distanceToPieceRightSide = Line2D.ptLineDist(
+            piecePoints [1][0], piecePoints [1][1], piecePoints [2][0], piecePoints [2][1], x, y);
+        double distanceToPieceSide = pieceAngle > (3 * Math.PI / 2 + 1E-6) || pieceAngle < (Math.PI / 2 + 1E-6)
+            ? distanceToPieceLeftSide
+            : distanceToPieceRightSide;
+        pieceAngle = (float)(distanceToRightSide < distanceToLeftSide 
+            ? wallAngle
+            : wallAngle + Math.PI);
+
+        if (piece.isDoorOrWindow()) {
+          final float thicknessEpsilon = 0.00025f;
+          float wallDistance = thicknessEpsilon / 2;
+          if (piece instanceof HomeDoorOrWindow) {
+            HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+            if (piece.isResizable()
+                && isItemResizable(piece)) {
+              piece.setDepth(thicknessEpsilon 
+                  + referenceWall.getThickness() / doorOrWindow.getWallThickness());
+            }
+            wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();           
+          } 
+          if (distanceToRightSide < distanceToLeftSide) {
+            xPiece += sinWallAngle * ( (distanceToLeftSide + wallDistance) - halfDepth);
+            yPiece += cosWallAngle * (-(distanceToLeftSide + wallDistance) + halfDepth);
+          } else {
+            xPiece += sinWallAngle * (-(distanceToRightSide + wallDistance) + halfDepth);
+            yPiece += cosWallAngle * ( (distanceToRightSide + wallDistance) - halfDepth);
+          }
           if (magnetizedAtRight) {
-            xPiece += cosAngle * (halfWidth - distanceToPieceSide) - sinAngle * halfDepth;
-            yPiece += sinAngle * (halfWidth - distanceToPieceSide) + cosAngle * halfDepth;
+            xPiece += cosWallAngle * (halfWidth - distanceToPieceSide);
+            yPiece += sinWallAngle * (halfWidth - distanceToPieceSide);
           } else {
             // Ensure adjusted window is at the right of the cursor 
-            xPiece += -cosAngle * (halfWidth - distanceToPieceSide) - sinAngle * halfDepth;
-            yPiece += -sinAngle * (halfWidth - distanceToPieceSide) + cosAngle * halfDepth;
+            xPiece += -cosWallAngle * (halfWidth - distanceToPieceSide);
+            yPiece += -sinWallAngle * (halfWidth - distanceToPieceSide);
           }
         } else {
-          angle = wallAngle + Math.PI;
-          xPiece = x - sinAngle * (distanceToRightSide + wallDistance);
-          yPiece = y + cosAngle * (distanceToRightSide + wallDistance);
-          if (magnetizedAtRight) {
-            xPiece += cosAngle * (halfWidth - distanceToPieceSide) + sinAngle * halfDepth;
-            yPiece += sinAngle * (halfWidth - distanceToPieceSide) - cosAngle * halfDepth;
+          if (distanceToRightSide < distanceToLeftSide) {
+            int pointIndicator = Line2D.relativeCCW(
+                referenceWallPoints [2][0], referenceWallPoints [2][1], referenceWallPoints [3][0], referenceWallPoints [3][1], x, y);
+            xPiece +=  pointIndicator * sinWallAngle * distanceToRightSide - sinWallAngle * halfDepth;
+            yPiece += -pointIndicator * cosWallAngle * distanceToRightSide + cosWallAngle * halfDepth;
           } else {
-            // Ensure adjusted window is at the right of the cursor 
-            xPiece += -cosAngle * (halfWidth - distanceToPieceSide) + sinAngle * halfDepth;
-            yPiece += -sinAngle * (halfWidth - distanceToPieceSide) - cosAngle * halfDepth;
+            int pointIndicator = Line2D.relativeCCW(
+                referenceWallPoints [0][0], referenceWallPoints [0][1], referenceWallPoints [1][0], referenceWallPoints [1][1], x, y);
+            xPiece += -pointIndicator * sinWallAngle * distanceToLeftSide + sinWallAngle * halfDepth;
+            yPiece +=  pointIndicator * cosWallAngle * distanceToLeftSide - cosWallAngle * halfDepth;
+          }
+          if (magnetizedAtRight) {
+            xPiece += cosWallAngle * (halfWidth - distanceToPieceSide);
+            yPiece += sinWallAngle * (halfWidth - distanceToPieceSide);
+          } else {
+            // Ensure adjusted piece is at the right of the cursor 
+            xPiece += -cosWallAngle * (halfWidth - distanceToPieceSide);
+            yPiece += -sinWallAngle * (halfWidth - distanceToPieceSide);
           }
         }
       } else {
-        float halfDepth = piece.getDepth() / 2;
-        if (distanceToRightSide < distanceToLeftSide) {
-          angle = wallAngle;
-          int pointIndicator = Line2D.relativeCCW(
-              wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
-          xPiece = x + pointIndicator * sinAngle * distanceToRightSide;
-          yPiece = y - pointIndicator * cosAngle * distanceToRightSide;
-          if (magnetizedAtRight) {
-            xPiece += cosAngle * (halfWidth - distanceToPieceSide) - sinAngle * halfDepth;
-            yPiece += sinAngle * (halfWidth - distanceToPieceSide) + cosAngle * halfDepth;
-          } else {
-            // Ensure adjusted piece is at the right of the cursor 
-            xPiece += -cosAngle * (halfWidth - distanceToPieceSide) - sinAngle * halfDepth;
-            yPiece += -sinAngle * (halfWidth - distanceToPieceSide) + cosAngle * halfDepth;
-          }
-        } else {
-          angle = wallAngle + Math.PI;
-          int pointIndicator = Line2D.relativeCCW(
-              wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
-          xPiece = x - pointIndicator * sinAngle * distanceToLeftSide;
-          yPiece = y + pointIndicator * cosAngle * distanceToLeftSide;
-          if (magnetizedAtRight) {
-            xPiece += cosAngle * (halfWidth - distanceToPieceSide) + sinAngle * halfDepth;
-            yPiece += sinAngle * (halfWidth - distanceToPieceSide) - cosAngle * halfDepth;
-          } else {
-            // Ensure adjusted piece is at the right of the cursor 
-            xPiece += -cosAngle * (halfWidth - distanceToPieceSide) + sinAngle * halfDepth;
-            yPiece += -sinAngle * (halfWidth - distanceToPieceSide) - cosAngle * halfDepth;
+        // Search the distance required to align piece on the left or right side of the reference wall
+        Line2D centerLine = new Line2D.Float(referenceWall.getXStart(), referenceWall.getYStart(), 
+            referenceWall.getXEnd(), referenceWall.getYEnd());
+        Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), (float)(pieceAngle - wallAngle));
+        double rotatedBoundingBoxDepth = pieceBoundingBox.getBounds2D().getHeight();
+        double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
+            * (-referenceWall.getThickness() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);
+        if (Math.signum(centerLine.relativeCCW(x, y)) != Math.signum(centerLine.relativeCCW(piece.getX(), piece.getY()))) {
+          distance -= Math.signum(centerLine.relativeCCW(x, y)) * (rotatedBoundingBoxDepth + referenceWall.getThickness());
+        }
+        xPiece = piece.getX() + (float)(-distance * sinWallAngle);
+        yPiece = piece.getY() + (float)(distance * cosWallAngle);
+      }
+        
+      if (!piece.isDoorOrWindow()) {
+        // Search if piece intersects some other walls 
+        Area wallsAreaIntersection = new Area(getWallsArea());
+        Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
+                yPiece - halfDepth, piece.getWidth(), piece.getDepth(), pieceAngle));
+        wallsAreaIntersection.subtract(new Area(getPath(referenceWallPoints)));
+        wallsAreaIntersection.intersect(adjustedPieceArea);
+        if (!wallsAreaIntersection.isEmpty()) {
+          // Search the wall intersection path the closest to mouse cursor  
+          GeneralPath closestWallIntersectionPath = getClosestPath(getAreaPaths(wallsAreaIntersection), x, y);            
+          if (closestWallIntersectionPath != null) {           
+            // In case the adjusted piece crosses a wall, search the area intersecting that wall 
+            // + other parts which crossed the wall (the farthest ones from cursor)
+            adjustedPieceArea.subtract(getWallsArea()); 
+            if (adjustedPieceArea.isEmpty()) {
+              return null;
+            } else {
+              List<GeneralPath> adjustedPieceAreaPaths = getAreaPaths(adjustedPieceArea);
+              // Ignore too complex cases when the piece intersect many walls and is not parallel to a wall
+              double angleDifference = (wallAngle - pieceAngle + 2 * Math.PI) % Math.PI;
+              if (angleDifference < 1E-5 
+                  || Math.PI - angleDifference < 1E-5
+                  || adjustedPieceAreaPaths.size() < 2) {
+                GeneralPath adjustedPiecePathInArea = getClosestPath(adjustedPieceAreaPaths, x, y);
+                Area adjustingArea = new Area(closestWallIntersectionPath);
+                for (GeneralPath path : adjustedPieceAreaPaths) {
+                  if (path != adjustedPiecePathInArea) {
+                    adjustingArea.add(new Area(path));
+                  }
+                }
+                AffineTransform rotation = AffineTransform.getRotateInstance(-wallAngle);
+                Rectangle2D adjustingAreaBounds = adjustingArea.createTransformedArea(rotation).getBounds2D();            
+                Rectangle2D adjustedPiecePathInAreaBounds = adjustedPiecePathInArea.createTransformedShape(rotation).getBounds2D();
+                if (!adjustingAreaBounds.contains(adjustedPiecePathInAreaBounds)) {
+                  double adjustLeftBorder = Math.signum(adjustedPiecePathInAreaBounds.getCenterX() - adjustingAreaBounds.getCenterX());
+                  xPiece += adjustingAreaBounds.getWidth() * cosWallAngle * adjustLeftBorder;
+                  yPiece += adjustingAreaBounds.getWidth() * sinWallAngle * adjustLeftBorder;
+                }
+              }
+            }
           }
         }
       }
-      piece.setAngle((float)angle);
-      piece.setX((float)xPiece);
-      piece.setY((float)yPiece);
+
+      piece.setAngle(pieceAngle);
+      piece.setX(xPiece);
+      piece.setY(yPiece);
       if (piece instanceof HomeDoorOrWindow) {
-        ((HomeDoorOrWindow)piece).setBoundToWall(true);
+        ((HomeDoorOrWindow) piece).setBoundToWall(true);
       }
-    }    
-    return wallAtPoint;
+      return referenceWall;
+    }
+    return null;
+  }
+
+  /**
+   * Returns the closest path among <code>area</code> ones to the given point.
+   */
+  public GeneralPath getClosestPath(List<GeneralPath> paths, float x, float y) {
+    GeneralPath closestPath = null;
+    double closestPathDistance = Double.MAX_VALUE;
+    for (GeneralPath path : paths) {
+      float [][] pathPoints = getPathPoints(path, true);
+      for (int i = 0; i < pathPoints.length; i++) {
+        double distanceToPath = Line2D.ptSegDistSq(pathPoints [i][0], pathPoints [i][1], 
+            pathPoints [(i + 1) % pathPoints.length][0], pathPoints [(i + 1) % pathPoints.length][1], x, y);
+        if (distanceToPath < closestPathDistance) {
+          closestPathDistance = distanceToPath;
+          closestPath = path;
+        }
+      }
+    }
+    return closestPath;
   }
 
   /**
@@ -1819,12 +1919,13 @@ public class PlanController extends FurnitureController implements Controller {
   private List<DimensionLine> getDimensionLinesAlongWall(HomePieceOfFurniture piece, Wall wall) {
     // Search the points on the wall side closest to piece
     float [][] piecePoints = piece.getPoints();
-    float [] piecePoint = piece.isDoorOrWindow()
-        ? piecePoints [3] // Front side point
-        : piecePoints [0]; // Back side point
+    float angle = piece.getAngle();
     float [][] wallPoints = wall.getPoints();
     float [] pieceLeftPoint;
     float [] pieceRightPoint;
+    float [] piecePoint = piece.isDoorOrWindow()
+        ? piecePoints [3] // Front side point
+        : piecePoints [0]; // Back side point
     if (Line2D.ptLineDistSq(wallPoints [0][0], wallPoints [0][1], 
             wallPoints [1][0], wallPoints [1][1], 
             piecePoint [0], piecePoint [1]) 
@@ -1851,47 +1952,64 @@ public class PlanController extends FurnitureController implements Controller {
       for (int j = 0; j < roomPoints.length; j++) {
         float [] startPoint = roomPoints [j];
         float [] endPoint = roomPoints [(j + 1) % roomPoints.length];
-        boolean segmentContainsLeftPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
-            endPoint [0], endPoint [1], pieceLeftPoint [0], pieceLeftPoint [1]) < 0.0001;
-        boolean segmentContainsRightPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
-            endPoint [0], endPoint [1], pieceRightPoint [0], pieceRightPoint [1]) < 0.0001;
-        if (segmentContainsLeftPoint || segmentContainsRightPoint) {
-          if (segmentContainsLeftPoint) {
-            // Compute distances to segment start point
-            double startPointToLeftPointDistance = Point2D.distanceSq(startPoint [0], startPoint [1], 
-                pieceLeftPoint [0], pieceLeftPoint [1]);
-            double startPointToRightPointDistance = Point2D.distanceSq(startPoint [0], startPoint [1], 
-                pieceRightPoint [0], pieceRightPoint [1]);
-            if (startPointToLeftPointDistance < startPointToRightPointDistance
-                || !segmentContainsRightPoint) {
-              wallEndPointJoinedToPieceLeftPoint = startPoint.clone();
-            } else {
-              wallEndPointJoinedToPieceLeftPoint = endPoint.clone();
+        float deltaX = endPoint [0] - startPoint [0];
+        float deltaY = endPoint [1] - startPoint [1];
+        double segmentAngle = Math.abs(deltaX) < 1E-5
+            ? Math.PI / 2
+            : (Math.abs(deltaY) < 1E-5
+                  ? 0
+                  : Math.atan2(deltaY, deltaX));
+        // If segment and piece are parallel
+        double angleDifference = (segmentAngle - angle + 2 * Math.PI) % Math.PI;
+        if (angleDifference < 1E-5 || Math.PI - angleDifference < 1E-5) {
+          boolean segmentContainsLeftPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
+              endPoint [0], endPoint [1], pieceLeftPoint [0], pieceLeftPoint [1]) < 0.0001;
+          boolean segmentContainsRightPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
+              endPoint [0], endPoint [1], pieceRightPoint [0], pieceRightPoint [1]) < 0.0001;
+          if (segmentContainsLeftPoint || segmentContainsRightPoint) {
+            if (segmentContainsLeftPoint) {
+              // Compute distances to segment start point
+              double startPointToLeftPointDistance = Point2D.distanceSq(startPoint [0], startPoint [1], 
+                  pieceLeftPoint [0], pieceLeftPoint [1]);
+              double startPointToRightPointDistance = Point2D.distanceSq(startPoint [0], startPoint [1], 
+                  pieceRightPoint [0], pieceRightPoint [1]);
+              if (startPointToLeftPointDistance < startPointToRightPointDistance
+                  || !segmentContainsRightPoint) {
+                wallEndPointJoinedToPieceLeftPoint = startPoint.clone();
+              } else {
+                wallEndPointJoinedToPieceLeftPoint = endPoint.clone();
+              }
             }
-          }
-          if (segmentContainsRightPoint) {
-            // Compute distances to segment start point
-            double endPointToLeftPointDistance = Point2D.distanceSq(endPoint [0], endPoint [1], 
-                pieceLeftPoint [0], pieceLeftPoint [1]);
-            double endPointToRightPointDistance = Point2D.distanceSq(endPoint [0], endPoint [1], 
-                pieceRightPoint [0], pieceRightPoint [1]);
-            if (endPointToLeftPointDistance < endPointToRightPointDistance
-                && segmentContainsLeftPoint) {
-              wallEndPointJoinedToPieceRightPoint = startPoint.clone();
-            } else {
-              wallEndPointJoinedToPieceRightPoint = endPoint.clone();
+            if (segmentContainsRightPoint) {
+              // Compute distances to segment start point
+              double endPointToLeftPointDistance = Point2D.distanceSq(endPoint [0], endPoint [1], 
+                  pieceLeftPoint [0], pieceLeftPoint [1]);
+              double endPointToRightPointDistance = Point2D.distanceSq(endPoint [0], endPoint [1], 
+                  pieceRightPoint [0], pieceRightPoint [1]);
+              if (endPointToLeftPointDistance < endPointToRightPointDistance
+                  && segmentContainsLeftPoint) {
+                wallEndPointJoinedToPieceRightPoint = startPoint.clone();
+              } else {
+                wallEndPointJoinedToPieceRightPoint = endPoint.clone();
+              }
             }
+            break;
           }
-          break;
         }
       }
     }
 
-    float angle = piece.getAngle();
     boolean reverse = angle > Math.PI / 2 && angle <= 3 * Math.PI / 2;
+    boolean pieceFrontSideAlongWallSide = !piece.isDoorOrWindow() 
+        && Line2D.ptLineDistSq(wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), piecePoint [0], piecePoint [1]) 
+            > Line2D.ptLineDistSq(wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), piecePoints [3][0], piecePoints [3][1]);
     if (wallEndPointJoinedToPieceLeftPoint != null) {
       float offset = (float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1], 
           piecePoints [3][0], piecePoints [3][1]) + 10 / getView().getScale();
+      if (pieceFrontSideAlongWallSide) {
+        offset = -(float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1], 
+            piecePoints [0][0], piecePoints [0][1]) - 10 / getView().getScale();
+      }
       if (reverse) {
         dimensionLines.add(new DimensionLine(pieceLeftPoint [0], pieceLeftPoint [1],
             wallEndPointJoinedToPieceLeftPoint [0],
@@ -1905,6 +2023,10 @@ public class PlanController extends FurnitureController implements Controller {
     if (wallEndPointJoinedToPieceRightPoint != null) {
       float offset = (float)Point2D.distance(pieceRightPoint [0], pieceRightPoint [1], 
           piecePoints [2][0], piecePoints [2][1]) + 10 / getView().getScale();
+      if (pieceFrontSideAlongWallSide) {
+        offset = -(float)Point2D.distance(pieceRightPoint [0], pieceRightPoint [1], 
+            piecePoints [1][0], piecePoints [1][1]) - 10 / getView().getScale();
+      }
       if (reverse) {
         dimensionLines.add(new DimensionLine(wallEndPointJoinedToPieceRightPoint [0],
             wallEndPointJoinedToPieceRightPoint [1], 
@@ -1913,6 +2035,11 @@ public class PlanController extends FurnitureController implements Controller {
         dimensionLines.add(new DimensionLine(pieceRightPoint [0], pieceRightPoint [1],
             wallEndPointJoinedToPieceRightPoint [0],
             wallEndPointJoinedToPieceRightPoint [1], offset));
+      }
+    }
+    for (Iterator<DimensionLine> it = dimensionLines.iterator(); it.hasNext(); ) {
+      if (it.next().getLength() < 0.01f) {
+        it.remove();
       }
     }
     return dimensionLines;
@@ -2000,10 +2127,12 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Attempts to align <code>piece</code> on the borders of home furniture at the the same elevation 
    * that intersect with it and returns that piece.
+   * @param b 
    * @see #adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture, float, float)
    */
   private HomePieceOfFurniture adjustPieceOfFurnitureSideBySideAt(HomePieceOfFurniture piece, 
-                                                                  boolean adjustOrientation) {
+                                                                  boolean forceOrientation, 
+                                                                  boolean alignOnlyOnSides) {
     float [][] piecePoints = piece.getPoints();
     Area pieceArea = new Area(getPath(piecePoints));
     boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
@@ -2046,7 +2175,7 @@ public class PlanController extends FurnitureController implements Controller {
             insideArea.subtract(marginArea);
             insideArea.intersect(pieceArea);
             if (insideArea.isEmpty()) {
-              float surface = new Room(getPathPoints(getPath(intersection), false)).getArea();
+              float surface = getArea(intersection);
               if (surface < intersectionWithReferencePieceSurface) {
                 surface = intersectionWithReferencePieceSurface;
                 referencePiece = homePiece;
@@ -2070,30 +2199,30 @@ public class PlanController extends FurnitureController implements Controller {
         float [][] pathPoints = getPathPoints(referencePieceLargerBoundingBox, false);
         alignedOnReferencePieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, pathPoints);
       }
-      if (adjustOrientation) {  
+      if (forceOrientation) {  
         piece.setAngle(referencePiece.getAngle());
       }
-      Shape pieceBboundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), piece.getAngle() - referencePiece.getAngle());
-      float deltaX;
-      float deltaY;
-      if (alignedOnReferencePieceFrontOrBackSide) {
-        // Search the distance required to align piece on the front or back side of the reference piece
-        Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
-            (referencePiecePoints [2][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [2][1] + referencePiecePoints [1][1]) / 2);
-        double rotatedBoundingBoxHeight = pieceBboundingBox.getBounds2D().getHeight();
-        double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
-            * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxHeight / 2);      
-        deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
-        deltaY = (float)(distance * Math.cos(referencePiece.getAngle()));
-      } else {
+      Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), piece.getAngle() - referencePiece.getAngle());
+      float deltaX = 0;
+      float deltaY = 0;
+      if (!alignedOnReferencePieceFrontOrBackSide) {
         // Search the distance required to align piece on the left or right side of the reference piece
         Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
             (referencePiecePoints [0][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [0][1] + referencePiecePoints [1][1]) / 2);
-        double rotatedBoundingBoxWidth = pieceBboundingBox.getBounds2D().getWidth();
+        double rotatedBoundingBoxWidth = pieceBoundingBox.getBounds2D().getWidth();
         double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
             * (-referencePiece.getWidth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
         deltaX = (float)(distance * Math.cos(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.sin(referencePiece.getAngle()));
+      } else if (!alignOnlyOnSides) {
+        // Search the distance required to align piece on the front or back side of the reference piece
+        Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
+            (referencePiecePoints [2][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [2][1] + referencePiecePoints [1][1]) / 2);
+        double rotatedBoundingBoxDepth = pieceBoundingBox.getBounds2D().getHeight();
+        double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
+            * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);      
+        deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
+        deltaY = (float)(distance * Math.cos(referencePiece.getAngle()));
       }
       
       // Accept move only if reference piece and moved piece share some points
@@ -2101,31 +2230,31 @@ public class PlanController extends FurnitureController implements Controller {
         piece.move(deltaX, deltaY);
         return referencePiece;
       } else {
-        if (adjustOrientation) {  
+        if (forceOrientation) {  
           // Update points array
           piecePoints = piece.getPoints();
         }
         boolean alignedOnPieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, piecePoints);        
-        Shape referencePieceBboundingBox = getRotatedRectangle(0, 0, referencePiece.getWidth(), referencePiece.getDepth(), 
+        Shape referencePieceBoundingBox = getRotatedRectangle(0, 0, referencePiece.getWidth(), referencePiece.getDepth(), 
             referencePiece.getAngle() - piece.getAngle());        
-        if (alignedOnPieceFrontOrBackSide) {
-          // Search the distance required to align piece on its front or back side 
-          Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
-              (piecePoints [2][0] + piecePoints [1][0]) / 2, (piecePoints [2][1] + piecePoints [1][1]) / 2);
-          double rotatedBoundingBoxHeight = referencePieceBboundingBox.getBounds2D().getHeight();
-          double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
-              * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxHeight / 2);      
-          deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
-          deltaY = -(float)(distance * Math.cos(piece.getAngle()));
-        } else {
+        if (!alignedOnPieceFrontOrBackSide) {
           // Search the distance required to align piece on its left or right side 
           Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
               (piecePoints [0][0] + piecePoints [1][0]) / 2, (piecePoints [0][1] + piecePoints [1][1]) / 2);
-          double rotatedBoundingBoxWidth = referencePieceBboundingBox.getBounds2D().getWidth();
+          double rotatedBoundingBoxWidth = referencePieceBoundingBox.getBounds2D().getWidth();
           double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
               * (-piece.getWidth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxWidth / 2);      
           deltaX = -(float)(distance * Math.cos(piece.getAngle()));
           deltaY = -(float)(distance * Math.sin(piece.getAngle()));
+        } else if (!alignOnlyOnSides) {
+          // Search the distance required to align piece on its front or back side 
+          Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
+              (piecePoints [2][0] + piecePoints [1][0]) / 2, (piecePoints [2][1] + piecePoints [1][1]) / 2);
+          double rotatedBoundingBoxDepth = referencePieceBoundingBox.getBounds2D().getHeight();
+          double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
+              * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxDepth / 2);      
+          deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
+          deltaY = -(float)(distance * Math.cos(piece.getAngle()));
         }
 
         // Accept move only if reference piece and moved piece share some points
@@ -2153,12 +2282,22 @@ public class PlanController extends FurnitureController implements Controller {
     pieceFrontAndBackQuarters.closePath();
     Area intersectionWithFrontOrBack = new Area(area);
     intersectionWithFrontOrBack.intersect(new Area(pieceFrontAndBackQuarters));
-    // Align along front or back side when the intersection with the border of the reference piece
-    // is larger on the front and back sides than on left and right sides
     boolean alignedOnPieceFrontOrBackSide = !intersectionWithFrontOrBack.isEmpty()
-        && (new Room(getPathPoints(getPath(intersectionWithFrontOrBack), false)).getArea() 
-            / new Room(getPathPoints(getPath(area), false)).getArea() > 0.5f);
+        && (getArea(intersectionWithFrontOrBack) 
+            / getArea(area) > 0.5f);
     return alignedOnPieceFrontOrBackSide;
+  }
+
+  /**
+   * Returns the area of the given shape.
+   */
+  public float getArea(Area area) {
+    float [][] pathPoints = getPathPoints(getPath(area), false);
+    if (pathPoints.length != 0) {
+      return new Room(pathPoints).getArea();
+    } else {
+      return 0;
+    }
   }
 
   /**
@@ -3542,7 +3681,7 @@ public class PlanController extends FurnitureController implements Controller {
           Area pieceAreaIntersection = new Area(getPath(piecePoints));
           pieceAreaIntersection.intersect(wallsArea);
           if (!pieceAreaIntersection.isEmpty()
-              && new Room(piecePoints).getArea() / new Room(getPathPoints(getPath(pieceAreaIntersection), false)).getArea() > 0.999) {
+              && new Room(piecePoints).getArea() / getArea(pieceAreaIntersection) > 0.999) {
             ((HomeDoorOrWindow) piece).setBoundToWall(true);
           }
         }
@@ -4608,33 +4747,43 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath> getRoomPathsFromWalls() {
     if (this.roomPathsCache == null) {
       // Iterate over all the paths the walls area contains
-      List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
       Area wallsArea = getWallsArea();
+      List<GeneralPath> roomPaths = getAreaPaths(wallsArea);
       Area insideWallsArea = new Area(wallsArea);
-      GeneralPath roomPath = new GeneralPath();
-      for (PathIterator it = wallsArea.getPathIterator(null, 0.5f); !it.isDone(); ) {
-        float [] roomPoint = new float[2];
-        switch (it.currentSegment(roomPoint)) {
-          case PathIterator.SEG_MOVETO : 
-            roomPath.moveTo(roomPoint [0], roomPoint [1]);
-            break;
-          case PathIterator.SEG_LINETO : 
-            roomPath.lineTo(roomPoint [0], roomPoint [1]);
-            break;
-          case PathIterator.SEG_CLOSE :
-            roomPath.closePath();
-            insideWallsArea.add(new Area(roomPath));              
-            roomPaths.add(roomPath);
-            roomPath = new GeneralPath();
-            break;
-        }
-        it.next();        
+      for (GeneralPath roomPath : roomPaths) {
+        insideWallsArea.add(new Area(roomPath));              
       }
       
       this.roomPathsCache = roomPaths;
       this.insideWallsAreaCache = insideWallsArea;
     }
     return this.roomPathsCache;
+  }
+
+  /**
+   * Returns the paths described by the given <code>area</code>.
+   */
+  private List<GeneralPath> getAreaPaths(Area area) {
+    List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
+    GeneralPath roomPath = new GeneralPath();
+    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); ) {
+      float [] roomPoint = new float[2];
+      switch (it.currentSegment(roomPoint)) {
+        case PathIterator.SEG_MOVETO : 
+          roomPath.moveTo(roomPoint [0], roomPoint [1]);
+          break;
+        case PathIterator.SEG_LINETO : 
+          roomPath.lineTo(roomPoint [0], roomPoint [1]);
+          break;
+        case PathIterator.SEG_CLOSE :
+          roomPath.closePath();
+          roomPaths.add(roomPath);
+          roomPath = new GeneralPath();
+          break;
+      }
+      it.next();        
+    }
+    return roomPaths;
   }
   
   /**
@@ -5628,13 +5777,12 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
         if (this.magnetismEnabled) {
-          Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y);
+          Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
           if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
-            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false);
+            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall != null);
           }
           if (magnetWall != null) {
-            getView().setDimensionLinesFeedback(
-                getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
+            getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
           } else {
             getView().setDimensionLinesFeedback(null);
           }
@@ -6070,13 +6218,12 @@ public class PlanController extends FurnitureController implements Controller {
         this.draggedPieceOfFurniture.setElevation(this.elevationDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.move(x, y);
 
-        Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.draggedPieceOfFurniture, x, y);
+        Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.draggedPieceOfFurniture, x, y, true);
         if (adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) == null) {
-          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, true);
+          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, magnetWall == null, magnetWall != null);
         }
         if (magnetWall != null) {
-          getView().setDimensionLinesFeedback(
-              getDimensionLinesAlongWall(this.draggedPieceOfFurniture, magnetWall));
+          getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.draggedPieceOfFurniture, magnetWall));
         } else {
           getView().setDimensionLinesFeedback(null);
         }
