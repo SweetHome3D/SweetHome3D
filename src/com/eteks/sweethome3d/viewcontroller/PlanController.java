@@ -1696,6 +1696,7 @@ public class PlanController extends FurnitureController implements Controller {
             && wall.containsPoint(x, y, 0)
             && wall.getStartPointToEndPointDistance() > 0) {
           referenceWall = wall;
+          referenceWallPoints = referenceWall.getPoints();
           break;
         }
       }
@@ -1708,6 +1709,7 @@ public class PlanController extends FurnitureController implements Controller {
               && wall.containsPoint(x, y, margin)
               && wall.getStartPointToEndPointDistance() > 0) {
             referenceWall = wall;
+            referenceWallPoints = referenceWall.getPoints();
             break;
           }
         }
@@ -1720,19 +1722,19 @@ public class PlanController extends FurnitureController implements Controller {
       BasicStroke stroke = new BasicStroke(margin, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
       float intersectionWithReferenceWallSurface = 0;
       for (Wall wall : this.home.getWalls()) {
-        if (wall.getArcExtent() == null 
-            && wall.isAtLevel(selectedLevel)
+        if (wall.getArcExtent() == null
+            && wall.isAtLevel(selectedLevel) 
             && wall.getStartPointToEndPointDistance() > 0) {
           float [][] wallPoints = wall.getPoints();
-          Area marginArea = new Area(getPath(wallPoints));
-          Line2D leftBorder = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1]);
-          marginArea.add(new Area(stroke.createStrokedShape(leftBorder)));
-          Line2D rightBorder = new Line2D.Float(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1]);
-          marginArea.add(new Area(stroke.createStrokedShape(rightBorder)));
-          Area intersection = new Area(marginArea);
-          intersection.intersect(pieceArea);
-          if (!intersection.isEmpty()) {
-            float surface = getArea(intersection);
+          Area wallAreaIntersection = new Area(getPath(wallPoints));
+          // Add borders to non round walls to magnetize furniture approaching walls
+          Line2D leftBorder = new Line2D.Float(wallPoints [0] [0], wallPoints [0] [1], wallPoints [1] [0], wallPoints [1] [1]);
+          wallAreaIntersection.add(new Area(stroke.createStrokedShape(leftBorder)));
+          Line2D rightBorder = new Line2D.Float(wallPoints [2] [0], wallPoints [2] [1], wallPoints [3] [0], wallPoints [3] [1]);
+          wallAreaIntersection.add(new Area(stroke.createStrokedShape(rightBorder)));
+          wallAreaIntersection.intersect(pieceArea);
+          if (!wallAreaIntersection.isEmpty()) {
+            float surface = getArea(wallAreaIntersection);
             if (surface > intersectionWithReferenceWallSurface) {
               surface = intersectionWithReferenceWallSurface;
               referenceWall = wall;
@@ -1741,13 +1743,12 @@ public class PlanController extends FurnitureController implements Controller {
           }
         }
       }
-    } else {
-      referenceWallPoints = referenceWall.getPoints();
-    }
+    } 
     
     if (referenceWall != null) {
       float xPiece = x;
       float yPiece = y;
+      float pieceAngle = piece.getAngle();      
       float halfWidth = piece.getWidth() / 2;
       float halfDepth = piece.getDepth() / 2;
       double wallAngle = Math.atan2(referenceWall.getYEnd() - referenceWall.getYStart(), 
@@ -1759,7 +1760,6 @@ public class PlanController extends FurnitureController implements Controller {
           referenceWallPoints [0][0], referenceWallPoints [0][1], referenceWallPoints [1][0], referenceWallPoints [1][1], x, y);
       double distanceToRightSide = Line2D.ptLineDist(
           referenceWallPoints [2][0], referenceWallPoints [2][1], referenceWallPoints [3][0], referenceWallPoints [3][1], x, y);
-      float pieceAngle = piece.getAngle();
       if (forceOrientation
           || piece.isDoorOrWindow() 
           || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale())) {
@@ -1889,7 +1889,53 @@ public class PlanController extends FurnitureController implements Controller {
         ((HomeDoorOrWindow) piece).setBoundToWall(true);
       }
       return referenceWall;
+    } else {
+      // Search if the border of a round wall at floor level intersects with the given piece
+      Area roundWallAreaIntersection = null;
+      float intersectionWithReferenceWallSurface = 0;
+      for (Wall wall : this.home.getWalls()) {
+        if (wall.getArcExtent() != null
+            && wall.isAtLevel(selectedLevel) 
+            && wall.getStartPointToEndPointDistance() > 0) {
+          float [][] wallPoints = wall.getPoints();
+          Area wallAreaIntersection = new Area(getPath(wallPoints));
+          wallAreaIntersection.intersect(pieceArea);
+          if (!wallAreaIntersection.isEmpty()) {
+            float surface = getArea(wallAreaIntersection);
+            if (surface > intersectionWithReferenceWallSurface) {
+              surface = intersectionWithReferenceWallSurface;
+              referenceWall = wall;
+              referenceWallPoints = wallPoints;
+              roundWallAreaIntersection = wallAreaIntersection;
+            }
+          }
+        }
+      }
+      
+      if (referenceWall != null) {
+        // Search the round wall intersection path the closest to mouse cursor and move the piece to avoid it intersects the wall  
+        GeneralPath closestWallIntersectionPath = getClosestPath(getAreaPaths(roundWallAreaIntersection), x, y);            
+        pieceArea.subtract(roundWallAreaIntersection); 
+        List<GeneralPath> adjustedPieceAreaPaths = getAreaPaths(pieceArea);
+        GeneralPath adjustedPiecePathInArea = getClosestPath(adjustedPieceAreaPaths, x, y);
+        Area adjustingArea = new Area(closestWallIntersectionPath);
+        for (GeneralPath path : adjustedPieceAreaPaths) {
+          if (path != adjustedPiecePathInArea) {
+            adjustingArea.add(new Area(path));
+          }
+        }
+        float pieceAngle = piece.getAngle();      
+        AffineTransform rotation = AffineTransform.getRotateInstance(-pieceAngle);
+        Rectangle2D adjustingAreaBounds = adjustingArea.createTransformedArea(rotation).getBounds2D();            
+        Rectangle2D adjustedPiecePathInAreaBounds = adjustedPiecePathInArea.createTransformedShape(rotation).getBounds2D();
+        if (!adjustingAreaBounds.contains(adjustedPiecePathInAreaBounds)) {
+          double adjustLeftBorder = Math.signum(adjustedPiecePathInAreaBounds.getCenterX() - adjustingAreaBounds.getCenterX());
+          piece.setX((float)(piece.getX() + adjustingAreaBounds.getWidth() * Math.cos(pieceAngle) * adjustLeftBorder));
+          piece.setY((float)(piece.getY() + adjustingAreaBounds.getWidth() * Math.sin(pieceAngle) * adjustLeftBorder));
+        }
+      } 
     }
+      
     return null;
   }
 
