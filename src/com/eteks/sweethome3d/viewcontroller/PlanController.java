@@ -1681,35 +1681,32 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private Wall adjustPieceOfFurnitureOnWallAt(HomePieceOfFurniture piece, 
                                               float x, float y, boolean forceOrientation) {
+    float margin = PIXEL_MARGIN / getScale();
     Level selectedLevel = this.home.getSelectedLevel();
     float [][] piecePoints = piece.getPoints();
-    Area pieceArea = new Area(getPath(piecePoints));
     
     Area wallsArea = getWallsArea();
     Collection<Wall> walls = this.home.getWalls();
-    Wall referenceWall = null;
-    float margin = PIXEL_MARGIN / getScale();
     
+    Wall referenceWall = null;
     if (forceOrientation
         || !piece.isDoorOrWindow()) {
       // Search if point (x, y) is contained in home walls with no margin
       for (Wall wall : walls) {
-        if (wall.getArcExtent() == null
-            && wall.isAtLevel(selectedLevel)
-            && wall.containsPoint(x, y, 0)
+        if (wall.isAtLevel(selectedLevel) 
+            && wall.containsPoint(x, y, 0) 
             && wall.getStartPointToEndPointDistance() > 0) {
-          referenceWall = wall;
+          referenceWall = getReferenceWall(wall, x, y);
           break;
         }
       }
       if (referenceWall == null) {
         // If not found search if point (x, y) is contained in home walls with a margin
         for (Wall wall : walls) {
-          if (wall.getArcExtent() == null
-              && wall.isAtLevel(selectedLevel)
+          if (wall.isAtLevel(selectedLevel)
               && wall.containsPoint(x, y, margin)
               && wall.getStartPointToEndPointDistance() > 0) {
-            referenceWall = wall;
+            referenceWall = getReferenceWall(wall, x, y);
             break;
           }
         }
@@ -1723,8 +1720,7 @@ public class PlanController extends FurnitureController implements Controller {
           piece.getWidth() + 2 * margin, piece.getDepth() + 2 * margin, piece.getAngle()));
       float intersectionWithReferenceWallSurface = 0;
       for (Wall wall : walls) {
-        if (wall.getArcExtent() == null
-            && wall.isAtLevel(selectedLevel) 
+        if (wall.isAtLevel(selectedLevel) 
             && wall.getStartPointToEndPointDistance() > 0) {
           float [][] wallPoints = wall.getPoints();
           Area wallAreaIntersection = new Area(getPath(wallPoints));
@@ -1733,14 +1729,16 @@ public class PlanController extends FurnitureController implements Controller {
             float surface = getArea(wallAreaIntersection);
             if (surface > intersectionWithReferenceWallSurface) {
               surface = intersectionWithReferenceWallSurface;
-              referenceWall = wall;
+              referenceWall = getReferenceWall(wall, x, y);
             }
           }
         }
       }
     }
     
-    if (referenceWall != null) {
+    if (referenceWall != null
+        && (referenceWall.getArcExtent() == null 
+            || !piece.isDoorOrWindow())) {
       float xPiece = x;
       float yPiece = y;
       float pieceAngle = piece.getAngle();      
@@ -1756,9 +1754,10 @@ public class PlanController extends FurnitureController implements Controller {
           wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
       double distanceToRightSide = Line2D.ptLineDist(
           wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
-      if (forceOrientation
+      boolean adjustOrientation = forceOrientation
           || piece.isDoorOrWindow() 
-          || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale())) {
+          || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale());
+      if (adjustOrientation) {
         double distanceToPieceLeftSide = Line2D.ptLineDist(
             piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
         double distanceToPieceRightSide = Line2D.ptLineDist(
@@ -1834,7 +1833,11 @@ public class PlanController extends FurnitureController implements Controller {
         yPiece = piece.getY() + (float)(distance * cosWallAngle);
       }
         
-      if (!piece.isDoorOrWindow()) {
+      if (!piece.isDoorOrWindow() 
+          && (referenceWall.getArcExtent() == null // Ignore reoriented piece when (x, y) is inside a round wall
+              || !adjustOrientation
+              || Line2D.relativeCCW(referenceWall.getXStart(), referenceWall.getYStart(), 
+                  referenceWall.getXEnd(), referenceWall.getYEnd(), x, y) > 0)) {
         // Search if piece intersects some other walls and avoid it intersects the closest one 
         Area wallsAreaIntersection = new Area(wallsArea);
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
@@ -1842,11 +1845,11 @@ public class PlanController extends FurnitureController implements Controller {
         wallsAreaIntersection.subtract(new Area(getPath(wallPoints)));
         wallsAreaIntersection.intersect(adjustedPieceArea);
         if (!wallsAreaIntersection.isEmpty()) {
-          // Search the wall intersection path the closest to mouse cursor  
+          // Search the wall intersection path the closest to (x, y)
           GeneralPath closestWallIntersectionPath = getClosestPath(getAreaPaths(wallsAreaIntersection), x, y);            
           if (closestWallIntersectionPath != null) {           
             // In case the adjusted piece crosses a wall, search the area intersecting that wall 
-            // + other parts which crossed the wall (the farthest ones from cursor)
+            // + other parts which crossed the wall (the farthest ones from (x,y))
             adjustedPieceArea.subtract(wallsArea); 
             if (adjustedPieceArea.isEmpty()) {
               return null;
@@ -1885,53 +1888,29 @@ public class PlanController extends FurnitureController implements Controller {
         ((HomeDoorOrWindow) piece).setBoundToWall(true);
       }
       return referenceWall;
-    } else if (!piece.isDoorOrWindow()) {
-      // Search if the border of a round wall at floor level intersects with the given piece
-      Area roundWallAreaIntersection = null;
-      float intersectionWithReferenceWallSurface = 0;
-      for (Wall wall : walls) {
-        if (wall.getArcExtent() != null
-            && wall.isAtLevel(selectedLevel) 
-            && wall.getStartPointToEndPointDistance() > 0) {
-          float [][] wallPoints = wall.getPoints();
-          Area wallAreaIntersection = new Area(getPath(wallPoints));
-          wallAreaIntersection.intersect(pieceArea);
-          if (!wallAreaIntersection.isEmpty()) {
-            float surface = getArea(wallAreaIntersection);
-            if (surface > intersectionWithReferenceWallSurface) {
-              surface = intersectionWithReferenceWallSurface;
-              referenceWall = wall;
-              roundWallAreaIntersection = wallAreaIntersection;
-            }
-          }
-        }
-      }
-      
-      if (referenceWall != null) {
-        // Search the round wall intersection path the closest to mouse cursor and move the piece to avoid it intersects the wall  
-        GeneralPath closestWallIntersectionPath = getClosestPath(getAreaPaths(roundWallAreaIntersection), x, y);            
-        pieceArea.subtract(roundWallAreaIntersection); 
-        List<GeneralPath> adjustedPieceAreaPaths = getAreaPaths(pieceArea);
-        GeneralPath adjustedPiecePathInArea = getClosestPath(adjustedPieceAreaPaths, x, y);
-        Area adjustingArea = new Area(closestWallIntersectionPath);
-        for (GeneralPath path : adjustedPieceAreaPaths) {
-          if (path != adjustedPiecePathInArea) {
-            adjustingArea.add(new Area(path));
-          }
-        }
-        float pieceAngle = piece.getAngle();      
-        AffineTransform rotation = AffineTransform.getRotateInstance(-pieceAngle);
-        Rectangle2D adjustingAreaBounds = adjustingArea.createTransformedArea(rotation).getBounds2D();            
-        Rectangle2D adjustedPiecePathInAreaBounds = adjustedPiecePathInArea.createTransformedShape(rotation).getBounds2D();
-        if (!adjustingAreaBounds.contains(adjustedPiecePathInAreaBounds)) {
-          double adjustLeftBorder = Math.signum(adjustedPiecePathInAreaBounds.getCenterX() - adjustingAreaBounds.getCenterX());
-          piece.move((float)(adjustingAreaBounds.getWidth() * Math.cos(pieceAngle) * adjustLeftBorder),
-              (float)(adjustingAreaBounds.getWidth() * Math.sin(pieceAngle) * adjustLeftBorder));
-        }
-      } 
-    }
+    } 
       
     return null;
+  }
+
+  /**
+   * Returns <code>wall</code> or a small wall part at the angle joining wall center to 
+   * (<code>x</code>, <code>y</code>) point if the given <code>wall</code> is round. 
+   */
+  public Wall getReferenceWall(Wall wall, float x, float y) {
+    if (wall.getArcExtent() == null) {
+      return wall;
+    } else {
+      double angle = Math.atan2(wall.getYArcCircleCenter() - y, x - wall.getXArcCircleCenter());
+      double radius = Point2D.distance(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(), wall.getXStart(), wall.getYStart());
+      float epsilonAngle = 0.001f;
+      Wall wallPart = new Wall((float)(wall.getXArcCircleCenter() + Math.cos(angle + epsilonAngle) * radius), 
+          (float)(wall.getYArcCircleCenter() - Math.sin(angle + epsilonAngle) * radius),
+          (float)(wall.getXArcCircleCenter() + Math.cos(angle - epsilonAngle) * radius), 
+          (float)(wall.getYArcCircleCenter() - Math.sin(angle - epsilonAngle) * radius), wall.getThickness(), 0);
+      wallPart.setArcExtent(epsilonAngle * 2);
+      return wallPart;
+    }
   }
 
   /**
