@@ -1729,7 +1729,12 @@ public class PlanController extends FurnitureController implements Controller {
             float surface = getArea(wallAreaIntersection);
             if (surface > intersectionWithReferenceWallSurface) {
               surface = intersectionWithReferenceWallSurface;
-              referenceWall = getReferenceWall(wall, x, y);
+              if (forceOrientation) {
+                referenceWall = getReferenceWall(wall, x, y);
+              } else {
+                Rectangle2D intersectionBounds = wallAreaIntersection.getBounds2D();
+                referenceWall = getReferenceWall(wall, (float)intersectionBounds.getCenterX(), (float)intersectionBounds.getCenterY());
+              }
             }
           }
         }
@@ -1894,7 +1899,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns <code>wall</code> or a small wall part at the angle joining wall center to 
+   * Returns <code>wall</code> or a small wall part at the angle formed by the line joining wall center to 
    * (<code>x</code>, <code>y</code>) point if the given <code>wall</code> is round. 
    */
   public Wall getReferenceWall(Wall wall, float x, float y) {
