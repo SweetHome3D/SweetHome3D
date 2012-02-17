@@ -1012,9 +1012,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     addMouseWheelListener(new MouseWheelListener() {        
         public void mouseWheelMoved(MouseWheelEvent ev) {
           if (ev.getModifiers() == getToolkit().getMenuShortcutKeyMask()) {
+            float mouseX = 0;
+            float mouseY = 0;
+            int deltaX = 0;
+            int deltaY = 0;
+            if (getParent() instanceof JViewport) {
+              mouseX = convertXPixelToModel(ev.getX());
+              mouseY = convertYPixelToModel(ev.getY());
+              Rectangle viewRectangle = ((JViewport)getParent()).getViewRect();
+              deltaX = ev.getX() - viewRectangle.x;
+              deltaY = ev.getY() - viewRectangle.y;
+            }
+
             controller.zoom((float)(ev.getWheelRotation() < 0 
                 ? Math.pow(1.05, -ev.getWheelRotation()) 
                 : Math.pow(0.95, ev.getWheelRotation())));
+            
+            if (getParent() instanceof JViewport) {
+              // Update viewport position to keep the same coordinates under mouse cursor
+              ((JViewport)getParent()).setViewPosition(new Point());
+              moveView(mouseX - convertXPixelToModel(deltaX), mouseY - convertYPixelToModel(deltaY));
+            }
           } else if (getMouseWheelListeners().length == 1) {
             // If this listener is the only one registered on this component
             // redispatch event to its parent (for default scroll bar management)
@@ -4308,10 +4326,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (getParent() instanceof JViewport) {
         parent = (JViewport)getParent();
         viewRectangle = parent.getViewRect();
-        xViewCenterPosition = (convertXPixelToModel(viewRectangle.x) 
-            + convertXPixelToModel(viewRectangle.x + viewRectangle.width)) / 2;
-        yViewCenterPosition = (convertYPixelToModel(viewRectangle.y)
-            + convertYPixelToModel(viewRectangle.y + viewRectangle.height)) / 2;
+        xViewCenterPosition = convertXPixelToModel(viewRectangle.x + viewRectangle.width / 2);
+        yViewCenterPosition = convertYPixelToModel(viewRectangle.y + viewRectangle.height / 2);
       }
       
       this.scale = scale;
