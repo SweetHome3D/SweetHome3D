@@ -26,29 +26,25 @@
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
-	<td><p>To add doors, windows or furniture to your home, drag and drop one or more pieces of furniture
-	      from catalog to the home plan or  furniture list. </p>
+	<td><p>To add doors, windows or furniture to your home, drag and drop them one by one from the catalog to the home plan or  furniture list. </p>
 	  <p align="center"><img src="images/addingFurniture.png" alt="Adding furniture" width="435" height="179"></p>
-	  <p align="left">You may also select some pieces in the catalog, then choose <i>Furniture &gt; Add to home</i> or click
+	  <p align="left">You may also select one or more pieces in the catalog, then choose <i>Furniture &gt; Add to home</i> or click
 	    on the
 	    <i>Add to home</i> tool.</p>
 	  <blockquote>
 	    <p align="left"><img src="../images/addToHomeTool.png" alt="Add to home tool" width="24" height="24" align="absmiddle">&nbsp;<i>Add
 	      to home</i> tool</p>
 	    </blockquote>	  
-	  <p align="left">When pieces are dropped in furniture list or added with the <i>Furniture &gt; Add to home</i> menu, the
+	  <p align="left">When pieces are dropped in furniture list or added with the <i>Furniture &gt; Add to home</i> menu item, the
 	    location of their top left corner is at the point (0, 0).<br>
-          When pieces are dropped in the plan, the location of their top left 
-          corner is at the point where you release the mouse button. When <b>one</b> 
-          piece is dropped with the mouse cursor upon a wall, it will be automatically 
-          rotated and resized depending on the orientation and the thickness of 
-          that wall if this piece is a door or a window, whereas a piece of an 
-          other type will be rotated so its back face lies along that wall. </p>
-	  <p align="left">The pieces added to home are selected and  drawn simultaneously in furniture list, in the plan and in
+          When a piece is dropped in the plan, its location and orientation depends on the location of the walls close to the piece. If the dropped piece is a door or a window, it will be automatically 
+          rotated and resized according to the orientation and the thickness of 
+          the wall it intersects. Other kind of pieces will be rotated to make their back face lie along the closest wall it could intersect.</p>
+<p align="left">The pieces added to home are selected and  drawn simultaneously in furniture list, in the plan and in
 	          the 3D view. During the loading time of the 3D model of added pieces, these pieces are represented as a white
 	        box in
 	          the 3D
-          view. </p></td>
+      view. </p></td>
 	</tr>
 </table>
 <div id="taskbox">
@@ -85,14 +81,14 @@
               <p>If a piece of furniture is dropped on an other one, it will be 
                   elevated to appear on the top of the latter, when its selection 
                   rectangle is included in the one of the latter and its default 
-                  elevation is equal to zero (i.e. at floor level).</td>
+                  elevation is equal to zero (i.e. at floor level). If the border of the dropped piece intersects the border of an other piece, the dropped piece will be oriented with the same angle and positionned along the border of that piece.</td>
           </tr>
           <tr valign="top">
             <td>
               <p>&#149;</p>
             </td>
             <td>
-              <p>The angle, the depth and the elevation of the added piece are automatically computed only if  magnetism
+              <p>The angle, the depth and the elevation of the  piece added with the mouse are automatically computed only if  magnetism
                 is enabled in <a href="editingPreferences.html">preferences</a> panel.</p>
             </td>
           </tr>

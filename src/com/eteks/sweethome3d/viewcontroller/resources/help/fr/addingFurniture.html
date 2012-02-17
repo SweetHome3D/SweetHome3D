@@ -25,10 +25,9 @@
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
-	<td><p>Pour ajouter des portes, des fen&ecirc;tres ou des meubles &agrave; votre logement, glissez-d&eacute;posez un ou
-	    plusieurs meubles du catalogue vers le plan du logement ou la liste des meubles. </p>
+	<td><p>Pour ajouter des portes, des fen&ecirc;tres ou des meubles &agrave; votre logement, glissez-d&eacute;posez les un par un du catalogue vers le plan du logement ou la liste des meubles. </p>
 	  <p align="center"><img src="images/addingFurniture.png" alt="Adding furniture" width="432" height="179"></p>
-	  <p align="left">Vous pouvez aussi s&eacute;lectionner des meubles dans le catalogue, puis choisir <i>Meubles &gt; Ajouter
+	  <p align="left">Vous pouvez aussi s&eacute;lectionner un ou plusieurs meubles dans le catalogue, puis choisir le menu <i>Meubles &gt; Ajouter
       au logement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </i>	    ou
       cliquer sur l'outil <i>Ajouter au logement</i>.</p>
 	  <blockquote>
@@ -38,15 +37,13 @@
 	  <p align="left">Quand les meubles sont d&eacute;pos&eacute;s dans la liste des meubles ou ajout&eacute;s avec le menu <i>Meubles &gt; Ajouter
       au logement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </i>, la position de leur coin sup&eacute;rieur
       gauche est au point (0, 0). <br>
-      Quand les meubles sont d&eacute;pos&eacute;s dans le plan, la position de leur coin sup&eacute;rieur gauche
-	      est au point o&ugrave; vous rel&acirc;chez le bouton de la souris. Quand <b>un</b> meuble est d&eacute;pos&eacute;e avec
-	      le curseur de la souris sur un mur, son orientation et sa profondeur s'adaptent automatiquement
-	       &agrave; l'orientation et &agrave; l'&eacute;paisseur du mur si c'est une porte et une fen&ecirc;tre, tandis qu'un
-       meuble d'un autre type est orient&eacute; de telle fa&ccedil;on que sa face arri&egrave;re soit contre le mur.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </p>
-	  <p align="left">Les meubles ajout&eacute;s au logement sont s&eacute;lectionn&eacute;s et dessin&eacute;s simultan&eacute;ment
+      Quand un meuble est d&eacute;pos&eacute; dans le plan, sa position et son orientation d&eacute;pend de la position des murs aux abords de ce meuble. Si le meuble d&eacute;pos&eacute; est une porte et une fen&ecirc;tre, son orientation et sa profondeur s'adaptent automatiquement
+        &agrave; l'orientation et &agrave; l'&eacute;paisseur du mur qu'il intersectionne. 
+       Les meubles d'un autre type seront orient&eacute;s de telle fa&ccedil;on que leur face arri&egrave;re soit contre le mur le plus proche qu'il pourrait couper.</p>
+<p align="left">Les meubles ajout&eacute;s au logement sont s&eacute;lectionn&eacute;s et dessin&eacute;s simultan&eacute;ment
 	      dans la liste des meubles, dans le plan et dans la vue 3D. Pendant la dur&eacute;e de chargement du mod&egrave;le
 	      3D des meubles ajout&eacute;s, ces meubles sont repr&eacute;sent&eacute;s sous la forme d'une bo&icirc;te blanche
-	      dans la vue 3D. </p></td>
+      dans la vue 3D. </p></td>
 	</tr>
 </table>
 <div id="taskbox">
@@ -81,7 +78,7 @@
               <p>Si un meuble est d&eacute;pos&eacute; sur un autre, son &eacute;l&eacute;vation
                 sera calcul&eacute;e pour que celui-ci apparaisse sur le dessus du second, si son rectangle de s&eacute;lection
                 est inclus dans celui de l'autre objet et si son &eacute;l&eacute;vation par d&eacute;faut est
-              nulle (au niveau du sol).</td>
+              nulle (au niveau du sol). Si le bord du meuble d&eacute;pos&eacute; coupe le bord d'un autre meuble, le meuble d&eacute;pos&eacute; sera orient&eacute; du m&ecirc;me angle et positionn&eacute; le long du bord de l'autre meuble.</td>
           </tr>
           <tr valign="top">
             <td>
