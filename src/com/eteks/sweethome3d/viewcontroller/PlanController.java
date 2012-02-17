@@ -1688,7 +1688,8 @@ public class PlanController extends FurnitureController implements Controller {
     Area wallsArea = getWallsArea();
     Collection<Wall> walls = this.home.getWalls();
     Wall referenceWall = null;
-    float [][] referenceWallPoints = null;
+    float margin = PIXEL_MARGIN / getScale();
+    
     if (forceOrientation
         || !piece.isDoorOrWindow()) {
       // Search if point (x, y) is contained in home walls with no margin
@@ -1698,12 +1699,10 @@ public class PlanController extends FurnitureController implements Controller {
             && wall.containsPoint(x, y, 0)
             && wall.getStartPointToEndPointDistance() > 0) {
           referenceWall = wall;
-          referenceWallPoints = referenceWall.getPoints();
           break;
         }
       }
       if (referenceWall == null) {
-        float margin = PIXEL_MARGIN / getScale();
         // If not found search if point (x, y) is contained in home walls with a margin
         for (Wall wall : walls) {
           if (wall.getArcExtent() == null
@@ -1711,7 +1710,6 @@ public class PlanController extends FurnitureController implements Controller {
               && wall.containsPoint(x, y, margin)
               && wall.getStartPointToEndPointDistance() > 0) {
             referenceWall = wall;
-            referenceWallPoints = referenceWall.getPoints();
             break;
           }
         }
@@ -1720,8 +1718,9 @@ public class PlanController extends FurnitureController implements Controller {
 
     if (referenceWall == null) {
       // Search if the border of a wall at floor level intersects with the given piece
-      float margin = 2 * PIXEL_MARGIN / getScale();
-      BasicStroke stroke = new BasicStroke(margin, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+      Area pieceAreaWithMargin = new Area(getRotatedRectangle(
+          piece.getX() - piece.getWidth() / 2 - margin, piece.getY()  - piece.getDepth() / 2 - margin, 
+          piece.getWidth() + 2 * margin, piece.getDepth() + 2 * margin, piece.getAngle()));
       float intersectionWithReferenceWallSurface = 0;
       for (Wall wall : walls) {
         if (wall.getArcExtent() == null
@@ -1729,23 +1728,17 @@ public class PlanController extends FurnitureController implements Controller {
             && wall.getStartPointToEndPointDistance() > 0) {
           float [][] wallPoints = wall.getPoints();
           Area wallAreaIntersection = new Area(getPath(wallPoints));
-          // Add borders to non round walls to magnetize furniture approaching walls
-          Line2D leftBorder = new Line2D.Float(wallPoints [0] [0], wallPoints [0] [1], wallPoints [1] [0], wallPoints [1] [1]);
-          wallAreaIntersection.add(new Area(stroke.createStrokedShape(leftBorder)));
-          Line2D rightBorder = new Line2D.Float(wallPoints [2] [0], wallPoints [2] [1], wallPoints [3] [0], wallPoints [3] [1]);
-          wallAreaIntersection.add(new Area(stroke.createStrokedShape(rightBorder)));
-          wallAreaIntersection.intersect(pieceArea);
+          wallAreaIntersection.intersect(pieceAreaWithMargin);
           if (!wallAreaIntersection.isEmpty()) {
             float surface = getArea(wallAreaIntersection);
             if (surface > intersectionWithReferenceWallSurface) {
               surface = intersectionWithReferenceWallSurface;
               referenceWall = wall;
-              referenceWallPoints = wallPoints;
             }
           }
         }
       }
-    } 
+    }
     
     if (referenceWall != null) {
       float xPiece = x;
@@ -1755,13 +1748,14 @@ public class PlanController extends FurnitureController implements Controller {
       float halfDepth = piece.getDepth() / 2;
       double wallAngle = Math.atan2(referenceWall.getYEnd() - referenceWall.getYStart(), 
           referenceWall.getXEnd() - referenceWall.getXStart());
+      float [][] wallPoints = referenceWall.getPoints();
       boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2;
       double cosWallAngle = Math.cos(wallAngle);
       double sinWallAngle = Math.sin(wallAngle);
       double distanceToLeftSide = Line2D.ptLineDist(
-          referenceWallPoints [0][0], referenceWallPoints [0][1], referenceWallPoints [1][0], referenceWallPoints [1][1], x, y);
+          wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
       double distanceToRightSide = Line2D.ptLineDist(
-          referenceWallPoints [2][0], referenceWallPoints [2][1], referenceWallPoints [3][0], referenceWallPoints [3][1], x, y);
+          wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
       if (forceOrientation
           || piece.isDoorOrWindow() 
           || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale())) {
@@ -1807,12 +1801,12 @@ public class PlanController extends FurnitureController implements Controller {
         } else {
           if (distanceToRightSide < distanceToLeftSide) {
             int pointIndicator = Line2D.relativeCCW(
-                referenceWallPoints [2][0], referenceWallPoints [2][1], referenceWallPoints [3][0], referenceWallPoints [3][1], x, y);
+                wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
             xPiece +=  pointIndicator * sinWallAngle * distanceToRightSide - sinWallAngle * halfDepth;
             yPiece += -pointIndicator * cosWallAngle * distanceToRightSide + cosWallAngle * halfDepth;
           } else {
             int pointIndicator = Line2D.relativeCCW(
-                referenceWallPoints [0][0], referenceWallPoints [0][1], referenceWallPoints [1][0], referenceWallPoints [1][1], x, y);
+                wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
             xPiece += -pointIndicator * sinWallAngle * distanceToLeftSide + sinWallAngle * halfDepth;
             yPiece +=  pointIndicator * cosWallAngle * distanceToLeftSide - cosWallAngle * halfDepth;
           }
@@ -1845,7 +1839,7 @@ public class PlanController extends FurnitureController implements Controller {
         Area wallsAreaIntersection = new Area(wallsArea);
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
                 yPiece - halfDepth, piece.getWidth(), piece.getDepth(), pieceAngle));
-        wallsAreaIntersection.subtract(new Area(getPath(referenceWallPoints)));
+        wallsAreaIntersection.subtract(new Area(getPath(wallPoints)));
         wallsAreaIntersection.intersect(adjustedPieceArea);
         if (!wallsAreaIntersection.isEmpty()) {
           // Search the wall intersection path the closest to mouse cursor  
@@ -1907,7 +1901,6 @@ public class PlanController extends FurnitureController implements Controller {
             if (surface > intersectionWithReferenceWallSurface) {
               surface = intersectionWithReferenceWallSurface;
               referenceWall = wall;
-              referenceWallPoints = wallPoints;
               roundWallAreaIntersection = wallAreaIntersection;
             }
           }
