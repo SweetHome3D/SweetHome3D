@@ -59,5 +59,5 @@ from parameters list.
 Mentioning the following copyrights on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
 
-Sweet Home 3D Viewer, Copyright (c) 2005-2011 Emmanuel PUYBARET / eTeks. 
+Sweet Home 3D Viewer, Copyright (c) 2005-2012 Emmanuel PUYBARET / eTeks. 
 Distributed under GNU General Public License    

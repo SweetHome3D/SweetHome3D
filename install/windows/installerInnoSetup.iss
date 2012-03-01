@@ -29,7 +29,7 @@ ChangesAssociations=yes
 VersionInfoVersion=3.5.0.0
 VersionInfoTextVersion=3.5
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2011 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2012 eTeks
 VersionInfoCompany=eTeks
 ; Uncomment next line to check language support in installer
 ; ShowUndisplayableLanguages=yes
