@@ -2176,7 +2176,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (homePiece != piece 
           && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
           && (pieceElevation < homePieceElevation + homePiece.getHeight()
-              || pieceElevation + piece.getHeight() < homePieceElevation)
+              || pieceElevation + piece.getHeight() > homePieceElevation)
           && (!doorOrWindowBoundToWall // Ignore other furniture for doors and windows bound to a wall
               || homePiece.isDoorOrWindow())) {
         float [][] points = homePiece.getPoints();
