@@ -1894,8 +1894,11 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.NEW_HOME, toolBar);
     addActionToToolBar(ActionType.OPEN, toolBar);
     addActionToToolBar(ActionType.SAVE, toolBar);
+    if (!OperatingSystem.isMacOSX()) {
+      addActionToToolBar(ActionType.PREFERENCES, toolBar);
+    }
     toolBar.addSeparator();
-
+    
     addActionToToolBar(ActionType.UNDO, toolBar);
     addActionToToolBar(ActionType.REDO, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
