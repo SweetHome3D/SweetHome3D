@@ -175,8 +175,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
-      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE, 
-      GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU}
+      OPEN_RECENT_HOME_MENU, ALIGN_OR_DISTRIBUTE_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, 
+      MODIFY_TEXT_STYLE, GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -617,6 +617,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(preferences, MenuActionType.HELP_MENU);
     createMenuAction(preferences, MenuActionType.OPEN_RECENT_HOME_MENU);
     createMenuAction(preferences, MenuActionType.SORT_HOME_FURNITURE_MENU);
+    createMenuAction(preferences, MenuActionType.ALIGN_OR_DISTRIBUTE_MENU);
     createMenuAction(preferences, MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
     createMenuAction(preferences, MenuActionType.MODIFY_TEXT_STYLE);
     createMenuAction(preferences, MenuActionType.GO_TO_POINT_OF_VIEW);
@@ -1250,6 +1251,27 @@ public class HomePane extends JRootPane implements HomeView {
         && component.getComponent(0) instanceof JSeparator) {
       component.remove(0);
     }
+  }
+
+  /**
+   * Returns align or distribute menu.
+   */
+  private JMenu createAlignOrDistributeMenu(final Home home,
+                                            final UserPreferences preferences,
+                                            boolean popup) {
+    JMenu alignOrDistributeMenu = new JMenu(this.menuActionMap.get(MenuActionType.ALIGN_OR_DISTRIBUTE_MENU));    
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_TOP, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, popup, alignOrDistributeMenu);
+    addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, popup, alignOrDistributeMenu);
+    return alignOrDistributeMenu;
   }
 
   /**
@@ -2465,7 +2487,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);
-      addActionToPopupMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, planViewPopup);
+      planViewPopup.add(createAlignOrDistributeMenu(home, preferences, true));
       addActionToPopupMenu(ActionType.MODIFY_COMPASS, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);

@@ -581,16 +581,7 @@ public class SwingTools {
   private static class MenuItemsVisibilityListener implements PopupMenuListener {
     public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {        
       JPopupMenu popupMenu = (JPopupMenu)ev.getSource();
-      // Make visible only enabled menu items   
-      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
-        Component component = popupMenu.getComponent(i);
-        if (component instanceof JMenu) {
-          component.setVisible(containsEnabledItems((JMenu)component));
-        } else if (component instanceof JMenuItem) {
-          component.setVisible(component.isEnabled());
-        }
-      }
-      hideUselessSeparators(popupMenu);
+      hideDisabledMenuItems(popupMenu);
       // Ensure at least one item is visible
       boolean allItemsInvisible = true;
       for (int i = 0; i < popupMenu.getComponentCount(); i++) {
@@ -602,6 +593,25 @@ public class SwingTools {
       if (allItemsInvisible) {
         popupMenu.getComponent(0).setVisible(true);
       }
+    }
+
+    /**
+     * Makes useless menu items invisible.
+     */
+    private void hideDisabledMenuItems(JPopupMenu popupMenu) {
+      for (int i = 0; i < popupMenu.getComponentCount(); i++) {
+        Component component = popupMenu.getComponent(i);
+        if (component instanceof JMenu) {
+          boolean containsEnabledItems = containsEnabledItems((JMenu)component);
+          component.setVisible(containsEnabledItems);
+          if (containsEnabledItems) {
+            hideDisabledMenuItems(((JMenu)component).getPopupMenu());
+          }
+        } else if (component instanceof JMenuItem) {
+          component.setVisible(component.isEnabled());
+        }
+      }
+      hideUselessSeparators(popupMenu);
     }
 
     /**
