@@ -2153,7 +2153,6 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Attempts to align <code>piece</code> on the borders of home furniture at the the same elevation 
    * that intersect with it and returns that piece.
-   * @param b 
    * @see #adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture, float, float)
    */
   private HomePieceOfFurniture adjustPieceOfFurnitureSideBySideAt(HomePieceOfFurniture piece, 
@@ -2312,10 +2311,19 @@ public class PlanController extends FurnitureController implements Controller {
     pieceFrontAndBackQuarters.closePath();
     Area intersectionWithFrontOrBack = new Area(area);
     intersectionWithFrontOrBack.intersect(new Area(pieceFrontAndBackQuarters));
-    boolean alignedOnPieceFrontOrBackSide = !intersectionWithFrontOrBack.isEmpty()
-        && (getArea(intersectionWithFrontOrBack) 
-            / getArea(area) > 0.5f);
-    return alignedOnPieceFrontOrBackSide;
+    if (intersectionWithFrontOrBack.isEmpty()) {
+      return false;
+    } else {
+      GeneralPath pieceLeftAndRightQuarters = new GeneralPath();
+      pieceLeftAndRightQuarters.moveTo(piecePoints [0][0], piecePoints [0][1]);
+      pieceLeftAndRightQuarters.lineTo(piecePoints [2][0], piecePoints [2][1]);
+      pieceLeftAndRightQuarters.lineTo(piecePoints [1][0], piecePoints [1][1]);
+      pieceLeftAndRightQuarters.lineTo(piecePoints [3][0], piecePoints [3][1]);
+      pieceLeftAndRightQuarters.closePath();
+      Area intersectionWithLeftAndRight = new Area(area);      
+      intersectionWithLeftAndRight.intersect(new Area(pieceLeftAndRightQuarters));
+      return getArea(intersectionWithFrontOrBack) > getArea(intersectionWithLeftAndRight);
+    }
   }
 
   /**
