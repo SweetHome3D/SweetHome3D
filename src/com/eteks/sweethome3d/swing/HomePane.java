@@ -75,6 +75,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -2265,7 +2267,7 @@ public class HomePane extends JRootPane implements HomeView {
   private void configureSplitPane(final JSplitPane splitPane,
                                   Home home,
                                   final String dividerLocationProperty,
-                                  double defaultResizeWeight,
+                                  final double defaultResizeWeight,
                                   boolean showBorder,
                                   final HomeController controller) {
     splitPane.setContinuousLayout(true);
@@ -2290,8 +2292,10 @@ public class HomePane extends JRootPane implements HomeView {
                     Component focusedComponent = focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner);
                     if (focusedComponent == null) {
                       focusedComponent = focusTraversalPolicy.getComponentBefore(HomePane.this, focusOwner);
-                    }                
-                    focusedComponent.requestFocusInWindow();              
+                    }     
+                    if (focusedComponent != null) {
+                      focusedComponent.requestFocusInWindow();
+                    }
                   }
                   controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
                 }
@@ -2299,7 +2303,7 @@ public class HomePane extends JRootPane implements HomeView {
           }
         });
   }
-
+  
   /**
    * Returns the catalog tree and furniture table pane. 
    */
@@ -2616,10 +2620,43 @@ public class HomePane extends JRootPane implements HomeView {
       JComponent planView3DPane;
       if (planView != null) {
         // Create a split pane that displays both components
-        planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, view3D);
-        planView3DPane.setMinimumSize(new Dimension());
-        configureSplitPane((JSplitPane)planView3DPane, home, 
+        final JSplitPane planView3DSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, view3D);
+        planView3DSplitPane.setMinimumSize(new Dimension());
+        configureSplitPane((JSplitPane)planView3DSplitPane, home, 
             PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
+
+        final Integer dividerLocation = (Integer)home.getVisualProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
+        if (OperatingSystem.isMacOSX() && dividerLocation != null && dividerLocation > 2) {
+          // Under Mac OS X, ensure that the 3D view of an existing home will be displayed during a while
+          // to avoid a freeze when the 3D view was saved as hidden and then the window displaying the 3D view is enlarged 
+          planView3DSplitPane.addAncestorListener(new AncestorListener() {
+              public void ancestorAdded(AncestorEvent event) {
+                planView3DSplitPane.removeAncestorListener(this);
+                if (planView3DSplitPane.getRightComponent().getHeight() == 0) {
+                  // If the 3D view is invisible, make it appear during a while
+                  planView3DSplitPane.setDividerLocation(dividerLocation - 2);
+                  Executors.newSingleThreadScheduledExecutor().schedule(
+                      new Runnable() {
+                        public void run() {
+                          EventQueue.invokeLater(new Runnable() {
+                              public void run() {
+                                planView3DSplitPane.setDividerLocation(dividerLocation);
+                              }
+                            });
+                        }
+                      }, 1, TimeUnit.SECONDS);
+                }
+              }
+              
+              public void ancestorRemoved(AncestorEvent event) {
+              }
+              
+              public void ancestorMoved(AncestorEvent event) {
+              }
+            });
+        }
+        
+        planView3DPane = planView3DSplitPane;
       } else {
         planView3DPane = view3D;
       }
