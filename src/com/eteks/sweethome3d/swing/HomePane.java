@@ -387,17 +387,17 @@ public class HomePane extends JRootPane implements HomeView {
     PlanController planController = controller.getPlanController();
     if (planController.getView() != null) {
       ButtonGroup modeGroup = new ButtonGroup();
-      createToogleAction(ActionType.SELECT, planController.getMode() == PlanController.Mode.SELECTION, modeGroup, 
+      createToggleAction(ActionType.SELECT, planController.getMode() == PlanController.Mode.SELECTION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.SELECTION);
-      createToogleAction(ActionType.PAN, planController.getMode() == PlanController.Mode.PANNING, modeGroup, 
+      createToggleAction(ActionType.PAN, planController.getMode() == PlanController.Mode.PANNING, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.PANNING);
-      createToogleAction(ActionType.CREATE_WALLS, planController.getMode() == PlanController.Mode.WALL_CREATION, modeGroup, 
+      createToggleAction(ActionType.CREATE_WALLS, planController.getMode() == PlanController.Mode.WALL_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.WALL_CREATION);
-      createToogleAction(ActionType.CREATE_ROOMS, planController.getMode() == PlanController.Mode.ROOM_CREATION, modeGroup, 
+      createToggleAction(ActionType.CREATE_ROOMS, planController.getMode() == PlanController.Mode.ROOM_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.ROOM_CREATION);
-      createToogleAction(ActionType.CREATE_DIMENSION_LINES, planController.getMode() == PlanController.Mode.DIMENSION_LINE_CREATION, modeGroup, 
+      createToggleAction(ActionType.CREATE_DIMENSION_LINES, planController.getMode() == PlanController.Mode.DIMENSION_LINE_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.DIMENSION_LINE_CREATION);
-      createToogleAction(ActionType.CREATE_LABELS, planController.getMode() == PlanController.Mode.LABEL_CREATION, modeGroup, 
+      createToggleAction(ActionType.CREATE_LABELS, planController.getMode() == PlanController.Mode.LABEL_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.LABEL_CREATION);
       createAction(ActionType.DELETE_SELECTION, preferences, planController, "deleteSelection");
       createAction(ActionType.LOCK_BASE_PLAN, preferences, planController, "lockBasePlan");
@@ -431,9 +431,9 @@ public class HomePane extends JRootPane implements HomeView {
     
     if (homeController3D.getView() != null) {
       ButtonGroup viewGroup = new ButtonGroup();
-      createToogleAction(ActionType.VIEW_FROM_TOP, home.getCamera() == home.getTopCamera(), viewGroup, 
+      createToggleAction(ActionType.VIEW_FROM_TOP, home.getCamera() == home.getTopCamera(), viewGroup, 
           preferences, homeController3D, "viewFromTop");
-      createToogleAction(ActionType.VIEW_FROM_OBSERVER, home.getCamera() == home.getObserverCamera(), viewGroup, 
+      createToggleAction(ActionType.VIEW_FROM_OBSERVER, home.getCamera() == home.getObserverCamera(), viewGroup, 
           preferences, homeController3D, "viewFromObserver");
       createAction(ActionType.STORE_POINT_OF_VIEW, preferences, 
           controller, "storeCamera");
@@ -454,9 +454,9 @@ public class HomePane extends JRootPane implements HomeView {
 
       ButtonGroup displayLevelGroup = new ButtonGroup();
       boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
-      createToogleAction(ActionType.DISPLAY_ALL_LEVELS, allLevelsVisible, displayLevelGroup, preferences, 
+      createToggleAction(ActionType.DISPLAY_ALL_LEVELS, allLevelsVisible, displayLevelGroup, preferences, 
           homeController3D, "displayAllLevels");
-      createToogleAction(ActionType.DISPLAY_SELECTED_LEVEL, !allLevelsVisible, displayLevelGroup, preferences, 
+      createToggleAction(ActionType.DISPLAY_SELECTED_LEVEL, !allLevelsVisible, displayLevelGroup, preferences, 
           homeController3D, "displaySelectedLevel");
       createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, homeController3D, "modifyAttributes");
       createAction(ActionType.CREATE_PHOTO, preferences, controller, "createPhoto");
@@ -491,7 +491,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns a new <code>ControllerAction</code> object associated with a <code>ToggleButtonModel</code> instance 
    * set as selected or not.
    */
-  private Action createToogleAction(ActionType actionType,
+  private Action createToggleAction(ActionType actionType,
                                     boolean selected,
                                     ButtonGroup group,
                                     UserPreferences preferences,                            
