@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -568,6 +569,21 @@ public class SwingTools {
     return titledPanel;
   }
 
+  /**
+   * Returns a scroll pane containing the given <code>component</code> 
+   * that always displays scroll bars under Mac OS X.
+   */
+  public static JScrollPane createScrollPane(JComponent component) {
+    JScrollPane scrollPane = new JScrollPane(component);
+    if (OperatingSystem.isMacOSX()) {
+      scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+      scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    }
+    installFocusBorder(component);
+    scrollPane.setMinimumSize(new Dimension());
+    return scrollPane;
+  }
+  
   /**
    * Adds a listener that will update the given popup menu to hide disabled menu items.
    */

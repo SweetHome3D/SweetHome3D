@@ -2236,7 +2236,7 @@ public class HomePane extends JRootPane implements HomeView {
       preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
           new FurnitureCatalogViewChangeListener(this, catalogView));
       if (catalogView instanceof Scrollable) {
-        catalogView = new HomeScrollPane(catalogView);
+        catalogView = SwingTools.createScrollPane(catalogView);
       }
     }
     
@@ -2272,7 +2272,7 @@ public class HomePane extends JRootPane implements HomeView {
       furnitureView.setComponentPopupMenu(furnitureViewPopup);
   
       if (furnitureView instanceof Scrollable) {
-        JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
+        JScrollPane furnitureScrollPane = SwingTools.createScrollPane(furnitureView);
         // Add a mouse listener that gives focus to furniture view when
         // user clicks in its viewport (tables don't spread vertically if their row count is too small)
         final JViewport viewport = furnitureScrollPane.getViewport();
@@ -2343,7 +2343,7 @@ public class HomePane extends JRootPane implements HomeView {
           homePane.setTransferEnabled(transferHandlerEnabled);
           JComponent splitPaneTopComponent = newFurnitureCatalogView; 
           if (newFurnitureCatalogView instanceof Scrollable) {
-            splitPaneTopComponent = new HomeScrollPane(newFurnitureCatalogView);
+            splitPaneTopComponent = SwingTools.createScrollPane(newFurnitureCatalogView);
           } else {
             splitPaneTopComponent = newFurnitureCatalogView;
           }
@@ -2433,7 +2433,7 @@ public class HomePane extends JRootPane implements HomeView {
       final JScrollPane planScrollPane;
       if (planView instanceof Scrollable) {
         planView = planScrollPane
-                 = new HomeScrollPane(planView);
+                 = SwingTools.createScrollPane(planView);
       } else {
         List<JScrollPane> scrollPanes = SwingTools.findChildren(planView, JScrollPane.class);
         if (scrollPanes.size() == 1) {
@@ -2512,7 +2512,7 @@ public class HomePane extends JRootPane implements HomeView {
       view3D.setComponentPopupMenu(view3DPopup);
       
       if (view3D instanceof Scrollable) {
-        view3D = new HomeScrollPane(view3D);
+        view3D = SwingTools.createScrollPane(view3D);
       }
     
       JComponent planView3DPane;
@@ -3729,22 +3729,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * A scroll pane that always displays scroll bar on Mac OS X.
-   */
-  private static class HomeScrollPane extends JScrollPane {
-    public HomeScrollPane(JComponent view) {
-      super(view);
-      if (OperatingSystem.isMacOSX()) {
-        setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_ALWAYS);
-        setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
-      }
-      SwingTools.installFocusBorder(view);
-      setMinimumSize(new Dimension());
-    }
-  }
-
-  /**
-   * An object able to format a selectable item;
+   * An object able to format a selectable item.
    */
   private abstract interface SelectableFormat<T extends Selectable> {
     public abstract String format(T item);
