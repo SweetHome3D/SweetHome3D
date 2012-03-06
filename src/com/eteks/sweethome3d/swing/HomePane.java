@@ -166,8 +166,10 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -198,25 +200,6 @@ public class HomePane extends JRootPane implements HomeView {
   private final Home                            home;
   private final UserPreferences                 preferences;
   private final HomeController                  controller;
-  // Button models shared by Select, Pan, Create walls, Create rooms, Create dimensions 
-  // and Create labels menu items and their matching tool bar buttons
-  private final JToggleButton.ToggleButtonModel selectToggleModel;
-  private final JToggleButton.ToggleButtonModel panToggleModel;
-  private final JToggleButton.ToggleButtonModel createWallsToggleModel;
-  private final JToggleButton.ToggleButtonModel createRoomsToggleModel;
-  private final JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
-  private final JToggleButton.ToggleButtonModel createLabelsToggleModel;
-  // Button models shared by Bold and Italic menu items and their matching tool bar buttons
-  private final JToggleButton.ToggleButtonModel boldStyleToggleModel;
-  private final JToggleButton.ToggleButtonModel italicStyleToggleModel;
-  // Button models shared by View from top and View from observer menu items and
-  // the matching tool bar buttons
-  private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
-  private final JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
-  // Button models shared by Display all levels and Display selected level menu items and
-  // the matching tool bar buttons
-  private final JToggleButton.ToggleButtonModel displayAllLevelsToggleModel;
-  private final JToggleButton.ToggleButtonModel displaySelectedLevelToggleModel;
   private JComponent                            lastFocusedComponent;
   private PlanController.Mode                   previousPlanControllerMode;
   private TransferHandler                       catalogTransferHandler;
@@ -236,69 +219,11 @@ public class HomePane extends JRootPane implements HomeView {
     this.home = home;
     this.preferences = preferences;
     this.controller = controller;
-    // Create unique toggle button models for Selection / Pan / Wall creation / Room creation / 
-    // Dimension line creation / Label creation states
-    // so the matching menu items and tool bar buttons always reflect the same toggle state at screen
-    this.selectToggleModel = new JToggleButton.ToggleButtonModel();
-    this.selectToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.SELECTION);
-    this.panToggleModel = new JToggleButton.ToggleButtonModel();
-    this.panToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.PANNING);
-    this.createWallsToggleModel = new JToggleButton.ToggleButtonModel();
-    this.createWallsToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.WALL_CREATION);
-    this.createRoomsToggleModel = new JToggleButton.ToggleButtonModel();
-    this.createRoomsToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.ROOM_CREATION);
-    this.createDimensionLinesToggleModel = new JToggleButton.ToggleButtonModel();
-    this.createDimensionLinesToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.DIMENSION_LINE_CREATION);
-    this.createLabelsToggleModel = new JToggleButton.ToggleButtonModel();
-    this.createLabelsToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.LABEL_CREATION);
-    
-    ButtonGroup modeGroup = new ButtonGroup();
-    this.selectToggleModel.setGroup(modeGroup);
-    this.panToggleModel.setGroup(modeGroup);
-    this.createWallsToggleModel.setGroup(modeGroup);
-    this.createRoomsToggleModel.setGroup(modeGroup);
-    this.createDimensionLinesToggleModel.setGroup(modeGroup);
-    this.createLabelsToggleModel.setGroup(modeGroup);
-    
-    // Use special models for bold and italic check box menu items and tool bar buttons 
-    // that are selected texts in home selected items are all bold or italic
-    this.boldStyleToggleModel = createBoldStyleToggleModel(home, preferences);
-    this.italicStyleToggleModel = createItalicStyleToggleModel(home, preferences);
-    // Create unique toggle button models for top and observer cameras
-    // so View from top and View from observer creation menu items and tool bar buttons 
-    // always reflect the same toggle state at screen
-    this.viewFromTopToggleModel = new JToggleButton.ToggleButtonModel();
-    this.viewFromTopToggleModel.setSelected(home.getCamera() == home.getTopCamera());
-    this.viewFromObserverToggleModel = new JToggleButton.ToggleButtonModel();
-    this.viewFromObserverToggleModel.setSelected(home.getCamera() == home.getObserverCamera());
-    
-    ButtonGroup viewGroup = new ButtonGroup();
-    this.viewFromTopToggleModel.setGroup(viewGroup);
-    this.viewFromObserverToggleModel.setGroup(viewGroup);
-
-    // Create unique toggle button models for level display management
-    // so the matching menu items and tool bar buttons 
-    // always reflect the same toggle state at screen
-    this.displayAllLevelsToggleModel = new JToggleButton.ToggleButtonModel();
-    boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
-    this.displayAllLevelsToggleModel.setSelected(allLevelsVisible);
-    this.displaySelectedLevelToggleModel = new JToggleButton.ToggleButtonModel();
-    this.displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
-    
-    ButtonGroup displayLevelGroup = new ButtonGroup();
-    this.displayAllLevelsToggleModel.setGroup(displayLevelGroup);
-    this.displaySelectedLevelToggleModel.setGroup(displayLevelGroup);
 
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
     
-    createActions(preferences, controller);
+    createActions(home, preferences, controller);
     createMenuActions(preferences, controller);
     createPluginActions(controller instanceof HomePluginController
         ? ((HomePluginController)controller).getPlugins()
@@ -332,7 +257,8 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Create the actions map of this component.
    */
-  private void createActions(UserPreferences preferences, 
+  private void createActions(Home home,
+                             UserPreferences preferences, 
                              final HomeController controller) {
     createAction(ActionType.NEW_HOME, preferences, controller, "newHome");
     createAction(ActionType.OPEN, preferences, controller, "open");
@@ -358,36 +284,23 @@ public class HomePane extends JRootPane implements HomeView {
     
     createAction(ActionType.ADD_HOME_FURNITURE, preferences, controller, "addHomeFurniture");
     FurnitureController furnitureController = controller.getFurnitureController();
-    createAction(ActionType.DELETE_HOME_FURNITURE, preferences,
-        furnitureController, "deleteSelection");
+    createAction(ActionType.DELETE_HOME_FURNITURE, preferences, furnitureController, "deleteSelection");
     createAction(ActionType.MODIFY_FURNITURE, preferences, controller, "modifySelectedFurniture");
-    createAction(ActionType.GROUP_FURNITURE, preferences, 
-        furnitureController, "groupSelectedFurniture");
-    createAction(ActionType.UNGROUP_FURNITURE, preferences, 
-        furnitureController, "ungroupSelectedFurniture");
-    createAction(ActionType.ALIGN_FURNITURE_ON_TOP, preferences, 
-        furnitureController, "alignSelectedFurnitureOnTop");
-    createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, preferences, 
-        furnitureController, "alignSelectedFurnitureOnBottom");
-    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT, preferences, 
-        furnitureController, "alignSelectedFurnitureOnLeft");
-    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, 
-        furnitureController, "alignSelectedFurnitureOnRight");
-    createAction(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, preferences, 
-        furnitureController, "alignSelectedFurnitureOnFrontSide");
-    createAction(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, preferences, 
-        furnitureController, "alignSelectedFurnitureOnBackSide");
-    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE, preferences, 
-        furnitureController, "alignSelectedFurnitureOnLeftSide");
-    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE, preferences, 
-        furnitureController, "alignSelectedFurnitureOnRightSide");
-    createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, 
-        furnitureController, "alignSelectedFurnitureSideBySide");
-    createAction(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, preferences, 
-        furnitureController, "distributeSelectedFurnitureHorizontally");
-    createAction(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, preferences, 
-        furnitureController, "distributeSelectedFurnitureVertically");
-    if (controller.getHomeController3D().getView() != null) {
+    createAction(ActionType.GROUP_FURNITURE, preferences, furnitureController, "groupSelectedFurniture");
+    createAction(ActionType.UNGROUP_FURNITURE, preferences, furnitureController, "ungroupSelectedFurniture");
+    createAction(ActionType.ALIGN_FURNITURE_ON_TOP, preferences, furnitureController, "alignSelectedFurnitureOnTop");
+    createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, preferences, furnitureController, "alignSelectedFurnitureOnBottom");
+    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT, preferences, furnitureController, "alignSelectedFurnitureOnLeft");
+    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, furnitureController, "alignSelectedFurnitureOnRight");
+    createAction(ActionType.ALIGN_FURNITURE_ON_FRONT_SIDE, preferences, furnitureController, "alignSelectedFurnitureOnFrontSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_BACK_SIDE, preferences, furnitureController, "alignSelectedFurnitureOnBackSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT_SIDE, preferences, furnitureController, "alignSelectedFurnitureOnLeftSide");
+    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT_SIDE, preferences, furnitureController, "alignSelectedFurnitureOnRightSide");
+    createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, furnitureController, "alignSelectedFurnitureSideBySide");
+    createAction(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, preferences, furnitureController, "distributeSelectedFurnitureHorizontally");
+    createAction(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, preferences, furnitureController, "distributeSelectedFurnitureVertically");
+    final HomeController3D homeController3D = controller.getHomeController3D();
+    if (homeController3D.getView() != null) {
       createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
     }
     createAction(ActionType.IMPORT_FURNITURE_LIBRARY, preferences, controller, "importFurnitureLibrary");
@@ -471,93 +384,81 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
     
-    if (controller.getPlanController().getView() != null) {
-      createAction(ActionType.SELECT, preferences, controller, "setMode", 
-          PlanController.Mode.SELECTION);
-      createAction(ActionType.PAN, preferences, controller, "setMode", 
-          PlanController.Mode.PANNING);
-      createAction(ActionType.CREATE_WALLS, preferences, controller, "setMode",
-          PlanController.Mode.WALL_CREATION);
-      createAction(ActionType.CREATE_ROOMS, preferences, controller, "setMode",
-          PlanController.Mode.ROOM_CREATION);
-      createAction(ActionType.CREATE_DIMENSION_LINES, preferences, controller, "setMode",
-          PlanController.Mode.DIMENSION_LINE_CREATION);
-      createAction(ActionType.CREATE_LABELS, preferences, controller, "setMode",
-          PlanController.Mode.LABEL_CREATION);
-      createAction(ActionType.DELETE_SELECTION, preferences, 
-          controller.getPlanController(), "deleteSelection");
-      createAction(ActionType.LOCK_BASE_PLAN, preferences, 
-          controller.getPlanController(), "lockBasePlan");
-      createAction(ActionType.UNLOCK_BASE_PLAN, preferences, 
-          controller.getPlanController(), "unlockBasePlan");
-      createAction(ActionType.MODIFY_COMPASS, preferences, 
-          controller.getPlanController(), "modifyCompass");
-      createAction(ActionType.MODIFY_WALL, preferences, 
-          controller.getPlanController(), "modifySelectedWalls");
-      createAction(ActionType.MODIFY_ROOM, preferences, 
-          controller.getPlanController(), "modifySelectedRooms");
-      createAction(ActionType.MODIFY_LABEL, preferences, 
-          controller.getPlanController(), "modifySelectedLabels");
-      createAction(ActionType.INCREASE_TEXT_SIZE, preferences, 
-          controller.getPlanController(), "increaseTextSize");
-      createAction(ActionType.DECREASE_TEXT_SIZE, preferences, 
-          controller.getPlanController(), "decreaseTextSize");
-      createAction(ActionType.TOGGLE_BOLD_STYLE, preferences, 
-          controller.getPlanController(), "toggleBoldStyle");
-      createAction(ActionType.TOGGLE_ITALIC_STYLE, preferences, 
-          controller.getPlanController(), "toggleItalicStyle");
-      createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, 
-          controller.getPlanController(), "reverseSelectedWallsDirection");
-      createAction(ActionType.SPLIT_WALL, preferences, 
-          controller.getPlanController(), "splitSelectedWall");
-      createAction(ActionType.IMPORT_BACKGROUND_IMAGE, preferences, 
-          controller, "importBackgroundImage");
-      createAction(ActionType.MODIFY_BACKGROUND_IMAGE, preferences, 
-          controller, "modifyBackgroundImage");
-      createAction(ActionType.HIDE_BACKGROUND_IMAGE, preferences, 
-          controller, "hideBackgroundImage");
-      createAction(ActionType.SHOW_BACKGROUND_IMAGE, preferences, 
-          controller, "showBackgroundImage");
-      createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, 
-          controller, "deleteBackgroundImage");
-      createAction(ActionType.ADD_LEVEL, preferences, 
-          controller.getPlanController(), "addLevel");
-      createAction(ActionType.MODIFY_LEVEL, preferences, 
-          controller.getPlanController(), "modifySelectedLevel");
-      createAction(ActionType.DELETE_LEVEL, preferences, 
-          controller.getPlanController(), "deleteSelectedLevel");
+    PlanController planController = controller.getPlanController();
+    if (planController.getView() != null) {
+      ButtonGroup modeGroup = new ButtonGroup();
+      createToogleAction(ActionType.SELECT, planController.getMode() == PlanController.Mode.SELECTION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.SELECTION);
+      createToogleAction(ActionType.PAN, planController.getMode() == PlanController.Mode.PANNING, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.PANNING);
+      createToogleAction(ActionType.CREATE_WALLS, planController.getMode() == PlanController.Mode.WALL_CREATION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.WALL_CREATION);
+      createToogleAction(ActionType.CREATE_ROOMS, planController.getMode() == PlanController.Mode.ROOM_CREATION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.ROOM_CREATION);
+      createToogleAction(ActionType.CREATE_DIMENSION_LINES, planController.getMode() == PlanController.Mode.DIMENSION_LINE_CREATION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.DIMENSION_LINE_CREATION);
+      createToogleAction(ActionType.CREATE_LABELS, planController.getMode() == PlanController.Mode.LABEL_CREATION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.LABEL_CREATION);
+      createAction(ActionType.DELETE_SELECTION, preferences, planController, "deleteSelection");
+      createAction(ActionType.LOCK_BASE_PLAN, preferences, planController, "lockBasePlan");
+      createAction(ActionType.UNLOCK_BASE_PLAN, preferences, planController, "unlockBasePlan");
+      createAction(ActionType.MODIFY_COMPASS, preferences, planController, "modifyCompass");
+      createAction(ActionType.MODIFY_WALL, preferences, planController, "modifySelectedWalls");
+      createAction(ActionType.MODIFY_ROOM, preferences, planController, "modifySelectedRooms");
+      createAction(ActionType.MODIFY_LABEL, preferences, planController, "modifySelectedLabels");
+      createAction(ActionType.INCREASE_TEXT_SIZE, preferences, planController, "increaseTextSize");
+      createAction(ActionType.DECREASE_TEXT_SIZE, preferences, planController, "decreaseTextSize");
+      // Use special toggle models for bold and italic check box menu items and tool bar buttons 
+      // that are selected texts in home selected items are all bold or italic
+      Action toggleBoldAction = createAction(ActionType.TOGGLE_BOLD_STYLE, preferences, planController, "toggleBoldStyle");
+      toggleBoldAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createBoldStyleToggleModel(home, preferences));
+      Action toggleItalicAction = createAction(ActionType.TOGGLE_ITALIC_STYLE, preferences, planController, "toggleItalicStyle");
+      toggleItalicAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createItalicStyleToggleModel(home, preferences));
+      createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, planController, "reverseSelectedWallsDirection");
+      createAction(ActionType.SPLIT_WALL, preferences, planController, "splitSelectedWall");
+      createAction(ActionType.IMPORT_BACKGROUND_IMAGE, preferences, controller, "importBackgroundImage");
+      createAction(ActionType.MODIFY_BACKGROUND_IMAGE, preferences, controller, "modifyBackgroundImage");
+      createAction(ActionType.HIDE_BACKGROUND_IMAGE, preferences, controller, "hideBackgroundImage");
+      createAction(ActionType.SHOW_BACKGROUND_IMAGE, preferences, controller, "showBackgroundImage");
+      createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, controller, "deleteBackgroundImage");
+      createAction(ActionType.ADD_LEVEL, preferences, planController, "addLevel");
+      createAction(ActionType.MODIFY_LEVEL, preferences, planController, "modifySelectedLevel");
+      createAction(ActionType.DELETE_LEVEL, preferences, planController, "deleteSelectedLevel");
       createAction(ActionType.ZOOM_IN, preferences, controller, "zoomIn");
       createAction(ActionType.ZOOM_OUT, preferences, controller, "zoomOut");
       createAction(ActionType.EXPORT_TO_SVG, preferences, controller, "exportToSVG");
     }
     
-    if (controller.getHomeController3D().getView() != null) {
-      createAction(ActionType.VIEW_FROM_TOP, preferences, 
-          controller.getHomeController3D(), "viewFromTop");
-      createAction(ActionType.VIEW_FROM_OBSERVER, preferences, 
-          controller.getHomeController3D(), "viewFromObserver");
+    if (homeController3D.getView() != null) {
+      ButtonGroup viewGroup = new ButtonGroup();
+      createToogleAction(ActionType.VIEW_FROM_TOP, home.getCamera() == home.getTopCamera(), viewGroup, 
+          preferences, homeController3D, "viewFromTop");
+      createToogleAction(ActionType.VIEW_FROM_OBSERVER, home.getCamera() == home.getObserverCamera(), viewGroup, 
+          preferences, homeController3D, "viewFromObserver");
       createAction(ActionType.STORE_POINT_OF_VIEW, preferences, 
           controller, "storeCamera");
-      createAction(ActionType.DISPLAY_ALL_LEVELS, preferences, 
-          controller.getHomeController3D(), "displayAllLevels");
-      createAction(ActionType.DISPLAY_SELECTED_LEVEL, preferences, 
-          controller.getHomeController3D(), "displaySelectedLevel");
       getActionMap().put(ActionType.DETACH_3D_VIEW, 
           new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
             @Override
             public void actionPerformed(ActionEvent ev) {
-              controller.detachView(controller.getHomeController3D().getView());
+              controller.detachView(homeController3D.getView());
             }
           });
       getActionMap().put(ActionType.ATTACH_3D_VIEW, 
           new ResourceAction(preferences, HomePane.class, ActionType.ATTACH_3D_VIEW.name()) {
             @Override
             public void actionPerformed(ActionEvent ev) {
-              controller.attachView(controller.getHomeController3D().getView());
+              controller.attachView(homeController3D.getView());
             }
           });
-      createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, 
-          controller.getHomeController3D(), "modifyAttributes");
+
+      ButtonGroup displayLevelGroup = new ButtonGroup();
+      boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
+      createToogleAction(ActionType.DISPLAY_ALL_LEVELS, allLevelsVisible, displayLevelGroup, preferences, 
+          homeController3D, "displayAllLevels");
+      createToogleAction(ActionType.DISPLAY_SELECTED_LEVEL, !allLevelsVisible, displayLevelGroup, preferences, 
+          homeController3D, "displaySelectedLevel");
+      createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, homeController3D, "modifyAttributes");
       createAction(ActionType.CREATE_PHOTO, preferences, controller, "createPhoto");
       createAction(ActionType.CREATE_VIDEO, preferences, controller, "createVideo");
       createAction(ActionType.EXPORT_TO_OBJ, preferences, controller, "exportToOBJ");
@@ -568,20 +469,43 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Creates a <code>ControllerAction</code> object that calls on <code>controller</code> a given
-   * <code>method</code> with its <code>parameters</code>.
+   * Returns a new <code>ControllerAction</code> object that calls on <code>controller</code> a given
+   * <code>method</code> with its <code>parameters</code>. This action is added to the action map of this component.
    */
-  private void createAction(ActionType actionType,
-                            UserPreferences preferences,                            
-                            Object controller, 
-                            String method, 
-                            Object ... parameters) {
+  private Action createAction(ActionType actionType,
+                              UserPreferences preferences,                            
+                              Object controller, 
+                              String method, 
+                              Object ... parameters) {
     try {
-      getActionMap().put(actionType, new ControllerAction(
-          preferences, HomePane.class, actionType.name(), controller, method, parameters));
+      ControllerAction action = new ControllerAction(
+          preferences, HomePane.class, actionType.name(), controller, method, parameters);
+      getActionMap().put(actionType, action);
+      return action;
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
+  }
+  
+  /**
+   * Returns a new <code>ControllerAction</code> object associated with a <code>ToggleButtonModel</code> instance 
+   * set as selected or not.
+   */
+  private Action createToogleAction(ActionType actionType,
+                                    boolean selected,
+                                    ButtonGroup group,
+                                    UserPreferences preferences,                            
+                                    Object controller, 
+                                    String method, 
+                                    Object ... parameters) {
+    Action action = createAction(actionType, preferences, controller, method, parameters);
+    JToggleButton.ToggleButtonModel toggleButtonModel = new JToggleButton.ToggleButtonModel();
+    toggleButtonModel.setSelected(selected);
+    if (group != null) {
+      toggleButtonModel.setGroup(group);
+    }
+    action.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, toggleButtonModel);
+    return action;
   }
   
   /**
@@ -672,14 +596,20 @@ public class HomePane extends JRootPane implements HomeView {
     home.addPropertyChangeListener(Home.Property.CAMERA, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            viewFromTopToggleModel.setSelected(
-                home.getCamera() == home.getTopCamera());
-            viewFromObserverToggleModel.setSelected(
-                home.getCamera() == home.getObserverCamera());
+            setToggleButtonModelSelected(ActionType.VIEW_FROM_TOP, home.getCamera() == home.getTopCamera());
+            setToggleButtonModelSelected(ActionType.VIEW_FROM_OBSERVER, home.getCamera() == home.getObserverCamera());
           }
         });
   }
 
+  /**
+   * Changes the selection of the toggle model matching the given action.
+   */
+  private void setToggleButtonModelSelected(ActionType actionType, boolean selected) {
+    ((JToggleButton.ToggleButtonModel)getActionMap().get(actionType).getValue(ResourceAction.TOGGLE_BUTTON_MODEL)).
+        setSelected(selected);
+  }
+  
   /**
    * Adds listener to <code>home</code> to update
    * Display all levels and Display selected level toggle models 
@@ -690,8 +620,8 @@ public class HomePane extends JRootPane implements HomeView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
-            displayAllLevelsToggleModel.setSelected(allLevelsVisible);
-            displaySelectedLevelToggleModel.setSelected(!allLevelsVisible);
+            setToggleButtonModelSelected(ActionType.DISPLAY_ALL_LEVELS, allLevelsVisible);
+            setToggleButtonModelSelected(ActionType.DISPLAY_SELECTED_LEVEL, !allLevelsVisible);
           }
         });
   }
@@ -736,18 +666,13 @@ public class HomePane extends JRootPane implements HomeView {
     planController.addPropertyChangeListener(PlanController.Property.MODE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            selectToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.SELECTION);
-            panToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.PANNING);
-            createWallsToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.WALL_CREATION);
-            createRoomsToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.ROOM_CREATION);
-            createDimensionLinesToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.DIMENSION_LINE_CREATION);
-            createLabelsToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.LABEL_CREATION);
+            Mode mode = planController.getMode();
+            setToggleButtonModelSelected(ActionType.SELECT, mode == PlanController.Mode.SELECTION);
+            setToggleButtonModelSelected(ActionType.PAN, mode == PlanController.Mode.PANNING);
+            setToggleButtonModelSelected(ActionType.CREATE_WALLS, mode == PlanController.Mode.WALL_CREATION);
+            setToggleButtonModelSelected(ActionType.CREATE_ROOMS, mode == PlanController.Mode.ROOM_CREATION);
+            setToggleButtonModelSelected(ActionType.CREATE_DIMENSION_LINES, mode == PlanController.Mode.DIMENSION_LINE_CREATION);
+            setToggleButtonModelSelected(ActionType.CREATE_LABELS, mode == PlanController.Mode.LABEL_CREATION);
           }
         });
   }
@@ -1012,18 +937,12 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
-    addToggleActionToMenu(ActionType.SELECT, 
-        this.selectToggleModel, true, planMenu);
-    addToggleActionToMenu(ActionType.PAN, 
-        this.panToggleModel, true, planMenu);
-    addToggleActionToMenu(ActionType.CREATE_WALLS, 
-        this.createWallsToggleModel, true, planMenu);
-    addToggleActionToMenu(ActionType.CREATE_ROOMS, 
-        this.createRoomsToggleModel, true, planMenu);
-    addToggleActionToMenu(ActionType.CREATE_DIMENSION_LINES, 
-        this.createDimensionLinesToggleModel, true, planMenu);
-    addToggleActionToMenu(ActionType.CREATE_LABELS, 
-        this.createLabelsToggleModel, true, planMenu);
+    addToggleActionToMenu(ActionType.SELECT, true, planMenu);
+    addToggleActionToMenu(ActionType.PAN, true, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_WALLS, true, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_ROOMS, true, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_DIMENSION_LINES, true, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_LABELS, true, planMenu);
     planMenu.addSeparator();
     JMenuItem lockUnlockBasePlanMenuItem = createLockUnlockBasePlanMenuItem(home, false);
     if (lockUnlockBasePlanMenuItem != null) {
@@ -1058,10 +977,8 @@ public class HomePane extends JRootPane implements HomeView {
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
-    addToggleActionToMenu(ActionType.VIEW_FROM_TOP, 
-        this.viewFromTopToggleModel, true, preview3DMenu);
-    addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
-        this.viewFromObserverToggleModel, true, preview3DMenu);
+    addToggleActionToMenu(ActionType.VIEW_FROM_TOP, true, preview3DMenu);
+    addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, true, preview3DMenu);
     addActionToMenu(ActionType.STORE_POINT_OF_VIEW, preview3DMenu);
     JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
     if (goToPointOfViewMenu != null) {
@@ -1072,10 +989,8 @@ public class HomePane extends JRootPane implements HomeView {
     if (attachDetach3DViewMenuItem != null) {
       preview3DMenu.add(attachDetach3DViewMenuItem);
     }
-    addToggleActionToMenu(ActionType.DISPLAY_ALL_LEVELS, 
-        this.displayAllLevelsToggleModel, true, preview3DMenu);
-    addToggleActionToMenu(ActionType.DISPLAY_SELECTED_LEVEL, 
-        this.displaySelectedLevelToggleModel, true, preview3DMenu);
+    addToggleActionToMenu(ActionType.DISPLAY_ALL_LEVELS, true, preview3DMenu);
+    addToggleActionToMenu(ActionType.DISPLAY_SELECTED_LEVEL, true, preview3DMenu);
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
@@ -1162,10 +1077,9 @@ public class HomePane extends JRootPane implements HomeView {
    * Adds to <code>menu</code> the menu item matching the given <code>actionType</code>.
    */
   private void addToggleActionToMenu(ActionType actionType,
-                                     JToggleButton.ToggleButtonModel toggleButtonModel,
                                      boolean radioButton,
                                      JMenu menu) {
-    addToggleActionToMenu(actionType, false, toggleButtonModel, radioButton, menu);
+    addToggleActionToMenu(actionType, false, radioButton, menu);
   }
 
   /**
@@ -1173,12 +1087,11 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addToggleActionToMenu(ActionType actionType,
                                      boolean popup,
-                                     JToggleButton.ToggleButtonModel toggleButtonModel,
                                      boolean radioButton,
                                      JMenu menu) {
     Action action = getActionMap().get(actionType);
     if (action != null && action.getValue(Action.NAME) != null) {
-      menu.add(createToggleMenuItem(action, popup, toggleButtonModel, radioButton));
+      menu.add(createToggleMenuItem(action, popup, radioButton));
     }
   }
 
@@ -1187,7 +1100,6 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private JMenuItem createToggleMenuItem(Action action, 
                                          boolean popup,
-                                         JToggleButton.ToggleButtonModel toggleButtonModel,
                                          boolean radioButton) {
     JMenuItem menuItem;
     if (radioButton) {
@@ -1196,7 +1108,7 @@ public class HomePane extends JRootPane implements HomeView {
       menuItem = new JCheckBoxMenuItem();
     }
     // Configure model
-    menuItem.setModel(toggleButtonModel);
+    menuItem.setModel((JToggleButton.ToggleButtonModel)action.getValue(ResourceAction.TOGGLE_BUTTON_MODEL));
     // Configure menu item action after setting its model to avoid losing its mnemonic
     menuItem.setAction(popup
         ? new ResourceAction.PopupMenuItemAction(action)
@@ -1219,12 +1131,11 @@ public class HomePane extends JRootPane implements HomeView {
    * and returns <code>true</code> if it was added.
    */
   private void addToggleActionToPopupMenu(ActionType actionType,
-                                          JToggleButton.ToggleButtonModel toggleButtonModel,
                                           boolean radioButton,
                                           JPopupMenu menu) {
     Action action = getActionMap().get(actionType);
     if (action != null && action.getValue(Action.NAME) != null) {
-      menu.add(createToggleMenuItem(action, true, toggleButtonModel, radioButton));
+      menu.add(createToggleMenuItem(action, true, radioButton));
     }
   }
 
@@ -1538,10 +1449,8 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.INCREASE_TEXT_SIZE, popup, modifyTextStyleMenu);
     addActionToMenu(ActionType.DECREASE_TEXT_SIZE, popup, modifyTextStyleMenu);
     modifyTextStyleMenu.addSeparator();
-    addToggleActionToMenu(ActionType.TOGGLE_BOLD_STYLE, popup, 
-        this.boldStyleToggleModel, false, modifyTextStyleMenu);
-    addToggleActionToMenu(ActionType.TOGGLE_ITALIC_STYLE, popup, 
-        this.italicStyleToggleModel, false, modifyTextStyleMenu);
+    addToggleActionToMenu(ActionType.TOGGLE_BOLD_STYLE, popup, false, modifyTextStyleMenu);
+    addToggleActionToMenu(ActionType.TOGGLE_ITALIC_STYLE, popup, false, modifyTextStyleMenu);
     return modifyTextStyleMenu;
   }
 
@@ -1912,18 +1821,18 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.ADD_HOME_FURNITURE, toolBar);
     toolBar.addSeparator();
    
-    addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.PAN, this.panToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_WALLS, this.createWallsToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_ROOMS, this.createRoomsToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, this.createDimensionLinesToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_LABELS, this.createLabelsToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.SELECT, toolBar);
+    addToggleActionToToolBar(ActionType.PAN, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_WALLS, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_ROOMS, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_LABELS, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     addActionToToolBar(ActionType.INCREASE_TEXT_SIZE, toolBar);
     addActionToToolBar(ActionType.DECREASE_TEXT_SIZE, toolBar);
-    addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, this.boldStyleToggleModel, toolBar);
-    addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, this.italicStyleToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     addActionToToolBar(ActionType.ZOOM_IN, toolBar);
@@ -1965,13 +1874,12 @@ public class HomePane extends JRootPane implements HomeView {
    * and returns <code>true</code> if it was added.
    */
   private void addToggleActionToToolBar(ActionType actionType,
-                                        JToggleButton.ToggleButtonModel toggleButtonModel,
                                         JToolBar toolBar) {
     Action action = getActionMap().get(actionType);
     if (action!= null && action.getValue(Action.NAME) != null) {
       Action toolBarAction = new ResourceAction.ToolBarAction(action);    
       JToggleButton toggleButton = new JToggleButton(toolBarAction);
-      toggleButton.setModel(toggleButtonModel);
+      toggleButton.setModel((JToggleButton.ToggleButtonModel)action.getValue(ResourceAction.TOGGLE_BUTTON_MODEL));
       toolBar.add(toggleButton);
     }
   }
@@ -2474,18 +2382,12 @@ public class HomePane extends JRootPane implements HomeView {
       }
       addActionToPopupMenu(ActionType.SELECT_ALL, planViewPopup);
       planViewPopup.addSeparator();
-      addToggleActionToPopupMenu(ActionType.SELECT, 
-          this.selectToggleModel, true, planViewPopup);
-      addToggleActionToPopupMenu(ActionType.PAN, 
-          this.panToggleModel, true, planViewPopup);
-      addToggleActionToPopupMenu(ActionType.CREATE_WALLS, 
-          this.createWallsToggleModel, true, planViewPopup);
-      addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, 
-          this.createRoomsToggleModel, true, planViewPopup);
-      addToggleActionToPopupMenu(ActionType.CREATE_DIMENSION_LINES, 
-          this.createDimensionLinesToggleModel, true, planViewPopup);
-      addToggleActionToPopupMenu(ActionType.CREATE_LABELS, 
-          this.createLabelsToggleModel, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.SELECT, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.PAN, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.CREATE_WALLS, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.CREATE_DIMENSION_LINES, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.CREATE_LABELS, true, planViewPopup);
       planViewPopup.addSeparator();
       JMenuItem lockUnlockBasePlanMenuItem = createLockUnlockBasePlanMenuItem(home, true);
       if (lockUnlockBasePlanMenuItem != null) {
@@ -2586,10 +2488,8 @@ public class HomePane extends JRootPane implements HomeView {
       
       // Create 3D view popup menu
       JPopupMenu view3DPopup = new JPopupMenu();
-      addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
-          this.viewFromTopToggleModel, true, view3DPopup);
-      addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
-          this.viewFromObserverToggleModel, true, view3DPopup);
+      addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, true, view3DPopup);
+      addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, true, view3DPopup);
       addActionToPopupMenu(ActionType.STORE_POINT_OF_VIEW, view3DPopup);
       JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
       if (goToPointOfViewMenu != null) {
@@ -2600,10 +2500,8 @@ public class HomePane extends JRootPane implements HomeView {
       if (attachDetach3DViewMenuItem != null) {
         view3DPopup.add(attachDetach3DViewMenuItem);
       }
-      addToggleActionToPopupMenu(ActionType.DISPLAY_ALL_LEVELS, 
-          this.displayAllLevelsToggleModel, true, view3DPopup);
-      addToggleActionToPopupMenu(ActionType.DISPLAY_SELECTED_LEVEL, 
-          this.displaySelectedLevelToggleModel, true, view3DPopup);
+      addToggleActionToPopupMenu(ActionType.DISPLAY_ALL_LEVELS, true, view3DPopup);
+      addToggleActionToPopupMenu(ActionType.DISPLAY_SELECTED_LEVEL, true, view3DPopup);
       addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
       view3DPopup.addSeparator();
       addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);

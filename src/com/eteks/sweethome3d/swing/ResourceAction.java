@@ -39,7 +39,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  */
 public class ResourceAction extends AbstractAction {
   public static final String POPUP = "Popup";
-    
+  public static final String TOGGLE_BUTTON_MODEL = "ToggleButtonModel";
+  
   /**
    * Creates a disabled action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.

@@ -28,8 +28,6 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -44,7 +42,7 @@ import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -76,7 +74,6 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -434,45 +431,12 @@ public class AppletApplication extends HomeApplication {
       toolBar.addSeparator();
     }
     
-    final JToggleButton selectToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.SELECT));
-    selectToggleButton.setSelected(true);
-    toolBar.add(selectToggleButton);
-    final JToggleButton panToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.PAN));
-    toolBar.add(panToggleButton);
-    final JToggleButton createWallsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_WALLS));
-    toolBar.add(createWallsToggleButton);
-    final JToggleButton createRoomsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_ROOMS));
-    toolBar.add(createRoomsToggleButton);
-    final JToggleButton createDimensionLinesToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES));
-    toolBar.add(createDimensionLinesToggleButton);
-    final JToggleButton createLabelsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_LABELS));
-    toolBar.add(createLabelsToggleButton);
-    // Add Select, Create Walls and Create dimensions buttons to radio group 
-    ButtonGroup group = new ButtonGroup();
-    group.add(selectToggleButton);
-    group.add(panToggleButton);
-    group.add(createWallsToggleButton);
-    group.add(createRoomsToggleButton);
-    group.add(createDimensionLinesToggleButton);
-    group.add(createLabelsToggleButton);
-    controller.getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            PlanController.Mode mode = controller.getPlanController().getMode();
-            selectToggleButton.setSelected(mode == PlanController.Mode.SELECTION);
-            panToggleButton.setSelected(mode == PlanController.Mode.PANNING);
-            createWallsToggleButton.setSelected(mode == PlanController.Mode.WALL_CREATION);
-            createRoomsToggleButton.setSelected(mode == PlanController.Mode.ROOM_CREATION);
-            createDimensionLinesToggleButton.setSelected(mode == PlanController.Mode.DIMENSION_LINE_CREATION);
-            createLabelsToggleButton.setSelected(mode == PlanController.Mode.LABEL_CREATION);
-          }
-        });
+    addToolBarToggleAction(homeView, HomeView.ActionType.SELECT, toolBar);
+    addToolBarToggleAction(homeView, HomeView.ActionType.PAN, toolBar);
+    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_WALLS, toolBar);
+    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_ROOMS, toolBar);
+    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES, toolBar);
+    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_LABELS, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     addToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT, toolBar);
@@ -545,6 +509,18 @@ public class AppletApplication extends HomeApplication {
         : null;
   }
   
+  /**
+   * Adds the action matching the given toggle <code>actionType</code> to the tool bar if it exists.
+   */
+  private void addToolBarToggleAction(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
+    Action action = getToolBarAction(homeView, actionType);
+    if (action != null) {
+      JToggleButton toggleButton = new JToggleButton(action);
+      toggleButton.setModel((ButtonModel)action.getValue(ResourceAction.TOGGLE_BUTTON_MODEL));
+      toolBar.add(toggleButton);
+    }
+  }
+
   /**
    * Returns a recorder able to write and read homes on server.
    */
