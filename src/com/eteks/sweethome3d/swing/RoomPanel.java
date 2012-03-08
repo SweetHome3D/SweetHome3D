@@ -82,7 +82,7 @@ public class RoomPanel extends JPanel implements DialogView {
     this.controller = controller;
     createComponents(preferences, controller);
     setMnemonics(preferences);
-    layoutComponents(preferences, controller);
+    layoutComponents(preferences);
   }
 
   /**
@@ -449,13 +449,11 @@ public class RoomPanel extends JPanel implements DialogView {
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents(UserPreferences preferences, 
-                                final RoomController controller) {
+  private void layoutComponents(UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
-    Insets rowInsets;
     JPanel nameAndAreaPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         RoomPanel.class, "nameAndAreaPanel.title"));
     nameAndAreaPanel.add(this.nameLabel, new GridBagConstraints(
@@ -467,6 +465,7 @@ public class RoomPanel extends JPanel implements DialogView {
     nameAndAreaPanel.add(this.areaVisibleCheckBox, new GridBagConstraints(
         2, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    Insets rowInsets;
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // User smaller insets for Mac OS X 10.5
       rowInsets = new Insets(0, 0, 0, 0);
