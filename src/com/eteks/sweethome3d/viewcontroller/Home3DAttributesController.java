@@ -46,6 +46,7 @@ public class Home3DAttributesController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {OBSERVER_FIELD_OF_VIEW_IN_DEGREES, OBSERVER_HEIGHT, OBSERVER_CAMERA_ELEVATION, MINIMUM_ELEVATION, 
+      OBSERVER_CAMERA_ELEVATION_ADJUSTED,
       GROUND_COLOR, GROUND_PAINT, SKY_COLOR, SKY_PAINT,
       LIGHT_COLOR, WALLS_ALPHA}
   /**
@@ -67,6 +68,7 @@ public class Home3DAttributesController implements Controller {
   private float             observerHeight;
   private Float             observerCameraElevation;
   private float             minimumElevation;
+  private boolean           observerCameraElevationAdjusted;
   private int               groundColor;
   private EnvironmentPaint  groundPaint;
   private int               skyColor;
@@ -170,12 +172,15 @@ public class Home3DAttributesController implements Controller {
     setObserverFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(
         this.home.getObserverCamera().getFieldOfView())) + 360) % 360);
     setObserverHeight(this.home.getObserverCamera().getZ() * 15 / 14);
+    HomeEnvironment homeEnvironment = this.home.getEnvironment();
     List<Level> levels = this.home.getLevels();
-    setMinimumElevation(levels.size() == 0  ? 10  : 10 + levels.get(0).getElevation());
+    setMinimumElevation(levels.size() == 0 
+        ? 10  
+        : 10 + levels.get(0).getElevation());
     setObserverCameraElevation(levels.size() == 0 || levels.get(0).getElevation() == 0 && levels.get(levels.size() - 1).getElevation() == 0  
         ? null  
         : this.home.getObserverCamera().getZ());
-    HomeEnvironment homeEnvironment = this.home.getEnvironment();
+    setObserverCameraElevationAdjusted(homeEnvironment.isObserverCameraElevationAdjusted());
     setGroundColor(homeEnvironment.getGroundColor());
     HomeTexture groundTexture = homeEnvironment.getGroundTexture();
     getGroundTextureController().setTexture(groundTexture);
@@ -270,6 +275,41 @@ public class Home3DAttributesController implements Controller {
     return this.minimumElevation;
   }
 
+  /**
+   * Returns <code>true</code> if the observer elevation should be adjusted according 
+   * to the elevation of the selected level.
+   */
+  public boolean isObserverCameraElevationAdjusted() {
+    return this.observerCameraElevationAdjusted;
+  }
+  
+  /**
+   * Sets whether the observer elevation should be adjusted according 
+   * to the elevation of the selected level.
+   */
+  public void setObserverCameraElevationAdjusted(boolean observerCameraElevationAdjusted) {
+    if (this.observerCameraElevationAdjusted != observerCameraElevationAdjusted) {
+      this.observerCameraElevationAdjusted = observerCameraElevationAdjusted;
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED.name(), 
+          !observerCameraElevationAdjusted, observerCameraElevationAdjusted);
+      Level selectedLevel = this.home.getSelectedLevel();
+      if (selectedLevel != null) {
+        if (observerCameraElevationAdjusted) {
+          setObserverCameraElevation(getObserverCameraElevation() - selectedLevel.getElevation());
+        } else {
+          setObserverCameraElevation(getObserverCameraElevation() + selectedLevel.getElevation());
+        }
+      }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the adjustment of the observer camera according to the current level is modifiable.
+   */
+  public boolean isObserverCameraElevationAdjustedModifiable() {
+    return this.home.getLevels().size() > 1;
+  }
+  
   /**
    * Sets the edited ground color.
    */
@@ -389,6 +429,13 @@ public class Home3DAttributesController implements Controller {
     float observerCameraZ = observerCameraElevation != null  
         ? observerCameraElevation.floatValue()  
         : getObserverHeight() * 14 / 15;
+    boolean observerCameraElevationAdjusted = isObserverCameraElevationAdjusted();
+    Level selectedLevel = this.home.getSelectedLevel();
+    if (observerCameraElevationAdjusted && selectedLevel != null) {
+      observerCameraZ += selectedLevel.getElevation();
+      List<Level> levels = home.getLevels();
+      observerCameraZ = Math.max(observerCameraZ, levels.size() == 0  ? 10  : 10 + levels.get(0).getElevation());
+    }
     int   groundColor = getGroundColor();
     HomeTexture groundTexture = getGroundPaint() == EnvironmentPaint.TEXTURED
         ? getGroundTextureController().getTexture()
@@ -401,8 +448,9 @@ public class Home3DAttributesController implements Controller {
     float wallsAlpha = getWallsAlpha();
 
     float oldObserverCameraFieldOfView = this.home.getObserverCamera().getFieldOfView();
-    float oldObserverCameraZ = this.home.getObserverCamera().getZ();
+    float oldObserverCameraZ = this.home.getObserverCamera().getZ();    
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
+    boolean oldObserverCameraElevationAdjusted = homeEnvironment.isObserverCameraElevationAdjusted();
     int   oldGroundColor = homeEnvironment.getGroundColor();
     HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
     int   oldSkyColor = homeEnvironment.getSkyColor();
@@ -411,14 +459,15 @@ public class Home3DAttributesController implements Controller {
     float oldWallsAlpha = homeEnvironment.getWallsAlpha();
     
     // Apply modification
-    doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
+    doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, observerCameraElevationAdjusted,
         groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(
           this.home, this.preferences,
-          oldObserverCameraFieldOfView, oldObserverCameraZ,
+          oldObserverCameraFieldOfView, oldObserverCameraZ, oldObserverCameraElevationAdjusted,
           oldGroundColor, oldGroundTexture, oldSkyColor,
-          oldSkyTexture, oldLightColor, oldWallsAlpha, observerCameraFieldOfView, observerCameraZ, 
+          oldSkyTexture, oldLightColor, oldWallsAlpha, 
+          observerCameraFieldOfView, observerCameraZ, observerCameraElevationAdjusted, 
           groundColor, groundTexture, skyColor,
           skyTexture, lightColor, wallsAlpha);
       this.undoSupport.postEdit(undoableEdit);
@@ -434,6 +483,7 @@ public class Home3DAttributesController implements Controller {
     private final UserPreferences preferences;
     private final float           oldObserverCameraFieldOfView;
     private final float           oldObserverCameraZ;
+    private final boolean         oldObserverCameraElevationAdjusted;
     private final int             oldGroundColor;
     private final HomeTexture     oldGroundTexture;
     private final int             oldSkyColor;
@@ -442,6 +492,7 @@ public class Home3DAttributesController implements Controller {
     private final float           oldWallsAlpha;
     private final float           observerCameraFieldOfView;
     private final float           observerCameraZ;
+    private final boolean         observerCameraElevationAdjusted;
     private final int             groundColor;
     private final HomeTexture     groundTexture;
     private final int             skyColor;
@@ -453,6 +504,7 @@ public class Home3DAttributesController implements Controller {
                                                      UserPreferences preferences,
                                                      float oldObserverCameraFieldOfView,
                                                      float oldObserverCameraZ,
+                                                     boolean oldObserverCameraElevationAdjusted, 
                                                      int oldGroundColor,
                                                      HomeTexture oldGroundTexture,
                                                      int oldSkyColor,
@@ -461,6 +513,7 @@ public class Home3DAttributesController implements Controller {
                                                      float oldWallsAlpha,
                                                      float observerCameraFieldOfView,
                                                      float observerCameraZ,
+                                                     boolean observerCameraElevationAdjusted, 
                                                      int groundColor,
                                                      HomeTexture groundTexture,
                                                      int skyColor,
@@ -471,6 +524,7 @@ public class Home3DAttributesController implements Controller {
       this.preferences = preferences;
       this.oldObserverCameraFieldOfView = oldObserverCameraFieldOfView;
       this.oldObserverCameraZ = oldObserverCameraZ;
+      this.oldObserverCameraElevationAdjusted = oldObserverCameraElevationAdjusted;
       this.oldGroundColor = oldGroundColor;
       this.oldGroundTexture = oldGroundTexture;
       this.oldSkyColor = oldSkyColor;
@@ -479,6 +533,7 @@ public class Home3DAttributesController implements Controller {
       this.oldWallsAlpha = oldWallsAlpha;
       this.observerCameraFieldOfView = observerCameraFieldOfView;
       this.observerCameraZ = observerCameraZ;
+      this.observerCameraElevationAdjusted = observerCameraElevationAdjusted;
       this.groundColor = groundColor;
       this.groundTexture = groundTexture;
       this.skyColor = skyColor;
@@ -490,14 +545,14 @@ public class Home3DAttributesController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doModify3DAttributes(this.home, this.oldObserverCameraFieldOfView, this.oldObserverCameraZ, 
+      doModify3DAttributes(this.home, this.oldObserverCameraFieldOfView, this.oldObserverCameraZ, this.oldObserverCameraElevationAdjusted,
           this.oldGroundColor, this.oldGroundTexture, this.oldSkyColor, this.oldSkyTexture, this.oldLightColor, this.oldWallsAlpha); 
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModify3DAttributes(this.home, this.observerCameraFieldOfView, this.observerCameraZ, 
+      doModify3DAttributes(this.home, this.observerCameraFieldOfView, this.observerCameraZ, this.observerCameraElevationAdjusted,
           this.groundColor, this.groundTexture, this.skyColor, this.skyTexture, this.lightColor, this.wallsAlpha); 
     }
 
@@ -514,6 +569,7 @@ public class Home3DAttributesController implements Controller {
   private static void doModify3DAttributes(Home home,
                                            float observerCameraFieldOfView, 
                                            float observerCameraZ, 
+                                           boolean observerCameraElevationAdjusted, 
                                            int groundColor, HomeTexture groundTexture, 
                                            int skyColor, HomeTexture skyTexture, 
                                            int lightColor, float wallsAlpha) {
@@ -521,6 +577,7 @@ public class Home3DAttributesController implements Controller {
     observerCamera.setFieldOfView(observerCameraFieldOfView);
     observerCamera.setZ(observerCameraZ);
     HomeEnvironment homeEnvironment = home.getEnvironment();
+    homeEnvironment.setObserverCameraElevationAdjusted(observerCameraElevationAdjusted);
     homeEnvironment.setGroundColor(groundColor);
     homeEnvironment.setGroundTexture(groundTexture);
     homeEnvironment.setSkyColor(skyColor);

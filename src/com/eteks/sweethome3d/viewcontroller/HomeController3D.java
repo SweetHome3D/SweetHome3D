@@ -82,6 +82,13 @@ public class HomeController3D implements Controller {
     setCameraState(home.getCamera() == home.getTopCamera() 
         ? this.topCameraState
         : this.observerCameraState);
+    addModelListeners(home);
+  }
+
+  /**
+   * Add listeners to model to update camera position accordingly.
+   */
+  private void addModelListeners(final Home home) {
     home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {      
         public void propertyChange(PropertyChangeEvent ev) {
           setCameraState(home.getCamera() == home.getTopCamera() 
@@ -89,7 +96,38 @@ public class HomeController3D implements Controller {
               : observerCameraState);
         }
       });
-    // Add a listener to home to update visible levels according to selected level.
+    // Add listeners to adjust observer camera elevation when the elevation of the selected level  
+    // or the level selection change
+    final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName()) 
+              && home.getEnvironment().isObserverCameraElevationAdjusted()) {
+            home.getObserverCamera().setZ(Math.max(getObserverCameraMinimumElevation(home), 
+                home.getObserverCamera().getZ() + (Float)ev.getNewValue() - (Float)ev.getOldValue()));
+          }
+        }
+      };
+    Level selectedLevel = home.getSelectedLevel();
+    if (selectedLevel != null) {
+      selectedLevel.addPropertyChangeListener(levelElevationChangeListener);
+    }
+    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Level oldSelectedLevel = (Level)ev.getOldValue();
+          Level selectedLevel = home.getSelectedLevel();
+          if (home.getEnvironment().isObserverCameraElevationAdjusted()) {
+            home.getObserverCamera().setZ(Math.max(getObserverCameraMinimumElevation(home), 
+                home.getObserverCamera().getZ() 
+                + (selectedLevel == null ? 0 : selectedLevel.getElevation()) 
+                - (oldSelectedLevel == null ? 0 : oldSelectedLevel.getElevation())));
+          }
+          if (oldSelectedLevel != null) {
+            oldSelectedLevel.removePropertyChangeListener(levelElevationChangeListener);
+          }
+          selectedLevel.addPropertyChangeListener(levelElevationChangeListener);
+        }
+      });     
+    // Add a listener to home to update visible levels according to selected level
     PropertyChangeListener selectedLevelListener = new PropertyChangeListener() {
          public void propertyChange(PropertyChangeEvent ev) {
            List<Level> levels = home.getLevels();
@@ -104,8 +142,14 @@ public class HomeController3D implements Controller {
            }
          }
        };
-     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
+     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);     
      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.ALL_LEVELS_VISIBLE, selectedLevelListener);
+  }
+
+  private float getObserverCameraMinimumElevation(final Home home) {
+    List<Level> levels = home.getLevels();
+    float minimumElevation = levels.size() == 0  ? 10  : 10 + levels.get(0).getElevation();
+    return minimumElevation;
   }
 
   /**

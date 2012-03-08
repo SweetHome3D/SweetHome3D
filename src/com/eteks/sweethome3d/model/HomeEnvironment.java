@@ -37,7 +37,8 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE, ALL_LEVELS_VISIBLE,
+  public enum Property {OBSERVER_CAMERA_ELEVATION_ADJUSTED, SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, 
+                        WALLS_ALPHA, DRAWING_MODE, ALL_LEVELS_VISIBLE,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
@@ -47,6 +48,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
     FILL, OUTLINE, FILL_AND_OUTLINE
   }
   
+  private boolean                         observerCameraElevationAdjusted;
   private int                             groundColor;
   private HomeTexture                     groundTexture;
   private int                             skyColor;
@@ -101,6 +103,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   public HomeEnvironment(int groundColor, HomeTexture groundTexture, 
                          int skyColor, HomeTexture skyTexture,
                          int lightColor, float wallsAlpha) {
+    this.observerCameraElevationAdjusted = true;
     this.groundColor = groundColor;
     this.groundTexture = groundTexture;
     this.skyColor = skyColor;
@@ -173,6 +176,28 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
+  /**
+   * Returns <code>true</code> if the observer elevation should be adjusted according 
+   * to the elevation of the selected level.
+   * @since 3.5
+   */
+  public boolean isObserverCameraElevationAdjusted() {
+    return this.observerCameraElevationAdjusted;
+  }
+  
+  /**
+   * Sets whether the observer elevation should be adjusted according 
+   * to the elevation of the selected level and fires a <code>PropertyChangeEvent</code>.
+   * @since 3.5
+   */
+  public void setObserverCameraElevationAdjusted(boolean observerCameraElevationAdjusted) {
+    if (this.observerCameraElevationAdjusted != observerCameraElevationAdjusted) {
+      this.observerCameraElevationAdjusted = observerCameraElevationAdjusted;
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED.name(), 
+          !observerCameraElevationAdjusted, observerCameraElevationAdjusted);
+    }
+  }
+  
   /**
    * Returns the ground color of this environment.
    */

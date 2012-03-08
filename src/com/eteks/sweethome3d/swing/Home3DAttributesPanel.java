@@ -22,12 +22,15 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -59,6 +62,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private JSpinner      observerHeightSpinner;
   private JLabel        observerCameraElevationLabel;
   private JSpinner      observerCameraElevationSpinner;
+  private JCheckBox     adjustObserverCameraElevationCheckBox;
   private JRadioButton  groundColorRadioButton;
   private ColorButton   groundColorButton;
   private JRadioButton  groundTextureRadioButton;
@@ -85,7 +89,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     this.controller = controller;
     createComponents(preferences, controller);
     setMnemonics(preferences);
-    layoutComponents();
+    layoutComponents(preferences);
   }
 
   /**
@@ -162,13 +166,28 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     observerCameraElevationChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(Home3DAttributesController.Property.OBSERVER_CAMERA_ELEVATION, observerCameraElevationChangeListener);
     
+    this.adjustObserverCameraElevationCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        Home3DAttributesPanel.class, "adjustObserverCameraElevationCheckBox.text"), controller.isObserverCameraElevationAdjusted());
+    this.adjustObserverCameraElevationCheckBox.setEnabled(controller.isObserverCameraElevationAdjustedModifiable());
+    this.adjustObserverCameraElevationCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setObserverCameraElevationAdjusted(adjustObserverCameraElevationCheckBox.isSelected());
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            adjustObserverCameraElevationCheckBox.setSelected(controller.isObserverCameraElevationAdjusted());
+          }
+        });
+
     controller.addPropertyChangeListener(Home3DAttributesController.Property.MINIMUM_ELEVATION, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            observerHeightSpinnerModel.setLength(Math.min(observerHeightSpinnerModel.getLength(), controller.getMinimumElevation()));
+            observerHeightSpinnerModel.setLength(Math.max(observerHeightSpinnerModel.getLength(), controller.getMinimumElevation()));
             observerHeightSpinnerModel.setMinimum(controller.getMinimumElevation());
             if (observerCameraElevationSpinnerModel.getLength() != null) {
-              observerCameraElevationSpinnerModel.setLength(Math.min(observerCameraElevationSpinnerModel.getLength(), controller.getMinimumElevation()));
+              observerCameraElevationSpinnerModel.setLength(Math.max(observerCameraElevationSpinnerModel.getLength(), controller.getMinimumElevation()));
             }
             observerCameraElevationSpinnerModel.setMinimum(controller.getMinimumElevation());
           }
@@ -376,6 +395,9 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class, "observerCameraElevationLabel.mnemonic")).getKeyCode());
       this.observerCameraElevationLabel.setLabelFor(this.observerCameraElevationSpinner);
+      this.adjustObserverCameraElevationCheckBox.setDisplayedMnemonicIndex(
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              Home3DAttributesPanel.class, "adjustObserverCameraElevationCheckBox.mnemonic")).getKeyCode());
       this.groundColorRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class,"groundColorRadioButton.mnemonic")).getKeyCode());
@@ -402,73 +424,107 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents() {
+  private void layoutComponents(UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
+    JPanel observerPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        Home3DAttributesPanel.class, "observerPanel.title"));
     Insets labelInsets = new Insets(0, 0, 10, 5);
-    add(this.observerFieldOfViewLabel, new GridBagConstraints(
+    observerPanel.add(this.observerFieldOfViewLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets componentInsets = new Insets(0, 0, 10, 15);
-    add(this.observerFieldOfViewSpinner, new GridBagConstraints(
+    observerPanel.add(this.observerFieldOfViewSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 20, 0));
-    add(this.observerHeightLabel, new GridBagConstraints(
+    observerPanel.add(this.observerHeightLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
-    add(this.observerHeightSpinner, new GridBagConstraints(
+    observerPanel.add(this.observerHeightSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, -25, 0));
     // observerCameraElevation label and spinner at the same location but both are never visible at the same time 
-    add(this.observerCameraElevationLabel, new GridBagConstraints(
+    observerPanel.add(this.observerCameraElevationLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.observerCameraElevationSpinner, new GridBagConstraints(
+    observerPanel.add(this.observerCameraElevationSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, -25, 0));
     // Second row
-    Insets closeLabelInsets = new Insets(0, 0, 2, 5);
-    add(this.groundColorRadioButton, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
-    add(this.groundColorButton, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 15), 0, 0));
-    add(this.skyColorRadioButton, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
-    add(this.skyColorButton, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    observerPanel.add(this.adjustObserverCameraElevationCheckBox, new GridBagConstraints(
+        0, 1, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    Insets rowInsets;
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // User smaller insets for Mac OS X 10.5
+      rowInsets = new Insets(0, 0, 0, 0);
+    } else {
+      rowInsets = new Insets(0, 0, 5, 0);
+    }
+    add(observerPanel, new GridBagConstraints(
+        0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+    
+    JPanel groundPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        Home3DAttributesPanel.class, "groundPanel.title"));
     // Third row
-    add(this.groundTextureRadioButton, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.groundTextureComponent, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
-    add(this.skyTextureRadioButton, new GridBagConstraints(
-        2, 2, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.skyTextureComponent, new GridBagConstraints(
-        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    Insets closeLabelInsets = new Insets(0, 0, 2, 5);
+    groundPanel.add(this.groundColorRadioButton, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
+    groundPanel.add(this.groundColorButton, new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 15), 0, 0));
     // Fourth row
-    add(this.brightnessLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
+    groundPanel.add(this.groundTextureRadioButton, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(this.brightnessSlider, new GridBagConstraints(
-        1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+    groundPanel.add(this.groundTextureComponent, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(groundPanel, new GridBagConstraints(
+        0, 1, 1, 1, 0.5, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+    
+    JPanel skyPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        Home3DAttributesPanel.class, "skyPanel.title"));
+    skyPanel.add(this.skyColorRadioButton, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
+    skyPanel.add(this.skyColorButton, new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    skyPanel.add(this.skyTextureRadioButton, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    skyPanel.add(this.skyTextureComponent, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(skyPanel, new GridBagConstraints(
+        1, 1, 1, 1, 0.5, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+    
+    JPanel renderingPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        Home3DAttributesPanel.class, "renderingPanel.title"));
+    // fifth row
+    renderingPanel.add(this.brightnessLabel, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    renderingPanel.add(this.brightnessSlider, new GridBagConstraints(
+        1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Last row
-    add(this.wallsTransparencyLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
+    renderingPanel.add(this.wallsTransparencyLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(this.wallsTransparencySlider, new GridBagConstraints(
-        1, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+    renderingPanel.add(this.wallsTransparencySlider, new GridBagConstraints(
+        1, 1, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    add(renderingPanel, new GridBagConstraints(
+        0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
