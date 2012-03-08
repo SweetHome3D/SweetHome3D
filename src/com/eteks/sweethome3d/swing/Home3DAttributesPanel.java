@@ -395,7 +395,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class, "observerCameraElevationLabel.mnemonic")).getKeyCode());
       this.observerCameraElevationLabel.setLabelFor(this.observerCameraElevationSpinner);
-      this.adjustObserverCameraElevationCheckBox.setDisplayedMnemonicIndex(
+      this.adjustObserverCameraElevationCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class, "adjustObserverCameraElevationCheckBox.mnemonic")).getKeyCode());
       this.groundColorRadioButton.setMnemonic(
