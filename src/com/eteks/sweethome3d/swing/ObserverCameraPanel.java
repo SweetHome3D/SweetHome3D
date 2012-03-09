@@ -276,7 +276,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
           ObserverCameraPanel.class, "observerHeightLabel.mnemonic")).getKeyCode());
       this.observerHeightLabel.setLabelFor(this.observerHeightSpinner);
       this.elevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          ObserverCameraPanel.class, "observerCameraElevationLabel.mnemonic")).getKeyCode());
+          ObserverCameraPanel.class, "elevationLabel.mnemonic")).getKeyCode());
       this.elevationLabel.setLabelFor(this.elevationSpinner);
       this.fieldOfViewLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ObserverCameraPanel.class, "fieldOfViewLabel.mnemonic")).getKeyCode());
@@ -377,10 +377,12 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
-    JFormattedTextField observerFieldOfViewSpinnerTextField = 
-        ((JSpinner.DefaultEditor)this.fieldOfViewSpinner.getEditor()).getTextField();
-    if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, this.dialogTitle, observerFieldOfViewSpinnerTextField) == JOptionPane.OK_OPTION
+    JFormattedTextField elevationSpinnerTextField = 
+        ((JSpinner.DefaultEditor)this.elevationSpinner.getEditor()).getTextField();
+    JFormattedTextField observerHeightSpinnerTextField = 
+        ((JSpinner.DefaultEditor)this.observerHeightSpinner.getEditor()).getTextField();
+    if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle, 
+            this.elevationSpinner.isVisible() ? elevationSpinnerTextField : observerHeightSpinnerTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyObserverCamera();
     }
