@@ -144,6 +144,12 @@ public interface ViewFactory {
                                                CompassController compassController);
   
   /**
+   * Returns a new view that edits observer camera values.
+   */
+  public abstract DialogView createObserverCameraView(UserPreferences preferences,
+                                                      ObserverCameraController home3DAttributesController);
+  
+  /**
    * Returns a new view that edits 3D attributes.
    */
   public abstract DialogView createHome3DAttributesView(UserPreferences preferences,

@@ -124,7 +124,9 @@ public class HomeController3D implements Controller {
           if (oldSelectedLevel != null) {
             oldSelectedLevel.removePropertyChangeListener(levelElevationChangeListener);
           }
-          selectedLevel.addPropertyChangeListener(levelElevationChangeListener);
+          if (selectedLevel != null) {
+            selectedLevel.addPropertyChangeListener(levelElevationChangeListener);
+          }
         }
       });     
     // Add a listener to home to update visible levels according to selected level

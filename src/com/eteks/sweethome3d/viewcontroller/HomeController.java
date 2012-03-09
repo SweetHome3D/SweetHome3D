@@ -279,6 +279,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
+    homeView.setEnabled(HomeView.ActionType.MODIFY_OBSERVER, this.home.getCamera() == this.home.getObserverCamera());
     homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
@@ -613,6 +614,7 @@ public class HomeController implements Controller {
           }
         };
       this.home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, notUndoableModificationListener);
+      this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED, notUndoableModificationListener);
       this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_WIDTH, notUndoableModificationListener);
       this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_ASPECT_RATIO, notUndoableModificationListener);
       this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.VIDEO_FRAME_RATE, notUndoableModificationListener);
@@ -915,6 +917,11 @@ public class HomeController implements Controller {
           if (Compass.Property.VISIBLE.equals(ev.getPropertyName())) {
             enableSelectAllAction();
           }
+        }
+      });
+    this.home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          getView().setEnabled(HomeView.ActionType.MODIFY_OBSERVER, home.getCamera() == home.getObserverCamera());
         }
       });
   }

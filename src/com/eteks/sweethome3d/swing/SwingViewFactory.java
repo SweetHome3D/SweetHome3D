@@ -44,6 +44,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.LevelController;
+import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
@@ -231,6 +232,14 @@ public class SwingViewFactory implements ViewFactory {
   public DialogView createHome3DAttributesView(UserPreferences preferences,
                                   Home3DAttributesController home3DAttributesController) {
     return new Home3DAttributesPanel(preferences, home3DAttributesController);    
+  }
+  
+  /**
+   * Returns a new view that edits observer camera values.
+   */
+  public DialogView createObserverCameraView(UserPreferences preferences,
+                                             ObserverCameraController observerCameraController) {
+    return new ObserverCameraPanel(preferences, observerCameraController);    
   }
   
   /**

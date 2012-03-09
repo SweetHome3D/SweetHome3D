@@ -1055,6 +1055,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Controls the modification of the observer camera.
+   */
+  public void modifyObserverCamera() {
+    new ObserverCameraController(this.home, this.preferences, this.viewFactory,
+        this.undoSupport).displayView(getView());
+  }
+  
+  /**
    * Toggles bold style of texts in selected items.
    */
   public void toggleBoldStyle() {
@@ -5715,6 +5723,8 @@ public class PlanController extends FurnitureController implements Controller {
             modifySelectedLabels();
           } else if (item instanceof Compass) {
             modifyCompass();
+          } else if (item instanceof ObserverCamera) {
+            modifyObserverCamera();
           } 
         }
       }

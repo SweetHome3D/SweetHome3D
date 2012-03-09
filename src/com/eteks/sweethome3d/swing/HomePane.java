@@ -197,19 +197,19 @@ public class HomePane extends JRootPane implements HomeView {
 
   private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
   
-  private final Home                            home;
-  private final UserPreferences                 preferences;
-  private final HomeController                  controller;
-  private JComponent                            lastFocusedComponent;
-  private PlanController.Mode                   previousPlanControllerMode;
-  private TransferHandler                       catalogTransferHandler;
-  private TransferHandler                       furnitureTransferHandler;
-  private TransferHandler                       planTransferHandler;
-  private boolean                               transferHandlerEnabled;
-  private MouseInputAdapter                     furnitureCatalogDragAndDropListener;
-  private boolean                               clipboardEmpty = true;
-  private ActionMap                             menuActionMap;
-  private List<Action>                          pluginActions;
+  private final Home            home;
+  private final UserPreferences preferences;
+  private final HomeController  controller;
+  private JComponent            lastFocusedComponent;
+  private PlanController.Mode   previousPlanControllerMode;
+  private TransferHandler       catalogTransferHandler;
+  private TransferHandler       furnitureTransferHandler;
+  private TransferHandler       planTransferHandler;
+  private boolean               transferHandlerEnabled;
+  private MouseInputAdapter     furnitureCatalogDragAndDropListener;
+  private boolean               clipboardEmpty = true;
+  private ActionMap             menuActionMap;
+  private List<Action>          pluginActions;
   
   /**
    * Creates home view associated with its controller.
@@ -435,8 +435,8 @@ public class HomePane extends JRootPane implements HomeView {
           preferences, homeController3D, "viewFromTop");
       createToggleAction(ActionType.VIEW_FROM_OBSERVER, home.getCamera() == home.getObserverCamera(), viewGroup, 
           preferences, homeController3D, "viewFromObserver");
-      createAction(ActionType.STORE_POINT_OF_VIEW, preferences, 
-          controller, "storeCamera");
+      createAction(ActionType.MODIFY_OBSERVER, preferences, planController, "modifyObserverCamera");
+      createAction(ActionType.STORE_POINT_OF_VIEW, preferences, controller, "storeCamera");
       getActionMap().put(ActionType.DETACH_3D_VIEW, 
           new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
             @Override
@@ -979,6 +979,7 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
     addToggleActionToMenu(ActionType.VIEW_FROM_TOP, true, preview3DMenu);
     addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, true, preview3DMenu);
+    addActionToMenu(ActionType.MODIFY_OBSERVER, preview3DMenu);
     addActionToMenu(ActionType.STORE_POINT_OF_VIEW, preview3DMenu);
     JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
     if (goToPointOfViewMenu != null) {
@@ -2490,6 +2491,7 @@ public class HomePane extends JRootPane implements HomeView {
       JPopupMenu view3DPopup = new JPopupMenu();
       addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, true, view3DPopup);
       addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, true, view3DPopup);
+      addActionToPopupMenu(ActionType.MODIFY_OBSERVER, view3DPopup);
       addActionToPopupMenu(ActionType.STORE_POINT_OF_VIEW, view3DPopup);
       JMenu goToPointOfViewMenu = createGoToPointOfViewMenu(home, preferences, controller);
       if (goToPointOfViewMenu != null) {
