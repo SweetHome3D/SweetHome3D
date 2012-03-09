@@ -1058,8 +1058,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Controls the modification of the observer camera.
    */
   public void modifyObserverCamera() {
-    new ObserverCameraController(this.home, this.preferences, this.viewFactory,
-        this.undoSupport).displayView(getView());
+    new ObserverCameraController(this.home, this.preferences, this.viewFactory).displayView(getView());
   }
   
   /**

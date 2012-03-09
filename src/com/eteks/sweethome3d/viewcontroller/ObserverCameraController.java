@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
 
-import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
@@ -64,8 +63,7 @@ public class ObserverCameraController implements Controller {
    */
   public ObserverCameraController(Home home,
                                   UserPreferences preferences,
-                                  ViewFactory viewFactory, 
-                                  UndoableEditSupport undoSupport) {
+                                  ViewFactory viewFactory) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
