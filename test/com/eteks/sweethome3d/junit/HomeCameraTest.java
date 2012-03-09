@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.swing.ColorButton;
 import com.eteks.sweethome3d.swing.Home3DAttributesPanel;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.ObserverCameraPanel;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.TextureChoiceComponent;
@@ -264,10 +265,6 @@ public class HomeCameraTest extends ComponentTestFixture {
         attributesDialog, Home3DAttributesPanel.class);
     Home3DAttributesController panelController = 
         (Home3DAttributesController)TestUtilities.getField(panel, "controller");
-    JSpinner observerFieldOfViewSpinner = 
-        (JSpinner)TestUtilities.getField(panel, "observerFieldOfViewSpinner");
-    JSpinner observerHeightSpinner = 
-        (JSpinner)TestUtilities.getField(panel, "observerHeightSpinner");
     ColorButton groundColorButton =  
         (ColorButton)TestUtilities.getField(panel, "groundColorButton");
     ColorButton skyColorButton = 
@@ -277,17 +274,11 @@ public class HomeCameraTest extends ComponentTestFixture {
     JSlider wallsTransparencySlider = 
         (JSlider)TestUtilities.getField(panel, "wallsTransparencySlider");
     // Check edited values
-    float oldCameraFieldOfView = observerCamera.getFieldOfView();
-    float oldCameraHeight = observerCamera.getHeight();
     int oldGroundColor = home.getEnvironment().getGroundColor();
     TextureImage oldGroundTexture = home.getEnvironment().getGroundTexture();
     int oldSkyColor = home.getEnvironment().getSkyColor();
     int oldLightColor = home.getEnvironment().getLightColor();
     float oldWallsAlpha = home.getEnvironment().getWallsAlpha();
-    assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(oldCameraFieldOfView)), 
-        observerFieldOfViewSpinner.getValue());
-    assertEquals("Wrong height", (float)Math.round(oldCameraHeight * 100) / 100, 
-        observerHeightSpinner.getValue());
     assertEquals("Wrong ground color", oldGroundColor, 
         groundColorButton.getColor().intValue());
     assertEquals("Wrong ground texture", oldGroundTexture, 
@@ -300,8 +291,6 @@ public class HomeCameraTest extends ComponentTestFixture {
         wallsTransparencySlider.getValue());
     
     // 12. Change dialog box values
-    observerFieldOfViewSpinner.setValue(90);
-    observerHeightSpinner.setValue(300f);
     groundColorButton.setColor(0xFFFFFF);
     skyColorButton.setColor(0x000000);
     brightnessSlider.setValue(128);
@@ -309,19 +298,19 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Click on Ok in dialog box
     doClickOnOkInDialog(attributesDialog, tester);
     // Check home attributes are modified accordingly
-    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
-        0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    assert3DAttributesEqualHomeAttributes(0xFFFFFF, null, 
+        0x000000, 0x808080, 1 / 255f * 128f, home);
     
     // 13. Undo changes
     runAction(controller, HomePane.ActionType.UNDO, tester);
     // Check home attributes have previous values
-    assert3DAttributesEqualHomeAttributes(oldCameraFieldOfView, oldCameraHeight, 
-        oldGroundColor, null, oldSkyColor, oldLightColor, oldWallsAlpha, home);
+    assert3DAttributesEqualHomeAttributes(oldGroundColor, null, 
+        oldSkyColor, oldLightColor, oldWallsAlpha, home);
     // Redo
     runAction(controller, HomePane.ActionType.REDO, tester);
     // Check home attributes are modified accordingly
-    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
-        0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    assert3DAttributesEqualHomeAttributes(0xFFFFFF, null, 
+        0x000000, 0x808080, 1 / 255f * 128f, home);
     
     // 14. Edit 3D view modal dialog box to change ground texture
     attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
@@ -375,8 +364,36 @@ public class HomeCameraTest extends ComponentTestFixture {
     doClickOnOkInDialog(attributesDialog, tester);
     
     // Check home attributes are modified accordingly
-    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
-        0xFFFFFF, firstTexture, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    assert3DAttributesEqualHomeAttributes(0xFFFFFF, firstTexture, 
+        0x000000, 0x808080, 1 / 255f * 128f, home);
+    
+    // 15. Edit observer camera attributes
+    tester.actionClick(planComponent, new ComponentLocation(new Point(115, 115)), InputEvent.BUTTON1_MASK, 2);
+    String observerCameraTitle = preferences.getLocalizedString(
+        ObserverCameraPanel.class, "observerCamera.title");
+    tester.waitForFrameShowing(new AWTHierarchy(), observerCameraTitle);
+    // Check observer camera dialog box is displayed
+    JDialog observerCameraDialog = (JDialog)new BasicFinder().find(frame, 
+        new WindowMatcher(observerCameraTitle));
+    assertTrue("Observer camera dialog not showing", observerCameraDialog.isShowing());
+
+    ObserverCameraPanel observerCameraPanel = (ObserverCameraPanel)TestUtilities.findComponent(
+        observerCameraDialog, ObserverCameraPanel.class);
+    JSpinner fieldOfViewSpinner = 
+        (JSpinner)TestUtilities.getField(observerCameraPanel, "fieldOfViewSpinner");
+    JSpinner observerHeightSpinner = 
+        (JSpinner)TestUtilities.getField(observerCameraPanel, "observerHeightSpinner");
+    assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(observerCamera.getFieldOfView())), 
+        fieldOfViewSpinner.getValue());
+    assertEquals("Wrong height", (float)Math.round(observerCamera.getHeight() * 100) / 100, 
+        observerHeightSpinner.getValue());
+    fieldOfViewSpinner.setValue(90);
+    observerHeightSpinner.setValue(300f);
+
+    // Click on OK in observer camera dialog box
+    doClickOnOkInDialog(observerCameraDialog, tester);
+    assertEquals("Wrong field of view", (float)Math.toRadians(90), observerCamera.getFieldOfView());
+    assertEquals("Wrong height", 300f, observerCamera.getHeight());
   }
 
   /**
@@ -403,7 +420,7 @@ public class HomeCameraTest extends ComponentTestFixture {
   }
   
   /**
-   * Cliks on OK in dialog to close it.
+   * Clicks on OK in dialog to close it.
    */
   private void doClickOnOkInDialog(JDialog dialog, JComponentTester tester) 
             throws ComponentSearchException {
@@ -455,16 +472,12 @@ public class HomeCameraTest extends ComponentTestFixture {
   /**
    * Asserts the 3D attributes given in parameter match <code>home</code> 3D attributes.
    */
-  private void assert3DAttributesEqualHomeAttributes(float cameraFieldOfView, 
-                                                     float cameraHeight, 
-                                                     int groundColor, 
-                                                     TextureImage groundTexture,
+  private void assert3DAttributesEqualHomeAttributes(int groundColor, 
+                                                     TextureImage groundTexture, 
                                                      int skyColor, 
-                                                     int lightColor, 
-                                                     float wallsAlpha, Home home) {
-    ObserverCamera observerCamera = home.getObserverCamera();
-    assertEquals("Wrong field of view", cameraFieldOfView, observerCamera.getFieldOfView());
-    assertEquals("Wrong height", cameraHeight, observerCamera.getHeight());
+                                                     int lightColor,
+                                                     float wallsAlpha, 
+                                                     Home home) {
     HomeEnvironment homeEnvironment = home.getEnvironment();
     assertEquals("Wrong ground color", groundColor, homeEnvironment.getGroundColor());
     if (groundTexture == null) {
