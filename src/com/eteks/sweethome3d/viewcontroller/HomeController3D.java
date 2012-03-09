@@ -575,7 +575,7 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraPitch(float delta) {
-      float newPitch = this.topCamera.getPitch() - delta;
+      float newPitch = this.topCamera.getPitch() + delta;
       // Check new pitch is between PI / 2 and PI / 16  
       newPitch = Math.max(newPitch, (float)Math.PI / 16);
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
