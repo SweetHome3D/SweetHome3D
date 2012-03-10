@@ -55,8 +55,6 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
   private JSpinner      xSpinner;
   private JLabel        yLabel;
   private JSpinner      ySpinner;
-  private JLabel        observerHeightLabel;
-  private JSpinner      observerHeightSpinner;
   private JLabel        elevationLabel;
   private JSpinner      elevationSpinner;
   private JLabel        yawLabel;
@@ -75,7 +73,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
    * @param controller the controller of this panel
    */
   public ObserverCameraPanel(UserPreferences preferences,
-                               ObserverCameraController controller) {
+                             ObserverCameraController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     createComponents(preferences, controller);
@@ -130,32 +128,14 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
         }
       });
 
-   // Create observer height label and spinner bound to OBSERVER_HEIGHT controller property
-    this.observerHeightLabel = new JLabel(String.format(SwingTools.getLocalizedLabelText(preferences, 
-        ObserverCameraPanel.class, "observerHeightLabel.text"), unitName));
-    float maximumElevation = preferences.getLengthUnit().getMaximumElevation();
-    final NullableSpinner.NullableSpinnerLengthModel observerHeightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getMinimumElevation(), maximumElevation * 15 / 14);
-    this.observerHeightSpinner = new AutoCommitSpinner(observerHeightSpinnerModel);
-    observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
-    observerHeightSpinnerModel.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setObserverHeight(observerHeightSpinnerModel.getLength());
-        }
-      });
-    controller.addPropertyChangeListener(ObserverCameraController.Property.OBSERVER_HEIGHT, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
-          }
-        });
-    
-    // Create camera elevation label and spinner bound to OBSERVER_CAMERA_ELEVATION controller property
+    // Create camera elevation label and spinner bound to ELEVATION controller property
     this.elevationLabel = new JLabel(String.format(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "elevationLabel.text"), unitName));
+    float maximumElevation = preferences.getLengthUnit().getMaximumElevation();
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getMinimumElevation(), maximumElevation);
     this.elevationSpinner = new AutoCommitSpinner(elevationSpinnerModel);    
+    elevationSpinnerModel.setLength((float)Math.round(controller.getElevation() * 100) / 100);
     elevationSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.setElevation(elevationSpinnerModel.getLength());
@@ -163,18 +143,9 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
       });
     PropertyChangeListener elevationChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          Float observerCameraElevation = controller.getElevation();
-          elevationSpinnerModel.setNullable(observerCameraElevation == null);
-          elevationSpinnerModel.setLength(observerCameraElevation != null
-              ? (float)Math.round(controller.getElevation() * 100) / 100
-              : null);
-          elevationLabel.setVisible(observerCameraElevation != null);
-          elevationSpinner.setVisible(observerCameraElevation != null);
-          observerHeightLabel.setVisible(observerCameraElevation == null);
-          observerHeightSpinner.setVisible(observerCameraElevation == null);
+          elevationSpinnerModel.setLength((float)Math.round(controller.getElevation() * 100) / 100);
         }
       };
-    elevationChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(ObserverCameraController.Property.ELEVATION, elevationChangeListener);
     
     // Create yaw label and spinner bound to YAW_IN_DEGREES controller property
@@ -248,8 +219,6 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(ObserverCameraController.Property.MINIMUM_ELEVATION, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            observerHeightSpinnerModel.setLength(Math.max(observerHeightSpinnerModel.getLength(), controller.getMinimumElevation()));
-            observerHeightSpinnerModel.setMinimum(controller.getMinimumElevation());
             if (elevationSpinnerModel.getLength() != null) {
               elevationSpinnerModel.setLength(Math.max(elevationSpinnerModel.getLength(), controller.getMinimumElevation()));
             }
@@ -272,9 +241,6 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
       this.yLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ObserverCameraPanel.class, "yLabel.mnemonic")).getKeyCode());
       this.yLabel.setLabelFor(this.ySpinner);
-      this.observerHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          ObserverCameraPanel.class, "observerHeightLabel.mnemonic")).getKeyCode());
-      this.observerHeightLabel.setLabelFor(this.observerHeightSpinner);
       this.elevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ObserverCameraPanel.class, "elevationLabel.mnemonic")).getKeyCode());
       this.elevationLabel.setLabelFor(this.elevationSpinner);
@@ -318,13 +284,6 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
     // Third row
-    locationPanel.add(this.observerHeightLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    locationPanel.add(this.observerHeightSpinner, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
-    // Elevation label and spinner at the same location but both are never visible at the same time 
     locationPanel.add(this.elevationLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
@@ -379,10 +338,8 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
   public void displayView(View parentView) {
     JFormattedTextField elevationSpinnerTextField = 
         ((JSpinner.DefaultEditor)this.elevationSpinner.getEditor()).getTextField();
-    JFormattedTextField observerHeightSpinnerTextField = 
-        ((JSpinner.DefaultEditor)this.observerHeightSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle, 
-            this.elevationSpinner.isVisible() ? elevationSpinnerTextField : observerHeightSpinnerTextField) == JOptionPane.OK_OPTION
+            elevationSpinnerTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyObserverCamera();
     }

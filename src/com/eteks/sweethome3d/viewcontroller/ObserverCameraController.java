@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
 
-
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.Level;
@@ -38,7 +37,7 @@ public class ObserverCameraController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {X, Y, OBSERVER_HEIGHT, ELEVATION, MINIMUM_ELEVATION,
+  public enum Property {X, Y, ELEVATION, MINIMUM_ELEVATION,
       YAW_IN_DEGREES, PITCH_IN_DEGREES, FIELD_OF_VIEW_IN_DEGREES, 
       OBSERVER_CAMERA_ELEVATION_ADJUSTED}
   
@@ -50,8 +49,7 @@ public class ObserverCameraController implements Controller {
 
   private float             x;
   private float             y;
-  private float             observerHeight;
-  private Float             elevation;
+  private float             elevation;
   private float             minimumElevation;
   private int               yawInDegrees;
   private int               pitchInDegrees;
@@ -111,14 +109,11 @@ public class ObserverCameraController implements Controller {
     ObserverCamera observerCamera = this.home.getObserverCamera();
     setX(observerCamera.getX());
     setY(observerCamera.getY());
-    setObserverHeight(observerCamera.getZ() * 15 / 14);
     List<Level> levels = this.home.getLevels();
     setMinimumElevation(levels.size() == 0 
         ? 10  
         : 10 + levels.get(0).getElevation());
-    setElevation(levels.size() == 0 || levels.get(0).getElevation() == 0 && levels.get(levels.size() - 1).getElevation() == 0  
-        ? null  
-        : observerCamera.getZ());
+    setElevation(observerCamera.getZ());
     setYawInDegrees((int)(Math.round(Math.toDegrees(observerCamera.getYaw()))));
     setPitchInDegrees((int)(Math.round(Math.toDegrees(
         observerCamera.getPitch())) + 360) % 360);
@@ -165,39 +160,20 @@ public class ObserverCameraController implements Controller {
   }
 
   /**
-   * Sets the edited observer height.
-   */
-  public void setObserverHeight(float observerHeight) {
-    if (observerHeight != this.observerHeight) {
-      float oldObserverHeight = this.observerHeight;
-      this.observerHeight = observerHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_HEIGHT.name(), oldObserverHeight, observerHeight);
-    }
-  }
-
-  /**
-   * Returns the edited observer height.
-   */
-  public float getObserverHeight() {
-    return this.observerHeight;
-  }
-
-  /**
    * Sets the edited camera elevation.
    */
-  public void setElevation(Float observerCameraElevation) {
-    if (observerCameraElevation != this.elevation
-        || observerCameraElevation != null && !observerCameraElevation.equals(this.elevation)) {
-      Float oldObserverCameraElevation = this.elevation;
-      this.elevation = observerCameraElevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldObserverCameraElevation, observerCameraElevation);
+  public void setElevation(float elevation) {
+    if (elevation != this.elevation) {
+      float oldObserverCameraElevation = this.elevation;
+      this.elevation = elevation;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldObserverCameraElevation, elevation);
     }
   }
 
   /**
-   * Returns the edited camera elevation or <code>null</code> if observer height should be preferred.
+   * Returns the edited camera elevation.
    */
-  public Float getElevation() {
+  public float getElevation() {
     return this.elevation;
   }
 
@@ -315,10 +291,7 @@ public class ObserverCameraController implements Controller {
   public void modifyObserverCamera() {
     float x = getX();
     float y = getY();
-    Float observerCameraElevation = getElevation();
-    float z = observerCameraElevation != null  
-        ? observerCameraElevation.floatValue()  
-        : getObserverHeight() * 14 / 15;
+    float z = getElevation();
     boolean observerCameraElevationAdjusted = isElevationAdjusted();
     Level selectedLevel = this.home.getSelectedLevel();
     if (observerCameraElevationAdjusted && selectedLevel != null) {
