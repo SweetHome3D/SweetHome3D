@@ -2266,6 +2266,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.MODIFY_FURNITURE, furnitureViewPopup);
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, furnitureViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, furnitureViewPopup);
+      furnitureViewPopup.add(createAlignOrDistributeMenu(home, preferences, true));
       furnitureViewPopup.addSeparator();
       furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
       furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
