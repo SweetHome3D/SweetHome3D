@@ -308,14 +308,14 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     // First row
     Insets labelInsets = new Insets(0, 0, 2, 5);
     groundPanel.add(this.groundColorRadioButton, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     groundPanel.add(this.groundColorButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Second row
     groundPanel.add(this.groundTextureRadioButton, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     groundPanel.add(this.groundTextureComponent, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -334,13 +334,13 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     JPanel skyPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "skyPanel.title"));
     skyPanel.add(this.skyColorRadioButton, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     skyPanel.add(this.skyColorButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     skyPanel.add(this.skyTextureRadioButton, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     skyPanel.add(this.skyTextureComponent, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
