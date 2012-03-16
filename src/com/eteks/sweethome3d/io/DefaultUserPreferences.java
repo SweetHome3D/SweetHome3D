@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
@@ -81,7 +82,7 @@ public class DefaultUserPreferences extends UserPreferences {
     setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
     setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));    
-    setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
+    setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase(Locale.ENGLISH)));
     setRulersVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
     setGridVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
     setFurnitureViewedFromTop(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
