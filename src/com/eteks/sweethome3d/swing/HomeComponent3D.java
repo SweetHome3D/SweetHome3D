@@ -1706,6 +1706,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());          
+            updateObjects(home.getRooms());
           } else if (Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
             updateObjects(home.getRooms());
           }  
