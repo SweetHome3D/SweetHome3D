@@ -63,9 +63,10 @@ public class HomeFileRecorder implements HomeRecorder {
    * Creates a home recorder able to write and read homes in files compressed 
    * at a level from 0 to 9. 
    * @param compressionLevel 0-9
-   * @param includeOnlyTemporaryContent if <code>true</code>, only content instances of 
+   * @param includeOnlyTemporaryContent if <code>true</code>, content instances of 
    *            <code>TemporaryURLContent</code> class referenced by the saved home 
-   *            will be written. If <code>false</code>, all the content instances 
+   *            as well as the content previously saved with it will be written. 
+   *            If <code>false</code>, all the content instances 
    *            referenced by the saved home will be written in the zip stream.  
    */
   public HomeFileRecorder(int     compressionLevel, 

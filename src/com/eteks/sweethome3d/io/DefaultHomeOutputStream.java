@@ -49,7 +49,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  */
 public class DefaultHomeOutputStream extends FilterOutputStream {
   private int                    compressionLevel;
-  private boolean                includeOnlyTemporaryContent;
+  private ContentRecording       contentRecording;
   private List<Content>          contents           = new ArrayList<Content>();
   private Map<URL, List<String>> zipUrlEntriesCache = new HashMap<URL, List<String>>();
   
@@ -64,17 +64,32 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   /**
    * Creates a stream that will serialize a home in a zip stream.
    * @param compressionLevel 0-9
-   * @param includeOnlyTemporaryContent if <code>true</code>, only content instances of 
+   * @param includeTemporaryContent if <code>true</code>, content instances of 
    *            <code>TemporaryURLContent</code> class referenced by the saved home 
-   *            will be written. If <code>false</code>, all the content instances 
+   *            as well as the content previously saved with it will be written. 
+   *            If <code>false</code>, all the content instances 
    *            referenced by the saved home will be written in the zip stream.  
    */
   public DefaultHomeOutputStream(OutputStream out,
-                          int          compressionLevel, 
-                          boolean      includeOnlyTemporaryContent) throws IOException {
+                                 int          compressionLevel, 
+                                 boolean      includeTemporaryContent) throws IOException {
+    this(out, compressionLevel, 
+        includeTemporaryContent 
+            ? ContentRecording.INCLUDE_TEMPORARY_CONTENT
+            : ContentRecording.INCLUDE_ALL_CONTENT);
+  }
+
+  /**
+   * Creates a stream that will serialize a home in a zip stream.
+   * @param compressionLevel 0-9
+   * @param contentRecording how content should be recorded with home.  
+   */
+  public DefaultHomeOutputStream(OutputStream out,
+                                 int          compressionLevel, 
+                                 ContentRecording contentRecording) throws IOException {
     super(out);
     this.compressionLevel = compressionLevel;
-    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
+    this.contentRecording = contentRecording;
   }
 
   /**
@@ -271,14 +286,16 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   private class HomeObjectOutputStream extends ObjectOutputStream {
     public HomeObjectOutputStream(OutputStream out) throws IOException {
       super(out);
-      enableReplaceObject(true);
+      if (contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
+        enableReplaceObject(true);
+      }
     }
 
     @Override
     protected Object replaceObject(Object obj) throws IOException {
       if (obj instanceof TemporaryURLContent 
           || obj instanceof HomeURLContent
-          || (!includeOnlyTemporaryContent && obj instanceof Content)) {
+          || (contentRecording == ContentRecording.INCLUDE_ALL_CONTENT && obj instanceof Content)) {
         // Add obj to Content objects list
         contents.add((Content)obj);
 

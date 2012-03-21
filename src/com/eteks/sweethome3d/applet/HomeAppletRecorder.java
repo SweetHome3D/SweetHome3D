@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 
+import com.eteks.sweethome3d.io.ContentRecording;
 import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.io.DefaultHomeOutputStream;
 import com.eteks.sweethome3d.model.Home;
@@ -43,10 +44,10 @@ import com.eteks.sweethome3d.model.RecorderException;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletRecorder implements HomeRecorder {
-  private final String writeHomeURL;
-  private final String readHomeURL;
-  private final String listHomesURL;
-  private final boolean includeOnlyTemporaryContent;
+  private final String           writeHomeURL;
+  private final String           readHomeURL;
+  private final String           listHomesURL;
+  private final ContentRecording contentRecording;
 
   /**
    * Creates a recorder that will use the URLs in parameter to write, read and list homes.
@@ -65,11 +66,25 @@ public class HomeAppletRecorder implements HomeRecorder {
   public HomeAppletRecorder(String writeHomeURL, 
                             String readHomeURL,
                             String listHomesURL,
-                            boolean includeOnlyTemporaryContent) {
+                            boolean includeTemporaryContent) {
+    this(writeHomeURL, readHomeURL, listHomesURL, 
+        includeTemporaryContent 
+            ? ContentRecording.INCLUDE_TEMPORARY_CONTENT
+            : ContentRecording.INCLUDE_ALL_CONTENT);
+  }
+  
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read and list homes.
+   * @see SweetHome3DApplet
+   */
+  public HomeAppletRecorder(String writeHomeURL, 
+                            String readHomeURL,
+                            String listHomesURL,
+                            ContentRecording contentRecording) {
     this.writeHomeURL = writeHomeURL;
     this.readHomeURL = readHomeURL;
     this.listHomesURL = listHomesURL;
-    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
+    this.contentRecording = contentRecording;
   }
   
   /**
@@ -95,7 +110,7 @@ public class HomeAppletRecorder implements HomeRecorder {
           + name.replace('\"', '\'') + "\"\r\n").getBytes("UTF-8"));
       out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes("UTF-8"));
       out.flush();
-      DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, this.includeOnlyTemporaryContent);
+      DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, this.contentRecording);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
       homeOut.flush();
@@ -138,7 +153,7 @@ public class HomeAppletRecorder implements HomeRecorder {
       connection = new URL(readHomeURL).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
-      in = new DefaultHomeInputStream(connection.getInputStream());
+      in = new DefaultHomeInputStream(connection.getInputStream(), this.contentRecording);
       // Read home with HomeInputStream
       Home home = in.readHome();
       return home;
