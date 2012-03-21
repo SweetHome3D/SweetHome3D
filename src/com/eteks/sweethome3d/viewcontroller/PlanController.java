@@ -5652,7 +5652,13 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (getResizedCompassAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
       } else {
-        getView().setCursor(PlanView.CursorType.SELECTION);
+        // If a selected item is under cursor position
+        List<Selectable> selectedItems = home.getSelectedItems();
+        if (selectedItems.size() > 0 && selectedItems.contains(getSelectableItemAt(x, y))) {
+          getView().setCursor(PlanView.CursorType.MOVE);
+        } else {
+          getView().setCursor(PlanView.CursorType.SELECTION);
+        }
       }
     }
 
@@ -5805,6 +5811,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
       this.duplicatedItems = null;
       this.duplicationActivated = wasDuplicationActivatedLastMousePress();
+      getView().setCursor(PlanView.CursorType.MOVE);
     }
     
     @Override
@@ -5992,7 +5999,7 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.movedPieceOfFurniture != null) {
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
           }
-          getView().setCursor(PlanView.CursorType.SELECTION);
+          getView().setCursor(PlanView.CursorType.MOVE);
         }
         
         selectItems(this.movedItems);

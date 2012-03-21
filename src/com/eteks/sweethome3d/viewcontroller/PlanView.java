@@ -33,7 +33,7 @@ public interface PlanView extends View {
   /**
    * The cursor types available in plan view.
    */
-  public enum CursorType {SELECTION, PANNING, DRAW, ROTATION, ELEVATION, HEIGHT, POWER, RESIZE, DUPLICATION}
+  public enum CursorType {SELECTION, PANNING, DRAW, ROTATION, ELEVATION, HEIGHT, POWER, RESIZE, DUPLICATION, MOVE}
   
   /**
    * Sets rectangle selection feedback coordinates. 

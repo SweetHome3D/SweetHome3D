@@ -228,6 +228,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor          heightCursor;
   private final Cursor          powerCursor;
   private final Cursor          resizeCursor;
+  private final Cursor          moveCursor;
   private final Cursor          panningCursor;
   private final Cursor          duplicationCursor;
   
@@ -556,6 +557,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         "resources/cursors/power32x32.png", "Power cursor", Cursor.MOVE_CURSOR);
     this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
         "resources/cursors/resize32x32.png", "Resize cursor", Cursor.MOVE_CURSOR);
+    this.moveCursor = createCustomCursor("resources/cursors/move16x16.png",
+        "resources/cursors/move32x32.png", "Move cursor", Cursor.MOVE_CURSOR);
     this.panningCursor = createCustomCursor("resources/cursors/panning16x16.png",
         "resources/cursors/panning32x32.png", "Panning cursor", Cursor.HAND_CURSOR);
     this.duplicationCursor = DragSource.DefaultCopyDrop;
@@ -1289,6 +1292,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                     String largeCursorImageResource,
                                     String cursorName,
                                     int    defaultCursor) {
+    if (OperatingSystem.isMacOSX()) {
+      smallCursorImageResource = smallCursorImageResource.replace(".png", "-macosx.png");
+    }
     return createCustomCursor(PlanComponent.class.getResource(smallCursorImageResource), 
         PlanComponent.class.getResource(largeCursorImageResource), 
         0.5f, 0.5f, cursorName, 
@@ -4427,9 +4433,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public void setCursor(CursorType cursorType) {
     switch (cursorType) {
-      case SELECTION :
-        setCursor(Cursor.getDefaultCursor());
-        break;
       case DRAW :
         setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
         break;
@@ -4453,6 +4456,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         break;
       case DUPLICATION :
         setCursor(this.duplicationCursor);
+        break;
+      case MOVE :
+        setCursor(this.moveCursor);
+        break;
+      case SELECTION :
+      default :
+        setCursor(Cursor.getDefaultCursor());
         break;
     }
   }
