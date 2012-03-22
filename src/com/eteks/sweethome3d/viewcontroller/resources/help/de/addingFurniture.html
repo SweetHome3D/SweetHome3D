@@ -29,22 +29,25 @@
     <tr> 
       <td><p>Um ihrem Haus Möbel hinzuzufügen, ziehen Sie (drag and drop) Möbel 
           vom Katalog auf Ihren Haus-Plan oder in Ihre Einrichtungs-Liste. </p>
-        <p align="center"><img src="images/addingFurniture.png" alt="Adding furniture" width="435" height="179"></p>
-        <p align="left">SIe können auch einige Möbel im Katalog auswählen und 
+        <p align="center"><img src="images/addingFurniture.png" alt="Mobiliar hinzuf&uuml;gen" width="435" height="179"></p>
+        <p align="left">Sie können auch einige Möbel im Katalog auswählen und 
           dann auf <i>Mobiliar &gt; Zum Haus hinzufügen</i> klicken, oder ebenso 
           auf das <i>Hinzufügen</i>-Symbol klicken.</p>
         <blockquote> 
-          <p align="left"><img src="../images/addToHomeTool.png" alt="Add to home tool" width="24" height="24" align="absmiddle">&nbsp;<i>Aus 
+          <p align="left"><img src="../images/addToHomeTool.png" alt="Zum Haus hinzuf&uuml;gen-Werkzeug" width="24" height="24" align="absmiddle">&nbsp;<i>Aus 
             dem Katalog ausgewähltes Mobiliar zum Haus hinzufügen </i> Symbol</p>
         </blockquote>
-        <p align="left">Wenn Sie Möbelstücke auf den Plan ziehen, ist deren linke 
-          obere Ecke dort, wo Sie den Mausknopf loslassen.<br>
-          Wenn Sie Möbelstücke auf die Liste ziehen, oder den oben genannten Knopf 
-          betätigen, ist die linke obere Ecke am Koordinatenpunkt (0, 0). </p>
+        
+        
+        <p align="left">Wenn Sie Möbelstücke auf die Mobiliarliste ziehen oder sie mit dem Men&uuml;eintrag <i>Mobiliar &gt; Zum Haus hinzuf&uuml;gen</i> einf&uuml;gen,
+          ist die linke obere Ecke am Koordinatenpunkt (0, 0).<br>
+          Wenn Sie Mobiliar auf den Plan ziehen, hängt seine Position und Ausrichtung von den nächsten Wänden ab.
+          Wenn es sich beim abgelegten Möbelstück um eine Tür oder ein Fenster handelt, wird dieses Möbelstück automatisch entsprechend der Ausrichtung und Dicke der Wand, die es schneidet, gedreht und skaliert.
+          Andere Arten von Möbelstücken werden so gedreht, dass ihre Rückseite an der nächsten Wand anliegt.</p>
         <p align="left">Die Möbelstücke, die Sie gerade hinzugefügt haben, sind 
           markiert und werden gleichzeitig in die Liste, den Plan und die 3D-Ansicht 
-          eingetragen. Während der Ladezeit der 3D-Modelle werden diese von weißen 
-          Platzhalten dargestellt.</p></td>
+          eingetragen. Während der Ladezeit der 3D-Modelle werden an ihrer Stelle weiße 
+          Platzhalter dargestellt.</p></td>
     </tr>
   </table>
   <div id="taskbox"> 
@@ -55,7 +58,7 @@
               <td> <p>&#149;</p></td>
               <td> <p>Wenn der Katalog ein Objekt nicht enthält, dass Sie Ihrer 
                   Wohnung hinzufügen möchten, können Sie im Katalog unter <i>Verschiedenes</i> 
-                  die <i>Kiste</i> nehmen und der gewünschten Größe anpassen. 
+                  die <i>Kiste</i> nehmen und sie der gewünschten Größe anpassen. 
                   Oder Sie <a href="importingFurniture.html">importieren</a> das 
                   gewünschte Möbelstück aus einer anderen Möbel-Bibliothek. </p></td>
             </tr>
@@ -63,6 +66,26 @@
               <td> <p>&#149;</p></td>
               <td> <p>F&uuml;r M&ouml;belst&uuml;cke, welche als T&uuml;ren oder Fenster klassifiziert sind, erzeugt Sweet Home 3D automatisch Aussparungen in den W&auml;nde an den Stellen, an denen Sie die T&uuml;r oder das Fenster platzieren. Entsprechend werden f&uuml;r Treppen &Ouml;ffnungen in Decken und den B&ouml;den der dar&uuml;berliegenden Niveaus erzeugt. F&uuml;r andere M&ouml;belst&uuml;cke werden keine solchen Berechnungen durchgef&uuml;hrt.</td>
             </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Wird ein Möbelstück an einer Position eingefügt, an der sich bereits ein anderes Möbelstück befindet, so wird das zuletzt eingefügte Möbelstück
+                entsprechend angehoben, um über dem zuvor vorhandenen zu erscheinen.
+                Dies gilt nur, wenn sich das Auswahlrechteck des neuen Möbelstücks innerhalb des Auswahlrechtecks des bereits vorhandenen befindet
+                und wenn seine Standardanhebung gleich null (das heißt, auf Bodenhöhe) ist.
+                Schneidet der Rahmen des neuen Möbelstücks den Rahmen eines anderen Möbelstücks, wird das neue Möbelstück mit demselben Winkel wie das andere Möbelstück rotiert und seitlich an ihm ausgerichtet.</td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Der Winkel, die Tiefe und die Anhebung des Möbelstücks, das mit der Maus hinzugefügt wurde, werden nur automatisch berechnet, wenn Magnetismus
+                in den <a href="editingPreferences.html">Einstellungen</a> aktiviert ist.</p>
+            </td>
+          </tr>
             <tr valign="top"> 
               <td> <p>&#149;</p></td>
               <td> <p>Nachdem ein M&ouml;belst&uuml;ck hinzugef&uuml;gt wurde, 

@@ -99,7 +99,7 @@
           doppelklicken Sie auf ein Möbelstück im Plan oder in der Liste, oder 
           in dem Sie <i>Mobiliar &gt; Ändern...</i> auswählen, nachdem Sie ein 
           Möbelstück ausgewählt haben.</p>
-        <p align="center"><img src="images/editingFurniture.png" alt="Modify furniture" width="403" height="378"></p>
+        <p align="center"><img src="images/editingFurniture.png" alt="Modify furniture" width="430" height="402"></p>
         <p>In diesem Dialog können Sie den Namen des Möbelstücks, die X- und Y-Koordinate 
           seines Mittelpunkts, seine Höhe über dem Boden, seine Breite, Tiefe und Höhe, 
           die Farbe, Textur und den Glanz, die Sichtbarkeit, den Rotationswinkel, 
@@ -160,11 +160,24 @@
               		Eine Lichtquelle hat keine physische 3D-Entsprechung und wird nur 
               		zu Bearbeitungszwecken in der 3D-Ansicht angezeigt.</td>
             </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Wird ein Möbelstück an einer Position eingefügt, an der sich bereits ein anderes Möbelstück befindet, so wird das zuletzt eingefügte Möbelstück
+                entsprechend angehoben, um über dem zuvor vorhandenen zu erscheinen.
+                Dies gilt nur, wenn sich das Auswahlrechteck des neuen Möbelstücks innerhalb des Auswahlrechtecks des bereits vorhandenen befindet
+                und wenn seine Standardanhebung gleich null (das heißt, auf Bodenhöhe) ist.
+                Schneidet der Rahmen des neuen Möbelstücks den Rahmen eines anderen Möbelstücks, wird das neue Möbelstück mit demselben Winkel wie das andere Möbelstück rotiert und seitlich an ihm ausgerichtet.</td>
+          </tr>
             <tr valign="top"> 
               <td> <p>&#149;</p></td>
               <td> <p> Falls im Plan ausgewählte Objekte Wände, Mobiliar und Dimensionen 
                   enthalten, werden all diese Objekte durch Drag&Drop mit der 
-                  Maus, oder durch die pfeiltasten, bewegt.</td>
+                  Maus, oder durch die pfeiltasten, bewegt.
+                  Wenn Sie beim Ziehen die <i>Strg</i>-Taste (unter Mac OS X die <i>Alt</i>-Taste) gedrückt halten,
+                  werden die gezogenen Objekte dupliziert.</td>
             </tr>
             <tr valign="top"> 
               <td width="16"> <p>&#149;</p></td>
