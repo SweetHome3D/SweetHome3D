@@ -40,7 +40,7 @@
            encoding="ISO-8859-1" target="1.1" source="1.2"/>      
     <!-- Compile other classes -->
     <javac srcdir="src" destdir="build/classes"
-           encoding="ISO-8859-1" target="1.5">
+           encoding="ISO-8859-1" target="1.5" source="1.5">
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
