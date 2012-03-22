@@ -2892,6 +2892,19 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the selected item at (<code>x</code>, <code>y</code>) point.
+   */
+  private boolean isItemSelectedAt(float x, float y) {
+    float margin = PIXEL_MARGIN / getScale();
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item.containsPoint(x, y, margin)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  /**
    * Returns the selectable item at (<code>x</code>, <code>y</code>) point.
    */
   public Selectable getSelectableItemAt(float x, float y) {
@@ -5653,8 +5666,7 @@ public class PlanController extends FurnitureController implements Controller {
         getView().setCursor(PlanView.CursorType.RESIZE);
       } else {
         // If a selected item is under cursor position
-        List<Selectable> selectedItems = home.getSelectedItems();
-        if (selectedItems.size() > 0 && selectedItems.contains(getSelectableItemAt(x, y))) {
+        if (isItemSelectedAt(x, y)) {
           getView().setCursor(PlanView.CursorType.MOVE);
         } else {
           getView().setCursor(PlanView.CursorType.SELECTION);
