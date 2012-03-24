@@ -965,9 +965,11 @@ public class FurnitureController implements Controller {
   private void alignSelectedFurniture(final AlignmentAction alignmentAction) {
     final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 2) {
+      final List<Selectable> oldSelection = this.home.getSelectedItems();
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
           AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
+      this.home.setSelectedItems(selectedFurniture);
       alignmentAction.alignFurniture(alignedFurniture, leadPiece);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
@@ -975,6 +977,7 @@ public class FurnitureController implements Controller {
           public void undo() throws CannotUndoException {
             super.undo();
             undoAlignFurniture(alignedFurniture); 
+            home.setSelectedItems(oldSelection);
           }
           
           @Override
@@ -1083,8 +1086,10 @@ public class FurnitureController implements Controller {
   public void distributeSelectedFurniture(final boolean horizontal) {
     final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 3) {
+      final List<Selectable> oldSelection = this.home.getSelectedItems();
       final AlignedPieceOfFurniture [] alignedFurniture = 
           AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, null);
+      this.home.setSelectedItems(selectedFurniture);
       doDistributeFurnitureAlongAxis(alignedFurniture, horizontal);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
@@ -1092,6 +1097,7 @@ public class FurnitureController implements Controller {
           public void undo() throws CannotUndoException {
             super.undo();
             undoAlignFurniture(alignedFurniture); 
+            home.setSelectedItems(oldSelection);
           }
           
           @Override
