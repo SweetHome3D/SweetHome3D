@@ -2338,7 +2338,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public float getArea(Area area) {
     float [][] pathPoints = getPathPoints(getPath(area), false);
-    if (pathPoints.length != 0) {
+    if (pathPoints.length > 1) {
       return new Room(pathPoints).getArea();
     } else {
       return 0;
