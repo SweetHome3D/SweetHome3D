@@ -2176,7 +2176,7 @@ public class PlanController extends FurnitureController implements Controller {
     BasicStroke stroke = new BasicStroke(margin);
     HomePieceOfFurniture referencePiece = null;
     Area intersectionWithReferencePieceArea = null;
-    float intersectionWithReferencePieceSurface = Float.MAX_VALUE;
+    float intersectionWithReferencePieceSurface = 0;
     float [][] referencePiecePoints = null;
     for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
       float homePieceElevation = homePiece.getGroundElevation();
@@ -2212,8 +2212,8 @@ public class PlanController extends FurnitureController implements Controller {
             insideArea.intersect(pieceArea);
             if (insideArea.isEmpty()) {
               float surface = getArea(intersection);
-              if (surface < intersectionWithReferencePieceSurface) {
-                surface = intersectionWithReferencePieceSurface;
+              if (surface > intersectionWithReferencePieceSurface) {
+                intersectionWithReferencePieceSurface = surface;
                 referencePiece = homePiece;
                 referencePiecePoints = points;
                 intersectionWithReferencePieceArea = intersection;
