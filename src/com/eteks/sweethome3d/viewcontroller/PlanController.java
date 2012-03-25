@@ -1723,7 +1723,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (referenceWall == null) {
       // Search if the border of a wall at floor level intersects with the given piece
       Area pieceAreaWithMargin = new Area(getRotatedRectangle(
-          piece.getX() - piece.getWidth() / 2 - margin, piece.getY()  - piece.getDepth() / 2 - margin, 
+          piece.getX() - piece.getWidth() / 2 - margin, piece.getY() - piece.getDepth() / 2 - margin, 
           piece.getWidth() + 2 * margin, piece.getDepth() + 2 * margin, piece.getAngle()));
       float intersectionWithReferenceWallSurface = 0;
       for (Wall wall : walls) {
@@ -1735,7 +1735,7 @@ public class PlanController extends FurnitureController implements Controller {
           if (!wallAreaIntersection.isEmpty()) {
             float surface = getArea(wallAreaIntersection);
             if (surface > intersectionWithReferenceWallSurface) {
-              surface = intersectionWithReferenceWallSurface;
+              intersectionWithReferenceWallSurface = surface;
               if (forceOrientation) {
                 referenceWall = getReferenceWall(wall, x, y);
               } else {
