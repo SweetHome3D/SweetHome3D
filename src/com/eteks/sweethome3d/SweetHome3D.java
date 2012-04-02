@@ -314,7 +314,7 @@ public class SweetHome3D extends HomeApplication {
         // Call run with the arguments it should have received
         EventQueue.invokeLater(new Runnable() {
           public void run() {
-            SweetHome3D.this.run(args);
+            SweetHome3D.this.start(args);
           }
         });
       }
@@ -401,7 +401,7 @@ public class SweetHome3D extends HomeApplication {
     // Run everything else in Event Dispatch Thread
     EventQueue.invokeLater(new Runnable() {
       public void run() {
-        SweetHome3D.this.run(args);
+        SweetHome3D.this.start(args);
       }
     });
   }
@@ -580,9 +580,10 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
-   * Runs application once initialized.
+   * Starts application once initialized and opens home passed in arguments. 
+   * This method is executed from Event Dispatch Thread.
    */
-  void run(String [] args) {
+  protected void start(String [] args) {
     if (args.length == 2 && args [0].equals("-open")) {
       // If requested home is already opened, show it
       for (Home home : getHomes()) {
@@ -605,7 +606,7 @@ public class SweetHome3D extends HomeApplication {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
         createHomeFrameController(createHome()).getHomeController().open(args [1]);
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.LANGUAGE_LIBRARY)) {
-        run(new String [0]);
+        start(new String [0]);
         final String languageLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
@@ -622,7 +623,7 @@ public class SweetHome3D extends HomeApplication {
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
-        run(new String [0]);
+        start(new String [0]);
         final String furnitureLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
@@ -631,7 +632,7 @@ public class SweetHome3D extends HomeApplication {
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.TEXTURES_LIBRARY)) {
-        run(new String [0]);
+        start(new String [0]);
         final String texturesLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
@@ -640,7 +641,7 @@ public class SweetHome3D extends HomeApplication {
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.PLUGIN)) {
-        run(new String [0]);
+        start(new String [0]);
         final String pluginName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {

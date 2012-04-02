@@ -169,14 +169,14 @@ class MacOSXConfiguration {
         // handleOpenFile is called when user opens a document
         // associated with a Java Web Start application
         // Just call main with -open file arguments as JNLP specifies 
-        homeApplication.run(new String [] {"-open", ev.getFilename()});
+        homeApplication.start(new String [] {"-open", ev.getFilename()});
       }
       
       @Override
       public void handleReOpenApplication(ApplicationEvent ev) {
         // handleReOpenApplication is called when user launches 
         // the application when it's already open
-        homeApplication.run(new String [0]);
+        homeApplication.start(new String [0]);
       }
     });
     macosxApplication.setEnabledAboutMenu(true);
