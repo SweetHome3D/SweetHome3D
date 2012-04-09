@@ -96,7 +96,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
    */
   private void createComponents(final Home home, 
                                 final UserPreferences preferences, final PlanController controller) {
-    this.planComponent = new PlanComponent(home, preferences, controller);
+    this.planComponent = createPlanComponent(home, preferences, controller);
     
     UIManager.getDefaults().put("TabbedPane.contentBorderInsets", OperatingSystem.isMacOSX()
         ? new Insets(2, 2, 2, 2)
@@ -199,6 +199,14 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
         new LanguageChangeListener(this));
+  }
+
+  /**
+   * Creates and returns the main plan component displayed and layout by this component. 
+   */
+  protected PlanComponent createPlanComponent(final Home home, final UserPreferences preferences,
+                                              final PlanController controller) {
+    return new PlanComponent(home, preferences, controller);
   }
 
   /**
