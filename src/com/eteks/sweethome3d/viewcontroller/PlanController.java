@@ -2771,7 +2771,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Room getResizedRoomAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Room) {
+        && selectedItems.get(0) instanceof Room
+        && isItemResizable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (room.isAtLevel(this.home.getSelectedLevel())
