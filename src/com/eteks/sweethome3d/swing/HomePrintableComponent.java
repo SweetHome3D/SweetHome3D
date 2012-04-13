@@ -217,8 +217,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
         || this.fixedFooterLabel != null) {
       if (homePrint != null) {
         FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
-        float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
-        + HEADER_FOOTER_MARGIN;
+        float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() + HEADER_FOOTER_MARGIN;
         
         // Retrieve variable values
         int pageNumber = page + 1; 
@@ -227,9 +226,16 @@ public class HomePrintableComponent extends JComponent implements Printable {
         if (homePrint.getPlanScale() != null) {
           planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
         } else {
+          Float preferredScale = null;
+          // Should create an interface to test if the component has a preferred scale
           if (planView instanceof PlanComponent) {
-            planScale = "1/" + Math.round(1 / ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
-          }        
+            preferredScale = ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat);
+          } else if (planView instanceof MultipleLevelsPlanPanel) {
+            preferredScale = ((MultipleLevelsPlanPanel)planView).getPrintPreferredScale(g, pageFormat);
+          }     
+          if (preferredScale != null) {
+            planScale = "1/" + Math.round(1 / preferredScale);
+          }
         }          
         if (page == 0) {
           this.printDate = new Date();
