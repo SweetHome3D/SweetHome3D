@@ -920,7 +920,7 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Creates preferences folder and its sudirectories if it doesn't exist.
+   * Creates preferences folder and its sub folders if it doesn't exist.
    */
   private void checkPreferencesFolder() throws IOException {
     File preferencesFolder = getPreferencesFolder();
