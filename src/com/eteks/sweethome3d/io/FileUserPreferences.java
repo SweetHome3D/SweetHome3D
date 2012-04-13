@@ -914,14 +914,35 @@ public class FileUserPreferences extends UserPreferences {
    * Returns a new file in user preferences folder.
    */
   private File createPreferencesFile(String filePrefix) throws IOException {
+    checkPreferencesFolder();
+    // Return a new file in preferences folder
+    return File.createTempFile(filePrefix, ".pref", getPreferencesFolder());
+  }
+  
+  /**
+   * Creates preferences folder and its sudirectories if it doesn't exist.
+   */
+  private void checkPreferencesFolder() throws IOException {
     File preferencesFolder = getPreferencesFolder();
     // Create preferences folder if it doesn't exist
     if (!preferencesFolder.exists()
         && !preferencesFolder.mkdirs()) {
       throw new IOException("Couldn't create " + preferencesFolder);
     }
-    // Return a new file in preferences folder
-    return File.createTempFile(filePrefix, ".pref", preferencesFolder);
+    checkPreferencesSubFolder(getLanguageLibrariesPluginFolders());
+    checkPreferencesSubFolder(getFurnitureLibrariesPluginFolders());
+    checkPreferencesSubFolder(getTexturesLibrariesPluginFolders());
+  }
+
+  /**
+   * Creates the first folder in the given folders.
+   */
+  private void checkPreferencesSubFolder(File [] librariesPluginFolders) {
+    if (librariesPluginFolders != null
+        && librariesPluginFolders.length > 0
+        && !librariesPluginFolders [0].exists()) {
+      librariesPluginFolders [0].mkdirs();
+    }
   }
 
   /**
@@ -1135,6 +1156,7 @@ public class FileUserPreferences extends UserPreferences {
     OutputStream tempOut = null;
     try {
       tempIn = new BufferedInputStream(new FileInputStream(libraryFile));
+      // Create folder if it doesn't exist
       folder.mkdirs();
       tempOut = new FileOutputStream(destinationFile);          
       byte [] buffer = new byte [8192];
@@ -1252,7 +1274,7 @@ public class FileUserPreferences extends UserPreferences {
     private void writePreferences() throws IOException {
       OutputStream out = null;
       try {
-        getPreferencesFolder().mkdirs();
+        checkPreferencesFolder();
         out = new FileOutputStream(new File(getPreferencesFolder(), PREFERENCES_FILE));
         this.preferencesProperties.storeToXML(out, "Portable user preferences 3.0");
       } finally {
