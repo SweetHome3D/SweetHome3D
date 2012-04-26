@@ -110,20 +110,16 @@ public class ResourceAction extends AbstractAction {
                                     Class<?> resourceClass, 
                                     String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
-    try {
-      putValue(NAME, SwingTools.getLocalizedLabelText(preferences, resourceClass, propertyPrefix + NAME));
-    } catch (IllegalArgumentException ex) {
-      // Ignore unknown resource
-    }
+    putValue(NAME, getOptionalString(preferences, resourceClass, propertyPrefix + NAME, true));
     putValue(DEFAULT, getValue(NAME));
-    putValue(POPUP, getOptionalString(preferences, resourceClass, propertyPrefix + POPUP));
+    putValue(POPUP, getOptionalString(preferences, resourceClass, propertyPrefix + POPUP, true));
     
     putValue(SHORT_DESCRIPTION, 
-        getOptionalString(preferences, resourceClass, propertyPrefix + SHORT_DESCRIPTION));
+        getOptionalString(preferences, resourceClass, propertyPrefix + SHORT_DESCRIPTION, false));
     putValue(LONG_DESCRIPTION, 
-        getOptionalString(preferences, resourceClass, propertyPrefix + LONG_DESCRIPTION));
+        getOptionalString(preferences, resourceClass, propertyPrefix + LONG_DESCRIPTION, false));
     
-    String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON);
+    String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON, false);
     if (smallIcon != null) {
       putValue(SMALL_ICON, new ImageIcon(resourceClass.getResource(smallIcon)));
     }
@@ -131,16 +127,16 @@ public class ResourceAction extends AbstractAction {
     String propertyKey = propertyPrefix + ACCELERATOR_KEY;
     // Search first if there's a key for this OS
     String acceleratorKey = getOptionalString(preferences, 
-        resourceClass, propertyKey + "." + System.getProperty("os.name"));
+        resourceClass, propertyKey + "." + System.getProperty("os.name"), false);
     if (acceleratorKey == null) {
       // Then search default value
-      acceleratorKey = getOptionalString(preferences, resourceClass, propertyKey);
+      acceleratorKey = getOptionalString(preferences, resourceClass, propertyKey, false);
     }
     if (acceleratorKey !=  null) {
       putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(acceleratorKey));
     }
     
-    String mnemonicKey = getOptionalString(preferences, resourceClass, propertyPrefix + MNEMONIC_KEY);
+    String mnemonicKey = getOptionalString(preferences, resourceClass, propertyPrefix + MNEMONIC_KEY, false);
     if (mnemonicKey != null) {
       putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
@@ -152,9 +148,12 @@ public class ResourceAction extends AbstractAction {
    */
   private String getOptionalString(UserPreferences preferences, 
                                    Class<?> resourceClass, 
-                                   String propertyKey) {
+                                   String propertyKey,
+                                   boolean label) {
     try {
-      String localizedText = preferences.getLocalizedString(resourceClass, propertyKey);
+      String localizedText = label 
+          ? SwingTools.getLocalizedLabelText(preferences, resourceClass, propertyKey)
+          : preferences.getLocalizedString(resourceClass, propertyKey);
       if (localizedText != null && localizedText.length() > 0) {
         return localizedText;
       } else {
