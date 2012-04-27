@@ -77,7 +77,7 @@ public class AutoRecoveryManager {
   /**
    * Creates a manager able to automatically recover <code>application</code> homes.
    * As this constructor adds some listeners on <code>application</code> instance and its preferences,
-   * it should be invoke only from the same thread where application is modified or at program startup. 
+   * it should be invoked only from the same thread where application is modified or at program startup. 
    */
   public AutoRecoveryManager(HomeApplication application) throws RecorderException {
     this.application = application;
