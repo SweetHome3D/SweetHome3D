@@ -584,7 +584,7 @@ public class SweetHome3D extends HomeApplication {
    * This method is executed from Event Dispatch Thread.
    */
   protected void start(String [] args) {
-    if (args.length == 2 && args [0].equals("-open")) {
+    if (args.length == 2 && args [0].equals("-open") && args [1].length() > 0) {
       // If requested home is already opened, show it
       for (Home home : getHomes()) {
         if (args [1].equals(home.getName())) {
