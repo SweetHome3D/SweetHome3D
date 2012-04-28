@@ -129,34 +129,34 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Add 1° to camera pitch
     tester.actionKeyStroke(KeyEvent.VK_PAGE_UP);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1000.1468f, 1025.8342f, 
-        (float)Math.PI, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1052.5009f, 973.4803f, 
+        (float)Math.PI, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 4. Remove 10° from camera yaw 
     tester.actionKeyStroke(KeyEvent.VK_LEFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(144.2812f, 998.8128f, 1025.8342f, 
-        (float)Math.PI - (float)Math.PI / 60, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(147.02121f, 1051.095f, 973.4803f, 
+        (float)Math.PI - (float)Math.PI / 60, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     // Add 1° to camera yaw 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-109.0647f, 978.874f, 1025.8342f, 
-        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-119.9497f, 1030.084f, 973.4803f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 5. Move camera 1cm forward
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_UP);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-85.8082f, 869.4608f, 907.961f, 
-        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-95.4424f, 914.7864f, 861.6227f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     // Move camera 10 backward 
     tester.actionKeyStroke(KeyEvent.VK_DOWN);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-90.4595f, 891.3434f, 931.5356f, 
-        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 + (float)Math.PI / 120, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-100.3438f, 937.8459f, 883.9942f, 
+        (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 6. View from observer
     runAction(controller, HomePane.ActionType.VIEW_FROM_OBSERVER, tester);
@@ -381,19 +381,19 @@ public class HomeCameraTest extends ComponentTestFixture {
         observerCameraDialog, ObserverCameraPanel.class);
     JSpinner fieldOfViewSpinner = 
         (JSpinner)TestUtilities.getField(observerCameraPanel, "fieldOfViewSpinner");
-    JSpinner observerHeightSpinner = 
-        (JSpinner)TestUtilities.getField(observerCameraPanel, "observerHeightSpinner");
+    JSpinner elevationSpinner = 
+        (JSpinner)TestUtilities.getField(observerCameraPanel, "elevationSpinner");
     assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(observerCamera.getFieldOfView())), 
         fieldOfViewSpinner.getValue());
-    assertEquals("Wrong height", (float)Math.round(observerCamera.getHeight() * 100) / 100, 
-        observerHeightSpinner.getValue());
+    assertEquals("Wrong elevation", (float)Math.round(observerCamera.getZ() * 100) / 100, 
+        elevationSpinner.getValue());
     fieldOfViewSpinner.setValue(90);
-    observerHeightSpinner.setValue(300f);
+    elevationSpinner.setValue(300f);
 
     // Click on OK in observer camera dialog box
     doClickOnOkInDialog(observerCameraDialog, tester);
     assertEquals("Wrong field of view", (float)Math.toRadians(90), observerCamera.getFieldOfView());
-    assertEquals("Wrong height", 300f, observerCamera.getHeight());
+    assertEquals("Wrong elevation", 300f, observerCamera.getZ());
   }
 
   /**
