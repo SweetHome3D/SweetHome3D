@@ -180,12 +180,16 @@
 
   <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries"
           description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
-    <!-- Build SweetHome3D.jar file from the content of built jars -->
+    <!-- Build SweetHome3DJavaWebStartBootstrap.jar file containing main class and signed JNLP file -->
+    <mkdir dir="build/JNLP-INF"/>
+  	<copy file="deploy/SweetHome3D.jnlp" tofile="build/JNLP-INF/APPLICATION.JNLP"/>
     <mkdir dir="deploy/lib"/>
     <zip destfile="deploy/lib/SweetHome3DJavaWebStartBootstrap.jar">
       <zipfileset src="build/SweetHome3D.jar"  
          includes="com/eteks/sweethome3d/SweetHome3DJavaWebStartBootstrap.class"/>
+      <fileset dir="build" includes="JNLP-INF/APPLICATION.JNLP"/>
     </zip>
+    <!-- Build SweetHome3D.jar file from the content of built jars -->
     <zip destfile="deploy/lib/SweetHome3D.jar">
       <zipfileset src="build/SweetHome3D.jar" 
           excludes="com/eteks/sweethome3d/SweetHome3DJavaWebStartBootstrap.class"/>
