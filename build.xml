@@ -820,9 +820,9 @@
       <footer><![CDATA[<a href='http://www.sweethome3d.com' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
       <bottom><![CDATA[<table align='center'><tr>
                        <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.com/images/eteks.gif' border='0'><a></td>
-                       <td>© Copyrights 2006-2011 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
+                       <td>© Copyrights 2006-2012 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
                            <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
-      <link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+      <link href="http://docs.oracle.com/javase/1.5.0/docs/api/"/>
       <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>
       <group title="Base classes" packages="*"/>
       <group title="Application and Applet" packages="com.eteks.sweethome3d:com.eteks.sweethome3d.applet"/>
