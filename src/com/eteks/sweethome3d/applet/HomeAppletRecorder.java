@@ -221,7 +221,7 @@ public class HomeAppletRecorder implements HomeRecorder {
           in.close();
         }
       } catch (IOException ex) {
-        throw new RecorderException("Can't close coonection", ex);
+        throw new RecorderException("Can't close connection", ex);
       }
     }
   }
