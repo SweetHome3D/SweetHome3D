@@ -1714,10 +1714,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   @Override
   protected void paintComponent(Graphics g) {
     Graphics2D g2D = (Graphics2D)g.create();
-    Color backgroundColor = getBackground();
-    Color foregroundColor = getForeground();
     if (this.backgroundPainted) {
-      paintBackground(g2D, backgroundColor);
+      paintBackground(g2D, getBackgroundColor(PaintMode.PAINT));
     }
     Insets insets = getInsets();
     // Clip component to avoid drawing in empty borders
@@ -1732,7 +1730,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.scale(paintScale, paintScale);
     setRenderingHints(g2D);
     try {
-      paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);
+      paintContent(g2D, paintScale, PaintMode.PAINT);
     } catch (InterruptedIOException ex) {
       // Ignore exception because it may happen only in EXPORT paint mode 
     }   
@@ -1834,7 +1832,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       setRenderingHints(g2D);
       try {
         // Print component contents
-        paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);
+        paintContent(g2D, printScale, PaintMode.PRINT);
       } catch (InterruptedIOException ex) {
         // Ignore exception because it may happen only in EXPORT paint mode 
       }   
@@ -1871,7 +1869,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       setRenderingHints(g2D);
       try {
         // Paint component contents
-        paintContent(g2D, clipboardScale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);
+        paintContent(g2D, clipboardScale, PaintMode.CLIPBOARD);
       } catch (InterruptedIOException ex) {
         // Ignore exception because it may happen only in EXPORT paint mode 
       }   
@@ -1929,7 +1927,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           -svgItemBounds.getMinY() + extraMargin);
       
       planComponent.checkCurrentThreadIsntInterrupted(PaintMode.EXPORT);
-      planComponent.paintContent(exportG2D, svgScale, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
+      planComponent.paintContent(exportG2D, svgScale, PaintMode.EXPORT);   
       exportG2D.endExport();
     }
   }
@@ -1996,6 +1994,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return true;
     } else {
       return false;
+    }
+  }
+
+  /**
+   * Returns the foreground color used to draw content. 
+   */
+  protected Color getForegroundColor(PaintMode mode) {
+    if (mode == PaintMode.PAINT) {
+      return getForeground();
+    } else {
+      return Color.BLACK;
+    }
+  }
+
+  /**
+   * Returns the background color used to draw content. 
+   */
+  protected Color getBackgroundColor(PaintMode mode) {
+    if (mode == PaintMode.PAINT) {
+      return getBackground();
+    } else {
+      return Color.WHITE;
     }
   }
 
@@ -2212,8 +2232,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * @throws InterruptedIOException if painting was interrupted (may happen only 
    *           if <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>).
    */
-  private void paintContent(Graphics2D g2D, float planScale, 
-                            Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
+  private void paintContent(Graphics2D g2D, float planScale, PaintMode paintMode) throws InterruptedIOException {
+    Color backgroundColor = getBackgroundColor(paintMode);
+    Color foregroundColor = getForegroundColor(paintMode);
     if (this.backgroundPainted) {
       paintBackgroundImage(g2D, paintMode);
       if (paintMode == PaintMode.PAINT) {
