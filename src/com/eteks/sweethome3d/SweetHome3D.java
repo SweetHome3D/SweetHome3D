@@ -97,7 +97,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * one of its <code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code>,
  * <code>recovery</code> subfolders don't exist, Sweet Home 3D will create it when needed.<br>
  * The other folders are used as resources where SH3F, SH3T, SH3L, SH3P files will be searched 
- * in their respective code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code> 
+ * in their respective <code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code> 
  * subfolders. Any of the cited folders may be an absolute path or a relative path to the folder
  * from which the program was launched.</li>
  *       
