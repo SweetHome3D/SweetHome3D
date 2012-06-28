@@ -1677,7 +1677,7 @@ public class PlanController extends FurnitureController implements Controller {
   protected void adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture piece, float x, float y) {
     Wall magnetWall = adjustPieceOfFurnitureOnWallAt(piece, x, y, true);
     if (adjustPieceOfFurnitureElevation(piece) == null) {
-      adjustPieceOfFurnitureSideBySideAt(piece, magnetWall == null, magnetWall != null);
+      adjustPieceOfFurnitureSideBySideAt(piece, magnetWall == null, magnetWall);
     }
   }
   
@@ -2164,7 +2164,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private HomePieceOfFurniture adjustPieceOfFurnitureSideBySideAt(HomePieceOfFurniture piece, 
                                                                   boolean forceOrientation, 
-                                                                  boolean alignOnlyOnSides) {
+                                                                  Wall magnetWall) {
     float [][] piecePoints = piece.getPoints();
     Area pieceArea = new Area(getPath(piecePoints));
     boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
@@ -2250,7 +2250,7 @@ public class PlanController extends FurnitureController implements Controller {
             * (-referencePiece.getWidth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
         deltaX = (float)(distance * Math.cos(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.sin(referencePiece.getAngle()));
-      } else if (!alignOnlyOnSides) {
+      } else {
         // Search the distance required to align piece on the front or back side of the reference piece
         Line2D centerLine = new Line2D.Float(referencePiece.getX(), referencePiece.getY(), 
             (referencePiecePoints [2][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [2][1] + referencePiecePoints [1][1]) / 2);
@@ -2259,6 +2259,9 @@ public class PlanController extends FurnitureController implements Controller {
             * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);      
         deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.cos(referencePiece.getAngle()));
+        if (!isIntersectionEmpty(pieceArea, magnetWall, deltaX, deltaY)) {
+          deltaX = deltaY = 0;
+        }
       }
       
       // Accept move only if reference piece and moved piece share some points
@@ -2282,7 +2285,7 @@ public class PlanController extends FurnitureController implements Controller {
               * (-piece.getWidth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxWidth / 2);      
           deltaX = -(float)(distance * Math.cos(piece.getAngle()));
           deltaY = -(float)(distance * Math.sin(piece.getAngle()));
-        } else if (!alignOnlyOnSides) {
+        } else {
           // Search the distance required to align piece on its front or back side 
           Line2D centerLine = new Line2D.Float(piece.getX(), piece.getY(), 
               (piecePoints [2][0] + piecePoints [1][0]) / 2, (piecePoints [2][1] + piecePoints [1][1]) / 2);
@@ -2291,6 +2294,9 @@ public class PlanController extends FurnitureController implements Controller {
               * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxDepth / 2);      
           deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
           deltaY = -(float)(distance * Math.cos(piece.getAngle()));
+          if (!isIntersectionEmpty(pieceArea, magnetWall, deltaX, deltaY)) {
+            deltaX = deltaY = 0;
+          }
         }
 
         // Accept move only if reference piece and moved piece share some points
@@ -2358,6 +2364,21 @@ public class PlanController extends FurnitureController implements Controller {
         piece2.getY() - piece2.getDepth() / 2 - epsilon, 
         piece2.getWidth() + 2 * epsilon, piece2.getDepth() + 2 * epsilon, piece2.getAngle())));
     return intersection.isEmpty();
+  }
+  
+  /**
+   * Returns <code>true</code> if the given area and wall don't intersect once the area is moved from 
+   * (<code>deltaX</code>, <code>deltaY</code>) vector.
+   */
+  private boolean isIntersectionEmpty(Area pieceArea, Wall wall,
+                                      float deltaX, float deltaY) {
+    if (wall != null) {
+      Area magnetWallAreaIntersection = new Area(getPath(wall.getPoints()));
+      magnetWallAreaIntersection.transform(AffineTransform.getTranslateInstance(-deltaX, -deltaY));
+      magnetWallAreaIntersection.intersect(pieceArea);
+      return magnetWallAreaIntersection.isEmpty();
+    }
+    return true;
   }
   
   /**
@@ -5846,7 +5867,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.magnetismEnabled) {
           Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
           if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
-            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall != null);
+            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall);
           }
           if (magnetWall != null) {
             getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
@@ -6287,7 +6308,7 @@ public class PlanController extends FurnitureController implements Controller {
 
         Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.draggedPieceOfFurniture, x, y, true);
         if (adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) == null) {
-          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, magnetWall == null, magnetWall != null);
+          adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, magnetWall == null, magnetWall);
         }
         if (magnetWall != null) {
           getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.draggedPieceOfFurniture, magnetWall));
