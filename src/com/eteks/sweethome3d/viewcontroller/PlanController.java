@@ -2376,7 +2376,7 @@ public class PlanController extends FurnitureController implements Controller {
       Area magnetWallAreaIntersection = new Area(getPath(wall.getPoints()));
       magnetWallAreaIntersection.transform(AffineTransform.getTranslateInstance(-deltaX, -deltaY));
       magnetWallAreaIntersection.intersect(pieceArea);
-      return magnetWallAreaIntersection.isEmpty();
+      return getArea(magnetWallAreaIntersection) < 1E-4f;
     }
     return true;
   }
