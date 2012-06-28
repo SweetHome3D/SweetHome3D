@@ -199,7 +199,7 @@ public class Room3D extends Object3DBranch {
           && roomElevation != firstLevelElevation;
 
       // Find rooms at the same elevation 
-      /// and room ceilings at same elevation as the floor bottom  
+      // and room ceilings at same elevation as the floor bottom  
       List<Room> roomsAtSameElevation = new ArrayList<Room>();
       List<Room> ceilingsAtSameFloorBottomElevation = new ArrayList<Room>();
       for (Room homeRoom : this.home.getRooms()) {
@@ -212,18 +212,18 @@ public class Room3D extends Object3DBranch {
                 && homeRoomLevel != null 
                 && (roomPart == FLOOR_PART 
                         && homeRoom.isFloorVisible()
-                        && Math.abs(roomElevation - homeRoomLevel.getElevation()) < 1E-5
+                        && Math.abs(roomElevation - homeRoomLevel.getElevation()) < 1E-4
                     || roomPart == CEILING_PART 
                         && homeRoom.isCeilingVisible()
                         && !lastLevel
                         && !isLastLevel(homeRoomLevel, levels)
-                        && Math.abs(roomElevation + roomLevel.getHeight() - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-5)) {         
+                        && Math.abs(roomElevation + roomLevel.getHeight() - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4)) {         
           roomsAtSameElevation.add(homeRoom);
         } else if (floorBottomVisible 
                     && homeRoomLevel != null 
                     && homeRoom.isCeilingVisible() 
                     && !isLastLevel(homeRoomLevel, levels) 
-                    && Math.abs(floorBottomElevation - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-5) {
+                    && Math.abs(floorBottomElevation - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4) {
           ceilingsAtSameFloorBottomElevation.add(homeRoom);
         }
       }
