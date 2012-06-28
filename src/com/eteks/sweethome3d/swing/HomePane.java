@@ -3410,7 +3410,7 @@ public class HomePane extends JRootPane implements HomeView {
         : "";
         
     // Use a clone of home to ignore selection
-    OBJExporter.exportHomeToFile(home.clone(), objFile, header);
+    OBJExporter.exportHomeToFile(this.home.clone(), objFile, header);
   }
   
   /**
