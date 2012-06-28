@@ -2259,7 +2259,7 @@ public class PlanController extends FurnitureController implements Controller {
             * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);      
         deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.cos(referencePiece.getAngle()));
-        if (!isIntersectionEmpty(pieceArea, magnetWall, deltaX, deltaY)) {
+        if (!isIntersectionEmpty(piece, magnetWall, deltaX, deltaY)) {
           deltaX = deltaY = 0;
         }
       }
@@ -2294,7 +2294,7 @@ public class PlanController extends FurnitureController implements Controller {
               * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxDepth / 2);      
           deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
           deltaY = -(float)(distance * Math.cos(piece.getAngle()));
-          if (!isIntersectionEmpty(pieceArea, magnetWall, deltaX, deltaY)) {
+          if (!isIntersectionEmpty(piece, magnetWall, deltaX, deltaY)) {
             deltaX = deltaY = 0;
           }
         }
@@ -2370,13 +2370,13 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns <code>true</code> if the given area and wall don't intersect once the area is moved from 
    * (<code>deltaX</code>, <code>deltaY</code>) vector.
    */
-  private boolean isIntersectionEmpty(Area pieceArea, Wall wall,
+  private boolean isIntersectionEmpty(HomePieceOfFurniture piece, Wall wall,
                                       float deltaX, float deltaY) {
     if (wall != null) {
-      Area magnetWallAreaIntersection = new Area(getPath(wall.getPoints()));
-      magnetWallAreaIntersection.transform(AffineTransform.getTranslateInstance(-deltaX, -deltaY));
-      magnetWallAreaIntersection.intersect(pieceArea);
-      return getArea(magnetWallAreaIntersection) < 1E-4f;
+      Area wallAreaIntersection = new Area(getPath(wall.getPoints()));
+      wallAreaIntersection.intersect(new Area(getRotatedRectangle(piece.getX() - piece.getWidth() / 2 + deltaX, 
+          piece.getY() - piece.getDepth() / 2 + deltaY, piece.getWidth(), piece.getDepth(), piece.getAngle())));
+      return getArea(wallAreaIntersection) < 1E-4f;
     }
     return true;
   }
