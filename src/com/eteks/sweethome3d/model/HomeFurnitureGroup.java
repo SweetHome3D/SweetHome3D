@@ -180,8 +180,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setDescription(null);
     setMovable(movable);
     setVisible(visible);
-    super.setColor(null);
-    super.setTexture(null);
+    if (this.texturable) {
+      super.setColor(null);
+      super.setTexture(null);
+    }
     super.setX((float)center.getX());
     super.setY((float)center.getY());
     super.setAngle(firstPiece.getAngle());
