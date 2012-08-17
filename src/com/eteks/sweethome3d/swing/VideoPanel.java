@@ -1081,7 +1081,7 @@ public class VideoPanel extends JPanel implements DialogView {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
       Camera recordedCamera = camera.clone();
-      recordedCamera.setLens(Camera.Lens.NORMAL);
+      recordedCamera.setLens(Camera.Lens.PINHOLE);
       recordedCamera.setTime(this.controller.getTime());
       cameraPath.add(recordedCamera);
       this.controller.setCameraPath(cameraPath);
@@ -1301,7 +1301,7 @@ public class VideoPanel extends JPanel implements DialogView {
             yaw + deltaYawAngle * j, pitch + deltaPitchAngle * j, 
             fieldOfView + deltaFieldOfViewAngle * j,
             time + deltaTime * j,
-            Camera.Lens.NORMAL));
+            Camera.Lens.PINHOLE));
       }
       
       x = newX;
