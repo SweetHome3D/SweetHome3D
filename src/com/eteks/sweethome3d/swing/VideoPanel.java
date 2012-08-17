@@ -1183,7 +1183,7 @@ public class VideoPanel extends JPanel implements DialogView {
    */
   private void deleteCameraPath() {
     List<Camera> cameraPath = Collections.emptyList();
-    this.controller.setCameraPath(cameraPath );
+    this.controller.setCameraPath(cameraPath);
   }
 
   /**
