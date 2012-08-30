@@ -86,16 +86,19 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
   }
 
   /**
+   * Returns the index of the given <code>piece</code> of furniture.
+   * @since 3.6
+   */
+  public int getIndexOfPieceOfFurniture(CatalogPieceOfFurniture piece) {
+    checkFurnitureSorted();
+    return this.furniture.indexOf(piece);
+  }
+
+  /**
    * Adds a piece of furniture to this category.
    * @param piece the piece to add.
-   * @throws IllegalHomonymException if a piece with same name as the one in
-   *           parameter already exists in this category.
    */
   void add(CatalogPieceOfFurniture piece) {
-    if (this.furniture.contains(piece)) {
-      throw new IllegalHomonymException(
-         piece.getName() + " already in category " + this.name);
-    }
     piece.setCategory(this);
     this.furniture.add(piece);    
     this.sorted = false;
@@ -118,7 +121,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
   }
   
   /**
-   * Returns true if this category and the one in parameter have the same name.
+   * Returns <code>true</code> if this category and the one in parameter have the same name.
    */
   @Override
   public boolean equals(Object obj) {

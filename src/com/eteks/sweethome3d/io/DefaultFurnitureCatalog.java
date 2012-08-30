@@ -44,7 +44,6 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
-import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -268,8 +267,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
   
-  private static final String HOMONYM_FURNITURE_FORMAT = "%s -%d-";
-  
   /**
    * Creates a default furniture catalog read from resources in the package of this class.
    */
@@ -321,7 +318,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
           for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
             // Try to load the properties file describing furniture catalog from current file  
-            readPluginFurnitureCatalog(pluginFurnitureCatalogFile, furnitureHomonymsCounter, identifiedFurniture);
+            readPluginFurnitureCatalog(pluginFurnitureCatalogFile, identifiedFurniture);
           }
         }
       }
@@ -342,10 +339,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    */
   public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls,
                                  URL    furnitureResourcesUrlBase) {
-    Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
-        new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
-
     try {
       SecurityManager securityManager = System.getSecurityManager();
       if (securityManager != null) {
@@ -356,7 +350,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         try {        
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
               new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
-          readFurniture(resource, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
+          readFurniture(resource, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, identifiedFurniture);
         } catch (MissingResourceException ex) {
           // Ignore malformed furniture catalog
         } catch (IllegalArgumentException ex) {
@@ -366,7 +360,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     } catch (AccessControlException ex) {
       // Use only furniture accessible through classpath
       ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault());
-      readFurniture(resource, null, furnitureResourcesUrlBase, furnitureHomonymsCounter, identifiedFurniture);
+      readFurniture(resource, null, furnitureResourcesUrlBase, identifiedFurniture);
     }
   }
 
@@ -376,7 +370,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Reads plug-in furniture catalog from the <code>pluginFurnitureCatalogFile</code> file. 
    */
   private void readPluginFurnitureCatalog(File pluginFurnitureCatalogFile,
-                                          Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter, 
                                           List<String> identifiedFurniture) {
     try {
       URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
@@ -397,8 +390,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
           new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));      
-      readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, furnitureHomonymsCounter,
-          identifiedFurniture);
+      readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, identifiedFurniture);
     } catch (MissingResourceException ex) {
       // Ignore malformed furniture catalog
     } catch (IllegalArgumentException ex) {
@@ -463,7 +455,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         return;
       }
     }
-    readFurniture(resource, null, null, furnitureHomonymsCounter, identifiedFurniture);
+    readFurniture(resource, null, null, identifiedFurniture);
   }
   
   /**
@@ -474,7 +466,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private void readFurniture(ResourceBundle resource, 
                              URL furnitureCatalogUrl,
                              URL furnitureResourcesUrlBase,
-                             Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
     CatalogPieceOfFurniture piece;
     for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl, furnitureResourcesUrlBase)) != null; i++) {
@@ -490,7 +481,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         }
       }
       FurnitureCategory pieceCategory = readFurnitureCategory(resource, i);
-      add(pieceCategory, piece, furnitureHomonymsCounter);
+      add(pieceCategory, piece);
     }
   }
 
@@ -587,62 +578,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     return new FurnitureCategory(category);
   }
     
-  /**
-   * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
-   * in its category its name will be suffixed indicating its sequence.
-   */
-  private void add(FurnitureCategory pieceCategory,
-                   CatalogPieceOfFurniture piece,
-                   Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
-    try {        
-      add(pieceCategory, piece);
-    } catch (IllegalHomonymException ex) {
-      // Search the counter of piece name
-      Map<CatalogPieceOfFurniture, Integer> categoryFurnitureHomonymsCounter = 
-          furnitureHomonymsCounter.get(pieceCategory);
-      if (categoryFurnitureHomonymsCounter == null) {
-        categoryFurnitureHomonymsCounter = new HashMap<CatalogPieceOfFurniture, Integer>();
-        furnitureHomonymsCounter.put(pieceCategory, categoryFurnitureHomonymsCounter);
-      }
-      Integer pieceHomonymCounter = categoryFurnitureHomonymsCounter.get(piece);
-      if (pieceHomonymCounter == null) {
-        pieceHomonymCounter = 1;
-      }
-      categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
-      // Try to add piece again to catalog with a suffix indicating its sequence
-      String suffixedName = String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter);
-      if (piece instanceof CatalogDoorOrWindow) {
-        CatalogDoorOrWindow doorOrWindow = (CatalogDoorOrWindow)piece;
-        piece = new CatalogDoorOrWindow(doorOrWindow.getId(), suffixedName,
-            doorOrWindow.getDescription(), doorOrWindow.getIcon(), doorOrWindow.getPlanIcon(), doorOrWindow.getModel(),
-            doorOrWindow.getWidth(), doorOrWindow.getDepth(), doorOrWindow.getHeight(), doorOrWindow.getElevation(), 
-            doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
-            doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
-            doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
-            doorOrWindow.isResizable(), doorOrWindow.isDeformable(), doorOrWindow.isTexturable(), 
-            doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage(), doorOrWindow.getCurrency());
-      } else if (piece instanceof CatalogLight) {
-        CatalogLight light = (CatalogLight)piece;
-        piece = new CatalogLight(light.getId(), suffixedName,
-            light.getDescription(), light.getIcon(), light.getPlanIcon(), light.getModel(),
-            light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
-            light.isMovable(), light.getLightSources(), light.getStaircaseCutOutShape(), 
-            light.getModelRotation(), light.getCreator(),
-            light.isResizable(), light.isDeformable(), light.isTexturable(),
-            light.getPrice(), light.getValueAddedTaxPercentage(), light.getCurrency());
-      } else {
-        piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
-            piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
-            piece.getWidth(), piece.getDepth(), piece.getHeight(), 
-            piece.getElevation(), piece.isMovable(), piece.getStaircaseCutOutShape(), 
-            piece.getModelRotation(), piece.getCreator(),
-            piece.isResizable(), piece.isDeformable(), piece.isTexturable(),
-            piece.getPrice(), piece.getValueAddedTaxPercentage(), piece.getCurrency());
-      }
-      add(pieceCategory, piece, furnitureHomonymsCounter);
-    }
-  }
-  
   /**
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle

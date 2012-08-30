@@ -46,7 +46,6 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
-import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
@@ -251,11 +250,7 @@ public class AppletUserPreferences extends UserPreferences {
         new DefaultFurnitureCatalog(this.pluginFurnitureCatalogURLs, this.furnitureResourcesUrlBase);
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        try {
-          furnitureCatalog.add(category, piece);
-        } catch (IllegalHomonymException ex) {
-          // Ignore pieces that have the same name as an existing piece
-        }
+        furnitureCatalog.add(category, piece);
       }
     }
     
@@ -273,11 +268,7 @@ public class AppletUserPreferences extends UserPreferences {
         new DefaultTexturesCatalog(this.pluginTexturesCatalogURLs, this.texturesResourcesUrlBase);
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
-        try {
-          texturesCatalog.add(category, texture);
-        } catch (IllegalHomonymException ex) {
-          // Ignore textures that have the same name as an existing piece
-        }
+        texturesCatalog.add(category, texture);
       }
     }
   }

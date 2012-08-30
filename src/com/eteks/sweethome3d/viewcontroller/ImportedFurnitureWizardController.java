@@ -24,7 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -691,22 +690,8 @@ public class ImportedFurnitureWizardController extends WizardController
    * Returns <code>true</code> if piece name is valid.
    */
   public boolean isPieceOfFurnitureNameValid() {
-    if (this.category == null) {
-      return true;
-    }
-    CatalogPieceOfFurniture temporaryPiece = 
-        new CatalogPieceOfFurniture(this.name, null, null, 0, 0, 0, 0, false, null, null, false, 0, false);
-    if (this.piece != null
-        && this.category == this.piece.getCategory()
-        // Check piece names are equal with binary search to keep locale dependence
-        && Collections.binarySearch(this.category.getFurniture(), this.piece)
-              == Collections.binarySearch(this.category.getFurniture(), temporaryPiece)) {
-      // Accept piece name if it didn't change 
-      return true;
-    }
     return this.name != null
-            && this.name.length() > 0
-            && Collections.binarySearch(this.category.getFurniture(), temporaryPiece) < 0;
+        && this.name.length() > 0;
   }
 
   /**

@@ -588,20 +588,20 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   }
   
   /** 
-   * Returns true if this piece and the one in parameter have the same name.
+   * Returns <code>true</code> if this piece and the one in parameter are the same objects.
+   * Note that, from version 3.6, two pieces of furniture can have the same name.
    */
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof CatalogPieceOfFurniture
-           && COMPARATOR.equals(this.name, ((CatalogPieceOfFurniture)obj).name);
+    return super.equals(obj);
   }
 
   /** 
-   * Returns a hash code computed from the name of this piece.
+   * Returns default hash code.
    */
    @Override
   public int hashCode() {
-    return this.name.hashCode();
+    return super.hashCode();
   }
 
   /** 

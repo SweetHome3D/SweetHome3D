@@ -23,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
-import java.util.Collections;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
@@ -296,19 +295,9 @@ public class ImportedTextureWizardController extends WizardController
    * Returns <code>true</code> if texture name is valid.
    */
   public boolean isTextureNameValid() {
-    CatalogTexture temporaryTexture = new CatalogTexture(this.name, null, 0, 0);
-    if (this.texture != null
-        && this.category == this.texture.getCategory()
-        // Check texture names are equal with binary search to keep locale dependence
-        && Collections.binarySearch(this.category.getTextures(), this.texture)
-              == Collections.binarySearch(this.category.getTextures(), temporaryTexture)) {
-      // Accept piece name if it didn't change 
-      return true;
-    }
     return this.name != null
         && this.name.length() > 0
-        && this.category != null
-        && Collections.binarySearch(this.category.getTextures(), temporaryTexture) < 0;
+        && this.category != null;
   }
 
   /**

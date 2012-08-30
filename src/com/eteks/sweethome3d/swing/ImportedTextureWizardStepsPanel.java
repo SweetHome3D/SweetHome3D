@@ -199,7 +199,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
-    final Color defaultNameTextFieldColor = this.nameTextField.getForeground();
     DocumentListener nameListener = new DocumentListener() {
         public void changedUpdate(DocumentEvent ev) {
           nameTextField.getDocument().removeDocumentListener(this);
@@ -223,7 +222,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             if (!nameTextField.getText().trim().equals(controller.getName())) {
               nameTextField.setText(controller.getName());
             }
-            updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
 
@@ -295,7 +293,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             if (category != null) {
               categoryComboBox.setSelectedItem(category);
             }
-            updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
 
@@ -456,16 +453,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     }
   }
 
-  /**
-   * Updates name text field foreground color depending on the validity
-   * of the piece name.
-   */
-  private void updateNameTextFieldForeground(Color defaultNameTextFieldColor) {
-    nameTextField.setForeground(controller.isTextureNameValid() 
-        ? defaultNameTextFieldColor
-        : Color.RED);
-  }
-  
   /**
    * Updates controller initial values from <code>textureImage</code>. 
    */

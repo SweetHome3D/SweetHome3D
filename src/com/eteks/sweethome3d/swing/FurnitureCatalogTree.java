@@ -264,8 +264,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       if (this.defaultFont == null) {
         this.defaultFont = label.getFont();
         this.modifiablePieceFont = 
-            new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
-        
+            new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());        
       }
       // If node is a category, change label text
       if (value instanceof FurnitureCategory) {
@@ -341,7 +340,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       if (parent instanceof FurnitureCatalog) {
         return Collections.binarySearch(((FurnitureCatalog)parent).getCategories(), (FurnitureCategory)child);
       } else {
-        return Collections.binarySearch(((FurnitureCategory)parent).getFurniture(), (CatalogPieceOfFurniture)child);
+        return ((FurnitureCategory)parent).getIndexOfPieceOfFurniture((CatalogPieceOfFurniture)child);
       }
     }
 

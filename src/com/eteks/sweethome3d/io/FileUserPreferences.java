@@ -58,7 +58,6 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
-import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
@@ -390,11 +389,7 @@ public class FileUserPreferences extends UserPreferences {
         new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders());
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        try {
-          furnitureCatalog.add(category, piece);
-        } catch (IllegalHomonymException ex) {
-          // Ignore pieces that have the same name as an existing piece
-        }
+        furnitureCatalog.add(category, piece);
       }
     }
   }
@@ -418,11 +413,7 @@ public class FileUserPreferences extends UserPreferences {
         new DefaultTexturesCatalog(this, getTexturesLibrariesPluginFolders());
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
-        try {
-          texturesCatalog.add(category, texture);
-        } catch (IllegalHomonymException ex) {
-          // Ignore textures that have the same name as an existing piece
-        }
+        texturesCatalog.add(category, texture);
       }
     }
   }
@@ -478,19 +469,7 @@ public class FileUserPreferences extends UserPreferences {
             width, depth, height, elevation, movable, 
             staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
       }
-      try {        
-        getFurnitureCatalog().add(pieceCategory, piece);
-      } catch (IllegalHomonymException ex) {
-        // If a piece with same name and category already exists in furniture catalog
-        // replace the existing piece by the new one
-        List<FurnitureCategory> categories = getFurnitureCatalog().getCategories();
-        int categoryIndex = Collections.binarySearch(categories, pieceCategory);
-        List<CatalogPieceOfFurniture> furniture = categories.get(categoryIndex).getFurniture();
-        int existingPieceIndex = Collections.binarySearch(furniture, piece);        
-        getFurnitureCatalog().delete(furniture.get(existingPieceIndex));
-        
-        getFurnitureCatalog().add(pieceCategory, piece);
-      }
+      getFurnitureCatalog().add(pieceCategory, piece);
     }
   }  
 
@@ -561,19 +540,7 @@ public class FileUserPreferences extends UserPreferences {
 
       TexturesCategory textureCategory = new TexturesCategory(category);
       CatalogTexture texture = new CatalogTexture(name, image, width, height, true);
-      try {        
-        getTexturesCatalog().add(textureCategory, texture);
-      } catch (IllegalHomonymException ex) {
-        // If a texture with same name and category already exists in textures catalog
-        // replace the existing texture by the new one
-        List<TexturesCategory> categories = getTexturesCatalog().getCategories();
-        int categoryIndex = Collections.binarySearch(categories, textureCategory);
-        List<CatalogTexture> textures = categories.get(categoryIndex).getTextures();
-        int existingTextureIndex = Collections.binarySearch(textures, texture);        
-        getTexturesCatalog().delete(textures.get(existingTextureIndex));
-        
-        getTexturesCatalog().add(textureCategory, texture);
-      }
+      getTexturesCatalog().add(textureCategory, texture);
     }
   }  
 

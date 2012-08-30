@@ -117,7 +117,7 @@ public abstract class FurnitureCatalog {
     category.add(piece);
     
     this.furnitureChangeSupport.fireCollectionChanged(piece, 
-        Collections.binarySearch(category.getFurniture(), piece), CollectionEvent.Type.ADD);
+        category.getIndexOfPieceOfFurniture(piece), CollectionEvent.Type.ADD);
   }
 
   /**
@@ -132,7 +132,7 @@ public abstract class FurnitureCatalog {
     FurnitureCategory category = piece.getCategory();
     // Remove piece from its category
     if (category != null) {
-      int pieceIndex = Collections.binarySearch(category.getFurniture(), piece);
+      int pieceIndex = category.getIndexOfPieceOfFurniture(piece);
       if (pieceIndex >= 0) {
         category.delete(piece);
         

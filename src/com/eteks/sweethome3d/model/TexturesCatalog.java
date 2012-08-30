@@ -116,7 +116,7 @@ public abstract class TexturesCatalog {
     category.add(texture);
     
     this.texturesChangeSupport.fireCollectionChanged(texture, 
-        Collections.binarySearch(category.getTextures(), texture), CollectionEvent.Type.ADD);
+        category.getIndexOfTexture(texture), CollectionEvent.Type.ADD);
   }
 
   /**
@@ -130,8 +130,8 @@ public abstract class TexturesCatalog {
     TexturesCategory category = texture.getCategory();
     // Remove texture from its category
     if (category != null) {
-      int pieceIndex = Collections.binarySearch(category.getTextures(), texture);
-      if (pieceIndex >= 0) {
+      int textureIndex = category.getIndexOfTexture(texture);
+      if (textureIndex >= 0) {
         category.delete(texture);
         
         if (category.getTexturesCount() == 0) {
@@ -140,7 +140,7 @@ public abstract class TexturesCatalog {
           this.categories.remove(category);
         }
         
-        this.texturesChangeSupport.fireCollectionChanged(texture, pieceIndex, CollectionEvent.Type.DELETE);
+        this.texturesChangeSupport.fireCollectionChanged(texture, textureIndex, CollectionEvent.Type.DELETE);
         return;
       }
     }

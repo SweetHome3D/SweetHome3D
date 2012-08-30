@@ -162,20 +162,20 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
   }
   
   /** 
-   * Returns true if this texture and the one in parameter have the same name.
+   * Returns true if this texture and the one in parameter are the same objects.
+   * Note that, from version 3.6, two textures can have the same name.
    */
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof CatalogTexture
-           && COMPARATOR.equals(this.name, ((CatalogTexture)obj).name);
+    return super.equals(obj);
   }
 
   /** 
-   * Returns a hash code computed from the name of this texture.
+   * Returns default hash code.
    */
    @Override
   public int hashCode() {
-    return this.name.hashCode();
+    return super.hashCode();
   }
 
   /** 

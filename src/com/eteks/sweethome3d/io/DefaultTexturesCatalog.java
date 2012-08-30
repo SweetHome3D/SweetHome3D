@@ -39,7 +39,6 @@ import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -110,8 +109,6 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
 
   private static final String ADDITIONAL_TEXTURES_CATALOG_FAMILY  = "AdditionalTexturesCatalog";
 
-  private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
-
   /**
    * Creates a default textures catalog read from resources.
    */
@@ -142,11 +139,9 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   public DefaultTexturesCatalog(final UserPreferences preferences, 
                                 File [] texturesPluginFolders) {
-    Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
-        new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
-    
-    readDefaultTexturesCatalogs(preferences, textureHomonymsCounter, identifiedTextures);
+
+    readDefaultTexturesCatalogs(preferences, identifiedTextures);
 
     if (texturesPluginFolders != null) {
       for (File texturesPluginFolder : texturesPluginFolders) {
@@ -163,7 +158,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
           Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
           for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
             // Try to load the properties file describing textures catalog from current file  
-            readPluginTexturesCatalog(pluginTexturesCatalogFile, textureHomonymsCounter, identifiedTextures);
+            readPluginTexturesCatalog(pluginTexturesCatalogFile, identifiedTextures);
           }
         }
       }
@@ -183,10 +178,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls,
                                 URL    texturesResourcesUrlBase) {
-    Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
-        new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
-
     try {
       SecurityManager securityManager = System.getSecurityManager();
       if (securityManager != null) {
@@ -197,7 +189,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         try {
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
                   new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));
-          readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
+          readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, identifiedTextures);
         } catch (MissingResourceException ex) {
           // Ignore malformed textures catalog
         } catch (IllegalArgumentException ex) {
@@ -207,7 +199,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     } catch (AccessControlException ex) {
       // Use only textures accessible through classpath
       ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault());
-      readTextures(resource, null, texturesResourcesUrlBase, textureHomonymsCounter, identifiedTextures);
+      readTextures(resource, null, texturesResourcesUrlBase, identifiedTextures);
     }
   }
 
@@ -217,7 +209,6 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * Reads plug-in textures catalog from the <code>pluginTexturesCatalogFile</code> file. 
    */
   private void readPluginTexturesCatalog(File pluginTexturesCatalogFile,
-                                         Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter, 
                                          List<String> identifiedTextures) {
     try {
       URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
@@ -239,7 +230,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
           new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));      
-      readTextures(resourceBundle, pluginTexturesCatalogUrl, null, textureHomonymsCounter, identifiedTextures);
+      readTextures(resourceBundle, pluginTexturesCatalogUrl, null, identifiedTextures);
     } catch (MissingResourceException ex) {
       // Ignore malformed textures catalog
     } catch (IllegalArgumentException ex) {
@@ -253,17 +244,16 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * Reads the default textures described in properties files accessible through classpath.
    */
   private void readDefaultTexturesCatalogs(final UserPreferences preferences,
-                                           Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
                                            List<String> identifiedTextures) {
     // Try to load com.eteks.sweethome3d.io.DefaultTexturesCatalog property file from classpath 
     final String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
     readTexturesCatalog(defaultTexturesCatalogFamily, 
-        preferences, textureHomonymsCounter, identifiedTextures);
+        preferences, identifiedTextures);
 
     // Try to load com.eteks.sweethome3d.io.AdditionalTexturesCatalog property file from classpath 
     String classPackage = defaultTexturesCatalogFamily.substring(0, defaultTexturesCatalogFamily.lastIndexOf("."));
     readTexturesCatalog(classPackage + "." + ADDITIONAL_TEXTURES_CATALOG_FAMILY, 
-        preferences, textureHomonymsCounter, identifiedTextures);
+        preferences, identifiedTextures);
   }
   
   /**
@@ -271,7 +261,6 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   private void readTexturesCatalog(final String texturesCatalogFamily,
                                    final UserPreferences preferences,
-                                   Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
                                    List<String> identifiedTextures) {
     ResourceBundle resource;
     if (preferences != null) {
@@ -300,7 +289,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         return;
       }
     }
-    readTextures(resource, null, null, textureHomonymsCounter, identifiedTextures);
+    readTextures(resource, null, null, identifiedTextures);
   }
   
   /**
@@ -311,7 +300,6 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private void readTextures(ResourceBundle resource, 
                             URL texturesUrl,
                             URL texturesResourcesUrlBase,
-                            Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
                             List<String> identifiedTextures) {
     for (int index = 1;; index++) {
       String name = null;
@@ -342,39 +330,10 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         }
       }
 
-      add(new TexturesCategory(category), texture, textureHomonymsCounter);
+      add(new TexturesCategory(category), texture);
     }
   }
   
-  /**
-   * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
-   * in its category its name will be suffixed indicating its sequence.
-   */
-  private void add(TexturesCategory textureCategory,
-                   CatalogTexture texture,
-                   Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
-    try {        
-      add(textureCategory, texture);
-    } catch (IllegalHomonymException ex) {
-      // Search the counter of piece name
-      Map<CatalogTexture, Integer> categoryTextureHomonymsCounter = 
-        textureHomonymsCounter.get(textureCategory);
-      if (categoryTextureHomonymsCounter == null) {
-        categoryTextureHomonymsCounter = new HashMap<CatalogTexture, Integer>();
-        textureHomonymsCounter.put(textureCategory, categoryTextureHomonymsCounter);
-      }
-      Integer textureHomonymCounter = categoryTextureHomonymsCounter.get(texture);
-      if (textureHomonymCounter == null) {
-        textureHomonymCounter = 1;
-      }
-      categoryTextureHomonymsCounter.put(texture, ++textureHomonymCounter);
-      // Try to add texture again to catalog with a suffix indicating its sequence
-      texture = new CatalogTexture(String.format(HOMONYM_TEXTURE_FORMAT, texture.getName(), textureHomonymCounter), 
-          texture.getImage(), texture.getWidth(), texture.getHeight());
-      add(textureCategory, texture, textureHomonymsCounter);
-    }
-  }
-
   /**
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle

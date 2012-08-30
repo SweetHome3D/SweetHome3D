@@ -400,7 +400,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
-    final Color defaultNameTextFieldColor = this.nameTextField.getForeground();
     DocumentListener nameListener = new DocumentListener() {
         public void changedUpdate(DocumentEvent ev) {
           nameTextField.getDocument().removeDocumentListener(this);
@@ -424,7 +423,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             if (!nameTextField.getText().trim().equals(controller.getName())) {
               nameTextField.setText(controller.getName());
             }
-            updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
 
@@ -513,7 +511,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             if (category != null) {
               categoryComboBox.setSelectedItem(category);
             }
-            updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
     if (this.categoryComboBox.getItemCount() > 0) {
@@ -1019,16 +1016,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     }
   }
 
-  /**
-   * Updates name text field foreground color depending on the validity
-   * of the piece name.
-   */
-  private void updateNameTextFieldForeground(Color defaultNameTextFieldColor) {
-    nameTextField.setForeground(this.controller.isPieceOfFurnitureNameValid() 
-        ? defaultNameTextFieldColor
-        : Color.RED);
-  }
-  
   /**
    * Returns the transformation matching current model rotation.
    */
