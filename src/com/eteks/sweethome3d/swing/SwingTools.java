@@ -531,11 +531,13 @@ public class SwingTools {
             try {
               while (splashScreenWindow.isVisible()) {
                 Thread.sleep(500);
-                // If an other frame is created, dispose splash window
+                // If an other frame is showing, dispose splash window
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      if (Frame.getFrames().length > 1) {
-                        splashScreenWindow.dispose();
+                      for (Frame frame : Frame.getFrames()) {
+                        if (frame.isShowing()) {
+                          splashScreenWindow.dispose();
+                        }
                       }
                     }
                   });
