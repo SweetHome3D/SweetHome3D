@@ -182,6 +182,13 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
    * Compares the names of this texture and the one in parameter.
    */
   public int compareTo(CatalogTexture texture) {
-    return COMPARATOR.compare(this.name, texture.name);
+    int nameComparison = COMPARATOR.compare(this.name, texture.name);
+    if (nameComparison != 0) {
+      return nameComparison;
+    } else {
+      return this.modifiable == texture.modifiable 
+          ? 0
+          : (this.modifiable ? 1 : -1); 
+    }
   }
 }

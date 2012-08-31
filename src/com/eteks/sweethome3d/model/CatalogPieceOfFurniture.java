@@ -608,6 +608,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * Compares the names of this piece and the one in parameter.
    */
   public int compareTo(CatalogPieceOfFurniture piece) {
-    return COMPARATOR.compare(this.name, piece.name);
+    int nameComparison = COMPARATOR.compare(this.name, piece.name);
+    if (nameComparison != 0) {
+      return nameComparison;
+    } else {
+      return this.modifiable == piece.modifiable 
+          ? 0
+          : (this.modifiable ? 1 : -1); 
+    }
   }
 }
