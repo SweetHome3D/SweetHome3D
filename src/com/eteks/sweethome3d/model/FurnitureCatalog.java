@@ -27,7 +27,7 @@ import java.util.List;
  * Furniture catalog.
  * @author Emmanuel Puybaret
  */
-public abstract class FurnitureCatalog {
+public class FurnitureCatalog {
   private List<FurnitureCategory>       categories = new ArrayList<FurnitureCategory>();
   private boolean                       sorted;
   private final CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
@@ -115,7 +115,7 @@ public abstract class FurnitureCatalog {
     }    
     // Add current piece of furniture to category list
     category.add(piece);
-    
+
     this.furnitureChangeSupport.fireCollectionChanged(piece, 
         category.getIndexOfPieceOfFurniture(piece), CollectionEvent.Type.ADD);
   }

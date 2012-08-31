@@ -33,6 +33,7 @@ import java.net.URL;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -559,7 +560,12 @@ public class AppletApplication extends HomeApplication {
           getURLs(codeBase, texturesCatalogURLs),
           getURLWithCodeBase(codeBase, texturesResourcesUrlBase), 
           getURLWithCodeBase(codeBase, writePreferencesURL), 
-          getURLWithCodeBase(codeBase, readPreferencesURL),
+          getURLWithCodeBase(codeBase, readPreferencesURL), 
+          new Executor() {
+              public void execute(Runnable command) {
+                EventQueue.invokeLater(command);
+              }
+            },
           userLanguage);
     }
     return this.userPreferences;

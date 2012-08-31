@@ -46,6 +46,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.prefs.AbstractPreferences;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -132,6 +134,8 @@ public class FileUserPreferences extends UserPreferences {
   private final File                 preferencesFolder;
   private final File []              applicationFolders;
   private Preferences                preferences;
+  private Executor                   catalogsLoader;
+  private Executor                   updater;
   
   static {
     Content dummyURLContent = null;
@@ -160,13 +164,42 @@ public class FileUserPreferences extends UserPreferences {
    *    have write access otherwise the user won't be able to import them.
    */
   public FileUserPreferences(File preferencesFolder,
-                             File [] applicationFolders) {    
+                             File [] applicationFolders) {
+    this(preferencesFolder, applicationFolders, null);
+  }
+  
+  /**
+   * Creates user preferences stored in the folders given in parameter. 
+   * @param preferencesFolder the folder where preferences files are stored
+   *    or <code>null</code> if this folder is the default one.
+   * @param applicationFolders  the folders where application private files are stored
+   *    or <code>null</code> if it's the default one. As the first application folder
+   *    is used as the folder where plug-ins files are imported by the user, it should
+   *    have write access otherwise the user won't be able to import them.
+   * @param updater  an executor that will be used to update user preferences for lengthy 
+   *    initialization operations. If <code>null</code>, then these operations and 
+   *    updates will be executed in the current thread.
+   */
+  public FileUserPreferences(File preferencesFolder,
+                             File [] applicationFolders,
+                             Executor updater) {
     this.preferencesFolder = preferencesFolder;
     this.applicationFolders = applicationFolders;
+    if (updater == null) {
+      this.catalogsLoader =
+      this.updater = new Executor() {
+          public void execute(Runnable command) {
+            command.run();
+          }
+        };
+    } else {
+      this.catalogsLoader = Executors.newSingleThreadExecutor();
+      this.updater = updater;
+    }
     
     updateSupportedLanguages();
 
-    Preferences preferences;
+    final Preferences preferences;
     // From version 3.0 use portable preferences
     PortablePreferences portablePreferences = new PortablePreferences();    
     // If portable preferences storage doesn't exist and default preferences folder is used
@@ -184,17 +217,27 @@ public class FileUserPreferences extends UserPreferences {
       language = Locale.ENGLISH.getLanguage();  
     }
     setLanguage(language);    
-    
-    // Fill default furniture catalog 
-    setFurnitureCatalog(new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders()));
-    // Read additional furniture
-    readFurnitureCatalog(preferences);
-    
-    // Fill default textures catalog 
-    setTexturesCatalog(new DefaultTexturesCatalog(this, getTexturesLibrariesPluginFolders()));
-    // Read additional textures
-    readTexturesCatalog(preferences);
 
+    setFurnitureCatalog(new FurnitureCatalog());
+    // Fill default furniture catalog 
+    updateFurnitureDefaultCatalog();
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          // Read additional furniture
+          readModifiableFurnitureCatalog(preferences, FileUserPreferences.this.updater);
+        }
+      });
+    
+    setTexturesCatalog(new TexturesCatalog());
+    // Fill default textures catalog 
+    updateTexturesDefaultCatalog();
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          // Read additional textures
+          readModifiableTexturesCatalog(preferences, FileUserPreferences.this.updater);
+        }
+      });
+    
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false, this);
     
     // Fill default patterns catalog 
@@ -268,6 +311,7 @@ public class FileUserPreferences extends UserPreferences {
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
+          // Update catalogs with new default locale
           updateFurnitureDefaultCatalog();
           updateTexturesDefaultCatalog();
           updateAutoCompletionStrings();
@@ -276,9 +320,10 @@ public class FileUserPreferences extends UserPreferences {
     
     if (preferences != portablePreferences) {
       // Switch to portable preferences now that all preferences are read
-      preferences = portablePreferences;
+      this.preferences = portablePreferences;
+    } else {
+      this.preferences = preferences;
     }
-    this.preferences = preferences;
   }
   
   /**
@@ -375,7 +420,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateFurnitureDefaultCatalog() {
     // Delete default pieces of current furniture catalog          
-    FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
+    final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         if (!piece.isModifiable()) {
@@ -383,15 +428,23 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    // Read again default furniture catalog with new default locale
-    // Add default pieces that don't have homonym among user catalog
-    FurnitureCatalog defaultFurnitureCatalog = 
-        new DefaultFurnitureCatalog(this, getFurnitureLibrariesPluginFolders());
-    for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
-      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        furnitureCatalog.add(category, piece);
-      }
-    }
+    // Read default furniture catalog
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          // Fill default furniture catalog 
+          DefaultFurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(
+              FileUserPreferences.this, getFurnitureLibrariesPluginFolders());
+          for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
+            for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
+              updater.execute(new Runnable() {
+                  public void run() {
+                    furnitureCatalog.add(category, piece);
+                  }
+                });
+            }
+          }
+        }
+      });
   }
 
   /**
@@ -399,7 +452,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateTexturesDefaultCatalog() {
     // Delete default textures of current textures catalog          
-    TexturesCatalog texturesCatalog = getTexturesCatalog();
+    final TexturesCatalog texturesCatalog = getTexturesCatalog();
     for (TexturesCategory category : texturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         if (!texture.isModifiable()) {
@@ -407,15 +460,22 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    // Read again default textures catalog with new default locale
-    // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = 
-        new DefaultTexturesCatalog(this, getTexturesLibrariesPluginFolders());
-    for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
-      for (CatalogTexture texture : category.getTextures()) {
-        texturesCatalog.add(category, texture);
-      }
-    }
+    // Read default textures catalog
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(
+              FileUserPreferences.this, getTexturesLibrariesPluginFolders());
+          for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
+            for (final CatalogTexture texture : category.getTextures()) {
+              updater.execute(new Runnable() {
+                  public void run() {
+                    texturesCatalog.add(category, texture);
+                  }
+                });
+            }
+          }
+        }
+      });
   }
 
   /**
@@ -431,9 +491,10 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Read furniture catalog from preferences.
+   * Read modifiable furniture catalog from preferences.
    */
-  private void readFurnitureCatalog(Preferences preferences) {
+  private void readModifiableFurnitureCatalog(Preferences preferences, 
+                                              Executor catalogUpdater) {
     for (int i = 1; ; i++) {
       String name = preferences.get(FURNITURE_NAME + i, null);
       if (name == null) {
@@ -458,8 +519,8 @@ public class FileUserPreferences extends UserPreferences {
       float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
 
-      FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece;
+      final FurnitureCategory pieceCategory = new FurnitureCategory(category);
+      final CatalogPieceOfFurniture piece;
       if (doorOrWindow) {
         piece = new CatalogDoorOrWindow(name, icon, model,
             width, depth, height, elevation, movable, 1, 0, new Sash [0],
@@ -469,7 +530,11 @@ public class FileUserPreferences extends UserPreferences {
             width, depth, height, elevation, movable, 
             staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
       }
-      getFurnitureCatalog().add(pieceCategory, piece);
+      catalogUpdater.execute(new Runnable() {
+          public void run() {
+            getFurnitureCatalog().add(pieceCategory, piece);
+          }
+        });
     }
   }  
 
@@ -524,9 +589,10 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Read textures catalog from preferences.
+   * Read modifiable textures catalog from preferences.
    */
-  private void readTexturesCatalog(Preferences preferences) {
+  private void readModifiableTexturesCatalog(Preferences preferences, 
+                                             Executor catalogUpdater) {
     for (int i = 1; ; i++) {
       String name = preferences.get(TEXTURE_NAME + i, null);
       if (name == null) {
@@ -538,9 +604,13 @@ public class FileUserPreferences extends UserPreferences {
       float width = preferences.getFloat(TEXTURE_WIDTH + i, 0.1f);
       float height = preferences.getFloat(TEXTURE_HEIGHT + i, 0.1f);
 
-      TexturesCategory textureCategory = new TexturesCategory(category);
-      CatalogTexture texture = new CatalogTexture(name, image, width, height, true);
-      getTexturesCatalog().add(textureCategory, texture);
+      final TexturesCategory textureCategory = new TexturesCategory(category);
+      final CatalogTexture texture = new CatalogTexture(name, image, width, height, true);
+      catalogUpdater.execute(new Runnable() {
+          public void run() {
+            getTexturesCatalog().add(textureCategory, texture);
+          }
+        });
     }
   }  
 
@@ -550,8 +620,8 @@ public class FileUserPreferences extends UserPreferences {
   @Override
   public void write() throws RecorderException {
     Preferences preferences = getPreferences();
-    writeFurnitureCatalog(preferences);
-    writeTexturesCatalog(preferences);
+    writeModifiableFurnitureCatalog(preferences);
+    writeModifiableTexturesCatalog(preferences);
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
@@ -622,9 +692,9 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Writes furniture catalog in <code>preferences</code>.
+   * Writes modifiable furniture in <code>preferences</code>.
    */
-  private void writeFurnitureCatalog(Preferences preferences) throws RecorderException {
+  private void writeModifiableFurnitureCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> furnitureContentURLs = new HashSet<URL>();
     int i = 1;
     for (FurnitureCategory category : getFurnitureCatalog().getCategories()) {
@@ -700,9 +770,9 @@ public class FileUserPreferences extends UserPreferences {
   }
     
   /**
-   * Writes textures catalog in <code>preferences</code>.
+   * Writes modifiable textures catalog in <code>preferences</code>.
    */
-  private void writeTexturesCatalog(Preferences preferences) throws RecorderException {
+  private void writeModifiableTexturesCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> texturesContentURLs = new HashSet<URL>();
     int i = 1;
     for (TexturesCategory category : getTexturesCatalog().getCategories()) {

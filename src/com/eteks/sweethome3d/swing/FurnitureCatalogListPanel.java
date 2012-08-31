@@ -556,7 +556,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.defaultFont = UIManager.getFont("ToolTip.font");
       this.modifiablePieceFont = new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
       setFont(this.defaultFont);
-      setText("");
+      setText("-");
       setIcon(IconManager.getInstance().getWaitIcon(DEFAULT_ICON_HEIGHT));
     }
     

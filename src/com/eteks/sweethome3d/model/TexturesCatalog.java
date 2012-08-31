@@ -27,7 +27,7 @@ import java.util.List;
  * Textures catalog.
  * @author Emmanuel Puybaret
  */
-public abstract class TexturesCatalog {
+public class TexturesCatalog {
   private List<TexturesCategory>  categories = new ArrayList<TexturesCategory>();
   private boolean                 sorted;
   private final CollectionChangeSupport<CatalogTexture> texturesChangeSupport = 

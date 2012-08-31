@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -197,7 +198,12 @@ public class SweetHome3D extends HomeApplication {
       } else {
         applicationFolders = null;
       }
-      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders);
+      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, 
+          new Executor() {
+            public void execute(Runnable command) {
+              EventQueue.invokeLater(command);
+            }
+          });
     }
     return this.userPreferences;
   }

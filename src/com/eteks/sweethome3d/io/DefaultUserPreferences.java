@@ -64,11 +64,11 @@ public class DefaultUserPreferences extends UserPreferences {
     // Read default furniture catalog
     setFurnitureCatalog(readCatalogs 
         ? new DefaultFurnitureCatalog(localizedPreferences, (File)null) 
-        : new FurnitureCatalog() { });
+        : new FurnitureCatalog());
     // Read default textures catalog
     setTexturesCatalog(readCatalogs 
         ? new DefaultTexturesCatalog(localizedPreferences, (File)null)
-        : new TexturesCatalog() { });
+        : new TexturesCatalog());
     // Build default patterns catalog
     List<TextureImage> patterns = new ArrayList<TextureImage>();
     patterns.add(new DefaultPatternTexture("foreground"));

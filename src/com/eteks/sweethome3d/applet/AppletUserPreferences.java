@@ -38,6 +38,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
@@ -81,6 +83,8 @@ public class AppletUserPreferences extends UserPreferences {
   private Properties   properties;
   private final URL    writePreferencesURL;
   private final URL    readPreferencesURL;
+  private Executor     catalogsLoader;
+  private Executor     updater;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
 
@@ -148,12 +152,46 @@ public class AppletUserPreferences extends UserPreferences {
                                URL writePreferencesURL, 
                                URL readPreferencesURL,
                                String userLanguage) {
+    this(pluginFurnitureCatalogURLs, furnitureResourcesUrlBase, pluginTexturesCatalogURLs, texturesResourcesUrlBase,
+        writePreferencesURL, readPreferencesURL, null, userLanguage);
+  }
+  
+  /**
+   * Creates default user preferences read from resource files and catalogs urls given in parameter, 
+   * then reads saved user preferences from the XML content returned by <code>readPreferencesURL</code>, 
+   * if URL isn't <code>null</code> or empty. 
+   * Preferences modifications will be notified to <code>writePreferencesURL</code> with 
+   * an XML content describing preferences in a parameter named preferences, 
+   * if URL isn't <code>null</code> or empty.
+   * The DTD of XML content is specified at 
+   * <a href="http://java.sun.com/dtd/properties.dtd">http://java.sun.com/dtd/properties.dtd</a>.
+   * Preferences written with this class don't include imported furniture and textures.
+   */
+  public AppletUserPreferences(URL [] pluginFurnitureCatalogURLs,
+                               URL    furnitureResourcesUrlBase,
+                               URL [] pluginTexturesCatalogURLs,
+                               URL    texturesResourcesUrlBase,
+                               URL writePreferencesURL, 
+                               URL readPreferencesURL,
+                               Executor updater,
+                               String userLanguage) {
     this.pluginFurnitureCatalogURLs = pluginFurnitureCatalogURLs;
     this.furnitureResourcesUrlBase = furnitureResourcesUrlBase;
     this.pluginTexturesCatalogURLs = pluginTexturesCatalogURLs;
     this.texturesResourcesUrlBase = texturesResourcesUrlBase;
     this.writePreferencesURL = writePreferencesURL;
     this.readPreferencesURL = readPreferencesURL;
+    if (updater == null) {
+      this.catalogsLoader =
+      this.updater = new Executor() {
+          public void execute(Runnable command) {
+            command.run();
+          }
+        };
+    } else {
+      this.catalogsLoader = Executors.newSingleThreadExecutor();
+      this.updater = updater;
+    }
     
     final Properties properties = getProperties();
     
@@ -165,10 +203,10 @@ public class AppletUserPreferences extends UserPreferences {
     }
     setLanguage(properties.getProperty(LANGUAGE, userLanguage));    
 
-    // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog(pluginFurnitureCatalogURLs, furnitureResourcesUrlBase));
-    // Read default textures catalog
-    setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogURLs, texturesResourcesUrlBase));   
+    // Read default furniture and textures catalog
+    setFurnitureCatalog(new FurnitureCatalog());
+    setTexturesCatalog(new TexturesCatalog());
+    updateDefaultCatalogs();
  
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     defaultPreferences.setLanguage(getLanguage());
@@ -237,7 +275,7 @@ public class AppletUserPreferences extends UserPreferences {
    */
   private void updateDefaultCatalogs() {
     // Delete default pieces of current furniture catalog          
-    FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
+    final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         if (!piece.isModifiable()) {
@@ -245,17 +283,25 @@ public class AppletUserPreferences extends UserPreferences {
         }
       }
     }
-    // Add default pieces that don't have homonym among user catalog
-    FurnitureCatalog defaultFurnitureCatalog = 
-        new DefaultFurnitureCatalog(this.pluginFurnitureCatalogURLs, this.furnitureResourcesUrlBase);
-    for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
-      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        furnitureCatalog.add(category, piece);
-      }
-    }
-    
+    // Add default pieces 
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          FurnitureCatalog defaultFurnitureCatalog = 
+              new DefaultFurnitureCatalog(pluginFurnitureCatalogURLs, furnitureResourcesUrlBase);
+          for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
+            for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
+              updater.execute(new Runnable() {
+                  public void run() {
+                    furnitureCatalog.add(category, piece);
+                  }
+                });
+            }
+          }
+        }
+      });
+
     // Delete default textures of current textures catalog          
-    TexturesCatalog texturesCatalog = getTexturesCatalog();
+    final TexturesCatalog texturesCatalog = getTexturesCatalog();
     for (TexturesCategory category : texturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         if (!texture.isModifiable()) {
@@ -263,14 +309,22 @@ public class AppletUserPreferences extends UserPreferences {
         }
       }
     }
-    // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = 
-        new DefaultTexturesCatalog(this.pluginTexturesCatalogURLs, this.texturesResourcesUrlBase);
-    for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
-      for (CatalogTexture texture : category.getTextures()) {
-        texturesCatalog.add(category, texture);
-      }
-    }
+    // Add default textures
+    this.catalogsLoader.execute(new Runnable() {
+        public void run() {
+          TexturesCatalog defaultTexturesCatalog = 
+              new DefaultTexturesCatalog(pluginTexturesCatalogURLs, texturesResourcesUrlBase);
+          for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
+            for (final CatalogTexture texture : category.getTextures()) {
+              updater.execute(new Runnable() {
+                  public void run() {
+                    texturesCatalog.add(category, texture);
+                  }
+                });
+            }
+          }
+        }
+      });
   }
 
   /**
