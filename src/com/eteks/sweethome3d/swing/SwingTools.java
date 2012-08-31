@@ -529,8 +529,8 @@ public class SwingTools {
       Executors.newSingleThreadExecutor().execute(new Runnable() {
           public void run() {
             try {
+              Thread.sleep(500);
               while (splashScreenWindow.isVisible()) {
-                Thread.sleep(500);
                 // If an other frame is showing, dispose splash window
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
@@ -541,6 +541,7 @@ public class SwingTools {
                       }
                     }
                   });
+                Thread.sleep(300);
               }
             } catch (InterruptedException ex) {
               EventQueue.invokeLater(new Runnable() {
