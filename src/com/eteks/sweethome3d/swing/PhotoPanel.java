@@ -828,22 +828,26 @@ public class PhotoPanel extends JPanel implements DialogView {
       boolean highQuality = controller.getQuality() >= 2;
       boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
       if (advancedComponentsVisible != highQuality) {
+        setAdvancedComponentsVisible(highQuality);
         int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 6
             + this.dateSpinner.getPreferredSize().height + 5
             + this.lensComboBox.getPreferredSize().height;
-        this.advancedComponentsSeparator.setVisible(highQuality);
-        this.dateLabel.setVisible(highQuality);
-        this.dateSpinner.setVisible(highQuality);
-        this.timeLabel.setVisible(highQuality);
-        this.timeSpinner.setVisible(highQuality);
-        this.dayNightLabel.setVisible(highQuality);
-        this.lensLabel.setVisible(highQuality);
-        this.lensComboBox.setVisible(highQuality);
-        this.ceilingLightEnabledCheckBox.setVisible(highQuality);
-          root.setSize(root.getWidth(), 
-              root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
+        root.setSize(root.getWidth(), 
+            root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
       }
     }   
+  }
+
+  private void setAdvancedComponentsVisible(boolean visible) {
+    this.advancedComponentsSeparator.setVisible(visible);
+    this.dateLabel.setVisible(visible);
+    this.dateSpinner.setVisible(visible);
+    this.timeLabel.setVisible(visible);
+    this.timeSpinner.setVisible(visible);
+    this.dayNightLabel.setVisible(visible);
+    this.lensLabel.setVisible(visible);
+    this.lensComboBox.setVisible(visible);
+    this.ceilingLightEnabledCheckBox.setVisible(visible);
   }
 
   /**
@@ -894,7 +898,11 @@ public class PhotoPanel extends JPanel implements DialogView {
           screenHeight -= 30;
         }
         int screenBottomBorder = screenSize.height - screenInsets.bottom;
-        int dialogWidth = dialog.getWidth();
+        // Search the largest width between advanced photo editing or non advanced photo editing mode
+        int dialogWidthWithAdvancedComponentsVisible = dialog.getWidth();
+        setAdvancedComponentsVisible(false);
+        dialog.pack();
+        int dialogWidth = Math.max(dialog.getWidth(), dialogWidthWithAdvancedComponentsVisible);
         if (dialog.getHeight() > screenHeight) {
           dialog.setSize(dialogWidth, screenHeight);
         }
