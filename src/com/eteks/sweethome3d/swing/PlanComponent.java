@@ -1027,12 +1027,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               deltaY = ev.getY() - viewRectangle.y;
             }
 
+            float oldScale = getScale();
             controller.zoom((float)(ev.getWheelRotation() < 0 
                 ? Math.pow(1.05, -ev.getWheelRotation()) 
                 : Math.pow(0.95, ev.getWheelRotation())));
             
-            if (getParent() instanceof JViewport) {
-              // Update viewport position to keep the same coordinates under mouse cursor
+            if (getScale() != oldScale && getParent() instanceof JViewport) {
+              // If scale changed, update viewport position to keep the same coordinates under mouse cursor
               ((JViewport)getParent()).setViewPosition(new Point());
               moveView(mouseX - convertXPixelToModel(deltaX), mouseY - convertYPixelToModel(deltaY));
             }
