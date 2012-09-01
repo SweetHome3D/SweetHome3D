@@ -79,6 +79,7 @@ public class HomeFurnitureController implements Controller {
   private Float   y;
   private Float   elevation;
   private Integer angleInDegrees;
+  private Float   angle;
   private Float   width;
   private Float   proportionalWidth;
   private Float   depth;
@@ -254,11 +255,7 @@ public class HomeFurnitureController implements Controller {
           break;
         }
       }
-      if (angle == null) {
-        setAngleInDegrees(null);
-      } else {
-        setAngleInDegrees((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
-      }      
+      setAngle(angle);
 
       Float x = firstPiece.getX();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -580,15 +577,43 @@ public class HomeFurnitureController implements Controller {
     if (angleInDegrees != this.angleInDegrees) {
       Integer oldAngleInDegrees = this.angleInDegrees;
       this.angleInDegrees = angleInDegrees;
+      if (this.angleInDegrees == null) {
+        this.angle = null;
+      } else {
+        this.angle = new Float(Math.toRadians(this.angleInDegrees));
+      }
       this.propertyChangeSupport.firePropertyChange(Property.ANGLE_IN_DEGREES.name(), oldAngleInDegrees, angleInDegrees);
     }
   }
 
   /**
-   * Returns the edited angle.
+   * Returns the edited angle in degrees.
    */
   public Integer getAngleInDegrees() {
     return this.angleInDegrees;
+  }
+  
+  /**
+   * Sets the edited angle in radians.
+   * @since 3.6
+   */
+  public void setAngle(Float angle) {
+    if (angle != this.angle) {
+      if (angle == null) {
+        setAngleInDegrees(null);
+      } else {
+        setAngleInDegrees((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
+      }      
+      this.angle = angle;
+    }
+  }
+
+  /**
+   * Returns the edited angle in radians.
+   * @since 3.6
+   */
+  public Float getAngle() {
+    return this.angle;
   }
   
   /**
@@ -935,8 +960,7 @@ public class HomeFurnitureController implements Controller {
       Float x = getX();
       Float y = getY();
       Float elevation = getElevation();
-      Float angle = getAngleInDegrees() != null
-          ? (float)Math.toRadians(getAngleInDegrees())  : null;
+      Float angle = getAngle();
       Boolean basePlanItem = getBasePlanItem();
       Float width = getWidth();
       Float depth = getDepth();
