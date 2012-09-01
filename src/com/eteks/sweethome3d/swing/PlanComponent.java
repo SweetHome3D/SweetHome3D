@@ -39,6 +39,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -139,6 +140,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
@@ -4933,6 +4938,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         };
       PlanComponent.this.addMouseListener(mouseInputListener);
       PlanComponent.this.addMouseMotionListener(mouseInputListener);
+      addAncestorListener(new AncestorListener() {
+          public void ancestorAdded(AncestorEvent ev) {
+            removeAncestorListener(this);
+            if (getParent() instanceof JViewport) {
+              ((JViewport)getParent()).addChangeListener(new ChangeListener() {
+                  public void stateChanged(ChangeEvent ev) {
+                    mouseLocation = MouseInfo.getPointerInfo().getLocation(); 
+                    SwingUtilities.convertPointFromScreen(mouseLocation, PlanComponent.this);
+                    repaint();
+                  }
+                });
+            }
+          }
+          
+          public void ancestorRemoved(AncestorEvent ev) {
+          }
+          
+          public void ancestorMoved(AncestorEvent ev) {
+          }
+        });
     }
 
     /**
