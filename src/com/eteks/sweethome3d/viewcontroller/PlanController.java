@@ -48,6 +48,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -2489,6 +2490,7 @@ public class PlanController extends FurnitureController implements Controller {
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
     final Level oldSelectedLevel = this.home.getSelectedLevel();
+    final BackgroundImage homeBackgroundImage = this.home.getBackgroundImage();
     List<Level> levels = this.home.getLevels();
     float newWallHeight = this.preferences.getNewWallHeight();
     float newFloorThickness = this.preferences.getNewFloorThickness();
@@ -2497,7 +2499,8 @@ public class PlanController extends FurnitureController implements Controller {
       // Create level 0
       String level0Name = this.preferences.getLocalizedString(PlanController.class, "levelName", 0);
       level0 = createLevel(level0Name, 0, newFloorThickness, newWallHeight);
-      level0.setBackgroundImage(this.home.getBackgroundImage());
+      level0.setBackgroundImage(homeBackgroundImage);
+      this.home.setBackgroundImage(null);
       moveHomeItemsToLevel(level0);
       levels = this.home.getLevels();
     } else {
@@ -2515,7 +2518,7 @@ public class PlanController extends FurnitureController implements Controller {
         setSelectedLevel(oldSelectedLevel);
         home.deleteLevel(newLevel);
         if (level0 != null) {
-          home.setBackgroundImage(level0.getBackgroundImage());
+          home.setBackgroundImage(homeBackgroundImage);
           moveHomeItemsToLevel(oldSelectedLevel);
           home.deleteLevel(level0);
         }
@@ -2528,7 +2531,8 @@ public class PlanController extends FurnitureController implements Controller {
         if (level0 != null) {
           home.addLevel(level0);
           moveHomeItemsToLevel(level0);
-          level0.setBackgroundImage(home.getBackgroundImage());
+          level0.setBackgroundImage(homeBackgroundImage);
+          home.setBackgroundImage(null);
         }
         home.addLevel(newLevel);
         setSelectedLevel(newLevel);
