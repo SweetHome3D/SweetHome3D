@@ -2126,11 +2126,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float gridSize = getGridSize(gridScale);
     float mainGridSize = getMainGridSize(gridScale);
     
-    Rectangle2D planBounds = getPlanBounds();
-    float xMin = (float)planBounds.getMinX() - MARGIN;
-    float yMin = (float)planBounds.getMinY() - MARGIN;
-    float xMax = convertXPixelToModel(getWidth());
-    float yMax = convertYPixelToModel(getHeight());
+    float xMin;
+    float yMin;
+    float xMax;
+    float yMax;
+    Rectangle2D planBounds = getPlanBounds();    
+    if (getParent() instanceof JViewport) {
+      Rectangle viewRectangle = ((JViewport)getParent()).getViewRect();
+      xMin = convertXPixelToModel(viewRectangle.x - 1);
+      yMin = convertYPixelToModel(viewRectangle.y - 1);
+      xMax = convertXPixelToModel(viewRectangle.x + viewRectangle.width);
+      yMax = convertYPixelToModel(viewRectangle.y + viewRectangle.height);
+    } else {
+      xMin = (float)planBounds.getMinX() - MARGIN;
+      yMin = (float)planBounds.getMinY() - MARGIN;
+      xMax = convertXPixelToModel(getWidth());
+      yMax = convertYPixelToModel(getHeight());
+    }
     if (OperatingSystem.isMacOSX()
         && System.getProperty("apple.awt.graphics.UseQuartz", "false").equals("false")) {
       // Draw grid with an image texture in under Mac OS X, because default 2D rendering engine 
@@ -2162,24 +2174,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setColor(UIManager.getColor("controlShadow"));
     g2D.setStroke(new BasicStroke(0.5f / gridScale));
     // Draw vertical lines
-    for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
-      g2D.draw(new Line2D.Float(x, yMin, x, yMax));
+    for (double x = (int)(xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+      g2D.draw(new Line2D.Double(x, yMin, x, yMax));
     }
     // Draw horizontal lines
-    for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
-      g2D.draw(new Line2D.Float(xMin, y, xMax, y));
+    for (double y = (int)(yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+      g2D.draw(new Line2D.Double(xMin, y, xMax, y));
     }
 
     if (mainGridSize != gridSize) {
       g2D.setStroke(new BasicStroke(1.5f / gridScale,
           BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
       // Draw main vertical lines
-      for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
-        g2D.draw(new Line2D.Float(x, yMin, x, yMax));
+      for (double x = (int)(xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+        g2D.draw(new Line2D.Double(x, yMin, x, yMax));
       }
       // Draw positive main horizontal lines
-      for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
-        g2D.draw(new Line2D.Float(xMin, y, xMax, y));
+      for (double y = (int)(yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+        g2D.draw(new Line2D.Double(xMin, y, xMax, y));
       }
     }
   }
@@ -4990,12 +5002,32 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float gridSize = getGridSize(rulerScale);
       float mainGridSize = getMainGridSize(rulerScale);
       
+      float xMin;
+      float yMin;
+      float xMax;
+      float yMax;
+      float xRulerBase;
+      float yRulerBase;
       Rectangle2D planBounds = getPlanBounds();    
-      float xMin = (float)planBounds.getMinX() - MARGIN;
-      float yMin = (float)planBounds.getMinY() - MARGIN;
-      float xMax = convertXPixelToModel(getWidth());
-      float yMax = convertYPixelToModel(getHeight());
       boolean leftToRightOriented = getComponentOrientation().isLeftToRight();
+      if (getParent() instanceof JViewport) {
+        Rectangle viewRectangle = ((JViewport)getParent()).getViewRect();
+        xMin = convertXPixelToModel(viewRectangle.x - 1);
+        yMin = convertYPixelToModel(viewRectangle.y - 1);
+        xMax = convertXPixelToModel(viewRectangle.x + viewRectangle.width);
+        yMax = convertYPixelToModel(viewRectangle.y + viewRectangle.height);
+        xRulerBase = leftToRightOriented 
+            ? convertXPixelToModel(viewRectangle.x + viewRectangle.width - 1)
+            : convertXPixelToModel(viewRectangle.x); 
+        yRulerBase = convertYPixelToModel(viewRectangle.y + viewRectangle.height - 1);
+      } else {
+        xMin = (float)planBounds.getMinX() - MARGIN;
+        yMin = (float)planBounds.getMinY() - MARGIN;
+        xMax = convertXPixelToModel(getWidth() - 1);
+        yRulerBase = 
+        yMax = convertYPixelToModel(getHeight() - 1);
+        xRulerBase = leftToRightOriented ? xMax : xMin;
+      }
 
       FontMetrics metrics = getFontMetrics(getFont());
       int fontAscent = metrics.getAscent();
@@ -5007,25 +5039,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float lineWidth = 0.5f / rulerScale;
       g2D.setStroke(new BasicStroke(lineWidth));
       if (this.orientation == SwingConstants.HORIZONTAL) {
-        // Draw horizontal rule base
-        g2D.draw(new Line2D.Float(xMin, yMax - lineWidth, xMax, yMax - lineWidth));
+        // Draw horizontal ruler base
+        g2D.draw(new Line2D.Float(xMin, yRulerBase - lineWidth / 2, xMax, yRulerBase - lineWidth  / 2));
         // Draw small ticks
-        for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
-          g2D.draw(new Line2D.Float(x, yMax - tickSize, x, yMax));
+        for (double x = (int)(xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+          g2D.draw(new Line2D.Double(x, yMax - tickSize, x, yMax));
         }
       } else {
-        // Draw vertical rule base
+        // Draw vertical ruler base
         if (leftToRightOriented) {
-          g2D.draw(new Line2D.Float(xMax - lineWidth, yMin, xMax - lineWidth, yMax));
+          g2D.draw(new Line2D.Float(xRulerBase - lineWidth / 2, yMin, xRulerBase - lineWidth / 2, yMax));
         } else {
-          g2D.draw(new Line2D.Float(xMin + lineWidth, yMin, xMin + lineWidth, yMax));
+          g2D.draw(new Line2D.Float(xRulerBase + lineWidth / 2, yMin, xRulerBase + lineWidth / 2, yMax));
         }
         // Draw small ticks
-        for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+        for (double y = (int)(yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
           if (leftToRightOriented) {
-            g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
+            g2D.draw(new Line2D.Double(xMax - tickSize, y, xMax, y));
           } else {
-            g2D.draw(new Line2D.Float(xMin, y, xMin + tickSize, y));
+            g2D.draw(new Line2D.Double(xMin, y, xMin + tickSize, y));
           }
         }
       }
@@ -5036,8 +5068,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         AffineTransform previousTransform = g2D.getTransform();
         // Draw big ticks
         if (this.orientation == SwingConstants.HORIZONTAL) {
-          for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
-            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
+          for (double x = ((int)(xMin / mainGridSize) - 1) * mainGridSize; x < xMax; x += mainGridSize) {
+            g2D.draw(new Line2D.Double(x, yMax - mainTickSize, x, yMax));
             // Draw unit text
             g2D.translate(x, yMax - mainTickSize);
             g2D.scale(1 / rulerScale, 1 / rulerScale);
@@ -5045,17 +5077,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             g2D.setTransform(previousTransform);
           }
         } else {
-          for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+          for (double y = ((int)(yMin / mainGridSize) - 1) * mainGridSize; y < yMax; y += mainGridSize) {
             String yText = getFormattedTickText(format, y);
             if (leftToRightOriented) {
-              g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+              g2D.draw(new Line2D.Double(xMax - mainTickSize, y, xMax, y));
               // Draw unit text with a vertical orientation
               g2D.translate(xMax - mainTickSize, y);
               g2D.scale(1 / rulerScale, 1 / rulerScale);
               g2D.rotate(-Math.PI / 2);
               g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
             } else {
-              g2D.draw(new Line2D.Float(xMin, y, xMin +  mainTickSize, y));
+              g2D.draw(new Line2D.Double(xMin, y, xMin +  mainTickSize, y));
               // Draw unit text with a vertical orientation
               g2D.translate(xMin + mainTickSize, y);
               g2D.scale(1 / rulerScale, 1 / rulerScale);
@@ -5086,13 +5118,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     }
 
-    private String getFormattedTickText(NumberFormat format, float value) {
+    private String getFormattedTickText(NumberFormat format, double value) {
       String text;
       if (Math.abs(value) < 1E-5) {
         value = 0; // Avoid "-0" text
       }
       if (preferences.getLengthUnit() == LengthUnit.INCH) {
-        text = format.format(LengthUnit.centimeterToFoot(value)) + "'"; 
+        text = format.format(LengthUnit.centimeterToFoot((float)value)) + "'"; 
       } else {
         text = format.format(value / 100);
         if (value == 0) {
