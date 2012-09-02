@@ -50,7 +50,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
+  public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
       DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
@@ -217,6 +217,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float                  nameXOffset;
   private float                  nameYOffset;
   private TextStyle              nameStyle;
+  private float                  nameAngle;
   private String                 description;
   private Content                icon;
   private Content                planIcon;
@@ -429,6 +430,29 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
   }
   
+  /**
+   * Returns the angle in radians used to display the piece name.
+   * @since 3.6 
+   */
+  public float getNameAngle() {
+    return this.nameAngle;
+  }
+
+  /**
+   * Sets the angle in radians used to display the piece name. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.6 
+   */
+  public void setNameAngle(float nameAngle) {
+    // Ensure angle is always positive and between 0 and 2 PI
+    nameAngle = (float)((nameAngle % TWICE_PI + TWICE_PI) % TWICE_PI);
+    if (nameAngle != this.nameAngle) {
+      float oldNameAngle = this.nameAngle;
+      this.nameAngle = nameAngle;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_ANGLE.name(), oldNameAngle, nameAngle);
+    }
+  }
+
   /**
    * Returns the description of this piece of furniture.
    * The returned value may be <code>null</code>.

@@ -33,16 +33,19 @@ import java.io.Serializable;
 public class Label implements Selectable, Serializable, Elevatable {
   private static final long serialVersionUID = 1L;
   
+  private static final double TWICE_PI = 2 * Math.PI;
+
   /**
    * The properties of a label that may change. <code>PropertyChangeListener</code>s added 
    * to a label will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {TEXT, X, Y, STYLE, LEVEL};
+  public enum Property {TEXT, X, Y, STYLE, ANGLE, LEVEL};
   
   private String    text;
   private float     x;
   private float     y;
   private TextStyle style;
+  private float     angle;
   private Level     level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -153,6 +156,29 @@ public class Label implements Selectable, Serializable, Elevatable {
     }
   }
 
+  /**
+   * Returns the angle in radians used to display this label.
+   * @since 3.6 
+   */
+  public float getAngle() {
+    return this.angle;
+  }
+
+  /**
+   * Sets the angle in radians used to display this label. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.6 
+   */
+  public void setAngle(float angle) {
+    // Ensure angle is always positive and between 0 and 2 PI
+    angle = (float)((angle % TWICE_PI + TWICE_PI) % TWICE_PI);
+    if (angle != this.angle) {
+      float oldAngle = this.angle;
+      this.angle = angle;
+      this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
+    }
+  }
+  
   /**
    * Returns the level which this label belongs to. 
    * @since 3.4

@@ -293,6 +293,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       CAMERA_HEAD;  
   private static final GeneralPath DIMENSION_LINE_END;  
   private static final GeneralPath TEXT_LOCATION_INDICATOR;
+  private static final GeneralPath TEXT_ANGLE_INDICATOR;
+  private static final Shape       LABEL_CENTER_INDICATOR;
   private static final Shape       COMPASS_DISC;
   private static final GeneralPath COMPASS;
   private static final GeneralPath COMPASS_ROTATION_INDICATOR;
@@ -472,6 +474,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     TEXT_LOCATION_INDICATOR.moveTo(-6, 6.5f);    // Left arrow
     TEXT_LOCATION_INDICATOR.lineTo(-10, 7);
     TEXT_LOCATION_INDICATOR.lineTo(-7.5f, 3.5f);
+    
+    // Create a path used as angle indicator for texts
+    TEXT_ANGLE_INDICATOR = new GeneralPath(); 
+    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-1.25f, -1.25f, 2.5f, 2.5f, 10, 160, Arc2D.CHORD), false);    
+    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 15, 150, Arc2D.OPEN), false);
+    TEXT_ANGLE_INDICATOR.moveTo(4.8f, -4.0f);
+    TEXT_ANGLE_INDICATOR.lineTo(7.7f, -2f);
+    TEXT_ANGLE_INDICATOR.lineTo(7.5f, -5.5f);
+    
+    LABEL_CENTER_INDICATOR = new Ellipse2D.Float(-1f, -1f, 2, 2);
     
     // Create the path used to draw the compass
     COMPASS_DISC = new Ellipse2D.Float(-0.5f, -0.5f, 1, 1);
@@ -670,10 +682,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.NAME_X_OFFSET.name().equals(propertyName)
               || Room.Property.NAME_Y_OFFSET.name().equals(propertyName)
               || Room.Property.NAME_STYLE.name().equals(propertyName)
+              || Room.Property.NAME_ANGLE.name().equals(propertyName)
               || Room.Property.AREA_VISIBLE.name().equals(propertyName)
               || Room.Property.AREA_X_OFFSET.name().equals(propertyName)
               || Room.Property.AREA_Y_OFFSET.name().equals(propertyName)
-              || Room.Property.AREA_STYLE.name().equals(propertyName)) {
+              || Room.Property.AREA_STYLE.name().equals(propertyName)
+              || Room.Property.AREA_ANGLE.name().equals(propertyName)) {
             sortedLevelRooms = null;
             otherLevelRoomsCache = null;
             otherLevelRoomAreaCache = null;
@@ -1464,35 +1478,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float yRoomCenter = room.getYCenter();
       String roomName = room.getName();
       if (roomName != null && roomName.length() > 0) {
-        float xName = xRoomCenter + room.getNameXOffset(); 
-        float yName = yRoomCenter + room.getNameYOffset();
-        TextStyle nameStyle = room.getNameStyle();
-        if (nameStyle == null) {
-          nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
-        }          
-        FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
-        Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
-        itemBounds.add(xName - nameBounds.getWidth() / 2, 
-            yName - nameFontMetrics.getAscent());
-        itemBounds.add(xName + nameBounds.getWidth() / 2, 
-            yName + nameFontMetrics.getDescent());
+        addTextBounds(room.getClass(), 
+            roomName, room.getNameStyle(), 
+            xRoomCenter + room.getNameXOffset(), 
+            yRoomCenter + room.getNameYOffset(), room.getNameAngle(), itemBounds);
       }
       if (room.isAreaVisible()) {
         float area = room.getArea();
         if (area > 0.01f) {
-          float xArea = xRoomCenter + room.getAreaXOffset(); 
-          float yArea = yRoomCenter + room.getAreaYOffset();
           String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-          TextStyle areaStyle = room.getAreaStyle();
-          if (areaStyle == null) {
-            areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
-          }          
-          FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
-          Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
-          itemBounds.add(xArea - areaTextBounds.getWidth() / 2, 
-              yArea - areaFontMetrics.getAscent());
-          itemBounds.add(xArea + areaTextBounds.getWidth() / 2, 
-              yArea + areaFontMetrics.getDescent());
+          addTextBounds(room.getClass(), 
+              areaText, room.getAreaStyle(), 
+              xRoomCenter + room.getAreaXOffset(), 
+              yRoomCenter + room.getAreaYOffset(), room.getAreaAngle(), itemBounds);
         }
       }
     } else if (item instanceof HomePieceOfFurniture) {
@@ -1507,24 +1505,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       // Add to bounds the displayed name of the piece of furniture 
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-      float xPiece = piece.getX();
-      float yPiece = piece.getY();
       String pieceName = piece.getName();
       if (piece.isVisible()
           && piece.isNameVisible()
           && pieceName.length() > 0) {
-        float xName = xPiece + piece.getNameXOffset(); 
-        float yName = yPiece + piece.getNameYOffset();
-        TextStyle nameStyle = piece.getNameStyle();
-        if (nameStyle == null) {
-          nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
-        }          
-        FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
-        Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
-        itemBounds.add(xName - nameBounds.getWidth() / 2, 
-            yName - nameFontMetrics.getAscent());
-        itemBounds.add(xName + nameBounds.getWidth() / 2, 
-            yName + nameFontMetrics.getDescent());
+        addTextBounds(piece.getClass(), 
+            pieceName, piece.getNameStyle(), 
+            piece.getX() + piece.getNameXOffset(), 
+            piece.getY() + piece.getNameYOffset(), piece.getNameAngle(), itemBounds);
       }
     } else if (item instanceof DimensionLine) {
       // Add to bounds the text bounds of the dimension line length 
@@ -1578,19 +1566,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else if (item instanceof Label) {
       // Add to bounds the displayed text of a label 
       Label label = (Label)item;
-      float xLabel = label.getX();
-      float yLabel = label.getY();
-      String labelText = label.getText();
-      TextStyle labelStyle = label.getStyle();
-      if (labelStyle == null) {
-        labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
-      }          
-      FontMetrics labelFontMetrics = getFontMetrics(componentFont, labelStyle);
-      Rectangle2D labelBounds = labelFontMetrics.getStringBounds(labelText, g);
-      itemBounds.add(xLabel - labelBounds.getWidth() / 2, 
-          yLabel - labelFontMetrics.getAscent());
-      itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
-          yLabel + labelFontMetrics.getDescent());
+      addTextBounds(label.getClass(), 
+          label.getText(), label.getStyle(), label.getX(), label.getY(), label.getAngle(), itemBounds);
     } else if (item instanceof Compass) {
       Compass compass = (Compass)item;
       AffineTransform transform = AffineTransform.getTranslateInstance(compass.getX(), compass.getY());
@@ -1602,6 +1579,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Add <code>text</code> bounds to the given rectangle <code>bounds</code>.
+   */
+  private void addTextBounds(Class<? extends Selectable> selectableClass,
+                             String text, TextStyle style, 
+                             float x, float y, float angle,
+                             Rectangle2D bounds) {
+    if (style == null) {
+      style = this.preferences.getDefaultTextStyle(selectableClass);
+    }          
+    for (float [] points : getTextBounds(text, style, x, y, angle)) {
+      bounds.add(points [0], points [1]);
+    }
+  }
+  
+  /**
    * Returns the coordinates of the bounding rectangle of the <code>text</code> centered at
    * the point (<code>x</code>,<code>y</code>).  
    */
@@ -1610,18 +1602,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FontMetrics fontMetrics = getFontMetrics(getFont(), style);
     Rectangle2D textBounds = fontMetrics.getStringBounds(text, null);
     float halfTextLength = (float)textBounds.getWidth() / 2;
-    float textBaseLine = fontMetrics.getAscent();
     if (angle == 0) {
+      float minY = (float)(y + textBounds.getY());
+      float maxY = (float)(minY + textBounds.getHeight());
       return new float [][] {
-          {x - halfTextLength, y - textBaseLine},
-          {x + halfTextLength, y - textBaseLine},
-          {x + halfTextLength, y + (float)textBounds.getHeight() - textBaseLine},
-          {x - halfTextLength, y + (float)textBounds.getHeight() - textBaseLine}};
+          {x - halfTextLength, minY},
+          {x + halfTextLength, minY},
+          {x + halfTextLength, maxY},
+          {x - halfTextLength, maxY}};
     } else {
       // Transform text bounding rectangle corners to their real location
       AffineTransform transform = new AffineTransform();
-      transform.translate(x - halfTextLength, y + (float)textBounds.getHeight() - textBaseLine);
+      transform.translate(x, y);
       transform.rotate(angle);
+      transform.translate(-halfTextLength, 0);
       GeneralPath textBoundsPath = new GeneralPath(textBounds);
       List<float []> textPoints = new ArrayList<float[]>(4);
       for (PathIterator it = textBoundsPath.getPathIterator(transform); !it.isDone(); ) {
@@ -2315,7 +2309,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null, 
             locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
         paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
-            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null,
             planScale, foregroundColor, paintMode);
         paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
             planScale, foregroundColor);
@@ -2399,7 +2393,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     checkCurrentThreadIsntInterrupted(paintMode);
     paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
-        planScale, foregroundColor, paintMode);
+        selectionColor, planScale, foregroundColor, paintMode);
     
     if (paintMode == PaintMode.PAINT
         && this.selectedItemsOutlinePainted) {
@@ -2578,34 +2572,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (name != null) {
           name = name.trim();
           if (name.length() > 0) {
-            float xName = xRoomCenter + room.getNameXOffset(); 
-            float yName = yRoomCenter + room.getNameYOffset();
-            TextStyle nameStyle = room.getNameStyle();
-            if (nameStyle == null) {
-              nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
-            }          
-            FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
-            Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
-            // Draw room name
-            g2D.setFont(getFont(previousFont, nameStyle));
-            g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
+            paintText(g2D, room.getClass(), name, room.getNameStyle(), 
+                xRoomCenter + room.getNameXOffset(),
+                yRoomCenter + room.getNameYOffset(),
+                room.getNameAngle(), previousFont);
           }
         }
         if (room.isAreaVisible()) {
           float area = room.getArea();
           if (area > 0.01f) {
-            float xArea = xRoomCenter + room.getAreaXOffset(); 
-            float yArea = yRoomCenter + room.getAreaYOffset();
-            TextStyle areaStyle = room.getAreaStyle();
-            if (areaStyle == null) {
-              areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
-            }          
-            FontMetrics areaFontMetrics = getFontMetrics(previousFont, areaStyle);
-            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-            Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g2D);
             // Draw room area 
-            g2D.setFont(getFont(previousFont, areaStyle));
-            g2D.drawString(areaText, xArea - (float)areaTextBounds.getWidth() / 2, yArea);
+            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);            
+            paintText(g2D, room.getClass(), areaText, room.getAreaStyle(), 
+                xRoomCenter + room.getAreaXOffset(),
+                yRoomCenter + room.getAreaYOffset(),
+                room.getAreaAngle(), previousFont);
           }
         }
       }
@@ -2613,6 +2594,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setFont(previousFont);
   }
 
+  /**
+   * Paints the given <code>text</code> centered at the point (<code>x</code>,<code>y</code>).
+   */
+  private void paintText(Graphics2D g2D,
+                         Class<? extends Selectable> selectableClass,
+                         String text, TextStyle style, 
+                         float x, float y, float angle,
+                         Font defaultFont) {
+    AffineTransform previousTransform = g2D.getTransform();
+    if (style == null) {
+      style = this.preferences.getDefaultTextStyle(selectableClass);
+    }              
+    FontMetrics fontMetrics = getFontMetrics(defaultFont, style);
+    Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
+    // Draw room name
+    g2D.setFont(getFont(defaultFont, style));
+    g2D.translate(x, y);
+    g2D.rotate(angle);
+    g2D.drawString(text, -(float)textBounds.getWidth() / 2, 0);
+    g2D.setTransform(previousTransform);
+  }
+  
   /**
    * Paints the outline of rooms among <code>items</code> and indicators if 
    * <code>items</code> contains only one room and indicator paint isn't <code>null</code>. 
@@ -2723,7 +2726,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         && room.getName().trim().length() > 0) {
       float xName = room.getXCenter() + room.getNameXOffset(); 
       float yName = room.getYCenter() + room.getNameYOffset();
-      paintTextLocationIndicator(g2D, xName, yName,
+      paintTextIndicators(g2D, room.getClass(), room.getNameStyle(), xName, yName, room.getNameAngle(),
           indicatorPaint, planScale);
     }
   }
@@ -2739,22 +2742,42 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         && room.getArea() > 0.01f) {
       float xArea = room.getXCenter() + room.getAreaXOffset(); 
       float yArea = room.getYCenter() + room.getAreaYOffset();
-      paintTextLocationIndicator(g2D, xArea, yArea, indicatorPaint, planScale);
+      paintTextIndicators(g2D, room.getClass(), room.getAreaStyle(), xArea, yArea, room.getAreaAngle(), 
+          indicatorPaint, planScale);
     }
   }
 
   /**
-   * Paints text location indicator at the given coordinates.
+   * Paints text location and angle indicators at the given coordinates.
    */
-  private void paintTextLocationIndicator(Graphics2D g2D, float x, float y,
-                                          Paint indicatorPaint, float planScale) {
+  private void paintTextIndicators(Graphics2D g2D, 
+                                   Class<? extends Selectable> selectableClass,
+                                   TextStyle style, 
+                                   float x, float y, float angle,
+                                   Paint indicatorPaint, 
+                                   float planScale) {
     g2D.setPaint(indicatorPaint);
     g2D.setStroke(INDICATOR_STROKE);
     AffineTransform previousTransform = g2D.getTransform();
     float scaleInverse = 1 / planScale;
     g2D.translate(x, y);
+    g2D.rotate(angle);
     g2D.scale(scaleInverse, scaleInverse);
-    g2D.draw(TEXT_LOCATION_INDICATOR);
+    if (Label.class.isAssignableFrom(selectableClass)) {
+      g2D.draw(LABEL_CENTER_INDICATOR);      
+    } else {
+      g2D.draw(TEXT_LOCATION_INDICATOR);
+    }
+    if (style == null) {
+      style = this.preferences.getDefaultTextStyle(selectableClass);
+    }              
+    FontMetrics fontMetrics = getFontMetrics(g2D.getFont(), style);
+    g2D.setTransform(previousTransform);
+    g2D.translate(x, y);
+    g2D.rotate(angle);
+    g2D.translate(0, -fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
+    g2D.scale(scaleInverse, scaleInverse);
+    g2D.draw(TEXT_ANGLE_INDICATOR);
     g2D.setTransform(previousTransform);
   }
 
@@ -3236,17 +3259,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // In clipboard paint mode, paint piece only if it is selected
           String name = piece.getName().trim();
           if (name.length() > 0) {
-            float xName = piece.getX() + piece.getNameXOffset(); 
-            float yName = piece.getY() + piece.getNameYOffset();
-            TextStyle nameStyle = piece.getNameStyle();
-            if (nameStyle == null) {
-              nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
-            }          
-            FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
-            Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
             // Draw piece name
-            g2D.setFont(getFont(previousFont, nameStyle));
-            g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
+            paintText(g2D, piece.getClass(), name, piece.getNameStyle(), 
+                piece.getX() + piece.getNameXOffset(),
+                piece.getY() + piece.getNameYOffset(),
+                piece.getNameAngle(), previousFont);
           }
         }
       }
@@ -3457,7 +3474,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           && piece.getName().trim().length() > 0) {
         float xName = piece.getX() + piece.getNameXOffset(); 
         float yName = piece.getY() + piece.getNameYOffset();
-        paintTextLocationIndicator(g2D, xName, yName,
+        paintTextIndicators(g2D, piece.getClass(), piece.getNameStyle(), xName, yName, piece.getNameAngle(),
             indicatorPaint, planScale);
       }
     }
@@ -3623,10 +3640,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints home labels.
    */
   private void paintLabels(Graphics2D g2D, Collection<Label> labels, List<Selectable> selectedItems, 
-                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, Paint indicatorPaint,
                            float planScale, Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
-    g2D.setPaint(foregroundColor);
     // Draw labels
     for (Label label : labels) {
       if (isViewableAtSelectedLevel(label)) {
@@ -3636,22 +3652,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           String labelText = label.getText();
           float xLabel = label.getX();
           float yLabel = label.getY();
+          float labelAngle = label.getAngle();
           TextStyle labelStyle = label.getStyle();
           if (labelStyle == null) {
             labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
-          }
-          float [][] labelBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, 0);
-          float labelWidth = labelBounds [2][0] - labelBounds [0][0];
-          // Draw label text
-          g2D.setFont(getFont(previousFont, labelStyle));
-          g2D.drawString(labelText, xLabel - labelWidth / 2, yLabel);
+          }          
+          g2D.setPaint(foregroundColor);
+          paintText(g2D, label.getClass(), labelText, labelStyle, 
+              xLabel, yLabel, labelAngle, previousFont);
 
           if (paintMode == PaintMode.PAINT && this.selectedItemsOutlinePainted && selectedLabel) {
             // Draw selection border
             g2D.setPaint(selectionOutlinePaint);
             g2D.setStroke(selectionOutlineStroke);
-            g2D.draw(getShape(labelBounds));
+            g2D.draw(getShape(getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle)));
             g2D.setPaint(foregroundColor);
+            if (indicatorPaint != null) {
+              paintTextIndicators(g2D, label.getClass(), labelStyle, xLabel, yLabel, labelAngle,
+                  indicatorPaint, planScale);
+            }
           }
         }
       }

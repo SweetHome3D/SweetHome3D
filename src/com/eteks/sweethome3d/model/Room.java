@@ -42,22 +42,26 @@ public class Room implements Serializable, Selectable, Elevatable {
    * The properties of a room that may change. <code>PropertyChangeListener</code>s added 
    * to a room will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-      POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE,
+  public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
+      POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE, AREA_ANGLE,
       FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, FLOOR_SHININESS,
       CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE, CEILING_SHININESS, LEVEL}
   
   private static final long serialVersionUID = 1L;
   
+  private static final double TWICE_PI = 2 * Math.PI;
+
   private String      name;
   private float       nameXOffset;
   private float       nameYOffset;
   private TextStyle   nameStyle;
+  private float       nameAngle;
   private float [][]  points;
   private boolean     areaVisible;
   private float       areaXOffset;
   private float       areaYOffset;
   private TextStyle   areaStyle;
+  private float       areaAngle;
   private boolean     floorVisible;
   private Integer     floorColor;
   private HomeTexture floorTexture;
@@ -188,6 +192,29 @@ public class Room implements Serializable, Selectable, Elevatable {
     }
   }
   
+  /**
+   * Returns the angle in radians used to display the room name.
+   * @since 3.6 
+   */
+  public float getNameAngle() {
+    return this.nameAngle;
+  }
+
+  /**
+   * Sets the angle in radians used to display the room name. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.6 
+   */
+  public void setNameAngle(float nameAngle) {
+    // Ensure angle is always positive and between 0 and 2 PI
+    nameAngle = (float)((nameAngle % TWICE_PI + TWICE_PI) % TWICE_PI);
+    if (nameAngle != this.nameAngle) {
+      float oldNameAngle = this.nameAngle;
+      this.nameAngle = nameAngle;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_ANGLE.name(), oldNameAngle, nameAngle);
+    }
+  }
+
   /**
    * Returns the points of the polygon matching this room. 
    * @return an array of the (x,y) coordinates of the room points.
@@ -384,6 +411,29 @@ public class Room implements Serializable, Selectable, Elevatable {
     }
   }
   
+  /**
+   * Returns the angle in radians used to display the room area.
+   * @since 3.6 
+   */
+  public float getAreaAngle() {
+    return this.areaAngle;
+  }
+
+  /**
+   * Sets the angle in radians used to display the room area. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.6 
+   */
+  public void setAreaAngle(float areaAngle) {
+    // Ensure angle is always positive and between 0 and 2 PI
+    areaAngle = (float)((areaAngle % TWICE_PI + TWICE_PI) % TWICE_PI);
+    if (areaAngle != this.areaAngle) {
+      float oldAreaAngle = this.areaAngle;
+      this.areaAngle = areaAngle;
+      this.propertyChangeSupport.firePropertyChange(Property.AREA_ANGLE.name(), oldAreaAngle, areaAngle);
+    }
+  }
+
   /**
    * Returns the abscissa of the center point of this room.
    */

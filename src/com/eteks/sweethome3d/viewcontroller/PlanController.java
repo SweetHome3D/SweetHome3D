@@ -142,6 +142,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       pieceOfFurnitureResizeState;
   private final ControllerState       lightPowerModificationState;
   private final ControllerState       pieceOfFurnitureNameOffsetState;
+  private final ControllerState       pieceOfFurnitureNameRotationState;
   private final ControllerState       cameraYawRotationState;
   private final ControllerState       cameraPitchRotationState;
   private final ControllerState       cameraElevationState;
@@ -153,8 +154,11 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       roomDrawingState;
   private final ControllerState       roomResizeState;
   private final ControllerState       roomAreaOffsetState;
+  private final ControllerState       roomAreaRotationState;
   private final ControllerState       roomNameOffsetState;
+  private final ControllerState       roomNameRotationState;
   private final ControllerState       labelCreationState;
+  private final ControllerState       labelRotationState;
   private final ControllerState       compassRotationState;
   private final ControllerState       compassResizeState;
   // Current state
@@ -209,6 +213,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
     this.lightPowerModificationState = new LightPowerModificationState();
     this.pieceOfFurnitureNameOffsetState = new PieceOfFurnitureNameOffsetState();
+    this.pieceOfFurnitureNameRotationState = new PieceOfFurnitureNameRotationState();
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
     this.cameraElevationState = new CameraElevationState();
@@ -220,8 +225,11 @@ public class PlanController extends FurnitureController implements Controller {
     this.roomDrawingState = new RoomDrawingState();
     this.roomResizeState = new RoomResizeState();
     this.roomAreaOffsetState = new RoomAreaOffsetState();
+    this.roomAreaRotationState = new RoomAreaRotationState();
     this.roomNameOffsetState = new RoomNameOffsetState();
+    this.roomNameRotationState = new RoomNameRotationState();
     this.labelCreationState = new LabelCreationState();
+    this.labelRotationState = new LabelRotationState();
     this.compassRotationState = new CompassRotationState();
     this.compassResizeState = new CompassResizeState();
     // Set default state to selectionState
@@ -498,6 +506,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the piece name rotation state.
+   * @since 3.6
+   */
+  protected ControllerState getPieceOfFurnitureNameRotationState() {
+    return this.pieceOfFurnitureNameRotationState;
+  }
+  
+  /**
    * Returns the camera yaw rotation state.
    */
   protected ControllerState getCameraYawRotationState() {
@@ -575,6 +591,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the room area rotation state.
+   * @since 3.6
+   */
+  protected ControllerState getRoomAreaRotationState() {
+    return this.roomAreaRotationState;
+  }
+  
+  /**
    * Returns the room name offset state.
    */
   protected ControllerState getRoomNameOffsetState() {
@@ -582,10 +606,26 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the room name rotation state.
+   * @since 3.6
+   */
+  protected ControllerState getRoomNameRotationState() {
+    return this.roomNameRotationState;
+  }
+  
+  /**
    * Returns the label creation state.
    */
   protected ControllerState getLabelCreationState() {
     return this.labelCreationState;
+  }
+
+  /**
+   * Returns the label rotation state.
+   * @since 3.6
+   */
+  protected ControllerState getLabelRotationState() {
+    return this.labelRotationState;
   }
 
   /**
@@ -2829,6 +2869,29 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the selected room with its 
+   * name angle point at (<code>x</code>, <code>y</code>).
+   */
+  private Room getRoomRotatedNameAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room
+        && isItemMovable(selectedItems.get(0))) {
+      Room room = (Room)selectedItems.get(0);
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (room.isAtLevel(this.home.getSelectedLevel())
+          && room.getName() != null
+          && room.getName().trim().length() > 0
+          && isTextAnglePointAt(room, room.getName(), room.getNameStyle(),
+              room.getXCenter() + room.getNameXOffset(), room.getYCenter() + room.getNameYOffset(),
+              room.getNameAngle(), x, y, margin)) {
+        return room;
+      }
+    } 
+    return null;
+  }
+  
+  /**
    * Returns the selected room with its area center point at (<code>x</code>, <code>y</code>).
    */
   private Room getRoomAreaAt(float x, float y) {
@@ -2842,6 +2905,33 @@ public class PlanController extends FurnitureController implements Controller {
           && room.isAreaVisible() 
           && room.isAreaCenterPointAt(x, y, margin)) {
         return room;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected room with its 
+   * area angle point at (<code>x</code>, <code>y</code>).
+   */
+  private Room getRoomRotatedAreaAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room
+        && isItemMovable(selectedItems.get(0))) {
+      Room room = (Room)selectedItems.get(0);
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (room.isAtLevel(this.home.getSelectedLevel())
+          && room.isAreaVisible()) {
+        float area = room.getArea();
+        if (area > 0.01f) {
+          String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
+          if (isTextAnglePointAt(room, areaText, room.getAreaStyle(),
+                  room.getXCenter() + room.getAreaXOffset(), room.getYCenter() + room.getAreaYOffset(),
+                  room.getAreaAngle(), x, y, margin)) {
+            return room;        
+          }
+        }
       }
     } 
     return null;
@@ -2972,17 +3062,14 @@ public class PlanController extends FurnitureController implements Controller {
     for (Label label : this.home.getLabels()) {
       if (!basePlanLocked 
           || !isItemPartOfBasePlan(label)) {
-        if (label.isAtLevel(selectedLevel)
-            && label.containsPoint(x, y, margin)) {
-          items.add(label);
-          if (stopAtFirstItem) {
-            return items;
-          }
-        } else if (isItemTextAt(label, label.getText(), label.getStyle(), 
-            label.getX(), label.getY(), x, y, textMargin)) {
-          items.add(label);
-          if (stopAtFirstItem) {
-            return items;
+        if (label.isAtLevel(selectedLevel)) {
+          if (label.containsPoint(x, y, margin)
+              || isItemTextAt(label, label.getText(), label.getStyle(), 
+                    label.getX(), label.getY(), label.getAngle(), x, y, textMargin)) {
+            items.add(label);
+            if (stopAtFirstItem) {
+              return items;
+            }
           }
         }
       }
@@ -3023,7 +3110,7 @@ public class PlanController extends FurnitureController implements Controller {
               && piece.isNameVisible() 
               && isItemTextAt(piece, pieceName, piece.getNameStyle(), 
                   piece.getX() + piece.getNameXOffset(), 
-                  piece.getY() + piece.getNameYOffset(), x, y, textMargin)) {
+                  piece.getY() + piece.getNameYOffset(), piece.getNameAngle(), x, y, textMargin)) {
             foundFurniture.add(piece);
             foundPiece = piece;
           }
@@ -3073,7 +3160,7 @@ public class PlanController extends FurnitureController implements Controller {
               if (roomName != null 
                   && isItemTextAt(room, roomName, room.getNameStyle(), 
                     room.getXCenter() + room.getNameXOffset(), 
-                    room.getYCenter() + room.getNameYOffset(), x, y, textMargin)) {
+                    room.getYCenter() + room.getNameYOffset(), room.getNameAngle(), x, y, textMargin)) {
                 items.add(room);
                 foundRoom = room;
               }
@@ -3082,7 +3169,7 @@ public class PlanController extends FurnitureController implements Controller {
                 String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea());
                 if (isItemTextAt(room, areaText, room.getAreaStyle(), 
                     room.getXCenter() + room.getAreaXOffset(), 
-                    room.getYCenter() + room.getAreaYOffset(), x, y, textMargin)) {
+                    room.getYCenter() + room.getAreaYOffset(), room.getAreaAngle(), x, y, textMargin)) {
                   items.add(room);
                   foundRoom = room;
                 }
@@ -3110,12 +3197,12 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns <code>true</code> if the <code>text</code> of an <code>item</code> displayed
    * at the point (<code>xText</code>, <code>yText</code>) contains the point (<code>x</code>, <code>y</code>).
    */
-  private boolean isItemTextAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, 
+  private boolean isItemTextAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, float textAngle, 
                                float x, float y, float textMargin) {
     if (textStyle == null) {
       textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
     }          
-    float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, 0);
+    float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, textAngle);
     return getPath(textBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin);
   }
   
@@ -3269,13 +3356,68 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isNameVisible()
           && piece.getName().trim().length() > 0
           && piece.isNameCenterPointAt(x, y, margin)) {
         return piece;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected piece of furniture with its 
+   * name angle point at (<code>x</code>, <code>y</code>).
+   */
+  private HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomePieceOfFurniture
+        && isItemMovable(selectedItems.get(0))) {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
+          && piece.isNameVisible()
+          && piece.getName().trim().length() > 0
+          && isTextAnglePointAt(piece, piece.getName(), piece.getNameStyle(),
+                piece.getX() + piece.getNameXOffset(), piece.getY() + piece.getNameYOffset(),
+                piece.getNameAngle(), x, y, margin)) {
+        return piece;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns <code>true</code> if the angle indicator of the <code>text</code> of an <code>item</code> displayed
+   * at the point (<code>xText</code>, <code>yText</code>) is equal to the point (<code>x</code>, <code>y</code>).
+   */
+  private boolean isTextAnglePointAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, float textAngle, 
+                               float x, float y, float margin) {
+    if (textStyle == null) {
+      textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
+    }          
+    float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, textAngle);
+    return Math.abs(x - (textBounds [0][0] + textBounds [1][0]) / 2) <= margin 
+        && Math.abs(y - (textBounds [0][1] + textBounds [1][1]) / 2) <= margin; 
+  }
+
+  /**
+   * Returns the selected label with its angle point at (<code>x</code>, <code>y</code>).
+   */
+  private Label getRotatedLabelAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Label
+        && isItemMovable(selectedItems.get(0))) {
+      Label label = (Label)selectedItems.get(0);
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (label.isAtLevel(this.home.getSelectedLevel())
+          && isTextAnglePointAt(label, label.getText(), label.getStyle(),
+                label.getX(), label.getY(), label.getAngle(), x, y, margin)) {
+        return label;
       }
     } 
     return null;
@@ -4138,6 +4280,37 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Posts an undoable operation about <code>label</code> angle change.
+   */
+  private void postLabelRotation(final Label label, final float oldAngle) {
+    final float newAngle = label.getAngle();
+    if (newAngle != oldAngle) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          label.setAngle(oldAngle);
+          selectAndShowItems(Arrays.asList(new Label [] {label}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          label.setAngle(newAngle);
+          selectAndShowItems(Arrays.asList(new Label [] {label}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoLabelRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Posts an undoable operation of a (<code>dx</code>, <code>dy</code>) move 
    * of <code>movedItems</code>.
    */
@@ -4403,6 +4576,37 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Posts an undoable operation about <code>room</code> name angle change.
+   */
+  private void postRoomNameRotation(final Room room, final float oldNameAngle) {
+    final float newNameAngle = room.getNameAngle();
+    if (newNameAngle != oldNameAngle) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          room.setNameAngle(oldNameAngle);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          room.setNameAngle(newNameAngle);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoRoomNameRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Posts an undoable operation about <code>room</code> area offset change.
    */
   private void postRoomAreaOffset(final Room room, final float oldAreaXOffset, 
@@ -4432,6 +4636,37 @@ public class PlanController extends FurnitureController implements Controller {
         public String getPresentationName() {
           return preferences.getLocalizedString(
               PlanController.class, "undoRoomAreaOffsetName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Posts an undoable operation about <code>room</code> area angle change.
+   */
+  private void postRoomAreaRotation(final Room room, final float oldAreaAngle) {
+    final float newAreaAngle = room.getAreaAngle();
+    if (newAreaAngle != oldAreaAngle) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          room.setAreaAngle(oldAreaAngle);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          room.setAreaAngle(newAreaAngle);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoRoomAreaRotationName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -4634,6 +4869,38 @@ public class PlanController extends FurnitureController implements Controller {
         public String getPresentationName() {
           return preferences.getLocalizedString(
               PlanController.class, "undoPieceOfFurnitureNameOffsetName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Posts an undoable operation about <code>piece</code> name angle change.
+   */
+  private void postPieceOfFurnitureNameRotation(final HomePieceOfFurniture piece, 
+                                                final float oldNameAngle) {
+    final float newNameAngle = piece.getNameAngle();
+    if (newNameAngle != oldNameAngle) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          piece.setNameAngle(oldNameAngle);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          piece.setNameAngle(newNameAngle);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureNameRotationName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -5661,14 +5928,19 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void moveMouse(float x, float y) {
-      if (getYawRotatedCameraAt(x, y) != null
+      if (getRotatedLabelAt(x, y) != null 
+          || getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getElevatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ELEVATION);
       } else if (getRoomNameAt(x, y) != null
-          || getRoomAreaAt(x, y) != null
-          || getResizedDimensionLineStartAt(x, y) != null
+          || getRoomAreaAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.RESIZE);
+      } else if (getRoomRotatedNameAt(x, y) != null
+          || getRoomRotatedAreaAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.ROTATION);
+      } else if (getResizedDimensionLineStartAt(x, y) != null
           || getResizedDimensionLineEndAt(x, y) != null
           || getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
@@ -5686,6 +5958,8 @@ public class PlanController extends FurnitureController implements Controller {
         getView().setCursor(PlanView.CursorType.ELEVATION);
       } else if (getPieceOfFurnitureNameAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
+      } else if (getPieceOfFurnitureRotatedNameAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getRotatedCompassAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getResizedCompassAt(x, y) != null) {
@@ -5704,7 +5978,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 1) {
-        if (getYawRotatedCameraAt(x, y) != null) {
+        if (getRotatedLabelAt(x, y) != null) {
+          setState(getLabelRotationState());
+        } else if (getYawRotatedCameraAt(x, y) != null) {
           setState(getCameraYawRotationState());
         } else if (getPitchRotatedCameraAt(x, y) != null) {
           setState(getCameraPitchRotationState());
@@ -5712,8 +5988,12 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getCameraElevationState());
         } else if (getRoomNameAt(x, y) != null) {
           setState(getRoomNameOffsetState());
+        } else if (getRoomRotatedNameAt(x, y) != null) {
+          setState(getRoomNameRotationState());
         } else if (getRoomAreaAt(x, y) != null) {
           setState(getRoomAreaOffsetState());
+        } else if (getRoomRotatedAreaAt(x, y) != null) {
+          setState(getRoomAreaRotationState());
         } else if (getResizedDimensionLineStartAt(x, y) != null
             || getResizedDimensionLineEndAt(x, y) != null) {
           setState(getDimensionLineResizeState());
@@ -5736,6 +6016,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getPieceOfFurnitureElevationState());
         } else if (getPieceOfFurnitureNameAt(x, y) != null) {
           setState(getPieceOfFurnitureNameOffsetState());
+        } else if (getPieceOfFurnitureRotatedNameAt(x, y) != null) {
+          setState(getPieceOfFurnitureNameRotationState());
         } else if (getRotatedCompassAt(x, y) != null) {
           setState(getCompassRotationState());
         } else if (getResizedCompassAt(x, y) != null) {
@@ -7723,6 +8005,88 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Furniture name rotation state. This state manages the name rotation of a piece of furniture. 
+   */
+  private class PieceOfFurnitureNameRotationState extends ControllerState {
+    private static final int     STEP_COUNT = 24;
+    
+    private HomePieceOfFurniture selectedPiece;
+    private float                oldNameAngle;
+    private float                angleMousePress;
+    private boolean              magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() + this.selectedPiece.getNameYOffset() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedPiece.getX() - this.selectedPiece.getNameXOffset()); 
+      this.oldNameAngle = this.selectedPiece.getNameAngle();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+          ^ wasShiftDownLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedPiece.getX() + this.selectedPiece.getNameXOffset() 
+          || y != this.selectedPiece.getY() + this.selectedPiece.getNameYOffset()) {
+        // Compute the new angle of the piece name      
+        float angleMouseMove = (float)Math.atan2(this.selectedPiece.getY() + this.selectedPiece.getNameYOffset() - y, 
+            x - this.selectedPiece.getX() - this.selectedPiece.getNameXOffset()); 
+        float newAngle = this.oldNameAngle - angleMouseMove + this.angleMousePress;
+        
+        if (this.magnetismEnabled) {
+          float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
+          // Compute angles closest to a step angle (multiple of angleStep) 
+          newAngle = Math.round(newAngle / angleStep) * angleStep;
+        }
+  
+        // Update piece name new angle
+        this.selectedPiece.setNameAngle(newAngle); 
+        getView().makePointVisible(x, y);
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPieceOfFurnitureNameRotation(this.selectedPiece, this.oldNameAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedPiece.setNameAngle(this.oldNameAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedPiece = null;
+    }  
+  }
+  
+  /**
    * Camera yaw change state. This states manages the change of the observer camera yaw angle.
    */
   private class CameraYawRotationState extends ControllerState {
@@ -9424,6 +9788,88 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Room name rotation state. This state manages the name rotation of a room. 
+   */
+  private class RoomNameRotationState extends ControllerState {
+    private static final int STEP_COUNT = 24;
+    
+    private Room     selectedRoom;
+    private float    oldNameAngle;
+    private float    angleMousePress;
+    private boolean  magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedRoom = (Room)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedRoom.getYCenter() + this.selectedRoom.getNameYOffset() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedRoom.getXCenter() - this.selectedRoom.getNameXOffset()); 
+      this.oldNameAngle = this.selectedRoom.getNameAngle();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+          ^ wasShiftDownLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedRoom.getXCenter() + this.selectedRoom.getNameXOffset() 
+          || y != this.selectedRoom.getYCenter() + this.selectedRoom.getNameYOffset()) {
+        // Compute the new angle of the room name      
+        float angleMouseMove = (float)Math.atan2(this.selectedRoom.getYCenter() + this.selectedRoom.getNameYOffset() - y, 
+            x - this.selectedRoom.getXCenter() - this.selectedRoom.getNameXOffset()); 
+        float newAngle = this.oldNameAngle - angleMouseMove + this.angleMousePress;
+        
+        if (this.magnetismEnabled) {
+          float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
+          // Compute angles closest to a step angle (multiple of angleStep) 
+          newAngle = Math.round(newAngle / angleStep) * angleStep;
+        }
+  
+        // Update room name new angle
+        this.selectedRoom.setNameAngle(newAngle); 
+        getView().makePointVisible(x, y);
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postRoomNameRotation(this.selectedRoom, this.oldNameAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedRoom.setNameAngle(this.oldNameAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedRoom = null;
+    }  
+  }
+  
+  /**
    * Room area offset state. This state manages room area offset. 
    */
   private class RoomAreaOffsetState extends ControllerState {
@@ -9486,6 +9932,88 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Room area rotation state. This state manages the area rotation of a room. 
+   */
+  private class RoomAreaRotationState extends ControllerState {
+    private static final int  STEP_COUNT = 24;
+    
+    private Room     selectedRoom;
+    private float    oldAreaAngle;
+    private float    angleMousePress;
+    private boolean  magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedRoom = (Room)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedRoom.getYCenter() + this.selectedRoom.getAreaYOffset() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedRoom.getXCenter() - this.selectedRoom.getAreaXOffset()); 
+      this.oldAreaAngle = this.selectedRoom.getAreaAngle();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+          ^ wasShiftDownLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedRoom.getXCenter() + this.selectedRoom.getAreaXOffset() 
+          || y != this.selectedRoom.getYCenter() + this.selectedRoom.getAreaYOffset()) {
+        // Compute the new angle of the room area      
+        float angleMouseMove = (float)Math.atan2(this.selectedRoom.getYCenter() + this.selectedRoom.getAreaYOffset() - y, 
+            x - this.selectedRoom.getXCenter() - this.selectedRoom.getAreaXOffset()); 
+        float newAngle = this.oldAreaAngle - angleMouseMove + this.angleMousePress;
+        
+        if (this.magnetismEnabled) {
+          float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
+          // Compute angles closest to a step angle (multiple of angleStep) 
+          newAngle = Math.round(newAngle / angleStep) * angleStep;
+        }
+  
+        // Update room area new angle
+        this.selectedRoom.setAreaAngle(newAngle); 
+        getView().makePointVisible(x, y);
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postRoomAreaRotation(this.selectedRoom, this.oldAreaAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedRoom.setAreaAngle(this.oldAreaAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedRoom = null;
+    }  
+  }
+  
+  /**
    * Label creation state. This state manages transition to
    * other modes, and initial label creation.
    */
@@ -9507,6 +10035,87 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
 
+  /**
+   * Label rotation state. This state manages the rotation of a label. 
+   */
+  private class LabelRotationState extends ControllerState {
+    private static final int STEP_COUNT = 24;
+    
+    private Label    selectedLabel;
+    private float    oldAngle;
+    private float    angleMousePress;
+    private boolean  magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedLabel = (Label)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedLabel.getY() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedLabel.getX()); 
+      this.oldAngle = this.selectedLabel.getAngle();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+          ^ wasShiftDownLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedLabel.getX() || y != this.selectedLabel.getY()) {
+        // Compute the new angle of the label text
+        float angleMouseMove = (float)Math.atan2(this.selectedLabel.getY() - y, 
+            x - this.selectedLabel.getX()); 
+        float newAngle = this.oldAngle - angleMouseMove + this.angleMousePress;
+        
+        if (this.magnetismEnabled) {
+          float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
+          // Compute angles closest to a step angle (multiple of angleStep) 
+          newAngle = Math.round(newAngle / angleStep) * angleStep;
+        }
+  
+        // Update label text new angle
+        this.selectedLabel.setAngle(newAngle); 
+        getView().makePointVisible(x, y);
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postLabelRotation(this.selectedLabel, this.oldAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedLabel.setAngle(this.oldAngle);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedLabel = null;
+    }  
+  }
+  
   /**
    * Compass rotation state. This states manages the rotation of the compass.
    */
