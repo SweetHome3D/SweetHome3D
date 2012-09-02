@@ -1,9 +1,9 @@
-SWEET HOME 3D VIEWER v 3.5
+SWEET HOME 3D VIEWER v 3.6
 --------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
 applet able to display the 3D view of a Sweet Home 3D file from its URL.
-This applet can run under Windows, Mac OS X 10.4 to 10.6 and Linux.
+This applet can run under Windows, Mac OS X 10.4 to 10.8 and Linux.
 The size of the library files downloaded by this applet varies from 2.2 MB 
 to 4 MB depending on the system and the Java version of the user.
 
