@@ -513,8 +513,6 @@
   <target name="windowsInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
     <!-- Create SweetHome3D-version-windows.exe with Inno Setup -->
-    <input message="Enter signature password:" 
-           addproperty="password"/> 
     <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
