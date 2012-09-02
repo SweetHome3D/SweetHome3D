@@ -478,10 +478,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Create a path used as angle indicator for texts
     TEXT_ANGLE_INDICATOR = new GeneralPath(); 
     TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-1.25f, -1.25f, 2.5f, 2.5f, 10, 160, Arc2D.CHORD), false);    
-    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 15, 150, Arc2D.OPEN), false);
-    TEXT_ANGLE_INDICATOR.moveTo(4.8f, -4.0f);
-    TEXT_ANGLE_INDICATOR.lineTo(7.7f, -2f);
-    TEXT_ANGLE_INDICATOR.lineTo(7.5f, -5.5f);
+    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 30, 120, Arc2D.OPEN), false);
+    TEXT_ANGLE_INDICATOR.moveTo(4f, -5.2f);
+    TEXT_ANGLE_INDICATOR.lineTo(6.9f, -4f);
+    TEXT_ANGLE_INDICATOR.lineTo(5.8f, -7f);
     
     LABEL_CENTER_INDICATOR = new Ellipse2D.Float(-1f, -1f, 2, 2);
     
