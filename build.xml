@@ -530,9 +530,18 @@
                  and SignTool included in Windows platform SDK installed in their default location -->
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
-    <!-- Create SweetHome3D-version-windows.exe with Inno Setup -->
     <input message="Enter signature password:" 
            addproperty="password"/> 
+    <!-- Sign Sweet Home 3D launcher -->
+    <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\signtool.exe">
+      <arg value="sign"/>
+      <arg value="/f"/>
+      <arg value="${basedir}\install\windows\keys.pfx"/>
+      <arg value="/p"/>
+      <arg value="${password}"/>
+      <arg value="${basedir}\install\windows\tmp\SweetHome3D.exe"/>
+    </exec>
+    <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
       <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\signtool.exe$$q sign /f $$q${basedir}\install\windows\keys.pfx$$q /p ${password} $p"/>
       <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
