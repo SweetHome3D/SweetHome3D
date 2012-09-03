@@ -1076,11 +1076,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void addFocusListener(final PlanController controller) {
     addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusLost(FocusEvent ev) {
-        controller.escape();
-      }
-    });
+        @Override
+        public void focusLost(FocusEvent ev) {
+          controller.escape();
+        }
+      });
+    
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      addPropertyChangeListener(new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if ("Frame.active".equals(ev.getPropertyName()) 
+                && !home.getSelectedItems().isEmpty()) {
+              // Repaint to update selection color
+              repaint();
+            }
+          }
+        });
+    }
   }
   
   /**
@@ -2414,12 +2426,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   protected Color getSelectionColor() {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        Color selectionColor = UIManager.getColor("Focus.color");
-        if (selectionColor != null) {
-          return selectionColor.darker();
-        } else {
-          return UIManager.getColor("List.selectionBackground").darker();
+        if (!SwingUtilities.getWindowAncestor(this).isActive()) {
+          Color selectionColor = UIManager.getColor("List.selectionInactiveBackground");
+          if (selectionColor != null) {
+            return selectionColor.darker();
+          }
         }
+        return UIManager.getColor("List.selectionBackground");
       } else { 
         return UIManager.getColor("textHighlight");
       }
