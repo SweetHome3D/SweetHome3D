@@ -249,7 +249,7 @@ public class TextureManager {
         this.textures.put(textureKey, sharedTexture);
       } else {
         // Search which key matches sharedTexture to keep unique keys
-        for (TextureKey key : textures.keySet()) {
+        for (TextureKey key : this.textures.keySet()) {
           if (key.getTexture() == sharedTexture) {
             textureKey = key;
             break;
@@ -267,14 +267,16 @@ public class TextureManager {
    * Sets the attributes and capabilities of a shared <code>texture</code>.
    */
   private void setSharedTextureAttributesAndCapabilities(Texture texture) {
-    texture.setMinFilter(Texture.NICEST);
-    texture.setMagFilter(Texture.NICEST);
-    texture.setCapability(Texture.ALLOW_FORMAT_READ);
-    texture.setCapability(Texture.ALLOW_IMAGE_READ);
-    for (ImageComponent image : texture.getImages()) {
-      if (!image.isLive()) {
-        image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
-        image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
+    if (!texture.isLive()) {
+      texture.setMinFilter(Texture.NICEST);
+      texture.setMagFilter(Texture.NICEST);
+      texture.setCapability(Texture.ALLOW_FORMAT_READ);
+      texture.setCapability(Texture.ALLOW_IMAGE_READ);
+      for (ImageComponent image : texture.getImages()) {
+        if (!image.isLive()) {
+          image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
+          image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
+        }
       }
     }
   }
