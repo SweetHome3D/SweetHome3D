@@ -136,9 +136,10 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
             CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)getModel().getElementAt(index);
             String tooltip = "<html><table><tr><td align='center'>- <b>" + piece.getCategory().getName() + "</b> -" 
                 + "<br><b>" + piece.getName() + "</b>";
-            if (piece.getCreator() != null) {
+            String creator = piece.getCreator();
+            if (creator != null) {
               tooltip += "<br>" + preferences.getLocalizedString(FurnitureCatalogTree.class, 
-                  "tooltipCreator", piece.getCreator() + "</td></tr>");
+                  "tooltipCreator", creator + "</td></tr>");
             }
             if (piece.getIcon() instanceof URLContent) {
               try {
@@ -634,13 +635,21 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.furniture.clear();
       for (FurnitureCategory category : this.catalog.getCategories()) {
         for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-          if ((this.filterCategory == null
-               || piece.getCategory().equals(this.filterCategory))
-               && (this.filterNamePattern.matcher(piece.getName()).matches()
-                   || this.filterNamePattern.matcher(piece.getCategory().getName()).matches()                   
-                   || (piece.getCreator() != null && this.filterNamePattern.matcher(piece.getCreator()).matches())
-                   || (piece.getDescription() != null && this.filterNamePattern.matcher(piece.getDescription()).matches()))) {
-            this.furniture.add(piece);
+          if (this.filterCategory == null
+               || piece.getCategory().equals(this.filterCategory)) {
+            if (this.filterNamePattern.matcher(piece.getName()).matches()
+                 || this.filterNamePattern.matcher(piece.getCategory().getName()).matches()                   
+                 || (piece.getCreator() != null && this.filterNamePattern.matcher(piece.getCreator()).matches())
+                 || (piece.getDescription() != null && this.filterNamePattern.matcher(piece.getDescription()).matches())) {
+              this.furniture.add(piece);
+            } else {
+              for (String tag : piece.getTags()) {
+                if (this.filterNamePattern.matcher(tag).matches()) {
+                  this.furniture.add(piece);
+                  break;
+                }
+              }
+            }
           }
         }
       }
