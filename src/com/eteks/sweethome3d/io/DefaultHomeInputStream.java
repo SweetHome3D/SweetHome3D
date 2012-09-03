@@ -108,7 +108,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
           && !"Home".equals(entry.getName())) {
       }
       if (entry == null) {
-        throw new IOException("No \"Home\" entry found.");
+        throw new IOException("Missing entry \"Home\"");
       }
       checkCurrentThreadIsntInterrupted();
       // Use an ObjectInputStream that replaces temporary URLs of Content objects 
@@ -141,7 +141,14 @@ public class DefaultHomeInputStream extends FilterInputStream {
         String url = tmpURL.toString();
         if (url.startsWith("jar:file:temp!/")) {
           // Replace "temp" in URL by current temporary file
-          URL fileURL = new URL("jar:file:" + tempFile.toString() + url.substring(url.indexOf('!')));
+          String entryName = url.substring(url.indexOf('!') + 2);
+          URL fileURL = new URL("jar:file:" + tempFile.toString() + "!/" + entryName);
+          try {
+            // Check entry exists
+            fileURL.openStream().close();
+          } catch (IOException ex) {
+            throw new IOException("Missing entry \"" + entryName + "\"");
+          }
           return new HomeURLContent(fileURL);
         } else {
           return obj;
