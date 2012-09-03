@@ -546,6 +546,22 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   }
 
   /**
+   * Returns the selection color used in preview components.
+   */
+  private static Color getSelectionColor() {
+    Color selectionColor = OperatingSystem.isMacOSXLeopardOrSuperior() 
+        ? UIManager.getColor("List.selectionBackground") 
+        : UIManager.getColor("textHighlight");
+    float [] hsb = new float [3];
+    Color.RGBtoHSB(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), hsb);
+    if (hsb [1] < 0.4f) {
+      // If color is too gray, return a default blue color
+      selectionColor = new Color(40, 89, 208);
+    }
+    return selectionColor;
+  }
+
+  /**
    * Preview component for image scale distance choice. 
    */
   private static class ScaleImagePreviewComponent extends ScaledImageComponent {
@@ -673,11 +689,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         // Paint image with a 0.5 alpha
         paintImage(g2D, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
 
-        Color scaleDistanceLineColor = OperatingSystem.isMacOSXLeopardOrSuperior() 
-            ? UIManager.getColor("List.selectionBackground") 
-            : UIManager.getColor("textHighlight");
-     
-        g2D.setPaint(scaleDistanceLineColor);
+        g2D.setPaint(getSelectionColor());
         
         AffineTransform oldTransform = g2D.getTransform();
         Stroke oldStroke = g2D.getStroke();
@@ -795,10 +807,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         // Paint image with a 0.5 alpha 
         paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
         
-        Color scaleDistanceLineColor = OperatingSystem.isMacOSXLeopardOrSuperior() 
-            ? UIManager.getColor("List.selectionBackground") 
-            : UIManager.getColor("textHighlight");;
-        g2D.setPaint(scaleDistanceLineColor);
+        g2D.setPaint(getSelectionColor());
         
         AffineTransform oldTransform = g2D.getTransform();
         Stroke oldStroke = g2D.getStroke();
