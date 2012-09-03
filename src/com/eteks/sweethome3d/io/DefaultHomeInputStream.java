@@ -29,6 +29,7 @@ import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.eteks.sweethome3d.model.Home;
@@ -101,8 +102,14 @@ public class DefaultHomeInputStream extends FilterInputStream {
       // Open a zip input from temp file
       zipIn = new ZipInputStream(this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT
           ? this.in : new FileInputStream(this.tempFile));
-      // Read home in first entry
-      zipIn.getNextEntry();
+      // Read Home entry
+      ZipEntry entry;
+      while ((entry = zipIn.getNextEntry()) != null
+          && !"Home".equals(entry.getName())) {
+      }
+      if (entry == null) {
+        throw new IOException("No \"Home\" entry found.");
+      }
       checkCurrentThreadIsntInterrupted();
       // Use an ObjectInputStream that replaces temporary URLs of Content objects 
       // by URLs relative to file 
