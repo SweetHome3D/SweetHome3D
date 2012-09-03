@@ -29,37 +29,40 @@ import java.text.Collator;
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-  private final String                 id;
-  private final String                 name;
-  private final String                 description;
-  private final Content                icon;
-  private final Content                planIcon;
-  private final Content                model;
-  private final float                  width;
-  private final float                  depth;
-  private final float                  height;
-  private final boolean                proportional;
-  private final float                  elevation;
-  private final boolean                movable;
-  private final boolean                doorOrWindow;
-  private final float [][]             modelRotation;
-  private final String                 staircaseCutOutShape;
-  private final String                 creator;
-  private final boolean                backFaceShown;
-  private final Integer                color;
-  private final float                  iconYaw;
-  private final boolean                modifiable;
-  private final boolean                resizable;
-  private final boolean                deformable;
-  private final boolean                texturable;
-  private final BigDecimal             price;
-  private final BigDecimal             valueAddedTaxPercentage;
-  private final String                 currency;
+  private final String            id;
+  private final String            name;
+  private final String            description;
+  private final String []         tags;
+  private final Long              creationDate;
+  private final Content           icon;
+  private final Content           planIcon;
+  private final Content           model;
+  private final float             width;
+  private final float             depth;
+  private final float             height;
+  private final boolean           proportional;
+  private final float             elevation;
+  private final boolean           movable;
+  private final boolean           doorOrWindow;
+  private final float [][]        modelRotation;
+  private final String            staircaseCutOutShape;
+  private final String            creator;
+  private final String            url;
+  private final boolean           backFaceShown;
+  private final Integer           color;
+  private final float             iconYaw;
+  private final boolean           modifiable;
+  private final boolean           resizable;
+  private final boolean           deformable;
+  private final boolean           texturable;
+  private final BigDecimal        price;
+  private final BigDecimal        valueAddedTaxPercentage;
+  private final String            currency;
+  private final Float             grade;
 
-  private FurnitureCategory            category;
+  private FurnitureCategory       category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
-
 
   /**
    * Creates a catalog piece of furniture.
@@ -241,9 +244,52 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, String creator,
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
-    this(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable, false, staircaseCutOutShape,
-        null, modelRotation, creator, false, resizable, deformable, texturable,
-        price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+    this(id, name, description, new String [0], null, icon, planIcon, model, width, depth, height, elevation, 
+        movable, staircaseCutOutShape, modelRotation, creator, null, resizable, deformable, texturable,
+        price, valueAddedTaxPercentage, currency, null);
+  }
+  
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param tags tags associated to the new piece
+   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param icon content of the icon of the new piece
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param creator the creator of the model
+   * @param url URL associated to the new piece
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code>
+   * @param grade grade of the piece of furniture or <code>null</code>
+   * @since 3.6
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, String [] tags, Long creationDate,
+                                 Content icon, Content planIcon, Content model, 
+                                 float width, float depth, float height, 
+                                 float elevation, boolean movable, String staircaseCutOutShape, 
+                                 float [][] modelRotation, String creator, String url,
+                                 boolean resizable, boolean deformable, boolean texturable, 
+                                 BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, Float grade) {
+    this(id, name, description, tags, creationDate, icon, planIcon, model, width, depth, height, elevation, 
+        movable, false, staircaseCutOutShape, null, modelRotation, creator, url, false, resizable, deformable, texturable,
+        price, valueAddedTaxPercentage, currency, grade, (float)Math.PI / 8, true, false);
   }
   
  /**
@@ -326,22 +372,25 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  Integer color, float [][] modelRotation, 
                                  boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
-    this(null, name, null, icon, null, model, width, depth, height, elevation, movable, false, 
-        staircaseCutOutShape, color, modelRotation, null, backFaceShown, true, true, true, null, null, null, iconYaw, proportional, true);
+    this(null, name, null, new String [0], System.currentTimeMillis(), icon, null, model, width, depth, height, elevation, movable, false, 
+        staircaseCutOutShape, color, modelRotation, null, null, backFaceShown, true, true, true, null, null, null, null, iconYaw, proportional, true);
   }
   
-  private CatalogPieceOfFurniture(String id, String name, String description, 
+  private CatalogPieceOfFurniture(String id, String name, String description,
+                                  String [] tags, Long creationDate,
                                   Content icon, Content planIcon, Content model, 
                                   float width, float depth, float height, float elevation, 
                                   boolean movable, boolean doorOrWindow, 
                                   String staircaseCutOutShape, Integer color, float [][] modelRotation,
-                                  String creator, boolean backFaceShown,
+                                  String creator, String url, boolean backFaceShown,
                                   boolean resizable, boolean deformable, boolean texturable,
                                   BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency,
-                                  float iconYaw, boolean proportional, boolean modifiable) {
+                                  Float grade, float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;
     this.name = name;
     this.description = description;
+    this.tags = tags;
+    this.creationDate = creationDate;
     this.icon = icon;
     this.planIcon = planIcon;
     this.model = model;
@@ -354,9 +403,11 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.color = color;
     this.staircaseCutOutShape = staircaseCutOutShape;
     this.creator = creator;
+    this.url = url;
     this.price = price;
     this.valueAddedTaxPercentage = valueAddedTaxPercentage;
     this.currency = currency;
+    this.grade = grade;
     if (modelRotation == null) {
       this.modelRotation = INDENTITY_ROTATION;
     } else {
@@ -391,6 +442,23 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public String getDescription() {
     return this.description;
+  }
+
+  /**
+   * Returns the tags associated to this piece.
+   * @since 3.6
+   */
+  public String [] getTags() {
+    return this.tags;
+  }
+  
+  /**
+   * Returns the creation date of this piece in milliseconds since the epoch, 
+   * or <code>null</code> if no date is given to this piece.
+   * @since 3.6
+   */
+  public Long getCreationDate() {
+    return this.creationDate;
   }
 
   /**
@@ -492,6 +560,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   }
   
   /**
+   * Returns the URL of this piece, or <code>null</code>.
+   * @since 3.6
+   */
+  public String getURL() {
+    return this.url;
+  }
+  
+  /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.
    */
@@ -573,6 +649,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     return this.currency;
   }
 
+  /**
+   * Returns the grade of this piece, or <code>null</code> if no grade is given to this piece.
+   * @since 3.6
+   */
+  public Float getGrade() {
+    return this.grade;
+  }
+  
   /**
    * Returns the category of this piece of furniture.
    */

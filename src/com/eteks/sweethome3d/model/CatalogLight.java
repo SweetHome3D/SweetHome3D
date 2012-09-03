@@ -161,9 +161,53 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       float [][] modelRotation, String creator,
                       boolean resizable, boolean deformable, boolean texturable,
                       BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
-    super(id, name, description, icon, planIcon, model, width, depth, height, elevation,   
-        movable, staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, 
-        price, valueAddedTaxPercentage, currency);
+    this(id, name, description, null, null, icon, planIcon, model, width, depth, height, elevation,   
+        movable, lightSources, staircaseCutOutShape, modelRotation, creator, null, resizable, deformable, texturable, 
+        price, valueAddedTaxPercentage, currency, null);
+  }
+         
+  /**
+   * Creates an unmodifiable catalog light of the default catalog.
+   * @param id    the id of the new light, or <code>null</code>
+   * @param name  the name of the new light
+   * @param description the description of the new light 
+   * @param tags tags associated to the new piece
+   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param icon content of the icon of the new light
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new light
+   * @param width  the width in centimeters of the new light
+   * @param depth  the depth in centimeters of the new light
+   * @param height  the height in centimeters of the new light
+   * @param elevation  the elevation in centimeters of the new light
+   * @param movable if <code>true</code>, the new light is movable
+   * @param lightSources the light sources of the new light
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the light model
+   * @param creator the creator of the model
+   * @param url URL associated to the new piece
+   * @param resizable if <code>true</code>, the size of the new light may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new light, or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new light or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code> 
+   * @param grade grade of the piece of furniture or <code>null</code>
+   * @since 3.6          
+   */
+  public CatalogLight(String id, String name, String description, String [] tags, Long creationDate, 
+                      Content icon, Content planIcon, Content model, 
+                      float width, float depth, float height, float elevation, boolean movable, 
+                      LightSource [] lightSources, String staircaseCutOutShape,
+                      float [][] modelRotation, String creator, String url,
+                      boolean resizable, boolean deformable, boolean texturable,
+                      BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, Float grade) {
+    super(id, name, description, tags, creationDate, icon, planIcon, model, width, depth, height, elevation,   
+        movable, staircaseCutOutShape, modelRotation, creator, url, resizable, deformable, texturable, 
+        price, valueAddedTaxPercentage, currency, grade);
     this.lightSources = lightSources;
   }
          

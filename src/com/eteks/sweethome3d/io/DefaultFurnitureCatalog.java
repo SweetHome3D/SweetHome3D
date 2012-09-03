@@ -27,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessControlException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -75,6 +77,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      * This may give detailed information about a piece of furniture.
      */
     DESCRIPTION("description"),
+    /**
+     * The key for the tags associated to a piece of furniture (optional).
+     */
+    TAGS("tags"),
+    /**
+     * The key for the creation date of a piece of furniture (optional).
+     */
+    CREATION_DATE("creationDate"),
     /**
      * The key for the category's name of a piece of furniture (mandatory).
      * A new category with this name will be created if it doesn't exist.
@@ -215,6 +225,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     CREATOR("creator"),
     /**
+     * The key for the URL describing a piece of furniture (optional).
+     */
+    URL("url"),
+    /**
      * The key for the resizability of a piece of furniture (optional, <code>true</code> by default).
      * If the value of this key is <code>false</code>, the piece of furniture
      * will be considered as a piece with a fixed size. 
@@ -243,7 +257,11 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     /**
      * The key for the currency ISO 4217 code of the price of a piece of furniture (optional).
      */
-    CURRENCY("currency");
+    CURRENCY("currency"),
+    /**
+     * The key for the grade of a piece of furniture (optional).
+     */
+    GRADE("grade");
     
     private String keyPrefix;
 
@@ -509,6 +527,22 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return null;
     }
     String description = getOptionalString(resource, PropertyKey.DESCRIPTION.getKey(index), null);
+    String tagsString = getOptionalString(resource, PropertyKey.TAGS.getKey(index), null);
+    String [] tags;
+    if (tagsString != null) {
+      tags = tagsString.split("\\s*,\\s*");
+    } else {
+      tags = new String [0];
+    }
+    String creationDateString = getOptionalString(resource, PropertyKey.CREATION_DATE.getKey(index), null);
+    Long creationDate = null;
+    if (creationDateString != null) {
+      try {
+        creationDate = new SimpleDateFormat("yyyy-MM-dd").parse(creationDateString).getTime();
+      } catch (ParseException ex) {
+        throw new IllegalArgumentException("Can't parse date "+ creationDateString, ex);
+      }
+    }
     Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, false, false);
     Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), 
@@ -526,6 +560,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     float [][] modelRotation = getModelRotation(resource, PropertyKey.MODEL_ROTATION.getKey(index));
     // By default creator is eTeks
     String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), null);
+    String url = getOptionalString(resource, PropertyKey.URL.getKey(index), null);
     String id = getOptionalString(resource, PropertyKey.ID.getKey(index), null);
     boolean resizable = getOptionalBoolean(resource, PropertyKey.RESIZABLE.getKey(index), true);
     boolean deformable = getOptionalBoolean(resource, PropertyKey.DEFORMABLE.getKey(index), true);
@@ -543,6 +578,11 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       // By default price is null
     }
     String currency = getOptionalString(resource, PropertyKey.CURRENCY.getKey(index), null);
+    String gradeString = getOptionalString(resource, PropertyKey.GRADE.getKey(index), null);
+    Float grade = null;
+    if (gradeString != null) {
+      grade = Float.valueOf(gradeString);
+    }
 
     if (doorOrWindow) {
       float wallThicknessPercentage = getOptionalFloat(
@@ -550,20 +590,20 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       float wallDistancePercentage = getOptionalFloat(
           resource, PropertyKey.DOOR_OR_WINDOW_WALL_DISTANCE.getKey(index), 0) / depth;
       Sash [] sashes = getDoorOrWindowSashes(resource, index, width, depth);
-      return new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
+      return new CatalogDoorOrWindow(id, name, description, tags, creationDate, icon, planIcon, model,
           width, depth, height, elevation, movable, 
-          wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-          resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+          wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, url, 
+          resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, grade);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
-        return new CatalogLight(id, name, description, icon, planIcon, model,
-            width, depth, height, elevation, movable, lightSources, staircaseCutOutShape, modelRotation, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+        return new CatalogLight(id, name, description, tags, creationDate, icon, planIcon, model,
+            width, depth, height, elevation, movable, lightSources, staircaseCutOutShape, modelRotation, creator, url, 
+            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, grade);
       } else {
-        return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
-            width, depth, height, elevation, movable, staircaseCutOutShape, modelRotation, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+        return new CatalogPieceOfFurniture(id, name, description, tags, creationDate, icon, planIcon, model,
+            width, depth, height, elevation, movable, staircaseCutOutShape, modelRotation, creator, url, 
+            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, grade);
       }
     }
   }
