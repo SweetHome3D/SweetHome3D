@@ -5270,15 +5270,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   canFilterIndexColorModel = true;
                 }
   
-                public int filterRGB (int x, int y, int rgb) {
-                  int alpha = rgb & 0xFF000000;
-                  int red   = (rgb & 0x00FF0000) >> 16;
-                  int green = (rgb & 0x0000FF00) >> 8;
-                  int blue  = rgb & 0x000000FF;
+                public int filterRGB (int x, int y, int argb) {
+                  int alpha = argb & 0xFF000000;
+                  int red   = (argb & 0x00FF0000) >> 16;
+                  int green = (argb & 0x0000FF00) >> 8;
+                  int blue  = argb & 0x000000FF;
                   
                   // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue 
                   // for faster results
-                  int brightness = (red + red + red + green + green + green + green + blue) >> 3;
+                  int brightness = ((red + red + red + green + green + green + green + blue) >> 4) + 0x7F;
                   
                   red   = (colorRed   * brightness / 0xFF) & 0xFF0000;
                   green = (colorGreen * brightness / 0xFF) & 0xFF00;
