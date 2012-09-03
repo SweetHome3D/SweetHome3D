@@ -245,7 +245,7 @@ public class FileContentManager implements ContentManager {
   private final String                    furnitureLibraryFileExtension;
   private final String                    texturesLibraryFileExtension;
   private final String                    pluginFileExtension;
-  private File                            currentDirectory;
+  private Map<ContentType, File>          lastDirectories;
   private Map<ContentType, FileFilter []> fileFilters;
   private Map<ContentType, String>        defaultFileExtensions;
 
@@ -256,6 +256,7 @@ public class FileContentManager implements ContentManager {
     this.furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
     this.texturesLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "texturesLibraryExtension");
     this.pluginFileExtension = preferences.getLocalizedString(FileContentManager.class, "pluginExtension");
+    this.lastDirectories = new HashMap<ContentManager.ContentType, File>();
     
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
@@ -520,9 +521,10 @@ public class FileContentManager implements ContentManager {
           return isAcceptable(new File(dir, name).toString(), contentType);
         }
       });
-    // Update current directory
-    if (this.currentDirectory != null) {
-      fileDialog.setDirectory(this.currentDirectory.toString());
+    // Update directory
+    File directory = getLastDirectory(contentType);
+    if (directory != null) {
+      fileDialog.setDirectory(directory.toString());
     }
     if (save) {
       fileDialog.setMode(FileDialog.SAVE);
@@ -539,13 +541,38 @@ public class FileContentManager implements ContentManager {
     String selectedFile = fileDialog.getFile();
     // If user chose a file
     if (selectedFile != null) {
-      // Retrieve current directory for future calls
-      this.currentDirectory = new File(fileDialog.getDirectory());
+      // Retrieve directory for future calls
+      directory = new File(fileDialog.getDirectory());
+      // Store current directory
+      setLastDirectory(contentType, directory);
       // Return selected file
-      return this.currentDirectory + File.separator + selectedFile;
+      return directory + File.separator + selectedFile;
     } else {
       return null;
     }
+  }
+
+  /**
+   * Returns the last directory used for the given content type.
+   * @return the last directory for <code>contentType</code> or the default last directory 
+   *         if it's not set. If <code>contentType</code> is <code>null</code>, the
+   *         returned directory will be the default last one or <code>null</code> if it's not set yet.
+   */
+  protected File getLastDirectory(ContentType contentType) {
+    File directory = this.lastDirectories.get(contentType);
+    if (directory == null) {
+      directory = this.lastDirectories.get(null);
+    }
+    return directory;
+  }
+
+  /**
+   * Stores the last directory for the given content type.
+   */
+  protected void setLastDirectory(ContentType contentType, File directory) {
+    this.lastDirectories.put(contentType, directory);
+    // Store default last directory in null content 
+    this.lastDirectories.put(null, directory);
   }
 
   /**
@@ -575,9 +602,10 @@ public class FileContentManager implements ContentManager {
       fileChooser.setFileFilter(acceptAllFileFilter);
     }
     
-    // Update current directory
-    if (this.currentDirectory != null) {
-      fileChooser.setCurrentDirectory(this.currentDirectory);
+    // Update directory
+    File directory = getLastDirectory(contentType);
+    if (directory != null) {
+      fileChooser.setCurrentDirectory(directory);
     }
     
     if (dialogTitle == null) {
@@ -592,8 +620,10 @@ public class FileContentManager implements ContentManager {
       option = fileChooser.showOpenDialog((JComponent)parentView);
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
-      // Retrieve current directory for future calls
-      this.currentDirectory = fileChooser.getCurrentDirectory();
+      // Retrieve last directory for future calls
+      directory = fileChooser.getCurrentDirectory();
+      // Store last directory
+      setLastDirectory(contentType, directory);
       // Return selected file
       return fileChooser.getSelectedFile().toString();
     } else {

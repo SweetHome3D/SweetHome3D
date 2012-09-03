@@ -213,7 +213,7 @@ public class SweetHome3D extends HomeApplication {
    */
   protected ContentManager getContentManager() {
     if (this.contentManager == null) {
-      this.contentManager = new FileContentManager(getUserPreferences());
+      this.contentManager = new FileContentManagerWithRecordedLastDirectories(getUserPreferences(), getClass());
     }
     return this.contentManager;
   }
@@ -692,15 +692,74 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
+   * A file content manager that records the last directories for each content
+   * in Java preferences.
+   */
+  private static class FileContentManagerWithRecordedLastDirectories extends FileContentManager {
+    private static final String LAST_DIRECTORY         = "lastDirectory#";
+    private static final String LAST_DEFAULT_DIRECTORY = "lastDefaultDirectory";
+    
+    private final Class<? extends SweetHome3D> mainClass;
+
+    public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences, 
+                                                         Class<? extends SweetHome3D> mainClass) {
+      super(preferences);
+      this.mainClass = mainClass;
+    }
+
+    @Override
+    protected File getLastDirectory(ContentType contentType) {
+      Preferences preferences = Preferences.userNodeForPackage(this.mainClass);
+      String directoryPath = null;
+      if (contentType != null) {
+        directoryPath = preferences.get(LAST_DIRECTORY + contentType, null);
+      }
+      if (directoryPath == null) {
+        directoryPath = preferences.get(LAST_DEFAULT_DIRECTORY, null);
+      }
+      if (directoryPath != null) {
+        File directory = new File(directoryPath);
+        if (directory.isDirectory()) {
+          return directory;
+        } 
+      }
+      return null;
+    }
+    
+    @Override
+    protected void setLastDirectory(ContentType contentType, File directory) {
+      // Last directories are not recorded in user preferences since there's no need of portability 
+      // from a computer to an other
+      Preferences preferences = Preferences.userNodeForPackage(this.mainClass);
+      if (directory == null) {
+        preferences.remove(LAST_DIRECTORY + contentType);
+      } else {
+        String directoryPath = directory.getAbsolutePath();
+        if (contentType != null) {
+          preferences.put(LAST_DIRECTORY + contentType, directoryPath);
+        }
+        if (directoryPath != null) {
+          preferences.put(LAST_DEFAULT_DIRECTORY, directoryPath);
+        }
+      }
+      try {
+        preferences.flush();
+      } catch (BackingStoreException ex) {
+        // Ignore exception, Sweet Home 3D will work without recorded directories
+      }
+    }
+  }
+  
+  /**
    * JNLP <code>ServiceManagerStub</code> implementation for standalone
    * applications run out of Java Web Start. This service manager supports
    * <code>BasicService</code> and <code>javax.jnlp.SingleInstanceService</code>.
    * .
    */
   private static class StandaloneServiceManager implements ServiceManagerStub {
-    private final Class<?> mainClass;
+    private final Class<? extends SweetHome3D> mainClass;
 
-    public StandaloneServiceManager(Class<?> mainClass) {
+    public StandaloneServiceManager(Class<? extends SweetHome3D> mainClass) {
       this.mainClass = mainClass;
     }
 
@@ -802,10 +861,10 @@ public class SweetHome3D extends HomeApplication {
   private static class StandaloneSingleInstanceService implements SingleInstanceService {
     private static final String                SINGLE_INSTANCE_PORT    = "singleInstancePort";
 
-    private final Class<?>                     mainClass;
+    private final Class<? extends SweetHome3D> mainClass;
     private final List<SingleInstanceListener> singleInstanceListeners = new ArrayList<SingleInstanceListener>();
 
-    public StandaloneSingleInstanceService(Class<?> mainClass) {
+    public StandaloneSingleInstanceService(Class<? extends SweetHome3D> mainClass) {
       this.mainClass = mainClass;
     }
 
@@ -886,7 +945,7 @@ public class SweetHome3D extends HomeApplication {
      * Returns <code>true</code> if single instance server was successfully
      * called.
      */
-    public static boolean callSingleInstanceServer(String [] mainArgs, Class<?> mainClass) {
+    public static boolean callSingleInstanceServer(String [] mainArgs, Class<? extends SweetHome3D> mainClass) {
       if (!OperatingSystem.isMacOSX()) {
         // No server under Mac OS X, multiple application launches are managed
         // by com.apple.eawt.ApplicationListener in MacOSXConfiguration class
