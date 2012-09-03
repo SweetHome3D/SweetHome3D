@@ -1083,10 +1083,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       });
     
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      addPropertyChangeListener(new PropertyChangeListener() {
+      addPropertyChangeListener("Frame.active", new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            if ("Frame.active".equals(ev.getPropertyName()) 
-                && !home.getSelectedItems().isEmpty()) {
+            if (!home.getSelectedItems().isEmpty()) {
               // Repaint to update selection color
               repaint();
             }
