@@ -258,14 +258,14 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Check default category is first category  
     final FurnitureCategory firstCategory = preferences.getFurnitureCatalog().getCategories().get(0);
     assertEquals("Wrong default category", firstCategory, categoryComboBox.getSelectedItem());
-    // Rename furniture with the name of the catalog first piece
+    // Rename furniture with an empty name
     tester.invokeAndWait(new Runnable() {
         public void run() {
-          nameTextField.setText(firstCategory.getFurniture().get(0).getName());
+          nameTextField.setText("");
         }
       });
-    // Check next button is enabled 
-    assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
+    // Check next button is disabled 
+    assertFalse("Next button isn't disabled", nextFinishOptionButton.isEnabled());
     // Select Add to catalog check box
     tester.invokeAndWait(new Runnable() {
         public void run() {
