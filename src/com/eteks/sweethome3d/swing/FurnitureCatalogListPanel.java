@@ -611,7 +611,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     private JEditorPane             informationPane;
     
     public CatalogCellRenderer() {
-      setLayout(new BorderLayout(0, 0));
+      setLayout(null);
       this.nameLabel = new DefaultListCellRenderer() {
           @Override
           public Dimension getPreferredSize() {
@@ -627,14 +627,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.modifiablePieceFont = new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
       this.nameLabel.setFont(this.defaultFont);
       
-      this.informationPane = new JEditorPane("text/html", null) {
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension preferredSize = super.getPreferredSize();
-            preferredSize.height += 2;
-            return preferredSize;
-          }
-        };
+      this.informationPane = new JEditorPane("text/html", "-");
       this.informationPane.setOpaque(false);
       this.informationPane.setEditable(false);
       String bodyRule = "body { font-family: " + this.defaultFont.getFamily() + "; " 
@@ -643,7 +636,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       ((HTMLDocument)this.informationPane.getDocument()).getStyleSheet().addRule(bodyRule);
       
       add(this.nameLabel);
-      add(this.informationPane, BorderLayout.SOUTH);
+      add(this.informationPane);
     }
     
     public Component getListCellRendererComponent(JList list,
@@ -663,8 +656,9 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       String information = piece.getInformation();
       if (information != null) {
         this.informationPane.setText(information);
+        this.informationPane.setVisible(true);
       } else {
-        this.informationPane.setText("&nbsp;");
+        this.informationPane.setVisible(false);
       }
       return this;
     }
@@ -678,10 +672,28 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           break;
         }
       }
-      invalidate();
       return getPreferredSize().height;
     }
 
+    @Override
+    public void doLayout() {
+      Dimension namePreferredSize = this.nameLabel.getPreferredSize();
+      this.nameLabel.setSize(getWidth(), namePreferredSize.height);
+      if (this.informationPane.isVisible()) {
+        this.informationPane.setBounds(0, namePreferredSize.height,
+            getWidth(), getHeight() - namePreferredSize.height);
+      }
+    }
+    
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension preferredSize = this.nameLabel.getPreferredSize();
+      if (this.informationPane.isVisible()) {
+        preferredSize.height += this.informationPane.getPreferredSize().height + 2;
+      }
+      return preferredSize;
+    }
+    
     /**
      * The following methods are overridden for performance reasons.
      */
@@ -719,11 +731,12 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)list.getModel().getElementAt(pieceIndex);
         String information = piece.getInformation();
         if (information != null) {
+          getListCellRendererComponent(list, piece, pieceIndex, false, false);
           Rectangle cellBounds = list.getCellBounds(pieceIndex, pieceIndex);
-          getListCellRendererComponent(list, piece, pieceIndex, false, false).validate();
-          point.x -= cellBounds.x + this.informationPane.getX(); 
+          point.x -= cellBounds.x; 
           point.y -= cellBounds.y + this.informationPane.getY(); 
           if (point.x > 0 && point.y > 0) {
+            // Search in information pane if point is over a HTML link
             int position = this.informationPane.viewToModel(point);
             if (position > 1) {
               HTMLDocument hdoc = (HTMLDocument)this.informationPane.getDocument();
