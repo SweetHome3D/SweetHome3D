@@ -25,6 +25,7 @@ import java.text.Collator;
 import java.util.List;
 import java.util.Locale;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -122,7 +123,7 @@ public class CatalogTreeTest extends TestCase {
     Component childLabel = renderer.
         getTreeCellRendererComponent(tree, node, 
            false, true, false, 0, false);
-    return ((JLabel)childLabel).getText();
+    return ((JLabel)((JComponent)childLabel).getComponent(0)).getText();
   }
   
   public static void main(String [] args) {
