@@ -169,12 +169,8 @@ public class AutoRecoveryManager {
               this.recoveredHomes.add(home);
             }
           } catch (RecorderException ex) {
-            if (recoveredFiles.length > 1) {
-              // Let's give a chance to other files
-              ex.printStackTrace();
-            } else {
-              throw ex; 
-            }
+            // Let's give a chance to other files
+            ex.printStackTrace();
           }
         }
       }
