@@ -63,6 +63,7 @@ public class AutoRecoveryManager {
   private static final int    MINIMUM_DELAY_BETWEEN_AUTO_SAVE_OPERATIONS = 30000;
   private static final String RECOVERY_SUB_FOLDER      = "recovery";
   private static final String RECOVERED_FILE_EXTENSION = ".recovered";
+  private static final String UNRECOVERABLE_FILE_EXTENSION = ".unrecoverable";
 
   private final HomeApplication             application;
   private final List<Home>                  recoveredHomes      = new ArrayList<Home>();
@@ -134,7 +135,8 @@ public class AutoRecoveryManager {
    * Reads the homes to recover.
    */
   private void readRecoveredHomes() throws RecorderException {
-    File [] recoveredFiles = getRecoveryFolder().listFiles(new FileFilter() {
+    File recoveryFolder = getRecoveryFolder();
+    File [] recoveredFiles = recoveryFolder.listFiles(new FileFilter() {
         public boolean accept(File file) {
           return file.isFile()
               && file.getName().endsWith(RECOVERED_FILE_EXTENSION);
@@ -169,8 +171,10 @@ public class AutoRecoveryManager {
               this.recoveredHomes.add(home);
             }
           } catch (RecorderException ex) {
-            // Let's give a chance to other files
             ex.printStackTrace();
+            // Rename file to avoid it to be read again at next launch
+            file.renameTo(new File(recoveryFolder, 
+                file.getName().replace(RECOVERED_FILE_EXTENSION, UNRECOVERABLE_FILE_EXTENSION)));
           }
         }
       }
