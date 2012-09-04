@@ -171,9 +171,9 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              float [][] modelRotation, String creator,
                              boolean resizable, boolean deformable, boolean texturable,
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
-    this(id, name, description, null, null, icon, planIcon, model, width, depth, height, elevation, movable, 
-        wallThickness, wallDistance, sashes, modelRotation, creator, null, 
-        resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, null);
+    this(id, name, description, null, null, null, null, icon, planIcon, model, width, depth, height, elevation, movable, 
+        wallThickness, wallDistance, sashes, 
+        modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
   }
          
   /**
@@ -181,8 +181,10 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param id    the id of the new door or window, or <code>null</code>
    * @param name  the name of the new door or window
    * @param description the description of the new door or window 
-   * @param tags tags associated to the new piece
-   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param information additional information associated to the new door or window
+   * @param tags tags associated to the new door or window
+   * @param creationDate creation date of the new door or window in milliseconds since the epoch 
+   * @param grade grade of the new door or window or <code>null</code>
    * @param icon content of the icon of the new door or window
    * @param planIcon content of the icon of the new piece displayed in plan
    * @param model content of the 3D model of the new door or window
@@ -196,7 +198,6 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param sashes the sashes attached to the new door or window
    * @param modelRotation the rotation 3 by 3 matrix applied to the door or window model
    * @param creator the creator of the model
-   * @param url URL associated to the new piece
    * @param resizable if <code>true</code>, the size of the new door or window may be edited
    * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
    *            change independently from each other
@@ -205,19 +206,19 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new door or window or <code>null</code>
    * @param currency the price currency, noted with ISO 4217 code, or <code>null</code> 
-   * @param grade grade of the piece of furniture or <code>null</code>
    * @since 3.6 
    */
-  public CatalogDoorOrWindow(String id, String name, String description, String [] tags, Long creationDate, 
+  public CatalogDoorOrWindow(String id, String name, String description, 
+                             String information, String [] tags, Long creationDate, Float grade, 
                              Content icon, Content planIcon, Content model, 
                              float width, float depth, float height, float elevation, boolean movable, 
-                             float wallThickness, float wallDistance, Sash [] sashes,
-                             float [][] modelRotation, String creator, String url,
-                             boolean resizable, boolean deformable, boolean texturable,
-                             BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, Float grade) {
-    super(id, name, description, tags, creationDate, icon, planIcon, model, 
-        width, depth, height, elevation, movable, null, modelRotation, creator, url, 
-        resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, grade);
+                             float wallThickness, float wallDistance, Sash [] sashes, 
+                             float [][] modelRotation, String creator, 
+                             boolean resizable, boolean deformable, boolean texturable, 
+                             BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
+    super(id, name, description, information, tags, creationDate, grade, 
+        icon, planIcon, model, width, depth, height, elevation, movable, 
+        null, modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;
     this.sashes = sashes;

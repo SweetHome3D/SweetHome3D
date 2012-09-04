@@ -161,9 +161,9 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       float [][] modelRotation, String creator,
                       boolean resizable, boolean deformable, boolean texturable,
                       BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
-    this(id, name, description, null, null, icon, planIcon, model, width, depth, height, elevation,   
-        movable, lightSources, staircaseCutOutShape, modelRotation, creator, null, resizable, deformable, texturable, 
-        price, valueAddedTaxPercentage, currency, null);
+    this(id, name, description, null, null, null, null, icon, planIcon, model, width, depth, height, elevation, movable, 
+        lightSources, staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, 
+        price, valueAddedTaxPercentage, currency);
   }
          
   /**
@@ -171,8 +171,10 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
    * @param id    the id of the new light, or <code>null</code>
    * @param name  the name of the new light
    * @param description the description of the new light 
-   * @param tags tags associated to the new piece
-   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param information additional information associated to the new light
+   * @param tags tags associated to the new light
+   * @param creationDate creation date of the new light in milliseconds since the epoch 
+   * @param grade grade of the new light or <code>null</code>
    * @param icon content of the icon of the new light
    * @param planIcon content of the icon of the new piece displayed in plan
    * @param model content of the 3D model of the new light
@@ -186,7 +188,6 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
    *            with the piece like a staircase
    * @param modelRotation the rotation 3 by 3 matrix applied to the light model
    * @param creator the creator of the model
-   * @param url URL associated to the new piece
    * @param resizable if <code>true</code>, the size of the new light may be edited
    * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
    *            change independently from each other
@@ -195,19 +196,20 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new light or <code>null</code> 
    * @param currency the price currency, noted with ISO 4217 code, or <code>null</code> 
-   * @param grade grade of the piece of furniture or <code>null</code>
    * @since 3.6          
    */
-  public CatalogLight(String id, String name, String description, String [] tags, Long creationDate, 
+  public CatalogLight(String id, String name, String description, 
+                      String information, String [] tags, Long creationDate, Float grade, 
                       Content icon, Content planIcon, Content model, 
-                      float width, float depth, float height, float elevation, boolean movable, 
-                      LightSource [] lightSources, String staircaseCutOutShape,
-                      float [][] modelRotation, String creator, String url,
-                      boolean resizable, boolean deformable, boolean texturable,
-                      BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, Float grade) {
-    super(id, name, description, tags, creationDate, icon, planIcon, model, width, depth, height, elevation,   
-        movable, staircaseCutOutShape, modelRotation, creator, url, resizable, deformable, texturable, 
-        price, valueAddedTaxPercentage, currency, grade);
+                      float width, float depth, float height, float elevation, boolean movable,
+                      LightSource [] lightSources, String staircaseCutOutShape, 
+                      float [][] modelRotation, String creator, 
+                      boolean resizable, boolean deformable, boolean texturable, 
+                      BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
+    super(id, name, description, information, tags, creationDate, grade, 
+        icon, planIcon, model, width, depth, height, elevation, movable, 
+        staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, 
+        price, valueAddedTaxPercentage, currency);
     this.lightSources = lightSources;
   }
          
