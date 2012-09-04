@@ -342,8 +342,6 @@ public class FurnitureCatalogTree extends JTree implements View {
           this.informationPane.setVisible(false);
         }
       }
-//      this.nameLabel.invalidate();
-//      this.informationPane.invalidate();
       return this;
     }
     
@@ -426,6 +424,7 @@ public class FurnitureCatalogTree extends JTree implements View {
           point.x -= rowBounds.x + this.informationPane.getX(); 
           point.y -= rowBounds.y + this.informationPane.getY(); 
           if (point.x > 0 && point.y > 0) {
+            // Search in information pane if point is over a HTML link
             int position = this.informationPane.viewToModel(point);
             if (position > 0) {
               HTMLDocument hdoc = (HTMLDocument)this.informationPane.getDocument();
