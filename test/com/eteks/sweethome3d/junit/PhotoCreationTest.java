@@ -186,7 +186,9 @@ public class PhotoCreationTest extends ComponentTestFixture {
       sliderTester.actionSlide(qualitySlider, i);
       // Test image creation at each quality 
       tester.click(createButton);
-      assertFalse("Rendering didn't start", saveButton.isEnabled());
+      if (i == qualitySlider.getMinimum()) {
+        assertFalse("Rendering didn't start", saveButton.isEnabled());
+      }
       // Wait image is generated
       for (int j = 0; j < 1000 && !saveButton.isEnabled(); j++) {
         Thread.sleep(100);
