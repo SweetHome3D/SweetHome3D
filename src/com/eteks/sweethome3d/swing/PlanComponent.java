@@ -48,6 +48,7 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.TexturePaint;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -2425,7 +2426,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   protected Color getSelectionColor() {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        if (!SwingUtilities.getWindowAncestor(this).isActive()) {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null && !window.isActive()) {
           Color selectionColor = UIManager.getColor("List.selectionInactiveBackground");
           if (selectionColor != null) {
             return selectionColor.darker();
