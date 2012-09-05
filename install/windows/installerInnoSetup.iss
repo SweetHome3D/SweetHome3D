@@ -4,7 +4,7 @@
 ;
 ; SweetHome3D-3.6-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
-; and a tmp directory stored in current directory containing :
+; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
 ; + a jre... subdirectory containing a dump of Windows JRE without the files mentioned 
 ;   in the JRE README.TXT file (JRE bin/javaw.exe command excepted)     
@@ -55,7 +55,7 @@ Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm
 ;Name: associate; Description: "{cm:AssocFileExtension,Sweet Home 3D,sh3d}"; GroupDescription: "{cm:OtherTasks}"
 
 [Files]
-Source: "tmp\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
