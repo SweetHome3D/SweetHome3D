@@ -30,7 +30,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
@@ -49,6 +48,7 @@ import javax.swing.JEditorPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -208,7 +208,7 @@ public class FurnitureCatalogTree extends JTree implements View {
    */
   private void addMouseListeners(final FurnitureCatalogController controller) {
     final Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
-    MouseAdapter mouseListener = new MouseAdapter () {
+    MouseInputAdapter mouseListener = new MouseInputAdapter() {
         @Override
         public void mouseClicked(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)) {

@@ -39,7 +39,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
@@ -87,6 +86,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
@@ -362,7 +362,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
   private void addMouseListeners(final JList catalogFurnitureList,
                                  final FurnitureCatalogController controller) {
     final Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
-    MouseAdapter mouseListener = new MouseAdapter () {
+    MouseInputAdapter mouseListener = new MouseInputAdapter () {
         @Override
         public void mouseClicked(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)) {
