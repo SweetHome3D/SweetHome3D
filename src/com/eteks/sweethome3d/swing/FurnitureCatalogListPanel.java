@@ -717,11 +717,11 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     }
     
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintChildren(Graphics g) {
       // Force text anti aliasing on texts
       ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
           RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-      super.paintComponent(g);
+      super.paintChildren(g);
     }
 
     public URL getURLAt(Point point, JList list) {
