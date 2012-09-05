@@ -18,6 +18,7 @@
      - windowsInstaller       : Builds SweetHome3D-version-windows.exe file in install directory     
      - windowsSignedInstaller : Builds signed SweetHome3D-version-windows.exe file in install directory     
      - macosxInstaller        : Builds SweetHome3D-version-macosx.dmg file in install directory
+     - macosxSignedInstaller  : Builds signed SweetHome3D-version-macosx.dmg file in install directory
      - linux32Installer       : Builds SweetHome3D-version-linux-x86.tgz file in install directory
      - linux64Installer       : Builds SweetHome3D-version-linux-x64.tgz file in install directory
      - viewerInstaller        : Builds SweetHome3DViewer-version.zip file in install directory
@@ -419,19 +420,19 @@
     <echo message="install/SweetHome3D-${version}.jar ready for ftp"/>
   </target>
 
-  <!-- Builds Sweet Home 3D Windows launcher.
+  <!-- Builds Sweet Home 3D Windows launcher in install/windows/build directory.
        CAUTION : May be run only under Windows and requires a Windows 32 bits JRE and launch4j 
                  installed in their default location -->
   <target name="windowsLauncher" depends="application,furniture,textures,help"
           description="Builds Sweet Home 3D Windows launcher">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D 
-         to install/windows/tmp/lib -->
-    <mkdir dir="install/windows/tmp/lib"/>
-    <move file="build/SweetHome3D.jar" todir="install/windows/tmp/lib" />
-    <move file="build/Furniture.jar"   todir="install/windows/tmp/lib" />
-    <move file="build/Textures.jar"    todir="install/windows/tmp/lib" />
-    <move file="build/Help.jar"        todir="install/windows/tmp/lib" />
-    <copy todir="install/windows/tmp/lib" >
+         to install/windows/build/lib -->
+    <mkdir dir="install/windows/build/lib"/>
+    <move file="build/SweetHome3D.jar" todir="install/windows/build/lib" />
+    <move file="build/Furniture.jar"   todir="install/windows/build/lib" />
+    <move file="build/Textures.jar"    todir="install/windows/build/lib" />
+    <move file="build/Help.jar"        todir="install/windows/build/lib" />
+    <copy todir="install/windows/build/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
@@ -439,25 +440,25 @@
         <include name="*.dll"/>
       </fileset>
     </copy>
-    <!-- Copy COPYING.TXT and licenses texts to install/windows/tmp/ -->
-    <copy file="COPYING.TXT" todir="install/windows/tmp"/>
-    <copy file="LICENSE.TXT" todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/windows/tmp"/>
-    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/windows/tmp"/>
-    <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/windows/tmp" />
+    <!-- Copy COPYING.TXT and licenses texts to install/windows/build/ -->
+    <copy file="COPYING.TXT" todir="install/windows/build"/>
+    <copy file="LICENSE.TXT" todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/windows/build"/>
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/windows/build"/>
+    <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/windows/build" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/windows/build" />
   
-    <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
+    <!-- Copy JRE to install/windows/build/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
-    <copy todir="install/windows/tmp/jre6">
+    <copy todir="install/windows/build/jre6">
       <fileset dir="C:\Program Files\Java\jre6">
         <include name="*"/>
         <include name="bin/**"/>
@@ -519,7 +520,7 @@
 
     <!-- Clean build directories -->
     <delete dir="build"/>
-    <delete dir="install/windows/tmp"/>
+    <delete dir="install/windows/build"/>
 
     <echo message="install/SweetHome3D-${version}-windows.exe ready for ftp"/>
   </target>
@@ -539,7 +540,7 @@
       <arg value="${basedir}\install\windows\keys.pfx"/>
       <arg value="/p"/>
       <arg value="${password}"/>
-      <arg value="${basedir}\install\windows\tmp\SweetHome3D.exe"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D.exe"/>
     </exec>
     <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
@@ -549,16 +550,14 @@
 
     <!-- Clean build directories -->
     <delete dir="build"/>
-    <delete dir="install/windows/tmp"/>
+    <delete dir="install/windows/build"/>
 
     <echo message="signed install/SweetHome3D-${version}-windows.exe ready for ftp"/>
   </target>
 
-  <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
-       and Sweet Home 3D libraries. 
-       CAUTION : May be run only under Mac OS X and requires Disk Utility -->
-  <target name="macosxInstaller" depends="application,furniture,textures,help"
-          description="Builds install/SweetHome3D-version-macosx.dmg archive">
+  <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. -->
+  <target name="macosxBundle" depends="application,furniture,textures,help"
+          description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app">
@@ -612,7 +611,13 @@
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/macosx/SweetHome3D-${version}" />
- 
+  </target>
+
+  <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
+       and Sweet Home 3D libraries. 
+       CAUTION : May be run only under Mac OS X and requires Disk Utility -->
+  <target name="macosxInstaller" depends="macosxBundle"
+          description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-${version}-macosx.dmg"/>
     <exec executable="hdiutil">
@@ -627,6 +632,44 @@
     <delete dir="install/macosx/SweetHome3D-${version}"/>
 
     <echo message="install/SweetHome3D-${version}-macosx.dmg ready for ftp"/>
+  </target>
+
+  <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app 
+       and Sweet Home 3D libraries. 
+       CAUTION : May be run only under Mac OS X and requires hdutil, codesign 
+       and a certificate imported in Keychain Access -->
+  <target name="macosxSignedInstaller" depends="macosxBundle"
+          description="Builds install/SweetHome3D-version-macosx.dmg archive">
+    <input message="Enter certificate name:" 
+           addproperty="certificateName"/> 
+    <!-- Sign Sweet Home 3D application bundle -->
+    <exec executable="codesign">
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app"/>
+    </exec>
+
+    <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
+    <delete file="install/SweetHome3D-${version}-macosx.dmg"/>
+    <exec executable="hdiutil">
+      <arg value="create"/>
+      <arg value="-srcfolder"/>
+      <arg value="install/macosx/SweetHome3D-${version}"/>
+      <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
+    </exec>
+
+    <!-- Sign Sweet Home 3D DMG image -->
+    <exec executable="codesign">
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
+    </exec>
+
+    <!-- Clean build directories -->
+    <delete dir="build"/>
+    <delete dir="install/macosx/SweetHome3D-${version}"/>
+
+    <echo message="signed install/SweetHome3D-${version}-macosx.dmg ready for ftp"/>
   </target>
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
