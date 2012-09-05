@@ -620,14 +620,8 @@ public class PhotoPanel extends JPanel implements DialogView {
    * Returns the slider value matching a given x.
    */
   private float getSliderValueAt(JSlider qualitySlider, int x, UserPreferences preferences) {
-    int fastLabelOffset = OperatingSystem.isLinux() 
-        ? 0
-        : new JLabel(SwingTools.getLocalizedLabelText(preferences,
-              PhotoPanel.class, "fastLabel.text")).getPreferredSize().width / 2;
-    int bestLabelOffset = OperatingSystem.isLinux() 
-        ? 0
-        : new JLabel(SwingTools.getLocalizedLabelText(preferences,
-              PhotoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
+    int fastLabelOffset = 0;
+    int bestLabelOffset = 0;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
     return qualitySlider.getMinimum()
         + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight() 
@@ -774,11 +768,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     proportionsPanel.add(this.aspectRatioComboBox);
     add(proportionsPanel, new GridBagConstraints(
         1, 2, 5, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Fourth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     this.qualityLabel.setHorizontalAlignment(labelAlignment);
     add(this.qualitySlider, new GridBagConstraints(
         2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -789,7 +783,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualityLabelsPanel.add(this.bestQualityLabel, BorderLayout.EAST);
     add(qualityLabelsPanel, new GridBagConstraints(
         2, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 0, 0), 0, 0));
     // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 

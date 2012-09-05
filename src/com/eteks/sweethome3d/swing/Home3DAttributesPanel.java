@@ -19,13 +19,12 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Dictionary;
-import java.util.Hashtable;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -60,7 +59,11 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private JComponent    skyTextureComponent;
   private JLabel        brightnessLabel;
   private JSlider       brightnessSlider;
+  private JLabel        darkBrightnessLabel;
+  private JLabel        brightBrightnessLabel;
   private JLabel        wallsTransparencyLabel;
+  private JLabel        opaqueWallsTransparencyLabel;
+  private JLabel        invisibleWallsTransparencyLabel;
   private JSlider       wallsTransparencySlider;
   private String        dialogTitle;
 
@@ -189,17 +192,12 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     this.brightnessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "brightnessLabel.text"));
     this.brightnessSlider = new JSlider(0, 255);
-    JLabel darkLabel = new JLabel(preferences.getLocalizedString(
+    this.darkBrightnessLabel = new JLabel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "darkLabel.text"));
-    JLabel brightLabel = new JLabel(preferences.getLocalizedString(
+    this.brightBrightnessLabel = new JLabel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "brightLabel.text"));
-    Dictionary<Integer,JComponent> brightnessSliderLabelTable = new Hashtable<Integer,JComponent>();
-    brightnessSliderLabelTable.put(0, darkLabel);
-    brightnessSliderLabelTable.put(255, brightLabel);
-    this.brightnessSlider.setLabelTable(brightnessSliderLabelTable);
-    this.brightnessSlider.setPaintLabels(true);
     this.brightnessSlider.setPaintTicks(true);
-    this.brightnessSlider.setMajorTickSpacing(16);
+    this.brightnessSlider.setMajorTickSpacing(17);
     this.brightnessSlider.setValue(controller.getLightColor() & 0xFF);
     this.brightnessSlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -218,17 +216,12 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     this.wallsTransparencyLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "wallsTransparencyLabel.text"));
     this.wallsTransparencySlider = new JSlider(0, 255);
-    JLabel opaqueLabel = new JLabel(preferences.getLocalizedString(
+    this.opaqueWallsTransparencyLabel = new JLabel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "opaqueLabel.text"));
-    JLabel invisibleLabel = new JLabel(preferences.getLocalizedString(
+    this.invisibleWallsTransparencyLabel = new JLabel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "invisibleLabel.text"));
-    Dictionary<Integer,JComponent> wallsTransparencySliderLabelTable = new Hashtable<Integer,JComponent>();
-    wallsTransparencySliderLabelTable.put(0, opaqueLabel);
-    wallsTransparencySliderLabelTable.put(255, invisibleLabel);
-    this.wallsTransparencySlider.setLabelTable(wallsTransparencySliderLabelTable);
-    this.wallsTransparencySlider.setPaintLabels(true);
     this.wallsTransparencySlider.setPaintTicks(true);
-    this.wallsTransparencySlider.setMajorTickSpacing(16);
+    this.wallsTransparencySlider.setMajorTickSpacing(17);
     this.wallsTransparencySlider.setValue((int)(controller.getWallsAlpha() * 255));
     this.wallsTransparencySlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -358,13 +351,27 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     renderingPanel.add(this.brightnessSlider, new GridBagConstraints(
         1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    JPanel brightnessLabelsPanel = new JPanel(new BorderLayout(20, 0));
+    brightnessLabelsPanel.setOpaque(false);
+    brightnessLabelsPanel.add(this.darkBrightnessLabel, BorderLayout.WEST);
+    brightnessLabelsPanel.add(this.brightBrightnessLabel, BorderLayout.EAST);
+    renderingPanel.add(brightnessLabelsPanel, new GridBagConstraints(
+        1, 1, 3, 1, 1, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 3, 0), 0, 0));
     // Last row
     renderingPanel.add(this.wallsTransparencyLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     renderingPanel.add(this.wallsTransparencySlider, new GridBagConstraints(
-        1, 1, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
+        1, 2, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    JPanel wallsTransparencyLabelsPanel = new JPanel(new BorderLayout(20, 0));
+    wallsTransparencyLabelsPanel.setOpaque(false);
+    wallsTransparencyLabelsPanel.add(this.opaqueWallsTransparencyLabel, BorderLayout.WEST);
+    wallsTransparencyLabelsPanel.add(this.invisibleWallsTransparencyLabel, BorderLayout.EAST);
+    renderingPanel.add(wallsTransparencyLabelsPanel, new GridBagConstraints(
+        1, 3, 3, 1, 1, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 0, 0), 0, 0));
     add(renderingPanel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
