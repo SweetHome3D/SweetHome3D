@@ -605,7 +605,9 @@ public class SweetHome3D extends HomeApplication {
             public void collectionChanged(CollectionEvent<Home> ev) {
               if (ev.getType() == CollectionEvent.Type.ADD) {
                 removeHomesListener(this);
-                autoRecoveryManager.openRecoveredHomes();                
+                if (autoRecoveryManager != null) {
+                  autoRecoveryManager.openRecoveredHomes();
+                }
               }
             }
           });
@@ -660,7 +662,9 @@ public class SweetHome3D extends HomeApplication {
         });
       }
     } else if (getHomes().isEmpty()) {
-      this.autoRecoveryManager.openRecoveredHomes();
+      if (autoRecoveryManager != null) {
+        this.autoRecoveryManager.openRecoveredHomes();
+      }
       if (getHomes().isEmpty()) {
         // Add a new home to application
         addHome(createHome());
