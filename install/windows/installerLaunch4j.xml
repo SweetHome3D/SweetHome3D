@@ -5,7 +5,7 @@
      SweetHome3D.exe creator 
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
-     It creates a SweetHome3D.exe in tmp directory running with
+     It creates a SweetHome3D.exe in build directory running with
      JRE 6 Update 35 stored in jre6 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
@@ -13,7 +13,7 @@
   <dontWrapJar>true</dontWrapJar>
   <headerType>gui</headerType>
   <jar></jar>
-  <outfile>tmp\SweetHome3D.exe</outfile>
+  <outfile>build\SweetHome3D.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
