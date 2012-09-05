@@ -152,7 +152,6 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JButton               saveButton;
   private JButton               closeButton;
 
-
   private static PhotoPanel     currentPhotoPanel; // Support only one photo panel opened at a time
 
   public PhotoPanel(Home home, 
@@ -783,7 +782,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualityLabelsPanel.add(this.bestQualityLabel, BorderLayout.EAST);
     add(qualityLabelsPanel, new GridBagConstraints(
         2, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 0, 0), 0, 0));
     // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
         1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 

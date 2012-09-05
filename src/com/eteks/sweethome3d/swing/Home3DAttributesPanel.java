@@ -357,7 +357,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     brightnessLabelsPanel.add(this.brightBrightnessLabel, BorderLayout.EAST);
     renderingPanel.add(brightnessLabelsPanel, new GridBagConstraints(
         1, 1, 3, 1, 1, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 3, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 3, 0), 0, 0));
     // Last row
     renderingPanel.add(this.wallsTransparencyLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
@@ -371,7 +371,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     wallsTransparencyLabelsPanel.add(this.invisibleWallsTransparencyLabel, BorderLayout.EAST);
     renderingPanel.add(wallsTransparencyLabelsPanel, new GridBagConstraints(
         1, 3, 3, 1, 1, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -4, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 0, 0), 0, 0));
     add(renderingPanel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
