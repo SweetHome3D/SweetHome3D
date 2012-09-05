@@ -785,7 +785,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 0, 0), 0, 0));
     // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 5, 5, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     // Seventh row
     add(this.dateLabel, new GridBagConstraints(
