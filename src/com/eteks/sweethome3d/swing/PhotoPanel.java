@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -55,9 +56,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Dictionary;
 import java.util.GregorianCalendar;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -133,6 +132,8 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JComboBox             aspectRatioComboBox;
   private JLabel                qualityLabel;
   private JSlider               qualitySlider;
+  private JLabel                fastQualityLabel;
+  private JLabel                bestQualityLabel;
   private Component             advancedComponentsSeparator;
   private JLabel                dateLabel;
   private JSpinner              dateSpinner;
@@ -381,6 +382,8 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
+    this.fastQualityLabel = new JLabel();
+    this.bestQualityLabel = new JLabel();
     this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
         @Override
         public String getToolTipText(MouseEvent ev) {
@@ -416,7 +419,6 @@ public class PhotoPanel extends JPanel implements DialogView {
             });
         }
       });
-    this.qualitySlider.setPaintLabels(true);
     this.qualitySlider.setPaintTicks(true);    
     this.qualitySlider.setMajorTickSpacing(1);
     this.qualitySlider.setSnapToTicks(true);
@@ -646,6 +648,13 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "applyProportionsCheckBox.text"));
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "qualityLabel.text"));
+    this.fastQualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
+        PhotoPanel.class, "fastLabel.text"));
+    if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
+      this.fastQualityLabel.setEnabled(false);
+    }
+    this.bestQualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
+        PhotoPanel.class, "bestLabel.text"));
     this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "dateLabel.text"));
     this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
@@ -654,17 +663,6 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "lensLabel.text"));
     this.ceilingLightEnabledCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "ceilingLightEnabledCheckBox.text"));
-    JLabel fastLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
-        PhotoPanel.class, "fastLabel.text"));
-    if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
-      fastLabel.setEnabled(false);
-    }
-    JLabel bestLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
-        PhotoPanel.class, "bestLabel.text"));
-    Dictionary<Integer,JComponent> qualitySliderLabelTable = new Hashtable<Integer,JComponent>();
-    qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
-    qualitySliderLabelTable.put(this.qualitySlider.getMaximum(), bestLabel);
-    this.qualitySlider.setLabelTable(qualitySliderLabelTable);
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
     Window window = SwingUtilities.getWindowAncestor(this);  
     if (window != null) {
@@ -747,10 +745,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Second row
     // Add a dummy label at left and right
     add(new JLabel(), new GridBagConstraints(
-        0, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
+        0, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(new JLabel(), new GridBagConstraints(
-        6, 1, 1, 7, 0.5f, 0, GridBagConstraints.CENTER, 
+        6, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
@@ -775,8 +773,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     proportionsPanel.add(this.applyProportionsCheckBox);
     proportionsPanel.add(this.aspectRatioComboBox);
     add(proportionsPanel, new GridBagConstraints(
-        1, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        1, 2, 5, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Fourth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -786,10 +784,17 @@ public class PhotoPanel extends JPanel implements DialogView {
         2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Fifth row
-    add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 5, 5, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
+    JPanel qualityLabelsPanel = new JPanel(new BorderLayout(20, 0));
+    qualityLabelsPanel.add(this.fastQualityLabel, BorderLayout.WEST);
+    qualityLabelsPanel.add(this.bestQualityLabel, BorderLayout.EAST);
+    add(qualityLabelsPanel, new GridBagConstraints(
+        2, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Sixth row
+    add(this.advancedComponentsSeparator, new GridBagConstraints(
+        1, 5, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
+    // Seventh row
     add(this.dateLabel, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
@@ -898,11 +903,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           screenHeight -= 30;
         }
         int screenBottomBorder = screenSize.height - screenInsets.bottom;
-        // Search the largest width between advanced photo editing or non advanced photo editing mode
-        int dialogWidthWithAdvancedComponentsVisible = dialog.getWidth();
-        setAdvancedComponentsVisible(false);
-        dialog.pack();
-        int dialogWidth = Math.max(dialog.getWidth(), dialogWidthWithAdvancedComponentsVisible);
+        int dialogWidth = dialog.getWidth();
         if (dialog.getHeight() > screenHeight) {
           dialog.setSize(dialogWidth, screenHeight);
         }
