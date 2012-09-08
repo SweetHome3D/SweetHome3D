@@ -21,6 +21,7 @@
      - macosxSignedInstaller  : Builds signed SweetHome3D-version-macosx.dmg file in install directory
      - linux32Installer       : Builds SweetHome3D-version-linux-x86.tgz file in install directory
      - linux64Installer       : Builds SweetHome3D-version-linux-x64.tgz file in install directory
+     - portableArchive        : Builds SweetHome3D-version-portable files in install/portable directory
      - viewerInstaller        : Builds SweetHome3DViewer-version.zip file in install directory
      - sourceArchive          : Builds SweetHome3D-version-src.zip file in install directory
      - javadoc                : Builds SweetHome3D-version-javadoc.zip file install directory 
@@ -608,7 +609,7 @@
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/macosx/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}"/>
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/macosx/SweetHome3D-${version}" />
   </target>
@@ -707,7 +708,7 @@
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/i386/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/i386/SweetHome3D-${version}"/>
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/i386/SweetHome3D-${version}" />
 
@@ -785,7 +786,7 @@
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/x64/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/x64/SweetHome3D-${version}"/>
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/x64/SweetHome3D-${version}" />
 
@@ -828,6 +829,85 @@
     <echo message="install/SweetHome3D-${version}-linux-x64.tgz ready for ftp"/>
   </target>
 
+  <!-- Builds install/portable/SweetHome3D-version-portable files required for SweetHome3D portable version -->
+  <target name="portableArchive" depends="application,furniture,textures,help"
+          description="Builds install/portable/SweetHome3D-version-portable files">
+    <!-- Copy SweetHome3D JARs and its libs 
+         to install/portable/SweetHome3D-${version}/lib -->
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/lib/ext"/>
+    <move file="build/SweetHome3D.jar" todir="install/portable/SweetHome3D-${version}-portable/lib" />
+    <move file="build/Furniture.jar"   todir="install/portable/SweetHome3D-${version}-portable/lib" />
+    <move file="build/Textures.jar"    todir="install/portable/SweetHome3D-${version}-portable/lib" />
+    <move file="build/Help.jar"        todir="install/portable/SweetHome3D-${version}-portable/lib" />
+    <copy todir="install/portable/SweetHome3D-${version}-portable/lib" >
+      <fileset dir="lib">
+        <include name="*.jar"/>
+        <exclude name="jmf.jar"/>
+        <exclude name="j3dcore.jar"/>
+        <exclude name="j3dutils.jar"/>
+        <exclude name="vecmath.jar"/>
+      </fileset>
+    </copy>
+    <!-- Copy jnlp.jar, JMF and DLLs and JARs for Java 3D 
+         to install/portable/SweetHome3D-${version}-portable/lib/ext -->
+    <copy file="libtest/jnlp.jar" todir="install/portable/SweetHome3D-${version}-portable/lib/ext"/>
+    <copy todir="install/portable/SweetHome3D-${version}-portable/lib/ext">
+      <fileset dir="lib">
+        <include name="jmf.jar"/>
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
+        <include name="macosx/**"/>
+        <include name="windows/**"/>
+        <include name="linux/**"/>
+      </fileset>
+    </copy>
+    <!-- Copy README.TXT and licenses texts to install/macosx/SweetHome3D-version/ -->
+    <copy file="install/portable/README.TXT" todir="install/portable/SweetHome3D-${version}-portable"/>
+    <copy file="COPYING.TXT" todir="install/portable/SweetHome3D-${version}-portable"/>
+    <copy file="LICENSE.TXT" todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/portable/SweetHome3D-${version}-portable"/>
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
+
+  	<!-- Copy Mac OS X application bundle using a different Info.plist file -->
+    <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
+      <fileset dir="install/macosx/Sweet Home 3D"/>
+    </copy>
+    <copy file="install/portable/Info.plist" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
+    <!-- Change executable permission of SweetHome3D lost during copy task -->
+    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/SweetHome3D"/>
+
+  	<!-- Copy Linux command files -->
+    <copy file="install/portable/SweetHome3D-linux-x86" todir="install/portable/SweetHome3D-${version}-portable"/>
+    <copy file="install/portable/SweetHome3D-linux-x64" todir="install/portable/SweetHome3D-${version}-portable"/>
+    <!-- Change executable permission of command files lost during copy task -->
+    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-linux-*"/>
+ 
+  	<!-- Prepare bundle jre directories -->
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/i586"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/x64"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/i586"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/x64"/>
+
+  	<!-- Prepare data directories for SH3F, SH3T, SH3L and SH3P files -->
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/furniture"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/textures"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/languages"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/plugins"/>
+   	
+    <echo message="copy Windows executable files, jres, SH3F, SH3T, SH3L and SH3P files 
+    	           to install/portable/SweetHome3D-${version}-portable and prepare compressed archive"/>
+  </target>
+  	
   <!-- Builds install/SweetHome3DViewer-version.zip archive that contains 
        the files required for SweetHome3DViewer applet -->
   <target name="viewerInstaller" depends="viewer"
