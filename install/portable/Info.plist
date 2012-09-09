@@ -245,6 +245,8 @@
 			<string>$APP_PACKAGE/../data</string>
 			<key>com.eteks.sweethome3d.applicationFolders</key>
 			<string>$APP_PACKAGE/../data</string>
+			<key>com.eteks.sweethome3d.deploymentInformation</key>
+			<string>portable</string>
 		</dict>
 	</dict>
 </dict>
