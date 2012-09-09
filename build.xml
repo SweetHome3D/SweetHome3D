@@ -829,6 +829,37 @@
     <echo message="install/SweetHome3D-${version}-linux-x64.tgz ready for ftp"/>
   </target>
 
+  <!-- Builds Sweet Home 3D Windows signed portable launchers in install/portable/SweetHome3D-version-portable directory.
+       CAUTION : May be run only under Windows and requires launch4j and SignTool
+                 included in Windows platform SDK installed in their default location -->
+  <target name="windowsSignedPortableLaunchers" 
+          description="Builds Sweet Home 3D Windows portable launchers">
+    <!-- Create portable executable files with launch4j -->
+    <exec executable="C:\Program Files\Launch4j\launch4jc.exe">
+      <arg value="${basedir}\install\portable\SweetHome3D-windows-x86.xml"/>
+    </exec>
+    <exec executable="C:\Program Files\Launch4j\launch4jc.exe">
+      <arg value="${basedir}\install\portable\SweetHome3D-windows-x64.xml"/>
+    </exec>
+
+    <input message="Enter signature password:" 
+           addproperty="password"/> 
+    <!-- Sign launchers -->
+    <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\signtool.exe">
+      <arg value="sign"/>
+      <arg value="/f"/>
+      <arg value="${basedir}\install\windows\keys.pfx"/>
+      <arg value="/p"/>
+      <arg value="${password}"/>
+      <arg value="${basedir}\install\portable\SweetHome3D-windows-x86.exe"/>
+      <arg value="${basedir}\install\portable\SweetHome3D-windows-x64.exe"/>
+    </exec>
+
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable"/>
+    <move file="install/portable/SweetHome3D-windows-x86.exe" todir="install/portable/SweetHome3D-${version}-portable" />
+    <move file="install/portable/SweetHome3D-windows-x64.exe" todir="install/portable/SweetHome3D-${version}-portable" />
+  </target>
+
   <!-- Builds install/portable/SweetHome3D-version-portable files required for SweetHome3D portable version -->
   <target name="portableArchive" depends="application,furniture,textures,help"
           description="Builds install/portable/SweetHome3D-version-portable files">
@@ -878,7 +909,7 @@
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
 
-  	<!-- Copy Mac OS X application bundle using a different Info.plist file -->
+    <!-- Copy Mac OS X application bundle using a different Info.plist file -->
     <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
@@ -886,28 +917,28 @@
     <!-- Change executable permission of SweetHome3D lost during copy task -->
     <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/SweetHome3D"/>
 
-  	<!-- Copy Linux command files -->
+    <!-- Copy Linux command files -->
     <copy file="install/portable/SweetHome3D-linux-x86" todir="install/portable/SweetHome3D-${version}-portable"/>
     <copy file="install/portable/SweetHome3D-linux-x64" todir="install/portable/SweetHome3D-${version}-portable"/>
     <!-- Change executable permission of command files lost during copy task -->
     <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-linux-*"/>
  
-  	<!-- Prepare bundle jre directories -->
+    <!-- Prepare bundle jre directories -->
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/i586"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/x64"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/i586"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/x64"/>
 
-  	<!-- Prepare data directories for SH3F, SH3T, SH3L and SH3P files -->
+    <!-- Prepare data directories for SH3F, SH3T, SH3L and SH3P files -->
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/furniture"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/textures"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/languages"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/plugins"/>
-   	
+
     <echo message="copy Windows executable files, jres, SH3F, SH3T, SH3L and SH3P files 
-    	           to install/portable/SweetHome3D-${version}-portable and prepare compressed archive"/>
+                   to install/portable/SweetHome3D-${version}-portable and prepare compressed archive"/>
   </target>
-  	
+
   <!-- Builds install/SweetHome3DViewer-version.zip archive that contains 
        the files required for SweetHome3DViewer applet -->
   <target name="viewerInstaller" depends="viewer"
