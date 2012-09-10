@@ -479,7 +479,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   
   /**
    * Reads each piece of furniture described in <code>resource</code> bundle.
-   * Resources described in piece properties will be loaded from <code>furnitureUrl</code> 
+   * Resources described in piece properties will be loaded from <code>furnitureCatalogUrl</code> 
    * if it isn't <code>null</code> or relative to <code>furnitureResourcesUrlBase</code>. 
    */
   private void readFurniture(ResourceBundle resource, 
