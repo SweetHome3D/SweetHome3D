@@ -1,11 +1,11 @@
 SWEET HOME 3D v 3.6
 -------------------
 
-This archive contains the required applications and data to run Sweet Home 3D
+The current folder contains the required applications and data to run Sweet Home 3D
 under Windows 32 bits, Windows 64 bits, Mac OS X, Linux 32 bits and Linux 64 bits.
 
-To use Sweet Home 3D, simply copy the content of this archive on a fixed 
-or a removable drive, and run the application matching your operating system:
+To use Sweet Home 3D, simply copy the current folder on a fixed or a removable drive, 
+and run the application matching your operating system:
 - SweetHome3D-windows-x86 for Windows 32 bits
 - SweetHome3D-windows-x64 for Windows 64 bits
 - SweetHome3D-macosx      for Mac OS X
@@ -18,14 +18,15 @@ and the translations proposed by contributors at:
 http://www.sweethome3d.com/translations.jsp
 Note that some recent pieces of furniture might not be translated in your language.
 
-This portable version of Sweet Home 3D is configured to store user preferences 
-and imported data in the folder named "data", which lets you use the configuration 
-of Sweet Home 3D from a computer to the other without reinstalling anything. 
-Write rights must be granted on this "data" folder to let the application save 
-preferences and imported data. You can copy the content of the "data" folder from 
-a device to another if you need to copy a configuration of Sweet Home 3D. 
-Note also that this folder matches the default configuration folder used by 
-other versions of Sweet Home 3D (installer, JAR executable file and Java Web 
+The Sweet Home 3D applications of this portable version are configured to store 
+user preferences and imported data in the sub folder named "data", which lets you 
+use Sweet Home 3D and its configuration from a computer to another, by just copying 
+the current folder. 
+Write rights must be granted to the "data" sub folder to let the application save 
+preferences and imported data. You can copy the content of the "data" sub folder 
+from a device to another if you need to copy a configuration of Sweet Home 3D. 
+Note also that the "data" sub folder matches the default configuration folder used 
+by the other versions of Sweet Home 3D (installer, JAR executable file and Java Web 
 Start versions), i.e.:
 - C:\Users\user\AppData\Roaming\eTeks\Sweet Home 3D 
   folder under Windows Vista / 7,
@@ -35,9 +36,9 @@ Start versions), i.e.:
   sub folder of your user folder under Mac OS X, 
 - .eteks/sweethome3d/furniture 
    sub folder of your user folder under Linux.   
-If you need to restore the configuration of Sweet Home 3D you built with another 
+If you need to restore the configuration of Sweet Home 3D you generated with another 
 version of Sweet Home 3D, you can copy the content of the previous folders to 
-the "data" folder of the portable version, except the sub folder named "work".
+the "data" sub folder of the portable version, except the sub folder named "work".
 
 Plugins SH3P files are supported by this version of Sweet Home 3D and should be 
 placed in the "data/plugins" sub folder.
