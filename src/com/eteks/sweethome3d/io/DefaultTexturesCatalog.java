@@ -98,14 +98,17 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     }
     
     /**
-     * Returns the key for the piece property of the given index.
+     * Returns the key for the texture property of the given index.
      */
     public String getKey(int textureIndex) {
       return keyPrefix + "#" + textureIndex;
     }
   }
 
-  private static final String PLUGIN_TEXTURES_CATALOG_FAMILY = "PluginTexturesCatalog";
+  /**
+   * The name of <code>.properties</code> family files in plugin textures catalog files. 
+   */
+  public static final String PLUGIN_TEXTURES_CATALOG_FAMILY = "PluginTexturesCatalog";
 
   private static final String ADDITIONAL_TEXTURES_CATALOG_FAMILY  = "AdditionalTexturesCatalog";
 
@@ -298,42 +301,75 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * if it isn't <code>null</code>. 
    */
   private void readTextures(ResourceBundle resource, 
-                            URL texturesUrl,
+                            URL texturesCatalogUrl,
                             URL texturesResourcesUrlBase,
                             List<String> identifiedTextures) {
-    for (int index = 1;; index++) {
-      String name = null;
-      try {
-        name = resource.getString(PropertyKey.NAME.getKey(index));
-      } catch (MissingResourceException ex) {
-        // Stop the loop when a key name# doesn't exist
-        break;
-      }
-      String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
-      Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), 
-          texturesUrl, texturesResourcesUrlBase);
-      float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
-      float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
-      String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
-      String id = getOptionalString(resource, PropertyKey.ID.getKey(index));
-
-      CatalogTexture texture = new CatalogTexture(id, name, image, width, height, creator);
+    CatalogTexture texture;
+    for (int i = 1; (texture = readTexture(resource, i, texturesCatalogUrl, texturesResourcesUrlBase)) != null; i++) {
       if (texture.getId() != null) {
         // Take into account only texture that have an ID
         if (identifiedTextures.contains(texture.getId())) {
           continue;
         } else {
           // Add id to identifiedTextures to be sure that two textures with a same ID
-          // won't be added twice to texture catalog (in case they are cited twice
-          // in different texture properties files)
+          // won't be added twice to textures catalog (in case they are cited twice
+          // in different textures properties files)
           identifiedTextures.add(texture.getId());
         }
       }
-
-      add(new TexturesCategory(category), texture);
+      TexturesCategory textureCategory = readTexturesCategory(resource, i);
+      add(textureCategory, texture);
     }
   }
   
+  /**
+   * Returns the texture at the given <code>index</code> of a 
+   * localized <code>resource</code> bundle. 
+   * @param resource             a resource bundle 
+   * @param index                the index of the read texture
+   * @param texturesCatalogUrl  the URL from which texture resources will be loaded 
+   *            or <code>null</code> if it's read from current classpath.
+   * @param texturesResourcesUrlBase the URL used as a base to build the URL to texture resources  
+   *            or <code>null</code> if it's read from current classpath or <code>texturesCatalogUrl</code>
+   * @return the read texture or <code>null</code> if the piece at the given index doesn't exist.
+   * @throws MissingResourceException if mandatory keys are not defined.
+   */
+  /**
+   * Reads each texture described in <code>resource</code> bundle.
+   * Resources described in texture properties will be loaded from <code>texturesUrl</code> 
+   * if it isn't <code>null</code>. 
+   */
+  protected CatalogTexture readTexture(ResourceBundle resource,
+                                       int index,
+                                       URL texturesUrl,
+                                       URL texturesResourcesUrlBase) {
+    String name = null;
+    try {
+      name = resource.getString(PropertyKey.NAME.getKey(index));
+    } catch (MissingResourceException ex) {
+      // Return null if key name# doesn't exist
+      return null;
+    }
+    Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), 
+        texturesUrl, texturesResourcesUrlBase);
+    float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
+    float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
+    String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
+    String id = getOptionalString(resource, PropertyKey.ID.getKey(index));
+
+    return new CatalogTexture(id, name, image, width, height, creator);
+  }
+  
+  /**
+   * Returns the category of a texture at the given <code>index</code> of a 
+   * localized <code>resource</code> bundle. 
+   * @throws MissingResourceException if mandatory keys are not defined.
+   */
+  protected TexturesCategory readTexturesCategory(ResourceBundle resource, int index) {
+    String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
+    return new TexturesCategory(category);
+  }
+    
   /**
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle
@@ -366,7 +402,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         return new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
       } else {
         try {
-          return new URLContent(new URL("jar:" + texturesUrl + "!" + contentFile));
+          return new ResourceURLContent(new URL("jar:" + texturesUrl + "!" + contentFile), false);
         } catch (MalformedURLException ex2) {
           throw new IllegalArgumentException("Invalid URL", ex2);
         }
