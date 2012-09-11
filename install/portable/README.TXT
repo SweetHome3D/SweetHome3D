@@ -39,6 +39,9 @@ Start versions), i.e.:
 If you need to restore the configuration of Sweet Home 3D you generated with another 
 version of Sweet Home 3D, you can copy the content of the previous folders to 
 the "data" sub folder of the portable version, except the sub folder named "work".
+Whether you use this portable version or the other ones of Sweet Home 3D, a SH3D 
+file is autonomous and contains all the required data to be edited whatever 
+furniture or textures were imported on a computer.
 
 Plugins SH3P files are supported by this version of Sweet Home 3D and should be 
 placed in the "data/plugins" sub folder.
