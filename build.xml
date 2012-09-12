@@ -935,7 +935,7 @@
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/languages"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/plugins"/>
 
-    <echo message="copy Windows executable files, jres, SH3F, SH3T, SH3L and SH3P files 
+    <echo message="copy Windows portable launchers, jres, SH3F, SH3T, SH3L and SH3P files 
                    to install/portable/SweetHome3D-${version}-portable and prepare compressed archive"/>
   </target>
 
