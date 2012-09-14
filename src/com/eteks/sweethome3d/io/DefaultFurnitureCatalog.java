@@ -132,7 +132,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     WIDTH("width"),
     /**
-     * The key for the height in centimeters of a piece of furniture (mandatory).
+     * The key for the depth in centimeters of a piece of furniture (mandatory).
      */
     DEPTH("depth"),
     /**
