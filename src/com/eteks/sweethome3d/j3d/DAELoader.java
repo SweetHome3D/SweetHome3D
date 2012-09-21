@@ -854,8 +854,12 @@ public class DAELoader extends LoaderBase implements Loader {
       } else if ("polylist".equals(name)) {
         geometryInfo.setStripCounts(this.vcount);
       } else if ("polygons".equals(name)) {
+        int polygonHolesCount = 0;
+        for (List<int []> polygonHoles : this.polygonsHoles) {
+          polygonHolesCount += polygonHoles.size();
+        }
         int [] stripCounts = new int [this.facesAndLinesPrimitives.size() + this.polygonsPrimitives.size() 
-                                      + this.polygonsHoles.size()];
+                                      + polygonHolesCount];
         int [] contourCounts = new int [this.facesAndLinesPrimitives.size() + this.polygonsPrimitives.size()];
         int stripIndex = 0;
         int countourIndex = 0;
