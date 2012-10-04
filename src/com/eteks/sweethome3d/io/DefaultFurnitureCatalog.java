@@ -83,7 +83,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     INFORMATION("information"),
     /**
-     * The key for the tags associated to a piece of furniture (optional).
+     * The key for the tags associated to a piece of furniture (optional). 
+     * Tags are separated by commas with possible heading or trailing spaces. 
      */
     TAGS("tags"),
     /**
