@@ -75,6 +75,7 @@ public class Component3DManager {
    * Returns the template to configure the graphics of canvas 3D.
    */
   private GraphicsConfigTemplate3D createGraphicsConfigurationTemplate3D() {
+    System.setProperty("j3d.implicitAntialiasing", "true");
     // Retrieve graphics configuration once 
     GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
     // Try to get antialiasing
