@@ -125,6 +125,8 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
    */
   @Override
   public HomeLight clone() {
-    return (HomeLight)super.clone();
+    HomeLight clone = (HomeLight)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    return clone;
   }
 }
