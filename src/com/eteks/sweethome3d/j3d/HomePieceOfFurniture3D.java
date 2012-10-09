@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -28,6 +30,9 @@ import java.util.Set;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
+import javax.media.j3d.BoundingLeaf;
+import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.CapabilityNotSetException;
 import javax.media.j3d.Geometry;
@@ -36,6 +41,7 @@ import javax.media.j3d.Group;
 import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
+import javax.media.j3d.PointLight;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
@@ -47,6 +53,7 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
@@ -55,9 +62,13 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Light;
+import com.eteks.sweethome3d.model.LightSource;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -72,7 +83,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private static final PolygonAttributes      DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0);
   private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
-  
+  private static final Bounds                 DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), 1E7);
+
   private final Home home;
   
   static {
@@ -124,6 +136,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
     addChild(pieceTransformGroup);
     
+    if (piece instanceof HomeLight) {
+      BoundingLeaf bounds = new BoundingLeaf();
+      bounds.setCapability(BoundingLeaf.ALLOW_REGION_WRITE);
+      addChild(bounds);
+    }
+
     // While loading model use a temporary node that displays a white box  
     final BranchGroup waitBranch = new BranchGroup();
     waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
@@ -145,6 +163,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             // Add piece model scene to a normalized transform group
             TransformGroup modelTransformGroup = 
                 ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
+
             updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
           
@@ -166,6 +185,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     } else {
       updatePieceOfFurnitureTransform();
       updatePieceOfFurnitureColorAndTexture(false);      
+      updateLight();
       updatePieceOfFurnitureVisibility();      
       updatePieceOfFurnitureModelMirrored();
     }
@@ -219,6 +239,65 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // Set default material and texture of model
       setColorAndTexture(filledModelNode, null, null, piece.getShininess(), false, 
           null, null, new HashSet<Appearance>());
+    }
+  }
+
+  /**
+   * Sets the light color if the piece is a light. 
+   */
+  private void updateLight() {
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    if (piece instanceof HomeLight
+        && this.home != null) {
+      boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0 
+          && piece.isVisible() 
+          && (piece.getLevel() == null
+            || piece.getLevel().isVisible());
+      HomeLight light = (HomeLight)piece;
+      LightSource [] lightSources = light.getLightSources();
+      TransformGroup transformGroup = (TransformGroup)getChild(0);
+      if (transformGroup.numChildren() > 1) {
+        Color homeLightColor = new Color(this.home.getEnvironment().getLightColor());
+        float homeLightColorRed   = homeLightColor.getRed()   / 3072f; 
+        float homeLightColorGreen = homeLightColor.getGreen() / 3072f; 
+        float homeLightColorBlue  = homeLightColor.getBlue()  / 3072f; 
+        Group lightsBranch = (Group)transformGroup.getChild(1); 
+        for (int i = 0; i < lightSources.length; i++) {
+          Color lightColor = new Color(lightSources [i].getColor());
+          float power = light.getPower();
+          PointLight pointLight = (PointLight)lightsBranch.getChild(i);
+          pointLight.setColor(new Color3f(
+              lightColor.getRed()   / 255f * power + (power > 0 ? homeLightColorRed : 0), 
+              lightColor.getGreen() / 255f * power + (power > 0 ? homeLightColorGreen : 0), 
+              lightColor.getBlue()  / 255f * power + (power > 0 ? homeLightColorBlue : 0)));
+          pointLight.setEnable(enabled);
+        }
+  
+        if (enabled) {
+          Bounds bounds = DEFAULT_INFLUENCING_BOUNDS;
+          for (Room room : this.home.getRooms()) {
+            Level roomLevel = room.getLevel();
+            if (light.isAtLevel(roomLevel)) {
+              Shape roomShape = getShape(room.getPoints());
+              if (roomShape.contains(light.getX(), light.getY())) {
+                Rectangle roomBounds = roomShape.getBounds();
+                float minElevation = roomLevel != null 
+                    ? roomLevel.getElevation() 
+                    : 0;
+                float maxElevation =  roomLevel != null 
+                    ? minElevation + roomLevel.getHeight() 
+                    : 100000;
+                float epsilon = 0.1f;
+                bounds = new BoundingBox(
+                    new Point3d(roomBounds.getMinX() - epsilon, minElevation - epsilon, roomBounds.getMinY() - epsilon),
+                    new Point3d(roomBounds.getMaxX() + epsilon, maxElevation + epsilon, roomBounds.getMaxY() + epsilon));
+                break;
+              }
+            }
+          }
+          ((BoundingLeaf)getChild(1)).setRegion(bounds);
+        }
+      }
     }
   }
 
@@ -304,7 +383,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // Add outline model node 
       modelBranch.addChild(createOutlineModelNode(normalization));
     }
-
     setModelCapabilities(modelBranch);
 
     TransformGroup transformGroup = (TransformGroup)getChild(0);
@@ -312,10 +390,29 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     transformGroup.removeAllChildren();
     // Add model branch to live scene
     transformGroup.addChild(modelBranch);
-    
+
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    if (piece instanceof HomeLight) {
+      BranchGroup lightBranch = new BranchGroup();
+      lightBranch.setCapability(ALLOW_CHILDREN_READ);
+      HomeLight light = (HomeLight)piece;
+      for (LightSource lightSource : light.getLightSources()) {
+        PointLight pointLight = new PointLight(new Color3f(),
+            new Point3f(lightSource.getX() - 0.5f, lightSource.getZ() - 0.5f,  0.5f - lightSource.getY()),
+            new Point3f(0.66f, 0, 0.0001f)); 
+        pointLight.setCapability(PointLight.ALLOW_COLOR_WRITE);
+        pointLight.setCapability(PointLight.ALLOW_STATE_WRITE);
+        BoundingLeaf bounds = (BoundingLeaf)getChild(1);
+        pointLight.setInfluencingBoundingLeaf(bounds);
+        lightBranch.addChild(pointLight);
+      }
+      transformGroup.addChild(lightBranch);
+    }
+
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
+    updateLight();
     updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureModelMirrored();
 
@@ -574,8 +671,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       // Change visibility
       renderingAttributes.setVisible(visible);
-    }
-  }
+    } 
+  } 
 
   /**
    * Returns <code>true</code> if this piece of furniture belongs to <code>selectedItems</code>.

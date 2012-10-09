@@ -97,6 +97,7 @@ import org.sunflow.system.ui.SilentInterface;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -176,7 +177,11 @@ public class PhotoRenderer {
     // so use this shader only when observer is used 
     boolean silk = this.useAmbientOcclusion && quality == Quality.HIGH;
     
-    // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
+    // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
+    HomeEnvironment homeEnvironment = home.getEnvironment();
+    float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
+    // Dividing walls and rooms surface in subparts is useless
+    homeEnvironment.setSubpartSizeUnderLight(0); 
     for (Wall wall : home.getWalls()) {
       exportNode((Node)object3DFactory.createObject3D(home, wall, true), true, silk);
     }
@@ -193,8 +198,9 @@ public class PhotoRenderer {
     TransformGroup groundTransformGroup = new TransformGroup(translation);
     groundTransformGroup.addChild(ground);
     exportNode(groundTransformGroup, true, silk);
+    homeEnvironment.setSubpartSizeUnderLight(subpartSize);
 
-    HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
+    HomeTexture skyTexture = homeEnvironment.getSkyTexture();
     this.useSunSky = skyTexture == null || !(home.getCamera() instanceof ObserverCamera);
     if (!this.useSunSky) {
       // If observer camera is used with a sky texture, 
@@ -220,8 +226,8 @@ public class PhotoRenderer {
     } 
     
     // Set light settings 
-    int ceillingLightColor = home.getEnvironment().getCeillingLightColor();
-    this.homeLightColor = home.getEnvironment().getLightColor();
+    int ceillingLightColor = homeEnvironment.getCeillingLightColor();
+    this.homeLightColor = homeEnvironment.getLightColor();
     if (ceillingLightColor > 0) {
       // Add lights at the top of each room 
       for (Room room : home.getRooms()) {

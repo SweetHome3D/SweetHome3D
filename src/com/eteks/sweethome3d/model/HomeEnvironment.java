@@ -38,7 +38,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * The environment properties that may change.
    */
   public enum Property {OBSERVER_CAMERA_ELEVATION_ADJUSTED, SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, 
-                        WALLS_ALPHA, DRAWING_MODE, ALL_LEVELS_VISIBLE,
+                        WALLS_ALPHA, DRAWING_MODE, SUBPART_SIZE_UNDER_LIGHT, ALL_LEVELS_VISIBLE,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
@@ -57,6 +57,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private int                             ceilingLightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
+  private float                           subpartSizeUnderLight;      
   private boolean                         allLevelsVisible; 
   private int                             photoWidth;
   private int                             photoHeight;
@@ -348,6 +349,28 @@ public class HomeEnvironment implements Serializable, Cloneable {
       this.drawingMode = drawingMode;
       this.propertyChangeSupport.firePropertyChange(
           Property.DRAWING_MODE.name(), oldDrawingMode, drawingMode);
+    }
+  }
+
+  /**
+   * Returns the size of subparts under home lights in this environment.
+   * @return a size in centimeters or 0 if home lights don't illuminate home.
+   * @since 3.7 
+   */
+  public float getSubpartSizeUnderLight() {
+    return this.subpartSizeUnderLight;
+  }
+
+  /**
+   * Sets the size of subparts under home lights of this environment and fires a <code>PropertyChangeEvent</code>.
+   * @since 3.7 
+   */
+  public void setSubpartSizeUnderLight(float subpartSizeUnderLight) {
+    if (subpartSizeUnderLight != this.subpartSizeUnderLight) {
+      float oldSubpartWidthUnderLight = this.subpartSizeUnderLight;
+      this.subpartSizeUnderLight = subpartSizeUnderLight;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.SUBPART_SIZE_UNDER_LIGHT.name(), oldSubpartWidthUnderLight, subpartSizeUnderLight);
     }
   }
 

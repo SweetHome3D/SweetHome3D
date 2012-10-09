@@ -82,6 +82,7 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.ColoringAttributes;
@@ -131,12 +132,14 @@ import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.Object3DBranch;
 import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
 import com.eteks.sweethome3d.j3d.TextureManager;
+import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
@@ -167,7 +170,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final boolean                            displayShadowOnFloor;
   private final Object3DFactory                    object3dFactory;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
+  private Light []                                 defaultLights;
   private Collection<Selectable>                   homeObjectsToUpdate;
+  private Collection<Selectable>                   lightScopeObjectsToUpdate;
   private Component                                component3D;
   private SimpleUniverse                           onscreenUniverse;
   private Camera                                   camera;
@@ -177,6 +182,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   skyColorListener;
   private PropertyChangeListener                   groundChangeListener;
   private PropertyChangeListener                   lightColorListener;
+  private PropertyChangeListener                   subpartSizeListener;
   private PropertyChangeListener                   wallsAlphaListener;
   private PropertyChangeListener                   drawingModeListener;
   private CollectionListener<Level>                levelListener;
@@ -196,6 +202,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private JComponent                               navigationPanel;
   private ComponentListener                        navigationPanelListener;
   private BufferedImage                            navigationPanelImage;
+  private Area                                     lightScopeWallsAreaCache;
   
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
@@ -759,6 +766,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SUBPART_SIZE_UNDER_LIGHT, this.subpartSizeListener);
     this.home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
     this.home.removeLevelsListener(this.levelListener);
     for (Level level : this.home.getLevels()) {
@@ -1395,10 +1403,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     // Build scene tree
     root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
     root.addChild(createBackgroundNode(listenToHomeUpdates, waitForLoading));
-    root.addChild(createGroundNode(-0.5E7f, -0.5E7f, 1E7f, 1E7f, listenToHomeUpdates, waitForLoading));
+    Node groundNode = createGroundNode(-0.5E7f, -0.5E7f, 1E7f, 1E7f, listenToHomeUpdates, waitForLoading);
+    root.addChild(groundNode);
 
-    // Add default lights
-    for (Light light : createLights(listenToHomeUpdates)) {
+    this.defaultLights = createLights(groundNode, listenToHomeUpdates);
+    for (Light light : this.defaultLights) {
       root.addChild(light);
     }
     
@@ -1592,7 +1601,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns the lights of the scene.
    */
-  private Light [] createLights(boolean listenToHomeUpdates) {
+  private Light [] createLights(final Node groundNode, boolean listenToHomeUpdates) {
     final Light [] lights = {
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1.5f, -0.8f, -1)),         
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(-1.5f, -0.8f, -1)), 
@@ -1600,8 +1609,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new DirectionalLight(new Color3f(0.7f, 0.7f, 0.7f), new Vector3f(0, 1f, 0)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
     for (int i = 0; i < lights.length - 1; i++) {
-      // Allow directional lights color to change
+      // Allow directional lights color and influencing bounds to change
       lights [i].setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+      lights [i].setCapability(DirectionalLight.ALLOW_SCOPE_WRITE);
       // Store default color in user data
       Color3f defaultColor = new Color3f();
       lights [i].getColor(defaultColor);
@@ -1609,8 +1619,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       updateLightColor(lights [i]);
     }
     
+    final Bounds defaultInfluencingBounds = new BoundingSphere(new Point3d(), 1E7);
     for (Light light : lights) {
-      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 1E7));
+      light.setInfluencingBounds(defaultInfluencingBounds);
     }
     
     if (listenToHomeUpdates) {
@@ -1620,10 +1631,75 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             for (int i = 0; i < lights.length - 1; i++) {
               updateLightColor(lights [i]);
             }
+            updateObjects(new ArrayList<Selectable>(Home.getSubList(home.getFurniture(), HomeLight.class)));
           }
         };
       this.home.getEnvironment().addPropertyChangeListener(
           HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
+      
+      // Add a listener on subpart size property change to home
+      this.subpartSizeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            Collection<Selectable> homeItems = new ArrayList<Selectable>(home.getWalls());
+            homeItems.addAll(home.getRooms());
+            homeItems.addAll(Home.getSubList(home.getFurniture(), HomeLight.class));
+            updateObjects(homeItems);
+            clearPrintedImageCache();
+            
+            // Update default lights scope
+            List<Group> scope = null;
+            if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
+              Area lightScopeWallsArea = getLightScopeWallsArea();
+              scope = new ArrayList<Group>();
+              for (Wall wall : home.getWalls()) {
+                Object3DBranch wall3D = homeObjects.get(wall);
+                if (wall3D instanceof Wall3D) {
+                  // Add left and/or right side of the wall to scope
+                  float [][] points = wall.getPoints();
+                  if (!lightScopeWallsArea.contains(points [0][0], points [0][1])) {
+                    scope.add((Group)wall3D.getChild(1));
+                  } 
+                  if (!lightScopeWallsArea.contains(points [points.length - 1][0], points [points.length - 1][1])) {
+                    scope.add((Group)wall3D.getChild(4));
+                  }
+                }
+                // Add wall top and bottom groups to scope 
+                scope.add((Group)wall3D.getChild(0));
+                scope.add((Group)wall3D.getChild(2));
+                scope.add((Group)wall3D.getChild(3));
+                scope.add((Group)wall3D.getChild(5));
+              }
+              List<Selectable> otherItems = new ArrayList<Selectable>(home.getFurniture());
+              otherItems.addAll(home.getRooms());
+              for (Selectable item : otherItems) {
+                // Add item to scope if one of its points don't belong to lightScopeWallsArea
+                for (float [] point : item.getPoints()) {
+                  if (!lightScopeWallsArea.contains(point [0], point [1])) {
+                    scope.add(homeObjects.get(item));
+                    break;
+                  }
+                }
+              }
+            } else {
+              lightScopeWallsAreaCache = null;
+            }
+            
+            for (Light light : lights) {
+              if (light instanceof DirectionalLight) {
+                light.removeAllScopes();
+                if (scope != null) {
+                  light.addScope((Group)groundNode);
+                  for (Group group : scope) {
+                    light.addScope(group);
+                  }
+                } 
+              }
+            }
+          }
+        };
+      this.home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.SUBPART_SIZE_UNDER_LIGHT, this.subpartSizeListener);
+      this.subpartSizeListener.propertyChange(null);
     }
     
     return lights;
@@ -1639,6 +1715,41 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                 ((lightColor >>> 8) & 0xFF) / 255f * defaultColor.y,
                                         (lightColor & 0xFF) / 255f * defaultColor.z));
     clearPrintedImageCache();
+  }
+
+  /**
+   * Returns walls area used for light scope.
+   */
+  private Area getLightScopeWallsArea() {
+    if (this.lightScopeWallsAreaCache == null) {
+      // Compute a smaller area surrounding all walls at all levels
+      Area wallsPath = new Area();
+      for (Wall wall : home.getWalls()) {
+        Wall thinnerWall = wall.clone();
+        thinnerWall.setThickness(Math.max(thinnerWall.getThickness() - 0.1f, 0.08f));
+        wallsPath.add(new Area(getShape(thinnerWall.getPoints())));
+      }
+      Area lightScopeWallsArea = new Area();
+      GeneralPath currentPath = new GeneralPath();
+      for (PathIterator it = wallsPath.getPathIterator(null, 1); !it.isDone(); it.next()) {
+        float [] point = new float[2];
+        switch (it.currentSegment(point)) {
+          case PathIterator.SEG_MOVETO : 
+            currentPath.moveTo(point [0], point [1]);
+            break;
+          case PathIterator.SEG_LINETO : 
+            currentPath.lineTo(point [0], point [1]);
+            break;
+          case PathIterator.SEG_CLOSE :
+            currentPath.closePath();
+            lightScopeWallsArea.add(new Area(currentPath));
+            currentPath.reset();
+            break;
+        }
+      }
+      this.lightScopeWallsAreaCache = lightScopeWallsArea;
+    }
+    return this.lightScopeWallsAreaCache;
   }
 
   /**
@@ -1745,6 +1856,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (updatedWall.getLevel() != null && updatedWall.getLevel().getElevation() < 0) {
             groundChangeListener.propertyChange(null);
           }
+          if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
+            String propertyName = ev.getPropertyName();
+            if (Wall.Property.X_START.name().equals(propertyName)
+                || Wall.Property.Y_START.name().equals(propertyName)
+                || Wall.Property.X_END.name().equals(propertyName)
+                || Wall.Property.Y_END.name().equals(propertyName)
+                || Wall.Property.ARC_EXTENT.name().equals(propertyName)
+                || Wall.Property.THICKNESS.name().equals(propertyName)) {
+              lightScopeWallsAreaCache = null;
+              updateLightScope(null);
+            }
+          }
         }
       };
     for (Wall wall : this.home.getWalls()) {
@@ -1763,8 +1886,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               wall.removePropertyChangeListener(wallChangeListener);
               break;
           }
+          lightScopeWallsAreaCache = null;
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
+          updateLightScope(null);
         }
       };
     this.home.addWallsListener(this.wallListener);
@@ -1783,26 +1908,34 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
+            updatePieceOfFurnitureGeometry(updatedPiece);
+            updateLightScope(updatedPiece);
+          } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
               || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
-            updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
-            // If piece is or contains a door or a window, update walls that intersect with piece
-            if (containsDoorsAndWindows(updatedPiece)) {
-              updateObjects(home.getWalls());
-            } else if (containsStaircases(updatedPiece)) {
-              updateObjects(home.getRooms());
-            }
-            if (updatedPiece.getLevel() != null && updatedPiece.getLevel().getElevation() < 0) {
-              groundChangeListener.propertyChange(null);
-            }
+            updatePieceOfFurnitureGeometry(updatedPiece);
           } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
               || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)) {
+              || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)
+              || (HomeLight.Property.POWER.name().equals(propertyName)
+                  && home.getEnvironment().getSubpartSizeUnderLight() > 0)) {
             updateObjects(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
+          }
+        }
+
+        private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece) {
+          updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+          // If piece is or contains a door or a window, update walls that intersect with piece
+          if (containsDoorsAndWindows(piece)) {
+            updateObjects(home.getWalls());
+          } else if (containsStaircases(piece)) {
+            updateObjects(home.getRooms());
+          }
+          if (piece.getLevel() != null && piece.getLevel().getElevation() < 0) {
+            groundChangeListener.propertyChange(null);
           }
         }
       };
@@ -1829,6 +1962,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updateObjects(home.getRooms());
           }
           groundChangeListener.propertyChange(null);
+          updateLightScope(piece);
         }
       };
     this.home.addFurnitureListener(this.furnitureListener);
@@ -1894,9 +2028,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               updateObjects(home.getRooms());
             } else {
               updateObjects(Arrays.asList(new Room [] {updatedRoom}));
+              updateObjects(Home.getSubList(home.getFurniture(), HomeLight.class));
               // Search the rooms that overlap the updated one
-              Area oldArea = getArea((float [][])ev.getOldValue());
-              Area newArea = getArea((float [][])ev.getNewValue());
+              Area oldArea = new Area(getShape((float [][])ev.getOldValue()));
+              Area newArea = new Area(getShape((float [][])ev.getNewValue()));
               Level updatedRoomLevel = updatedRoom.getLevel(); 
               for (Room room : home.getRooms()) {
                 Level roomLevel = room.getLevel();
@@ -1904,7 +2039,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                     && (roomLevel == null
                         || Math.abs(updatedRoomLevel.getElevation() + updatedRoomLevel.getHeight() - (roomLevel.getElevation() + roomLevel.getHeight())) < 1E-5
                         || Math.abs(updatedRoomLevel.getElevation() + updatedRoomLevel.getHeight() - (roomLevel.getElevation() - roomLevel.getFloorThickness())) < 1E-5)) {
-                  Area roomAreaIntersectionWithOldArea = getArea(room.getPoints());
+                  Area roomAreaIntersectionWithOldArea = new Area(getShape(room.getPoints()));
                   Area roomAreaIntersectionWithNewArea = new Area(roomAreaIntersectionWithOldArea);
                   roomAreaIntersectionWithNewArea.intersect(newArea);                  
                   if (!roomAreaIntersectionWithNewArea.isEmpty()) {
@@ -1919,17 +2054,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }              
             }
             groundChangeListener.propertyChange(null);
+            updateLightScope(updatedRoom);
           }            
-        }
-        
-        private Area getArea(float [][] points) {
-          GeneralPath path = new GeneralPath();
-          path.moveTo(points [0][0], points [0][1]);
-          for (int i = 1; i < points.length; i++) {
-            path.lineTo(points [i][0], points [i][1]);
-          }
-          path.closePath();
-          return new Area(path);
         }
       };
     for (Room room : this.home.getRooms()) {
@@ -1952,11 +2078,25 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
+          updateLightScope(room);
         }
       };
     this.home.addRoomsListener(this.roomListener);
   }
 
+  /**
+   * Returns the path matching points.
+   */
+  private GeneralPath getShape(float [][] points) {
+    GeneralPath path = new GeneralPath();
+    path.moveTo(points [0][0], points [0][1]);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points [i][0], points [i][1]);
+    }
+    path.closePath();
+    return path;
+  }
+  
   /**
    * Adds a walls alpha change listener and drawing mode change listener to home 
    * environment that updates the home scene objects appearance. 
@@ -2067,6 +2207,56 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     updateObjects(wallsToUpdate);
   }
 
+  /**
+   * Updates the <code>object</code> scope under light later. Should be invoked from Event Dispatch Thread.
+   */
+  private void updateLightScope(Selectable object) {
+    if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
+      if (this.lightScopeObjectsToUpdate != null) {
+        if (!this.lightScopeObjectsToUpdate.contains(null)) {
+          this.lightScopeObjectsToUpdate.add(null);
+        }
+      } else {
+        this.lightScopeObjectsToUpdate = new HashSet<Selectable>();
+        this.lightScopeObjectsToUpdate.add(object);
+        // Invoke later the update of objects of lightScopeObjectsToUpdate
+        EventQueue.invokeLater(new Runnable () {
+          public void run() {
+            if (lightScopeObjectsToUpdate.contains(null)) {
+              subpartSizeListener.propertyChange(null);
+            } else if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
+              Area lightScopeWallsArea = getLightScopeWallsArea();
+              for (Selectable object : lightScopeObjectsToUpdate) {
+                Object3DBranch objectBranch = homeObjects.get(object);
+                // Check object wasn't deleted since updateObjects call
+                if (objectBranch != null) { 
+                  // Add item to scope if one of its points don't belong to lightScopeWallsArea
+                  boolean objectInLightScope = false;
+                  for (float [] point : object.getPoints()) {
+                    if (!lightScopeWallsArea.contains(point [0], point [1])) {
+                      objectInLightScope = true;
+                      break;
+                    }
+                  }
+                  for (Light light : defaultLights) {
+                    if (light instanceof DirectionalLight) {
+                      if (objectInLightScope && light.indexOfScope(objectBranch) == -1) {
+                        light.addScope(objectBranch);
+                      } else if (!objectInLightScope && light.indexOfScope(objectBranch) != -1) {
+                        light.removeScope(objectBranch);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            lightScopeObjectsToUpdate = null;
+          }
+        });
+      }
+    }
+  }
+  
   /**
    * Adds to <code>homeRoot</code> shapes matching the shadow of furniture at their level.
    */

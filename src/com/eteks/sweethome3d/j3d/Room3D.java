@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.j3d;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -293,200 +294,284 @@ public class Room3D extends Object3DBranch {
         floorBottomHoles = Collections.emptyMap();
       }      
       
-      Geometry [] geometries = new Geometry [roomPoints.size() + floorBottomPoints.size()];
+      List<Geometry> geometries = new ArrayList<Geometry> (roomPoints.size() + floorBottomPoints.size());
       boolean computeFloorBorder = roomLevel != null
           && roomPart == FLOOR_PART 
           && roomLevel.getElevation() != firstLevelElevation;
       // Compute room and border geometries
       int i = 0;      
+      final float subpartSize = this.home.getEnvironment().getSubpartSizeUnderLight();
       for ( ; i < roomPoints.size(); i++) {
-        float [][] geometryPoints = roomPoints.get(i);
-        List<float [][]> geometryHoles = roomHoles.get(i);
-        if (geometryHoles == null) {
-          geometryHoles = Collections.emptyList();
-        }
-        int geometryHolesPointCount = 0;
-        for (float [][] geometryHole : geometryHoles) {
-          geometryHolesPointCount += geometryHole.length;
-        }
-        
-        int contourLength = 1;
-        if (computeFloorBorder) {
-          contourLength += geometryPoints.length + geometryHolesPointCount;
-        }
-        int [] contourCounts = new int [contourLength];
-        int [] stripCounts = new int [contourCounts.length + geometryHoles.size()];
-        int j = 0;
-        int vertexCount = geometryPoints.length;
-        if (computeFloorBorder) {
-          vertexCount *= 5;
-          vertexCount += geometryHolesPointCount * 4;
-          Arrays.fill(contourCounts, 0, j = geometryPoints.length + geometryHolesPointCount, 1);
-          Arrays.fill(stripCounts, 0, j, 4);
-        }
-        contourCounts [contourCounts.length - 1] = 1 + geometryHoles.size();
-        stripCounts [j++] = geometryPoints.length;
-        for (float [][] geometryHole : geometryHoles) {
-          vertexCount += geometryHole.length;
-          stripCounts [j++] = geometryHole.length;
-        }
-        
-        j = 0;
-        Point3f [] coords = new Point3f [vertexCount];
-        if (computeFloorBorder) {
-          // Compute room borders coordinates
-          for (int k = 0; k < geometryPoints.length; k++) {
-            coords [j++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
-            coords [j++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
-            int nextPoint = k < geometryPoints.length - 1  
-                ? k + 1
-                : 0;
-            coords [j++] = new Point3f(geometryPoints [nextPoint][0], floorBottomElevation, geometryPoints [nextPoint][1]);
-            coords [j++] = new Point3f(geometryPoints [nextPoint][0], roomElevation, geometryPoints [nextPoint][1]);
-          }
-          // Compute holes borders coordinates
-          for (float [][] geometryHole : geometryHoles) {
-            for (int k = 0; k < geometryHole.length; k++) {
-              coords [j++] = new Point3f(geometryHole [k][0], roomElevation, geometryHole [k][1]);
-              int nextPoint = k < geometryHole.length - 1  
-                  ? k + 1
-                  : 0;
-              coords [j++] = new Point3f(geometryHole [nextPoint][0], roomElevation, geometryHole [nextPoint][1]);
-              coords [j++] = new Point3f(geometryHole [nextPoint][0], floorBottomElevation, geometryHole [nextPoint][1]);
-              coords [j++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
-            }
-          }
-        }
-        // Compute room coordinates
-        for (int k = 0; k < geometryPoints.length; k++) {
-          float y = roomPart == FLOOR_PART 
+        float [][] roomPartPoints = roomPoints.get(i);
+        float [] roomPartPointElevations = new float [roomPartPoints.length];
+        boolean  sameElevation = true;
+        for (int j = 0; j < roomPartPoints.length; j++) {
+          roomPartPointElevations [j] = roomPart == FLOOR_PART 
               ? roomElevation 
-              : getRoomHeightAt(geometryPoints [k][0], geometryPoints [k][1]);
-          coords [j++] = new Point3f(geometryPoints [k][0], y, geometryPoints [k][1]);
-        }
-        for (float [][] geometryHole : geometryHoles) {
-          for (int k = 0; k < geometryHole.length; k++) {
-            float y = roomPart == FLOOR_PART 
-                ? roomElevation 
-                : getRoomHeightAt(geometryHole [k][0], geometryHole [k][1]);
-            coords [j++] = new Point3f(geometryHole [k][0], y, geometryHole [k][1]);
+              : getRoomHeightAt(roomPartPoints [j][0], roomPartPoints [j][1]);
+          if (sameElevation && j > 0) {
+            sameElevation = roomPartPointElevations [j] == roomPartPointElevations [j - 1];
           }
         }
-        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-        geometryInfo.setCoordinates(coords);
-        geometryInfo.setStripCounts(stripCounts);
-        geometryInfo.setContourCounts(contourCounts);
         
-        if (texture != null) {
-          TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
-          j = 0;
-          if (computeFloorBorder) {
-            // Compute room border texture coordinates
-            for (int k = 0; k < geometryPoints.length; k++) {
-              textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), -geometryPoints [k][1] / texture.getHeight());
-              textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), -(geometryPoints [k][1] - roomLevel.getFloorThickness()) / texture.getHeight());
-              int nextPoint = k < geometryPoints.length - 1  
-                  ? k + 1
-                  : 0;
-              textureCoords [j++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -(geometryPoints [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
-              textureCoords [j++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -geometryPoints [nextPoint][1] / texture.getHeight());
-            }
-            // Compute holes borders texture coordinates
-            for (float [][] geometryHole : geometryHoles) {
-              for (int k = 0; k < geometryHole.length; k++) {
-                textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), -geometryHole [k][1] / texture.getHeight());
-                int nextPoint = k < geometryHole.length - 1  
-                    ? k + 1
-                    : 0;
-                textureCoords [j++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -geometryHole [nextPoint][1] / texture.getHeight());
-                textureCoords [j++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -(geometryHole [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
-                textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), -(geometryHole [k][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+        if (sameElevation && subpartSize > 0) {
+          // Subdivide area in smaller squares to ensure a smoother effect with point lights         
+          float xMin = Float.MAX_VALUE;
+          float xMax = Float.MIN_VALUE;
+          float zMin = Float.MAX_VALUE;
+          float zMax = Float.MIN_VALUE;
+          for (float [] point : roomPartPoints) {
+            xMin = Math.min(xMin, point [0]);
+            xMax = Math.max(xMax, point [0]);
+            zMin = Math.min(zMin, point [1]);
+            zMax = Math.max(zMax, point [1]);
+          }
+          
+          Area roomPartArea = new Area(getShape(roomPartPoints));        
+          for (float xSquare = xMin; xSquare < xMax; xSquare += subpartSize) {
+            for (float zSquare = zMin; zSquare < zMax; zSquare += subpartSize) {
+              Area roomPartSquare = new Area(new Rectangle2D.Float(xSquare, zSquare, subpartSize, subpartSize));
+              roomPartSquare.intersect(roomPartArea);
+              List<float [][]> holes = roomHoles.get(i);
+              if (holes != null) {
+                for (float [][] geometryHole : holes) {
+                  roomPartSquare.subtract(new Area(getShape(geometryHole)));
+                }
+              }
+              if (!roomPartSquare.isEmpty()) {
+                List<float [][]>               geometryPartPointsList = new ArrayList<float [][]>();
+                Map<Integer, List<float [][]>> geometryPartHolesMap = new HashMap<Integer, List<float [][]>>();
+                getAreaPoints(roomPartSquare, roomPart == CEILING_PART, geometryPartPointsList, geometryPartHolesMap);
+                for (int j = 0 ; j < geometryPartPointsList.size(); j++) {
+                  geometries.add(computeRoomPartGeometry(geometryPartPointsList.get(j), geometryPartHolesMap.get(j), 
+                      null, roomLevel, roomPartPointElevations [0], floorBottomElevation, 
+                      roomPart == FLOOR_PART, false, texture));
+                }
               }
             }
           }
-          // Compute room texture coordinates
-          for (int k = 0; k < geometryPoints.length; k++) {
-            textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), 
-                roomPart == FLOOR_PART 
-                    ? -geometryPoints [k][1] / texture.getHeight()
-                    : geometryPoints [k][1] / texture.getHeight());
-          }
-          for (float [][] geometryHole : geometryHoles) {
-            for (int k = 0; k < geometryHole.length; k++) {
-              textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), 
-                  roomPart == FLOOR_PART 
-                      ? -geometryHole [k][1] / texture.getHeight()
-                      : geometryHole [k][1] / texture.getHeight());
-            }
-          }
-          geometryInfo.setTextureCoordinateParams(1, 2);
-          geometryInfo.setTextureCoordinates(0, textureCoords);
+        } else {
+          geometries.add(computeRoomPartGeometry(roomPartPoints, roomHoles.get(i), roomPartPointElevations, roomLevel,
+              roomElevation, floorBottomElevation, roomPart == FLOOR_PART, false, texture));
         }
         
-        // Generate normals
-        new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
-        geometries [i] = geometryInfo.getIndexedGeometryArray();
+        if (computeFloorBorder) {
+          geometries.add(computeRoomBorderGeometry(roomPartPoints, roomHoles.get(i),
+              roomLevel, roomElevation, texture));
+        }
       }
 
       // Compute floor bottom geometry
-      for (int l = 0 ; l < floorBottomPoints.size(); l++, i++) {
-        float [][] geometryPoints = floorBottomPoints.get(l);
-        List<float [][]> geometryHoles = floorBottomHoles.get(l);
-        if (geometryHoles == null) {
-          geometryHoles = Collections.emptyList();
-        }
-        int [] contourCounts = new int [1];
-        int [] stripCounts = new int [1 + geometryHoles.size()];
-        int j = 0;
-        int vertexCount = geometryPoints.length;
-        contourCounts [contourCounts.length - 1] = 1 + geometryHoles.size();
-        stripCounts [j++] = geometryPoints.length;
-        for (float [][] geometryHole : geometryHoles) {
-          vertexCount += geometryHole.length;
-          stripCounts [j++] = geometryHole.length;
-        }
-        
-        j = 0;
-        Point3f [] coords = new Point3f [vertexCount];
-        // Compute floor bottom coordinates
-        for (int k = 0; k < geometryPoints.length; k++) {
-          coords [j++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
-        }
-        for (float [][] geometryHole : geometryHoles) {
-          for (int k = 0; k < geometryHole.length; k++) {
-            coords [j++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
+      for (i = 0 ; i < floorBottomPoints.size(); i++) {
+        float [][] floorBottomPartPoints = floorBottomPoints.get(i);
+        if (subpartSize > 0) {
+          float xMin = Float.MAX_VALUE;
+          float xMax = Float.MIN_VALUE;
+          float zMin = Float.MAX_VALUE;
+          float zMax = Float.MIN_VALUE;
+          for (float [] point : floorBottomPartPoints) {
+            xMin = Math.min(xMin, point [0]);
+            xMax = Math.max(xMax, point [0]);
+            zMin = Math.min(zMin, point [1]);
+            zMax = Math.max(zMax, point [1]);
           }
-        }
-        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-        geometryInfo.setCoordinates(coords);
-        geometryInfo.setStripCounts(stripCounts);
-        geometryInfo.setContourCounts(contourCounts);
-        
-        if (texture != null) {
-          TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
-          j = 0;
-          // Compute floor bottom texture coordinates
-          for (int k = 0; k < geometryPoints.length; k++) {
-            textureCoords [j++] = new TexCoord2f(geometryPoints [k][0] / texture.getWidth(), geometryPoints [k][1] / texture.getHeight());
-          }
-          for (float [][] geometryHole : geometryHoles) {
-            for (int k = 0; k < geometryHole.length; k++) {
-              textureCoords [j++] = new TexCoord2f(geometryHole [k][0] / texture.getWidth(), geometryHole [k][1] / texture.getHeight());
+          
+          Area floorBottomPartArea = new Area(getShape(floorBottomPartPoints));
+          for (float xSquare = xMin; xSquare < xMax; xSquare += subpartSize) {
+            for (float zSquare = zMin; zSquare < zMax; zSquare += subpartSize) {
+              Area floorBottomPartSquare = new Area(new Rectangle2D.Float(xSquare, zSquare, subpartSize, subpartSize));
+              floorBottomPartSquare.intersect(floorBottomPartArea);
+              List<float [][]> holes = floorBottomHoles.get(i);
+              if (holes != null) {
+                for (float [][] geometryHole : holes) {
+                  floorBottomPartSquare.subtract(new Area(getShape(geometryHole)));
+                }
+              }
+              if (!floorBottomPartSquare.isEmpty()) {
+                List<float [][]>               geometryPartPointsList = new ArrayList<float [][]>();
+                Map<Integer, List<float [][]>> geometryPartHolesMap = new HashMap<Integer, List<float [][]>>();
+                getAreaPoints(floorBottomPartSquare, true, geometryPartPointsList, geometryPartHolesMap);
+                for (int j = 0 ; j < geometryPartPointsList.size(); j++) {
+                  geometries.add(computeRoomPartGeometry(geometryPartPointsList.get(j), geometryPartHolesMap.get(j), 
+                      null, roomLevel, roomElevation, floorBottomElevation, 
+                      true, true, texture));
+                }
+              }
             }
           }
-          geometryInfo.setTextureCoordinateParams(1, 2);
-          geometryInfo.setTextureCoordinates(0, textureCoords);
+        } else {
+          geometries.add(computeRoomPartGeometry(floorBottomPartPoints, floorBottomHoles.get(i), null, roomLevel,
+              roomElevation, floorBottomElevation, true, true, texture));
         }
-        
-        // Generate normals
-        new NormalGenerator().generateNormals(geometryInfo);
-        geometries [i] = geometryInfo.getIndexedGeometryArray();
       }
 
-      return geometries;
+      return geometries.toArray(new Geometry [geometries.size()]);
     } else {
       return new Geometry [0];
     }
+  }
+
+  /**
+   * Returns the room part geometry matching the given points.
+   */
+  private Geometry computeRoomPartGeometry(float [][] geometryPoints, 
+                                           List<float [][]> geometryHoles,
+                                           float [] roomPartPointElevations,
+                                           Level roomLevel,
+                                           float roomPartElevation, float floorBottomElevation,
+                                           boolean floorPart, boolean floorBottomPart, 
+                                           HomeTexture texture) {
+    if (geometryHoles == null) {
+      geometryHoles = Collections.emptyList();
+    }
+    int [] contourCounts = {1 + geometryHoles.size()};
+    int [] stripCounts = new int [contourCounts.length + geometryHoles.size()];
+    int i = 0;
+    int vertexCount = geometryPoints.length;
+    stripCounts [i++] = geometryPoints.length;
+    for (float [][] geometryHole : geometryHoles) {
+      vertexCount += geometryHole.length;
+      stripCounts [i++] = geometryHole.length;
+    }
+    
+    i = 0;
+    Point3f [] coords = new Point3f [vertexCount];
+    // Compute room coordinates
+    for (int j = 0; j < geometryPoints.length; j++) {
+      float y = floorBottomPart 
+          ? floorBottomElevation 
+          : (roomPartPointElevations != null
+                ? roomPartPointElevations [j]
+                : roomPartElevation);
+      coords [i++] = new Point3f(geometryPoints [j][0], y, geometryPoints [j][1]);
+    }
+    for (float [][] geometryHole : geometryHoles) {
+      for (int j = 0; j < geometryHole.length; j++) {
+        float y = floorBottomPart
+            ? floorBottomElevation
+            : (floorPart
+                  ? roomPartElevation 
+                  : getRoomHeightAt(geometryHole [j][0], geometryHole [j][1]));
+        coords [i++] = new Point3f(geometryHole [j][0], y, geometryHole [j][1]);
+      }
+    }
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+    geometryInfo.setCoordinates(coords);
+    geometryInfo.setStripCounts(stripCounts);
+    geometryInfo.setContourCounts(contourCounts);
+    
+    if (texture != null) {
+      TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
+      i = 0;
+      // Compute room texture coordinates
+      for (int j = 0; j < geometryPoints.length; j++) {
+        textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / texture.getWidth(), 
+            floorPart 
+                ? -geometryPoints [j][1] / texture.getHeight()
+                : geometryPoints [j][1] / texture.getHeight());
+      }
+      for (float [][] geometryHole : geometryHoles) {
+        for (int j = 0; j < geometryHole.length; j++) {
+          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / texture.getWidth(), 
+              floorPart 
+                  ? -geometryHole [j][1] / texture.getHeight()
+                  : geometryHole [j][1] / texture.getHeight());
+        }
+      }
+      geometryInfo.setTextureCoordinateParams(1, 2);
+      geometryInfo.setTextureCoordinates(0, textureCoords);
+    }
+    
+    // Generate normals
+    new NormalGenerator().generateNormals(geometryInfo);
+    return geometryInfo.getIndexedGeometryArray();
+  }
+
+  /**
+   * Returns the room border geometry matching the given points.
+   */
+  private Geometry computeRoomBorderGeometry(float [][] geometryPoints, 
+                                             List<float [][]> geometryHoles,
+                                             Level roomLevel, float roomElevation, 
+                                             HomeTexture texture) {
+    if (geometryHoles == null) {
+      geometryHoles = Collections.emptyList();
+    }
+    int geometryHolesPointCount = 0;
+    for (float [][] geometryHole : geometryHoles) {
+      geometryHolesPointCount += geometryHole.length;
+    }
+    
+    int [] contourCounts = new int [geometryPoints.length + geometryHolesPointCount];
+    int [] stripCounts = new int [contourCounts.length];
+    int vertexCount = geometryPoints.length * 4;
+    vertexCount += geometryHolesPointCount * 4;
+    Arrays.fill(contourCounts, 1);
+    Arrays.fill(stripCounts, 4);
+
+    int i = 0;
+    Point3f [] coords = new Point3f [vertexCount];
+    float floorBottomElevation = roomElevation - roomLevel.getFloorThickness();
+    // Compute room borders coordinates
+    for (int k = 0; k < geometryPoints.length; k++) {
+      coords [i++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
+      coords [i++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
+      int nextPoint = k < geometryPoints.length - 1  
+          ? k + 1
+          : 0;
+      coords [i++] = new Point3f(geometryPoints [nextPoint][0], floorBottomElevation, geometryPoints [nextPoint][1]);
+      coords [i++] = new Point3f(geometryPoints [nextPoint][0], roomElevation, geometryPoints [nextPoint][1]);
+    }
+    // Compute holes borders coordinates
+    for (float [][] geometryHole : geometryHoles) {
+      for (int k = 0; k < geometryHole.length; k++) {
+        coords [i++] = new Point3f(geometryHole [k][0], roomElevation, geometryHole [k][1]);
+        int nextPoint = k < geometryHole.length - 1  
+            ? k + 1
+            : 0;
+        coords [i++] = new Point3f(geometryHole [nextPoint][0], roomElevation, geometryHole [nextPoint][1]);
+        coords [i++] = new Point3f(geometryHole [nextPoint][0], floorBottomElevation, geometryHole [nextPoint][1]);
+        coords [i++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
+      }
+    }
+
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+    geometryInfo.setCoordinates(coords);
+    geometryInfo.setStripCounts(stripCounts);
+    geometryInfo.setContourCounts(contourCounts);
+    
+    if (texture != null) {
+      TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
+      i = 0;
+      // Compute room border texture coordinates
+      for (int j = 0; j < geometryPoints.length; j++) {
+        textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / texture.getWidth(), -geometryPoints [j][1] / texture.getHeight());
+        textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / texture.getWidth(), -(geometryPoints [j][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+        int nextPoint = j < geometryPoints.length - 1  
+            ? j + 1
+            : 0;
+        textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -(geometryPoints [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+        textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -geometryPoints [nextPoint][1] / texture.getHeight());
+      }
+      // Compute holes borders texture coordinates
+      for (float [][] geometryHole : geometryHoles) {
+        for (int j = 0; j < geometryHole.length; j++) {
+          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / texture.getWidth(), -geometryHole [j][1] / texture.getHeight());
+          int nextPoint = j < geometryHole.length - 1  
+              ? j + 1
+              : 0;
+          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -geometryHole [nextPoint][1] / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -(geometryHole [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / texture.getWidth(), -(geometryHole [j][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+        }
+      }
+      geometryInfo.setTextureCoordinateParams(1, 2);
+      geometryInfo.setTextureCoordinates(0, textureCoords);
+    }
+    
+    // Generate normals
+    new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
+    return geometryInfo.getIndexedGeometryArray();
   }
 
   private void removeStaircasesFromArea(List<HomePieceOfFurniture> visibleStaircases, Area area) {

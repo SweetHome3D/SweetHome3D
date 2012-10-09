@@ -33,6 +33,7 @@ import java.util.List;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Geometry;
+import javax.media.j3d.Group;
 import javax.media.j3d.Node;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
@@ -63,8 +64,8 @@ public class Wall3D extends Object3DBranch {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
-  private static final int LEFT_WALL_SIDE  = 0;
-  private static final int RIGHT_WALL_SIDE = 1;
+  private static final int WALL_LEFT_SIDE  = 0;
+  private static final int WALL_RIGHT_SIDE = 1;
   
   private final Home home;
 
@@ -88,14 +89,18 @@ public class Wall3D extends Object3DBranch {
     // Allow to read branch shape children
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     
-    // Add wall left and right empty shapes to branch
-    addChild(createWallPartShape(false));
-    addChild(createWallPartShape(false));
-    if (!ignoreDrawingMode) {
-      // Add wall left and right empty outline shapes to branch
-      addChild(createWallPartShape(true));
-      addChild(createWallPartShape(true));
+    // Add wall bottom, main and top shapes to branch for left and right side
+    for (int i = 0; i < 6; i++) {
+      Group wallSideGroup = new Group();
+      wallSideGroup.setCapability(Group.ALLOW_CHILDREN_READ);
+      wallSideGroup.addChild(createWallPartShape(false));
+      if (!ignoreDrawingMode) {
+        // Add wall left and right empty outline shapes to branch
+        wallSideGroup.addChild(createWallPartShape(true));
+      }
+      addChild(wallSideGroup);
     }
+        
     // Set wall shape geometry and appearance
     updateWallGeometry();
     updateWallAppearance(waitTextureLoadingEnd);
@@ -136,7 +141,6 @@ public class Wall3D extends Object3DBranch {
       // Mix texture and wall color
       wallAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     }
-    
     return wallShape;
   }
 
@@ -149,43 +153,62 @@ public class Wall3D extends Object3DBranch {
   /**
    * Sets the 3D geometry of this wall shapes that matches its 2D geometry.  
    */
-  private void updateWallGeometry() {
-    updateWallSideGeometry(LEFT_WALL_SIDE, ((Wall)getUserData()).getLeftSideTexture());
-    updateWallSideGeometry(RIGHT_WALL_SIDE, ((Wall)getUserData()).getRightSideTexture());
+  private void updateWallGeometry() {    
+    updateWallSideGeometry(WALL_LEFT_SIDE, ((Wall)getUserData()).getLeftSideTexture());
+    updateWallSideGeometry(WALL_RIGHT_SIDE, ((Wall)getUserData()).getRightSideTexture());
   }
   
   private void updateWallSideGeometry(int wallSide, HomeTexture texture) {
-    Shape3D wallFilledShape = (Shape3D)getChild(wallSide);
-    Shape3D wallOutlineShape = numChildren() > 2 
-        ? (Shape3D)getChild(wallSide + 2)
-        : null; 
-    int currentGeometriesCount = wallFilledShape.numGeometries();
+    Group [] wallSideGroups = {(Group)getChild(wallSide * 3),      // Bottom group
+                               (Group)getChild(wallSide * 3 + 1),  // Main group
+                               (Group)getChild(wallSide * 3 + 2)}; // Top group
+    Shape3D [] wallFilledShapes = new Shape3D [wallSideGroups.length];
+    Shape3D [] wallOutlineShapes = new Shape3D [wallSideGroups.length];
+    int [] currentGeometriesCounts = new int [3];
+    for (int i = 0; i < wallSideGroups.length; i++) {
+      wallFilledShapes  [i] = (Shape3D)wallSideGroups [i].getChild(0);
+      wallOutlineShapes [i] = wallSideGroups [i].numChildren() > 1 
+          ? (Shape3D)wallSideGroups [i].getChild(1)
+          : null;
+      currentGeometriesCounts [i] = wallFilledShapes [i].numGeometries();
+    }
     Wall wall = (Wall)getUserData();
     if (wall.getLevel() == null || wall.getLevel().isVisible()) {
-      for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
-        if (wallGeometry != null) {
-          wallFilledShape.addGeometry(wallGeometry);
-          if (wallOutlineShape != null) {
-            wallOutlineShape.addGeometry(wallGeometry);
+      List [] wallGeometries = {new ArrayList<Geometry>(), 
+                                new ArrayList<Geometry>(), 
+                                new ArrayList<Geometry>()};
+      createWallGeometries(wallGeometries [0], wallGeometries [1], wallGeometries [2], wallSide, texture);
+      for (int i = 0; i < wallSideGroups.length; i++) {
+        for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
+          if (wallGeometry != null) {
+            wallFilledShapes [i].addGeometry(wallGeometry);
+            if (wallOutlineShapes [i] != null) {
+              wallOutlineShapes [i].addGeometry(wallGeometry);
+            }
           }
         }
       }
     }
-    for (int i = currentGeometriesCount - 1; i >= 0; i--) {
-      wallFilledShape.removeGeometry(i);
-      if (wallOutlineShape != null) {
-        wallOutlineShape.removeGeometry(i);
+    for (int i = 0; i < wallSideGroups.length; i++) {
+      for (int j = currentGeometriesCounts [i] - 1; j >= 0; j--) {
+        wallFilledShapes [i].removeGeometry(j);
+        if (wallOutlineShapes [i] != null) {
+          wallOutlineShapes [i].removeGeometry(j);
+        }
       }
     }
   }
   
   /**
-   * Returns <code>wall</code> geometries computed with windows or doors 
+   * Creates <code>wall</code> geometries computed with windows or doors 
    * that intersect wall.
    */
-  private Geometry [] createWallGeometries(int wallSide, HomeTexture texture) {
+  private void createWallGeometries(List<Geometry> wallBottomGeometries, 
+                                    List<Geometry> wallGeometries, 
+                                    List<Geometry> wallTopGeometries, 
+                                    int wallSide, HomeTexture texture) {
     float [][] wallSidePoints = getWallSidePoints(wallSide);
-    float [] textureReferencePoint = wallSide == LEFT_WALL_SIDE
+    float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSidePoints [0]
         : wallSidePoints [wallSidePoints.length - 1];
     Shape wallShape = getShape(wallSidePoints);
@@ -258,7 +281,6 @@ public class Wall3D extends Object3DBranch {
         windowIntersections.addAll(otherWindowIntersections);
       }
     }    
-    List<Geometry> wallGeometries = new ArrayList<Geometry>();
     List<float[]> wallPoints = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
     float [] previousWallPoint = null;
@@ -277,9 +299,9 @@ public class Wall3D extends Object3DBranch {
                 cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, 
                 textureReferencePoint, wallSide));
             // Compute geometry for bottom part
-            wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
+            wallBottomGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
             // Compute geometry for top part
-            wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+            wallTopGeometries.add(createWallTopPartGeometry(wallPartPoints, 
                 cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
           }
         }
@@ -339,7 +361,7 @@ public class Wall3D extends Object3DBranch {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, wallElevation, 
                     cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindowElevation, texture, 
                     textureReferencePoint, wallSide));
-                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
+                wallBottomGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
                 wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 
                     lowestDoorOrWindowElevation, false, roundWall));
               }
@@ -386,7 +408,7 @@ public class Wall3D extends Object3DBranch {
                     cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint, wallSide));
                 wallGeometries.add(createWallHorizontalPartGeometry(
                     wallPartPoints, doorOrWindowTop, true, roundWall));
-                wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+                wallTopGeometries.add(createWallTopPartGeometry(wallPartPoints, 
                     cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
               }
             }
@@ -401,7 +423,6 @@ public class Wall3D extends Object3DBranch {
         }
       } 
     }
-    return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
   }
 
   /**
@@ -428,12 +449,12 @@ public class Wall3D extends Object3DBranch {
     Wall wall = (Wall)getUserData();
     float [][] wallPoints = wall.getPoints();
     
-    if (wallSide == LEFT_WALL_SIDE) {
+    if (wallSide == WALL_LEFT_SIDE) {
       for (int i = wallPoints.length / 2; i < wallPoints.length; i++) {
         wallPoints [i][0] = (wallPoints [i][0] + wallPoints [wallPoints.length - i - 1][0]) / 2;
         wallPoints [i][1] = (wallPoints [i][1] + wallPoints [wallPoints.length - i - 1][1]) / 2;
       }
-    } else { // RIGHT_WALL_SIDE
+    } else { // WALL_RIGHT_SIDE
       for (int i = 0, n = wallPoints.length / 2; i < n; i++) {
         wallPoints [i][0] = (wallPoints [i][0] + wallPoints [wallPoints.length - i - 1][0]) / 2;
         wallPoints [i][1] = (wallPoints [i][1] + wallPoints [wallPoints.length - i - 1][1]) / 2;
@@ -455,6 +476,23 @@ public class Wall3D extends Object3DBranch {
                                                   HomeTexture texture,
                                                   float [] textureReferencePoint,
                                                   int wallSide) {
+    final float subpartSize = this.home.getEnvironment().getSubpartSizeUnderLight();
+    if (wall.getArcExtent() == null && subpartSize > 0) {
+      // Subdivide points in smaller parts to ensure a smoother effect with point lights
+      List<float []> pointsList = new ArrayList<float[]>(points.length * 2);
+      pointsList.add(points [0]);
+      for (int i = 1; i < points.length; i++) {
+        double distance = Point2D.distance(points [i - 1][0], points [i - 1][1], points [i][0], points [i][1]) - subpartSize / 2;
+        double angle = Math.atan2(points [i][1] - points [i - 1][1], points [i][0] - points [i - 1][0]);
+        double cosAngle = Math.cos(angle);
+        double sinAngle = Math.sin(angle);
+        for (double d = 0; d < distance; d += subpartSize) {
+          pointsList.add(new float [] {(float)(points [i - 1][0] + d * cosAngle), (float)(points [i - 1][1] + d * sinAngle)});
+        }
+        pointsList.add(points [i]);
+      }
+      points = pointsList.toArray(new float [pointsList.size()][]);
+    }
     // Compute wall coordinates
     Point3f [] bottom = new Point3f [points.length];
     Point3f [] top    = new Point3f [points.length];
@@ -508,40 +546,49 @@ public class Wall3D extends Object3DBranch {
       return null;
     }
     
-    Point3f [] coords = new Point3f [rectanglesCount * 4];
-    int j = 0;
-    for (int i = 0; i < points.length - 1; i++) {
-      if (usedRectangle [i]) {
-        coords [j++] = bottom [i];
-        coords [j++] = bottom [i + 1];
-        coords [j++] = top [i + 1];
-        coords [j++] = top [i];
+    List<Point3f> coords = new ArrayList<Point3f> (rectanglesCount * 4);
+    for (int index = 0; index < points.length; index++) {
+      if (usedRectangle [index]) {
+        float y = yMin;
+        Point3f point1 = bottom [index];
+        int nextIndex = (index + 1) % points.length;
+        Point3f point2 = bottom [nextIndex];
+        if (subpartSize > 0) {
+          for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+            coords.add(point1);
+            coords.add(point2);
+            point1 = new Point3f(bottom [index].x, y, bottom [index].z);
+            point2 = new Point3f(bottom [nextIndex].x, y, bottom [nextIndex].z);
+            coords.add(point2);
+            coords.add(point1);
+          }
+        }
+        coords.add(point1);
+        coords.add(point2);
+        coords.add(top [nextIndex]);
+        coords.add(top [index]);
       }
-    }
-    if (usedRectangle [usedRectangle.length - 1]) {
-      coords [j++] = bottom [points.length - 1];
-      coords [j++] = bottom [0];
-      coords [j++] = top [0];
-      coords [j++] = top [points.length - 1];
-    }
+    }    
     
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
-    geometryInfo.setCoordinates (coords);
+    geometryInfo.setCoordinates(coords.toArray(new Point3f [coords.size()]));
     
     // Compute wall texture coordinates
     if (texture != null) {
       float halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
-      TexCoord2f [] textureCoords = new TexCoord2f [rectanglesCount * 4];
+      TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
       float yMinTextureCoords = yMin / texture.getHeight();
       TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
-      j = 0;
+      int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null 
           ? 0.0001f 
           : halfThicknessSq / 4;
       for (int index = 0; index < points.length; index++) {
-        int nextIndex = (index + 1) % points.length;
         if (usedRectangle [index]) {
+          int nextIndex = (index + 1) % points.length;
+          TexCoord2f textureCoords1;
+          TexCoord2f textureCoords2;
           if (Math.abs(distanceSqToWallMiddle [index] - halfThicknessSq) < epsilon
               && Math.abs(distanceSqToWallMiddle [nextIndex] - halfThicknessSq) < epsilon) {
             // Compute texture coordinates of wall part parallel to wall middle
@@ -568,22 +615,36 @@ public class Wall3D extends Object3DBranch {
               firstHorizontalTextureCoords = pointUCoordinates [index];
               secondHorizontalTextureCoords = pointUCoordinates [nextIndex];
             }
-            if (wallSide == LEFT_WALL_SIDE && texture.isLeftToRightOriented()) {
+            if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
               firstHorizontalTextureCoords = -firstHorizontalTextureCoords;
               secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
             }
-            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
-            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
-            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [nextIndex].y / texture.getHeight());
-            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [index].y / texture.getHeight());
+
+            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
+            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
           } else {
+            textureCoords1 = firstTextureCoords;
             float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1], 
                 points [nextIndex][0], points [nextIndex][1]) / texture.getWidth();
-            textureCoords [j++] = firstTextureCoords;
-            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [nextIndex].y / texture.getHeight());
-            textureCoords [j++] = new TexCoord2f(0, top [index].y / texture.getHeight());
+            textureCoords2 = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
           }
+          
+          if (subpartSize > 0) {
+            float y = yMin;
+            for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+              textureCoords [j++] = textureCoords1;
+              textureCoords [j++] = textureCoords2;
+              float yTextureCoords = y / texture.getHeight();
+              textureCoords1 = new TexCoord2f(textureCoords1.x, yTextureCoords);
+              textureCoords2 = new TexCoord2f(textureCoords2.x, yTextureCoords);
+              textureCoords [j++] = textureCoords2;
+              textureCoords [j++] = textureCoords1;
+            }
+          }
+          textureCoords [j++] = textureCoords1;
+          textureCoords [j++] = textureCoords2;
+          textureCoords [j++] = new TexCoord2f(textureCoords2.x, top [nextIndex].y / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(textureCoords1.x, top [index].y / texture.getHeight());
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
@@ -757,13 +818,21 @@ public class Wall3D extends Object3DBranch {
    */
   private void updateWallAppearance(boolean waitTextureLoadingEnd) {
     Wall wall = (Wall)getUserData();
-    updateFilledWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
-        wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
-    updateFilledWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
-        wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
-    if (numChildren() > 2) {
-      updateOutlineWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE + 2)).getAppearance());
-      updateOutlineWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE + 2)).getAppearance());
+    Group [] wallLeftSideGroups  = {(Group)getChild(0),  // Bottom group
+                                    (Group)getChild(1),  // Main group
+                                    (Group)getChild(2)}; // Top group
+    Group [] wallRightSideGroups = {(Group)getChild(3),  // Bottom group
+                                    (Group)getChild(4),  // Main group
+                                    (Group)getChild(5)}; // Top group
+    for (int i = 0; i < wallLeftSideGroups.length; i++) {
+      updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
+          wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
+      updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
+          wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
+      if (wallLeftSideGroups [i].numChildren() > 1) {
+        updateOutlineWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(1)).getAppearance());
+        updateOutlineWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(1)).getAppearance());
+      }
     }
   }
   
