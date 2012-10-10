@@ -274,7 +274,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               lightColor.getRed()   / 255f * power + (power > 0 ? homeLightColorRed : 0), 
               lightColor.getGreen() / 255f * power + (power > 0 ? homeLightColorGreen : 0), 
               lightColor.getBlue()  / 255f * power + (power > 0 ? homeLightColorBlue : 0)));
-          // Compute the position of the light to prevent resizing in a transformation to have some influence on attenuation
+          // Compute the position of the light instead of resizing/placing it with a transformation 
+          // that has some influence on attenuation
           float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
           float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
           float lightElevation = light.getGroundElevation();
