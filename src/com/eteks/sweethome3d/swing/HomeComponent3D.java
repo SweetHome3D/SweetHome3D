@@ -203,7 +203,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private JComponent                               navigationPanel;
   private ComponentListener                        navigationPanelListener;
   private BufferedImage                            navigationPanelImage;
-  private Area                                     lightScopeWallsAreaCache;
+  private Area                                     lightScopeOutsideWallsAreaCache;
   
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
@@ -1650,17 +1650,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             // Update default lights scope
             List<Group> scope = null;
             if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
-              Area lightScopeWallsArea = getLightScopeWallsArea();
+              Area lightScopeOutsideWallsArea = getLightScopeOutsideWallsArea();
               scope = new ArrayList<Group>();
               for (Wall wall : home.getWalls()) {
                 Object3DBranch wall3D = homeObjects.get(wall);
                 if (wall3D instanceof Wall3D) {
                   // Add left and/or right side of the wall to scope
                   float [][] points = wall.getPoints();
-                  if (!lightScopeWallsArea.contains(points [0][0], points [0][1])) {
+                  if (!lightScopeOutsideWallsArea.contains(points [0][0], points [0][1])) {
                     scope.add((Group)wall3D.getChild(1));
                   } 
-                  if (!lightScopeWallsArea.contains(points [points.length - 1][0], points [points.length - 1][1])) {
+                  if (!lightScopeOutsideWallsArea.contains(points [points.length - 1][0], points [points.length - 1][1])) {
                     scope.add((Group)wall3D.getChild(4));
                   }
                 }
@@ -1675,7 +1675,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               for (Selectable item : otherItems) {
                 // Add item to scope if one of its points don't belong to lightScopeWallsArea
                 for (float [] point : item.getPoints()) {
-                  if (!lightScopeWallsArea.contains(point [0], point [1])) {
+                  if (!lightScopeOutsideWallsArea.contains(point [0], point [1])) {
                     Group object3D = homeObjects.get(item);
                     if (object3D instanceof HomePieceOfFurniture3D) {
                       // Add the direct parent of the shape that will be added once loaded
@@ -1688,7 +1688,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 }
               }
             } else {
-              lightScopeWallsAreaCache = null;
+              lightScopeOutsideWallsAreaCache = null;
             }
             
             for (Light light : lights) {
@@ -1725,10 +1725,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Returns walls area used for light scope.
+   * Returns walls area used for light scope outside.
    */
-  private Area getLightScopeWallsArea() {
-    if (this.lightScopeWallsAreaCache == null) {
+  private Area getLightScopeOutsideWallsArea() {
+    if (this.lightScopeOutsideWallsAreaCache == null) {
       // Compute a smaller area surrounding all walls at all levels
       Area wallsPath = new Area();
       for (Wall wall : home.getWalls()) {
@@ -1736,27 +1736,29 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         thinnerWall.setThickness(Math.max(thinnerWall.getThickness() - 0.1f, 0.08f));
         wallsPath.add(new Area(getShape(thinnerWall.getPoints())));
       }
-      Area lightScopeWallsArea = new Area();
-      GeneralPath currentPath = new GeneralPath();
+      Area lightScopeOutsideWallsArea = new Area();
+      List<float []> points = new ArrayList<float[]>();
       for (PathIterator it = wallsPath.getPathIterator(null, 1); !it.isDone(); it.next()) {
         float [] point = new float[2];
         switch (it.currentSegment(point)) {
           case PathIterator.SEG_MOVETO : 
-            currentPath.moveTo(point [0], point [1]);
-            break;
           case PathIterator.SEG_LINETO : 
-            currentPath.lineTo(point [0], point [1]);
+            points.add(point);
             break;
           case PathIterator.SEG_CLOSE :
-            currentPath.closePath();
-            lightScopeWallsArea.add(new Area(currentPath));
-            currentPath.reset();
+            if (points.size() > 2) {
+              float [][] pointsArray = points.toArray(new float [points.size()][]);
+              if (new Room(pointsArray).isClockwise()) {
+                lightScopeOutsideWallsArea.add(new Area(getShape(pointsArray)));
+              }               
+            }
+            points.clear();
             break;
         }
       }
-      this.lightScopeWallsAreaCache = lightScopeWallsArea;
+      this.lightScopeOutsideWallsAreaCache = lightScopeOutsideWallsArea;
     }
-    return this.lightScopeWallsAreaCache;
+    return this.lightScopeOutsideWallsAreaCache;
   }
 
   /**
@@ -1871,7 +1873,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 || Wall.Property.Y_END.name().equals(propertyName)
                 || Wall.Property.ARC_EXTENT.name().equals(propertyName)
                 || Wall.Property.THICKNESS.name().equals(propertyName)) {
-              lightScopeWallsAreaCache = null;
+              lightScopeOutsideWallsAreaCache = null;
               updateLightScope(null);
             }
           }
@@ -1893,7 +1895,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               wall.removePropertyChangeListener(wallChangeListener);
               break;
           }
-          lightScopeWallsAreaCache = null;
+          lightScopeOutsideWallsAreaCache = null;
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
           updateLightScope(null);
@@ -2232,7 +2234,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             if (lightScopeObjectsToUpdate.contains(null)) {
               subpartSizeListener.propertyChange(null);
             } else if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
-              Area lightScopeWallsArea = getLightScopeWallsArea();
+              Area lightScopeOutsideWallsArea = getLightScopeOutsideWallsArea();
               for (Selectable object : lightScopeObjectsToUpdate) {
                 Group object3D = homeObjects.get(object);
                 if (object3D instanceof HomePieceOfFurniture3D) {
@@ -2242,19 +2244,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 }
                 // Check object wasn't deleted since updateObjects call
                 if (object3D != null) { 
-                  // Add item to scope if one of its points don't belong to lightScopeWallsArea
-                  boolean objectInLightScope = false;
+                  // Add item to scope if one of its points don't belong to lightScopeOutsideWallsArea
+                  boolean objectInOutsideLightScope = false;
                   for (float [] point : object.getPoints()) {
-                    if (!lightScopeWallsArea.contains(point [0], point [1])) {
-                      objectInLightScope = true;
+                    if (!lightScopeOutsideWallsArea.contains(point [0], point [1])) {
+                      objectInOutsideLightScope = true;
                       break;
                     }
                   }
                   for (Light light : defaultLights) {
                     if (light instanceof DirectionalLight) {
-                      if (objectInLightScope && light.indexOfScope(object3D) == -1) {
+                      if (objectInOutsideLightScope && light.indexOfScope(object3D) == -1) {
                         light.addScope(object3D);
-                      } else if (!objectInLightScope && light.indexOfScope(object3D) != -1) {
+                      } else if (!objectInOutsideLightScope && light.indexOfScope(object3D) != -1) {
                         light.removeScope(object3D);
                       }
                     }
