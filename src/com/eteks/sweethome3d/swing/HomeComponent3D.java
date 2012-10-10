@@ -128,6 +128,7 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.Ground3D;
+import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.Object3DBranch;
 import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
@@ -1675,7 +1676,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 // Add item to scope if one of its points don't belong to lightScopeWallsArea
                 for (float [] point : item.getPoints()) {
                   if (!lightScopeWallsArea.contains(point [0], point [1])) {
-                    scope.add(homeObjects.get(item));
+                    Group object3D = homeObjects.get(item);
+                    if (object3D instanceof HomePieceOfFurniture3D) {
+                      // Add the direct parent of the shape that will be added once loaded
+                      // otherwise scope won't be updated automatically
+                      object3D = (Group)object3D.getChild(0);
+                    }
+                    scope.add(object3D);
                     break;
                   }
                 }
@@ -2227,9 +2234,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             } else if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
               Area lightScopeWallsArea = getLightScopeWallsArea();
               for (Selectable object : lightScopeObjectsToUpdate) {
-                Object3DBranch objectBranch = homeObjects.get(object);
+                Group object3D = homeObjects.get(object);
+                if (object3D instanceof HomePieceOfFurniture3D) {
+                  // Add the direct parent of the shape that will be added once loaded
+                  // otherwise scope won't be updated automatically
+                  object3D = (Group)object3D.getChild(0);
+                }
                 // Check object wasn't deleted since updateObjects call
-                if (objectBranch != null) { 
+                if (object3D != null) { 
                   // Add item to scope if one of its points don't belong to lightScopeWallsArea
                   boolean objectInLightScope = false;
                   for (float [] point : object.getPoints()) {
@@ -2240,10 +2252,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                   }
                   for (Light light : defaultLights) {
                     if (light instanceof DirectionalLight) {
-                      if (objectInLightScope && light.indexOfScope(objectBranch) == -1) {
-                        light.addScope(objectBranch);
-                      } else if (!objectInLightScope && light.indexOfScope(objectBranch) != -1) {
-                        light.removeScope(objectBranch);
+                      if (objectInLightScope && light.indexOfScope(object3D) == -1) {
+                        light.addScope(object3D);
+                      } else if (!objectInLightScope && light.indexOfScope(object3D) != -1) {
+                        light.removeScope(object3D);
                       }
                     }
                   }
