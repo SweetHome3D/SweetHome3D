@@ -1874,7 +1874,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 || Wall.Property.ARC_EXTENT.name().equals(propertyName)
                 || Wall.Property.THICKNESS.name().equals(propertyName)) {
               lightScopeOutsideWallsAreaCache = null;
-              updateLightScope(null);
+              updateObjectsLightScope(null);
             }
           }
         }
@@ -1898,7 +1898,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           lightScopeOutsideWallsAreaCache = null;
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
-          updateLightScope(null);
+          updateObjectsLightScope(null);
         }
       };
     this.home.addWallsListener(this.wallListener);
@@ -1919,7 +1919,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
             updatePieceOfFurnitureGeometry(updatedPiece);
-            updateLightScope(updatedPiece);
+            updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
@@ -1971,7 +1971,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updateObjects(home.getRooms());
           }
           groundChangeListener.propertyChange(null);
-          updateLightScope(piece);
+          updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
       };
     this.home.addFurnitureListener(this.furnitureListener);
@@ -2063,7 +2063,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }              
             }
             groundChangeListener.propertyChange(null);
-            updateLightScope(updatedRoom);
+            updateObjectsLightScope(Arrays.asList(new Room [] {updatedRoom}));
+            updateObjectsLightScope(Home.getSubList(home.getFurniture(), HomeLight.class));
           }            
         }
       };
@@ -2087,7 +2088,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
-          updateLightScope(room);
+          updateObjectsLightScope(Arrays.asList(new Room [] {room}));
+          updateObjectsLightScope(Home.getSubList(home.getFurniture(), HomeLight.class));
         }
       };
     this.home.addRoomsListener(this.roomListener);
@@ -2219,15 +2221,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates the <code>object</code> scope under light later. Should be invoked from Event Dispatch Thread.
    */
-  private void updateLightScope(Selectable object) {
+  private void updateObjectsLightScope(Collection<? extends Selectable> objects) {
     if (home.getEnvironment().getSubpartSizeUnderLight() > 0) {
       if (this.lightScopeObjectsToUpdate != null) {
-        if (!this.lightScopeObjectsToUpdate.contains(null)) {
+        if (objects == null) {
+          this.lightScopeObjectsToUpdate.clear();
           this.lightScopeObjectsToUpdate.add(null);
+        } else if (!this.lightScopeObjectsToUpdate.contains(null)) {
+          this.homeObjectsToUpdate.addAll(objects);
         }
       } else {
         this.lightScopeObjectsToUpdate = new HashSet<Selectable>();
-        this.lightScopeObjectsToUpdate.add(object);
+        if (objects == null) {
+          this.lightScopeObjectsToUpdate.add(null);
+        } else {
+          this.lightScopeObjectsToUpdate.addAll(objects);
+        }
         // Invoke later the update of objects of lightScopeObjectsToUpdate
         EventQueue.invokeLater(new Runnable () {
           public void run() {
