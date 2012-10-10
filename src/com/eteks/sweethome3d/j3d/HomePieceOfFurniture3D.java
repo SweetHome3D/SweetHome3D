@@ -112,6 +112,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_DETACH);
     // Allow to read branch transform child
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+    setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
     
     if (piece instanceof HomeFurnitureGroup) {
       for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
@@ -255,21 +256,32 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             || piece.getLevel().isVisible());
       HomeLight light = (HomeLight)piece;
       LightSource [] lightSources = light.getLightSources();
-      TransformGroup transformGroup = (TransformGroup)getChild(0);
-      if (transformGroup.numChildren() > 1) {
+      if (numChildren() > 2) {
         Color homeLightColor = new Color(this.home.getEnvironment().getLightColor());
         float homeLightColorRed   = homeLightColor.getRed()   / 3072f; 
         float homeLightColorGreen = homeLightColor.getGreen() / 3072f; 
         float homeLightColorBlue  = homeLightColor.getBlue()  / 3072f; 
-        Group lightsBranch = (Group)transformGroup.getChild(1); 
+        float angle = light.getAngle();
+        float cos = (float)Math.cos(angle);
+        float sin = (float)Math.sin(angle);
+        Group lightsBranch = (Group)getChild(2); 
         for (int i = 0; i < lightSources.length; i++) {
-          Color lightColor = new Color(lightSources [i].getColor());
+          LightSource lightSource = lightSources [i];
+          Color lightColor = new Color(lightSource.getColor());
           float power = light.getPower();
           PointLight pointLight = (PointLight)lightsBranch.getChild(i);
           pointLight.setColor(new Color3f(
               lightColor.getRed()   / 255f * power + (power > 0 ? homeLightColorRed : 0), 
               lightColor.getGreen() / 255f * power + (power > 0 ? homeLightColorGreen : 0), 
               lightColor.getBlue()  / 255f * power + (power > 0 ? homeLightColorBlue : 0)));
+          // Compute the position of the light to prevent resizing in a transformation to have some influence on attenuation
+          float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
+          float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
+          float lightElevation = light.getGroundElevation();
+          pointLight.setPosition(
+              light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
+              lightElevation + (lightSource.getZ() * light.getHeight()),
+              light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos);
           pointLight.setEnable(enabled);
         }
   
@@ -286,7 +298,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                     : 0;
                 float maxElevation =  roomLevel != null 
                     ? minElevation + roomLevel.getHeight() 
-                    : 100000;
+                    : 1E7f;
                 float epsilon = 0.1f;
                 bounds = new BoundingBox(
                     new Point3d(roomBounds.getMinX() - epsilon, minElevation - epsilon, roomBounds.getMinY() - epsilon),
@@ -396,17 +408,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       BranchGroup lightBranch = new BranchGroup();
       lightBranch.setCapability(ALLOW_CHILDREN_READ);
       HomeLight light = (HomeLight)piece;
-      for (LightSource lightSource : light.getLightSources()) {
-        PointLight pointLight = new PointLight(new Color3f(),
-            new Point3f(lightSource.getX() - 0.5f, lightSource.getZ() - 0.5f,  0.5f - lightSource.getY()),
-            new Point3f(0.66f, 0, 0.0001f)); 
+      for (int i = light.getLightSources().length; i > 0 ; i--) {
+        PointLight pointLight = new PointLight(new Color3f(), new Point3f(), new Point3f(0.25f, 0, 0.0000025f)); 
+        pointLight.setCapability(PointLight.ALLOW_POSITION_WRITE);
         pointLight.setCapability(PointLight.ALLOW_COLOR_WRITE);
         pointLight.setCapability(PointLight.ALLOW_STATE_WRITE);
         BoundingLeaf bounds = (BoundingLeaf)getChild(1);
         pointLight.setInfluencingBoundingLeaf(bounds);
         lightBranch.addChild(pointLight);
       }
-      transformGroup.addChild(lightBranch);
+      addChild(lightBranch);
     }
 
     // Update piece color, visibility and model mirror in dispatch thread as
@@ -634,7 +645,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   /**
    * Sets the visible attribute of the <code>Shape3D</code> children nodes of <code>node</code>.
-   * If <code>updateLightSources</code> is <code>true</code>, only light sources will updated. 
    */
   private void setVisible(Node node, boolean visible) {
     if (node instanceof Group) {
