@@ -195,7 +195,8 @@ class MacOSXConfiguration {
                       Thread.sleep(50);
                       EventQueue.invokeAndWait(new Runnable() {
                           public void run() {
-                            canvas3D.set(!SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty());
+                            canvas3D.set(homeFrame.isShowing()
+                                && !SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty());
                           }
                         });
                     } while (!canvas3D.get());                  
