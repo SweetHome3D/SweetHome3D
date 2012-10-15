@@ -24,8 +24,12 @@ import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.Canvas3D;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -45,6 +49,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
@@ -177,8 +182,37 @@ class MacOSXConfiguration {
     homeApplication.addHomesListener(new CollectionListener<Home>() {
       public void collectionChanged(CollectionEvent<Home> ev) {
         if (ev.getType() == CollectionEvent.Type.ADD) {
+          final JFrame homeFrame = homeApplication.getHomeFrame(ev.getItem());
+          if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+            // To avoid a possible freeze of the program when the user requests a window enlargement 
+            // while the frame canvas 3D is instantiated, forbid window to be resized
+            homeFrame.setResizable(false);
+            Executors.newSingleThreadExecutor().submit(new Runnable() {                
+                public void run() {
+                  try {
+                    final AtomicBoolean canvas3D = new AtomicBoolean();
+                    do {
+                      Thread.sleep(50);
+                      EventQueue.invokeAndWait(new Runnable() {
+                          public void run() {
+                            canvas3D.set(!SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty());
+                          }
+                        });
+                    } while (!canvas3D.get());                  
+                  } catch (InterruptedException ex) {
+                  } catch (InvocationTargetException ex) {
+                    ex.printStackTrace();
+                  } finally {
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                          homeFrame.setResizable(true);
+                        }
+                      });
+                  }
+                }
+              });
+          }
           // Add Mac OS X Window menu on new homes
-          JFrame homeFrame = homeApplication.getHomeFrame(ev.getItem());
           MacOSXConfiguration.addWindowMenu(
               homeFrame, homeFrame.getJMenuBar(), homeApplication, false);
         }
