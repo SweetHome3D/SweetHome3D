@@ -732,13 +732,13 @@ public class SwingTools {
   /**
    * Returns the children of a component of the given class.
    */
-  public static <T extends JComponent> List<T> findChildren(JComponent parent, Class<T> childrenClass) {
+  public static <T extends Component> List<T> findChildren(JComponent parent, Class<T> childrenClass) {
     List<T> children = new ArrayList<T>();
     findChildren(parent, childrenClass, children); 
     return children;
   }
 
-  private static <T extends JComponent> void findChildren(JComponent parent, Class<T> childrenClass, List<T> children) {
+  private static <T extends Component> void findChildren(JComponent parent, Class<T> childrenClass, List<T> children) {
     for (int i = 0; i < parent.getComponentCount(); i++) {
       Component child = parent.getComponent(i);
       if (childrenClass.isInstance(child)) {
