@@ -188,7 +188,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super.setY((float)center.getY());
     super.setAngle(firstPiece.getAngle());
     super.setElevation(elevation);
-    super.setModelMirrored(modelMirrored);
+    if (this.resizable) {
+      super.setModelMirrored(modelMirrored);
+    }
   }
 
   /**
