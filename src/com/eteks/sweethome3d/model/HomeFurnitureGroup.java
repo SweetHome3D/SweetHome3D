@@ -167,6 +167,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setWidth((float)unrotatedBoundingRectangle.getWidth());
       super.setDepth((float)unrotatedBoundingRectangle.getHeight());
       super.setHeight(height - elevation);
+      super.setModelMirrored(modelMirrored);
     } else {
       this.fixedWidth = (float)unrotatedBoundingRectangle.getWidth();
       this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
@@ -188,9 +189,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super.setY((float)center.getY());
     super.setAngle(firstPiece.getAngle());
     super.setElevation(elevation);
-    if (this.resizable) {
-      super.setModelMirrored(modelMirrored);
-    }
   }
 
   /**
