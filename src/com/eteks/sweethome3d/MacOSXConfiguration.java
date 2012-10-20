@@ -84,20 +84,17 @@ class MacOSXConfiguration {
     }
 
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
-    JFrame frame;
+    JFrame frame = null;
     try {
       if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
-        try {
-          macosxApplication.setDefaultMenuBar(defaultMenuBar);
-          addWindowMenu(null, defaultMenuBar, homeApplication, true);
-        } catch (java.awt.IllegalComponentStateException ex) {
-          // See bug http://java.net/jira/browse/MACOSX_PORT-775
-          frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
-        }
+        macosxApplication.setDefaultMenuBar(defaultMenuBar);
+        addWindowMenu(null, defaultMenuBar, homeApplication, true);
       }
-      frame = null;
     } catch (NoSuchMethodError ex) {
       // Create default frame if setDefaultMenuBar isn't available
+      frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
+    } catch (java.awt.IllegalComponentStateException ex) {
+      // See bug http://java.net/jira/browse/MACOSX_PORT-775
       frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
     } 
 
@@ -241,17 +238,17 @@ class MacOSXConfiguration {
                                                            final JMenuBar defaultMenuBar) {
     final JFrame frame = new JFrame();
     EventQueue.invokeLater(new Runnable() {
-      public void run() {
-        // Create a default undecorated frame out of sight 
-        // and attach the application menu bar of empty view to it
-        frame.setLocation(-10, 0);
-        frame.setUndecorated(true);
-        frame.setVisible(true);
-        frame.setJMenuBar(defaultMenuBar);
-        frame.setContentPane(defaultHomeView);
-        addWindowMenu(frame, defaultMenuBar, homeApplication, true);
-      }
-    });
+        public void run() {
+          // Create a default undecorated frame out of sight 
+          // and attach the application menu bar of empty view to it
+          frame.setLocation(-10, 0);
+          frame.setUndecorated(true);
+          frame.setVisible(true);
+          frame.setJMenuBar(defaultMenuBar);
+          frame.setContentPane(defaultHomeView);
+          addWindowMenu(frame, defaultMenuBar, homeApplication, true);
+        }
+      });
     return frame;
   }
   
