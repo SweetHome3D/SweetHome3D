@@ -887,15 +887,15 @@ public class Wall implements Serializable, Selectable, Elevatable {
       float y = point1 [1];
       
       // If first line is vertical
-      if (Math.abs(alpha1) > 1E5)  {
-        if (Math.abs(alpha2) < 1E5) {
+      if (Math.abs(alpha1) > 4000)  {
+        if (Math.abs(alpha2) < 4000) {
           x = point1 [0];
           float beta2  = point4 [1] - alpha2 * point4 [0];
           y = alpha2 * x + beta2;
         }
       // If second line is vertical
-      } else if (Math.abs(alpha2) > 1E5) {
-        if (Math.abs(alpha1) < 1E5) {
+      } else if (Math.abs(alpha2) > 4000) {
+        if (Math.abs(alpha1) < 4000) {
           x = point3 [0];
           float beta1  = point2 [1] - alpha1 * point2 [0];
           y = alpha1 * x + beta1;
