@@ -899,14 +899,12 @@ public class VideoPanel extends JPanel implements DialogView {
     add(new JLabel(), new GridBagConstraints(
         3, 3, 1, 6, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.videoFormatLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets componentInsets = new Insets(0, 0, 0, 10);
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     add(this.videoFormatComboBox, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -50, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), -50, 0));
     // Fifth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, labelAlignment, 
