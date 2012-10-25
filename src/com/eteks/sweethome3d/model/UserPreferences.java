@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -99,7 +100,7 @@ public abstract class UserPreferences {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.classResourceBundles = new HashMap<Class<?>, ResourceBundle>();
     this.resourceBundles = new HashMap<String, ResourceBundle>();
-    this.autoCompletionStrings = new HashMap<String, List<String>>();
+    this.autoCompletionStrings = new LinkedHashMap<String, List<String>>();
 
     this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();    
@@ -797,14 +798,18 @@ public abstract class UserPreferences {
    * @since 3.4
    */
   public void addAutoCompletionString(String property, String autoCompletionString) {
-    if (autoCompletionString.length() > 0) {
+    if (autoCompletionString != null 
+        && autoCompletionString.length() > 0) {
       List<String> propertyAutoCompletionStrings = this.autoCompletionStrings.get(property);
-      if (propertyAutoCompletionStrings != null
-          && !propertyAutoCompletionStrings.contains(autoCompletionString)) {
+      if (propertyAutoCompletionStrings == null) {
+        propertyAutoCompletionStrings = new ArrayList<String>();
+      } else if (!propertyAutoCompletionStrings.contains(autoCompletionString)) {
         propertyAutoCompletionStrings = new ArrayList<String>(propertyAutoCompletionStrings);
-        propertyAutoCompletionStrings.add(0, autoCompletionString);
-        setAutoCompletionStrings(property, propertyAutoCompletionStrings);
+      } else {
+        return;
       }
+      propertyAutoCompletionStrings.add(0, autoCompletionString);
+      setAutoCompletionStrings(property, propertyAutoCompletionStrings);
     }
   }
   
