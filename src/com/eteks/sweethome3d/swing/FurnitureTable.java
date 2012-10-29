@@ -64,6 +64,7 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
+import javax.swing.plaf.synth.SynthLookAndFeel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
@@ -89,7 +90,6 @@ import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -1440,6 +1440,8 @@ public class FurnitureTable extends JTable implements View, Printable {
 
         final FurnitureTreeTableModel tableTreeModel = (FurnitureTreeTableModel)table.getModel();
         this.tree = new JTree(tableTreeModel) {
+            boolean drawing = false;
+            
             public void setBounds(int x, int y, int width, int height) {
               // Force tree height to be equal to table height... 
               super.setBounds(x, 0, width, table.getHeight());
@@ -1453,7 +1455,9 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
               // Translate graphics to the currently rendered row 
               g.translate(0, -renderedRow * getRowHeight());
+              this.drawing = true;
               super.paint(g);
+              this.drawing = false;
             }
 
             @Override
@@ -1463,9 +1467,10 @@ public class FurnitureTable extends JTable implements View, Printable {
             
             @Override
             public boolean hasFocus() {
-              if (OperatingSystem.isLinux()) {
-                // Always return true to ensure the background width is filled for selected items
-                return true;
+              if (this.drawing 
+                  && UIManager.getLookAndFeel() instanceof SynthLookAndFeel) {
+                // Always return true when drawing to ensure the background width is filled for selected items                
+                return  true;
               } else {
                 return super.hasFocus();
               }
