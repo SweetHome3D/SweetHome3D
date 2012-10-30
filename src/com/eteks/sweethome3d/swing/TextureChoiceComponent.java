@@ -1,5 +1,5 @@
 /*
- * TextureButton.java 05 oct. 2007
+ * TextureChoiceComponent.java 05 oct. 2007
  *
  * Sweet Home 3D, Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>
  *
