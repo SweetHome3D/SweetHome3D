@@ -827,7 +827,7 @@ public class ModelManager {
     for (Appearance appearance : appearances) {
       try {
         if (appearance.getName() == null) {
-          appearance.setName("Texture " + i);
+          appearance.setName("Texture_" + ++i);
         }
       } catch (NoSuchMethodError ex) {
         // Don't support HomeMaterial with Java 3D < 1.4 where appearance name was added

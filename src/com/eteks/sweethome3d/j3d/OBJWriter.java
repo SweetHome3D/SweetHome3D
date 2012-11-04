@@ -35,6 +35,7 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -370,7 +371,25 @@ public class OBJWriter extends FilterWriter {
             String appearanceName = this.appearances.get(comparableAppearance);
             if (appearanceName == null) {
               // Store appearance
-              appearanceName = objectName;
+              try {
+                appearanceName = appearance.getName();
+              } catch (NoSuchMethodError ex) {
+                // Don't reuse appearance name with Java 3D < 1.4 where getName was added              }
+              }
+              if (appearanceName == null || !accept(appearanceName)) {
+                appearanceName = objectName;
+              } else {
+                // Find a unique appearance name among appearances 
+                Collection<String> appearanceNames = this.appearances.values();
+                String baseName = appearanceName + "_" + objectName;
+                for (int i = 0; appearanceNames.contains(appearanceName); i++) {
+                  if (i == 0) {
+                    appearanceName = baseName;
+                  } else {
+                    appearanceName = baseName + "_" + i;
+                  }
+                }
+              }
               this.appearances.put(comparableAppearance, appearanceName);
               
               Texture texture = appearance.getTexture();
