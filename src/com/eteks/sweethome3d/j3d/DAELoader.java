@@ -184,6 +184,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Map<String, Texture> textures = new HashMap<String, Texture>();
     private final Map<String, Appearance> effectAppearances = new HashMap<String, Appearance>();
     private final Map<String, String> materialEffects = new HashMap<String, String>();
+    private final Map<String, String> materialNames = new HashMap<String, String>();
     private final Map<String, String> surface2DIds = new HashMap<String, String>();
     private final Map<String, String> sampler2DIds = new HashMap<String, String>();
     private final Map<String, List<Geometry>> geometries = new HashMap<String, List<Geometry>>();
@@ -260,6 +261,7 @@ public class DAELoader extends LoaderBase implements Loader {
         this.imageId = attributes.getValue("id");
       } else if ("material".equals(name)) {
         this.materialId = attributes.getValue("id");
+        this.materialNames.put(this.materialId, attributes.getValue("name"));
       } else if ("material".equals(parent) && "instance_effect".equals(name)) {
         String effectInstanceUrl = attributes.getValue("url"); 
         if (effectInstanceUrl.startsWith("#")) {
@@ -435,8 +437,13 @@ public class DAELoader extends LoaderBase implements Loader {
           final Group group = this.parentGroups.peek();
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
-                updateShapeAppearance(group, 
-                    effectAppearances.get(materialEffects.get(materialInstanceAnchor)));
+                Appearance appearance = effectAppearances.get(materialEffects.get(materialInstanceAnchor));
+                updateShapeAppearance(group, appearance);
+                try {
+                  appearance.setName(materialNames.get(materialInstanceAnchor));
+                } catch (NoSuchMethodError ex) {
+                  // Don't set name with Java 3D < 1.4
+                }
               }
               
               private void updateShapeAppearance(Node node, Appearance appearance) {

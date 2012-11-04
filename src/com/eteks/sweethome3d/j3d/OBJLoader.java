@@ -1613,6 +1613,11 @@ public class OBJLoader extends LoaderBase implements Loader {
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
         currentAppearance = new Appearance();
         appearances.put(tokenizer.sval, currentAppearance);
+        try {
+          currentAppearance.setName(tokenizer.sval);
+        } catch (NoSuchMethodError ex) {
+          // Don't set name with Java 3D < 1.4
+        }
       } else {
         throw new IncorrectFormatException("Expected material name at line " + tokenizer.lineno());
       }
