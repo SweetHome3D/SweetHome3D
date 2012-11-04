@@ -1928,6 +1928,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updatePieceOfFurnitureGeometry(updatedPiece);
           } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
               || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(propertyName)
               || HomePieceOfFurniture.Property.SHININESS.name().equals(propertyName)
               || (HomeLight.Property.POWER.name().equals(propertyName)
                   && home.getEnvironment().getSubpartSizeUnderLight() > 0)) {

@@ -40,8 +40,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -87,8 +90,11 @@ import org.apache.batik.parser.AWTPathProducer;
 import org.apache.batik.parser.ParseException;
 import org.apache.batik.parser.PathParser;
 
+import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.microcrowd.loader.java3d.max3ds.Loader3DS;
@@ -685,11 +691,10 @@ public class ModelManager {
         }
         
         // Update transparency of scene window panes shapes
-        updateShapeNamesAndWindowPanesTransparency(scene);
-        
+        updateShapeNamesAndWindowPanesTransparency(scene);        
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
-        turnOffLightsShareAndModulateTextures(modelNode);
-
+        turnOffLightsShareAndModulateTextures(modelNode);        
+        checkAppearancesName(modelNode);
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -808,6 +813,99 @@ public class ModelManager {
         }
       }
     } 
+  }
+
+  /** 
+   * Ensures that all the appearance of the children shapes of the 
+   * given <code>node</code> have a name.
+   */
+  public void checkAppearancesName(Node node) {
+    // Search appearances used by node shapes 
+    Set<Appearance> appearances = new HashSet<Appearance>(); 
+    searchMaterials(node, appearances);
+    int i = 0;
+    for (Appearance appearance : appearances) {
+      try {
+        if (appearance.getName() == null) {
+          appearance.setName("Texture " + i);
+        }
+      } catch (NoSuchMethodError ex) {
+        // Don't support HomeMaterial with Java 3D < 1.4 where appearance name was added
+        break;
+      }
+    }
+  }
+
+  /** 
+   * Returns the materials used by the children shapes of the given <code>node</code>.
+   */
+  public HomeMaterial [] getMaterials(Node node) {
+    // Search appearances used by node shapes 
+    Set<Appearance> appearances = new HashSet<Appearance>(); 
+    searchMaterials(node, appearances);
+    Set<HomeMaterial> materials = new TreeSet<HomeMaterial>(new Comparator<HomeMaterial>() {
+        public int compare(HomeMaterial m1, HomeMaterial m2) {
+          String name1 = m1.getName();
+          String name2 = m2.getName();
+          if (name1 != null) {
+            if (name2 != null) {
+              return name1.compareTo(name2);
+            } else {
+              return 1;
+            }
+          } else if (name2 != null) {
+            return -1;
+          } else {
+            return 0;
+          }
+        }
+      });
+    for (Appearance appearance : appearances) {
+      Integer color = null;
+      Float   shininess = null;
+      Material material = appearance.getMaterial();
+      if (material != null) {
+        Color3f diffuseColor = new Color3f();
+        material.getDiffuseColor(diffuseColor);
+        color = ((int)(diffuseColor.x * 255) << 16) 
+            | ((int)(diffuseColor.y * 255) << 8)
+            | (int)(diffuseColor.z * 255); 
+        shininess = material.getShininess() / 128;          
+      }
+      Texture appearanceTexture = appearance.getTexture();
+      HomeTexture texture = null;
+      if (appearanceTexture != null) {
+        URL textureImageUrl = (URL)appearanceTexture.getUserData();
+        if (textureImageUrl != null) {
+          Content textureImage = new URLContent(textureImageUrl);
+          texture = new HomeTexture(new CatalogTexture(null, textureImage, -1, -1));
+        }
+      }
+      try {
+        materials.add(new HomeMaterial(appearance.getName(), color, texture, shininess));
+      } catch (NoSuchMethodError ex) {
+        // Don't support HomeMaterial with Java 3D < 1.4 where getName was added
+        return new HomeMaterial [0];
+      }
+    }
+    return materials.toArray(new HomeMaterial [materials.size()]);
+  }
+
+  private void searchMaterials(Node node, Set<Appearance> appearances) {
+    if (node instanceof Group) {
+      // Enumerate children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        searchMaterials((Node)enumeration.nextElement(), appearances);
+      }
+    } else if (node instanceof Link) {
+      searchMaterials(((Link)node).getSharedGroup(), appearances);
+    } else if (node instanceof Shape3D) {
+      Appearance appearance = ((Shape3D)node).getAppearance();
+      if (appearance != null) {
+        appearances.add(appearance);
+      }
+    }
   }
 
   /**

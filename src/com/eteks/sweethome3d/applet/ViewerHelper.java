@@ -74,6 +74,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.LevelController;
+import com.eteks.sweethome3d.viewcontroller.ModelMaterialsController;
 import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
 import com.eteks.sweethome3d.viewcontroller.VideoController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
@@ -229,6 +230,11 @@ public final class ViewerHelper {
 
         public TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                                          TextureChoiceController textureChoiceController) {
+          throw new UnsupportedOperationException();
+        }
+        
+        public View createModelMaterialsView(UserPreferences preferences, 
+                                             ModelMaterialsController modelMaterialsController) {
           throw new UnsupportedOperationException();
         }
 

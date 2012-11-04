@@ -44,6 +44,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.LevelController;
+import com.eteks.sweethome3d.viewcontroller.ModelMaterialsController;
 import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
@@ -248,6 +249,14 @@ public class SwingViewFactory implements ViewFactory {
   public TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                             TextureChoiceController textureChoiceController) {
     return new TextureChoiceComponent(preferences, textureChoiceController);
+  }
+
+  /**
+   * Returns a new view that edits the materials of its controller.  
+   */
+  public View createModelMaterialsView(UserPreferences preferences,
+                                        ModelMaterialsController controller) {
+    return new ModelMaterialsComponent(preferences, controller);
   }
 
   /**

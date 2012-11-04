@@ -94,8 +94,10 @@ public class HomeTexture implements TextureImage, Serializable {
       return true;
     } else if (obj instanceof HomeTexture) {
       HomeTexture texture = (HomeTexture)obj;
-      return texture.name.equals(this.name)
-          && texture.image.equals(this.image)
+      return (texture.name == this.name 
+              || texture.name != null && texture.name.equals(this.name))
+          && (texture.image == this.image 
+              || texture.image != null && texture.image.equals(this.image))
           && texture.width == this.width
           && texture.height == this.height
           && texture.leftToRightOriented == this.leftToRightOriented;
@@ -109,8 +111,8 @@ public class HomeTexture implements TextureImage, Serializable {
    */
   @Override
   public int hashCode() {
-    return this.name.hashCode()
-        + this.image.hashCode()
+    return (this.name != null  ? this.name.hashCode()   : 0)
+        + (this.image != null  ? this.image.hashCode()  : 0)
         + Float.floatToIntBits(this.width)
         + Float.floatToIntBits(this.height);
   }

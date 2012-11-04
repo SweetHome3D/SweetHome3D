@@ -58,11 +58,13 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
+import com.eteks.sweethome3d.j3d.TextureManager.TextureObserver;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
@@ -230,15 +232,19 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     Node filledModelNode = getFilledModelNode();
     if (piece.getColor() != null) {
-      setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), false, 
+      setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
           null, null, new HashSet<Appearance>());
     } else if (piece.getTexture() != null) {
-      setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), waitTextureLoadingEnd,
+      setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
           new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(((Group)filledModelNode).getChild(0)),
+          new HashSet<Appearance>());
+    } else if (piece.getModelMaterials() != null) {
+      setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
+          new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(((Group)filledModelNode).getChild(0)), 
           new HashSet<Appearance>());
     } else {
       // Set default material and texture of model
-      setColorAndTexture(filledModelNode, null, null, piece.getShininess(), false, 
+      setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
           null, null, new HashSet<Appearance>());
     }
   }
@@ -541,21 +547,21 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * Sets the material and texture attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
    * from the given <code>color</code> and <code>texture</code>. 
    */
-  private void setColorAndTexture(Node node, Integer color, 
-                                  HomeTexture texture, Float shininess, 
-                                  boolean waitTextureLoadingEnd, Vector3f pieceSize,
-                                  BoundingBox modelBounds, Set<Appearance> modifiedAppearances) {
+  private void setColorAndTexture(Node node, Integer color, HomeTexture texture, Float shininess, 
+                                  HomeMaterial [] materials, boolean waitTextureLoadingEnd, 
+                                  Vector3f pieceSize, BoundingBox modelBounds, 
+                                  Set<Appearance> modifiedAppearances) {
     if (node instanceof Group) {
       // Set material and texture of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setColorAndTexture((Node)enumeration.nextElement(), color, 
-            texture, shininess, waitTextureLoadingEnd, pieceSize,
+            texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
             modelBounds, modifiedAppearances);
       }
     } else if (node instanceof Link) {
       setColorAndTexture(((Link)node).getSharedGroup(), color,
-          texture, shininess, waitTextureLoadingEnd, pieceSize,
+          texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
           modelBounds, modifiedAppearances);
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
@@ -593,55 +599,127 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             appearance.setTexture(null);
           } else if (color == null && texture != null) {            
             // Change material to white then texture
+            appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
             appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-            Point3d lower = new Point3d();
-            modelBounds.getLower(lower);
-            Point3d upper = new Point3d();
-            modelBounds.getUpper(upper);
-            float minimumSize = ModelManager.getInstance().getMinimumSize();
-            float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / texture.getWidth();
-            float sw = texture.isLeftToRightOriented()  
-                ? (float)-lower.x * sx  
-                : 0;
-            float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize) / texture.getHeight();
-            float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize) / texture.getHeight();
-            float tw = texture.isLeftToRightOriented()  
-                ? (float)(-lower.y * ty + upper.z * tz)
-                : 0;
-            TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(sx, 0, 0, sw), new Vector4f(0, ty, -tz, tw));
-            appearance.setTexCoordGeneration(texCoordGeneration);
             appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-            TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
-                new TextureManager.TextureObserver() {
-                    public void textureUpdated(Texture texture) {
-                      if (TextureManager.getInstance().isTextureTransparent(texture)) {
-                        shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
-                        shape.getAppearance().setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
-                      }
-                      shape.getAppearance().setTexture(texture);
-                    }
-                  });
-          } else {
-            // Restore default material and texture
-            Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
-            if (defaultMaterial != null && shininess != null) {
-              defaultMaterial = (Material)defaultMaterial.cloneNodeComponent(true);
-              defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
-              defaultMaterial.setShininess(shininess * 128);
+            TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd, getTextureObserver(appearance));
+          } else if (materials != null && materials.length > 0) {
+            boolean materialFound = false;
+            // Apply color, texture and shininess of the material named as appearance name
+            for (HomeMaterial material : materials) {
+              if (material != null 
+                  && material.getName().equals(appearance.getName())) {
+                if (material.getShininess() != null) {
+                  materialShininess = material.getShininess();
+                }
+                color = material.getColor();                
+                if (color != null) {
+                  appearance.setMaterial(getMaterial(color, color, materialShininess));
+                  appearance.setTexture(null);
+                  appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+                  appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+                } else if (color == null && material.getTexture() != null) {
+                  if (!isTexturesCoordinatesDefined(shape)) {
+                    appearance.setTexCoordGeneration(getTextureCoordinates(appearance, material.getTexture(), pieceSize, modelBounds));
+                  }
+                  appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
+                  appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+                  TextureManager.getInstance().loadTexture(material.getTexture().getImage(), waitTextureLoadingEnd, getTextureObserver(appearance));
+                } else {
+                  restoreDefaultMaterialAndTexture(appearance, material.getShininess());
+                }
+                materialFound = true;
+                break;
+              }
             }
-            appearance.setMaterial(defaultMaterial);
-            appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-            appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
-            appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-            appearance.setTexture(defaultMaterialAndTexture.getTexture());
-            appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
+            if (!materialFound) {
+              restoreDefaultMaterialAndTexture(appearance, null);
+            }
+          } else {
+            restoreDefaultMaterialAndTexture(appearance, shininess);
           }
           // Store modified appearances to avoid changing their values more than once
           modifiedAppearances.add(appearance);
         }
       }
     }
+  }
+
+  /**
+   * Returns a texture observer that will update the given <code>appearance</code>.
+   */
+  private TextureObserver getTextureObserver(final Appearance appearance) {
+    return new TextureManager.TextureObserver() {
+        public void textureUpdated(Texture texture) {
+          if (TextureManager.getInstance().isTextureTransparent(texture)) {
+            appearance.setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
+            appearance.setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
+          } else {
+            DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+            if (defaultMaterialAndTexture != null) {
+              appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+            }
+          }
+          appearance.setTexture(texture);
+        }
+      };
+  }
+
+  /**
+   * Returns a texture coordinates generator that wraps the given texture on front face.
+   */
+  private TexCoordGeneration getTextureCoordinates(Appearance appearance, HomeTexture texture, 
+                                                   Vector3f pieceSize, BoundingBox modelBounds) {
+    Point3d lower = new Point3d();
+    modelBounds.getLower(lower);
+    Point3d upper = new Point3d();
+    modelBounds.getUpper(upper);
+    float minimumSize = ModelManager.getInstance().getMinimumSize();
+    float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / texture.getWidth();
+    float sw = texture.isLeftToRightOriented()  
+        ? (float)-lower.x * sx  
+        : 0;
+    float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize) / texture.getHeight();
+    float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize) / texture.getHeight();
+    float tw = texture.isLeftToRightOriented()  
+        ? (float)(-lower.y * ty + upper.z * tz)
+        : 0;
+    return new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+        TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(sx, 0, 0, sw), new Vector4f(0, ty, -tz, tw));
+  }
+
+  /**
+   * Returns <code>true</code> if all the geometries of the given <code>shape</code> define some texture coordinates.
+   */
+  private boolean isTexturesCoordinatesDefined(Shape3D shape) {
+    for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+      Geometry geometry = shape.getGeometry(i);
+      if (geometry instanceof GeometryArray 
+          && (((GeometryArray)geometry).getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) == 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Restores default material and texture of the given <code>appearance</code>.
+   */
+  private void restoreDefaultMaterialAndTexture(Appearance appearance,
+                                                Float shininess) {
+    DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+    Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
+    if (defaultMaterial != null && shininess != null) {
+      defaultMaterial = (Material)defaultMaterial.cloneNodeComponent(true);
+      defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
+      defaultMaterial.setShininess(shininess * 128);
+    }
+    appearance.setMaterial(defaultMaterial);
+    appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+    appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+    appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+    appearance.setTexture(defaultMaterialAndTexture.getTexture());
+    appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
   }
 
   /**

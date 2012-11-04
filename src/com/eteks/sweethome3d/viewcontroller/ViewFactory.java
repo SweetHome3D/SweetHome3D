@@ -162,6 +162,12 @@ public interface ViewFactory {
                                                      TextureChoiceController textureChoiceController);
 
   /**
+   * Returns a new view that edits the materials of its controller.  
+   */
+  public abstract View createModelMaterialsView(UserPreferences preferences,
+                                                 ModelMaterialsController modelMaterialsController);
+
+  /**
    * Creates a new view that edits page setup.
    */
   public abstract DialogView createPageSetupView(UserPreferences preferences,

@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Collator;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -228,6 +229,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float                  elevation;
   private boolean                movable;
   private boolean                doorOrWindow;
+  private HomeMaterial []        modelMaterials;
   private Integer                color;
   private HomeTexture            texture;
   private Float                  shininess;
@@ -249,6 +251,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
+
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -290,6 +293,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       this.y = homePiece.getY();
       this.modelMirrored = homePiece.isModelMirrored();
       this.texture = homePiece.getTexture();
+      this.modelMaterials = homePiece.getModelMaterials();
     } else {
       if (piece instanceof CatalogPieceOfFurniture) {
         this.catalogId = ((CatalogPieceOfFurniture)piece).getId();
@@ -630,6 +634,40 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public Content getModel() {
     return this.model;
   }
+
+  /**
+   * Sets the materials of the 3D model of this piece of furniture. 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @param modelMaterials the materials of the 3D model or <code>null</code> if they shouldn't be changed
+   * @throws IllegalStateException if this piece of furniture isn't texturable
+   */
+  public void setModelMaterials(HomeMaterial [] modelMaterials) {
+    if (isTexturable()) {
+      if (!Arrays.equals(modelMaterials, this.modelMaterials)) {
+        HomeMaterial [] oldModelMaterials = this.modelMaterials;
+        this.modelMaterials = modelMaterials != null 
+            ? modelMaterials.clone()
+            : null;
+        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelMaterials, modelMaterials);
+      }
+    } else {
+      throw new IllegalStateException("Piece isn't texturable");
+    }
+  }
+  
+  /**
+   * Returns the materials applied to the 3D model of this piece of furniture.
+   * @return the materials of the 3D model or <code>null</code> 
+   * if the individual materials of the 3D model are not modified.
+   * @since 3.8
+   */
+  public HomeMaterial [] getModelMaterials() {
+    if (this.modelMaterials != null) {
+      return this.modelMaterials.clone();
+    } else {
+      return null;
+    }
+  }
   
   /**
    * Returns the color of this piece of furniture.
@@ -640,8 +678,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   /**
-   * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged. 
+   * Sets the color of this piece of furniture. 
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @param color the color of this piece of furniture or <code>null</code> if piece color is the default one
    * @throws IllegalStateException if this piece of furniture isn't texturable
    */
   public void setColor(Integer color) {
@@ -667,8 +706,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   /**
-   * Sets the texture of this piece of furniture or <code>null</code> if piece texture is unchanged. 
+   * Sets the texture of this piece of furniture. 
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @param texture the texture of this piece of furniture or <code>null</code> if piece texture is the default one
    * @throws IllegalStateException if this piece of furniture isn't texturable
    * @since 2.3
    */
