@@ -33,6 +33,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -41,6 +43,7 @@ import java.util.Hashtable;
 import java.util.Locale;
 
 import javax.media.j3d.BranchGroup;
+import javax.swing.AbstractButton;
 import javax.swing.AbstractListModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListCellRenderer;
@@ -201,7 +204,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       
       this.shininessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           ModelMaterialsComponent.class, "shininessLabel.text"));
-      this.shininessSlider = new JSlider(1, 128);
+      this.shininessSlider = new JSlider(0, 128);
       JLabel mattLabel = new JLabel(preferences.getLocalizedString(
           ModelMaterialsComponent.class, "mattLabel.text"));
       JLabel shinyLabel = new JLabel(preferences.getLocalizedString(
@@ -266,6 +269,21 @@ public class ModelMaterialsComponent extends JButton implements View {
               enableComponents();
             }
           });
+      
+      this.materialsList.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent ev) {
+          // Open color or texture choice dialogs on double clicks
+          if (ev.getClickCount() == 2 && !materialsList.isSelectionEmpty()) {
+            if (colorButton.getColor() != null) {
+              colorButton.doClick(200);
+            } else if (controller.getTextureController().getTexture() != null
+                       && textureComponent instanceof AbstractButton) {
+              ((AbstractButton)textureComponent).doClick(200);
+            }
+          }
+        }
+      });
 
       if (this.materialsList.getModel().getSize() > 0) {
         this.materialsList.setSelectedIndex(0);
@@ -435,13 +453,13 @@ public class ModelMaterialsComponent extends JButton implements View {
           2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
       add(this.colorButton, new GridBagConstraints(
-          3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          3, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.textureRadioButton, new GridBagConstraints(
           2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
-          3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
 
@@ -501,7 +519,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             }
 
             public void modelError(Exception ex) {
-              // Shouldn't happen since  
+              // Let the list be empty  
             }
           });
       }
