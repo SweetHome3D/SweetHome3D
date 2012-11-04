@@ -240,23 +240,25 @@ public class ModelMaterialsComponent extends JButton implements View {
                   // Display default color or texture in buttons
                   texture = defaultMaterial.getTexture();
                   if (texture != null) {
-                    controller.getTextureController().setTexture(texture);
                     colorButton.setColor(null);
+                    controller.getTextureController().setTexture(texture);
                   } else {
                     color = defaultMaterial.getColor();
                     if (color != null) {
-                      colorButton.setColor(color);
                       controller.getTextureController().setTexture(null);
+                      colorButton.setColor(color);
                     }
                   }
                   defaultColorAndTextureRadioButton.setSelected(true);
                 } else if (texture != null) {
                   textureRadioButton.setSelected(true);
+                  colorButton.setColor(null);
                   controller.getTextureController().setTexture(texture);
                 } else {
                   colorRadioButton.setSelected(true);
+                  controller.getTextureController().setTexture(null);
                   colorButton.setColor(color);
-                }          
+                }         
      
                 shininessSlider.removeChangeListener(shininessChangeListener);
                 if (shininess != null) {
