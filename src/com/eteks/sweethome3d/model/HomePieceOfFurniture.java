@@ -52,7 +52,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
+      DESCRIPTION, PRICE, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -783,6 +783,20 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return this.price;
   }
   
+  /**
+   * Sets the price of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   * @since 3.8
+   */
+  public void setPrice(BigDecimal price) {
+    if (price != this.price
+        || (price != null && !price.equals(this.price))) {
+      BigDecimal oldPrice = this.price;
+      this.price = price;
+      this.propertyChangeSupport.firePropertyChange(Property.PRICE.name(), oldPrice, price);
+    }
+  }
+   
   /**
    * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
    */

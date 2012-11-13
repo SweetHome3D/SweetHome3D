@@ -26,6 +26,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.math.BigDecimal;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
@@ -61,6 +62,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private JLabel                  descriptionLabel;
   private JTextField              descriptionTextField;
   private NullableCheckBox        nameVisibleCheckBox;
+  private JLabel                  priceLabel;
+  private JSpinner                priceSpinner;
   private JLabel                  xLabel;
   private JSpinner                xSpinner;
   private JLabel                  yLabel;
@@ -208,6 +211,32 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         });
     }
         
+    if (controller.isPropertyEditable(HomeFurnitureController.Property.PRICE)) {
+      // Create Price label and its spinner bound to PRICE controller property
+      this.priceLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          HomeFurniturePanel.class, "priceLabel.text"));
+      final NullableSpinner.NullableSpinnerNumberModel priceSpinnerModel = 
+          new NullableSpinner.NullableSpinnerNumberModel(0, 0, 1E8f, 1f);
+      this.priceSpinner = new NullableSpinner(priceSpinnerModel);
+      BigDecimal price = controller.getPrice();
+      priceSpinnerModel.setNullable(price == null);
+      priceSpinnerModel.setValue(price == null  ? null  : price.floatValue());
+      final PropertyChangeListener priceChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            priceSpinnerModel.setNullable(ev.getNewValue() == null);
+            priceSpinnerModel.setValue(((Number)ev.getNewValue()).floatValue());
+          }
+        };
+      controller.addPropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
+      priceSpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.removePropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
+            controller.setPrice(new BigDecimal(priceSpinnerModel.getNumber().doubleValue()));
+            controller.addPropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
+          }
+        });
+    }
+
     final float maximumLength = preferences.getLengthUnit().getMaximumLength();
     
     if (controller.isPropertyEditable(HomeFurnitureController.Property.X)) {
@@ -770,6 +799,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             HomeFurniturePanel.class, "descriptionLabel.mnemonic")).getKeyCode());
         this.descriptionLabel.setLabelFor(this.descriptionTextField);
       }
+      if (this.priceLabel != null) {
+        this.priceLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(HomeFurniturePanel.class, "priceLabel.mnemonic")).getKeyCode());
+        this.priceLabel.setLabelFor(this.priceSpinner);
+      }
       if (this.xLabel != null) {
         this.xLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
             preferences.getLocalizedString(HomeFurniturePanel.class, "xLabel.mnemonic")).getKeyCode());
@@ -856,8 +890,9 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row    
+    boolean priceDisplayed = this.priceLabel != null;
     JPanel namePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
-        HomeFurniturePanel.class, "namePanel.title"));
+        HomeFurniturePanel.class, priceDisplayed  ?  "nameAndPricePanel.title"  : "namePanel.title"));
     int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
     if (this.nameLabel != null) {
       namePanel.add(this.nameLabel, new GridBagConstraints(
@@ -869,7 +904,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     if (this.nameVisibleCheckBox != null) {
       namePanel.add(this.nameVisibleCheckBox, new GridBagConstraints(
-          2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (this.descriptionLabel != null) {
@@ -877,7 +912,15 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
           new Insets(5, 0, 0, 5), 0, 0));
       namePanel.add(this.descriptionTextField, new GridBagConstraints(
-          1, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+          1, 1, priceDisplayed  ? 1  : 3, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, priceDisplayed  ? 10  : 0), 0, 0));
+    }
+    if (priceDisplayed) {
+      namePanel.add(this.priceLabel, new GridBagConstraints(
+          this.descriptionLabel != null  ? 2  : 0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
+          new Insets(5, 0, 0, 5), 0, 0));
+      namePanel.add(this.priceSpinner, new GridBagConstraints(
+          this.descriptionLabel != null  ? 3  : 1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
     }
     if (namePanel.getComponentCount() > 0) {

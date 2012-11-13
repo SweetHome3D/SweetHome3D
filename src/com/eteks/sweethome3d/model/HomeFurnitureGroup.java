@@ -49,10 +49,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private float                      fixedWidth;
   private float                      fixedDepth;
   private float                      fixedHeight;
-  private BigDecimal                 price;
-  private BigDecimal                 valueAddedTaxPercentage;
-  private BigDecimal                 valueAddedTax;
-  private BigDecimal                 priceValueAddedTaxIncluded;
   private String                     currency;
   private List<Integer>              furnitureDefaultColors;
   private List<HomeTexture>          furnitureDefaultTextures;
@@ -99,7 +95,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     this.doorOrWindow = true;
     boolean visible = false;
     boolean modelMirrored = true;
-    this.valueAddedTaxPercentage = firstPiece.getValueAddedTaxPercentage();
     this.currency = firstPiece.getCurrency();
     // Search the lowest level elevation among grouped furniture
     Level minLevel = null;
@@ -132,30 +127,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       this.doorOrWindow &= piece.isDoorOrWindow();
       visible |= piece.isVisible();
       modelMirrored &= piece.isModelMirrored();
-      
-      // Add price and VAT
-      if (piece.getPrice() != null) {
-        if (this.price == null) {
-          this.price = piece.getPrice();
-          this.priceValueAddedTaxIncluded = piece.getPriceValueAddedTaxIncluded();
-        } else {
-          this.price = this.price.add(piece.getPrice()); 
-          this.priceValueAddedTaxIncluded = this.priceValueAddedTaxIncluded.add(piece.getPriceValueAddedTaxIncluded());
-        }
-      }
-      if (piece.getValueAddedTax() != null) {
-        if (this.valueAddedTax == null) {
-          this.valueAddedTax = piece.getValueAddedTax();
-        } else {
-          this.valueAddedTax = this.valueAddedTax.add(piece.getValueAddedTax());
-        }
-      }
-      if (this.valueAddedTaxPercentage != null) {
-        if (piece.getValueAddedTaxPercentage() == null
-            || !piece.getValueAddedTaxPercentage().equals(this.valueAddedTaxPercentage)) {
-          this.valueAddedTaxPercentage = null; 
-        }
-      }
+
       if (this.currency != null) {
         if (piece.getCurrency() == null
             || !piece.getCurrency().equals(this.currency)) {
@@ -364,7 +336,36 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public BigDecimal getPrice() {
-    return this.price;
+    BigDecimal price = null;
+    for (HomePieceOfFurniture piece : this.furniture) {
+      if (piece.getPrice() != null) {
+        if (price == null) {
+          price = piece.getPrice();
+        } else {
+          price = price.add(piece.getPrice()); 
+        }
+      }
+    }
+    if (price == null) {
+      return super.getPrice();
+    } else {
+      return price;
+    }
+  }
+
+  /**
+   * Sets the price of this group.
+   * @throws UnsupportedOperationException if the price of one of the pieces is set
+   * @since 3.8
+   */
+  @Override
+  public void setPrice(BigDecimal price) {
+    for (HomePieceOfFurniture piece : this.furniture) {
+      if (piece.getPrice() != null) {
+        throw new UnsupportedOperationException("Can't change the price of a group containing pieces with a price");
+      }
+    }
+    super.setPrice(price);
   }
   
   /**
@@ -374,7 +375,17 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public BigDecimal getValueAddedTaxPercentage() {
-    return this.valueAddedTaxPercentage;
+    BigDecimal valueAddedTaxPercentage = this.furniture.get(0).getValueAddedTaxPercentage();
+    if (valueAddedTaxPercentage != null) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        BigDecimal pieceValueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
+        if (pieceValueAddedTaxPercentage == null
+            || !pieceValueAddedTaxPercentage.equals(valueAddedTaxPercentage)) {
+          return null; 
+        }
+      }
+    }
+    return valueAddedTaxPercentage;
   }
   
   /**
@@ -393,7 +404,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public BigDecimal getValueAddedTax() {
-    return this.valueAddedTax;
+    BigDecimal valueAddedTax = null;
+    for (HomePieceOfFurniture piece : furniture) {
+      BigDecimal pieceValueAddedTax = piece.getValueAddedTax();
+      if (pieceValueAddedTax != null) {
+        if (valueAddedTax == null) {
+          valueAddedTax = pieceValueAddedTax;
+        } else {
+          valueAddedTax = valueAddedTax.add(pieceValueAddedTax);
+        }
+      }
+    }
+    return valueAddedTax;
   }
   
   /**
@@ -401,7 +423,17 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public BigDecimal getPriceValueAddedTaxIncluded() {
-    return this.priceValueAddedTaxIncluded;
+    BigDecimal priceValueAddedTaxIncluded = null;
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece.getPrice() != null) {
+        if (priceValueAddedTaxIncluded == null) {
+          priceValueAddedTaxIncluded = piece.getPriceValueAddedTaxIncluded();
+        } else {
+          priceValueAddedTaxIncluded = priceValueAddedTaxIncluded.add(piece.getPriceValueAddedTaxIncluded());
+        }
+      }
+    }
+    return priceValueAddedTaxIncluded;
   }
   
   /**

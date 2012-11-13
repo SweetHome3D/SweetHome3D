@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +52,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {ICON, NAME, NAME_VISIBLE, DESCRIPTION, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
+  public enum Property {ICON, NAME, NAME_VISIBLE, DESCRIPTION, PRICE, X, Y, ELEVATION, ANGLE_IN_DEGREES, BASE_PLAN_ITEM, 
       WIDTH, DEPTH,  HEIGHT, PROPORTIONAL, COLOR, PAINT, SHININESS, VISIBLE, MODEL_MIRRORED, LIGHT_POWER, 
       RESIZABLE, DEFORMABLE, TEXTURABLE}
   
@@ -75,35 +76,36 @@ public class HomeFurnitureController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeFurnitureView;
 
-  private Content icon;
-  private String  name;
-  private String  description;
-  private Boolean nameVisible;
-  private Float   x;
-  private Float   y;
-  private Float   elevation;
-  private Integer angleInDegrees;
-  private Float   angle;
-  private Float   width;
-  private Float   proportionalWidth;
-  private Float   depth;
-  private Float   proportionalDepth;
-  private Float   height;
-  private Float   proportionalHeight;
-  private boolean proportional;
-  private Integer color;
+  private Content            icon;
+  private String             name;
+  private String             description;
+  private BigDecimal         price;
+  private Boolean            nameVisible;
+  private Float              x;
+  private Float              y;
+  private Float              elevation;
+  private Integer            angleInDegrees;
+  private Float              angle;
+  private Float              width;
+  private Float              proportionalWidth;
+  private Float              depth;
+  private Float              proportionalDepth;
+  private Float              height;
+  private Float              proportionalHeight;
+  private boolean            proportional;
+  private Integer            color;
   private FurniturePaint     paint;
   private FurnitureShininess shininess;
-  private Boolean visible;
-  private Boolean modelMirrored;
-  private Boolean basePlanItem;
-  private boolean basePlanItemEnabled;
-  private boolean lightPowerEditable;
-  private Float   lightPower;
-  private boolean resizable;
-  private boolean deformable;
-  private boolean texturable;
-  
+  private Boolean            visible;
+  private Boolean            modelMirrored;
+  private Boolean            basePlanItem;
+  private boolean            basePlanItemEnabled;
+  private boolean            lightPowerEditable;
+  private Float              lightPower;
+  private boolean            resizable;
+  private boolean            deformable;
+  private boolean            texturable;
+
   /**
    * Creates the controller of home furniture view with undo support.
    */
@@ -217,6 +219,8 @@ public class HomeFurnitureController implements Controller {
       setIcon(null);
       setName(null); // Nothing to edit
       setNameVisible(null); 
+      setDescription(null);
+      setPrice(null);
       setAngleInDegrees(null);
       setX(null);
       setY(null);
@@ -287,6 +291,17 @@ public class HomeFurnitureController implements Controller {
         }
       }
       setDescription(description);
+      
+      BigDecimal price = firstPiece.getPrice();
+      if (price != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (!price.equals(selectedFurniture.get(i).getPrice())) {
+            price = null;
+            break;
+          }
+        }
+      }
+      setPrice(price);
       
       Float angle = firstPiece.getAngle();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -527,11 +542,12 @@ public class HomeFurnitureController implements Controller {
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
    * may render it differently.
-   * The implementation of this method always returns <code>true</code> except for <code>DESCRIPTION</code> if it's not editable. 
+   * The implementation of this method always returns <code>true</code> except for <code>DESCRIPTION</code> and <code>PRICE</code> properties. 
    */
   public boolean isPropertyEditable(Property property) {
     switch (property) {
       case DESCRIPTION :
+      case PRICE :
         return false;
       case LIGHT_POWER :
         return isLightPowerEditable();
@@ -612,6 +628,26 @@ public class HomeFurnitureController implements Controller {
    */
   public String getDescription() {
     return this.description;
+  }
+  
+  /**
+   * Sets the edited price.
+   * @since 3.8
+   */
+  public void setPrice(BigDecimal price) {
+    if (price != this.price) {
+      BigDecimal oldPrice = this.price;
+      this.price = price;
+      this.propertyChangeSupport.firePropertyChange(Property.PRICE.name(), oldPrice, price);
+    }
+  }
+
+  /**
+   * Returns the edited price.
+   * @since 3.8
+   */
+  public BigDecimal getPrice() {
+    return this.price;
   }
   
   /**
@@ -1065,6 +1101,7 @@ public class HomeFurnitureController implements Controller {
       String name = getName();
       Boolean nameVisible = getNameVisible();
       String description = getDescription();
+      BigDecimal price = getPrice();
       Float x = getX();
       Float y = getY();
       Float elevation = getElevation();
@@ -1116,13 +1153,13 @@ public class HomeFurnitureController implements Controller {
         }
       }
       // Apply modification
-      doModifyFurniture(modifiedFurniture, name, nameVisible, description, x, y, elevation, angle, basePlanItem, width, depth, height, 
+      doModifyFurniture(modifiedFurniture, name, nameVisible, description, price, x, y, elevation, angle, basePlanItem, width, depth, height, 
           paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
       List<Selectable> newSelection = this.home.getSelectedItems(); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, newSelection, modifiedFurniture, 
-            name, nameVisible, description, x, y, elevation, angle, basePlanItem, width, depth, height, 
+            name, nameVisible, description, price, x, y, elevation, angle, basePlanItem, width, depth, height, 
             paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
         this.undoSupport.postEdit(undoableEdit);
       }
@@ -1148,6 +1185,7 @@ public class HomeFurnitureController implements Controller {
     private final String                      name;
     private final Boolean                     nameVisible;
     private final String                      description;
+    private final BigDecimal                  price;
     private final Float                       x;
     private final Float                       y;
     private final Float                       elevation;
@@ -1171,7 +1209,7 @@ public class HomeFurnitureController implements Controller {
                                               List<Selectable> oldSelection,
                                               List<Selectable> newSelection,
                                               ModifiedPieceOfFurniture [] modifiedFurniture,
-                                              String name, Boolean nameVisible, String description, 
+                                              String name, Boolean nameVisible, String description, BigDecimal price, 
                                               Float x, Float y, Float elevation, Float angle, Boolean basePlanItem, 
                                               Float width, Float depth, Float height,
                                               FurniturePaint paint, Integer color, HomeTexture texture,
@@ -1188,6 +1226,7 @@ public class HomeFurnitureController implements Controller {
       this.name = name;
       this.nameVisible = nameVisible;
       this.description = description;
+      this.price = price;
       this.x = x;
       this.y = y;
       this.elevation = elevation;
@@ -1218,7 +1257,7 @@ public class HomeFurnitureController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doModifyFurniture(this.modifiedFurniture, 
-          this.name, this.nameVisible, this.description, this.x, this.y, this.elevation, 
+          this.name, this.nameVisible, this.description, this.price, this.x, this.y, this.elevation, 
           this.angle, this.basePlanItem, this.width, this.depth, this.height, 
           this.paint, this.color, this.texture, this.modelMaterials, 
           this.defaultShininess, this.shininess,
@@ -1237,7 +1276,7 @@ public class HomeFurnitureController implements Controller {
    * Modifies furniture properties with the values in parameter.
    */
   private static void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
-                                        String name, Boolean nameVisible, String description,
+                                        String name, Boolean nameVisible, String description, BigDecimal price, 
                                         Float x, Float y, Float elevation, Float angle, Boolean basePlanItem, 
                                         Float width, Float depth, Float height, 
                                         FurniturePaint paint, Integer color, HomeTexture texture, 
@@ -1255,6 +1294,9 @@ public class HomeFurnitureController implements Controller {
       }
       if (description != null) {
         piece.setDescription(description);
+      }
+      if (price != null) {
+        piece.setPrice(price);
       }
       if (x != null) {
         piece.setX(x);
@@ -1341,6 +1383,7 @@ public class HomeFurnitureController implements Controller {
     private final String               name;
     private final boolean              nameVisible;
     private final String               description;
+    private final BigDecimal           price;
     private final float                x;
     private final float                y;
     private final float                elevation;
@@ -1361,6 +1404,7 @@ public class HomeFurnitureController implements Controller {
       this.name = piece.getName();
       this.nameVisible = piece.isNameVisible();
       this.description = piece.getDescription();
+      this.price = piece.getPrice();
       this.x = piece.getX();
       this.y = piece.getY();
       this.elevation = piece.getElevation();
@@ -1385,6 +1429,7 @@ public class HomeFurnitureController implements Controller {
       this.piece.setName(this.name);
       this.piece.setNameVisible(this.nameVisible);
       this.piece.setDescription(this.description);
+      this.piece.setPrice(this.price);
       this.piece.setX(this.x);
       this.piece.setY(this.y);
       this.piece.setElevation(this.elevation);
