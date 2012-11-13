@@ -1434,6 +1434,20 @@ public class OBJWriter extends FilterWriter {
             return false;
           }
         }
+        // Compare name
+        try {
+          String name1 = this.appearance.getName();
+          String name2 = appearance2.getName();
+          if ((name1 == null) ^ (name2 == null)) {
+            return false;
+          } else if (name1 != name2 
+                     && !name1.equals(name2)) {
+            return false;
+          }
+        } catch (NoSuchMethodError ex) {
+          // Don't compares name with Java 3D < 1.4 where getName was added              }
+        }
+
         return true;
       }
       return false;
@@ -1468,6 +1482,14 @@ public class OBJWriter extends FilterWriter {
       Texture texture = this.appearance.getTexture();
       if (texture != null) {
         code += texture.getImage(0).hashCode();
+      }
+      try {
+        String name = this.appearance.getName();
+        if (name != null) {
+          code += name.hashCode();
+        }
+      } catch (NoSuchMethodError ex) {
+        // Don't take name into account with Java 3D < 1.4 where getName was added              }
       }
       return code;
     }
