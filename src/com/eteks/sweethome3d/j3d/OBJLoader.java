@@ -1452,6 +1452,13 @@ public class OBJLoader extends LoaderBase implements Loader {
         throw new IncorrectFormatException("Expected material name at line " + tokenizer.lineno());
       }
     } else if ("mtllib".equals(tokenizer.sval)) {
+      // Read characters following mtllib in case they contain a file name with spaces 
+      tokenizer.wordChars(' ', ' ');
+      int mtllibToken = tokenizer.nextToken();
+      String mtllibString = tokenizer.sval.trim();
+      tokenizer.pushBack();
+      tokenizer.whitespaceChars(' ', ' ');
+      // First try to parse space separated library files
       int libCount = 0;
       do {
         if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
@@ -1462,6 +1469,9 @@ public class OBJLoader extends LoaderBase implements Loader {
       while (tokenizer.nextToken() != StreamTokenizer.TT_EOL);        
       if (libCount == 0) {
         throw new IncorrectFormatException("Expected material library at line " + tokenizer.lineno());
+      } else if (mtllibToken == StreamTokenizer.TT_WORD) {
+        // Even if not in format specifications, give a chance to file names with spaces
+        parseMaterial(mtllibString, baseUrl);
       }
       tokenizer.pushBack();
     } else {
@@ -1547,9 +1557,9 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Parses appearances from the given material file.
+   * Parses appearances from the given material file and returns <code>true</code> if the file exists.
    */
-  private void parseMaterial(String file, URL baseUrl) {
+  private boolean parseMaterial(String file, URL baseUrl) {
     InputStream in = null;
     try {
       if (baseUrl != null) {
@@ -1558,13 +1568,13 @@ public class OBJLoader extends LoaderBase implements Loader {
         in = new FileInputStream(file);
       }
     } catch (IOException ex) {
-      // Ignore material files not found
     }
 
     if (in != null) {
       try {        
         this.appearances.putAll(parseMaterialStream(
             new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl));
+        return true;
       } catch (IOException ex) {
         throw new ParsingErrorException(ex.getMessage());
       } finally {
@@ -1574,7 +1584,9 @@ public class OBJLoader extends LoaderBase implements Loader {
           throw new ParsingErrorException(ex.getMessage());
         }
       }
-    }     
+    } else {
+      return false;
+    }
   }
 
   /**
