@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 
@@ -125,7 +126,7 @@ public class PhotoRenderer {
   
   private final SunflowAPI sunflow;
   private boolean useSunSky;
-  private boolean useAmbientOcclusion;
+  private boolean useSunskyLight;
   private String sunSkyLightName;
   private String sunLightName;
   private final Map<TransparentTextureKey, String> textureImagesCache = new HashMap<TransparentTextureKey, String>();
@@ -172,10 +173,16 @@ public class PhotoRenderer {
     this.quality = quality;
     this.sunflow = new SunflowAPI();
     
-    this.useAmbientOcclusion = home.getCamera() instanceof ObserverCamera;
-    // SunFlow produce too much white spots when silk shader is used with sun sky
+    this.useSunskyLight = !(home.getCamera() instanceof ObserverCamera);
+    // SunFlow produce too much white spots when silk shader is used with sun sky light
     // so use this shader only when observer is used 
-    boolean silk = this.useAmbientOcclusion && quality == Quality.HIGH;
+    boolean silk = !this.useSunskyLight && quality == Quality.HIGH;
+    String shininessShader = getRenderingParameterValue("shininessShader");
+    if ("glossy".equals(shininessShader)) {
+      silk = false;
+    } else if ("silk".equals(shininessShader)) {
+      silk = true;
+    }  
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
     HomeEnvironment homeEnvironment = home.getEnvironment();
@@ -201,7 +208,7 @@ public class PhotoRenderer {
     homeEnvironment.setSubpartSizeUnderLight(subpartSize);
 
     HomeTexture skyTexture = homeEnvironment.getSkyTexture();
-    this.useSunSky = skyTexture == null || !(home.getCamera() instanceof ObserverCamera);
+    this.useSunSky = skyTexture == null || this.useSunskyLight;
     if (!this.useSunSky) {
       // If observer camera is used with a sky texture, 
       // create an image base light from sky texture  
@@ -319,11 +326,20 @@ public class PhotoRenderer {
       }
     }
 
-    this.sunflow.parameter("depths.diffuse", 1);
+    this.sunflow.parameter("depths.diffuse", Integer.parseInt(getRenderingParameterValue("diffusedBounces")));
     this.sunflow.parameter("depths.reflection", 4);
     this.sunflow.parameter("depths.refraction", 16);
     this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
-    
+
+    Integer causticsEmit = new Integer(getRenderingParameterValue("causticsPhotons"));
+    if (causticsEmit > 0) {
+      this.sunflow.parameter("caustics.emit", causticsEmit);
+      this.sunflow.parameter("caustics", "kd");
+      this.sunflow.parameter("caustics.gather", 64);
+      this.sunflow.parameter("caustics.radius", 0.5f);
+      this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
+    }
+
     // Use a spiral computing
     this.sunflow.parameter("bucket.size", 32);
     this.sunflow.parameter("bucket.order", "spiral");
@@ -346,6 +362,8 @@ public class PhotoRenderer {
     if (this.sunLightName != null) {
       this.sunflow.remove(this.sunLightName);
     }
+    // Possible values: default, path
+    String globalIllumination = getRenderingParameterValue("globalIllumination");
     float [] sunDirection = getSunDirection(this.compass, Camera.convertTimeToTimeZone(camera.getTime(), this.compass.getTimeZone()));
     // Update Sun direction during daytime
     if (sunDirection [1] > -0.075f) {
@@ -355,7 +373,7 @@ public class PhotoRenderer {
             new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
         this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
         this.sunflow.parameter("turbidity", 6f);
-        this.sunflow.parameter("samples", this.useAmbientOcclusion ? 0 : 12); 
+        this.sunflow.parameter("samples", this.useSunskyLight ? 12 : 0); 
         this.sunSkyLightName = UUID.randomUUID().toString();
         this.sunflow.light(this.sunSkyLightName, "sunsky");
       }
@@ -372,7 +390,7 @@ public class PhotoRenderer {
       float [] sunColor = sunSkyLight.getSunColor().getRGB();
       
       // Simulate additional Sun with a faraway sphere light of a color depending of the hour of the day
-      int sunPower = this.useAmbientOcclusion ? 40 : 10; 
+      int sunPower = this.useSunskyLight ? 10 : 40; 
       this.sunflow.parameter("radiance", null,
           (this.homeLightColor >> 16) * sunPower * (float)Math.sqrt(sunColor [0]), 
           ((this.homeLightColor >> 8) & 0xFF) * sunPower * (float)Math.sqrt(sunColor [1]), 
@@ -383,7 +401,8 @@ public class PhotoRenderer {
       this.sunLightName = UUID.randomUUID().toString();
       this.sunflow.light(this.sunLightName, "sphere");
 
-      if (this.useAmbientOcclusion) {
+      if (!this.useSunskyLight
+          && "default".equals(globalIllumination)) {
         this.sunflow.parameter("gi.engine", "ambocc");
         this.sunflow.parameter("gi.ambocc.bright", null, new float [] {1, 1, 1});
         // Use complementary color
@@ -395,7 +414,13 @@ public class PhotoRenderer {
         this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
       }
     }
-
+    
+    if ("path".equals(globalIllumination)) {
+      this.sunflow.parameter("gi.engine", "path");
+      this.sunflow.parameter("gi.path.samples", 64);
+      this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
+    }
+    
     // Update camera lens 
     final String CAMERA_NAME = "camera";    
     switch (camera.getLens()) {
@@ -406,8 +431,8 @@ public class PhotoRenderer {
         this.sunflow.camera(CAMERA_NAME, "fisheye");
         break;
       case NORMAL:
-        this.sunflow.parameter("focus.distance", 250f);
-        this.sunflow.parameter("lens.radius", 1f);
+        this.sunflow.parameter("focus.distance", new Float(getRenderingParameterValue("normalLens.focusDistance")));
+        this.sunflow.parameter("lens.radius", new Float(getRenderingParameterValue("normalLens.radius")));
         this.sunflow.camera(CAMERA_NAME, "thinlens");
         break;
       case PINHOLE:
@@ -451,16 +476,11 @@ public class PhotoRenderer {
     this.sunflow.parameter("resolutionX", image.getWidth());
     this.sunflow.parameter("resolutionY", image.getHeight());
     
-    if (this.quality == Quality.HIGH) {
-      this.sunflow.parameter("filter", "blackman-harris"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
-      // The bigger aa.max is, the cleanest rendering you get
-      this.sunflow.parameter("aa.min", 1);
-      this.sunflow.parameter("aa.max",  2);
-    } else {
-      this.sunflow.parameter("filter", "box");
-      this.sunflow.parameter("aa.min", 0);
-      this.sunflow.parameter("aa.max", 0); 
-    }
+    int antiAliasingMin = Integer.parseInt(getRenderingParameterValue("antiAliasing.min"));
+    int antiAliasingMax = Integer.parseInt(getRenderingParameterValue("antiAliasing.max"));
+    this.sunflow.parameter("filter", antiAliasingMax > 0  ? "blackman-harris"  : "box");
+    this.sunflow.parameter("aa.min", antiAliasingMin);
+    this.sunflow.parameter("aa.max", antiAliasingMax); 
     this.sunflow.parameter("sampler", "bucket"); // ipr, fast or bucket 
 
     // Render image with default camera
@@ -478,6 +498,25 @@ public class PhotoRenderer {
         this.renderingThread.interrupt();
       }
       this.renderingThread = null;
+    }
+  }
+
+  /**
+   * Returns the value of the given rendering parameter.
+   */
+  private String getRenderingParameterValue(String parameterName) {
+    // Try to retrieve overridden parameter value from System property
+    // (for example: System property com.eteks.sweethome3d.j3d.PhotoRenderer.lowQuality.antiAliasing.min)
+    String prefixedParameter = this.quality.name().toLowerCase() + "Quality." + parameterName;
+    String baseName = PhotoRenderer.class.getName();
+    String value = System.getProperty(baseName + '.' + prefixedParameter);
+    if (value != null) {
+      return value;
+    } else {
+      // Return default value stored in properties resource file
+      // (for example: property lowQuality.antiAliasing.min 
+      //  in com/eteks/sweethome3d/j3d/PhotoRenderer.properties file)
+      return ResourceBundle.getBundle(baseName).getString(prefixedParameter);
     }
   }
 
