@@ -191,28 +191,26 @@ public class Component3DManager {
       // Ensure unused canvases are freed
       System.gc();
       // Create a Java 3D canvas  
-      return new Canvas3D(configuration, offscreen) {
-          @Override
-          public void preRender() {
-            if (renderingObserver != null) {
+      if (renderingObserver != null) {
+        return new Canvas3D(configuration, offscreen) {
+            @Override
+            public void preRender() {
               renderingObserver.canvas3DPreRendered(this);
             }
-          }
-          
-          @Override
-          public void postRender() {
-            if (renderingObserver != null) {
+            
+            @Override
+            public void postRender() {
               renderingObserver.canvas3DPostRendered(this);
             }
-          }
-          
-          @Override
-          public void postSwap() {
-            if (renderingObserver != null) {
+            
+            @Override
+            public void postSwap() {
               renderingObserver.canvas3DSwapped(this);
             }
-          }
-        };
+          };
+      } else {
+        return new Canvas3D(configuration, offscreen);
+      }
     } catch (IllegalArgumentException ex) {
       IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
       ex2.initCause(ex);
