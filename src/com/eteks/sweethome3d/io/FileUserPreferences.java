@@ -78,54 +78,55 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
-  private static final String LANGUAGE                              = "language";
-  private static final String UNIT                                  = "unit";
-  private static final String FURNITURE_CATALOG_VIEWED_IN_TREE      = "furnitureCatalogViewedInTree";
-  private static final String NAVIGATION_PANEL_VISIBLE              = "navigationPanelVisible";
-  private static final String MAGNETISM_ENABLED                     = "magnetismEnabled";
-  private static final String RULERS_VISIBLE                        = "rulersVisible";
-  private static final String GRID_VISIBLE                          = "gridVisible";
-  private static final String FURNITURE_VIEWED_FROM_TOP             = "furnitureViewedFromTop";
-  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED        = "roomFloorColoredOrTextured";
-  private static final String WALL_PATTERN                          = "wallPattern";
-  private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
-  private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
-  private static final String NEW_FLOOR_THICKNESS                   = "newFloorThickness";
-  private static final String AUTO_SAVE_DELAY_FOR_RECOVERY          = "autoSaveDelayForRecovery";
-  private static final String AUTO_COMPLETION_PROPERTY              = "autoCompletionProperty#";
-  private static final String AUTO_COMPLETION_STRINGS               = "autoCompletionStrings#";
-  private static final String RECENT_HOMES                          = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";  
+  private static final String LANGUAGE                                  = "language";
+  private static final String UNIT                                      = "unit";
+  private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
+  private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
+  private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
+  private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
+  private static final String RULERS_VISIBLE                            = "rulersVisible";
+  private static final String GRID_VISIBLE                              = "gridVisible";
+  private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
+  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
+  private static final String WALL_PATTERN                              = "wallPattern";
+  private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
+  private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
+  private static final String AUTO_SAVE_DELAY_FOR_RECOVERY              = "autoSaveDelayForRecovery";
+  private static final String AUTO_COMPLETION_PROPERTY                  = "autoCompletionProperty#";
+  private static final String AUTO_COMPLETION_STRINGS                   = "autoCompletionStrings#";
+  private static final String RECENT_HOMES                              = "recentHomes#";
+  private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
 
-  private static final String FURNITURE_NAME                        = "furnitureName#";
-  private static final String FURNITURE_CATEGORY                    = "furnitureCategory#";
-  private static final String FURNITURE_ICON                        = "furnitureIcon#";
-  private static final String FURNITURE_MODEL                       = "furnitureModel#";
-  private static final String FURNITURE_WIDTH                       = "furnitureWidth#";
-  private static final String FURNITURE_DEPTH                       = "furnitureDepth#";
-  private static final String FURNITURE_HEIGHT                      = "furnitureHeight#";
-  private static final String FURNITURE_MOVABLE                     = "furnitureMovable#";
-  private static final String FURNITURE_DOOR_OR_WINDOW              = "furnitureDoorOrWindow#";
-  private static final String FURNITURE_ELEVATION                   = "furnitureElevation#";
-  private static final String FURNITURE_COLOR                       = "furnitureColor#";
-  private static final String FURNITURE_MODEL_ROTATION              = "furnitureModelRotation#";
-  private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE           = "furnitureStaircaseCutOutShape#"; 
-  private static final String FURNITURE_BACK_FACE_SHOWN             = "furnitureBackFaceShown#";
-  private static final String FURNITURE_ICON_YAW                    = "furnitureIconYaw#";
-  private static final String FURNITURE_PROPORTIONAL                = "furnitureProportional#";
+  private static final String FURNITURE_NAME                            = "furnitureName#";
+  private static final String FURNITURE_CATEGORY                        = "furnitureCategory#";
+  private static final String FURNITURE_ICON                            = "furnitureIcon#";
+  private static final String FURNITURE_MODEL                           = "furnitureModel#";
+  private static final String FURNITURE_WIDTH                           = "furnitureWidth#";
+  private static final String FURNITURE_DEPTH                           = "furnitureDepth#";
+  private static final String FURNITURE_HEIGHT                          = "furnitureHeight#";
+  private static final String FURNITURE_MOVABLE                         = "furnitureMovable#";
+  private static final String FURNITURE_DOOR_OR_WINDOW                  = "furnitureDoorOrWindow#";
+  private static final String FURNITURE_ELEVATION                       = "furnitureElevation#";
+  private static final String FURNITURE_COLOR                           = "furnitureColor#";
+  private static final String FURNITURE_MODEL_ROTATION                  = "furnitureModelRotation#";
+  private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE         = "furnitureStaircaseCutOutShape#"; 
+  private static final String FURNITURE_BACK_FACE_SHOWN                 = "furnitureBackFaceShown#";
+  private static final String FURNITURE_ICON_YAW                        = "furnitureIconYaw#";
+  private static final String FURNITURE_PROPORTIONAL                    = "furnitureProportional#";
 
-  private static final String TEXTURE_NAME                          = "textureName#";
-  private static final String TEXTURE_CATEGORY                      = "textureCategory#";
-  private static final String TEXTURE_IMAGE                         = "textureImage#";
-  private static final String TEXTURE_WIDTH                         = "textureWidth#";
-  private static final String TEXTURE_HEIGHT                        = "textureHeight#";
+  private static final String TEXTURE_NAME                              = "textureName#";
+  private static final String TEXTURE_CATEGORY                          = "textureCategory#";
+  private static final String TEXTURE_IMAGE                             = "textureImage#";
+  private static final String TEXTURE_WIDTH                             = "textureWidth#";
+  private static final String TEXTURE_HEIGHT                            = "textureHeight#";
 
-  private static final String FURNITURE_CONTENT_PREFIX              = "Furniture-3-";
-  private static final String TEXTURE_CONTENT_PREFIX                = "Texture-3-";
+  private static final String FURNITURE_CONTENT_PREFIX                  = "Furniture-3-";
+  private static final String TEXTURE_CONTENT_PREFIX                    = "Texture-3-";
 
-  private static final String LANGUAGE_LIBRARIES_PLUGIN_SUB_FOLDER  = "languages";
-  private static final String FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER = "furniture";
-  private static final String TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER  = "textures";
+  private static final String LANGUAGE_LIBRARIES_PLUGIN_SUB_FOLDER      = "languages";
+  private static final String FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER     = "furniture";
+  private static final String TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER      = "textures";
 
   private static final Content DUMMY_CONTENT;
   
@@ -244,6 +245,8 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.isFurnitureCatalogViewedInTree()));
     setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
         defaultPreferences.isNavigationPanelVisible()));
+    setAerialViewCenteredOnSelectionEnabled(preferences.getBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+        defaultPreferences.isAerialViewCenteredOnSelectionEnabled()));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
         defaultPreferences.isRulersVisible()));
@@ -614,6 +617,7 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
+    preferences.putBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, isAerialViewCenteredOnSelectionEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
     preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());

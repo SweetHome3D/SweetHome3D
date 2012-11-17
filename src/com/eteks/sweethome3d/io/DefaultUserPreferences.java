@@ -81,7 +81,13 @@ public class DefaultUserPreferences extends UserPreferences {
     // Read other preferences from resource bundle
     setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
-    setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));    
+    setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));  
+    try {
+      setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, 
+          "aerialViewCenteredOnSelectionEnabled")));
+    } catch (IllegalArgumentException ex) {
+      setAerialViewCenteredOnSelectionEnabled(false);
+    }
     setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase(Locale.ENGLISH)));
     setRulersVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
     setGridVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "gridVisible")));

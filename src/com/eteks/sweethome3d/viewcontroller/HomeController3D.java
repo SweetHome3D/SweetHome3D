@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,6 +42,8 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -76,7 +79,7 @@ public class HomeController3D implements Controller {
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     // Initialize states
-    this.topCameraState = new TopCameraState();
+    this.topCameraState = new TopCameraState(preferences);
     this.observerCameraState = new ObserverCameraState();
     // Set default state 
     setCameraState(home.getCamera() == home.getTopCamera() 
@@ -340,6 +343,7 @@ public class HomeController3D implements Controller {
     private Camera      topCamera;
     private Rectangle2D homeBounds;
     private float       minDistanceToHomeCenter;
+    private boolean     aerialViewCenteredOnSelectionEnabled;
     private PropertyChangeListener levelVisibilityChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
@@ -392,6 +396,17 @@ public class HomeController3D implements Controller {
           updateCameraFromHomeBounds();
         }
       };
+    private SelectionListener selectionListener = new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          updateCameraFromHomeBounds();
+        }
+      };
+
+    public TopCameraState(UserPreferences preferences) {
+      this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
+      preferences.addPropertyChangeListener(UserPreferences.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+          new UserPreferencesChangeListener(this));
+    }
 
     @Override
     public void enter() {
@@ -413,6 +428,15 @@ public class HomeController3D implements Controller {
         room.addPropertyChangeListener(this.objectChangeListener);
       }
       home.addRoomsListener(this.roomsListener);
+      home.addSelectionListener(this.selectionListener);
+    }
+    
+    /**
+     * Sets whether aerial view should be centered on selection or not.
+     */
+    public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
+      this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
+      updateCameraFromHomeBounds();
     }
     
     /**
@@ -434,26 +458,35 @@ public class HomeController3D implements Controller {
      * Returns home bounds that includes walls, furniture and rooms.
      */
     private Rectangle2D getHomeBounds() {
+      List<Selectable> selectedItems = home.getSelectedItems();
+      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
+
       // Compute plan bounds to include rooms, walls and furniture
       Rectangle2D homeBounds = null;
       boolean containsVisibleWalls = false;
-      for (Wall wall : home.getWalls()) {
-        if (isItemAtAVisibleLevel(wall)) {
+      for (Wall wall : selectionEmpty
+                           ? home.getWalls()
+                           : Home.getWallsSubList(selectedItems)) {
+        if (isItemAtVisibleLevel(wall)) {
           containsVisibleWalls = true;
           for (float [] point : wall.getPoints()) {
             homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
           }
         }
       }
-      for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible() && isItemAtAVisibleLevel(piece)) {
+      for (HomePieceOfFurniture piece : selectionEmpty 
+                                            ? home.getFurniture()
+                                            : Home.getFurnitureSubList(selectedItems)) {
+        if (piece.isVisible() && isItemAtVisibleLevel(piece)) {
           for (float [] point : piece.getPoints()) {
             homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
           }
         }
       }
-      for (Room room : home.getRooms()) {
-        if (isItemAtAVisibleLevel(room)) {
+      for (Room room : selectionEmpty 
+                           ? home.getRooms()
+                           : Home.getRoomsSubList(selectedItems)) {
+        if (isItemAtVisibleLevel(room)) {
           for (float [] point : room.getPoints()) {
             homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
           }
@@ -461,7 +494,7 @@ public class HomeController3D implements Controller {
       }
 
       if (homeBounds != null) {
-        if (!containsVisibleWalls) {
+        if (!containsVisibleWalls || !selectionEmpty) {
           // If home contains only rooms and furniture don't fix minimum size
           return homeBounds;
         } else {
@@ -484,7 +517,7 @@ public class HomeController3D implements Controller {
     /**
      * Returns <code>true</code> if the given <code>item</code> is at a visible level.
      */
-    private boolean isItemAtAVisibleLevel(Elevatable item) {
+    private boolean isItemAtVisibleLevel(Elevatable item) {
       return item.getLevel() == null || item.getLevel().isVisible();
     }
     
@@ -505,11 +538,18 @@ public class HomeController3D implements Controller {
      * Returns the minimum distance of the camera to home center.
      */
     private float getMinDistanceToHomeCenter(Rectangle2D homeBounds) {
+      List<Selectable> selectedItems = home.getSelectedItems();
+      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
+      
       float maxHeight = 0;
-      Collection<Wall> walls = home.getWalls();
+      Collection<Wall> walls = selectionEmpty 
+          ? home.getWalls() 
+          : Home.getWallsSubList(selectedItems);
       if (walls.isEmpty()) {
         // If home contains no wall, search the max height of the highest piece
-        for (HomePieceOfFurniture piece : home.getFurniture()) {
+        for (HomePieceOfFurniture piece : selectionEmpty 
+                                              ? home.getFurniture()
+                                              : Home.getFurnitureSubList(selectedItems)) {
           if (piece.isVisible()) {
             maxHeight = Math.max(maxHeight, piece.getGroundElevation() + piece.getHeight());
           }
@@ -621,9 +661,33 @@ public class HomeController3D implements Controller {
         room.removePropertyChangeListener(this.levelVisibilityChangeListener);
       }
       home.removeLevelsListener(this.levelsListener);
+      home.removeSelectionListener(this.selectionListener);
     }
   }
   
+  /**
+   * Preferences property listener bound to top camera state with a weak reference to avoid
+   * strong link between user preferences and top camera state.  
+   */
+  private static class UserPreferencesChangeListener implements PropertyChangeListener {
+    private WeakReference<TopCameraState>  topCameraState;
+
+    public UserPreferencesChangeListener(TopCameraState topCameraState) {
+      this.topCameraState = new WeakReference<TopCameraState>(topCameraState);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If top camera state was garbage collected, remove this listener from preferences
+      TopCameraState topCameraState = this.topCameraState.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
+      if (topCameraState == null) {
+        preferences.removePropertyChangeListener(UserPreferences.Property.valueOf(ev.getPropertyName()), this);
+      } else {
+        topCameraState.setAerialViewCenteredOnSelectionEnabled(preferences.isAerialViewCenteredOnSelectionEnabled());
+      }
+    }
+  }
+
   /**
    * Observer camera controller state. 
    */

@@ -60,21 +60,22 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class AppletUserPreferences extends UserPreferences {
-  private static final String LANGUAGE                         = "language";
-  private static final String UNIT                             = "unit";
-  private static final String FURNITURE_CATALOG_VIEWED_IN_TREE = "furnitureCatalogViewedInTree";
-  private static final String NAVIGATION_PANEL_VISIBLE         = "navigationPanelVisible";
-  private static final String MAGNETISM_ENABLED                = "magnetismEnabled";
-  private static final String RULERS_VISIBLE                   = "rulersVisible";
-  private static final String GRID_VISIBLE                     = "gridVisible";
-  private static final String FURNITURE_VIEWED_FROM_TOP        = "furnitureViewedFromTop";
-  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED   = "roomFloorColoredOrTextured";
-  private static final String WALL_PATTERN                     = "wallPattern";
-  private static final String NEW_WALL_HEIGHT                  = "newHomeWallHeight";
-  private static final String NEW_WALL_THICKNESS               = "newWallThickness";
-  private static final String NEW_FLOOR_THICKNESS              = "newFloorThickness";
-  private static final String RECENT_HOMES                     = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP               = "ignoredActionTip#";
+  private static final String LANGUAGE                                  = "language";
+  private static final String UNIT                                      = "unit";
+  private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
+  private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
+  private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
+  private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
+  private static final String RULERS_VISIBLE                            = "rulersVisible";
+  private static final String GRID_VISIBLE                              = "gridVisible";
+  private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
+  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
+  private static final String WALL_PATTERN                              = "wallPattern";
+  private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
+  private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
+  private static final String RECENT_HOMES                              = "recentHomes#";
+  private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";
 
   private final URL [] pluginFurnitureCatalogURLs;
   private final URL    furnitureResourcesUrlBase;
@@ -221,6 +222,8 @@ public class AppletUserPreferences extends UserPreferences {
         String.valueOf(defaultPreferences.isFurnitureCatalogViewedInTree()))));
     setNavigationPanelVisible(Boolean.parseBoolean(properties.getProperty(NAVIGATION_PANEL_VISIBLE, 
         String.valueOf(defaultPreferences.isNavigationPanelVisible()))));
+    setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(properties.getProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+        String.valueOf(defaultPreferences.isAerialViewCenteredOnSelectionEnabled()))));
     setMagnetismEnabled(Boolean.parseBoolean(properties.getProperty(MAGNETISM_ENABLED, "true")));
     setRulersVisible(Boolean.parseBoolean(properties.getProperty(RULERS_VISIBLE, 
         String.valueOf(defaultPreferences.isMagnetismEnabled()))));
@@ -339,6 +342,7 @@ public class AppletUserPreferences extends UserPreferences {
     properties.setProperty(UNIT, getLengthUnit().name());   
     properties.setProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, String.valueOf(isFurnitureCatalogViewedInTree()));
     properties.setProperty(NAVIGATION_PANEL_VISIBLE, String.valueOf(isNavigationPanelVisible()));    
+    properties.setProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, String.valueOf(isAerialViewCenteredOnSelectionEnabled()));    
     properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
     properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
     properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));

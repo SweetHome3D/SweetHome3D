@@ -36,7 +36,8 @@ public class UserPreferencesController implements Controller {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
-      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
+      NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
       AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
   
   private final UserPreferences         preferences;
@@ -49,6 +50,7 @@ public class UserPreferencesController implements Controller {
   private LengthUnit                    unit;
   private boolean                       furnitureCatalogViewedInTree;
   private boolean                       navigationPanelVisible;
+  private boolean                       aerialViewCenteredOnSelectionEnabled;
   private boolean                       magnetismEnabled;
   private boolean                       rulersVisible;
   private boolean                       gridVisible;
@@ -125,6 +127,7 @@ public class UserPreferencesController implements Controller {
     setUnit(this.preferences.getLengthUnit());
     setFurnitureCatalogViewedInTree(this.preferences.isFurnitureCatalogViewedInTree());
     setNavigationPanelVisible(this.preferences.isNavigationPanelVisible());
+    setAerialViewCenteredOnSelectionEnabled(this.preferences.isAerialViewCenteredOnSelectionEnabled());
     setMagnetismEnabled(this.preferences.isMagnetismEnabled());
     setGridVisible(this.preferences.isGridVisible());
     setRulersVisible(this.preferences.isRulersVisible());
@@ -225,6 +228,26 @@ public class UserPreferencesController implements Controller {
    */
   public boolean isNavigationPanelVisible() {
     return this.navigationPanelVisible;
+  }
+  
+  /**
+   * Sets whether aerial view should be centered on selection or not.
+   * @since 3.8
+   */
+  public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
+    if (aerialViewCenteredOnSelectionEnabled != this.aerialViewCenteredOnSelectionEnabled) {
+      this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED.name(), 
+          !aerialViewCenteredOnSelectionEnabled, aerialViewCenteredOnSelectionEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether aerial view should be centered on selection or not.
+   * @since 3.8
+   */
+  public boolean isAerialViewCenteredOnSelectionEnabled() {
+    return this.aerialViewCenteredOnSelectionEnabled;
   }
   
   /**
@@ -449,6 +472,7 @@ public class UserPreferencesController implements Controller {
     this.preferences.setUnit(getUnit());
     this.preferences.setFurnitureCatalogViewedInTree(isFurnitureCatalogViewedInTree());
     this.preferences.setNavigationPanelVisible(isNavigationPanelVisible());
+    this.preferences.setAerialViewCenteredOnSelectionEnabled(isAerialViewCenteredOnSelectionEnabled());
     this.preferences.setMagnetismEnabled(isMagnetismEnabled());
     this.preferences.setRulersVisible(isRulersVisible());
     this.preferences.setGridVisible(isGridVisible());

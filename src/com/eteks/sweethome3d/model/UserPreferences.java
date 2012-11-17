@@ -50,7 +50,7 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
-                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
                         AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
   private static final String [] DEFAULT_SUPPORTED_LANGUAGES; 
@@ -78,6 +78,7 @@ public abstract class UserPreferences {
   private String           currency;
   private LengthUnit       unit;
   private boolean          furnitureCatalogViewedInTree = true;
+  private boolean          aerialViewCenteredOnSelectionEnabled;
   private boolean          navigationPanelVisible = true;
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
@@ -494,6 +495,26 @@ public abstract class UserPreferences {
     }
   }
   
+  /**
+   * Sets whether aerial view should be centered on selection or not.
+   * @since 3.8
+   */
+  public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
+    if (aerialViewCenteredOnSelectionEnabled != this.aerialViewCenteredOnSelectionEnabled) {
+      this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED.name(), 
+          !aerialViewCenteredOnSelectionEnabled, aerialViewCenteredOnSelectionEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether aerial view should be centered on selection or not.
+   * @since 3.8
+   */
+  public boolean isAerialViewCenteredOnSelectionEnabled() {
+    return this.aerialViewCenteredOnSelectionEnabled;
+  }
+
   /**
    * Returns <code>true</code> if magnetism is enabled.
    * @return <code>true</code> by default.
