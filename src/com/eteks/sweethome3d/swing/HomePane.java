@@ -705,56 +705,70 @@ public class HomePane extends JRootPane implements HomeView {
             removePropertyChangeListener("currentFocusCycleRoot", this);
       } else {
         if (SwingUtilities.isDescendingFrom(homePane, (Component)ev.getOldValue())) {
-          this.focusChangeListener = null;
-          KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", 
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", 
               this.focusChangeListener);
+          this.focusChangeListener = null;
         } else if (SwingUtilities.isDescendingFrom(homePane, (Component)ev.getNewValue())) {
-          this.focusChangeListener = new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              if (homePane.lastFocusedComponent != null) {
-                // Update component which lost focused 
-                JComponent lostFocusedComponent = homePane.lastFocusedComponent;
-                if (SwingUtilities.isDescendingFrom(lostFocusedComponent, SwingUtilities.getWindowAncestor(homePane))) {
-                  lostFocusedComponent.removeKeyListener(homePane.specialKeysListener);
-                  // Restore previous plan mode if plan view had focus and window is deactivated
-                  if (homePane.previousPlanControllerMode != null
-                      && (lostFocusedComponent == homePane.controller.getPlanController().getView()
-                          || ev.getNewValue() == null)) {
-                    homePane.controller.getPlanController().setMode(homePane.previousPlanControllerMode);
-                    homePane.previousPlanControllerMode = null;
-                  }
-                }
-              }
-
-              if (ev.getNewValue() != null) {
-                // Retrieve component which gained focused 
-                Component gainedFocusedComponent = (Component)ev.getNewValue(); 
-                if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
-                    && gainedFocusedComponent instanceof JComponent) {
-                  View [] focusableViews = {
-                     homePane.controller.getFurnitureCatalogController().getView(),
-                     homePane.controller.getFurnitureController().getView(),
-                     homePane.controller.getPlanController().getView(),
-                     homePane.controller.getHomeController3D().getView()};
-                  // Notify controller that active view changed
-                  for (View view : focusableViews) {
-                    if (view != null && SwingUtilities.isDescendingFrom(gainedFocusedComponent, (JComponent)view)) {
-                      homePane.controller.focusedViewChanged(view);
-  
-                      gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
-                      
-                      // Update the component used by clipboard actions
-                      homePane.lastFocusedComponent = (JComponent)gainedFocusedComponent;
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          }; 
-            
+          this.focusChangeListener = new FocusOwnerChangeListener(homePane);             
           KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", 
               this.focusChangeListener);          
+        }
+      }
+    }
+  }
+  
+  /**
+   * Property listener bound to this component with a weak reference to avoid
+   * strong link between KeyboardFocusManager and this component.  
+   */
+  private static class FocusOwnerChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane> homePane;
+    
+    private FocusOwnerChangeListener(HomePane homePane) {
+      this.homePane = new WeakReference<HomePane>(homePane);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from KeyboardFocusManager
+      final HomePane homePane = this.homePane.get();
+      if (homePane == null) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
+      } else {
+        if (homePane.lastFocusedComponent != null) {
+          // Update component which lost focused 
+          JComponent lostFocusedComponent = homePane.lastFocusedComponent;
+          if (SwingUtilities.isDescendingFrom(lostFocusedComponent, SwingUtilities.getWindowAncestor(homePane))) {
+            lostFocusedComponent.removeKeyListener(homePane.specialKeysListener);
+            // Restore previous plan mode if plan view had focus and window is deactivated
+            if (homePane.previousPlanControllerMode != null
+                && (lostFocusedComponent == homePane.controller.getPlanController().getView()
+                || ev.getNewValue() == null)) {
+              homePane.controller.getPlanController().setMode(homePane.previousPlanControllerMode);
+              homePane.previousPlanControllerMode = null;
+            }
+          }
+        }
+        
+        if (ev.getNewValue() != null) {
+          // Retrieve component which gained focused 
+          Component gainedFocusedComponent = (Component)ev.getNewValue(); 
+          if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
+              && gainedFocusedComponent instanceof JComponent) {
+            View [] focusableViews = {homePane.controller.getFurnitureCatalogController().getView(),
+                                      homePane.controller.getFurnitureController().getView(),
+                                      homePane.controller.getPlanController().getView(),
+                                      homePane.controller.getHomeController3D().getView()};
+            // Notify controller that active view changed
+            for (View view : focusableViews) {
+              if (view != null && SwingUtilities.isDescendingFrom(gainedFocusedComponent, (JComponent)view)) {
+                homePane.controller.focusedViewChanged(view);
+                gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
+                // Update the component used by clipboard actions
+                homePane.lastFocusedComponent = (JComponent)gainedFocusedComponent;
+                break;
+              }
+            }
+          }
         }
       }
     }
