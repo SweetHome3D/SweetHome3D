@@ -192,22 +192,7 @@ public class Component3DManager {
       System.gc();
       // Create a Java 3D canvas  
       if (renderingObserver != null) {
-        return new Canvas3D(configuration, offscreen) {
-            @Override
-            public void preRender() {
-              renderingObserver.canvas3DPreRendered(this);
-            }
-            
-            @Override
-            public void postRender() {
-              renderingObserver.canvas3DPostRendered(this);
-            }
-            
-            @Override
-            public void postSwap() {
-              renderingObserver.canvas3DSwapped(this);
-            }
-          };
+        return new ObservedCanvas3D(configuration, offscreen, renderingObserver);
       } else {
         return new Canvas3D(configuration, offscreen);
       }
@@ -351,7 +336,7 @@ public class Component3DManager {
       return renderingErrorListener;
     }
   }
-  
+
   /**
    * An observer that receives notifications during the different steps 
    * of the loop rendering a canvas 3D.
@@ -371,5 +356,34 @@ public class Component3DManager {
      * Called after <code>canvas3D</code> buffer is swapped.
      */
     public void canvas3DSwapped(Canvas3D canvas3D); 
+  }
+
+  /**
+   * A canvas 3D observed during its rendering.
+   */
+  private static class ObservedCanvas3D extends Canvas3D {
+    private final RenderingObserver renderingObserver;
+
+    private ObservedCanvas3D(GraphicsConfiguration graphicsConfiguration, 
+                             boolean offScreen,
+                             RenderingObserver renderingObserver) {
+      super(graphicsConfiguration, offScreen);
+      this.renderingObserver = renderingObserver;
+    }
+
+    @Override
+    public void preRender() {
+      this.renderingObserver.canvas3DPreRendered(this);
+    }
+
+    @Override
+    public void postRender() {
+      this.renderingObserver.canvas3DPostRendered(this);
+    }
+
+    @Override
+    public void postSwap() {
+      this.renderingObserver.canvas3DSwapped(this);
+    }
   }
 }
