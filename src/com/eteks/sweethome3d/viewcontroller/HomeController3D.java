@@ -343,6 +343,7 @@ public class HomeController3D implements Controller {
     private Camera      topCamera;
     private Rectangle2D homeBounds;
     private float       minDistanceToHomeCenter;
+    private float       maxDistanceToHomeCenter;
     private boolean     aerialViewCenteredOnSelectionEnabled;
     private PropertyChangeListener levelVisibilityChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -444,22 +445,23 @@ public class HomeController3D implements Controller {
      */
     private void updateCameraFromHomeBounds() {
       if (this.homeBounds == null) {
-        this.homeBounds = getHomeBounds();
+        this.homeBounds = getHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
       }
       float distanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
           + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
           + Math.pow(this.topCamera.getZ(), 2));
-      this.homeBounds = getHomeBounds();
-      this.minDistanceToHomeCenter = getMinDistanceToHomeCenter(this.homeBounds);
+      this.homeBounds = getHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
+      this.minDistanceToHomeCenter = getMinDistanceToHomeCenter(this.homeBounds, this.aerialViewCenteredOnSelectionEnabled);
+      this.maxDistanceToHomeCenter = getMaxDistanceToHomeCenter(this.homeBounds, this.minDistanceToHomeCenter);
       placeCameraAt(distanceToCenter);
     }
 
     /**
      * Returns home bounds that includes walls, furniture and rooms.
      */
-    private Rectangle2D getHomeBounds() {
+    private Rectangle2D getHomeBounds(boolean centerOnSelection) {
       List<Selectable> selectedItems = home.getSelectedItems();
-      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
+      boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
 
       // Compute plan bounds to include rooms, walls and furniture
       Rectangle2D homeBounds = null;
@@ -537,9 +539,10 @@ public class HomeController3D implements Controller {
     /**
      * Returns the minimum distance of the camera to home center.
      */
-    private float getMinDistanceToHomeCenter(Rectangle2D homeBounds) {
+    private float getMinDistanceToHomeCenter(Rectangle2D homeBounds,
+                                             boolean centerOnSelection) {
       List<Selectable> selectedItems = home.getSelectedItems();
-      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
+      boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
       
       float maxHeight = 0;
       Collection<Wall> walls = selectionEmpty 
@@ -580,6 +583,19 @@ public class HomeController3D implements Controller {
       return (float)Math.sqrt(maxHeight * maxHeight + halfDiagonal * halfDiagonal) * 1.1f;
     }
     
+    /**
+     * Returns the maximum distance of the camera to home center.
+     */
+    private float getMaxDistanceToHomeCenter(Rectangle2D homeBounds, float minDistanceToHomeCenter) {
+      List<Selectable> selectedItems = home.getSelectedItems();
+      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
+      if (selectionEmpty) {
+        return 5 * minDistanceToHomeCenter;
+      } else {
+        return 5 * getMinDistanceToHomeCenter(homeBounds, false);
+      }
+    }
+    
     @Override
     public void moveCamera(float delta) {
       // Use a 5 times bigger delta for top camera move
@@ -594,7 +610,7 @@ public class HomeController3D implements Controller {
       // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
       distanceToCenter = Math.max(distanceToCenter, this.minDistanceToHomeCenter);
       // Check camera isn't too far
-      distanceToCenter = Math.min(distanceToCenter, 5 * this.minDistanceToHomeCenter);
+      distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToHomeCenter);
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
           * distanceToCenterAtGroundLevel));
