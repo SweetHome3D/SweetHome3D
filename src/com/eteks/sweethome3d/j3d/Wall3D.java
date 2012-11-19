@@ -818,6 +818,7 @@ public class Wall3D extends Object3DBranch {
    */
   private void updateWallAppearance(boolean waitTextureLoadingEnd) {
     Wall wall = (Wall)getUserData();
+    Integer wallsTopColor = this.home.getEnvironment().getWallsTopColor();
     Group [] wallLeftSideGroups  = {(Group)getChild(0),  // Bottom group
                                     (Group)getChild(1),  // Main group
                                     (Group)getChild(2)}; // Top group
@@ -825,10 +826,18 @@ public class Wall3D extends Object3DBranch {
                                     (Group)getChild(4),  // Main group
                                     (Group)getChild(5)}; // Top group
     for (int i = 0; i < wallLeftSideGroups.length; i++) {
-      updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
-          wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
-      updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
-          wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
+      if (i % 3 != 2 || wallsTopColor == null) {
+        updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
+            wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
+        updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
+            wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
+      } else {
+        // Fill walls top with the color set in home environment
+        updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
+            null, waitTextureLoadingEnd, wallsTopColor, 0);
+        updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
+            null, waitTextureLoadingEnd, wallsTopColor, 0);
+      }
       if (wallLeftSideGroups [i].numChildren() > 1) {
         updateOutlineWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(1)).getAppearance());
         updateOutlineWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(1)).getAppearance());

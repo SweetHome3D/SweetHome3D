@@ -38,7 +38,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * The environment properties that may change.
    */
   public enum Property {OBSERVER_CAMERA_ELEVATION_ADJUSTED, SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, 
-                        WALLS_ALPHA, DRAWING_MODE, SUBPART_SIZE_UNDER_LIGHT, ALL_LEVELS_VISIBLE,
+                        WALLS_ALPHA, WALLS_TOP_COLOR, DRAWING_MODE, SUBPART_SIZE_UNDER_LIGHT, ALL_LEVELS_VISIBLE,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
@@ -56,6 +56,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   private int                             lightColor;
   private int                             ceilingLightColor;
   private float                           wallsAlpha;
+  private Integer                         wallsTopColor;
   private DrawingMode                     drawingMode;
   private float                           subpartSizeUnderLight;      
   private boolean                         allLevelsVisible; 
@@ -330,6 +331,28 @@ public class HomeEnvironment implements Serializable, Cloneable {
       this.wallsAlpha = wallsAlpha;
       this.propertyChangeSupport.firePropertyChange(
           Property.WALLS_ALPHA.name(), oldWallsAlpha, wallsAlpha);
+    }
+  }
+
+  /**
+   * Returns the color used to draw walls in this environment.
+   * @sicne 3.8
+   */
+  public Integer getWallsTopColor() {
+    return this.wallsTopColor;
+  }
+
+  /**
+   * Sets the color used to draw walls in this environment and fires a <code>PropertyChangeEvent</code>.
+   * @param wallsTopColor a RGB color or <code>null</code> if walls top color should take a default color.
+   * @since 3.8
+   */
+  public void setWallsTopColor(Integer wallsTopColor) {
+    if (wallsTopColor != this.wallsTopColor) {
+      Integer oldWallsTopColor = this.wallsTopColor;
+      this.wallsTopColor = wallsTopColor;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.WALLS_TOP_COLOR.name(), oldWallsTopColor, wallsTopColor);
     }
   }
 

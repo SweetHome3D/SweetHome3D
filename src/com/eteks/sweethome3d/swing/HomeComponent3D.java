@@ -185,6 +185,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   lightColorListener;
   private PropertyChangeListener                   subpartSizeListener;
   private PropertyChangeListener                   wallsAlphaListener;
+  private PropertyChangeListener                   wallsTopColorListener;
   private PropertyChangeListener                   drawingModeListener;
   private CollectionListener<Level>                levelListener;
   private PropertyChangeListener                   levelChangeListener;
@@ -766,6 +767,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_TOP_COLOR, this.wallsTopColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SUBPART_SIZE_UNDER_LIGHT, this.subpartSizeListener);
     this.home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
@@ -2122,6 +2124,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       };
     this.home.getEnvironment().addPropertyChangeListener(
         HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener); 
+    this.wallsTopColorListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateObjects(home.getWalls());
+        }
+      };
+    this.home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.WALLS_TOP_COLOR, this.wallsTopColorListener); 
     this.drawingModeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
