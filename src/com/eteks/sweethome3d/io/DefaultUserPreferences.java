@@ -72,10 +72,13 @@ public class DefaultUserPreferences extends UserPreferences {
     // Build default patterns catalog
     List<TextureImage> patterns = new ArrayList<TextureImage>();
     patterns.add(new DefaultPatternTexture("foreground"));
+    patterns.add(new DefaultPatternTexture("reversedHatchUp"));
+    patterns.add(new DefaultPatternTexture("reversedHatchDown"));
+    patterns.add(new DefaultPatternTexture("reversedCrossHatch"));
+    patterns.add(new DefaultPatternTexture("background"));
     patterns.add(new DefaultPatternTexture("hatchUp"));
     patterns.add(new DefaultPatternTexture("hatchDown"));
     patterns.add(new DefaultPatternTexture("crossHatch"));
-    patterns.add(new DefaultPatternTexture("background"));
     PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
     setPatternsCatalog(patternsCatalog);
     // Read other preferences from resource bundle
