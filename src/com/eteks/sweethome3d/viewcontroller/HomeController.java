@@ -281,6 +281,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_OBSERVER, this.home.getCamera() == this.home.getObserverCamera());
     homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
+    homeView.setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !this.home.getStoredCameras().isEmpty());
     homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
@@ -392,6 +393,7 @@ public class HomeController implements Controller {
     addUndoSupportListener();
     addHomeItemsListener();
     addLevelListeners();
+    addStoredCamerasListener();
     addPlanControllerListeners();
     addLanguageListener();
   }
@@ -977,6 +979,18 @@ public class HomeController implements Controller {
               ev.getItem().removePropertyChangeListener(backgroundImageChangeListener);
               break;
           }
+        }
+      });
+  }
+
+  /**
+   * Adds a property change listener to home to
+   * enable/disable authorized actions according to stored cameras change.
+   */
+  private void addStoredCamerasListener() {
+    this.home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !home.getStoredCameras().isEmpty());
         }
       });
   }
@@ -1760,6 +1774,15 @@ public class HomeController implements Controller {
           this.preferences.getLocalizedString(HomeController.class, "exportToOBJMessage"), exceptionHandler, 
           this.preferences, this.viewFactory).executeTask(getView());
     }
+  }
+  
+  /**
+   * Controls the creation of multiple photo-realistic images at the stored cameras locations.
+   */
+  public void createPhotos() {
+    PhotosController photosController = new PhotosController(this.home, this.preferences, 
+        getHomeController3D().getView(), this.viewFactory, this.contentManager);
+    photosController.displayView(getView());
   }
   
   /**

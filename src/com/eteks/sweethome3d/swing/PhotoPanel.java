@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -78,18 +77,14 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerDateModel;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Camera;
@@ -98,7 +93,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
-import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.AbstractPhotoController;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
@@ -119,40 +114,31 @@ public class PhotoPanel extends JPanel implements DialogView {
   private static final String WAIT_CARD  = "wait";
   private static final String PHOTO_CARD = "photo";
   
-  private final Home            home;
-  private final UserPreferences preferences;
-  private final PhotoController controller;
-  private ScaledImageComponent  photoComponent; 
-  private JLabel                animatedWaitLabel;
-  private JLabel                widthLabel;
-  private JSpinner              widthSpinner;
-  private JLabel                heightLabel;
-  private JSpinner              heightSpinner;
-  private JCheckBox             applyProportionsCheckBox;
-  private JComboBox             aspectRatioComboBox;
-  private JLabel                qualityLabel;
-  private JSlider               qualitySlider;
-  private JLabel                fastQualityLabel;
-  private JLabel                bestQualityLabel;
-  private Component             advancedComponentsSeparator;
-  private JLabel                dateLabel;
-  private JSpinner              dateSpinner;
-  private JLabel                timeLabel;
-  private JSpinner              timeSpinner;
-  private JLabel                dayNightLabel;
-  private JLabel                lensLabel;
-  private JComboBox             lensComboBox;
-  private JCheckBox             ceilingLightEnabledCheckBox;
-  private String                dialogTitle;
-  private JPanel                photoPanel;
-  private CardLayout            photoCardLayout;
-  private ExecutorService       photoCreationExecutor;
-  private long                  photoCreationStartTime;
-  private JButton               createButton;
-  private JButton               saveButton;
-  private JButton               closeButton;
+  private final Home               home;
+  private final UserPreferences    preferences;
+  private final PhotoController    controller;
+  private ScaledImageComponent     photoComponent; 
+  private JLabel                   animatedWaitLabel;
+  private PhotoSizeAndQualityPanel sizeAndQualityPanel;
+  private Component                advancedComponentsSeparator;
+  private JLabel                   dateLabel;
+  private JSpinner                 dateSpinner;
+  private JLabel                   timeLabel;
+  private JSpinner                 timeSpinner;
+  private JLabel                   dayNightLabel;
+  private JLabel                   lensLabel;
+  private JComboBox                lensComboBox;
+  private JCheckBox                ceilingLightEnabledCheckBox;
+  private String                   dialogTitle;
+  private JPanel                   photoPanel;
+  private CardLayout               photoCardLayout;
+  private ExecutorService          photoCreationExecutor;
+  private long                     photoCreationStartTime;
+  private JButton                  createButton;
+  private JButton                  saveButton;
+  private JButton                  closeButton;
 
-  private static PhotoPanel     currentPhotoPanel; // Support only one photo panel opened at a time
+  private static PhotoPanel        currentPhotoPanel; // Support only one photo panel opened at a time
 
   public PhotoPanel(Home home, 
                     UserPreferences preferences, 
@@ -275,170 +261,14 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     this.animatedWaitLabel = new JLabel(new ImageIcon(PhotoPanel.class.getResource("resources/animatedWait.gif")));
 
-    // Create width label and spinner bound to WIDTH controller property
-    this.widthLabel = new JLabel();
-    final SpinnerNumberModel widthSpinnerModel = new SpinnerNumberModel(480, 10, 10000, 10);
-    this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
-    widthSpinnerModel.setValue(controller.getWidth());
-    widthSpinnerModel.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setWidth(((Number)widthSpinnerModel.getValue()).intValue());
-        }
-      });
-    controller.addPropertyChangeListener(PhotoController.Property.WIDTH, 
+    // Create size and quality panel
+    this.sizeAndQualityPanel = new PhotoSizeAndQualityPanel(home, preferences, controller);
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.QUALITY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            widthSpinnerModel.setValue(controller.getWidth());
-          }
-        });
-
-    
-    // Create height label and spinner bound to HEIGHT controller property
-    this.heightLabel = new JLabel();
-    final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 10000, 10);
-    this.heightSpinner = new AutoCommitSpinner(heightSpinnerModel);
-    heightSpinnerModel.setValue(controller.getHeight());
-    heightSpinnerModel.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setHeight(((Number)heightSpinnerModel.getValue()).intValue());
-        }
-      });
-    controller.addPropertyChangeListener(PhotoController.Property.HEIGHT, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            heightSpinnerModel.setValue(controller.getHeight());
-          }
-        });
-
-    // Create apply proportions check box bound to ASPECT_RATIO controller property
-    boolean notFreeAspectRatio = controller.getAspectRatio() != AspectRatio.FREE_RATIO;
-    this.applyProportionsCheckBox = new JCheckBox();
-    this.applyProportionsCheckBox.setSelected(notFreeAspectRatio);
-    this.applyProportionsCheckBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setAspectRatio(applyProportionsCheckBox.isSelected()
-              ? (AspectRatio)aspectRatioComboBox.getSelectedItem()
-              : AspectRatio.FREE_RATIO);
-        }
-      });
-    this.aspectRatioComboBox = new JComboBox(new Object [] {
-        AspectRatio.VIEW_3D_RATIO,
-        AspectRatio.SQUARE_RATIO,
-        AspectRatio.RATIO_4_3,
-        AspectRatio.RATIO_3_2,
-        AspectRatio.RATIO_16_9,
-        AspectRatio.RATIO_2_1});
-    this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, 
-                                                      int index, boolean isSelected, boolean cellHasFocus) {
-          AspectRatio aspectRatio = (AspectRatio)value;
-          String displayedValue = "";
-          if (aspectRatio != AspectRatio.FREE_RATIO) {
-            switch (aspectRatio) {
-              case VIEW_3D_RATIO :
-                displayedValue = preferences.getLocalizedString(
-                    PhotoPanel.class, "aspectRatioComboBox.view3DRatio.text");
-                break;
-              case SQUARE_RATIO :
-                displayedValue = preferences.getLocalizedString(
-                    PhotoPanel.class, "aspectRatioComboBox.squareRatio.text");
-                break;
-              case RATIO_4_3 :
-                displayedValue = "4/3";
-                break;
-              case RATIO_3_2 :
-                displayedValue = "3/2";
-                break;
-              case RATIO_16_9 :
-                displayedValue = "16/9";
-                break;
-              case RATIO_2_1 :
-                displayedValue = "2/1";
-                break;
-            }
-          } 
-          return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
-              cellHasFocus);
-        }
-      });
-    this.aspectRatioComboBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setAspectRatio((AspectRatio)aspectRatioComboBox.getSelectedItem());
-        }
-      });
-    this.aspectRatioComboBox.setEnabled(notFreeAspectRatio);
-    this.aspectRatioComboBox.setSelectedItem(controller.getAspectRatio());
-    controller.addPropertyChangeListener(PhotoController.Property.ASPECT_RATIO,
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            boolean notFreeAspectRatio = controller.getAspectRatio() != AspectRatio.FREE_RATIO;
-            applyProportionsCheckBox.setSelected(notFreeAspectRatio);
-            aspectRatioComboBox.setEnabled(notFreeAspectRatio);
-            aspectRatioComboBox.setSelectedItem(controller.getAspectRatio());
-          }
-        });
-
-    // Quality label and slider bound to QUALITY controller property
-    this.qualityLabel = new JLabel();
-    this.fastQualityLabel = new JLabel();
-    this.bestQualityLabel = new JLabel();
-    this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
-        @Override
-        public String getToolTipText(MouseEvent ev) {
-          float valueUnderMouse = getSliderValueAt(this, ev.getX(), preferences);
-          float valueToTick = valueUnderMouse - (float)Math.floor(valueUnderMouse);
-          if (valueToTick < 0.25f || valueToTick > 0.75f) {
-            // Display a tooltip that explains the different quality levels
-            return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' src='" 
-                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
-                + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
-                + "</tr></table>";
-          } else {
-            return null;
-          }
-        }
-      };
-    // Add a listener that displays also the tool tip when user clicks on the slider
-    this.qualitySlider.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent ev) {
-          EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                float valueUnderMouse = getSliderValueAt(qualitySlider, ev.getX(), preferences);
-                if (qualitySlider.getValue() == Math.round(valueUnderMouse)) {
-                  ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-                  int initialDelay = toolTipManager.getInitialDelay();
-                  toolTipManager.setInitialDelay(Math.min(initialDelay, 150));
-                  toolTipManager.mouseMoved(ev);
-                  toolTipManager.setInitialDelay(initialDelay);
-                }
-              }
-            });
-        }
-      });
-    this.qualitySlider.setPaintTicks(true);    
-    this.qualitySlider.setMajorTickSpacing(1);
-    this.qualitySlider.setSnapToTicks(true);
-    final boolean offScreenImageSupported = Component3DManager.getInstance().isOffScreenImageSupported();
-    this.qualitySlider.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          if (!offScreenImageSupported) {
-            // Can't support 2 first quality levels if offscreen image isn't supported 
-            qualitySlider.setValue(Math.max(qualitySlider.getMinimum() + 2, qualitySlider.getValue()));
-          }
-          controller.setQuality(qualitySlider.getValue() - qualitySlider.getMinimum());
-        }
-      });
-    controller.addPropertyChangeListener(PhotoController.Property.QUALITY, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            qualitySlider.setValue(qualitySlider.getMinimum() + controller.getQuality());
             updateAdvancedComponents();
           }
         });
-    this.qualitySlider.setValue(this.qualitySlider.getMinimum() + controller.getQuality());
 
     this.advancedComponentsSeparator = new JSeparator();
 
@@ -579,11 +409,9 @@ public class PhotoPanel extends JPanel implements DialogView {
           Camera.Lens lens = (Camera.Lens)lensComboBox.getSelectedItem();
           controller.setLens(lens);
           if (lens == Camera.Lens.SPHERICAL) {
-            applyProportionsCheckBox.setSelected(true);
-            aspectRatioComboBox.setSelectedItem(AspectRatio.RATIO_2_1);
+            controller.setAspectRatio(AspectRatio.RATIO_2_1);
           } else if (lens == Camera.Lens.FISHEYE) {
-            applyProportionsCheckBox.setSelected(true);
-            aspectRatioComboBox.setSelectedItem(AspectRatio.SQUARE_RATIO);
+            controller.setAspectRatio(AspectRatio.SQUARE_RATIO);
           }  
           updateRatioComponents();
         }
@@ -591,7 +419,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     this.ceilingLightEnabledCheckBox = new JCheckBox();
     this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
-    controller.addPropertyChangeListener(PhotoController.Property.CEILING_LIGHT_COLOR, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.CEILING_LIGHT_COLOR, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
@@ -616,38 +444,9 @@ public class PhotoPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Returns the slider value matching a given x.
-   */
-  private float getSliderValueAt(JSlider qualitySlider, int x, UserPreferences preferences) {
-    int fastLabelOffset = 0;
-    int bestLabelOffset = 0;
-    int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
-    return qualitySlider.getMinimum()
-        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight() 
-                          ? fastLabelOffset 
-                          : bestLabelOffset))
-        / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
-  }
-  
-  /**
    * Sets the texts of the components.
    */
   private void setComponentTexts(UserPreferences preferences) {
-    this.widthLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "widthLabel.text"));
-    this.heightLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "heightLabel.text"));
-    this.applyProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "applyProportionsCheckBox.text"));
-    this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "qualityLabel.text"));
-    this.fastQualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
-        PhotoPanel.class, "fastLabel.text"));
-    if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
-      this.fastQualityLabel.setEnabled(false);
-    }
-    this.bestQualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
-        PhotoPanel.class, "bestLabel.text"));
     this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "dateLabel.text"));
     this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
@@ -669,17 +468,6 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          PhotoPanel.class, "widthLabel.mnemonic")).getKeyCode());
-      this.widthLabel.setLabelFor(this.widthSpinner);
-      this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          PhotoPanel.class, "heightLabel.mnemonic")).getKeyCode());
-      this.heightLabel.setLabelFor(this.heightSpinner);
-      this.applyProportionsCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          PhotoPanel.class, "applyProportionsCheckBox.mnemonic")).getKeyCode());
-      this.qualityLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          PhotoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
-      this.qualityLabel.setLabelFor(this.qualitySlider);
       this.dateLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PhotoPanel.class, "dateLabel.mnemonic")).getKeyCode());
       this.dateLabel.setLabelFor(this.dateSpinner);
@@ -732,8 +520,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     photoPanel.add(this.photoComponent, PHOTO_CARD);
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
     // First row
-    add(photoPanel, new GridBagConstraints(
-        0, 0, 7, 1, 1, 1, GridBagConstraints.CENTER, 
+    add(this.photoPanel, new GridBagConstraints(
+        0, 0, 3, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
@@ -741,82 +529,47 @@ public class PhotoPanel extends JPanel implements DialogView {
         0, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(new JLabel(), new GridBagConstraints(
-        6, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
+        2, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    Insets labelInsets = new Insets(0, 0, 0, 5);
-    add(this.widthLabel, new GridBagConstraints(
+    add(this.sizeAndQualityPanel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
-    // Use HORIZONTAL fill constraint with label alignment to ensure
-    // label is correctly sized in small dialogs
-    this.widthLabel.setHorizontalAlignment(labelAlignment);
-    Insets componentInsets = new Insets(0, 0, 0, 10);
-    add(this.widthSpinner, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
-    add(this.heightLabel, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
-    this.heightLabel.setHorizontalAlignment(labelAlignment);
-    add(this.heightSpinner, new GridBagConstraints(
-        4, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
-    JPanel proportionsPanel = new JPanel();
-    proportionsPanel.add(this.applyProportionsCheckBox);
-    proportionsPanel.add(this.aspectRatioComboBox);
-    add(proportionsPanel, new GridBagConstraints(
-        1, 2, 5, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    // Fourth row
-    add(this.qualityLabel, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
-    this.qualityLabel.setHorizontalAlignment(labelAlignment);
-    add(this.qualitySlider, new GridBagConstraints(
-        2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    // Fifth row
-    JPanel qualityLabelsPanel = new JPanel(new BorderLayout(20, 0));
-    qualityLabelsPanel.add(this.fastQualityLabel, BorderLayout.WEST);
-    qualityLabelsPanel.add(this.bestQualityLabel, BorderLayout.EAST);
-    add(qualityLabelsPanel, new GridBagConstraints(
-        2, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 0, 0), 0, 0));
-    // Sixth row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 5, 5, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 2, 3, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
-    // Seventh row
-    add(this.dateLabel, new GridBagConstraints(
-        1, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+    // Forth row
+    JPanel advancedPanel = new JPanel(new GridBagLayout());
+    advancedPanel.add(this.dateLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     this.dateLabel.setHorizontalAlignment(labelAlignment);
-    add(this.dateSpinner, new GridBagConstraints(
-        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 8, 0));
-    add(this.timeLabel, new GridBagConstraints(
-        3, 6, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+    advancedPanel.add(this.dateSpinner, new GridBagConstraints(
+        1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
+    advancedPanel.add(this.timeLabel, new GridBagConstraints(
+        2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     this.timeLabel.setHorizontalAlignment(labelAlignment);
-    add(this.timeSpinner, new GridBagConstraints(
-        4, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+    advancedPanel.add(this.timeSpinner, new GridBagConstraints(
+        3, 1, 1, 1, 0.8, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
-    add(this.dayNightLabel, new GridBagConstraints(
-        5, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+    advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
+        4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
-    add(this.lensLabel, new GridBagConstraints(
-        1, 7, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+    advancedPanel.add(this.lensLabel, new GridBagConstraints(
+        0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     this.lensLabel.setHorizontalAlignment(labelAlignment);
-    add(this.lensComboBox, new GridBagConstraints(
-        2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+    advancedPanel.add(this.lensComboBox, new GridBagConstraints(
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
-    this.lensComboBox.setPreferredSize(new Dimension(this.widthSpinner.getPreferredSize().width, 
-        this.lensComboBox.getPreferredSize().height));
-    add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
-        3, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+    advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
+        2, 2, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));    
+    add(advancedPanel, new GridBagConstraints(
+        1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
   
@@ -855,8 +608,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     Lens lens = this.controller.getLens();
     boolean fixedProportions = lens == Camera.Lens.FISHEYE 
         || lens == Camera.Lens.SPHERICAL;
-    this.applyProportionsCheckBox.setEnabled(!fixedProportions); 
-    this.aspectRatioComboBox.setEnabled(!fixedProportions && applyProportionsCheckBox.isSelected()); 
+    this.sizeAndQualityPanel.setProportionsChoiceEnabled(!fixedProportions);
   }
 
   /**
@@ -921,25 +673,14 @@ public class PhotoPanel extends JPanel implements DialogView {
         dialog.setLocationByPlatform(true);
       }
       
-      // Add a listener on 3D view to be notified when its size changes 
-      final JComponent view3D = (JComponent)this.controller.get3DView();
-      final ComponentAdapter view3DSizeListener = new ComponentAdapter() {
-          @Override
-          public void componentResized(ComponentEvent ev) {
-            controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
-          }
-        };
-      view3D.addComponentListener(view3DSizeListener);
       dialog.addWindowListener(new WindowAdapter() {
           public void windowClosed(WindowEvent ev) {
-            ((JComponent)controller.get3DView()).removeComponentListener(view3DSizeListener);
             stopPhotoCreation(false);
             currentPhotoPanel = null;
           }
         });
 
       updateAdvancedComponents();
-      ToolTipManager.sharedInstance().registerComponent(this.qualitySlider);
       dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
@@ -966,11 +707,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void startPhotoCreation() {
     this.photoComponent.setImage(null);
-    this.widthSpinner.setEnabled(false);
-    this.heightSpinner.setEnabled(false);
-    this.applyProportionsCheckBox.setEnabled(false);
-    this.aspectRatioComboBox.setEnabled(false);
-    this.qualitySlider.setEnabled(false);
+    this.sizeAndQualityPanel.setEnabled(false);
     this.dateSpinner.setEnabled(false);
     this.timeSpinner.setEnabled(false);
     this.lensComboBox.setEnabled(false);
@@ -1010,15 +747,25 @@ public class PhotoPanel extends JPanel implements DialogView {
             quality == 2 
                 ? PhotoRenderer.Quality.LOW 
                 : PhotoRenderer.Quality.HIGH);
-        if (!Thread.currentThread().isInterrupted()) {
-          image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
+        int bestImageHeight;
+        // Check correct ratio if lens is fisheye or spherical
+        Camera camera = home.getCamera();
+        if (camera.getLens() == Camera.Lens.FISHEYE) {
+          bestImageHeight = imageWidth;
+        } else if (camera.getLens() == Camera.Lens.SPHERICAL) {
+          bestImageHeight = imageWidth * 2;
+        } else {           
+          bestImageHeight = imageHeight;
+        }
+        if (photoCreationExecutor != null) {
+          image = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
           this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
             }
           });
-          photoRenderer.render(image, home.getCamera(), this.photoComponent);
+          photoRenderer.render(image, camera, this.photoComponent);
         }
       } else {
         // Compute 3D view offscreen image
@@ -1045,10 +792,8 @@ public class PhotoPanel extends JPanel implements DialogView {
             }
             createButton.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
             photoComponent.setImage(photoImage);
-            widthSpinner.setEnabled(true);
-            heightSpinner.setEnabled(true);
+            sizeAndQualityPanel.setEnabled(true);
             updateRatioComponents();
-            qualitySlider.setEnabled(true);
             dateSpinner.setEnabled(true);
             timeSpinner.setEnabled(true);
             lensComboBox.setEnabled(true);
@@ -1118,7 +863,6 @@ public class PhotoPanel extends JPanel implements DialogView {
   private void close() {
     Window window = SwingUtilities.getWindowAncestor(this);
     if (window.isDisplayable()) {
-      ToolTipManager.sharedInstance().unregisterComponent(this.qualitySlider);
       window.dispose();
     }    
   }

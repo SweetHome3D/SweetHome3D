@@ -460,6 +460,7 @@ public class HomePane extends JRootPane implements HomeView {
           homeController3D, "displaySelectedLevel");
       createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, homeController3D, "modifyAttributes");
       createAction(ActionType.CREATE_PHOTO, preferences, controller, "createPhoto");
+      createAction(ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, preferences, controller, "createPhotos");
       createAction(ActionType.CREATE_VIDEO, preferences, controller, "createVideo");
       createAction(ActionType.EXPORT_TO_OBJ, preferences, controller, "exportToOBJ");
     }
@@ -1009,6 +1010,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
+    addActionToMenu(ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, preview3DMenu);
     addActionToMenu(ActionType.CREATE_VIDEO, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.EXPORT_TO_OBJ, preview3DMenu);
@@ -2522,6 +2524,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
       view3DPopup.addSeparator();
       addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
+      addActionToPopupMenu(ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, view3DPopup);
       addActionToPopupMenu(ActionType.CREATE_VIDEO, view3DPopup);
       view3DPopup.addSeparator();
       addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);

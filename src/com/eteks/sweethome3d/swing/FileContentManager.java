@@ -122,7 +122,7 @@ public class FileContentManager implements ContentManager {
      }};
   private static final String PNG_EXTENSION = ".png";
   /**
-   * Supported OBJ filter.
+   * Supported PNG filter.
    */
   private static final FileFilter [] PNG_FILTER = {
       new FileFilter() {
@@ -131,6 +131,25 @@ public class FileContentManager implements ContentManager {
           // Accept directories and .png files
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(PNG_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "PNG";
+        }
+      }};
+  private static final String JPEG_EXTENSION = ".jpg";
+  /**
+   * Supported OBJ filter.
+   */
+  private static final FileFilter [] JPEG_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .png files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(PNG_EXTENSION)
+              || file.getName().toLowerCase().endsWith("jpeg");
         }
         
         @Override
@@ -169,20 +188,7 @@ public class FileContentManager implements ContentManager {
           return "GIF";
         }
       },
-      new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          // Accept directories and JPEG files
-          return file.isDirectory()
-                 || file.getName().toLowerCase().endsWith(".jpg")
-                 || file.getName().toLowerCase().endsWith(".jpeg");
-        }
-    
-        @Override
-        public String getDescription() {
-          return "JPEG";
-        }
-      }, 
+      JPEG_FILTER [0], 
       PNG_FILTER [0]};
   private static final String MOV_EXTENSION = ".mov";
   /**
@@ -264,6 +270,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.MOV, MOV_FILTER);
     this.fileFilters.put(ContentType.PNG, PNG_FILTER);
+    this.fileFilters.put(ContentType.JPEG, JPEG_FILTER);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.SVG, SVG_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
@@ -328,20 +335,34 @@ public class FileContentManager implements ContentManager {
         }
       });
     this.fileFilters.put(ContentType.PLUGIN, new FileFilter [] {
-       new FileFilter() {
-         @Override
-         public boolean accept(File file) {
-           // Accept directories and .sh3f files
-           return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(pluginFileExtension);
-         }
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories and .sh3f files
+            return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(pluginFileExtension);
+          }
          
-         @Override
-         public String getDescription() {
-           return preferences.getLocalizedString(FileContentManager.class, "pluginDescription");
-         }
-       }
-     });
+          @Override
+          public String getDescription() {
+            return preferences.getLocalizedString(FileContentManager.class, "pluginDescription");
+          }
+        }
+      });
+    this.fileFilters.put(ContentType.PHOTOS_DIRECTORY, new FileFilter [] {
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories only
+            return file.isDirectory();
+          }
+         
+          @Override
+          public String getDescription() {
+            return "Photos";
+          }
+        }
+      });
 
     // Fill file default extension map
     this.defaultFileExtensions = new HashMap<ContentType, String>();
@@ -351,6 +372,7 @@ public class FileContentManager implements ContentManager {
     this.defaultFileExtensions.put(ContentType.TEXTURES_LIBRARY, texturesLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
     this.defaultFileExtensions.put(ContentType.PNG, PNG_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.JPEG, JPEG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.MOV, MOV_EXTENSION);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
     this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
@@ -437,7 +459,8 @@ public class FileContentManager implements ContentManager {
                                String      dialogTitle,
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
-    if (OperatingSystem.isMacOSX()) {
+    if (OperatingSystem.isMacOSX()
+        && contentType != ContentType.PHOTOS_DIRECTORY) {
       return showFileDialog(parentView, dialogTitle, contentType, null, false);
     } else {
       return showFileChooser(parentView, dialogTitle, contentType, null, false);
@@ -468,7 +491,8 @@ public class FileContentManager implements ContentManager {
     
     String savedName;
     // Use native file dialog under Mac OS X    
-    if (OperatingSystem.isMacOSX()) {
+    if (OperatingSystem.isMacOSX()
+        && contentType != ContentType.PHOTOS_DIRECTORY) {
       savedName = showFileDialog(parentView, dialogTitle, contentType, name, true);
     } else {
       savedName = showFileChooser(parentView, dialogTitle, contentType, name, true);
@@ -489,11 +513,13 @@ public class FileContentManager implements ContentManager {
           && !addedExtension) {
         return savedName;
       }
-      // If the file exists, prompt user if he wants to overwrite it
-      File savedFile = new File(savedName);
-      if (savedFile.exists()
-          && !confirmOverwrite(parentView, savedFile.getName())) {
-        return showSaveDialog(parentView, dialogTitle, contentType, savedName);
+      if (contentType != ContentType.PHOTOS_DIRECTORY) {
+        // If the file exists, prompt user if he wants to overwrite it
+        File savedFile = new File(savedName);
+        if (savedFile.exists()
+            && !confirmOverwrite(parentView, savedFile.getName())) {
+          return showSaveDialog(parentView, dialogTitle, contentType, savedName);
+        }
       }
     }
     return savedName;
@@ -514,14 +540,14 @@ public class FileContentManager implements ContentManager {
     if (save && name != null) {
       fileDialog.setFile(new File(name).getName());
     }
-    
     // Set supported files filter 
     fileDialog.setFilenameFilter(new FilenameFilter() {
         public boolean accept(File dir, String name) {          
           return isAcceptable(new File(dir, name).toString(), contentType);
         }
       });
-    // Update directory
+
+      // Update directory
     File directory = getLastDirectory(contentType);
     if (directory != null) {
       fileDialog.setDirectory(directory.toString());
@@ -538,6 +564,7 @@ public class FileContentManager implements ContentManager {
     fileDialog.setTitle(dialogTitle);
     
     fileDialog.setVisible(true);
+    
     String selectedFile = fileDialog.getFile();
     // If user chose a file
     if (selectedFile != null) {
@@ -585,7 +612,9 @@ public class FileContentManager implements ContentManager {
                                  boolean       save) {
     JFileChooser fileChooser = new JFileChooser();
     // Set selected file
-    if (save && name != null) {
+    if (save 
+        && name != null
+        && contentType != ContentType.PHOTOS_DIRECTORY) {
       fileChooser.setSelectedFile(new File(name));
     }    
     // Set supported files filter 
@@ -600,6 +629,10 @@ public class FileContentManager implements ContentManager {
       fileChooser.setFileFilter(contentFileFilters [0]);
     } else {
       fileChooser.setFileFilter(acceptAllFileFilter);
+    }
+    if (contentType == ContentType.PHOTOS_DIRECTORY) {
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      fileChooser.setAcceptAllFileFilterUsed(false);
     }
     
     // Update directory

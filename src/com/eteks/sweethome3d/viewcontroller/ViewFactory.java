@@ -188,6 +188,12 @@ public interface ViewFactory {
                                              PhotoController photoController);
 
   /**
+   * Returns a new view able to compute a photos of a home from its stored points of view. 
+   */
+  public abstract DialogView createPhotosView(Home home, UserPreferences preferences, 
+                                              PhotosController photosController);
+
+  /**
    * Returns a new view able to compute a 3D video of a home. 
    */
   public abstract DialogView createVideoView(Home home, UserPreferences preferences, 

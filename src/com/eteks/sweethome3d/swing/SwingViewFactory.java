@@ -48,6 +48,7 @@ import com.eteks.sweethome3d.viewcontroller.ModelMaterialsController;
 import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
+import com.eteks.sweethome3d.viewcontroller.PhotosController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
@@ -275,6 +276,14 @@ public class SwingViewFactory implements ViewFactory {
                                            HomeController homeController,
                                            PrintPreviewController printPreviewController) {
     return new PrintPreviewPanel(home, preferences, homeController, printPreviewController);
+  }
+  
+  /**
+   * Returns a new view able to compute a photos of a home from its stored points of view. 
+   */
+  public DialogView createPhotosView(Home home, UserPreferences preferences, 
+                                     PhotosController photosController) {
+    return new PhotosPanel(home, preferences, photosController);
   }
   
   /**
