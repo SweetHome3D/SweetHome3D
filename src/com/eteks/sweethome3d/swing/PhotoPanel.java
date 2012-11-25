@@ -536,7 +536,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 2, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     // Forth row
     JPanel advancedPanel = new JPanel(new GridBagLayout());
@@ -552,7 +552,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     this.timeLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0.8, 0, GridBagConstraints.LINE_START, 
+        3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -570,7 +570,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));    
     add(advancedPanel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
   private void updateAdvancedComponents() {
