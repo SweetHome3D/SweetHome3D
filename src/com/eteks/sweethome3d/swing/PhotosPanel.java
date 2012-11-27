@@ -402,7 +402,7 @@ public class PhotosPanel extends JPanel implements DialogView {
         0, 0, 1, 2, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     progressPanel.add(this.progressBar, new GridBagConstraints(
-        1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 1, 1, GridBagConstraints.SOUTH, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 5, 5, 0), 0, 0));
     progressPanel.add(this.progressLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 1, GridBagConstraints.NORTH, 
