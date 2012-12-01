@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.sun.j3d.exp.swing.JCanvas3D;
 
 /**
  * Configuration class that accesses to Mac OS X specifics.
@@ -193,7 +194,8 @@ class MacOSXConfiguration {
                       EventQueue.invokeAndWait(new Runnable() {
                           public void run() {
                             canvas3D.set(homeFrame.isShowing()
-                                && !SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty());
+                                && (!SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty()
+                                   || !SwingTools.findChildren(homeFrame.getRootPane(), JCanvas3D.class).isEmpty()));
                           }
                         });
                     } while (!canvas3D.get());                  
