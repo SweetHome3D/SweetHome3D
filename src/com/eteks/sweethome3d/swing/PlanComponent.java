@@ -581,9 +581,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         "resources/cursors/panning32x32.png", "Panning cursor", Cursor.HAND_CURSOR);
     this.duplicationCursor = DragSource.DefaultCopyDrop;
     this.patternImagesCache = new HashMap<TextureImage, BufferedImage>();
-    // Install default colors
-    super.setForeground(UIManager.getColor("textText"));
-    super.setBackground(UIManager.getColor("window"));
+    // Install default colors using same colors as a text field
+    super.setForeground(UIManager.getColor("TextField.foreground"));
+    super.setBackground(UIManager.getColor("TextField.background"));
   }
 
   /**
