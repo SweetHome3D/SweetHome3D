@@ -42,6 +42,8 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * Transfer handler with visual representation on systems that support it.
  * @author Emmanuel Puybaret
@@ -100,6 +102,25 @@ public class VisualTransferHandler extends TransferHandler {
   private class DragListenerWithVisualRepresentation implements DragGestureListener, DragSourceListener {
     private boolean autoscrolls;
     private final Image EMPTY_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    // Set dragged image offset which is strangely very different from an OS to the other 
+    private final Point OFFSET = OperatingSystem.isMacOSX() 
+        ? (isAtLeastJava7() ?  new Point(12, -120) :  new Point(12, 24))
+        : new Point(-12, -24);
+
+    private boolean isAtLeastJava7() {
+      String javaVersion = System.getProperty("java.version");
+      String [] javaVersionParts = javaVersion.split("\\.|_");
+      if (javaVersionParts.length >= 2) {
+        try {
+          // Return true for Java SE 6 and superior
+          if (Integer.parseInt(javaVersionParts [1]) >= 7) {
+            return true;
+          }
+        } catch (NumberFormatException ex) {
+        }
+      }
+      return false;
+    }
 
     public void dragGestureRecognized(DragGestureEvent ev) {
       JComponent component = (JComponent)ev.getComponent();
@@ -117,7 +138,7 @@ public class VisualTransferHandler extends TransferHandler {
             icon.paintIcon(component, g2D, 0, 0);
             g2D.dispose();
             
-            ev.startDrag(null, image, new Point(12, 24),  transferable, this);
+            ev.startDrag(null, image, OFFSET,  transferable, this);
           } else {
             // Force the use of an empty image otherwise Mac OS X uses a grey rectangle
             ev.startDrag(null, EMPTY_IMAGE, new Point(48, 48), transferable, this);
