@@ -484,9 +484,9 @@ public class SwingTools {
           }
 
           @Override
-          public int filterRGB(int x, int y, int rgba) {
+          public int filterRGB(int x, int y, int argb) {
             // Always use foreground color and alpha
-            return (rgba & 0xFF000000) | foregroundColorRgb;
+            return (argb & 0xFF000000) | foregroundColorRgb;
           }
         })), 0, 0, null);
     imageGraphics.dispose();
