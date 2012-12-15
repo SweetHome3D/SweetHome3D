@@ -1883,6 +1883,11 @@ public class HomePane extends JRootPane implements HomeView {
       } 
     }
 
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Reduce tool bar height to balance segmented buttons with higher insets 
+      toolBar.setPreferredSize(new Dimension(0, toolBar.getPreferredSize().height - 4));
+    }
+
     return toolBar;
   }
 
