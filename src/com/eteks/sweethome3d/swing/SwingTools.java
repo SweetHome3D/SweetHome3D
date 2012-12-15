@@ -567,7 +567,11 @@ public class SwingTools {
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       panelBorder = BorderFactory.createCompoundBorder(
           panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    }    
+    } else if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Enlarge space at the top of the border
+      panelBorder = BorderFactory.createCompoundBorder(
+          panelBorder, BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    }
     titledPanel.setBorder(panelBorder);    
     return titledPanel;
   }
