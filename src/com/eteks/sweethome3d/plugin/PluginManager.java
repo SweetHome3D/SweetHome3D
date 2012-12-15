@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
@@ -179,7 +180,7 @@ public class PluginManager {
 
       // Check Java and application versions
       String javaMinimumVersion = resource.getString(JAVA_MINIMUM_VERSION);
-      if (!isJavaVersionSuperiorTo(javaMinimumVersion)) {
+      if (!OperatingSystem.isJavaVersionAtLeast(javaMinimumVersion)) {
         System.err.println("Invalid plug-in " + pluginLocation + ":\n" 
             + "Not compatible Java version " + System.getProperty("java.version"));
         return;
@@ -212,34 +213,6 @@ public class PluginManager {
     } 
   }
   
-  /**
-   * Returns <code>true</code> if the given version is smaller than the version 
-   * of the current JVM. Versions are compared only on their first two parts.
-   */
-  private boolean isJavaVersionSuperiorTo(String javaMinimumVersion) {
-    String javaVersion = System.getProperty("java.version");
-    String [] javaVersionParts = javaVersion.split("\\.|_");
-    String [] javaMinimumVersionParts = javaMinimumVersion.split("\\.|_");
-    if (javaVersionParts.length >= 1
-        && javaMinimumVersionParts.length >= 1) {
-      try {
-        // Compare digits in first part
-        int javaVersionFirstPart = Integer.parseInt(javaVersionParts [0]);
-        int javaMinimumVersionFirstPart = Integer.parseInt(javaMinimumVersionParts [0]);        
-        if (javaVersionFirstPart > javaMinimumVersionFirstPart) {
-          return true;
-        } else if (javaVersionFirstPart == javaMinimumVersionFirstPart 
-                   && javaVersionParts.length >= 2
-                   && javaMinimumVersionParts.length >= 2) { 
-          // Compare digits in second part (this may work even if second part is > 10)
-          return Integer.parseInt(javaVersionParts [1]) >= Integer.parseInt(javaMinimumVersionParts [1]);
-        }
-      } catch (NumberFormatException ex) {
-      }
-    }
-    return false;
-  }
-
   /**
    * Returns <code>true</code> if the given version is smaller than the version 
    * of the application. Versions are compared only on their first two parts.

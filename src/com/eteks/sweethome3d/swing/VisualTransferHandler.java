@@ -104,23 +104,8 @@ public class VisualTransferHandler extends TransferHandler {
     private final Image EMPTY_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
     // Set dragged image offset which is strangely very different from an OS to the other 
     private final Point OFFSET = OperatingSystem.isMacOSX() 
-        ? (isAtLeastJava7() ?  new Point(12, -120) :  new Point(12, 24))
+        ? (OperatingSystem.isJavaVersionAtLeast("1.7") ?  new Point(12, -120) :  new Point(12, 24))
         : new Point(-12, -24);
-
-    private boolean isAtLeastJava7() {
-      String javaVersion = System.getProperty("java.version");
-      String [] javaVersionParts = javaVersion.split("\\.|_");
-      if (javaVersionParts.length >= 2) {
-        try {
-          // Return true for Java SE 6 and superior
-          if (Integer.parseInt(javaVersionParts [1]) >= 7) {
-            return true;
-          }
-        } catch (NumberFormatException ex) {
-        }
-      }
-      return false;
-    }
 
     public void dragGestureRecognized(DragGestureEvent ev) {
       JComponent component = (JComponent)ev.getComponent();

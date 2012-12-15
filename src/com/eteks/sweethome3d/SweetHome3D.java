@@ -791,7 +791,7 @@ public class SweetHome3D extends HomeApplication {
    */
   private static class StandaloneBasicService implements BasicService {
     public boolean showDocument(URL url) {
-      if (isJava6()) {
+      if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
         try {
           // Call Java SE 6 java.awt.Desktop browse method by reflection to
           // ensure Java SE 5 compatibility
@@ -823,7 +823,7 @@ public class SweetHome3D extends HomeApplication {
     }
 
     public boolean isWebBrowserSupported() {
-      if (isJava6()) {
+      if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
         try {
           // Call Java SE 6 java.awt.Desktop isSupported(Desktop.Action.BROWSE)
           // method by reflection to
@@ -840,21 +840,6 @@ public class SweetHome3D extends HomeApplication {
       }
       // For other Java versions, let's support only Mac OS X
       return OperatingSystem.isMacOSX();
-    }
-
-    private boolean isJava6() {
-      String javaVersion = System.getProperty("java.version");
-      String [] javaVersionParts = javaVersion.split("\\.|_");
-      if (javaVersionParts.length >= 2) {
-        try {
-          // Return true for Java SE 6 and superior
-          if (Integer.parseInt(javaVersionParts [1]) >= 6) {
-            return true;
-          }
-        } catch (NumberFormatException ex) {
-        }
-      }
-      return false;
     }
   }
 

@@ -110,6 +110,34 @@ public class OperatingSystem {
     return isMacOSX()
         && !System.getProperty("os.version").startsWith("10.4");
   }
+  
+  /**
+   * Returns <code>true</code> if the given version is greater than or equal to the version 
+   * of the current JVM. Versions are compared only on their first two parts.
+   */
+  public static boolean isJavaVersionAtLeast(String javaMinimumVersion) {
+    String javaVersion = System.getProperty("java.version");
+    String [] javaVersionParts = javaVersion.split("\\.|_");
+    String [] javaMinimumVersionParts = javaMinimumVersion.split("\\.|_");
+    if (javaVersionParts.length >= 1
+        && javaMinimumVersionParts.length >= 1) {
+      try {
+        // Compare digits in first part
+        int javaVersionFirstPart = Integer.parseInt(javaVersionParts [0]);
+        int javaMinimumVersionFirstPart = Integer.parseInt(javaMinimumVersionParts [0]);        
+        if (javaVersionFirstPart > javaMinimumVersionFirstPart) {
+          return true;
+        } else if (javaVersionFirstPart == javaMinimumVersionFirstPart 
+                   && javaVersionParts.length >= 2
+                   && javaMinimumVersionParts.length >= 2) { 
+          // Compare digits in second part (this may work even if second part is > 10)
+          return Integer.parseInt(javaVersionParts [1]) >= Integer.parseInt(javaMinimumVersionParts [1]);
+        }
+      } catch (NumberFormatException ex) {
+      }
+    }
+    return false;
+  }
 
   /**
    * Returns a temporary file that will be deleted when JVM will exit.
