@@ -19,12 +19,16 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -50,6 +54,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.sun.j3d.exp.swing.JCanvas3D;
 
@@ -87,15 +92,15 @@ class MacOSXConfiguration {
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
     JFrame frame = null;
     try {
-      if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
+      if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+        // Application#setDefaultMenuBar does nothing under Java 7
+        frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
+      } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
         macosxApplication.setDefaultMenuBar(defaultMenuBar);
         addWindowMenu(null, defaultMenuBar, homeApplication, true);
       }
     } catch (NoSuchMethodError ex) {
       // Create default frame if setDefaultMenuBar isn't available
-      frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
-    } catch (java.awt.IllegalComponentStateException ex) {
-      // See bug http://java.net/jira/browse/MACOSX_PORT-775
       frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
     } 
 
@@ -215,6 +220,22 @@ class MacOSXConfiguration {
           // Add Mac OS X Window menu on new homes
           MacOSXConfiguration.addWindowMenu(
               homeFrame, homeFrame.getJMenuBar(), homeApplication, false);
+          
+          if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+            // Help system to understand it should display the main menu of one of the remaining windows when a window is closed
+            homeFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent ev) {
+                  List<Home> homes = homeApplication.getHomes();
+                  defaultFrame.setVisible(false);
+                  defaultFrame.setVisible(true);
+                  if (homes.size() > 0) {
+                    homeApplication.getHomeFrame(homes.get(0)).toFront();
+                    defaultFrame.setVisible(false);
+                  }
+                }
+              });
+          }
         }
       };
     });
@@ -245,6 +266,7 @@ class MacOSXConfiguration {
           // and attach the application menu bar of empty view to it
           frame.setLocation(-10, 0);
           frame.setUndecorated(true);
+          frame.setBackground(new Color(0, 0, 0, 0));
           frame.setVisible(true);
           frame.setJMenuBar(defaultMenuBar);
           frame.setContentPane(defaultHomeView);
