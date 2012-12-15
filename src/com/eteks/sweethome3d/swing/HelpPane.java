@@ -365,14 +365,25 @@ public class HelpPane extends JRootPane implements HelpView {
   private void layoutToolBarButtons(JToolBar toolBar, 
                                     JButton previousButton,
                                     JButton nextButton) {
+    int buttonPadY;
+    int buttonsTopBottomInset;
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() 
+        && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Ensure the top and bottom of segmented buttons are correctly drawn 
+      buttonPadY = 6;
+      buttonsTopBottomInset = -2;
+    } else {
+      buttonPadY = 0;
+      buttonsTopBottomInset = 0;
+    }
     ComponentOrientation orientation = toolBar.getComponentOrientation();
     GridBagLayout layout = (GridBagLayout)toolBar.getLayout();
     GridBagConstraints firstButtonConstraints = new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+        GridBagConstraints.NONE, new Insets(buttonsTopBottomInset, 0, buttonsTopBottomInset, 0), 0, buttonPadY);
     GridBagConstraints secondButtonContraints = new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
+        GridBagConstraints.NONE, new Insets(buttonsTopBottomInset, 0, buttonsTopBottomInset, 5), 0, buttonPadY);
     layout.setConstraints(orientation.isLeftToRight() ? previousButton : nextButton, 
         firstButtonConstraints);
     layout.setConstraints(orientation.isLeftToRight() ? nextButton : previousButton, 

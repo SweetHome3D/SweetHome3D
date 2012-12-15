@@ -541,6 +541,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             }
           }
         });
+      
       this.colorButton = new ColorButton();
       if (OperatingSystem.isMacOSX()) {
         this.colorButton.putClientProperty("JButton.buttonType", "segmented");
@@ -1019,6 +1020,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     final JPanel paintPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "colorAndTexturePanel.title"));
     if (this.defaultColorAndTextureRadioButton != null) {
+      int buttonPadY;
+      int buttonsBottomInset;
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() 
+          && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+        // Ensure the top and bottom of segmented buttons are correctly drawn 
+        buttonPadY = 4;
+        buttonsBottomInset = -4;
+      } else {
+        buttonPadY = 0;
+        buttonsBottomInset = 0;
+      }
       // Color and Texture panel
       paintPanel.add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -1028,14 +1040,14 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       paintPanel.add(this.colorButton, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, buttonsBottomInset, 0), 0, buttonPadY));
       if (this.textureComponent != null) {
         paintPanel.add(this.textureRadioButton, new GridBagConstraints(
             0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
             GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
         paintPanel.add(this.textureComponent, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(5, 0, buttonsBottomInset, 0), 0, buttonPadY));
       }
       if (this.modelMaterialsComponent != null) {
         paintPanel.add(this.modelMaterialsRadioButton, new GridBagConstraints(
@@ -1043,7 +1055,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
         paintPanel.add(this.modelMaterialsComponent, new GridBagConstraints(
             1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(5, 0, buttonsBottomInset, 0), 0, buttonPadY));
       }
       add(paintPanel, new GridBagConstraints(
           0, 2, 1, 1, 0, 0, labelAlignment, 

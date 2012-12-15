@@ -1895,7 +1895,21 @@ public class HomePane extends JRootPane implements HomeView {
     Action action = getActionMap().get(actionType);
     if (action!= null && action.getValue(Action.NAME) != null) {
       Action toolBarAction = new ResourceAction.ToolBarAction(action);    
-      JToggleButton toggleButton = new JToggleButton(toolBarAction);
+      JToggleButton toggleButton;
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+        // Use higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
+        toggleButton = new JToggleButton(toolBarAction) {
+            @Override
+            public Insets getInsets() {
+              Insets insets = super.getInsets();
+              insets.top += 3;
+              insets.bottom += 3;
+              return insets;
+            }
+          };
+      } else {
+        toggleButton = new JToggleButton(toolBarAction);
+      }
       toggleButton.setModel((JToggleButton.ToggleButtonModel)action.getValue(ResourceAction.TOGGLE_BUTTON_MODEL));
       toolBar.add(toggleButton);
     }
@@ -1908,7 +1922,20 @@ public class HomePane extends JRootPane implements HomeView {
                                   JToolBar toolBar) {
     Action action = getActionMap().get(actionType);
     if (action!= null && action.getValue(Action.NAME) != null) {
-      toolBar.add(new ResourceAction.ToolBarAction(action));
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+        // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
+        toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)) {
+            @Override
+            public Insets getInsets() {
+              Insets insets = super.getInsets();
+              insets.top += 3;
+              insets.bottom += 3;
+              return insets;
+            }
+          });
+      } else {
+        toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)));
+      }
     }
   }
     

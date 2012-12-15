@@ -33,6 +33,7 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -159,8 +160,27 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       };
     this.toolBar.setFloatable(false);
     ActionMap actions = getActionMap();    
-    this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS_PAGE));
-    this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Add buttons with higher insets to ensure the top and bottom of segmented buttons are correctly drawn
+      class HigherInsetsButton extends JButton {
+        public HigherInsetsButton(Action action) {
+          super(action);
+        }
+
+        @Override
+        public Insets getInsets() {
+          Insets insets = super.getInsets();
+          insets.top += 3;
+          insets.bottom += 3;
+          return insets;
+        }
+      }
+      toolBar.add(new HigherInsetsButton(actions.get(ActionType.SHOW_PREVIOUS_PAGE)));
+      toolBar.add(new HigherInsetsButton(actions.get(ActionType.SHOW_NEXT_PAGE)));
+    } else {
+      this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS_PAGE));
+      this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
+    }
     updateToolBarButtonsStyle(this.toolBar);
     
     this.toolBar.add(Box.createHorizontalStrut(20));
