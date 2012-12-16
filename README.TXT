@@ -33,11 +33,11 @@ You may execute applications and tests of this archive, with the Eclipse Run men
 To execute applications and tests that require Java 3D, open Run Dialog in Eclipse, 
 select the Arguments tab of the target application, and add to the VM arguments 
 text field the option 
--Djava.ext.dirs=lib;lib/windows/i386, 
--Djava.ext.dirs=lib;lib/windows/x64,
--Djava.ext.dirs=lib:lib/macosx, 
--Djava.ext.dirs=lib:lib/linux/i386 
-or -Djava.ext.dirs=lib:lib/linux/x64 
+-Djava.ext.dirs=lib/windows/i386;lib, 
+-Djava.ext.dirs=lib/windows/x64;lib,
+-Djava.ext.dirs=lib/macosx:lib, 
+-Djava.ext.dirs=lib/linux/i386:lib 
+or -Djava.ext.dirs=lib/linux/x64:lib
 according to your system and its architecture.
 
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
