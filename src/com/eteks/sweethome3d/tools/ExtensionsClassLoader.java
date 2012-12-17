@@ -186,7 +186,7 @@ public class ExtensionsClassLoader extends ClassLoader {
               extensionJarOrDllFileName.indexOf(dllSuffix)), extensionDll);
         }          
       } catch (IOException ex) {
-        throw new RuntimeException("Couldn't extract extension jars", ex);
+        throw new RuntimeException("Couldn't extract extension " + extensionJarOrDllUrl, ex);
       }
     }
     
