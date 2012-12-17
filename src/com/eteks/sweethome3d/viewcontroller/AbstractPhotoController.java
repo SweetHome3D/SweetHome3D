@@ -92,9 +92,9 @@ public abstract class AbstractPhotoController implements Controller {
         ((HomeEnvironment)ev.getSource()).removePropertyChangeListener(HomeEnvironment.Property.PHOTO_QUALITY, this);
         ((HomeEnvironment)ev.getSource()).removePropertyChangeListener(HomeEnvironment.Property.CEILING_LIGHT_COLOR, this);
       } else if (HomeEnvironment.Property.PHOTO_WIDTH.name().equals(ev.getPropertyName())) {
-        controller.setWidth((Integer)ev.getNewValue());
+        controller.setWidth((Integer)ev.getNewValue(), false);
       } else if (HomeEnvironment.Property.PHOTO_HEIGHT.name().equals(ev.getPropertyName())) {
-        controller.setHeight((Integer)ev.getNewValue());
+        controller.setHeight((Integer)ev.getNewValue(), false);
       } else if (HomeEnvironment.Property.PHOTO_ASPECT_RATIO.name().equals(ev.getPropertyName())) {
         controller.setAspectRatio((AspectRatio)ev.getNewValue());
       } else if (HomeEnvironment.Property.PHOTO_QUALITY.name().equals(ev.getPropertyName())) {
