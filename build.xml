@@ -10,25 +10,26 @@
      - textures    : Builds Textures.jar file in build directory
      - help        : Builds Help.jar file in build directory
 
-     - java3dLibraries        : Builds JNLP Java 3D libraries in deploy/lib subdirectories
-     - javaWebStart           : Builds Java Web Start signed files in deploy/lib directory
-     - applet                 : Builds applet signed files in deploy/lib directory
-     - viewer                 : Builds viewer signed files in deploy/lib directory
-     - jarExecutable          : Builds SweetHome3D-version.jar file in install directory
-     - windowsInstaller       : Builds SweetHome3D-version-windows.exe file in install directory     
-     - windowsSignedInstaller : Builds signed SweetHome3D-version-windows.exe file in install directory     
-     - macosxInstaller        : Builds SweetHome3D-version-macosx.dmg file in install directory
-     - macosxSignedInstaller  : Builds signed SweetHome3D-version-macosx.dmg file in install directory
-     - linux32Installer       : Builds SweetHome3D-version-linux-x86.tgz file in install directory
-     - linux64Installer       : Builds SweetHome3D-version-linux-x64.tgz file in install directory
-     - portableArchive        : Builds SweetHome3D-version-portable files in install/portable directory
-     - viewerInstaller        : Builds SweetHome3DViewer-version.zip file in install directory
-     - sourceArchive          : Builds SweetHome3D-version-src.zip file in install directory
-     - javadoc                : Builds SweetHome3D-version-javadoc.zip file install directory 
+     - java3dLibraries                : Builds JNLP Java 3D libraries in deploy/lib subdirectories
+     - javaWebStart                   : Builds Java Web Start signed files in deploy/lib directory
+     - applet                         : Builds applet signed files in deploy/lib directory
+     - viewer                         : Builds viewer signed files in deploy/lib directory
+     - jarExecutable                  : Builds SweetHome3D-version.jar file in install directory
+     - windowsInstaller               : Builds SweetHome3D-version-windows.exe file in install directory     
+     - windowsSignedInstaller         : Builds signed SweetHome3D-version-windows.exe file in install directory     
+     - macosxJava5And6Installer       : Builds SweetHome3D-version-macosx.dmg file for Java 5 and 6 in install directory
+     - macosxJava5And6SignedInstaller : Builds signed SweetHome3D-version-macosx.dmg file for Java 5 and 6 in install directory
+     - macosxSignedInstaller          : Builds signed SweetHome3D-version-macosx.dmg file in install directory
+     - linux32Installer               : Builds SweetHome3D-version-linux-x86.tgz file in install directory
+     - linux64Installer               : Builds SweetHome3D-version-linux-x64.tgz file in install directory
+     - portableArchive                : Builds SweetHome3D-version-portable files in install/portable directory
+     - viewerInstaller                : Builds SweetHome3DViewer-version.zip file in install directory
+     - sourceArchive                  : Builds SweetHome3D-version-src.zip file in install directory
+     - javadoc                        : Builds SweetHome3D-version-javadoc.zip file install directory 
      
      - jdepend : Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest 
 -->
-<project basedir="." default="javaWebStart" name="SweetHome3D">
+<project basedir="." default="jarExecutable" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
   <property name="version" value="3.8"/>
 
@@ -112,18 +113,31 @@
     </zip>
   </target>
 
-  <target name="java3dLibraries"
+  <target name="jogl-java3d"
+          description="Builds jogl-java3d.jar that contains only packages required for Java 3D">
+    <mkdir dir="build"/>
+    <zip destfile="build/macosx/java3d-1.6/jogl-java3d.jar">
+      <zipfileset src="lib/macosx/java3d-1.6/jogl-all.jar"  
+        excludes="com/jogamp/graph/**, com/jogamp/newt/**, com/jogamp/opengl/swt/**, com/jogamp/opengl/util/**,
+                  javax/media/opengl/Debug*, javax/media/opengl/Trace*,
+                  jogamp/graph/**, jogamp/newt/**, jogl/util/data/av/**"/>
+      <zipfileset src="lib/macosx/java3d-1.6/jogl-all.jar"  
+        includes="com/jogamp/opengl/util/GLBuffers.class"/>
+    </zip>
+  </target>
+
+  <target name="java3dLibraries" depends="jogl-java3d"
           description="Builds JNLP Java 3D libraries in deploy/lib subdirectories">
     <!-- Create java3d.jar containing Windows 32 bits Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows/i386"/>
     <zip destfile="deploy/lib/windows/i386/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/i386/*.dll"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="windows/i386/*.dll"/>
       </fileset>
     </zip>
 
@@ -131,12 +145,12 @@
     <mkdir dir="deploy/lib/windows/x64"/>
     <zip destfile="deploy/lib/windows/x64/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/x64/*.dll"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="windows/x64/*.dll"/>
       </fileset>
     </zip>
 
@@ -144,12 +158,12 @@
     <mkdir dir="deploy/lib/linux/i386"/>
     <zip destfile="deploy/lib/linux/i386/java3d.jar">
       <fileset dir="lib">
-        <include name="linux/i386/*.so"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="linux/i386/*.so"/>
       </fileset>
     </zip>
  
@@ -157,12 +171,12 @@
     <mkdir dir="deploy/lib/linux/x64"/>
     <zip destfile="deploy/lib/linux/x64/java3d.jar">
       <fileset dir="lib">
-        <include name="linux/x64/*.so"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="linux/x64/*.so"/>
       </fileset>
     </zip>
  
@@ -170,13 +184,17 @@
     <mkdir dir="deploy/lib/macosx"/>
     <zip destfile="deploy/lib/macosx/java3d.jar">
       <fileset dir="lib">
-        <include name="macosx/*.jnilib"/>
-        <include name="macosx/*.jar"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="macosx/**/*.jnilib"/>
+        <include name="macosx/**/*.jar"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
     </zip>
   </target>
@@ -240,15 +258,19 @@
          (this library is used when Javascript doesn't succeed to detect user's OS) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/**/*.dll"/>
-        <include name="linux/**/*.so"/>
-        <include name="macosx/*.jnilib"/>
-        <include name="macosx/*.jar"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="windows/**/*.dll"/>
+        <include name="linux/**/*.so"/>
+        <include name="macosx/**/*.jnilib"/>
+        <include name="macosx/**/*.jar"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
     </zip>
 
@@ -335,15 +357,19 @@
          (this library is used for Java versions older than Java SE 6 update 10) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib">
-        <include name="windows/**/*.dll"/>
-        <include name="linux/**/*.so"/>
-        <include name="macosx/*.jnilib"/>
-        <include name="macosx/*.jar"/>
-      </fileset>
-      <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="windows/**/*.dll"/>
+        <include name="linux/**/*.so"/>
+        <include name="macosx/**/*.jnilib"/>
+        <include name="macosx/**/*.jar"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
     </zip>
 
@@ -378,7 +404,7 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <target name="jarExecutable" depends="application,furniture,textures,help"
+  <target name="jarExecutable" depends="application,furniture,textures,help,jogl-java3d"
           description="Builds install/SweetHome3D-version.jar executable Jar">
     <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
          and other DLLs and jars -->
@@ -389,13 +415,17 @@
       <zipfileset src="build/Textures.jar"/>
       <zipfileset src="build/Help.jar"/>
       <fileset dir="lib">
-        <include name="windows/**/*.dll"/>
-        <include name="linux/**/*.so"/>
-        <include name="macosx/*.jnilib"/>
-        <include name="macosx/*.jar"/>
+        <include name="*.jar"/>
       </fileset>
       <fileset dir="lib">
-        <include name="*.jar"/>
+        <include name="windows/**/*.dll"/>
+        <include name="linux/**/*.so"/>
+        <include name="macosx/**/*.jnilib"/>
+        <include name="macosx/**/*.jar"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
       <fileset dir="libtest">
         <include name="jnlp.jar"/>
@@ -556,8 +586,9 @@
     <echo message="signed install/SweetHome3D-${version}-windows.exe ready for ftp"/>
   </target>
 
-  <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. -->
-  <target name="macosxBundle" depends="application,furniture,textures,help"
+  <!-- Builds Sweet Home 3D Mac OS X application base bundle 
+       in install/macosx/SweetHome3D-version directory. -->
+  <target name="macosxBaseBundle" depends="application,furniture,textures,help"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/"/>
@@ -565,8 +596,8 @@
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
 
-    <!-- Change executable permission of SweetHome3D lost during copy task -->
-    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
+    <!-- Change executable permission of Sweet Home 3D executables lost during copy task -->
+    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/*"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java -->
@@ -590,15 +621,15 @@
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java/ext -->
     <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext" >
-      <fileset dir="lib/macosx">
-        <include name="*.jar"/>
-        <include name="*.jnilib"/>
-      </fileset>
       <fileset dir="lib">
         <include name="jmf.jar"/>
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+      </fileset>
+      <fileset dir="lib/macosx">
+        <include name="*.jar"/>
+        <include name="*.jnilib"/>
       </fileset>
     </copy>
     <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-version/ -->
@@ -614,11 +645,22 @@
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/macosx/SweetHome3D-${version}" />
   </target>
 
+  <!-- Builds Sweet Home 3D Mac OS X application bundle compatible with Java 5 and 6
+       in install/macosx/SweetHome3D-version directory. -->
+  <target name="macosxJava5And6Bundle" depends="macosxBaseBundle"
+          description="Builds Sweet Home 3D Mac OS X application bundle for Java 5 and 6">
+    <!-- Remove useless executable files -->
+    <delete file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
+    <move file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub" 
+          tofile="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
+    <delete file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/AppBundler"/>
+  </target>
+
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
-       and Sweet Home 3D libraries. 
+       and Sweet Home 3D libraries compatible with Java 5 and 6. 
        CAUTION : May be run only under Mac OS X and requires Disk Utility -->
-  <target name="macosxInstaller" depends="macosxBundle"
-          description="Builds install/SweetHome3D-version-macosx.dmg archive">
+  <target name="macosxJava5And6Installer" depends="macosxJava5And6Bundle"
+          description="Builds install/SweetHome3D-version-macosx.dmg archive for Java 5 and 6">
     <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-${version}-macosx.dmg"/>
     <exec executable="hdiutil">
@@ -636,13 +678,92 @@
   </target>
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app 
-       and Sweet Home 3D libraries. 
+       and Sweet Home 3D libraries compatible with Java 5 and 6. 
        CAUTION : May be run only under Mac OS X and requires hdutil, codesign 
        and a certificate imported in Keychain Access -->
+  <target name="macosxJava5And6SignedInstaller" depends="macosxJava5And6Bundle"
+          description="Builds signed install/SweetHome3D-version-macosx.dmg archive for Java 5 and 6">
+    <input message="Enter certificate name:" addproperty="certificateName"/> 
+    <!-- Sign Sweet Home 3D application bundle -->
+    <exec executable="codesign">
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app"/>
+    </exec>
+
+    <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
+    <delete file="install/SweetHome3D-${version}-macosx.dmg"/>
+    <exec executable="hdiutil">
+      <arg value="create"/>
+      <arg value="-srcfolder"/>
+      <arg value="install/macosx/SweetHome3D-${version}"/>
+      <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
+    </exec>
+
+    <!-- Sign Sweet Home 3D DMG image -->
+    <exec executable="codesign">
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
+    </exec>
+
+    <!-- Clean build directories -->
+    <delete dir="build"/>
+    <delete dir="install/macosx/SweetHome3D-${version}"/>
+
+    <echo message="signed install/SweetHome3D-${version}-macosx.dmg ready for ftp"/>
+  </target>
+
+  <!-- Builds Sweet Home 3D Mac OS X application bundle compatible with Java 7 and further
+       in install/macosx/SweetHome3D-version directory. 
+       CAUTION : May be run only under Mac OS X and requires Mac OS X JRE installed in jre1.7.0_10.jre -->
+  <target name="macosxBundle" depends="macosxBaseBundle,jogl-java3d"
+          description="Builds Sweet Home 3D Mac OS X application bundle">
+    <!-- Copy Java 3D 1.6 DLLs and JARs for Java 3D 
+         to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java/ext/java3d-1.6 -->
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext/java3d-1.6" >
+      <fileset dir="lib/macosx/java3d-1.6">
+        <include name="*.jar"/>
+        <include name="*.jnilib"/>
+        <exclude name="jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build/macosx/java3d-1.6">
+        <include name="jogl-java3d.jar"/>
+      </fileset>
+    </copy>
+
+    <!-- Create directories required by AppBundler -->
+    <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/jre7/Contents/Home/jre" />
+    <!-- Copy JRE to install/macosx/SweetHome3D-version/Plugins/jre... reorganizing files  
+         and excluding files mentioned in JRE README.TXT file -->
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/jre7/Contents/Home/jre">
+      <fileset dir="jre1.7.0_10.jre/Contents/Home">
+        <include name="**"/>
+        <exclude name="lib/ext/sunjce_provider.jar"/>
+        <exclude name="bin/java"/>
+        <exclude name="bin/rmid"/>
+        <exclude name="bin/rmiregistry"/>
+        <exclude name="bin/tnameserv"/>
+        <exclude name="bin/keytool"/>
+        <exclude name="bin/policytool"/>
+        <exclude name="bin/orbd"/>
+        <exclude name="bin/servertool"/>
+      </fileset>
+    </copy>
+
+    <!-- Copy other licenses texts to install/macosx/SweetHome3D-version/ -->
+    <copy file="THIRDPARTY-LICENSE-JOGL.TXT"  todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"  todir="install/macosx/SweetHome3D-${version}" />
+  </target>
+
+  <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app 
+       and Sweet Home 3D libraries compatible with Java 7 and further. 
+       CAUTION : May be run only under Mac OS X and requires hdutil, codesign, 
+       a certificate imported in Keychain Access and Mac OS X JRE installed in jre1.7.0_10.jre -->
   <target name="macosxSignedInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
-    <input message="Enter certificate name:" 
-           addproperty="certificateName"/> 
+    <input message="Enter certificate name:" addproperty="certificateName"/> 
     <!-- Sign Sweet Home 3D application bundle -->
     <exec executable="codesign">
       <arg value="-s"/>
@@ -861,7 +982,7 @@
   </target>
 
   <!-- Builds install/portable/SweetHome3D-version-portable files required for SweetHome3D portable version -->
-  <target name="portableArchive" depends="application,furniture,textures,help"
+  <target name="portableArchive" depends="application,furniture,textures,help,jogl-java3d"
           description="Builds install/portable/SweetHome3D-version-portable files">
     <!-- Copy SweetHome3D JARs and its libs 
          to install/portable/SweetHome3D-${version}/lib -->
@@ -888,25 +1009,30 @@
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
-        <include name="macosx/**"/>
         <include name="windows/**"/>
         <include name="linux/**"/>
+        <include name="macosx/**"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
     </copy>
     <!-- Copy README.TXT and licenses texts to install/macosx/SweetHome3D-version/ -->
     <copy file="install/portable/README.TXT" todir="install/portable/SweetHome3D-${version}-portable"/>
     <copy file="COPYING.TXT" todir="install/portable/SweetHome3D-${version}-portable"/>
     <copy file="LICENSE.TXT" todir="install/portable/SweetHome3D-${version}-portable" />
-    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT"       todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JOGL.TXT"       todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/portable/SweetHome3D-${version}-portable"/>
-    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
-    <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
-    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
 
     <!-- Copy Mac OS X application bundle using a different Info.plist file -->
@@ -915,7 +1041,10 @@
     </copy>
     <copy file="install/portable/Info.plist" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
     <!-- Change executable permission of SweetHome3D lost during copy task -->
-    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/SweetHome3D"/>
+    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/*"/>
+    <!-- Create directories required by AppBundler -->
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Java" />
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Plugins" />
 
     <!-- Copy Linux command files -->
     <copy file="install/portable/SweetHome3D-linux-x86" todir="install/portable/SweetHome3D-${version}-portable"/>
@@ -928,6 +1057,7 @@
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/x64"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/i586"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/x64"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/macosx"/>
 
     <!-- Prepare data directories for SH3F, SH3T, SH3L and SH3P files -->
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/furniture"/>

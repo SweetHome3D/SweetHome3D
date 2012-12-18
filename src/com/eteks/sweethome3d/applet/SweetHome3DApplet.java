@@ -267,35 +267,60 @@ public class SweetHome3DApplet extends JApplet {
     try {
       applicationClassName = getApplicationClassName();
       Class sweetHome3DAppletClass = SweetHome3DApplet.class;
-      List java3DFiles = new ArrayList(Arrays.asList(new String [] {
-          "j3dcore.jar", // Main Java 3D jars
-          "vecmath.jar",
-          "j3dutils.jar",
-          "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
-          "macosx/jogl.jar",
-          "macosx/libgluegen-rt.jnilib",
-          "macosx/libjogl.jnilib",
-          "macosx/libjogl_awt.jnilib",
-          "macosx/libjogl_cg.jnilib"}));
-      if ("64".equals(System.getProperty("sun.arch.data.model"))) {
-        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLL
-        java3DFiles.add("windows/x64/j3dcore-ogl.dll"); // Windows DLL
+      List java3DFiles = new ArrayList();
+      if (!System.getProperty("os.name").startsWith("Mac OS X")
+          || System.getProperty("java.version").startsWith("1.5")
+          || System.getProperty("java.version").startsWith("1.6")) {
+        java3DFiles.addAll(Arrays.asList(new String [] {
+            "j3dcore.jar", // Main Java 3D jars
+            "vecmath.jar",
+            "j3dutils.jar",
+            "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
+            "macosx/jogl.jar",
+            "macosx/libgluegen-rt.jnilib",
+            "macosx/libjogl.jnilib",
+            "macosx/libjogl_awt.jnilib",
+            "macosx/libjogl_cg.jnilib"}));
       } else {
-        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
-        java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
-        java3DFiles.add("windows/i386/j3dcore-d3d.dll"); // Windows DLLs
-        java3DFiles.add("windows/i386/j3dcore-ogl.dll");
-        java3DFiles.add("windows/i386/j3dcore-ogl-cg.dll");
-        java3DFiles.add("windows/i386/j3dcore-ogl-chk.dll");
+        java3DFiles.addAll(Arrays.asList(new String [] {
+            "macosx/java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
+            "macosx/java3d-1.6/vecmath.jar",
+            "macosx/java3d-1.6/j3dutils.jar",
+            "macosx/java3d-1.6/gluegen.jar", 
+            "macosx/java3d-1.6/jogl-java3d.jar",
+            "macosx/java3d-1.6/libgluegen-rt.jnilib",
+            "macosx/java3d-1.6/libjogl_desktop.jnilib",
+            "macosx/java3d-1.6/libnativewindow_awt.jnilib",
+            "macosx/java3d-1.6/libnativewindow_macosx.jnilib"}));
+        // Disable JOGL library loader
+        System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
+        System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
       }
+      if ("64".equals(System.getProperty("sun.arch.data.model"))) {
+        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
+        java3DFiles.add("windows/x64/j3dcore-ogl.dll"); // Windows 64 bits DLLs
+      } else {
+        java3DFiles.addAll(Arrays.asList(new String [] {
+            "linux/i386/libj3dcore-ogl.so", // Linux 32 bits DLLs
+            "linux/i386/libj3dcore-ogl-cg.so", // Windows 32 bits DLLs
+            "windows/i386/j3dcore-d3d.dll",
+            "windows/i386/j3dcore-ogl.dll",
+            "windows/i386/j3dcore-ogl-cg.dll",
+            "windows/i386/j3dcore-ogl-chk.dll"}));
+      }
+      
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
+          "com.eteks.sweethome3d",
           "com.eteks.sweethome3d",
           "javax.media",
           "javax.vecmath",
           "com.sun.j3d",
           "com.sun.opengl",
           "com.sun.gluegen.runtime",
+          "com.jogamp",
+          "jogamp",
           "javax.media.opengl",
+          "javax.media.nativewindow",
           "com.sun.media",
           "com.ibm.media",
           "jmpapps.util",

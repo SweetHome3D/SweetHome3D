@@ -153,11 +153,12 @@ public final class ViewerHelper {
         }
       };
 
-    // Force offscreen in 3D view under Plugin 2 and Mac OS X
-    System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
-        String.valueOf(OperatingSystem.isMacOSX()            
-            && applet.getAppletContext() != null
-            && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")));
+    // Force offscreen in 3D view under Plugin 2 / Java 6 / Mac OS X
+    if (OperatingSystem.isMacOSX()            
+        && applet.getAppletContext() != null
+        && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")) {
+      System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
+    }
 
     initLookAndFeel();
 

@@ -25,6 +25,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -56,6 +57,7 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
+import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Link;
@@ -87,7 +89,9 @@ import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
+import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
@@ -95,8 +99,8 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  */
 public class ModelPreviewComponent extends JComponent {
   private SimpleUniverse     universe;
-  private JPanel             canvasPanel;
-  private Canvas3D           canvas3D;
+  private JPanel             component3DPanel;
+  private Component          component3D;
   private BranchGroup        sceneTree;
   private float              viewYaw = (float) Math.PI / 8;
   private float              viewPitch = -(float)Math.PI / 16;
@@ -119,18 +123,18 @@ public class ModelPreviewComponent extends JComponent {
 
     this.sceneTree = createSceneTree();
     
-    this.canvasPanel = new JPanel();
+    this.component3DPanel = new JPanel();
     setLayout(new BorderLayout());
-    add(this.canvasPanel);
+    add(this.component3DPanel);
 
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (graphicsEnvironment.getScreenDevices().length == 1) {
-      // If only one screen device is available, create canvas 3D immediately, 
+      // If only one screen device is available, create 3D component immediately, 
       // otherwise create it once the screen device of the parent is known
-      createCanvas3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), pitchAndScaleChangeSupported);
+      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), pitchAndScaleChangeSupported);
     }
 
-    // Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
+    // Add an ancestor listener to create 3D component and its universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
     addAncestorListener(pitchAndScaleChangeSupported);
   }
@@ -148,21 +152,21 @@ public class ModelPreviewComponent extends JComponent {
   }
 
   /**
-   * Returns the component displaying the canvas 3D of this component.
+   * Returns the 3D component of this component.
    */
   JComponent getComponent3D() {
-    return this.canvasPanel;
+    return this.component3DPanel;
   }
   
   /**
-   * Adds an ancestor listener to this component to manage the creation of the canvas and its universe 
+   * Adds an ancestor listener to this component to manage the creation of the 3D component and its universe 
    * and clean up the universe.  
    */
   private void addAncestorListener(final boolean pitchAndScaleChangeSupported) {
     addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
-          if (canvas3D == null) {
-            createCanvas3D(ev.getAncestor().getGraphicsConfiguration(), pitchAndScaleChangeSupported);
+          if (component3D == null) {
+            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), pitchAndScaleChangeSupported);
           }
           if (universe == null) {
             createUniverse();
@@ -181,12 +185,28 @@ public class ModelPreviewComponent extends JComponent {
   }
   
   /**
-   * Creates the canvas 3D associated with the given <code>configuration</code> device.
+   * Creates the 3D component associated with the given <code>configuration</code> device.
    */
-  private void createCanvas3D(GraphicsConfiguration graphicsConfiguration, 
+  private void createComponent3D(GraphicsConfiguration graphicsConfiguration, 
                               boolean pitchAndScaleChangeSupported) {
-    this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
-        new Component3DManager.RenderingObserver() {
+    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
+      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      try {
+        // Instantiate JCanvas3DWithNotifiedPaint inner class by reflection
+        // to be able to run under Java 3D 1.3
+        this.component3D = (Component)Class.forName(ModelPreviewComponent.class.getName() + "$JCanvas3DWithNotifiedPaint").
+            getConstructor(ModelPreviewComponent.class, GraphicsConfigTemplate3D.class).newInstance(this, gc);
+      } catch (ClassNotFoundException ex) {
+        throw new UnsupportedOperationException("Java 3D 1.5 required to display an offscreen 3D view");
+      } catch (Exception ex) {
+        UnsupportedOperationException ex2 = new UnsupportedOperationException();
+        ex2.initCause(ex);
+        throw ex2;
+      }
+    } else {
+      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
+          new Component3DManager.RenderingObserver() {
             public void canvas3DPreRendered(Canvas3D canvas3d) {
             }
             
@@ -197,19 +217,38 @@ public class ModelPreviewComponent extends JComponent {
               ModelPreviewComponent.this.canvas3DSwapped();
             }            
           });
-    this.canvas3D.setBackground(new Color(0xE5E5E5));
+    }
+    this.component3D.setBackground(new Color(0xE5E5E5));
 
-    // Layout canvas3D
-    this.canvasPanel.setLayout(new GridLayout());
-    this.canvasPanel.add(this.canvas3D);
-    this.canvas3D.setFocusable(false);      
-    addMouseListeners(this.canvas3D, pitchAndScaleChangeSupported);
+    // Layout 3D component
+    this.component3DPanel.setLayout(new GridLayout());
+    this.component3DPanel.add(this.component3D);
+    this.component3D.setFocusable(false);      
+    addMouseListeners(this.component3D, pitchAndScaleChangeSupported);
   }
 
   /**
-   * Adds an AWT mouse listener to canvas that will update view platform transform.  
+   * A <code>JCanvas</code> canvas that sends a notification when it's drawn.
    */
-  private void addMouseListeners(final Canvas3D canvas3D, 
+  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
+    private final ModelPreviewComponent homeComponent3D;
+
+    public JCanvas3DWithNotifiedPaint(ModelPreviewComponent component,
+                                      GraphicsConfigTemplate3D template) {
+      super(template);
+      this.homeComponent3D = component;
+    }
+
+    public void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      this.homeComponent3D.canvas3DSwapped();
+    }
+  }
+  
+  /**
+   * Adds an AWT mouse listener to component that will update view platform transform.  
+   */
+  private void addMouseListeners(final Component component3D, 
                                  final boolean pitchAndScaleChangeSupported) {
     final float ANGLE_FACTOR = 0.02f;
     final float ZOOM_FACTOR = 0.02f;
@@ -244,11 +283,11 @@ public class ModelPreviewComponent extends JComponent {
         }
       };
 
-    canvas3D.addMouseListener(mouseListener);
-    canvas3D.addMouseMotionListener(mouseListener);
+    component3D.addMouseListener(mouseListener);
+    component3D.addMouseMotionListener(mouseListener);
     
     if (pitchAndScaleChangeSupported) {
-      canvas3D.addMouseWheelListener(new MouseWheelListener() {
+      component3D.addMouseWheelListener(new MouseWheelListener() {
           public void mouseWheelMoved(MouseWheelEvent ev) {
             // Mouse move along Y axis with Alt down changes scale
             setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp(ev.getWheelRotation() * ZOOM_FACTOR))));
@@ -256,49 +295,64 @@ public class ModelPreviewComponent extends JComponent {
         });
     }
     
-    // Redirect mouse events to the canvas 3D
+    // Redirect mouse events to the 3D component
     for (final MouseListener l : getMouseListeners()) {
-      canvas3D.addMouseListener(new MouseListener() {
+      component3D.addMouseListener(new MouseListener() {
           public void mouseReleased(MouseEvent ev) {
-            l.mouseReleased(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseReleased(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
           
           public void mousePressed(MouseEvent ev) {
-            l.mousePressed(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mousePressed(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
           
           public void mouseExited(MouseEvent ev) {
-            l.mouseExited(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseExited(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
           
           public void mouseEntered(MouseEvent ev) {
-            l.mouseEntered(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseEntered(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
           
           public void mouseClicked(MouseEvent ev) {
-            l.mouseClicked(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseClicked(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
         });
     }
     for (final MouseMotionListener l : getMouseMotionListeners()) {
-      canvas3D.addMouseMotionListener(new MouseMotionListener() {
+      component3D.addMouseMotionListener(new MouseMotionListener() {
           public void mouseMoved(MouseEvent ev) {
-            l.mouseMoved(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseMoved(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
           
           public void mouseDragged(MouseEvent ev) {
-            l.mouseDragged(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, canvas3D));
+            l.mouseDragged(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
           }
         });
     }
   }
 
   /**
-   * Creates universe bound to canvas.
+   * Creates universe bound to the 3D component.
    */
   private void createUniverse() {
-    // Link canvas 3D to a default universe
-    this.universe = new SimpleUniverse(this.canvas3D);
+    Canvas3D canvas3D;
+    if (this.component3D instanceof Canvas3D) {
+      canvas3D = (Canvas3D)this.component3D;
+    } else {
+      try {
+        // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+        canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(this.component3D);
+      } catch (Exception ex) {
+        UnsupportedOperationException ex2 = new UnsupportedOperationException();
+        ex2.initCause(ex);
+        throw ex2;
+      }
+    }    
+    // Create a universe bound to component 3D
+    ViewingPlatform viewingPlatform = new ViewingPlatform();
+    Viewer viewer = new Viewer(canvas3D);
+    this.universe = new SimpleUniverse(viewingPlatform, viewer);
     // Set viewer location 
     updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
         getViewYaw(), getViewPitch(), getViewScale());
@@ -778,9 +832,9 @@ public class ModelPreviewComponent extends JComponent {
     this.iconImageLock = new Object();
     try {
       // Instead of using off screen images that may cause some problems
-      // use Robot to capture canvas 3D image instead of
-      Point canvas3DOrigin = new Point();
-      SwingUtilities.convertPointToScreen(canvas3DOrigin, this.canvas3D);
+      // use Robot to capture canvas 3D image 
+      Point component3DOrigin = new Point();
+      SwingUtilities.convertPointToScreen(component3DOrigin, this.component3D);
       
       Robot robot = new Robot();
       // Render scene with a white background
@@ -795,7 +849,7 @@ public class ModelPreviewComponent extends JComponent {
         }
       }
       imageWithWhiteBackgound = robot.createScreenCapture(
-          new Rectangle(canvas3DOrigin, this.canvas3D.getSize()));
+          new Rectangle(component3DOrigin, this.component3D.getSize()));
       
       // Render scene with a black background
       if (this.iconImageLock != null) {
@@ -809,7 +863,7 @@ public class ModelPreviewComponent extends JComponent {
         }
       }
       imageWithBlackBackgound = robot.createScreenCapture(
-          new Rectangle(canvas3DOrigin, this.canvas3D.getSize()));
+          new Rectangle(component3DOrigin, this.component3D.getSize()));
     } catch (AWTException ex) {
       throw new RuntimeException(ex);
     } finally {

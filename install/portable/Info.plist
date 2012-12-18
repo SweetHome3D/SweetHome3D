@@ -214,6 +214,7 @@
 		</dict>
 	</array>
 
+	<!-- JavaApplicationStub arguments for Java 5 & 6 -->
 	<key>Java</key>
 	<dict>
 		<key>VMOptions</key>
@@ -246,8 +247,28 @@
 			<key>com.eteks.sweethome3d.applicationFolders</key>
 			<string>$APP_PACKAGE/../data</string>
 			<key>com.eteks.sweethome3d.deploymentInformation</key>
-			<string>portable</string>
+			<string>portable Java 3D 1.5.2</string>
 		</dict>
 	</dict>
+
+	<!-- AppBundler arguments for Java 7 -->
+	<key>JVMRuntime</key>
+	<string>../../../jre/macosx/jre7</string>	
+	<key>JVMMainClassName</key>
+	<string>com.eteks.sweethome3d.SweetHome3D</string>
+	<key>JVMOptions</key>
+	<array>
+		<string>-Xmx1024m</string>
+		<string>-cp</string>
+		<string>$APP_ROOT/../lib/SweetHome3D.jar:$APP_ROOT/../lib/Furniture.jar:$APP_ROOT/../lib/Textures.jar:$APP_ROOT/../lib/Help.jar:$APP_ROOT/../lib/freehep-vectorgraphics-svg-2.1.1.jar:$APP_ROOT/../lib/sunflow-0.07.3g.jar:$APP_ROOT/../lib/Loader3DS1_2u.jar:$APP_ROOT/../lib/batik-svgpathparser-1.7.jar</string>
+		<string>-Djava.ext.dirs=$APP_ROOT/../lib/ext/macosx/java3d-1.6:$APP_ROOT/../lib/ext:$APP_ROOT/Contents/PlugIns/jre1.7.0_10.jre/Contents/Home/jre/lib/ext</string>
+		<string>-Djava.library.path=$APP_ROOT/../lib/ext/macosx/java3d-1.6</string>
+		<string>-Djogamp.gluegen.UseTempJarCache=false</string>
+		<string>-Dsweethome3d.bundle=true</string>
+		<string>-Dcom.eteks.sweethome3d.j3d.useOffScreen3DView=true</string>
+		<string>-Dcom.eteks.sweethome3d.preferencesFolder=$APP_ROOT/../data</string>
+		<string>-Dcom.eteks.sweethome3d.applicationFolders=$APP_ROOT/../data</string>
+		<string>-Dcom.eteks.sweethome3d.deploymentInformation=portable Java 3D 1.6 pre5 / JOGL 2.0 rc11</string>
+	</array>
 </dict>
 </plist>

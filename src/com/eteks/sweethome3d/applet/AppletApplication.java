@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -45,6 +46,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonModel;
 import javax.swing.JApplet;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
@@ -126,15 +128,17 @@ public class AppletApplication extends HomeApplication {
     URL codeBase = applet.getCodeBase();
 
     try {
-      // Force offscreen in 3D view under Plugin 2 and Mac OS X
+      // Force offscreen in 3D view under Plugin 2 / Java 6 / Mac OS X  
       boolean plugin2 = applet.getAppletContext() != null
-                    && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager");
-      System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", 
-          String.valueOf(OperatingSystem.isMacOSX() && plugin2));
-      // Use DnD management without transfer handler under Plugin 2 + Mac OS X or OpenJDK + Linux 
-      System.setProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler", 
-          String.valueOf(OperatingSystem.isMacOSX() && plugin2 
-                        || (OperatingSystem.isLinux() && System.getProperty("java.runtime.name", "").startsWith("OpenJDK"))));
+                     && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager");
+      if (OperatingSystem.isMacOSX() && plugin2) {
+        System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
+      }
+      // Use DnD management without transfer handler under Plugin 2 / Mac OS X, Oracle Java / Mac OS X or OpenJDK / Linux 
+      if (OperatingSystem.isMacOSX() && (plugin2 || System.getProperty("java.vendor", "").startsWith("Oracle")) 
+          || OperatingSystem.isLinux() && System.getProperty("java.runtime.name", "").startsWith("OpenJDK")) {
+        System.setProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler", "true");
+      }
     } catch (AccessControlException ex) {
       // Unsigned applet
     }
@@ -368,22 +372,10 @@ public class AppletApplication extends HomeApplication {
     }
     toolBar.removeAll();
     // Add New, Open, Save, Save as buttons if they are enabled
-    Action newHomeAction = getToolBarAction(homeView, HomeView.ActionType.NEW_HOME);
-    if (newHomeAction != null && newHomeAction.isEnabled()) {
-      toolBar.add(newHomeAction);
-    }
-    Action openAction = getToolBarAction(homeView, HomeView.ActionType.OPEN);
-    if (openAction != null && openAction.isEnabled()) {
-      toolBar.add(openAction);
-    }
-    Action saveAction = getToolBarAction(homeView, HomeView.ActionType.SAVE);
-    if (saveAction != null && saveAction.isEnabled()) {
-      toolBar.add(saveAction);
-    }
-    Action saveAsAction = getToolBarAction(homeView, HomeView.ActionType.SAVE_AS);
-    if (saveAsAction != null && saveAsAction.isEnabled()) {
-      toolBar.add(saveAsAction);
-    }
+    addEnabledActionToToolBar(homeView, HomeView.ActionType.NEW_HOME, toolBar);
+    addEnabledActionToToolBar(homeView, HomeView.ActionType.OPEN, toolBar);
+    addEnabledActionToToolBar(homeView, HomeView.ActionType.SAVE, toolBar);
+    addEnabledActionToToolBar(homeView, HomeView.ActionType.SAVE_AS, toolBar);
     
     if (getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SH3D)) {
       try {
@@ -391,7 +383,7 @@ public class AppletApplication extends HomeApplication {
         Action exportToSH3DAction = new ControllerAction(getUserPreferences(), 
             AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
         exportToSH3DAction.setEnabled(true);
-        toolBar.add(new ResourceAction.ToolBarAction(exportToSH3DAction));
+        addActionToToolBar(new ResourceAction.ToolBarAction(exportToSH3DAction), toolBar);
       } catch (NoSuchMethodException ex) {
         ex.printStackTrace();
       }
@@ -400,48 +392,48 @@ public class AppletApplication extends HomeApplication {
     if (toolBar.getComponentCount() > 0) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     }
-    addToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP, toolBar);
-    addToolBarAction(homeView, HomeView.ActionType.PRINT, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.PAGE_SETUP, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.PRINT, toolBar);
     Action printToPdfAction = getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF);
     if (printToPdfAction != null 
         && getAppletBooleanParameter(this.applet, ENABLE_PRINT_TO_PDF) 
         && !OperatingSystem.isMacOSX()) {
       controller.getView().setEnabled(HomeView.ActionType.PRINT_TO_PDF, true);
-      toolBar.add(printToPdfAction);
+      addActionToToolBar(printToPdfAction, toolBar);
     }
     Action preferencesAction = getToolBarAction(homeView, HomeView.ActionType.PREFERENCES);
     if (preferencesAction != null) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-      toolBar.add(preferencesAction);
+      addActionToToolBar(preferencesAction, toolBar);
     }
     toolBar.addSeparator();
 
-    addToolBarAction(homeView, HomeView.ActionType.UNDO, toolBar);
-    addToolBarAction(homeView, HomeView.ActionType.REDO, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.UNDO, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.REDO, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    addToolBarAction(homeView, HomeView.ActionType.CUT, toolBar);
-    addToolBarAction(homeView, HomeView.ActionType.COPY, toolBar);
-    addToolBarAction(homeView, HomeView.ActionType.PASTE, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.CUT, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.COPY, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.PASTE, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    addToolBarAction(homeView, HomeView.ActionType.DELETE, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.DELETE, toolBar);
     toolBar.addSeparator();
 
     Action addHomeFurnitureAction = getToolBarAction(homeView, HomeView.ActionType.ADD_HOME_FURNITURE);
     if (addHomeFurnitureAction != null) {
-      toolBar.add(addHomeFurnitureAction);
+      addActionToToolBar(addHomeFurnitureAction, toolBar);
       toolBar.addSeparator();
     }
     
-    addToolBarToggleAction(homeView, HomeView.ActionType.SELECT, toolBar);
-    addToolBarToggleAction(homeView, HomeView.ActionType.PAN, toolBar);
-    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_WALLS, toolBar);
-    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_ROOMS, toolBar);
-    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES, toolBar);
-    addToolBarToggleAction(homeView, HomeView.ActionType.CREATE_LABELS, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.SELECT, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.PAN, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_WALLS, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_ROOMS, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_LABELS, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    addToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT, toolBar);
-    addToolBarAction(homeView, HomeView.ActionType.ZOOM_IN, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.ZOOM_OUT, toolBar);
+    addActionToToolBar(homeView, HomeView.ActionType.ZOOM_IN, toolBar);
 
     boolean no3D;
     try {
@@ -456,9 +448,10 @@ public class AppletApplication extends HomeApplication {
       if (createPhotoAction != null) {
         boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
         controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
+        controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, enableCreatePhoto);
         if (enableCreatePhoto) {
           toolBar.addSeparator();
-          toolBar.add(createPhotoAction);
+          addActionToToolBar(createPhotoAction, toolBar);
         }
       }
     }
@@ -474,7 +467,7 @@ public class AppletApplication extends HomeApplication {
     Action aboutAction = getToolBarAction(homeView, HomeView.ActionType.ABOUT);
     if (aboutAction != null) {
       toolBar.addSeparator();
-      toolBar.add(aboutAction);
+      addActionToToolBar(aboutAction, toolBar);
     }
     
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
@@ -491,12 +484,22 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
+   * Adds the action matching the given <code>actionType</code> to the tool bar if it exists and it's enabled.
+   */
+  private void addEnabledActionToToolBar(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
+    Action action = getToolBarAction(homeView, actionType);
+    if (action != null && action.isEnabled()) {
+      addActionToToolBar(action, toolBar);
+    }
+  }
+  
+  /**
    * Adds the action matching the given <code>actionType</code> to the tool bar if it exists.
    */
-  private void addToolBarAction(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
+  private void addActionToToolBar(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
     Action action = getToolBarAction(homeView, actionType);
     if (action != null) {
-      toolBar.add(action);
+      addActionToToolBar(action, toolBar);
     }
   }
 
@@ -511,12 +514,46 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
+   * Adds the given action to the tool bar.
+   */
+  private void addActionToToolBar(Action action, JToolBar toolBar) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
+      toolBar.add(new JButton(action) {
+          @Override
+          public Insets getInsets() {
+            Insets insets = super.getInsets();
+            insets.top += 3;
+            insets.bottom += 3;
+            return insets;
+          }
+        });
+    } else {
+      toolBar.add(new JButton(action));
+    }
+  }
+
+  /**
    * Adds the action matching the given toggle <code>actionType</code> to the tool bar if it exists.
    */
-  private void addToolBarToggleAction(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
+  private void addToggleActionToToolBar(JComponent homeView, HomeView.ActionType actionType, JToolBar toolBar) {
     Action action = getToolBarAction(homeView, actionType);
     if (action != null) {
-      JToggleButton toggleButton = new JToggleButton(action);
+      JToggleButton toggleButton;
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+        // Use higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
+        toggleButton = new JToggleButton(action) {
+            @Override
+            public Insets getInsets() {
+              Insets insets = super.getInsets();
+              insets.top += 3;
+              insets.bottom += 3;
+              return insets;
+            }
+          };
+      } else {
+        toggleButton = new JToggleButton(action);
+      }
       toggleButton.setModel((ButtonModel)action.getValue(ResourceAction.TOGGLE_BUTTON_MODEL));
       toolBar.add(toggleButton);
     }
