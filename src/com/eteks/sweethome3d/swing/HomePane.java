@@ -1863,7 +1863,7 @@ public class HomePane extends JRootPane implements HomeView {
     boolean pluginActionsAdded = false;
     for (Action pluginAction : this.pluginActions) {
       if (Boolean.TRUE.equals(pluginAction.getValue(PluginAction.Property.TOOL_BAR.name()))) {
-        toolBar.add(new ResourceAction.ToolBarAction(pluginAction));
+        addActionToToolBar(new ResourceAction.ToolBarAction(pluginAction), toolBar);
         pluginActionsAdded = true;
       }
     }
@@ -1927,20 +1927,28 @@ public class HomePane extends JRootPane implements HomeView {
                                   JToolBar toolBar) {
     Action action = getActionMap().get(actionType);
     if (action!= null && action.getValue(Action.NAME) != null) {
-      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
-        // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
-        toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)) {
-            @Override
-            public Insets getInsets() {
-              Insets insets = super.getInsets();
-              insets.top += 3;
-              insets.bottom += 3;
-              return insets;
-            }
-          });
-      } else {
-        toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)));
-      }
+      addActionToToolBar(new ResourceAction.ToolBarAction(action), toolBar);
+    }
+  }
+    
+  /**
+   * Adds to tool bar the button matching the given <code>action</code>. 
+   */
+  private void addActionToToolBar(Action action,
+                                  JToolBar toolBar) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
+      toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)) {
+          @Override
+          public Insets getInsets() {
+            Insets insets = super.getInsets();
+            insets.top += 3;
+            insets.bottom += 3;
+            return insets;
+          }
+        });
+    } else {
+      toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)));
     }
   }
     
