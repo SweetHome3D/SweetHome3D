@@ -3,13 +3,17 @@ files included as part of this product.
 
 Java 3D libraries are used to add 3D support in Sweet Home 3D.
 
-Java 3D libraries are available at:
+Java 3D 1.5.2 libraries used for Windows and Linux are available at:
 https://java3d.dev.java.net/ 
 and source code can be downloaded at:
 http://download.java.net/media/java3d/builds/release/1.5.2/j3d-1_5_2-src.zip
 http://download.java.net/media/java3d/builds/release/1.5.2/vecmath-1_5_2-src.zip
 https://j3d-core-utils.dev.java.net/build-instr.html
 
+Java 3D 1.6 libraries used for Java 7 under Mac OS X are available at:
+https://github.com/hharrison/java3d-core/downloads
+https://github.com/hharrison/java3d-utils/downloads
+https://github.com/hharrison/vecmath/downloads
 
 
 j3dutils.jar is licensed under Berkeley Software Distribution (BSD) License
