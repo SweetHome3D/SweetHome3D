@@ -25,7 +25,7 @@
 #include <mach-o/dyld.h>
 #include <CoreServices/CoreServices.h>
 
-#define ORACLE_JAVA_LAUNCHER  "AppBundler"
+#define ORACLE_JAVA_LAUNCHER  "JavaAppLauncher"
 #define APPLE_JAVA_LAUNCHER   "JavaApplicationStub"
 
 /**
