@@ -247,7 +247,7 @@
 		</dict>
 	</dict>
 		
-	<!-- AppBundler arguments for Java 7 -->
+	<!-- JavaAppLauncher arguments for Java 7 -->
 	<key>JVMRuntime</key>
 	<string>jre7</string>	
 	<key>JVMMainClassName</key>
