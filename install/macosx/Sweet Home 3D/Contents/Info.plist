@@ -217,12 +217,12 @@
 	<!-- JavaApplicationStub arguments for Java 5 & 6 -->
 	<key>Java</key>
 	<dict>
-		<key>VMOptions</key>
-		<string>-Xmx1024m</string>
-		<key>MainClass</key>
-		<string>com.eteks.sweethome3d.SweetHome3D</string>
 		<key>JVMVersion</key>
 		<string>1.5*</string>
+		<key>MainClass</key>
+		<string>com.eteks.sweethome3d.SweetHome3D</string>
+		<key>VMOptions</key>
+		<string>-Xmx1024m</string>
 		<key>ClassPath</key>
 		<array>
 			<string>$JAVAROOT/SweetHome3D.jar</string>
