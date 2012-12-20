@@ -550,7 +550,7 @@ public class PhotosPanel extends JPanel implements DialogView {
             fileName += " - ";
           }
           fileName += camera.getName();
-          fileName = fileName.replace(File.pathSeparatorChar, '-').replace(File.separatorChar, '-');
+          fileName = fileName.replaceAll("/|\\\\|:|;", "-").replace(File.pathSeparatorChar, '-').replace(File.separatorChar, '-');
           if (contentManager instanceof FileContentManager) {
             fileName += ((FileContentManager)contentManager).getDefaultFileExtension(
                 ContentManager.ContentType.valueOf(controller.getFileFormat()));
