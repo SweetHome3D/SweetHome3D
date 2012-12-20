@@ -61,6 +61,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PhotoPanel;
+import com.eteks.sweethome3d.swing.PhotoSizeAndQualityPanel;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.VideoPanel;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -166,13 +167,14 @@ public class PhotoCreationTest extends ComponentTestFixture {
     JDialog photoCreationDialog = showPhotoCreationPanel(this.preferences, this.homeController, frame, tester);
     // Retrieve PhotoPanel components
     PhotoPanel panel = (PhotoPanel)TestUtilities.findComponent(photoCreationDialog, PhotoPanel.class);    
-    final JSpinner widthSpinner = (JSpinner)TestUtilities.getField(panel, "widthSpinner");
-    JSpinner heightSpinner = (JSpinner)TestUtilities.getField(panel, "heightSpinner");
-    final JComboBox aspectRatioComboBox = (JComboBox)TestUtilities.getField(panel, "aspectRatioComboBox");
-    JSlider qualitySlider = (JSlider)TestUtilities.getField(panel, "qualitySlider");
     JButton createButton = (JButton)TestUtilities.getField(panel, "createButton");
     JButton saveButton = (JButton)TestUtilities.getField(panel, "saveButton");
     JButton closeButton = (JButton)TestUtilities.getField(panel, "closeButton");
+    PhotoSizeAndQualityPanel sizePanel = (PhotoSizeAndQualityPanel)TestUtilities.getField(panel, "sizeAndQualityPanel");
+    final JSpinner widthSpinner = (JSpinner)TestUtilities.getField(sizePanel, "widthSpinner");
+    JSpinner heightSpinner = (JSpinner)TestUtilities.getField(sizePanel, "heightSpinner");
+    final JComboBox aspectRatioComboBox = (JComboBox)TestUtilities.getField(sizePanel, "aspectRatioComboBox");
+    JSlider qualitySlider = (JSlider)TestUtilities.getField(sizePanel, "qualitySlider");
     
     tester.invokeAndWait(new Runnable() {
         public void run() {
