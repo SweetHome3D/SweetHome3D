@@ -71,7 +71,7 @@ class MacOSXConfiguration {
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
   public static void bindToApplicationMenu(final SweetHome3D homeApplication) {
-    Application macosxApplication = Application.getApplication();
+    final Application macosxApplication = Application.getApplication();
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = 
         homeApplication.createHomeFrameController(homeApplication.createHome()).getHomeController();
@@ -142,7 +142,7 @@ class MacOSXConfiguration {
       private void handleAction(Runnable runnable) {
         Frame activeFrame = null;
         for (Frame frame : Frame.getFrames()) {
-          if (frame.isActive()) {
+          if (frame != defaultFrame && frame.isActive()) {
             activeFrame = frame;
             break;
           }
@@ -150,6 +150,11 @@ class MacOSXConfiguration {
         if (defaultFrame != null) {
           // Move default frame to center to display dialogs at center
           defaultFrame.setLocationRelativeTo(null);
+          defaultFrame.toFront();
+          defaultFrame.setAlwaysOnTop(true);
+          // Disable About and Preferences menu items 
+          macosxApplication.setEnabledAboutMenu(false);
+          macosxApplication.setEnabledPreferencesMenu(false);
         }
         
         runnable.run();
@@ -159,8 +164,13 @@ class MacOSXConfiguration {
           activeFrame.toFront();
         }
         if (defaultFrame != null) {
+          defaultFrame.setAlwaysOnTop(false);
           // Move default frame out of user view
+          defaultFrame.toBack();
           defaultFrame.setLocation(-10, 0);
+          // Enable About and Preferences menu items again
+          macosxApplication.setEnabledAboutMenu(true);
+          macosxApplication.setEnabledPreferencesMenu(true);
         }
       }
 
