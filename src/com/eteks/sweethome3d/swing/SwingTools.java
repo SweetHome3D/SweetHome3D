@@ -33,6 +33,8 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -76,6 +78,7 @@ import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
@@ -402,7 +405,7 @@ public class SwingTools {
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            focusedComponent.requestFocusInWindow();
+            requestFocus(focusedComponent);
             dialog.removeComponentListener(this);
           }
         });
@@ -418,6 +421,20 @@ public class SwingTools {
     }
   }
 
+  /**
+   * Request the focus for the given component.
+   */
+  private static void requestFocus(final JComponent focusedComponent) {
+    // Prefer to call requestFocusInWindow in a timer with a small delay than calling it directly 
+    // or calling it with EnventQueue#invokeLater to ensure it always works
+    new Timer(50, new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          focusedComponent.requestFocusInWindow();
+          ((Timer)ev.getSource()).stop();
+        }
+      }).start();
+  }
+  
   /**
    * Displays <code>messageComponent</code> in a modal dialog box, giving focus to one of its components. 
    */
@@ -437,7 +454,7 @@ public class SwingTools {
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            focusedComponent.requestFocusInWindow();
+            requestFocus(focusedComponent);
             dialog.removeComponentListener(this);
           }
         });
