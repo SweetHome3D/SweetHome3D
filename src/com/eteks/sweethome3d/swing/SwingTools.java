@@ -422,7 +422,7 @@ public class SwingTools {
   }
 
   /**
-   * Request the focus for the given component.
+   * Requests the focus for the given component.
    */
   private static void requestFocus(final JComponent focusedComponent) {
     // Prefer to call requestFocusInWindow in a timer with a small delay than calling it directly 
