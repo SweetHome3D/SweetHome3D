@@ -299,10 +299,10 @@ public class ExtensionsClassLoader extends ClassLoader {
       // Try to find if resource belongs to one of the extracted jars
       for (int i = 0; i < this.extensionJars.length; i++) {
         JarFile extensionJar = this.extensionJars [i];
-        JarEntry jarEntry = extensionJar.getJarEntry(name);
+        JarEntry jarEntry = extensionJar.getJarEntry(name);        
         if (jarEntry != null) {
           try {
-            return new URL("jar:file:" + extensionJar.getName() + ":" + jarEntry.getName());
+            return new URL("jar:file:" + extensionJar.getName() + "!/" + jarEntry.getName());
           } catch (MalformedURLException ex) {
             // Forget that we could have found a resource
           }
