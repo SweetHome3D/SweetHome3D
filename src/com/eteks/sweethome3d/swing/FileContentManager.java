@@ -19,23 +19,44 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FileDialog;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileSystemView;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -43,7 +64,6 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.View;
-import com.l2fprod.common.swing.JDirectoryChooser;
 
 /**
  * Content manager for files with Swing file choosers.
@@ -358,8 +378,8 @@ public class FileContentManager implements ContentManager {
         new FileFilter() {
           @Override
           public boolean accept(File file) {
-            // Accept directories only where the user can write
-            return file.isDirectory() && file.canWrite();
+            // Accept directories only
+            return file.isDirectory();
           }
          
           @Override
@@ -617,7 +637,7 @@ public class FileContentManager implements ContentManager {
                                  boolean       save) {
     final JFileChooser fileChooser;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
-      fileChooser = new JDirectoryChooser();
+      fileChooser = new DirectoryChooser(this.preferences);
     } else {
       fileChooser = new JFileChooser();
     }
@@ -654,20 +674,6 @@ public class FileContentManager implements ContentManager {
     }
     int option;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      // Improve JDirectoryChooser behavior 
-      JTree filesTree = SwingTools.findChildren(fileChooser, JTree.class).get(0);
-      if (filesTree.getSelectionCount() > 0) {
-        filesTree.scrollPathToVisible(filesTree.getSelectionPath());
-      }
-      filesTree.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent ev) {
-          if (ev.getClickCount() == 2 && !ev.isPopupTrigger()) {
-            SwingTools.findChildren(fileChooser, JButton.class).get(1).doClick();
-          }
-        }
-      });
       option = fileChooser.showDialog((JComponent)parentView,
           this.preferences.getLocalizedString(FileContentManager.class, "selectDirectoryButton.text"));
     } else if (save) {
@@ -717,5 +723,194 @@ public class FileContentManager implements ContentManager {
     return JOptionPane.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView), 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
+   * A file chooser dedicated to directory choice.
+   */
+  private static class DirectoryChooser extends JFileChooser {
+    private JTree    foldersTree;
+    private Action   createFolderAction;
+
+    public DirectoryChooser(final UserPreferences preferences) {
+      setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      this.foldersTree = new JTree(createModel());
+      this.foldersTree.setRootVisible(false);
+      this.foldersTree.setEditable(false);
+      this.foldersTree.setCellRenderer(new DefaultTreeCellRenderer() {
+          @Override
+          public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
+                                                        boolean leaf, int row, boolean hasFocus) {
+            FileSystemView fileSystemView = getFileSystemView();
+            File file = (File)((DefaultMutableTreeNode)value).getUserObject();
+            super.getTreeCellRendererComponent(tree, fileSystemView.getSystemDisplayName(file), 
+                selected, expanded, leaf, row, hasFocus);
+            setIcon(fileSystemView.getSystemIcon(file));
+            return this;
+          }
+        });
+      this.foldersTree.addTreeSelectionListener(new TreeSelectionListener() {
+          public void valueChanged(TreeSelectionEvent ev) {
+            DirectoryNode selectedNode = (DirectoryNode)foldersTree.getSelectionPath().getLastPathComponent();
+            setSelectedFile((File)selectedNode.getUserObject());
+          }
+        });
+      
+      // Create an action used to create additional folders
+      final String newFolderText = UIManager.getString("FileChooser.win32.newFolder");
+      this.createFolderAction = new AbstractAction(newFolderText) {
+          public void actionPerformed(ActionEvent ev) {
+            String newFolderName = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
+                ? newFolderText
+                : UIManager.getString("FileChooser.other.newFolder");
+            newFolderName = (String)JOptionPane.showInputDialog(DirectoryChooser.this, 
+                preferences.getLocalizedString(FileContentManager.class, "createDirectory.message"),                
+                newFolderText, JOptionPane.QUESTION_MESSAGE, null, null, newFolderName);
+            if (newFolderName != null) {
+              File newFolder = new File(getSelectedFile(), newFolderName);
+              if (!newFolder.mkdir()) {
+                String newFolderErrorText = UIManager.getString("FileChooser.newFolderErrorText");
+                JOptionPane.showMessageDialog(DirectoryChooser.this, 
+                    newFolderErrorText, newFolderErrorText, JOptionPane.ERROR_MESSAGE);
+              } else {
+                TreeNode [] pathToSelectedFileNode = findPathToFileNode(getSelectedFile());
+                TreeNode parentTreeNode = pathToSelectedFileNode [pathToSelectedFileNode.length - 1];
+                ((DirectoryNode)parentTreeNode).updateChildren();
+                ((DefaultTreeModel)foldersTree.getModel()).nodeStructureChanged(parentTreeNode);
+                setSelectedFile(newFolder);
+              }
+            }
+          }
+        };
+      
+      setLayout(new BorderLayout());
+      add(new JScrollPane(this.foldersTree));
+      
+      addPropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            TreeNode[] pathToFileNode = findPathToFileNode(getSelectedFile());
+            if (pathToFileNode != null) {
+              TreePath path = new TreePath(pathToFileNode);
+              foldersTree.expandPath(path);
+              foldersTree.setSelectionPath(path);
+              foldersTree.scrollPathToVisible(path);
+            }
+          }
+        });
+      setSelectedFile(getFileSystemView().getHomeDirectory());      
+    }
+    
+    private TreeModel createModel() {
+      File [] roots = getFileSystemView().getRoots();
+      DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+      if (roots != null) {
+        for (File root : roots) {
+          if (root.isDirectory()) {
+            rootNode.add(new DirectoryNode(root));
+          }
+        }
+      }
+      return new DefaultTreeModel(rootNode);
+    }
+
+    private TreeNode[] findPathToFileNode(File searchedFile) {
+      try {
+        // Search each parent of the selected file
+        File selectedFile = searchedFile.getCanonicalFile();
+        List<File> files = new ArrayList<File>();
+        for (File file = selectedFile; 
+             file != null;
+             file = getFileSystemView().getParentDirectory(file)) {
+          files.add(0, file);
+        }
+        // Build path of tree nodes
+        List<TreeNode> pathToFileNode = new ArrayList<TreeNode>();
+        TreeNode node = (TreeNode)foldersTree.getModel().getRoot();
+        pathToFileNode.add(node);
+        for (File file : files) {
+          int i = 0;
+          int n = node.getChildCount();
+          for ( ; i < n; i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);
+            if (file.equals(child.getUserObject())) {
+              pathToFileNode.add(child);
+              node = child;
+              break;
+            }
+          }
+          if (i == n) {
+            break;
+          }
+        }
+        return pathToFileNode.toArray(new TreeNode [pathToFileNode.size()]);
+      } catch (IOException ex) {
+        return null;
+      }
+    }
+
+    /**
+     * Directory nodes which children are loaded when needed. 
+     */
+    private final class DirectoryNode extends DefaultMutableTreeNode {
+      private boolean loaded;
+
+      private DirectoryNode(File file) {
+        super(file);
+      }
+
+      @Override
+      public int getChildCount() {
+        if (!loaded) {
+          this.loaded = true;
+          return updateChildren();
+        } else {
+          return super.getChildCount();
+        }
+      }
+
+      public int updateChildren() {
+        removeAllChildren();
+        File [] files = getFileSystemView().getFiles((File)getUserObject(), true);
+        for (File childFile : files) {
+          if (childFile.isDirectory()) {
+            add(new DirectoryNode(childFile));
+          }
+        }
+        return files.length;
+      }
+    }
+
+    @Override
+    public int showDialog(Component parent, String approveButtonText) {
+      JButton createFolderButton = new JButton(this.createFolderAction);
+      Object cancelOption = UIManager.get("FileChooser.cancelButtonText");
+      Object [] options;
+      if (OperatingSystem.isMacOSX()) {
+        options = new Object [] {approveButtonText, cancelOption, createFolderButton};
+      } else {
+        options = new Object [] {createFolderButton, approveButtonText, cancelOption};
+      }
+      // Display chooser in a resizable dialog
+      JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, 
+          null, options, approveButtonText); 
+      JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), getDialogTitle());
+      dialog.setResizable(true);
+      dialog.pack();
+      if (this.foldersTree.getSelectionCount() > 0) {
+        this.foldersTree.scrollPathToVisible(this.foldersTree.getSelectionPath());
+      }
+      dialog.setMinimumSize(dialog.getPreferredSize());
+      dialog.setVisible(true);
+      dialog.dispose();
+      if (approveButtonText.equals(optionPane.getValue())) {
+        return JFileChooser.APPROVE_OPTION;
+      } else {
+        return JFileChooser.CANCEL_OPTION;
+      }
+    }
+    
+    public static void main(String [] args) {
+      new DirectoryChooser(new DefaultUserPreferences()).showDialog(new Frame(), "Go");
+    }
   }
 }
