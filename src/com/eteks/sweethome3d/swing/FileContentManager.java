@@ -29,6 +29,7 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
@@ -39,6 +40,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.View;
+import com.l2fprod.common.swing.JDirectoryChooser;
 
 /**
  * Content manager for files with Swing file choosers.
@@ -353,8 +355,8 @@ public class FileContentManager implements ContentManager {
         new FileFilter() {
           @Override
           public boolean accept(File file) {
-            // Accept directories only
-            return file.isDirectory();
+            // Accept directories only where the user can write
+            return file.isDirectory() && file.canWrite();
           }
          
           @Override
@@ -610,11 +612,28 @@ public class FileContentManager implements ContentManager {
                                  ContentType   contentType,
                                  String        name,
                                  boolean       save) {
-    JFileChooser fileChooser = new JFileChooser();
+    JFileChooser fileChooser;
+    if (contentType == ContentType.PHOTOS_DIRECTORY) {
+      fileChooser = new JDirectoryChooser();
+    } else {
+      fileChooser = new JFileChooser();
+    }
+    if (dialogTitle == null) {
+      dialogTitle = getFileDialogTitle(save);
+    }
+    fileChooser.setDialogTitle(dialogTitle);
+
+    // Update directory
+    File directory = getLastDirectory(contentType);
+    if (directory != null && directory.exists()) {
+      fileChooser.setCurrentDirectory(directory);
+      if (contentType == ContentType.PHOTOS_DIRECTORY) {
+        fileChooser.setSelectedFile(directory);
+      }
+    }    
     // Set selected file
     if (save 
-        && name != null
-        && contentType != ContentType.PHOTOS_DIRECTORY) {
+        && name != null) {
       fileChooser.setSelectedFile(new File(name));
     }    
     // Set supported files filter 
@@ -630,31 +649,28 @@ public class FileContentManager implements ContentManager {
     } else {
       fileChooser.setFileFilter(acceptAllFileFilter);
     }
+    int option;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
       fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      fileChooser.setAcceptAllFileFilterUsed(false);
-    }
-    
-    // Update directory
-    File directory = getLastDirectory(contentType);
-    if (directory != null) {
-      fileChooser.setCurrentDirectory(directory);
-    }
-    
-    if (dialogTitle == null) {
-      dialogTitle = getFileDialogTitle(save);
-    }
-    fileChooser.setDialogTitle(dialogTitle);
-    
-    int option;
-    if (save) {
+      // Improve JDirectoryChooser behavior
+      JTree filesTree = SwingTools.findChildren(fileChooser, JTree.class).get(0);
+      if (filesTree.getSelectionCount() > 0) {
+        filesTree.scrollPathToVisible(filesTree.getSelectionPath());
+      }
+      option = fileChooser.showDialog((JComponent)parentView,
+          this.preferences.getLocalizedString(FileContentManager.class, "selectDirectoryButton.text"));
+    } else if (save) {
       option = fileChooser.showSaveDialog((JComponent)parentView);
     } else {
       option = fileChooser.showOpenDialog((JComponent)parentView);
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve last directory for future calls
-      directory = fileChooser.getCurrentDirectory();
+      if (contentType == ContentType.PHOTOS_DIRECTORY) {
+        directory = fileChooser.getSelectedFile();
+      } else {
+        directory = fileChooser.getCurrentDirectory();
+      }
       // Store last directory
       setLastDirectory(contentType, directory);
       // Return selected file

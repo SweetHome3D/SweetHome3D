@@ -233,6 +233,7 @@
 			<string>$JAVAROOT/sunflow-0.07.3g.jar</string>
 			<string>$JAVAROOT/Loader3DS1_2u.jar</string>
 			<string>$JAVAROOT/batik-svgpathparser-1.7.jar</string>
+			<string>$JAVAROOT/l2fprod-common-jdirectorychooser-7.3.jar</string>
 		</array>
 		<key>Properties</key>
 		<dict>
@@ -256,7 +257,7 @@
 	<array>
 		<string>-Xmx1024m</string>
 		<string>-cp</string>
-		<string>$APP_ROOT/Contents/Resources/Java/SweetHome3D.jar:$APP_ROOT/Contents/Resources/Java/Furniture.jar:$APP_ROOT/Contents/Resources/Java/Textures.jar:$APP_ROOT/Contents/Resources/Java/Help.jar:$APP_ROOT/Contents/Resources/Java/freehep-vectorgraphics-svg-2.1.1.jar:$APP_ROOT/Contents/Resources/Java/sunflow-0.07.3g.jar:$APP_ROOT/Contents/Resources/Java/Loader3DS1_2u.jar:$APP_ROOT/Contents/Resources/Java/batik-svgpathparser-1.7.jar</string>
+		<string>$APP_ROOT/Contents/Resources/Java/SweetHome3D.jar:$APP_ROOT/Contents/Resources/Java/Furniture.jar:$APP_ROOT/Contents/Resources/Java/Textures.jar:$APP_ROOT/Contents/Resources/Java/Help.jar:$APP_ROOT/Contents/Resources/Java/freehep-vectorgraphics-svg-2.1.1.jar:$APP_ROOT/Contents/Resources/Java/sunflow-0.07.3g.jar:$APP_ROOT/Contents/Resources/Java/Loader3DS1_2u.jar:$APP_ROOT/Contents/Resources/Java/batik-svgpathparser-1.7.jar:$APP_ROOT/Contents/Resources/Java/l2fprod-common-jdirectorychooser-7.3.jar</string>
 		<string>-Djava.ext.dirs=$APP_ROOT/Contents/Resources/Java/ext/java3d-1.6:$APP_ROOT/Contents/Resources/Java/ext:$APP_ROOT/Contents/PlugIns/jre1.7.0_10.jre/Contents/Home/jre/lib/ext</string>
 		<string>-Djava.library.path=$APP_ROOT/Contents/Resources/Java/ext/java3d-1.6</string>
 		<string>-Djogamp.gluegen.UseTempJarCache=false</string>

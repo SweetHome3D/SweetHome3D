@@ -45,6 +45,7 @@ public class SweetHome3DBootstrap {
         "sunflow-0.07.3g.jar",
         "jmf.jar",
         "batik-svgpathparser-1.7.jar",
+        "l2fprod-common-jdirectorychooser-7.3.jar",
         "jnlp.jar"}));
     if (!System.getProperty("os.name").startsWith("Mac OS X")
         || System.getProperty("java.version").startsWith("1.5")
@@ -103,7 +104,8 @@ public class SweetHome3DBootstrap {
         "jmpapps.util",
         "com.microcrowd.loader.java3d",
         "org.sunflow",
-        "org.apache.batik"};
+        "org.apache.batik",
+        "com.l2fprod.common"};
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),
