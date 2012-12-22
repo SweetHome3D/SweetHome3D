@@ -20,12 +20,17 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.FileDialog;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -612,7 +617,7 @@ public class FileContentManager implements ContentManager {
                                  ContentType   contentType,
                                  String        name,
                                  boolean       save) {
-    JFileChooser fileChooser;
+    final JFileChooser fileChooser;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
       fileChooser = new JDirectoryChooser();
     } else {
@@ -652,11 +657,19 @@ public class FileContentManager implements ContentManager {
     int option;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
       fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      // Improve JDirectoryChooser behavior
+      // Improve JDirectoryChooser behavior 
       JTree filesTree = SwingTools.findChildren(fileChooser, JTree.class).get(0);
       if (filesTree.getSelectionCount() > 0) {
         filesTree.scrollPathToVisible(filesTree.getSelectionPath());
       }
+      filesTree.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent ev) {
+          if (ev.getClickCount() == 2 && !ev.isPopupTrigger()) {
+            SwingTools.findChildren(fileChooser, JButton.class).get(1).doClick();
+          }
+        }
+      });
       option = fileChooser.showDialog((JComponent)parentView,
           this.preferences.getLocalizedString(FileContentManager.class, "selectDirectoryButton.text"));
     } else if (save) {
