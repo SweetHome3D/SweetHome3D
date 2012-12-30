@@ -21,8 +21,8 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -56,7 +56,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -760,9 +759,18 @@ public class FileContentManager implements ContentManager {
       final String newFolderText = UIManager.getString("FileChooser.win32.newFolder");
       this.createFolderAction = new AbstractAction(newFolderText) {
           public void actionPerformed(ActionEvent ev) {
-            String newFolderName = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
+            String newFolderNameBase = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
                 ? newFolderText
                 : UIManager.getString("FileChooser.other.newFolder");
+            String newFolderName = newFolderNameBase;
+            // Search a new folder name that doesn't exist
+            for (int i = 2; new File(getSelectedFile(), newFolderName).exists(); i++) {
+              newFolderName = newFolderNameBase;
+              if (OperatingSystem.isWindows() || OperatingSystem.isMacOSX()) {
+                newFolderName += " ";
+              }
+              newFolderName += i;
+            }
             newFolderName = (String)JOptionPane.showInputDialog(DirectoryChooser.this, 
                 preferences.getLocalizedString(FileContentManager.class, "createDirectory.message"),                
                 newFolderText, JOptionPane.QUESTION_MESSAGE, null, null, newFolderName);
@@ -784,22 +792,31 @@ public class FileContentManager implements ContentManager {
         };
       
       setLayout(new BorderLayout());
-      add(new JScrollPane(this.foldersTree));
+      final JScrollPane scrollPane = new JScrollPane(this.foldersTree);
+      add(scrollPane);
       
       addPropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            TreeNode[] pathToFileNode = findPathToFileNode(getSelectedFile());
-            if (pathToFileNode != null) {
-              TreePath path = new TreePath(pathToFileNode);
-              foldersTree.expandPath(path);
-              foldersTree.setSelectionPath(path);
-              foldersTree.scrollPathToVisible(path);
+            File selectedFile = getSelectedFile();
+            if (selectedFile != null) {
+              TreeNode [] pathToFileNode = findPathToFileNode(selectedFile);
+              if (pathToFileNode != null) {
+                TreePath path = new TreePath(pathToFileNode);
+                foldersTree.expandPath(path);
+                foldersTree.setSelectionPath(path);
+                foldersTree.scrollRowToVisible(foldersTree.getRowForPath(path));
+              }
             }
           }
         });
-      setSelectedFile(getFileSystemView().getHomeDirectory());      
+      setSelectedFile(getFileSystemView().getHomeDirectory());
+      
+      setPreferredSize(new Dimension(0, scrollPane.getPreferredSize().height));
     }
     
+    /**
+     * Returns a new model matching the current file system.
+     */
     private TreeModel createModel() {
       File [] roots = getFileSystemView().getRoots();
       DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
@@ -813,7 +830,11 @@ public class FileContentManager implements ContentManager {
       return new DefaultTreeModel(rootNode);
     }
 
-    private TreeNode[] findPathToFileNode(File searchedFile) {
+    
+    /**
+     * Returns the tree nodes path matching the given searched file.
+     */
+    private TreeNode [] findPathToFileNode(File searchedFile) {
       try {
         // Search each parent of the selected file
         File selectedFile = searchedFile.getCanonicalFile();
@@ -825,7 +846,7 @@ public class FileContentManager implements ContentManager {
         }
         // Build path of tree nodes
         List<TreeNode> pathToFileNode = new ArrayList<TreeNode>();
-        TreeNode node = (TreeNode)foldersTree.getModel().getRoot();
+        TreeNode node = (TreeNode)this.foldersTree.getModel().getRoot();
         pathToFileNode.add(node);
         for (File file : files) {
           int i = 0;
@@ -851,7 +872,7 @@ public class FileContentManager implements ContentManager {
     /**
      * Directory nodes which children are loaded when needed. 
      */
-    private final class DirectoryNode extends DefaultMutableTreeNode {
+    private class DirectoryNode extends DefaultMutableTreeNode {
       private boolean loaded;
 
       private DirectoryNode(File file) {
@@ -860,7 +881,7 @@ public class FileContentManager implements ContentManager {
 
       @Override
       public int getChildCount() {
-        if (!loaded) {
+        if (!this.loaded) {
           this.loaded = true;
           return updateChildren();
         } else {
@@ -907,10 +928,6 @@ public class FileContentManager implements ContentManager {
       } else {
         return JFileChooser.CANCEL_OPTION;
       }
-    }
-    
-    public static void main(String [] args) {
-      new DirectoryChooser(new DefaultUserPreferences()).showDialog(new Frame(), "Go");
     }
   }
 }
