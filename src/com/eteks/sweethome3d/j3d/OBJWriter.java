@@ -86,7 +86,7 @@ import javax.vecmath.Vector4f;
 /**
  * An output stream that writes Java 3D nodes at OBJ + MTL format.
  * <p>Once you wrote nodes, call <code>close</code> method to create the MTL file
- * and the texture images in the same directory as OBJ file. This feature applies
+ * and the texture images in the same folder as OBJ file. This feature applies
  * only to constructor that takes a file as parameter.<br>
  * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret

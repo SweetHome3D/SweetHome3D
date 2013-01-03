@@ -124,7 +124,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     /**
      * The key for a piece of furniture with multiple parts (optional).
      * If the value of this key is <code>true</code>, all the files
-     * stored in the same directory as the 3D model file (MTL, texture files...)
+     * stored in the same folder as the 3D model file (MTL, texture files...)
      * will be considered as being necessary to view correctly the 3D model. 
      */
     MULTI_PART_MODEL("multiPartModel"),
@@ -630,7 +630,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * @param resourceUrlBase the URL used as a base to build the URL to content file  
    *            or <code>null</code> if it's read from current classpath or <code>furnitureCatalogUrl</code>.
    * @param multiPartModel if <code>true</code> the resource is a multi part resource stored 
-   *                 in a directory with other required resources
+   *                 in a folder with other required resources
    * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
   private Content getContent(ResourceBundle resource, 
