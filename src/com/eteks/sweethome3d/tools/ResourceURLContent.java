@@ -48,7 +48,7 @@ public class ResourceURLContent extends URLContent {
    * @param resourceClass the class relative to the resource name to load
    * @param resourceName  the name of the resource
    * @param multiPartResource  if <code>true</code> then the resource is a multi part resource 
-   *           stored in a directory with other required resources
+   *           stored in a folder with other required resources
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
   public ResourceURLContent(Class<?> resourceClass,
@@ -119,7 +119,7 @@ public class ResourceURLContent extends URLContent {
 
   /**
    * Returns <code>true</code> if the resource is a multi part resource stored 
-   * in a directory with other required resources.
+   * in a folder with other required resources.
    */
   public boolean isMultiPartResource() {
     return this.multiPartResource;
