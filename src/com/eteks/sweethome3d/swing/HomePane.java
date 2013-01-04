@@ -2576,6 +2576,8 @@ public class HomePane extends JRootPane implements HomeView {
       }
     
       JComponent planView3DPane;
+      Boolean detachedView3DProperty = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
+      boolean detachedView3D = detachedView3DProperty != null && detachedView3DProperty.booleanValue();        
       if (planView != null) {
         // Create a split pane that displays both components
         final JSplitPane planView3DSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, view3D);
@@ -2584,7 +2586,8 @@ public class HomePane extends JRootPane implements HomeView {
             PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
 
         final Integer dividerLocation = (Integer)home.getVisualProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
-        if (OperatingSystem.isMacOSX() && dividerLocation != null && dividerLocation > 2) {
+        if (OperatingSystem.isMacOSX() 
+            && !detachedView3D && dividerLocation != null && dividerLocation > 2) {
           // Under Mac OS X, ensure that the 3D view of an existing home will be displayed during a while
           // to avoid a freeze when the 3D view was saved as hidden and then the window displaying the 3D view is enlarged 
           planView3DSplitPane.addAncestorListener(new AncestorListener() {
@@ -2620,8 +2623,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
     
       // Detach 3D view if it was detached when saved and its dialog can be viewed in one of the screen devices
-      Boolean detachedView3D = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
-      if (detachedView3D != null && detachedView3D.booleanValue()) {
+      if (detachedView3D) {
         // Check 3D view can be viewed in one of the available screens      
         final Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
         final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
