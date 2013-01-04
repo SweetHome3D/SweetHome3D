@@ -20,9 +20,12 @@
 package com.eteks.sweethome3d;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -53,7 +56,6 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
-import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.sun.j3d.exp.swing.JCanvas3D;
@@ -209,8 +211,7 @@ class MacOSXConfiguration {
                       EventQueue.invokeAndWait(new Runnable() {
                           public void run() {
                             canvas3D.set(homeFrame.isShowing()
-                                && (!SwingTools.findChildren(homeFrame.getRootPane(), Canvas3D.class).isEmpty()
-                                   || !SwingTools.findChildren(homeFrame.getRootPane(), JCanvas3D.class).isEmpty()));
+                                && isParentOfCanvas3D(homeFrame, Canvas3D.class, JCanvas3D.class));
                           }
                         });
                     } while (!canvas3D.get());                  
@@ -224,6 +225,28 @@ class MacOSXConfiguration {
                         }
                       });
                   }
+                }
+                
+                private boolean isParentOfCanvas3D(Container parent, Class<?> ... canvas3DClasses) {
+                  // Search 3D canvas among children and child windows in case the 3D view was detached
+                  for (int i = 0; i < parent.getComponentCount(); i++) {
+                    Component child = parent.getComponent(i);
+                    for (Class<?> canvas3DClass : canvas3DClasses) {
+                      if (canvas3DClass.isInstance(child)
+                          || child instanceof Container
+                            && isParentOfCanvas3D((Container)child, canvas3DClasses)) {
+                        return true;
+                      }
+                    }
+                  }
+                  if (parent instanceof Window) {
+                    for (Window window : ((Window)parent).getOwnedWindows()) {
+                      if (isParentOfCanvas3D(window, canvas3DClasses)) {
+                        return true;
+                      }
+                    }
+                  } 
+                  return false;
                 }
               });
           }
