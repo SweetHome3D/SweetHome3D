@@ -64,7 +64,6 @@ import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.SceneBase;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
-import com.sun.j3d.utils.image.ImageException;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -1750,8 +1749,14 @@ public class OBJLoader extends LoaderBase implements Loader {
           }
         } catch (IOException ex) {
           // Ignore images at other format
-        } catch (ImageException ex) {
-          // Images not supported by TextureLoader
+        } catch (RuntimeException ex) {
+          // Take into account exceptions of Java 3D 1.5 ImageException class
+          // in such a way program can run in Java 3D 1.3.1
+          if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
+            // Ignore images not supported by TextureLoader
+          } else {
+            throw ex;
+          }
         }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());

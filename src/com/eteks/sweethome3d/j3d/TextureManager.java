@@ -43,7 +43,6 @@ import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.URLContent;
-import com.sun.j3d.utils.image.ImageException;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -221,9 +220,15 @@ public class TextureManager {
     } catch (IOException ex) {
       // Too bad, we'll use errorTexture
       return errorTexture;
-    } catch (ImageException ex) {
-      // Images not supported by TextureLoader
-      return errorTexture;
+    } catch (RuntimeException ex) {
+      // Take into account exceptions of Java 3D 1.5 ImageException class
+      // in such a way program can run in Java 3D 1.3.1
+      if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
+        // Images not supported by TextureLoader
+        return errorTexture;
+      } else {
+        throw ex;
+      }
     }            
   }
 
