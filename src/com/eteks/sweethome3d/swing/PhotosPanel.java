@@ -524,11 +524,11 @@ public class PhotosPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Creates the photo image depending on the quality requested by the user.
+   * Creates the photo images in a folder depending on the quality requested by the user.
    */
   private void startPhotosCreation() {
     final String directory = this.controller.getContentManager().showSaveDialog(this,
-        this.preferences.getLocalizedString(PhotosPanel.class, "selectPhotosDirectoryDialog.title"), 
+        this.preferences.getLocalizedString(PhotosPanel.class, "selectPhotosFolderDialog.title"), 
         ContentManager.ContentType.PHOTOS_DIRECTORY, this.home.getName());
     if (directory != null) {
       // Build file names list
