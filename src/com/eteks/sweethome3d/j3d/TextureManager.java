@@ -43,6 +43,7 @@ import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.sun.j3d.utils.image.ImageException;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -202,26 +203,28 @@ public class TextureManager {
    * Returns a texture created from the image from <code>content</code>. 
    */
   public Texture loadTexture(final Content content) {
-    BufferedImage image = null;
     try {
       // Read the image 
       InputStream contentStream = content.openStream();
-      image = ImageIO.read(contentStream);
+      BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
+      if (image != null) {
+        Texture texture = new TextureLoader(image).getTexture();
+        // Keep in user data the URL of the texture image
+        if (content instanceof URLContent) {
+          texture.setUserData(((URLContent)content).getURL());
+        }
+        return texture;
+      } else {
+        return errorTexture;
+      }
     } catch (IOException ex) {
       // Too bad, we'll use errorTexture
+      return errorTexture;
+    } catch (ImageException ex) {
+      // Images not supported by TextureLoader
+      return errorTexture;
     }            
-    final Texture texture;
-    if (image == null) {
-      texture = errorTexture;
-    } else {
-      texture = new TextureLoader(image).getTexture();
-      // Keep in user data the URL of the texture image
-      if (content instanceof URLContent) {
-        texture.setUserData(((URLContent)content).getURL());
-      }
-    }
-    return texture;
   }
 
   /**

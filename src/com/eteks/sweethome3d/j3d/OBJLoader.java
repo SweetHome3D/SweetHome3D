@@ -64,6 +64,7 @@ import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.SceneBase;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
+import com.sun.j3d.utils.image.ImageException;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -1735,21 +1736,22 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       
       if (imageFileName != null) {
-        URL textureImageUrl = baseUrl != null
-            ? new URL(baseUrl, imageFileName)
-            : new File(imageFileName).toURI().toURL();
-        BufferedImage textureImage = null;
         try {
-          textureImage = ImageIO.read(textureImageUrl);
+          URL textureImageUrl = baseUrl != null
+              ? new URL(baseUrl, imageFileName)
+              : new File(imageFileName).toURI().toURL();
+          BufferedImage textureImage = ImageIO.read(textureImageUrl);          
+          if (textureImage != null) {
+            TextureLoader textureLoader = new TextureLoader(textureImage);
+            Texture texture = textureLoader.getTexture();
+            // Keep in user data the URL of the texture image
+            texture.setUserData(textureImageUrl);
+            currentAppearance.setTexture(texture);
+          }
         } catch (IOException ex) {
           // Ignore images at other format
-        }
-        if (textureImage != null) {
-          TextureLoader textureLoader = new TextureLoader(textureImage);
-          Texture texture = textureLoader.getTexture();
-          // Keep in user data the URL of the texture image
-          texture.setUserData(textureImageUrl);
-          currentAppearance.setTexture(texture);
+        } catch (ImageException ex) {
+          // Images not supported by TextureLoader
         }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());
