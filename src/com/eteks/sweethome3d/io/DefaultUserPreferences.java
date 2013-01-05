@@ -85,49 +85,44 @@ public class DefaultUserPreferences extends UserPreferences {
     setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
     setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));  
-    try {
-      setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, 
-          "aerialViewCenteredOnSelectionEnabled")));
-    } catch (IllegalArgumentException ex) {
-      setAerialViewCenteredOnSelectionEnabled(false);
-    }
+    setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "aerialViewCenteredOnSelectionEnabled", "false")));
     setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase(Locale.ENGLISH)));
     setRulersVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
     setGridVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
-    setFurnitureViewedFromTop(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
-    setFloorColoredOrTextured(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
+    // Allow furnitureViewedFromTop and roomFloorColoredOrTextured to be different according to the running OS
+    String osName = System.getProperty("os.name");
+    setFurnitureViewedFromTop(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "furnitureViewedFromTop." + osName, 
+        localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop"))));
+    setFloorColoredOrTextured(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "roomFloorColoredOrTextured." + osName,
+        localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured"))));
     setWallPattern(patternsCatalog.getPattern(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
     setNewWallThickness(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
     setNewWallHeight(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
-    try {
-      setNewFloorThickness(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newFloorThickness")));
-    } catch (IllegalArgumentException ex) {
-      setNewFloorThickness(12);
-    }
-    try {
-      setAutoSaveDelayForRecovery(Integer.parseInt(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "autoSaveDelayForRecovery")));
-    } catch (IllegalArgumentException ex) {
-      // Disable auto save
-      setAutoSaveDelayForRecovery(0);
-    }
+    setNewFloorThickness(Float.parseFloat(getOptionalLocalizedString(localizedPreferences, "newFloorThickness", "12")));
+    setAutoSaveDelayForRecovery(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "autoSaveDelayForRecovery", "0")));
     setRecentHomes(new ArrayList<String>());
-    try {
-      setCurrency(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "currency"));
-    } catch (IllegalArgumentException ex) {
-      // Don't use currency and prices in program
-    }
+    setCurrency(getOptionalLocalizedString(localizedPreferences, "currency", null)); 
     for (String property : new String [] {"LevelName", "HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
-      try {
-        String [] autoCompletionStrings = localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "autoCompletionStrings#" + property).trim().split(",");
+      String autoCompletionStringsList = getOptionalLocalizedString(localizedPreferences, "autoCompletionStrings#" + property, null);
+      if (autoCompletionStringsList != null) {
+        String [] autoCompletionStrings = autoCompletionStringsList.trim().split(",");
         if (autoCompletionStrings.length > 0) {
           for (int i = 0; i < autoCompletionStrings.length; i++) {
             autoCompletionStrings [i] = autoCompletionStrings [i].trim();
           }
           setAutoCompletionStrings(property, Arrays.asList(autoCompletionStrings));
         }
-      } catch (IllegalArgumentException ex) {
-        // No default auto completion strings
       }
+    }
+  }
+  
+  private String getOptionalLocalizedString(UserPreferences localizedPreferences, 
+                                            String   resourceKey,
+                                            String   defaultValue) {
+    try {
+      return localizedPreferences.getLocalizedString(DefaultUserPreferences.class, resourceKey);
+    } catch (IllegalArgumentException ex) {
+      return defaultValue;
     }
   }
 
