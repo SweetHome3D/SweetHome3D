@@ -425,14 +425,16 @@ public class SwingTools {
    * Requests the focus for the given component.
    */
   private static void requestFocus(final JComponent focusedComponent) {
-    // Prefer to call requestFocusInWindow in a timer with a small delay than calling it directly 
-    // or calling it with EnventQueue#invokeLater to ensure it always works
-    new Timer(50, new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          focusedComponent.requestFocusInWindow();
-          ((Timer)ev.getSource()).stop();
-        }
-      }).start();
+    if (!focusedComponent.requestFocusInWindow()) {
+      // Prefer to call requestFocusInWindow in a timer with a small delay   
+      // than calling it with EnventQueue#invokeLater to ensure it always works
+      new Timer(50, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            focusedComponent.requestFocusInWindow();
+            ((Timer)ev.getSource()).stop();
+          }
+        }).start();
+    }
   }
   
   /**
