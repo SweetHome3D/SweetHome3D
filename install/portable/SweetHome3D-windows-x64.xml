@@ -1,6 +1,6 @@
 <!-- SweetHome3D-windows-x64.xml
 
-     Sweet Home 3D, Copyright (c) 2012 Emmanuel PUYBARET / eTeks <info@eteks.com>
+     Sweet Home 3D, Copyright (c) 2012-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
 
      SweetHome3D-windows-x64.exe creator for Launch4j 
      This script requires launch4j available at http://launch4j.sourceforge.net/     
@@ -50,12 +50,12 @@
     <opt>-Djava.library.path=lib/ext/windows/x64 -Xmx1024m -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable</opt>
   </jre>
   <versionInfo>
-    <fileVersion>3.8.0.0</fileVersion>
-    <txtFileVersion>3.8</txtFileVersion>
+    <fileVersion>4.0.0.0</fileVersion>
+    <txtFileVersion>4.0</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
-    <copyright>Copyright (c) 2007-2012 eTeks</copyright>
-    <productVersion>3.8.0.0</productVersion>
-    <txtProductVersion>3.8</txtProductVersion>
+    <copyright>Copyright (c) 2007-2013 eTeks</copyright>
+    <productVersion>4.0.0.0</productVersion>
+    <txtProductVersion>4.0</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>

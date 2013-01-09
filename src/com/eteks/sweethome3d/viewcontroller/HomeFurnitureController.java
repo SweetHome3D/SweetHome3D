@@ -422,7 +422,7 @@ public class HomeFurnitureController implements Controller {
         }
       }
       if (modelMaterialsController != null) {
-        // Materials management available since version 3.8 only
+        // Materials management available since version 4.0 only
         modelMaterialsController.setModelMaterials(modelMaterials);
         modelMaterialsController.setModel(model);
       }
@@ -612,7 +612,7 @@ public class HomeFurnitureController implements Controller {
   
   /**
    * Sets the edited description.
-   * @since 3.8
+   * @since 4.0
    */
   public void setDescription(String description) {
     if (description != this.description) {
@@ -624,7 +624,7 @@ public class HomeFurnitureController implements Controller {
 
   /**
    * Returns the edited description.
-   * @since 3.8
+   * @since 4.0
    */
   public String getDescription() {
     return this.description;
@@ -632,7 +632,7 @@ public class HomeFurnitureController implements Controller {
   
   /**
    * Sets the edited price.
-   * @since 3.8
+   * @since 4.0
    */
   public void setPrice(BigDecimal price) {
     if (price != this.price) {
@@ -644,7 +644,7 @@ public class HomeFurnitureController implements Controller {
 
   /**
    * Returns the edited price.
-   * @since 3.8
+   * @since 4.0
    */
   public BigDecimal getPrice() {
     return this.price;
@@ -752,7 +752,7 @@ public class HomeFurnitureController implements Controller {
   
   /**
    * Returns <code>true</code> if base plan item is an enabled property.
-   * @since 3.8
+   * @since 4.0
    */
   public boolean isBasePlanItemEnabled() {
     return this.basePlanItemEnabled;

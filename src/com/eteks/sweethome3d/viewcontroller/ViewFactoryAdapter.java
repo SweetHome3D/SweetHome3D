@@ -30,7 +30,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A view factory with all its methods throwing
  * <code>UnsupportedOperationException</code> exception.   
  * @author Emmanuel Puybaret
- * @since 3.8
+ * @since 4.0
  */
 public class ViewFactoryAdapter implements ViewFactory {
   /**

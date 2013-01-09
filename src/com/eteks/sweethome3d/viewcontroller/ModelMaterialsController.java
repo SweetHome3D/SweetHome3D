@@ -30,7 +30,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 /**
  * A MVC controller for model materials choice.
  * @author Emmanuel Puybaret
- * @since 3.8
+ * @since 4.0
  */
 public class ModelMaterialsController implements Controller {
   public enum Property {MODEL, MATERIALS}

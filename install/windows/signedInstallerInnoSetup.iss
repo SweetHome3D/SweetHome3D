@@ -1,8 +1,8 @@
 ; installerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2012 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2007-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
-; SweetHome3D-3.8-windows.exe setup program creator
+; SweetHome3D-4.0-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -13,7 +13,7 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVerName=Sweet Home 3D version 3.8
+AppVerName=Sweet Home 3D version 4.0
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -22,14 +22,14 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-3.8-windows
+OutputBaseFilename=..\SweetHome3D-4.0-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=3.8.0.0
-VersionInfoTextVersion=3.8
+VersionInfoVersion=4.0.0.0
+VersionInfoTextVersion=4.0
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2012 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2013 eTeks
 VersionInfoCompany=eTeks
 ; Signing
 ;

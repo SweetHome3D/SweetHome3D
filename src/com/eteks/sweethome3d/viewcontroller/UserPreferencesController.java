@@ -232,7 +232,7 @@ public class UserPreferencesController implements Controller {
   
   /**
    * Sets whether aerial view should be centered on selection or not.
-   * @since 3.8
+   * @since 4.0
    */
   public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
     if (aerialViewCenteredOnSelectionEnabled != this.aerialViewCenteredOnSelectionEnabled) {
@@ -244,7 +244,7 @@ public class UserPreferencesController implements Controller {
   
   /**
    * Returns whether aerial view should be centered on selection or not.
-   * @since 3.8
+   * @since 4.0
    */
   public boolean isAerialViewCenteredOnSelectionEnabled() {
     return this.aerialViewCenteredOnSelectionEnabled;

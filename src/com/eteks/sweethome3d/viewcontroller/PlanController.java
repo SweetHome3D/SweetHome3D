@@ -351,6 +351,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Activates or deactivates alignment feature. 
    * @param alignmentActivated if <code>true</code> then alignment is active.
+   * @since 4.0
    */
   public void setAlignmentActivated(boolean alignmentActivated) {
     this.state.setAlignmentActivated(alignmentActivated);
@@ -389,6 +390,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Processes a mouse button pressed event.
+   * @since 4.0
    */
   public void pressMouse(float x, float y, int clickCount, boolean shiftDown, 
                          boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled) {
@@ -686,6 +688,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Returns <code>true</code> if magnetism was toggled at last mouse press.
+   * @since 4.0
    */
   protected boolean wasMagnetismToggledLastMousePress() {
     return this.magnetismToggledLastMousePress;
@@ -693,6 +696,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Returns <code>true</code> if alignment was activated at last mouse press.
+   * @since 4.0
    */
   protected boolean wasAlignmentActivatedLastMousePress() {
     return this.alignmentActivatedLastMousePress;

@@ -356,7 +356,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   /**
    * Sets the price of this group.
    * @throws UnsupportedOperationException if the price of one of the pieces is set
-   * @since 3.8
+   * @since 4.0
    */
   @Override
   public void setPrice(BigDecimal price) {

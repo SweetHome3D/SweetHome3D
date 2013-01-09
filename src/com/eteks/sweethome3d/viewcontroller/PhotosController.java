@@ -34,7 +34,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 /**
  * The controller of multiple photos creation view.
  * @author Emmanuel Puybaret
- * @since 3.8
+ * @since 4.0
  */
 public class PhotosController extends AbstractPhotoController {
   /**

@@ -336,7 +336,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Returns the color used to draw walls in this environment.
-   * @sicne 3.8
+   * @sicne 4.0
    */
   public Integer getWallsTopColor() {
     return this.wallsTopColor;
@@ -345,7 +345,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * Sets the color used to draw walls in this environment and fires a <code>PropertyChangeEvent</code>.
    * @param wallsTopColor a RGB color or <code>null</code> if walls top color should take a default color.
-   * @since 3.8
+   * @since 4.0
    */
   public void setWallsTopColor(Integer wallsTopColor) {
     if (wallsTopColor != this.wallsTopColor) {

@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 /**
  * The color and other properties of a material.
- * @since 3.8
+ * @since 4.0
  * @author Emmanuel Puybaret
  */
 public class HomeMaterial implements Serializable {
@@ -36,7 +36,7 @@ public class HomeMaterial implements Serializable {
   
   /**
    * Creates a material instance from parameters.
-   * @since 3.8
+   * @since 4.0
    */
   public HomeMaterial(String name, Integer color, HomeTexture texture, Float shininess) {
     this.name = name;
@@ -48,7 +48,7 @@ public class HomeMaterial implements Serializable {
   /**
    * Returns the name of this material.
    * @return the name of the material or <code>null</code> if material has no name.
-   * @since 3.8
+   * @since 4.0
    */
   public String getName() {
     return this.name;
@@ -57,7 +57,7 @@ public class HomeMaterial implements Serializable {
   /**
    * Returns the color of this material.
    * @return the color of the material as RGB code or <code>null</code> if material color is unchanged.
-   * @since 3.8
+   * @since 4.0
    */
   public Integer getColor() {
     return this.color;
@@ -66,7 +66,7 @@ public class HomeMaterial implements Serializable {
   /**
    * Returns the texture of this material.
    * @return the texture of the material or <code>null</code> if material texture is unchanged.
-   * @since 3.8
+   * @since 4.0
    */
   public HomeTexture getTexture() {
     return this.texture;
@@ -75,7 +75,7 @@ public class HomeMaterial implements Serializable {
   /**
    * Returns the shininess of this material.
    * @return a value between 0 (matt) and 1 (very shiny) or <code>null</code> if material shininess is unchanged.
-   * @since 3.8
+   * @since 4.0
    */
   public Float getShininess() {
     return this.shininess;

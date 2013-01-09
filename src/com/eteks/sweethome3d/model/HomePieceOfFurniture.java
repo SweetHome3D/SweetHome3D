@@ -659,7 +659,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * Returns the materials applied to the 3D model of this piece of furniture.
    * @return the materials of the 3D model or <code>null</code> 
    * if the individual materials of the 3D model are not modified.
-   * @since 3.8
+   * @since 4.0
    */
   public HomeMaterial [] getModelMaterials() {
     if (this.modelMaterials != null) {
@@ -786,7 +786,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   /**
    * Sets the price of this piece of furniture. Once this piece is updated, 
    * listeners added to this piece will receive a change notification.
-   * @since 3.8
+   * @since 4.0
    */
   public void setPrice(BigDecimal price) {
     if (price != this.price

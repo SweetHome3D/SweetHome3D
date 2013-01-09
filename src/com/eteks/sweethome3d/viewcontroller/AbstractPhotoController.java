@@ -32,7 +32,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 /**
  * The base class for controllers of photo creation views.
  * @author Emmanuel Puybaret
- * @since 3.8
+ * @since 4.0
  */
 public abstract class AbstractPhotoController implements Controller {
   /**

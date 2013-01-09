@@ -1,4 +1,4 @@
-SWEET HOME 3D VIEWER v 3.8
+SWEET HOME 3D VIEWER v 4.0
 --------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
@@ -59,5 +59,5 @@ from parameters list.
 Mentioning the following copyrights on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
 
-Sweet Home 3D Viewer, Copyright (c) 2005-2012 Emmanuel PUYBARET / eTeks. 
+Sweet Home 3D Viewer, Copyright (c) 2005-2013 Emmanuel PUYBARET / eTeks. 
 Distributed under GNU General Public License    
