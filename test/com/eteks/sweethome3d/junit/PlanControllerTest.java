@@ -179,7 +179,7 @@ public class PlanControllerTest extends TestCase {
     assertCoordinatesEqualWallPoints(504, 300, 24, 300, wall3);
     assertCoordinatesEqualWallPoints(20, 20, 24, 300, wall4);
 
-    // 8. Click at (504, 40) with Shift key depressed
+    // 8. Click at (504, 40) 
     planController.moveMouse(504, 40);
     planController.pressMouse(504, 40, 1, true, false);
     planController.releaseMouse(504, 40);
