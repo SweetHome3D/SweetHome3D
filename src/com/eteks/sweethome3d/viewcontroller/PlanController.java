@@ -168,7 +168,9 @@ public class PlanController extends FurnitureController implements Controller {
   private float                           xLastMousePress;
   private float                           yLastMousePress;
   private boolean                         shiftDownLastMousePress;
+  private boolean                         alignmentActivatedLastMousePress;
   private boolean                         duplicationActivatedLastMousePress;
+  private boolean                         magnetismToggledLastMousePress;
   private float                           xLastMouseMove;
   private float                           yLastMouseMove;
   private Area                            wallsAreaCache;
@@ -176,6 +178,7 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath>               roomPathsCache;
   private Map<HomePieceOfFurniture, Area> furnitureSidesCache;
   private List<Selectable>                draggedItems;
+
 
   /**
    * Creates the controller of plan view. 
@@ -346,6 +349,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Activates or deactivates alignment feature. 
+   * @param alignmentActivated if <code>true</code> then alignment is active.
+   */
+  public void setAlignmentActivated(boolean alignmentActivated) {
+    this.state.setAlignmentActivated(alignmentActivated);
+  }
+
+  /**
    * Activates or deactivates duplication feature. 
    * @param duplicationActivated if <code>true</code> then duplication is active.
    */
@@ -373,13 +384,23 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public void pressMouse(float x, float y, int clickCount, 
                          boolean shiftDown, boolean duplicationActivated) {
+    pressMouse(x, y, clickCount, shiftDown, shiftDown, duplicationActivated, shiftDown);
+  }
+
+  /**
+   * Processes a mouse button pressed event.
+   */
+  public void pressMouse(float x, float y, int clickCount, boolean shiftDown, 
+                         boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled) {
     // Store the last coordinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
     this.xLastMouseMove = x;
     this.yLastMouseMove = y;
-    this.shiftDownLastMousePress = shiftDown; 
+    this.shiftDownLastMousePress = shiftDown;
+    this.alignmentActivatedLastMousePress = alignmentActivated;
     this.duplicationActivatedLastMousePress = duplicationActivated; 
+    this.magnetismToggledLastMousePress = magnetismToggled;
     this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
   }
 
@@ -661,6 +682,20 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected boolean wasShiftDownLastMousePress() {
     return this.shiftDownLastMousePress;
+  }
+
+  /**
+   * Returns <code>true</code> if magnetism was toggled at last mouse press.
+   */
+  protected boolean wasMagnetismToggledLastMousePress() {
+    return this.magnetismToggledLastMousePress;
+  }
+
+  /**
+   * Returns <code>true</code> if alignment was activated at last mouse press.
+   */
+  protected boolean wasAlignmentActivatedLastMousePress() {
+    return this.alignmentActivatedLastMousePress;
   }
 
   /**
@@ -5424,22 +5459,27 @@ public class PlanController extends FurnitureController implements Controller {
    * A point which coordinates are computed with an angle magnetism algorithm.
    */
   private static class PointWithAngleMagnetism {
-    private static final int STEP_COUNT = 24; // 15 degrees step 
+    private static final int CIRCLE_STEPS_15_DEG = 24;
+
     private float x;
     private float y;
     private float angle;
     
     /**
-     * Create a point that applies angle magnetism to point (<code>x</code>,
-     * <code>y</code>). Point end coordinates may be different from
-     * x or y, to match the closest point belonging to one of the radius of a
-     * circle centered at (<code>xStart</code>, <code>yStart</code>), each
-     * radius being a multiple of 15 degrees. The length of the line joining
-     * (<code>xStart</code>, <code>yStart</code>) to the computed point is 
-     * approximated depending on the current <code>unit</code> and scale.
+     * Create a point that applies angle magnetism to point (<code>x</code>, <code>y</code>). 
+     * Point end coordinates stored at object initialization may be different from x or y, 
+     * to match the closest point belonging to one of the radius of a circle centered at 
+     * (<code>xStart</code>, <code>yStart</code>), each radius being a multiple of 15 degrees. 
+     * The length of the line joining (<code>xStart</code>, <code>yStart</code>) to the computed 
+     * point is approximated depending on the current <code>unit</code> and scale.
      */
     public PointWithAngleMagnetism(float xStart, float yStart, float x, float y, 
                                    LengthUnit unit, float maxLengthDelta) {
+      this(xStart, yStart, x, y, unit, maxLengthDelta, CIRCLE_STEPS_15_DEG);
+    }
+    
+    public PointWithAngleMagnetism(float xStart, float yStart, float x, float y, 
+                                   LengthUnit unit, float maxLengthDelta, int circleSteps) {
       this.x = x;
       this.y = y;
       if (xStart == x) {
@@ -5451,7 +5491,7 @@ public class PlanController extends FurnitureController implements Controller {
         float magnetizedLength = unit.getMagnetizedLength(Math.abs(xStart - x), maxLengthDelta);
         this.x = xStart + (float)(magnetizedLength * Math.signum(x - xStart));
       } else { // xStart != x && yStart != y
-        double angleStep = 2 * Math.PI / STEP_COUNT; 
+        double angleStep = 2 * Math.PI / circleSteps; 
         // Caution : pixel coordinate space is indirect !
         double angle = Math.atan2(yStart - y, x - xStart);
         // Compute previous angle closest to a step angle (multiple of angleStep) 
@@ -5516,28 +5556,28 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     /**
-     * Returns the abscissa of end point computed with magnetism.
+     * Returns the abscissa of end point.
      */
     public float getX() {
       return this.x;
     }
     
     /**
-     * Sets the abscissa of end point computed with magnetism
+     * Sets the abscissa of end point.
      */
     protected void setX(float x) {
       this.x = x;
     }
 
     /**
-     * Returns the ordinate of end point computed with magnetism.
+     * Returns the ordinate of end point.
      */
     public float getY() {
       return this.y;
     }
     
     /**
-     * Sets the ordinate of end point computed with magnetism.
+     * Sets the ordinate of end point.
      */
     protected void setY(float y) {
       this.y = y;
@@ -5832,6 +5872,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void toggleMagnetism(boolean magnetismToggled) {
     }
 
+    public void setAlignmentActivated(boolean alignmentActivated) {
+    }
+
     public void setDuplicationActivated(boolean duplicationActivated) {
     }
 
@@ -6086,6 +6129,7 @@ public class PlanController extends FurnitureController implements Controller {
     private boolean              movedDoorOrWindowBoundToWall;
     private boolean              magnetismEnabled;
     private boolean              duplicationActivated;
+    private boolean              alignmentActivated;
 
     @Override
     public Mode getMode() {
@@ -6105,7 +6149,7 @@ public class PlanController extends FurnitureController implements Controller {
       List<Selectable> selectableItemsUnderCursor = 
           getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
       this.oldSelection = home.getSelectedItems();
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       // If no selectable item under the cursor belongs to selection
       if (Collections.disjoint(selectableItemsUnderCursor, this.oldSelection)) {
         // Select only the item with highest priority under cursor position
@@ -6131,6 +6175,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
       this.duplicatedItems = null;
       this.duplicationActivated = wasDuplicationActivatedLastMousePress();
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       getView().setCursor(PlanView.CursorType.MOVE);
     }
     
@@ -6138,6 +6183,12 @@ public class PlanController extends FurnitureController implements Controller {
     public void moveMouse(float x, float y) {      
       if (!this.mouseMoved) {
         toggleDuplication(this.duplicationActivated);
+      }
+      if (this.alignmentActivated) {
+        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(), 
+            x, y, preferences.getLengthUnit(), getView().getPixelLength(), 8);
+        x = alignedPoint.getX();
+        y = alignedPoint.getY();
       }
       if (this.movedPieceOfFurniture != null) {
         // Reset to default piece values and adjust piece of furniture location, angle and depth
@@ -6150,7 +6201,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
-        if (this.magnetismEnabled) {
+        if (this.magnetismEnabled && !this.alignmentActivated) {
           Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
           if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
             adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall);
@@ -6164,7 +6215,7 @@ public class PlanController extends FurnitureController implements Controller {
       } else { 
         moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
       }
-      
+
       if (!this.mouseMoved) {
         selectItems(this.movedItems);
       }
@@ -6221,7 +6272,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }
     }
-
+    
     @Override
     public void escape() {
       if (this.mouseMoved) {
@@ -6261,6 +6312,17 @@ public class PlanController extends FurnitureController implements Controller {
         toggleDuplication(duplicationActivated);
       }
       this.duplicationActivated = duplicationActivated;
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      if (this.mouseMoved) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
+      if (this.alignmentActivated) {
+        getView().deleteFeedback();
+      }
     }
 
     private void toggleDuplication(boolean duplicationActivated) {
@@ -6629,7 +6691,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
     }
     
     @Override
@@ -6836,7 +6898,7 @@ public class PlanController extends FurnitureController implements Controller {
       super.enter();
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       this.xStart = getXLastMouseMove();
       this.yStart = getYLastMouseMove();
       // If the start or end line of a wall close to (xStart, yStart) is
@@ -7347,7 +7409,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), 
@@ -7443,7 +7505,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.doorOrWindowBoundToWall = this.selectedPiece instanceof HomeDoorOrWindow 
           && ((HomeDoorOrWindow)this.selectedPiece).isBoundToWall();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();
+                              ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
@@ -7541,7 +7603,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaYToElevationPoint = getYLastMousePress() - elevationPoint [1];
       this.oldElevation = this.selectedPiece.getElevation();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();
+                              ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldElevation), 
@@ -7635,7 +7697,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaYToResizePoint = getYLastMousePress() - this.resizePoint [1];
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();
+                              ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getHeight()), 
@@ -7752,7 +7814,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();      
+                              ^ wasMagnetismToggledLastMousePress();      
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth()), 
@@ -8032,7 +8094,7 @@ public class PlanController extends FurnitureController implements Controller {
           getXLastMousePress() - this.selectedPiece.getX() - this.selectedPiece.getNameXOffset()); 
       this.oldNameAngle = this.selectedPiece.getNameAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-          ^ wasShiftDownLastMousePress();
+          ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
     }
@@ -8341,7 +8403,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
     }
 
     @Override
@@ -8437,7 +8499,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.offsetChoice = false;
       this.newDimensionLine = null;
       deselectAll();
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       DimensionLine dimensionLine = getMeasuringDimensionLineAt(
           getXLastMousePress(), getYLastMousePress(), this.magnetismEnabled);
       if (dimensionLine != null) {
@@ -8791,7 +8853,7 @@ public class PlanController extends FurnitureController implements Controller {
         planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd(), false);
       }
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
     }
     
     @Override
@@ -9025,7 +9087,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
     }
 
     @Override
@@ -9210,7 +9272,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
       this.newRoom = null;
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       if (this.magnetismEnabled) {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
@@ -9651,7 +9713,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldY = roomPoints [this.roomPointIndex][1];
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
-      toggleMagnetism(wasShiftDownLastMousePress());
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedRoom, this.roomPointIndex), 
@@ -9815,7 +9877,7 @@ public class PlanController extends FurnitureController implements Controller {
           getXLastMousePress() - this.selectedRoom.getXCenter() - this.selectedRoom.getNameXOffset()); 
       this.oldNameAngle = this.selectedRoom.getNameAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-          ^ wasShiftDownLastMousePress();
+          ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
     }
@@ -9959,7 +10021,7 @@ public class PlanController extends FurnitureController implements Controller {
           getXLastMousePress() - this.selectedRoom.getXCenter() - this.selectedRoom.getAreaXOffset()); 
       this.oldAreaAngle = this.selectedRoom.getAreaAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-          ^ wasShiftDownLastMousePress();
+          ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
     }
@@ -10063,7 +10125,7 @@ public class PlanController extends FurnitureController implements Controller {
           getXLastMousePress() - this.selectedLabel.getX()); 
       this.oldAngle = this.selectedLabel.getAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-          ^ wasShiftDownLastMousePress();
+          ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
     }

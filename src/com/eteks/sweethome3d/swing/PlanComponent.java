@@ -214,8 +214,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       MOVE_SELECTION_FAST_LEFT, MOVE_SELECTION_FAST_UP, MOVE_SELECTION_FAST_DOWN, MOVE_SELECTION_FAST_RIGHT,
-      TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
-      ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION, 
+      TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF,
+      ACTIVATE_ALIGNMENT, DEACTIVATE_ALIGNMENT,
+      ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION,       
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
   
   private static final float    MARGIN = 40;
@@ -997,8 +998,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           requestFocusInWindow();          
           if (ev.getButton() == MouseEvent.BUTTON1) {
             controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
-                ev.getClickCount(), ev.isShiftDown(), 
-                OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown());
+                ev.getClickCount(), ev.isShiftDown(), ev.isShiftDown(), 
+                OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown(),
+                OperatingSystem.isWindows() ? ev.isAltDown() : ev.isMetaDown());
           }
         }
       }
@@ -1105,6 +1107,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("DELETE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
     inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.MOVE_SELECTION_LEFT);
     inputMap.put(KeyStroke.getKeyStroke("shift LEFT"), ActionType.MOVE_SELECTION_FAST_LEFT);
     inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
@@ -1113,29 +1116,78 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("shift DOWN"), ActionType.MOVE_SELECTION_FAST_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("shift RIGHT"), ActionType.MOVE_SELECTION_FAST_RIGHT);
-    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
-    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
-    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
     inputMap.put(KeyStroke.getKeyStroke("ENTER"), ActionType.ACTIVATE_EDITIION);
     inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), ActionType.ACTIVATE_EDITIION);
+
     if (OperatingSystem.isMacOSX()) {
       // Under Mac OS X, duplication with Alt key 
       inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift released ALT"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("meta alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("meta released ALT"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift meta alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift meta released ALT"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
-      inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
-      inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.ACTIVATE_EDITIION);
     } else {
       // Under other systems, duplication with Ctrl key 
       inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("meta control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("meta released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift meta control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("shift meta released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
-      inputMap.put(KeyStroke.getKeyStroke("control shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
-      inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("control ENTER"), ActionType.ACTIVATE_EDITIION);
+    }
+    
+    if (OperatingSystem.isWindows()) {
+      // Under Windows, magnetism toggled with Alt key 
+      inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("shift released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("control alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("control released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("shift control alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("shift control released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.ACTIVATE_EDITIION);
+    } else {
+      // Under other systems, magnetism toggled with Meta key 
+      inputMap.put(KeyStroke.getKeyStroke("meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("released META"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("shift meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("shift released META"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("alt released META"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("shift alt meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("shift alt released META"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("meta ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("meta ENTER"), ActionType.ACTIVATE_EDITIION);
+    }
+
+    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+    if (OperatingSystem.isMacOSX()) {
+      inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("meta shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("meta released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+    } else {
+      inputMap.put(KeyStroke.getKeyStroke("control shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      if (OperatingSystem.isWindows()) {
+        inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+        inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      } else {
+        inputMap.put(KeyStroke.getKeyStroke("meta shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+        inputMap.put(KeyStroke.getKeyStroke("meta released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      }
     }
   }
   
@@ -1212,6 +1264,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         controller.toggleMagnetism(this.toggle);
       }
     }
+    // Alignment action
+    class SetAlignmentActivatedAction extends AbstractAction {
+      private final boolean alignmentActivated;
+      
+      public SetAlignmentActivatedAction(boolean alignmentActivated) {
+        this.alignmentActivated = alignmentActivated;
+      }
+      
+      public void actionPerformed(ActionEvent ev) {
+        controller.setAlignmentActivated(this.alignmentActivated);
+      }
+    }
     // Duplication action
     class SetDuplicationActivatedAction extends AbstractAction {
       private final boolean duplicationActivated;
@@ -1249,6 +1313,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     actionMap.put(ActionType.MOVE_SELECTION_FAST_RIGHT, new MoveSelectionAction(10, 0));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_ON, new ToggleMagnetismAction(true));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_OFF, new ToggleMagnetismAction(false));
+    actionMap.put(ActionType.ACTIVATE_ALIGNMENT, new SetAlignmentActivatedAction(true));
+    actionMap.put(ActionType.DEACTIVATE_ALIGNMENT, new SetAlignmentActivatedAction(false));
     actionMap.put(ActionType.ACTIVATE_DUPLICATION, new SetDuplicationActivatedAction(true));
     actionMap.put(ActionType.DEACTIVATE_DUPLICATION, new SetDuplicationActivatedAction(false));
     actionMap.put(ActionType.ACTIVATE_EDITIION, new SetEditionActivatedAction(true));
