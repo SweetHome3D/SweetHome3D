@@ -588,7 +588,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               : (appearance.getMaterial() != null
                   ? appearance.getMaterial().getShininess() / 128f
                   : 0);
-          if (color != null && defaultMaterialAndTexture.getTexture() == null) {
+          if (color != null) {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
             appearance.setMaterial(getMaterial(color, color, materialShininess));
