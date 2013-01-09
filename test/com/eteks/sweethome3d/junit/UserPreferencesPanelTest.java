@@ -42,6 +42,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.UserPreferencesPanel;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
 import com.eteks.sweethome3d.viewcontroller.CompassController;
@@ -96,7 +97,7 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setFurnitureViewedFromTop(
         defaultPreferences.isFurnitureViewedFromTop());
     preferences.setFloorColoredOrTextured(
-        defaultPreferences.isFurnitureViewedFromTop());
+        defaultPreferences.isRoomFloorColoredOrTextured());
     preferences.setNewWallThickness(
         defaultPreferences.getNewWallThickness());
     preferences.setNewWallHeight(
@@ -140,10 +141,11 @@ public class UserPreferencesPanelTest extends TestCase {
     assertTrue("Magnestism isn't selected", magnetismCheckBox.isSelected());
     assertTrue("Rulers isn't selected", rulersCheckBox.isSelected());
     assertTrue("Grid isn't selected", gridCheckBox.isSelected());
-    assertTrue("Catalog icon radio button isn't selected", catalogIconRadioButton.isSelected());
-    assertFalse("Top view button is selected",  topViewRadioButton.isSelected());
-    assertTrue("Monochrome radio button isn't selected", monochromeRadioButton.isSelected());
-    assertFalse("Floor color radio button is selected",  floorColorOrTextureRadioButton.isSelected());
+    boolean macOSXOrWindows = OperatingSystem.isMacOSX() || OperatingSystem.isWindows();
+    assertTrue("Catalog icon radio button isn't selected", catalogIconRadioButton.isSelected() != macOSXOrWindows);
+    assertFalse("Top view button is selected",  topViewRadioButton.isSelected() != macOSXOrWindows);
+    assertTrue("Monochrome radio button isn't selected", monochromeRadioButton.isSelected() != macOSXOrWindows);
+    assertFalse("Floor color radio button is selected",  floorColorOrTextureRadioButton.isSelected() != macOSXOrWindows);
     assertEquals("Wrong default thickness", 
         newWallThicknessSpinner.getValue(), defaultPreferences.getNewWallThickness());
     assertEquals("Wrong default wall height", 
@@ -154,8 +156,8 @@ public class UserPreferencesPanelTest extends TestCase {
     magnetismCheckBox.setSelected(false);
     rulersCheckBox.setSelected(false);
     gridCheckBox.setSelected(false);
-    topViewRadioButton.setSelected(true);
-    floorColorOrTextureRadioButton.setSelected(true);
+    catalogIconRadioButton.setSelected(true);
+    monochromeRadioButton.setSelected(true);
     newWallThicknessSpinner.setValue(1);
     newHomeWallHeightSpinner.setValue(100);
     
@@ -163,7 +165,7 @@ public class UserPreferencesPanelTest extends TestCase {
     controller.modifyUserPreferences();
     // Check preferences value
     assertPreferencesEqual(LengthUnit.INCH, false, false, false,
-        true, true,
+        false, false,
         LengthUnit.inchToCentimeter(1), 
         LengthUnit.inchToCentimeter(100), 
         preferences);
