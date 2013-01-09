@@ -44,6 +44,7 @@ public class PackageDependenciesTest extends TestCase {
     // Swing components packages
     JavaPackage swing = constraint.addPackage("javax.swing");
     JavaPackage imageio = constraint.addPackage("javax.imageio");
+    JavaPackage imageioStream = constraint.addPackage("javax.imageio.stream");
     // Java 3D
     JavaPackage java3d = constraint.addPackage("javax.media.j3d");
     JavaPackage vecmath = constraint.addPackage("javax.vecmath");
@@ -132,6 +133,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(sweetHome3DJava3D);
     sweetHome3DSwing.dependsUpon(swing);
     sweetHome3DSwing.dependsUpon(imageio);
+    sweetHome3DSwing.dependsUpon(imageioStream);
     sweetHome3DSwing.dependsUpon(java3d);
     sweetHome3DSwing.dependsUpon(vecmath);
     sweetHome3DSwing.dependsUpon(sun3dUtilsGeometry);
