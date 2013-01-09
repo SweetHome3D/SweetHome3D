@@ -60,6 +60,7 @@ import com.eteks.sweethome3d.swing.ObserverCameraPanel;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.TextureChoiceComponent;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
@@ -107,10 +108,10 @@ public class HomeCameraTest extends ComponentTestFixture {
     // 2. Create one wall between points (50, 50) and (150, 50) at a bigger scale
     runAction(controller, HomePane.ActionType.CREATE_WALLS, tester);
     runAction(controller, HomePane.ActionType.ZOOM_IN, tester);
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.actionClick(planComponent, 50, 50);
     tester.actionClick(planComponent, 150, 50, InputEvent.BUTTON1_MASK, 2);
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check wall length is 100 * plan scale
     Wall wall = home.getWalls().iterator().next();
     assertTrue("Incorrect wall length " + 100 / planComponent.getScale() 

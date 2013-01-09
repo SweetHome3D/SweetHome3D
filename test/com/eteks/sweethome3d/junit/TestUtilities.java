@@ -21,12 +21,15 @@ package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 
 import junit.framework.TestCase;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.Matcher;
+
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Gathers tools used by tests.
@@ -79,5 +82,12 @@ public final class TestUtilities {
                                                float value1, float value2, float epsilon) {
     TestCase.assertTrue(message + ", expected:" + value1 + " but was:" + value2, 
         Math.abs(value1 - value2) < epsilon);
+  }
+  
+  /**
+   * Returns the key used to toggle magnetism.
+   */
+  public static int getMagnetismToggleKey() {
+    return OperatingSystem.isWindows() ? KeyEvent.VK_ALT : KeyEvent.VK_META;
   }
 }

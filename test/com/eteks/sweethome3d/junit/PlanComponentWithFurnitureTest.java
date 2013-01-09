@@ -80,14 +80,14 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
     // then double click at (30, 30) with no magnetism
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.actionClick(planComponent, 30, 30);
     tester.actionClick(planComponent, 220, 30);
     tester.actionClick(planComponent, 270, 80);
     tester.actionClick(planComponent, 270, 170);
     tester.actionClick(planComponent, 30, 170);
     tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check 5 walls were added to home plan
     assertEquals("Wrong walls count", 5, frame.home.getWalls().size());
 
@@ -150,12 +150,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         new Point(121, 120))); 
     // Check piece angle is 0°
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
-    // Press Shift key
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    // Toggle magnetism
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     // Check piece angle is different from 0°
     assertFalse("Piece orientation shouldn't be magnetized", 
         Math.abs(piece.getAngle()) < 1E-10);
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);    
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());    
     tester.actionKeyStroke(planComponent, KeyEvent.VK_ESCAPE);
     tester.actionMouseRelease(); 
     // Check piece angle is 3 * PI / 2 (=-90°)
@@ -237,11 +237,11 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     Thread.sleep(1000); // Wait 1s to avoid double click
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2)));
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2 + 4, pieceYPixel - widthPixel / 2 + 4))); 
     tester.actionMouseRelease();
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check piece width and depth were resized (caution : piece angle is oriented at 90°)
     assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
         pieceDepth + 4 / planComponent.getScale(), pieceHeight, piece);
@@ -333,7 +333,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Move its end point to (330, 167)
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(280, 167)));
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(320, 167)));
-    // Check its coordinates while Shift key isn't pressed (with magnetism)
+    // Check its coordinates with magnetism
     assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
     // Check its length with magnetism 
     float firstDimensionLineLength = (float)Point2D.distance(
@@ -341,12 +341,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         firstDimensionLine.getXEnd(), firstDimensionLine.getYEnd());
     assertTrue("Incorrect length 182 " + firstDimensionLineLength, 
         Math.abs(182 - firstDimensionLineLength) < 1E-4);
-    // Press Shift key
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
-    // Check its coordinates while Shift key is pressed (with no magnetism)
+    // Toggle magnetism
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
+    // Check its coordinates with no magnetism
     assertEqualsDimensionLine(520, 122, 600, 298, 0, firstDimensionLine);
-    // Release Shift key and mouse button
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);    
+    // Release magnetism key and mouse button
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());    
     tester.actionMouseRelease();
     assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
     

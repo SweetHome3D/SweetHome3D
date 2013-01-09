@@ -113,11 +113,11 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check they are selected
     assertSelectionContains(frame.home, wall1, wall2, wall3);
 
-    // 3. Click at (30, 170), then double click at (50, 50) with Shift key depressed
+    // 3. Click at (30, 170), then double click at (50, 50) without magnetism
     tester.actionClick(planComponent, 30, 170);
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.actionClick(planComponent, 50, 50, InputEvent.BUTTON1_MASK, 2);
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check a forth wall was created at (20, 300), (60, 60) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(20, 300, 60, 60, wall4);
@@ -239,15 +239,15 @@ public class PlanComponentTest extends ComponentTestFixture {
     // 13. Select first wall
     tester.actionClick(planComponent, 100, 100); // Give focus first
     tester.actionClick(planComponent, 40, 30);
-    // Drag cursor from (30, 30) to (50, 50) with shift key pressed
+    // Drag cursor from (30, 30) to (50, 50) without magnetism
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(30, 30))); 
     tester.actionMouseMove(planComponent, 
         new ComponentLocation(new Point(50, 50))); 
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.waitForIdle();
     tester.actionMouseRelease(); 
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check wall start point moved to (60, 60)
     assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
     assertCoordinatesEqualWallPoints(60, 60, 24, 300, wall4);
@@ -355,13 +355,13 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Take control with mouse
     tester.actionMouseMove(planComponent, 
         new ComponentLocation(new Point(200, 200)));
-    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     Wall wall7 = orderedWalls.get(7);
     assertCoordinatesEqualWallPoints(wall7.getXStart(), wall7.getYStart(), 
         planComponent.convertXPixelToModel(200), 
         planComponent.convertYPixelToModel(200), wall7);
     tester.waitForIdle();
-    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Take control again with keyboard and close the walls square
     tester.actionKeyStroke(KeyEvent.VK_ENTER);
     tester.actionKeyString("100");
