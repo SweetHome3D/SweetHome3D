@@ -25,8 +25,11 @@
 #include <mach-o/dyld.h>
 #include <CoreServices/CoreServices.h>
 
-#define ORACLE_JAVA_LAUNCHER  "JavaAppLauncher"
-#define APPLE_JAVA_LAUNCHER   "JavaApplicationStub"
+#define ORACLE_JAVA_LAUNCHER  "SweetHome3D"
+#define APPLE_JAVA_LAUNCHER   "../Resources/Sweet Home 3D Java 5 and 6.app/Contents/MacOS/SweetHome3D"
+
+#define JAVA_HOME             "/usr/libexec/java_home"
+#define JAVA_HOME_1_6         "/usr/libexec/java_home -F -t BundledApp -v 1.6 1>/dev/null 2>/dev/null"
 
 /**
  * Returns the path of the given executable found in the same directory as the executable that launched this program.
@@ -51,26 +54,28 @@ char * getJavaLauncherExecutablePath(char *javaLauncherExecutable) {
 }
 
 /**
- * Launches AppBundler under Mac OS X 10.7 and more recent versions, or JavaApplicationStub for older versions.
+ * Launches AppBundler under Mac OS X 10.7 and more recent versions when Java 1.6 is not available, JavaApplicationStub otherwise.
  * Compile with:
- * gcc -o "Sweet Home 3D/Contents/MacOS/SweetHome3D" -framework CoreServices -arch i386 -arch x86_64 -arch ppc -mmacosx-version-min=10.4 Launcher.c 
+ * gcc -o "Sweet Home 3D/Contents/MacOS/SweetHome3DLauncher" -framework CoreServices -arch i386 -arch x86_64 -arch ppc -mmacosx-version-min=10.4 Launcher.c 
  */
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   // Retrieve Mac OS X version
   SInt32 majorVersion,minorVersion;
   Gestalt(gestaltSystemVersionMajor, &majorVersion);
   Gestalt(gestaltSystemVersionMinor, &minorVersion);
 
   char *javaLauncherExecutablePath;
-  if (majorVersion >= 10 && minorVersion >= 7) {
+  // If Mac OS X >= 10.7 and Java 6 isn't available in the system
+  if (majorVersion >= 10 
+      && minorVersion >= 7
+      && (access(JAVA_HOME, X_OK) != 0
+          || system(JAVA_HOME_1_6) != 0)) {
     javaLauncherExecutablePath = getJavaLauncherExecutablePath(ORACLE_JAVA_LAUNCHER);
-  } else {
+  } else { 
     javaLauncherExecutablePath = getJavaLauncherExecutablePath(APPLE_JAVA_LAUNCHER);
-  } 
+  }   
   int returnedValue = execv(javaLauncherExecutablePath, argv);
   free(javaLauncherExecutablePath);
   
   return returnedValue;
 }
-

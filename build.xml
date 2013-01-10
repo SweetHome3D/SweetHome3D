@@ -595,9 +595,14 @@
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app">
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
+    <move file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Sweet Home 3D Java 5 And 6"
+          tofile="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app"/>
+    <copy file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/SweetHome3D.icns" 
+          tofile="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app/Contents/Resources/SweetHome3D.icns"/>
 
     <!-- Change executable permission of Sweet Home 3D executables lost during copy task -->
     <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/*"/>
+    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app/Contents/MacOS/*"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java -->
@@ -649,11 +654,8 @@
        in install/macosx/SweetHome3D-version directory. -->
   <target name="macosxJava5And6Bundle" depends="macosxBaseBundle"
           description="Builds Sweet Home 3D Mac OS X application bundle for Java 5 and 6">
-    <!-- Remove useless executable files -->
+    <!-- Remove useless executable file -->
     <delete file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
-    <move file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub" 
-          tofile="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/SweetHome3D"/>
-    <delete file="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/MacOS/AppBundler"/>
   </target>
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
@@ -1039,9 +1041,17 @@
     <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
-    <copy file="install/portable/Info.plist" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
+    <move file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/Sweet Home 3D Java 5 And 6"
+          tofile="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app"/>
+    <copy file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/SweetHome3D.icns" 
+          tofile="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app/Contents/Resources/SweetHome3D.icns"/>
+    <copy file="install/portable/Info.plist" 
+          todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
+    <copy file="install/portable/InfoJava5And6.plist" 
+          tofile="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app/Contents/Info.plist" overwrite="true"/>
     <!-- Change executable permission of SweetHome3D lost during copy task -->
     <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/*"/>
+    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Resources/Sweet Home 3D Java 5 And 6.app/Contents/MacOS/*"/>
     <!-- Create directories required by AppBundler -->
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Java" />
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Plugins" />
