@@ -1989,7 +1989,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns <code>wall</code> or a small wall part at the angle formed by the line joining wall center to 
    * (<code>x</code>, <code>y</code>) point if the given <code>wall</code> is round. 
    */
-  public Wall getReferenceWall(Wall wall, float x, float y) {
+  private Wall getReferenceWall(Wall wall, float x, float y) {
     if (wall.getArcExtent() == null) {
       return wall;
     } else {
@@ -2006,9 +2006,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns the closest path among <code>area</code> ones to the given point.
+   * Returns the closest path among <code>paths</code> ones to the given point.
    */
-  public GeneralPath getClosestPath(List<GeneralPath> paths, float x, float y) {
+  private GeneralPath getClosestPath(List<GeneralPath> paths, float x, float y) {
     GeneralPath closestPath = null;
     double closestPathDistance = Double.MAX_VALUE;
     for (GeneralPath path : paths) {
@@ -2395,7 +2395,7 @@ public class PlanController extends FurnitureController implements Controller {
    * the front or back sides of the rectangle defined by <code>piecePoints</code> is larger
    * than with the left and right sides of this rectangle.
    */
-  public boolean isAreaLargerOnFrontOrBackSide(Area area, float [][] piecePoints) {
+  private boolean isAreaLargerOnFrontOrBackSide(Area area, float [][] piecePoints) {
     GeneralPath pieceFrontAndBackQuarters = new GeneralPath();
     pieceFrontAndBackQuarters.moveTo(piecePoints [0][0], piecePoints [0][1]);
     pieceFrontAndBackQuarters.lineTo(piecePoints [2][0], piecePoints [2][1]);
@@ -2422,7 +2422,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the area of the given shape.
    */
-  public float getArea(Area area) {
+  private float getArea(Area area) {
     float [][] pathPoints = getPathPoints(getPath(area), false);
     if (pathPoints.length > 1) {
       return new Room(pathPoints).getArea();
