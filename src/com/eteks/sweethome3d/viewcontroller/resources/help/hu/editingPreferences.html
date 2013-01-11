@@ -17,7 +17,7 @@
 	<td width="3" height="32">&nbsp;</td>
 	<td width="32" height="32"><img src="../images/applicationIcon32.png" alt="Sweet Home 3D Ikon" height="32" width="32"></td>
 	<td width="8" height="32">&nbsp;&nbsp;</td>
-	<td valign="bottom" height="32"><font id="topic">Beállítások</font></td>
+	<td valign="bottom" height="32"><font id="topic">Beállítások szerkesztése</font></td>
 	</tr>
 	<tr height="10">
 	<td colspan="4" height="10">&nbsp;</td>
@@ -27,17 +27,27 @@
 	<tr>
 	<td><p>A beállítások módosításához válassza a <i>Sweet Home 3D &gt; Beállítások...</i> menüpontot Mac OS X-en, vagy a <i>Fájl &gt; Beállítások...</i> menüpontot egyéb rendszerek alatt.</p>
 	    <p align="center"><img src="images/editingPreferences.png"></p>
+		
+		
 	  <p>A Beállítások ablakban tudja kiválasztani a program során használt <i>Nyelvet</i> és az alapértelmezett <i>Mértékegységet</i> amivel a program a távolságokat és a szélességeket méri.<br>
+	  A <i>Nyelv</i> legördülõ lista mögött található gomb segítségével további, .SH3L kiterjesztésû nyelvi fájlokat importálhat.<br>
+	  A <i>Kategória mappák</i> vagy és a <i>Kereshetõ lista</i> rádiógombok minden <a href="ui.html">Sweet Home 3D ablakban</a> megváltoztatják a bútorkatalógus megjelenését.<br>
+	  A <i>3D navigációs nyilak</i> jelölõnégyzet segítségével megjeleníthati a 3D nézet bal felsõ sarkában található nyilakat, melyek segítenek <a href="editing3DView.html">navigálni 3D nézetben</a>.
 	    A <i>Mágnesesség</i> jelölõnégyzet engedélyezi vagy tiltja le a mágnesességet az Alaprajz nézetben <a href="drawingWalls.html">falrajzolás</a> és <a href="editingFurniture.html">bútor elhelyezés</a> közben.<br>
 	    A <i>Vonalzók</i> jelölõnégyzettel lehet a vonalzók láthatóságát ki- és bekapcsolni.<br>
 	    A <i>Rácsvonal</i> jelölõnégyzet segítségével lehet az Alaprajz rácsozottságát ki- vagy bekapcsolni.<br>
-            A <i>Katalógus ikon</i> és <i>Felülnézet</i> rédiógombok segítségével választhatja ki, hogy a bútorok miképpen jelenjenek meg az alaprajzon lásd a képeket lejjebb).<br>
+            A <i>Katalógus ikon</i> és <i>Felülnézet</i> rédiógombok segítségével választhatja ki, hogy a bútorok miképpen jelenjenek meg az alaprajzon (lásd a képeket lejjebb).<br>
             A <i>Monokróm</i> és <i>Padlószín vagy mintázat megjelenítése</i> rádiógombok segítségével kiválaszthatja, hogy a szobák padlóján az alaprajzon megjelenjen a padlóhoz kiválasztott szín, vagy textúra, vagy világosszürkének (nyomtatásban fehérnek) látsszon.<br>
             A <i>Falmintázat az alaprajzon</i> doboz segítségével meghatározhatja, hogy a falaknak milyen legyen a mintázata az alaprajzon.</p>
 
-            <p>Az <i>Új falak vastagsága</i> érték adja meg az összes új fal kezdeti vastagságát.<br>
-	      Az <i>Új otthon alapértelmezett falvastagság</i> érték adja meg az új otthok összes falának magasságát.<br>
+            <p>Az <i>Új falak vastagsága</i> érték adja meg az összes új fal alapértelmezett vastagságát.<br>
+	      Az <i>Alapértelmezett falmagasság</i> érték adja meg az új otthon összes falának és az új szintek magasságát.<br>
+		  Az <i>Új padlók vastagsága</i> adja meg az új szintek padlójának vastagságát.
         </p>
+		
+		<p>Az <i>Automatikus mentés minden xx percben</i> mezõben beírt érték alapján a megadott percenként mentés készül minden nyitott fájlról. Ezek a mentések külön fájlba kerülnek és a helyreállításhoz lesznek felhasználva a Sweet Home 3D következõ futtatásakor, ha a program összeomlik. <br>
+		Végül, a <i>Tippek mutatása alapértelmezés szerint</i> gomb megnyomása törli azokat újra látni fogja azokat a tippeket is, melyeknél megjelölte a <i>Ne mutassa újra ezt a tippet</i> opciót, mikor valamelyik eszközt kiválasztotta.<br>
+		</p>
 	  	  <table border="0" align="center" cellpadding="0" cellspacing="5">
         <tr align="center">
           <td><img src="../images/defaultRendering.png" width="332" height="296"></td>
@@ -48,7 +58,7 @@
           <td align="center" valign="top">Alapértelmezett alaprajz-megjelenítés<br>katalógus ikonokkal, 
 egyszínû padlóval<br>és sávos falmintázattal</td>
           <td align="center" valign="top">Alaprajz-megjelenítés felülnézeti<br>bútorképekkel,
-színes padlóval<br>és fekete falakkal</td>
+színes padlóval<br>és feketére színezett falakkal</td>
         </tr>
       </table>
       </td>
@@ -65,14 +75,26 @@ színes padlóval<br>és fekete falakkal</td>
 	    <td><p>A beállítások módosításai az összes megnyitott Sweet Home 3D ablakra hatással vannak.</p>
 	      </td>
 	    </tr>
+		<tr valign="top">
+	    <td><p>&#149;</p>
+	      </td>
+	    <td><p>Ha túl sok elem van a bútorkatalógusban, jelenítse meg kereshetõ listaként. A lista kategóriadoboza és a szövegkeresõ segítségével gyorsabban megtalálhatja a tervhez hozzáadni kívánt darabokat.</p>
+	      </td>
+	    </tr>
+		<tr valign="top">
+	    <td><p>&#149;</p>
+	      </td>
+	    <td><p>Lehet, hogy a 3D navigáziós nyilak nem elérhetõek Mac OS X 10.4 alatt, illetve egyes Linux rendszerek alatt nem jelennek meg megfelelõen. Ha már tudja, hogyan kell <a href="editing3DView.html">3D-ben navigálni a kurzornyilak és az egér segítségével</a>, elrejtheti a navigációs nyilakat a Beállítások panelen, ha kiveszi a 3D navigációs nyilak láthatósága mellõl a jelölõnégyzetet. </p>
+	      </td>
+	    </tr>
 	  <tr valign="top">
 	    <td><p>&#149;</p>
 	      </td>
 	    <td><p>A bútorok felülnézete bizonyos rendszereken nem elérhetõ. Ez esetben a <i>Katalógus ikon</i> és a <i>Felülnézet</i> rádiógombok nem használhatóak.</p>
 	      </td>
 	    </tr>
-	  <tr valign="top"><td width="16"><p>&#149;</p></td><td><p>A Mágnesességet idõlegesen is meg lehet változtatni, a shift billentyû nyomvatartásával.</p></td></tr>
-		<tr valign="top"><td width="16"><p>&#149;</p></td><td><p>Ha egy új falat hoz létre, a magasságát, és vastagságát utólag is <a href="editingWalls.html">meg</a> tudja <a href="editingWalls.html">változtatni</a> a Beállítások ablakban.</p></td></tr></table>
+	  <tr valign="top"><td width="16"><p>&#149;</p></td><td><p>A Mágnesességet idõlegesen is meg lehet változtatni, a <i>Shift</i> billentyû nyomvatartásával.</p></td></tr>
+		<tr valign="top"><td width="16"><p>&#149;</p></td><td><p>Ha egy új falat hoz létre, a magasságát, és vastagságát utólag is meg tudja <a href="editingWalls.html">változtatni</a> a Beállítások ablakban.</p></td></tr></table>
 	</td>
 	</tr>
 </table></div>

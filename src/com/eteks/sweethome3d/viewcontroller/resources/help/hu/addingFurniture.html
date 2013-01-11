@@ -8,7 +8,7 @@
 <body  bgcolor="#ffffff">
 <div id="banner">
 	<div id="helpheader">
-		<a class="bread" href="index.html">Sweet Home 3D Súgó</a> > <a class="bread" href="tocCreating.html">Otthon, fal és bútor készítése</a>
+		<a class="bread" href="index.html">Sweet Home 3D Súgó</a> > <a class="bread" href="tocCreating.html">Otthon, fal és bútor hozzáadása</a>
 	</div>
 </div>
 <div id="mainbox" align="left">
@@ -25,15 +25,15 @@
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
-	<td><p>Bútor hozzáadásánál válasszon ki egy tárgyat, vagy akár többet is a Katalógusból és húzza be az Alaprajz ablakba, vagy a Bútorlistába.</p>
+	<td><p>Bútor, ajtó vagy ablak hozzáadásánál válasszon ki egy tárgyat, vagy akár többet is a Katalógusból és húzza be az Alaprajz ablakba, vagy a Bútorlistába.</p>
 	  <p align="center"><img src="images/addingFurniture.png" alt="Bútor hozzáadása" width="435" height="179"></p>
-	  <p align="left">Úgy is hozzáadhat bútorokat otthonához, ha kijelöli a menüben a <i>Bútor &gt; Hozzáadás az otthonhoz</i> pontot, vagy használhatja a
+	  <p align="left">Úgy is hozzáadhat bútorokat (akár egyszerre egynél többet) otthonához, ha kijelöli a menüben a <i>Bútor &gt; Hozzáadás az otthonhoz</i> pontot, vagy használhatja a
 	    <i>Hozzáadás az otthonhoz</i> eszközt is.</p>
 	  <blockquote>
 	    <p align="left"><img src="../images/addToHomeTool.png" alt="Hozzáadás az otthonhoz eszköz" width="24" height="24" align="absmiddle">&nbsp;<i>Hozzáadás az otthonhoz</i> eszköz</p>
 	    </blockquote>	  
-	  <p align="left">Ha egy bútort az Alaprajz ablakba húz, ahol felengedi az egér gombját, oda fog kerülni a bútor bal felsõ sarka. <br>
-	      Ha a bútorokat a Bútorlistába húzza vagy a <i>Bútor &gt; Hozzáadás az otthonhoz</i> menüt használja, akkor a bútor bal felsõ sarka a (0,0) pontoknál lesz.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </p>
+	  <p align="left">
+	      Ha a bútorokat a Bútorlistába húzza vagy a <i>Bútor &gt; Hozzáadás az otthonhoz</i> menüt használja, akkor a bútor bal felsõ sarka a (0,0) pontoknál lesz.                                                                                                       <br>    Ha egy bútort az Alaprajz ablakba húz, az elem helye és helyzete a közeli falak helyétõl is függ. Például ha a kiválsztott elem ajtó vagy ablak, a keresztezett fal tulajdonságainak megfelelõen automatikusan elfordul és átméretezõdik. Más típusú elemek automatikusan elfordulnak, hogy a hátsó oldaluk illeszkedjen a legközelebbi falhoz. <br>                                                                                                                                              </p>
 	    <p align="left">Az otthonhoz hozzáadott bútorok megjelennek a Bútorlistában, az Alaprajz nézetben, és a 3D nézetben is. Amíg a 3D nézet betölt, addig ezek fehér színû kockákként lesznek láthatóak.</p></td>
 	</tr>
 </table>
@@ -57,15 +57,23 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Az a bútor, amely ajtóként vagy ablakként szerepel a listában, automatikusan lyukat vág a falakon, ahol szükséges. Ez másfajta bútorokra nem vonatkozik.
+              <p>Az ajtóként vagy ablakként kategorizált elemek használatakor a Sweet Home 3D automatikusan nyílást vág a falakba az elemek felhasználási helyén. Hasonlóképpen, a lépcsõk a mennyzetbe, illetve a felsõ szint padlójába vágnak lyukat. Ez másfajta bútorokra nem vonatkozik.
                </td>
           </tr>
-          <tr valign="top">
+		  <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+		  <td>
+              <p>Ha egy bútort egy másikra ejt, az automatikusan az elõzõ bútor tetejére helyezõdik (felemelkedik), amennyiben az alsó(elsõ) bútor emelése 0 (vagyis a padlón van), és a ráejtett bútor teljes egészében az elsõ bútor fölött van. Ha a behúzott bútor kissé fed egy másik, már bent levõ bútort, a behúzott elem a másiknak megfelelõ szögbe fordul hogy az élek párhuzamosak legyenek, és a bútor mellé helyezõdik. Ez a funkció csak az újonnan hozzáadott bútorokkal mûködik, az alaprajzon levõ bútorok áthelyezésekor nem. A funkció úgyszintén nem mûködik, ha a Mágnesesség inaktív.
+               </td>
+          </tr>
+		  <tr valign="top">
             <td>
               <p>&#149;</p>
             </td>
             <td>
-              <p>Miután egy bútort hozzáadott otthonához, <a href="editingFurniture.html">változtatni tud</a> a nevén, szögén, helyzetén, méretén, és színén.</p>
+              <p>Az egérrel behúzott elem iránya, mélysége és emelése automatikusan kiszámolódik, ha a Mágnesesség engedélyezve van a <a href="editingPreferences.html">Beállítások</a> panelen.</p>
             </td>
           </tr>
           <tr valign="top">
@@ -73,7 +81,15 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Válassza az <i>Alaprajz &gt; Nagyítás</i> vagy <i>Alaprajz &gt; Kicsinyítés</i> menüpontokat az Alaprajz nézet méretarányának változtatásához.   
+              <p>Miután egy bútort hozzáadott otthonához, <a href="editingFurniture.html">változtatni tud</a> a nevén, szögén, helyzetén, méretén, és színén. A bútorokat akár csoportba is rendezheti ha többet egyszerre kijelöl, majd kiválasztja a <i>Bútor &gt; Csoport</i> menüpontot.</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Válassza az <i>Alaprajz &gt; Nagyítás</i> vagy <i>Alaprajz &gt; Kicsinyítés</i> menüpontokat vagy <i>Alaprajz &gt; Nagyítás</i> menüpontokat, vagy használja az egér görgõjét - miközben nyomva tartja a <i>Ctrl</i> gombot (Mac OS X alatt a <i>cmd</i> gombot) az Alaprajz nézet méretarányának változtatásához.   
             </td>
           </tr>
           <tr valign="top">

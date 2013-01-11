@@ -28,11 +28,30 @@
     <td><p>Otthon kinyomtatásához válassza a <i>Fájl &gt; nyomtatás</i> menüt.<br>
       Ez a menü megjeleníti a rendszer nyomtatási ablakát, ahol kiválaszthatja a nyomtatót, a nyomtatandó oldalak számát, a nyomtatás minõségét, stb.</p>
       <p>A Sweet Home 3D alapbeállítások szerint kinyomtatja a bútorlistát, az alaprajzot, és az aktuális háromdimenziós nézetet, az alapértelmezett papírméretet, margókat és tájolást használva.<br>
+	  	  
         Ha ezeken változtatni szeretne, válassza ki a <i>Fájl &gt; Oldalbeállítás</i> menüt.</p>
       <p align="center"><img src="images/pageSetup.png" alt="Page setup"></p>
       <p>          Az Oldalbeállítás panelen megváltoztathatja a papírméretet és a tájolást az <i>Oldal formátum</i> 
       gombra kattintással. Azt is kiválaszthatja, hogy a bútorlista, az alaprajz, és a 3D nézet kinyomtatódjon-e.</p>
-      <p>A nyomtatási kép megtekintéséhez válassza a <i>Fájl &gt; Nyomtatási kép</i> menüpontot.</p>
+      Ha nem szeretné, hogy a program az alaprajz méretarányát automatikusan az oldalhoz igazítsa, megadhat más méretarányt. <br>
+	  Megadhat fejlécet és láblécet is, melyek minden kinyomtatott oldal alján és tetején megjelennek. A <i>Fejléc</i> és <i>Lábléc</i> mezõkbe írhat szöveget és van lehetõség változók megadására is, melyek helyére a változók értéke fog nyomtatódni. Jelenleg az alábbi 7 változót használhatja:
+	  
+	  <ul>
+        <li><i>$pageNumber</i> - oldalszám,</li>
+        <li><i>$pageCount</i> - oldalak száma,</li>
+        <li><i>$planScale</i> - méretarány (akár automatikusan számolt, akár kézzel adta meg a <i>Méretarány</i> mezõben,</li>
+        <li><i>$date</i> - nyomtatás dátuma,</li>
+        <li><i>$time</i> - nyomtatás ideje,</li>
+        <li><i>$name</i> - otthon neve,</li>
+        <li><i>$file</i> - fájl elérési útja.</li>
+        </ul>     
+	  
+	  A <i>Fejléc</i> és <i>Lábléc</i> mezõk található gombok megnyomására a változók beíródnak az éppen kiválasztott mezõbe, így nem kell azokat kézzel beírnia. Mivel a $ jel a változónevek miatt foglal, ha meg szeretné nyomtatásban jeleníteni, írjon $$ jelet.
+	  
+	  
+	  
+	  
+	  <p>A nyomtatási kép megtekintéséhez válassza a <i>Fájl &gt; Nyomtatási kép</i> menüpontot.</p>
       <p align="center"><img src="images/printPreview.png" alt="Print preview"></p>
       <p>Az elõnézeti képen láthatja mi kerül az egyes oldalakon kinyomtatásra. A lapok között a lap tetején található nyilakra kattintással vagy a kurzornyilakkal válthat.</p></td>
   </tr>
@@ -58,11 +77,25 @@
               Ez esetben a <i>3D nézet nyomtatása</i> jelölõnégyzet jelölése törlésre és letiltásra kerül.</p>
             </td>
           </tr>
+		  <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>Ha a nyomtatni kívánt otthon <a href="addingLevels.html">többszintes</a>, a kiynomtatott bútorlista csak az aktuálisan kiválasztott szinten található bútorok listáját fogja tartalmazni, kivéve, ha csak a bútorlistát nyomtatja, ez esetben minden bútor rákerül a listára. Az alaprajzból és 3D nézetbõl az éppen aktuálisan megjelenített kerül kinyomtatásra. Ha egy többszintes otthon minden szintjét ki szeretné nyomtatni, válassza és nyomtassa ki õket egyenként. </p>
+            </td>
+          </tr>
           <tr valign="top">
             <td width="16"><p>&#149;</p>
             </td>
             <td>
-              <p> A3D nézet 150 dpi felbontással kerül nyomtatásra.</p>
+              <p> A3D nézet 150 dpi felbontással kerül nyomtatásra. egy oldalnyi méretre nagyítva, leszámítva a margókat.</p>
+            </td>
+          </tr>
+		  <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>A papíron is jelezheti az alaprajz méretarányát, ha az alaprajzon elhelyez egy szabványos, pl 1 méter nagyságú <a href="drawingDimensions.html">méretvonalat</a>.</p>
             </td>
           </tr>
           <tr valign="top">

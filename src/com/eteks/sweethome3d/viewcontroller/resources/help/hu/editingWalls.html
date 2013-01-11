@@ -27,7 +27,7 @@
   <tr>
     <td><p> Az otthon falainak hosszát és helyét módosíthatja az egérrel, vagy az  <i>Alaprajz &gt; Falak módosítása...</i> menüben.<br>
         Az otthon falainak egérrel való szerkesztésehez, elõször jelölje ki azokat az alaprajzon. Egy falat úgy jelölhet ki, ha rákattint az egérrel.
-        Több fal kijelöléséhez rajzoljon köréjük kijelölõ-téglalapot, vagy kattintson a falakra egyenként a Shift gomb
+        Több fal kijelöléséhez rajzoljon köréjük kijelölõ-téglalapot, vagy kattintson a falakra egyenként a <i>Shift</i> gomb
         nyomvatartása közben.<br>
         A kijelölt falak mozgatásához helyezze az egeret a kijelölt falak által meghatározott doboz belsejébe, és Húzd és Ejtsd módszerrel,
         vagy a kurzornyilakkal megkezdheti a mozgatást.
@@ -79,14 +79,13 @@
     <td><p>Ha az egérmutató a kezdõ- vagy végpont fölött van, megváltozik, így mutatja hogy Húzd és ejtsd módszerrel
     elmozdíthatja az adott pontot. Amíg nyomvatartja az egérgombot, a súgóbuborékban láthatja a fal hosszát.
     <br>
-    Az egér segítségével megváltoztatott falak együtt rajzolódnak az alaprajzon és a 3D nézeten.
+    Az egér segítségével megváltoztatott falak egyszerre rajzolódnak az alaprajzon és a 3D nézeten.
         </p>
         <p>Egy fal szerkeszthetõ az alábbi panel segítségével, amely megjeleníthetõ a falon kettõs kattintással,
         vagy a fal kijelölése után a <i>Alaprajz &gt; Falak módosítása...</i> menübõl.
         </p>
         <p align="center"><img src="images/editingWalls.png"></p>
-        <p>A fal panelen megváltoztathatja a kezdõ- és végpontok koordinátáit, a jobb- és baloldai textúrák színét, 
-        a fal vastagságát és magasságát.
+        <p>A fal panelen megváltoztathatja a kezdõ- és végpontok koordinátáit, a jobb- és baloldai textúrák színét és világosságát, a fal vastagságát és magasságát, továbbá íves fal esetén az ívhez tartozó középponti szöget.
         <br>
         Amennyiben ez egy padlás változó magasságú fala, állítson be eltérõ magasságot a kezdõ- és végpontoknál.
         és gyõzõdjön meg róla, hogy a <i>Lejtõs fal</i> rádiógomb van kiválasztva.
@@ -105,10 +104,9 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Ha meg kívánja változtatni a falak színét, vastagságát, vagy magasságát, jelölje ki a módosítáani kívánt falakat,
+              <p>Ha meg kívánja változtatni a falak színét, mintázatát, vastagságát, vagy magasságát, jelölje ki a módosítáani kívánt falakat,
               majd válassza az <i>Alaprajz &gt; Falak módosítása...</i> menüt.
-              Azon paraméterek értékei, melyek eetleg falanként eltérõek a kijelölt falegyüttesben, fehéren fognak megjelenni
-              a fal panelen.</td>
+              Azon paraméterek értékei, melyek eetleg falanként eltérõek a kijelölt falegyüttesben, fehéren fognak megjelenni a fal panelen. Ha a falak valamelyikének iránya nem megfelelõ, jelölje ki és az <i>Alaprajz &gt; Fal irányának megfordítása</i> menüpontban megfordíthatja annak irányát.</td>
           </tr>
           <tr valign="top">
             <td>
@@ -116,7 +114,15 @@
             </td>
             <td>
               <p>Ha egy adott fal - amely több, szomszédos szobát határol -,  egyik oldalát többféleképpen 
-              szeretné színezni, válassza szegmensekre a <a href="drawingWalls.html">készítésüknél</a>.
+              szeretné színezni, válassza szegmensekre a <a href="drawingWalls.html">készítésüknél</a>. Egy falat kettéoszthet két falra az <i>Alaprajz &gt; Fal felosztása</i> menüpont segítségével.
+              </td>
+          </tr>
+		  <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Ha nem szeretné a fal végponti koordinátáit a hossz alapján kiszámolni, használja a <i>Hosszúság a végpontnál</i> mezõt. E mezõ értékének változásakor a fal végpontjának koordinátái automatikusan kiszámolódnak, és fordítva.</p>
               </td>
           </tr>
           <tr valign="top">
@@ -125,7 +131,7 @@
             </td>
             <td>
               <p>
-				Annak érdekében hogy a falak párhuzamosak legyenek, a falak szöge alapértelmezésben 15&deg; többszöröse. Ezt a mágnesességet megtudja szakítani a Shift billentyû lenyomásával, rajzolás közben, vagy a mágnesesség letiltásásval a <a href="editingPreferences.html">Beállítások</a> ablakban.</p>
+				Annak érdekében hogy a falak párhuzamosak legyenek, a falak szöge alapértelmezésben 15&deg; többszöröse. Ezt a mágnesességet megtudja szakítani a <i>Shift</i> billentyû lenyomásával, rajzolás közben, vagy a mágnesesség letiltásával a <a href="editingPreferences.html">Beállítások</a> ablakban.</p>
             </td>
           </tr>
           <tr valign="top">
@@ -133,8 +139,7 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Ha az alaprajzon kijelölt terület tartalmaz fal, bútor és méretvonal elemeket is, mindezek elmozdulnak a kurzornyilakkal, vagy a Húzd és Ejtsd módszerrel
-              való mozgatáskor.
+              <p>Ha a kijelölt objektumok falak, helyiségek, bútorok, méretvonalak és szövegek, ezeket együtt mozgathatja egérrel, vagy a kurzornyilakkal. Ha mozgatás közben lenyomva tartja a Ctrl billentyût (vagy Mac OS X alatt a alt gombot, a kijelölt objektumokat lemásolja mozgatás helyett.
               </td>
           </tr>
           <tr valign="top">
@@ -149,8 +154,7 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Használja az <i>Alaprajz &gt; Nagyítás</i> vagy        
-            <i>Alaprajz &gt; Kicsinyítés</i> menüpontokat az Alaprajz méretarányának megváltoztatásához. </td>
+              <p>Válassza az <i>Alaprajz &gt; Kicsinyítés</i> vagy <i>Alaprajz &gt; Nagyítás</i> menüpontokat, vagy használja az egér görgõjét - miközben nyomva tartja a <i>Ctrl</i> gombot (Mac OS X alatt a <i>cmd</i> gombot) az alaprajz nagyításának megváltoztatásához.</td>
           </tr>
         </table>
       </td>

@@ -26,13 +26,10 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
   <tr>
     <td><p>Egy meglevõ háromdimenziós modell importálása az alábbi módokon  lehetséges. 
-    Válassza a <i>Bútor &gt; Bútor importálása</i> menüpontot, vagy kattintson a <i>Bútor importálása</i> 
-    ikonra az eszközsoron, vagy egyszerûen húzza és ejtse a 3D modell fájlt a Sweet Home 3D ablakába.</p>
-      <blockquote>
-        <p><img src="../images/importFurnitureTool.png" alt="Bútor importálása eszköz" width="24" height="24" align="absmiddle">&nbsp;<i>Bútor importálása</i> eszköz</p>
-      </blockquote>      
+    Válassza a <i>Bútor &gt; Bútor importálása</i> menüpontot,  vagy egyszerûen húzza és ejtse a 3D modell fájlt a Sweet Home 3D ablakába.</p>
+           
       <p>          Ezen mûveletek elindítanak egy varázslót, amelyek segítenek kiválasztani a 
-      3D modellfájlt ha szükséges és néhány lépésben meghatározhatók a bútor tulajdonságai. </p>
+      3D modellfájlt ha szükséges, és néhány lépésben meghatározhatók a bútor tulajdonságai. </p>
       <table border="0" align="center" cellpadding="0" cellspacing="5">
           <tr>
             <td><img src="../images/importingFurnitureStep1.png" alt="Step 1" width="250" height="199"></td>
@@ -54,26 +51,25 @@
           <tr valign="top">
             <td nowrap><p>1.</p>
             </td>
-            <td><p>Kattintson a <i>Válasszon modellt</i> gombra, és keressen OBJ, DAE, 3DS, LWS 
-            formátumú fájlokat, vagy olyan ZIP fájlt, ami ilyen fájlokat tartalmaz. Ha a modellt kiválasztotta, 
+            <td><p>A <i>Bútor &gt; Bútor importálása</i> menüpont kiválasztása után, ha elindult a varázsló, kattintson a <i>Válasszon modellt</i> gombra, és keressen OBJ, DAE, 3DS, LWS 
+            formátumú fájlokat, vagy olyan ZIP fájlt, ami ilyen fájlokat tartalmaz. Ha a modell betöltõdött, 
             kattintson a <i>Tovább</i> gombra..</p>
             </td>
           </tr>
           <tr valign="top">
             <td nowrap><p>2.</p>
             </td>
-            <td><p>Ellenõrizze, hogy helyes-e a modell tájolása. Ha nem, forgassa addig az alább található nyilakkal, 
+            <td><p>Ellenõrizze, hogy helyes-e a modell tájolása. Ha nem, forgassa addig a nyilakkal, 
             amíg az elölnézeti kép helyén a bútordarab eleje nem található. Ha a modell leképezése helytelennek tûnik, 
             az elsõ és hátsó oldaluk fel van cserélve. Ebben az esetben jelölje be az <i>Elõ- és hátoldal invertálása</i>
-             jelölõnégyzetet.<br>
-                Majd kattintson a <i>Tovább</i> gombra..</p>
+             jelölõnégyzetet, majd kattintson a <i>Tovább</i> gombra..</p>
             </td>
           </tr>
           <tr valign="top">
             <td nowrap><p>3.</p>
             </td>
             <td><p>Szükség szerint változtassa meg a nevet, méretet, emelést, az importált modell színét, 
-            illetve a mozgathatóság és nyílászáró beálllításokat. .<br>
+            illetve hogy a bútor mozgatható-e, esetleg nyílászáró vagy lépcsõ.<br>
                 Ha beimportált egy bútort a bútorlistába vagy az alaprajzra, jelölje be a <i>Hozzáadás a 
                 katalógushoz</i> jelölõnégyzetet, ha a bútorkatalógusba is importálni kívánja.<br>
                   Törölje a jelölést az <i>Arányok megtartása</i> jelölõnégyzetbõl, ha a 3D modell szélességét, magasságát vagy mélységét meg szeretné változtatni a többi mérettõl függetlenül.<br>
@@ -118,8 +114,15 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Elõfordulhat, hogy a  "húzd és ejtsd" módszerrel való importálás nem mûködik linuxon.</td>
+              <p>Elõfordulhat, hogy a  "húzd és ejtsd" módszerrel való importálás nem mûködik Linuxon.</td>
           </tr>
+		  <tr valign="top">
+		    <td>
+		      <p>&#149;</p>
+		      </td>
+		    <td>
+		      <p>Ha egy 3D modellt 1 fokonként szeretne forgatni az alapértelmezett 90 helyett, tartsa nyomva a <i>Shift</i> gombot, miközben az elforgató nyilakra kattint az importálás 2. lépésében.</td>
+		    </tr>
 		  <tr valign="top">
 		    <td>
 		      <p>&#149;</p>
@@ -127,6 +130,20 @@
 		    <td>
 		      <p>A <i>Kategória</i> lenyílóablakban található szöveg tetszés szerint megváltoztatható, 
 	          így akár új bútorkategóriákat is létrehozhat.</td>
+		    </tr>
+			<tr valign="top">
+		    <td>
+		      <p>&#149;</p>
+		      </td>
+		    <td>
+		      <p>Ha a Mágnesesség aktív, csak ajtók vagy ablakok helyezhetõk el egérrel a falon és csak e típusú bútorok vágnak automatikusan lyukat a falba. Ezért ne felejtse el bejelölni az <i>Ajtó vagy ablak</i> jelölõnégyzetet ha azt szeretné, hogy az importált elem eképp viselkedjen.</td>
+		    </tr>
+			<tr valign="top">
+		    <td>
+		      <p>&#149;</p>
+		      </td>
+		    <td>
+		      <p>Csak lépcsõk vágnak lyukat a mennyezetbe, illetve a fölötte levõ szint padlójába, ennélfogva ne felejtse el az elem importálásakor bejelölni a <i>Lépcsõ</i> jelölõnégyzetet, ha azt szeretné, hogy az importált bútor eképp viselkedjen.</td>
 		    </tr>
 		  <tr valign="top">
             <td>
