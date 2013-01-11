@@ -196,7 +196,7 @@
 			<key>CFBundleTypeIconFile</key>
 			<string>SweetHome3DTexturesLibrary.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Sweet Home 3D Furniture Textures Format</string>
+			<string>Sweet Home 3D Textures Library Format</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 		</dict>
