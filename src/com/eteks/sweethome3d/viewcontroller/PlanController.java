@@ -4031,7 +4031,7 @@ public class PlanController extends FurnitureController implements Controller {
         wall.setWallAtStart(wallAtStart);
         if (joinedNewWall.isJoinedAtEndOfWallAtStart()) {
           wallAtStart.setWallAtEnd(wall);
-        } else if (joinedNewWall.isJoinedAtStartOfWallAtStart()) {
+        } else {
           wallAtStart.setWallAtStart(wall);
         }
       }
@@ -4040,7 +4040,7 @@ public class PlanController extends FurnitureController implements Controller {
         wall.setWallAtEnd(wallAtEnd);
         if (joinedNewWall.isJoinedAtStartOfWallAtEnd()) {
           wallAtEnd.setWallAtStart(wall);
-        } else if (joinedNewWall.isJoinedAtEndOfWallAtEnd()) {
+        } else {
           wallAtEnd.setWallAtEnd(wall);
         }
       }
@@ -5378,10 +5378,8 @@ public class PlanController extends FurnitureController implements Controller {
     private final Wall    wallAtStart;
     private final Wall    wallAtEnd;
     private final Level   level;
-    private final boolean joinedAtStartOfWallAtStart;
     private final boolean joinedAtEndOfWallAtStart;
     private final boolean joinedAtStartOfWallAtEnd;
-    private final boolean joinedAtEndOfWallAtEnd;
     
     public JoinedWall(Wall wall) {
       this.wall = wall;
@@ -5390,13 +5388,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.joinedAtEndOfWallAtStart =
           this.wallAtStart != null
           && this.wallAtStart.getWallAtEnd() == wall;
-      this.joinedAtStartOfWallAtStart =
-          this.wallAtStart != null
-          && this.wallAtStart.getWallAtStart() == wall;
       this.wallAtEnd = wall.getWallAtEnd();
-      this.joinedAtEndOfWallAtEnd =
-          this.wallAtEnd != null
-          && wallAtEnd.getWallAtEnd() == wall;
       this.joinedAtStartOfWallAtEnd =
           this.wallAtEnd != null
           && wallAtEnd.getWallAtStart() == wall;
@@ -5420,14 +5412,6 @@ public class PlanController extends FurnitureController implements Controller {
 
     public boolean isJoinedAtEndOfWallAtStart() {
       return this.joinedAtEndOfWallAtStart;
-    }
-
-    public boolean isJoinedAtStartOfWallAtStart() {
-      return this.joinedAtStartOfWallAtStart;
-    }
-
-    public boolean isJoinedAtEndOfWallAtEnd() {
-      return this.joinedAtEndOfWallAtEnd;
     }
 
     public boolean isJoinedAtStartOfWallAtEnd() {
