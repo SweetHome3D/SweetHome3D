@@ -787,11 +787,14 @@ public class Home implements Serializable, Cloneable {
         otherWall.setWallAtEnd(null);
       }
     }
-    wall.setLevel(null);
-    // Make a copy of the list to avoid conflicts in the list returned by getWalls
-    this.walls = new ArrayList<Wall>(this.walls);
-    this.walls.remove(wall);
-    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
+    int index = this.walls.indexOf(wall);
+    if (index != -1) {
+      wall.setLevel(null);
+      // Make a copy of the list to avoid conflicts in the list returned by getWalls
+      this.walls = new ArrayList<Wall>(this.walls);
+      this.walls.remove(index);
+      this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
+    }
   }
 
   /**
@@ -842,11 +845,14 @@ public class Home implements Serializable, Cloneable {
   public void deleteDimensionLine(DimensionLine dimensionLine) {
     //  Ensure selectedItems don't keep a reference to dimension line
     deselectItem(dimensionLine);
-    dimensionLine.setLevel(null);
-    // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
-    this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
-    this.dimensionLines.remove(dimensionLine);
-    this.dimensionLinesChangeSupport.fireCollectionChanged(dimensionLine, CollectionEvent.Type.DELETE);
+    int index = this.dimensionLines.indexOf(dimensionLine);
+    if (index != -1) {
+      dimensionLine.setLevel(null);
+      // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
+      this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
+      this.dimensionLines.remove(index);
+      this.dimensionLinesChangeSupport.fireCollectionChanged(dimensionLine, CollectionEvent.Type.DELETE);
+    }
   }
 
   /**
@@ -896,11 +902,14 @@ public class Home implements Serializable, Cloneable {
   public void deleteLabel(Label label) {
     //  Ensure selectedItems don't keep a reference to label
     deselectItem(label);
-    label.setLevel(null);
-    // Make a copy of the list to avoid conflicts in the list returned by getLabels
-    this.labels = new ArrayList<Label>(this.labels);
-    this.labels.remove(label);
-    this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
+    int index = this.labels.indexOf(label);
+    if (index != -1) {
+      label.setLevel(null);
+      // Make a copy of the list to avoid conflicts in the list returned by getLabels
+      this.labels = new ArrayList<Label>(this.labels);
+      this.labels.remove(index);
+      this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
+    }
   }
   
   /**
