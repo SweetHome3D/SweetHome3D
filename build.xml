@@ -718,7 +718,7 @@
 
   <!-- Builds Sweet Home 3D Mac OS X application bundle compatible with Java 7 and further
        in install/macosx/SweetHome3D-version directory. 
-       CAUTION : May be run only under Mac OS X and requires Mac OS X JRE installed in jre1.7.0_10.jre -->
+       CAUTION : May be run only under Mac OS X and requires Mac OS X JRE installed in jre1.7.0_11.jre -->
   <target name="macosxBundle" depends="macosxBaseBundle,jogl-java3d"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Java 3D 1.6 DLLs and JARs for Java 3D 
@@ -740,7 +740,7 @@
     <!-- Copy JRE to install/macosx/SweetHome3D-version/Plugins/jre... reorganizing files  
          and excluding files mentioned in JRE README.TXT file -->
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/jre7/Contents/Home/jre">
-      <fileset dir="jre1.7.0_10.jre/Contents/Home">
+      <fileset dir="jre1.7.0_11.jre/Contents/Home">
         <include name="**"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="bin/java"/>
@@ -762,7 +762,7 @@
   <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app 
        and Sweet Home 3D libraries compatible with Java 7 and further. 
        CAUTION : May be run only under Mac OS X and requires hdutil, codesign, 
-       a certificate imported in Keychain Access and Mac OS X JRE installed in jre1.7.0_10.jre -->
+       a certificate imported in Keychain Access and Mac OS X JRE installed in jre1.7.0_11.jre -->
   <target name="macosxSignedInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <input message="Enter certificate name:" addproperty="certificateName"/> 
