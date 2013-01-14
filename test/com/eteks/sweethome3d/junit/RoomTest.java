@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.event.InputEvent;
+import java.util.Arrays;
 import java.util.Locale;
 
 import javax.swing.JComponent;
@@ -28,6 +29,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEditSupport;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;
@@ -40,7 +43,9 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.NullableCheckBox;
@@ -51,6 +56,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -228,6 +234,96 @@ public class RoomTest extends ComponentTestFixture {
         new ClassMatcher (JDialog.class, true));
     assertTrue("Room dialog not showing", attributesDialog.isShowing());
     return attributesDialog;
+  }
+
+  /**
+   * Tests automatic split of walls surrounding rooms.
+   */
+  public void testRoomWallsSplit() {
+    Home home = new Home();
+    UserPreferences preferences = new DefaultUserPreferences();
+    UndoableEditSupport undoSupport = new UndoableEditSupport();
+    UndoManager undoManager = new UndoManager();
+    undoSupport.addUndoableEditListener(undoManager);
+
+    // 1. Create a home drawing walls as follows 
+    // --------------------
+    // |        |         |
+    // |   0    |    1    |
+    // |--------|         |
+    // |        |         |
+    // |        |         |
+    // |        |        /
+    // -----------------/
+    Wall [] walls = {new Wall(0, 0, 1000, 0, 20, 250), 
+                     new Wall(1000, 0, 1000, 800, 20, 250), 
+                     new Wall(1000, 800, 800, 1000, 20, 250), 
+                     new Wall(800, 1000, 0, 1000, 20, 250), 
+                     new Wall(0, 1000, 0, 0, 20, 250),
+                     new Wall(500, 0, 500, 1000, 10, 250),
+                     new Wall(0, 400, 500, 400, 10, 250)};
+    // Join the first 4 walls
+    for (int i = 0; i < 4; i++) {
+      walls [i].setWallAtStart(walls [(i + 3) % 4]);
+      walls [i].setWallAtEnd(walls [(i + 1) % 4]);
+    }
+    for (Wall wall : walls) {
+      home.addWall(wall);
+    }
+    
+    // 2. Create automatically 2 rooms by simulating double clicks
+    PlanController planController = new PlanController(home, preferences, new SwingViewFactory(), null, undoSupport);
+    planController.setMode(PlanController.Mode.ROOM_CREATION);
+    planController.pressMouse(50, 50, 1, false, false);
+    planController.pressMouse(50, 50, 2, false, false);
+    assertEquals("Room wasn't created", 1, home.getRooms().size());
+    assertRoomCoordinates(home.getRooms().get(0), 
+        new float [][] {{495.0f, 10.0f}, {495.0f, 395.0f}, {10.0f, 395.0f}, {10.0f, 10.0f}});
+    planController.pressMouse(700, 700, 1, false, false);
+    planController.pressMouse(700, 700, 2, false, false);
+    Room room = home.getRooms().get(1);
+    assertRoomCoordinates(room, 
+        new float [][] {{990.0f, 10.0f}, {990.0f, 795.8579f}, {795.8579f, 990.0f}, {505.0f, 990.0f}, {505.0f, 10.0f}});
+    assertTrue("Second room isn't selected", home.getSelectedItems().contains(room));
+    
+    // 3. Split walls automatically
+    RoomController roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
+    assertTrue("Walls around second room have to be splitted", roomController.isSplitSurroundingWallsNeeded());
+    roomController.setSplitSurroundingWalls(true);
+    roomController.modifyRooms();
+    // Check two walls were split
+    assertEquals("No wall was split", walls.length + 2, home.getWalls().size());
+    undoManager.undo();
+    assertEquals("Incorrect wall count", walls.length, home.getWalls().size());
+    
+    home.setSelectedItems(Arrays.asList(new Selectable [] {home.getRooms().get(0), walls [0]}));
+    roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
+    roomController.setSplitSurroundingWalls(true);
+    roomController.modifyRooms();
+    // Check 3 walls were split
+    assertEquals("No wall was split", walls.length + 3, home.getWalls().size());
+    // Check selection contains 1 more item
+    assertEquals("Selection doesn't contain split walls", 3, home.getSelectedItems().size());
+    undoManager.undo();
+    assertEquals("Selection wasn't restored", 2, home.getSelectedItems().size());
+    undoManager.redo();
+    assertEquals("No wall was split", walls.length + 3, home.getWalls().size());
+    assertEquals("Selection doesn't contain split walls", 3, home.getSelectedItems().size());
+
+    roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
+    assertFalse("Walls around first room don't need to be splitted", roomController.isSplitSurroundingWallsNeeded());
+  }  
+
+  /**
+   * Asserts the points of the given <code>room</code> are the same as in <code>points</code>.
+   */
+  private void assertRoomCoordinates(Room room, float [][] points) {
+    float [][] roomPoints = room.getPoints();
+    assertEquals("Not same points count", points.length, roomPoints.length);
+    for (int i = 0; i < roomPoints.length; i++) {
+      assertEquals("Not same abscissa", points [i][0], roomPoints [i][0]);
+      assertEquals("Not same ordinate", points [i][1], roomPoints [i][1]);
+    }
   }
 
   public static void main(String [] args) {

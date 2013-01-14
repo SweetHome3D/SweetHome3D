@@ -19,10 +19,21 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.awt.BasicStroke;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -35,6 +46,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 
 /**
  * A MVC controller for room view.
@@ -45,7 +57,8 @@ public class RoomController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {NAME, AREA_VISIBLE, FLOOR_VISIBLE, FLOOR_COLOR, FLOOR_PAINT, FLOOR_SHININESS,
-      CEILING_VISIBLE, CEILING_COLOR, CEILING_PAINT, CEILING_SHININESS}
+      CEILING_VISIBLE, CEILING_COLOR, CEILING_PAINT, CEILING_SHININESS,
+      SPLIT_SURROUNDING_WALLS, WALL_SIDES_COLOR, WALL_SIDES_PAINT, WALL_SIDES_SHININESS}
   
   /**
    * The possible values for {@linkplain #getFloorPaint() room paint type}.
@@ -59,6 +72,7 @@ public class RoomController implements Controller {
   private final UndoableEditSupport   undoSupport;
   private TextureChoiceController     floorTextureController;
   private TextureChoiceController     ceilingTextureController;
+  private TextureChoiceController     wallSidesTextureController;
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  roomView;
 
@@ -72,9 +86,15 @@ public class RoomController implements Controller {
   private Integer   ceilingColor;
   private RoomPaint ceilingPaint;
   private Float     ceilingShininess;
+  private boolean   wallSidesEditable;
+  private boolean   splitSurroundingWalls;
+  private boolean   splitSurroundingWallsNeeded;
+  private Integer   wallSidesColor;
+  private RoomPaint wallSidesPaint;
+  private Float     wallSidesShininess;
 
   /**
-   * Creates the controller of room view with undo support.
+   * Creates the controller of room view with undo support.  
    */
   public RoomController(final Home home, 
                         UserPreferences preferences,
@@ -130,6 +150,25 @@ public class RoomController implements Controller {
   }
 
   /**
+   * Returns the texture controller of the room wall sides.
+   */
+  public TextureChoiceController getWallSidesTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.wallSidesTextureController == null) {
+      this.wallSidesTextureController = new TextureChoiceController(
+          this.preferences.getLocalizedString(RoomController.class, "wallSidesTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
+      this.wallSidesTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setWallSidesPaint(RoomPaint.TEXTURED);
+            }
+          });
+    }
+    return this.wallSidesTextureController;
+  }
+
+  /**
    * Returns the view associated with this controller.
    */
   public DialogView getView() {
@@ -161,6 +200,24 @@ public class RoomController implements Controller {
     this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
+  /**
+   * Returns <code>true</code> if the given <code>property</code> is editable.
+   * Depending on whether a property is editable or not, the view associated to this controller
+   * may render it differently.
+   * The implementation of this method always returns <code>true</code> except for <code>WALLS</code> properties. 
+   */
+  public boolean isPropertyEditable(Property property) {
+    switch (property) {
+      case SPLIT_SURROUNDING_WALLS :
+      case WALL_SIDES_COLOR :
+      case WALL_SIDES_PAINT :
+      case WALL_SIDES_SHININESS :
+        return this.wallSidesEditable;
+      default :
+        return true;
+    }
+  }
+  
   /**
    * Updates edited properties from selected rooms in the home edited by this controller.
    */
@@ -305,8 +362,206 @@ public class RoomController implements Controller {
       }
       setCeilingShininess(ceilingShininess);
     }
+
+    List<WallSide> wallSides = getRoomsWallSides(selectedRooms, null);
+    if (wallSides.isEmpty()) {
+      this.wallSidesEditable =
+      this.splitSurroundingWallsNeeded  =
+      this.splitSurroundingWalls = false;
+      setWallSidesColor(null);
+      setWallSidesPaint(null);
+      setWallSidesShininess(null);
+    } else {
+      this.wallSidesEditable = true;
+      this.splitSurroundingWallsNeeded = splitWalls(wallSides, null, null, null);
+      this.splitSurroundingWalls = false;
+      WallSide firstWallSide = wallSides.get(0);
+      
+      // Search the common wall color among wall sides        
+      Integer wallSidesColor = firstWallSide.getSide() == WallSide.LEFT_SIDE
+          ? firstWallSide.getWall().getLeftSideColor()
+          : firstWallSide.getWall().getRightSideColor();
+      if (wallSidesColor != null) {
+        for (int i = 1; i < wallSides.size(); i++) {
+          WallSide wallSide = wallSides.get(i);
+          if (!wallSidesColor.equals(wallSide.getSide() == WallSide.LEFT_SIDE
+                  ? wallSide.getWall().getLeftSideColor()
+                  : wallSide.getWall().getRightSideColor())) {
+            wallSidesColor = null;
+            break;
+          }
+        }
+      }
+      setWallSidesColor(wallSidesColor);
+      
+      // Search the common wall texture among wall sides
+      HomeTexture wallSidesTexture = firstWallSide.getSide() == WallSide.LEFT_SIDE
+          ? firstWallSide.getWall().getLeftSideTexture()
+          : firstWallSide.getWall().getRightSideTexture();
+      if (wallSidesTexture != null) {
+        for (int i = 1; i < wallSides.size(); i++) {
+          WallSide wallSide = wallSides.get(i);
+          if (!wallSidesTexture.equals(wallSide.getSide() == WallSide.LEFT_SIDE
+                  ? wallSide.getWall().getLeftSideTexture()
+                  : wallSide.getWall().getRightSideTexture())) {
+            wallSidesTexture = null;
+            break;
+          }
+        }
+      }
+      getWallSidesTextureController().setTexture(wallSidesTexture);
+      
+      // Search the common floor shininess among rooms
+      Float wallSidesShininess = firstWallSide.getSide() == WallSide.LEFT_SIDE
+          ? firstWallSide.getWall().getLeftSideShininess()
+          : firstWallSide.getWall().getRightSideShininess();
+      if (wallSidesShininess != null) {
+        for (int i = 1; i < wallSides.size(); i++) {
+          WallSide wallSide = wallSides.get(i);
+          if (!wallSidesShininess.equals(wallSide.getSide() == WallSide.LEFT_SIDE
+                  ? wallSide.getWall().getLeftSideShininess()
+                  : wallSide.getWall().getRightSideShininess())) {
+            wallSidesShininess = null;
+            break;
+          }
+        }
+      }
+      setWallSidesShininess(wallSidesShininess);
+    }      
   }
   
+  /**
+   * Returns the wall sides close to each room of <code>rooms</code>.
+   */
+  private List<WallSide> getRoomsWallSides(List<Room> rooms, List<WallSide> defaultWallSides) {
+    List<WallSide> wallSides = new ArrayList<WallSide>();
+    for (Room room : rooms) {
+      float [][] points = room.getPoints();
+      GeneralPath roomShape = new GeneralPath();
+      roomShape.moveTo(points [0][0], points [0][1]);
+      for (int i = 1; i < points.length; i++) {
+        roomShape.lineTo(points [i][0], points [i][1]);
+      }
+      roomShape.closePath();
+      Area roomArea = new Area(roomShape);
+
+      if (defaultWallSides != null) {
+        for (WallSide wallSide : defaultWallSides) {
+          if (isRoomItersectingWallSide(wallSide.getWall().getPoints(), wallSide.getSide(), roomArea)) {
+            wallSides.add(wallSide);
+          }
+        }
+      } else {
+        for (Wall wall : this.home.getWalls()) {
+          if (wall.isAtLevel(this.home.getSelectedLevel())) {
+            float [][] wallPoints = wall.getPoints();
+            if (isRoomItersectingWallSide(wallPoints, WallSide.LEFT_SIDE, roomArea)) {
+              wallSides.add(new WallSide(wall, WallSide.LEFT_SIDE));
+            }
+            if (isRoomItersectingWallSide(wallPoints, WallSide.RIGHT_SIDE, roomArea)) {
+              wallSides.add(new WallSide(wall, WallSide.RIGHT_SIDE));
+            }
+          }
+        }
+      }
+    }
+    return wallSides;
+  }
+
+  /**
+   * Returns <code>true</code> if the wall points on the given <code>wallSide</code>
+   * intersects room area.
+   */
+  private boolean isRoomItersectingWallSide(float [][] wallPoints, int wallSide, Area roomArea) {
+    BasicStroke lineStroke = new BasicStroke(2);
+    Shape wallSideShape = getWallSideShape(wallPoints, wallSide);
+    Area wallSideTestArea = new Area(lineStroke.createStrokedShape(wallSideShape));
+    float wallSideTestAreaSurface = getSurface(wallSideTestArea);
+    wallSideTestArea.intersect(roomArea);
+    if (!wallSideTestArea.isEmpty()) {
+      float wallSideIntersectionSurface = getSurface(wallSideTestArea);
+      // Take into account only walls that shares a minimum surface with the room
+      if (wallSideIntersectionSurface > wallSideTestAreaSurface * 0.02f) { 
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns the shape of the side of the given <code>wall</code>. 
+   */
+  private Shape getWallSideShape(float [][] wallPoints, int wallSide) {
+    if (wallPoints.length == 4) {
+      if (wallSide == WallSide.LEFT_SIDE) {
+        return new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1]);
+      } else {
+        return new Line2D.Float(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1]);
+      }
+    } else {
+      float [][] wallSidePoints = new float [wallPoints.length / 2][];
+      System.arraycopy(wallPoints, wallSide == WallSide.LEFT_SIDE ? 0 : wallSidePoints.length, 
+          wallSidePoints, 0, wallSidePoints.length);
+      return getPath(wallSidePoints, false);
+    }
+  }
+  
+  /**
+   * Returns the shape matching the coordinates in <code>points</code> array.
+   */
+  private GeneralPath getPath(float [][] points, boolean closedPath) {
+    GeneralPath path = new GeneralPath();
+    path.moveTo(points [0][0], points [0][1]);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points [i][0], points [i][1]);
+    }
+    if (closedPath) {
+      path.closePath();
+    }
+    return path;
+  }
+
+  /**
+   * Returns the surface of the given <code>area</code>.
+   */
+  private float getSurface(Area area) {
+    // Add the surface of the different polygons of this room
+    float surface = 0;
+    List<float []> currentPathPoints = new ArrayList<float[]>();
+    for (PathIterator it = area.getPathIterator(null); !it.isDone(); ) {
+      float [] roomPoint = new float[2];
+      switch (it.currentSegment(roomPoint)) {
+        case PathIterator.SEG_MOVETO : 
+          currentPathPoints.add(roomPoint);
+          break;
+        case PathIterator.SEG_LINETO : 
+          currentPathPoints.add(roomPoint);
+          break;
+        case PathIterator.SEG_CLOSE :
+          float [][] pathPoints = 
+              currentPathPoints.toArray(new float [currentPathPoints.size()][]);
+          surface += Math.abs(getSignedSurface(pathPoints));
+          currentPathPoints.clear();
+          break;
+      }
+      it.next();        
+    }
+    return surface;
+  }
+  
+  private float getSignedSurface(float areaPoints [][]) {
+    // From "Area of a General Polygon" algorithm described in  
+    // http://www.davidchandler.com/AreaOfAGeneralPolygon.pdf
+    float area = 0;
+    for (int i = 1; i < areaPoints.length; i++) {
+      area += areaPoints [i][0] * areaPoints [i - 1][1];
+      area -= areaPoints [i][1] * areaPoints [i - 1][0];
+    }
+    area += areaPoints [0][0] * areaPoints [areaPoints.length - 1][1];
+    area -= areaPoints [0][1] * areaPoints [areaPoints.length - 1][0];
+    return area / 2;
+  }
+
   /**
    * Sets the edited name.
    */
@@ -492,6 +747,87 @@ public class RoomController implements Controller {
   }
 
   /**
+   * Returns <code>true</code> if walls around the edited rooms should be split.
+   */
+  public boolean isSplitSurroundingWalls() {
+    return this.splitSurroundingWalls;
+  }
+  
+  /**
+   * Sets whether walls around the edited rooms should be split or not.
+   */
+  public void setSplitSurroundingWalls(boolean splitSurroundingWalls) {
+    if (splitSurroundingWalls != this.splitSurroundingWalls) {
+      this.splitSurroundingWalls = splitSurroundingWalls;
+      this.propertyChangeSupport.firePropertyChange(Property.SPLIT_SURROUNDING_WALLS.name(), !splitSurroundingWalls, splitSurroundingWalls);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if walls around the edited rooms need to be split 
+   * to avoid changing the color of wall sides that belong to neighborhood rooms.
+   */
+  public boolean isSplitSurroundingWallsNeeded() {
+    return this.splitSurroundingWallsNeeded;
+  }
+  
+  /**
+   * Sets the edited color of the wall sides.
+   */
+  public void setWallSidesColor(Integer wallSidesColor) {
+    if (wallSidesColor != this.wallSidesColor) {
+      Integer oldWallSidesColor = this.wallSidesColor;
+      this.wallSidesColor = wallSidesColor;
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_SIDES_COLOR.name(), oldWallSidesColor, wallSidesColor);
+      
+      setWallSidesPaint(RoomPaint.COLORED);
+    }
+  }
+  
+  /**
+   * Returns the edited color of the wall sides.
+   */
+  public Integer getWallSidesColor() {
+    return this.wallSidesColor;
+  }
+
+  /**
+   * Sets whether the wall sides are colored, textured or unknown painted.
+   */
+  public void setWallSidesPaint(RoomPaint wallSidesPaint) {
+    if (wallSidesPaint != this.wallSidesPaint) {
+      RoomPaint oldWallSidesPaint = this.wallSidesPaint;
+      this.wallSidesPaint = wallSidesPaint;
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_SIDES_PAINT.name(), oldWallSidesPaint, wallSidesPaint);
+    }
+  }
+  
+  /**
+   * Returns whether the wall sides are colored, textured or unknown painted.
+   */
+  public RoomPaint getWallSidesPaint() {
+    return this.wallSidesPaint;
+  }
+
+  /**
+   * Sets the edited shininess of the wall sides.
+   */
+  public void setWallSidesShininess(Float wallSidesShininess) {
+    if (wallSidesShininess != this.wallSidesShininess) {
+      Float oldWallSidesShininess = this.wallSidesShininess;
+      this.wallSidesShininess = wallSidesShininess;
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_SIDES_SHININESS.name(), oldWallSidesShininess, wallSidesShininess);
+    }
+  }
+  
+  /**
+   * Returns the edited shininess of the wall sides.
+   */
+  public Float getWallSidesShininess() {
+    return this.wallSidesShininess;
+  }
+
+  /**
    * Controls the modification of selected rooms in edited home.
    */
   public void modifyRooms() {
@@ -512,21 +848,48 @@ public class RoomController implements Controller {
       HomeTexture ceilingTexture = getCeilingPaint() == RoomPaint.TEXTURED
           ? getCeilingTextureController().getTexture() : null;
       Float ceilingShininess = getCeilingShininess();
+      Integer wallSidesColor = getWallSidesPaint() == RoomPaint.COLORED 
+          ? getWallSidesColor() : null;
+      HomeTexture wallSidesTexture = getWallSidesPaint() == RoomPaint.TEXTURED
+          ? getWallSidesTextureController().getTexture() : null;
+      Float wallSidesShininess = getWallSidesShininess();
+      List<WallSide> selectedRoomsWallSides = getRoomsWallSides(selectedRooms, null);
       
       // Create an array of modified rooms with their current properties values
       ModifiedRoom [] modifiedRooms = new ModifiedRoom [selectedRooms.size()]; 
       for (int i = 0; i < modifiedRooms.length; i++) {
         modifiedRooms [i] = new ModifiedRoom(selectedRooms.get(i));
       }
+      
       // Apply modification
-      doModifyRooms(modifiedRooms, name, areaVisible, 
+      List<ModifiedWall> deletedWalls = new ArrayList<ModifiedWall>();
+      List<ModifiedWall> addedWalls = new ArrayList<ModifiedWall>();
+      List<Selectable> newSelection = new ArrayList<Selectable>(oldSelection);
+      if (this.splitSurroundingWalls) {
+        if (splitWalls(selectedRoomsWallSides, deletedWalls, addedWalls, newSelection)) {
+          this.home.setSelectedItems(newSelection);
+          // Update wall sides
+          selectedRoomsWallSides = getRoomsWallSides(selectedRooms, selectedRoomsWallSides);
+        }
+      }
+      
+      // Create an array of modified wall sides with their current properties values
+      ModifiedWallSide [] modifiedWallSides = new ModifiedWallSide [selectedRoomsWallSides.size()]; 
+      for (int i = 0; i < modifiedWallSides.length; i++) {
+        modifiedWallSides [i] = new ModifiedWallSide(selectedRoomsWallSides.get(i));
+      }
+      doModifyRoomsAndWallSides(home, modifiedRooms, name, areaVisible, 
           floorVisible, floorColor, floorTexture, floorShininess, 
-          ceilingVisible, ceilingColor, ceilingTexture, ceilingShininess);       
+          ceilingVisible, ceilingColor, ceilingTexture, ceilingShininess,
+          modifiedWallSides, wallSidesColor, wallSidesTexture, wallSidesShininess, null, null);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new RoomsModificationUndoableEdit(
-            this.home, this.preferences, oldSelection, modifiedRooms, name, areaVisible, 
+        UndoableEdit undoableEdit = new RoomsAndWallSidesModificationUndoableEdit(
+            this.home, this.preferences, oldSelection, newSelection, modifiedRooms, name, areaVisible, 
             floorColor, floorTexture, floorVisible, floorShininess,
-            ceilingColor, ceilingTexture, ceilingVisible, ceilingShininess);
+            ceilingColor, ceilingTexture, ceilingVisible, ceilingShininess,
+            modifiedWallSides, wallSidesColor, wallSidesTexture, wallSidesShininess,
+            deletedWalls.toArray(new ModifiedWall [deletedWalls.size()]), 
+            addedWalls.toArray(new ModifiedWall [addedWalls.size()]));
         this.undoSupport.postEdit(undoableEdit);
       }
       if (name != null) {
@@ -536,28 +899,238 @@ public class RoomController implements Controller {
   }
 
   /**
+   * Splits walls that overfill on other rooms if needed and returns <code>false</code> if the operation wasn't needed. 
+   */
+  public boolean splitWalls(List<WallSide> wallSides, 
+                            List<ModifiedWall> deletedWalls,
+                            List<ModifiedWall> addedWalls, 
+                            List<Selectable> selectedItems) {
+    Map<Wall, ModifiedWall> existingWalls = null;
+    List<Wall> newWalls = new ArrayList<Wall>();
+    WallSide splitWallSide;
+    do {
+      splitWallSide = null;
+      Wall firstWall = null;
+      Wall secondWall = null;
+      ModifiedWall deletedWall = null;
+      for (Iterator<WallSide> it = wallSides.iterator(); 
+          it.hasNext() && splitWallSide == null; ) {
+        WallSide wallSide = (WallSide)it.next();
+        Wall wall = wallSide.getWall();
+        if (wall.getArcExtent() == null) { // Ignore round walls
+          Area wallArea = new Area(getPath(wall.getPoints(), true));
+          for (WallSide intersectedWallSide : wallSides) {
+            Wall intersectedWall = intersectedWallSide.getWall();
+            if (wall != intersectedWall) {
+              Area intersectedWallArea = new Area(getPath(intersectedWall.getPoints(), true));
+              intersectedWallArea.intersect(wallArea);
+              if (!intersectedWallArea.isEmpty()
+                  && intersectedWallArea.isSingular()) {
+                float [] intersection = computeIntersection(
+                    wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), 
+                    intersectedWall.getXStart(), intersectedWall.getYStart(), intersectedWall.getXEnd(), intersectedWall.getYEnd());
+                if (intersection != null) {
+                  // Clone new walls to copy their characteristics 
+                  firstWall = wall.clone();
+                  secondWall = wall.clone();
+                  
+                  // Change split walls end and start point
+                  firstWall.setXEnd(intersection [0]);
+                  firstWall.setYEnd(intersection [1]);
+                  secondWall.setXStart(intersection [0]);
+                  secondWall.setYStart(intersection [1]);
+                  
+                  if (firstWall.getLength() > intersectedWall.getThickness() / 2
+                      && secondWall.getLength() > intersectedWall.getThickness() / 2) {
+                    // If method is called for test purpose
+                    if (deletedWalls == null) { 
+                      return true; 
+                    }
+                    
+                    if (existingWalls == null) {
+                      // Store all walls at start and end in case there would be more than one change on a wall   
+                      existingWalls = new HashMap<Wall, ModifiedWall>(wallSides.size());
+                      for (WallSide side : wallSides) {
+                        if (!existingWalls.containsKey(side.getWall())) {
+                          existingWalls.put(side.getWall(), new ModifiedWall(side.getWall()));
+                        }
+                      }
+                    }
+                    
+                    deletedWall = existingWalls.get(wall);
+                    Wall wallAtStart = wall.getWallAtStart();            
+                    if (wallAtStart != null) {
+                      firstWall.setWallAtStart(wallAtStart);
+                      if (wallAtStart.getWallAtEnd() == wall) {
+                        wallAtStart.setWallAtEnd(firstWall);
+                      } else {
+                        wallAtStart.setWallAtStart(firstWall);
+                      }
+                    }
+                    
+                    Wall wallAtEnd = wall.getWallAtEnd();      
+                    if (wallAtEnd != null) {
+                      secondWall.setWallAtEnd(wallAtEnd);
+                      if (wallAtEnd.getWallAtEnd() == wall) {
+                        wallAtEnd.setWallAtEnd(secondWall);
+                      } else {
+                        wallAtEnd.setWallAtStart(secondWall);
+                      }
+                    }
+                    
+                    firstWall.setWallAtEnd(secondWall);
+                    secondWall.setWallAtStart(firstWall);
+
+                    if (wall.getHeightAtEnd() != null) {
+                      Float heightAtIntersecion = wall.getHeight() 
+                          + (wall.getHeightAtEnd() - wall.getHeight()) 
+                            * (float)Point2D.distance(wall.getXStart(), wall.getYStart(), intersection [0], intersection [1])
+                            / wall.getLength();
+                      firstWall.setHeightAtEnd(heightAtIntersecion);
+                      secondWall.setHeight(heightAtIntersecion);
+                    }
+                    
+                    splitWallSide = wallSide;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      if (splitWallSide != null) {    
+        newWalls.add(firstWall);
+        newWalls.add(secondWall);        
+        Wall splitWall = splitWallSide.getWall();
+        if (this.home.getWalls().contains(splitWall)) {
+          deletedWalls.add(deletedWall);
+        } else {
+          // Remove from newWalls in case it was a wall split twice
+          for (Iterator<Wall> it = newWalls.iterator(); it.hasNext(); ) {
+            if (it.next() == splitWall) {
+              it.remove();
+              break;
+            }
+          }
+        }
+        // Update selected items
+        if (selectedItems.remove(splitWall)) {
+          selectedItems.add(firstWall);
+          selectedItems.add(secondWall);
+        }
+        
+        wallSides.remove(splitWallSide);
+        wallSides.add(new WallSide(firstWall, splitWallSide.getSide()));
+        wallSides.add(new WallSide(secondWall, splitWallSide.getSide()));
+        // Update any wall side that reference the same wall
+        List<WallSide> sameWallSides = new ArrayList<WallSide>(); 
+        for (Iterator<WallSide> it = wallSides.iterator(); it.hasNext(); ) {
+          WallSide wallSide = it.next();
+          if (wallSide.getWall() == splitWall) {
+            it.remove();
+            sameWallSides.add(new WallSide(firstWall, wallSide.getSide()));
+            sameWallSides.add(new WallSide(secondWall, wallSide.getSide()));
+          }
+        }
+        wallSides.addAll(sameWallSides);
+      }
+    } while (splitWallSide != null);
+
+    // If method is called for test purpose
+    if (deletedWalls == null) { 
+      return false; 
+    } else {
+      for (Wall newWall : newWalls) {      
+        this.home.addWall(newWall);
+        addedWalls.add(new ModifiedWall(newWall));
+      }
+      for (ModifiedWall deletedWall : deletedWalls) {
+        this.home.deleteWall(deletedWall.getWall());
+      }
+      return !deletedWalls.isEmpty();
+    }
+  }
+
+  /** 
+   * Returns the intersection between a line segment and a second line.
+   */
+  private float [] computeIntersection(float xPoint1, float yPoint1, float xPoint2, float yPoint2, 
+                                       float xPoint3, float yPoint3, float xPoint4, float yPoint4) {    
+    float x = xPoint1;
+    float y = yPoint1;
+    float alpha1 = (yPoint2 - yPoint1) / (xPoint2 - xPoint1);
+    float alpha2 = (yPoint4 - yPoint3) / (xPoint4 - xPoint3);
+    // If the two lines are not parallel
+    if (alpha1 != alpha2) {
+      // If first line is vertical
+      if (Math.abs(alpha1) > 4000)  {
+        if (Math.abs(alpha2) < 4000) {
+          x = xPoint1;
+          float beta2  = yPoint4 - alpha2 * xPoint4;
+          y = alpha2 * x + beta2;
+        }
+      // If second line is vertical
+      } else if (Math.abs(alpha2) > 4000) {
+        if (Math.abs(alpha1) < 4000) {
+          x = xPoint3;
+          float beta1  = yPoint2 - alpha1 * xPoint2;
+          y = alpha1 * x + beta1;
+        }
+      } else {
+        boolean sameSignum = Math.signum(alpha1) == Math.signum(alpha2);
+        if ((sameSignum && (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001)
+            || (!sameSignum && Math.abs(alpha1 - alpha2) > 1E-5)) {
+          float beta1  = yPoint2 - alpha1 * xPoint2;
+          float beta2  = yPoint4 - alpha2 * xPoint4;
+          x = (beta2 - beta1) / (alpha1 - alpha2);
+          y = alpha1 * x + beta1;
+        }
+      } 
+    }
+    if (Line2D.ptSegDistSq(xPoint1, yPoint1, xPoint2, yPoint2, x, y) < 1E-7
+        && (Math.abs(xPoint1 - x) > 1E-4
+            || Math.abs(yPoint1 - y) > 1E-4)
+        && (Math.abs(xPoint2 - x) > 1E-4
+            || Math.abs(yPoint2 - y) > 1E-4)) {
+      return new float [] {x, y};
+    } else {
+      return null;
+    }
+  }
+
+  /**
    * Undoable edit for rooms modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class RoomsModificationUndoableEdit extends AbstractUndoableEdit {
-    private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
-    private final ModifiedRoom []  modifiedRooms;
-    private final String           name;
-    private final Boolean          areaVisible;
-    private final Integer          floorColor;
-    private final HomeTexture      floorTexture;
-    private final Boolean          floorVisible;
-    private final Float            floorShininess;
-    private final Integer          ceilingColor;
-    private final HomeTexture      ceilingTexture;
-    private final Boolean          ceilingVisible;
-    private final Float            ceilingShininess;
+  private static class RoomsAndWallSidesModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home                home;
+    private final UserPreferences     preferences;
+    private final List<Selectable>    oldSelection;
+    private final List<Selectable>    newSelection;
+    private final ModifiedRoom []     modifiedRooms;
+    private final String              name;
+    private final Boolean             areaVisible;
+    private final Integer             floorColor;
+    private final HomeTexture         floorTexture;
+    private final Boolean             floorVisible;
+    private final Float               floorShininess;
+    private final Integer             ceilingColor;
+    private final HomeTexture         ceilingTexture;
+    private final Boolean             ceilingVisible;
+    private final Float               ceilingShininess;
+    private final ModifiedWallSide [] modifiedWallSides;
+    private final Integer             wallSidesColor;
+    private final HomeTexture         wallSidesTexture;
+    private final Float               wallSidesShininess;
+    private final ModifiedWall []     deletedWalls;
+    private final ModifiedWall []     addedWalls;
 
-    private RoomsModificationUndoableEdit(Home home,
+    private RoomsAndWallSidesModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
                                           List<Selectable> oldSelection,
+                                          List<Selectable> newSelection, 
                                           ModifiedRoom [] modifiedRooms,
                                           String name,
                                           Boolean areaVisible,
@@ -568,10 +1141,17 @@ public class RoomController implements Controller {
                                           Integer ceilingColor,
                                           HomeTexture ceilingTexture,
                                           Boolean ceilingVisible,
-                                          Float ceilingShininess) {
+                                          Float ceilingShininess,
+                                          ModifiedWallSide [] modifiedWallSides,
+                                          Integer wallSidesColor,
+                                          HomeTexture wallSidesTexture,
+                                          Float wallSidesShininess, 
+                                          ModifiedWall [] deletedWalls, 
+                                          ModifiedWall [] addedWalls) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
+      this.newSelection = newSelection;
       this.modifiedRooms = modifiedRooms;
       this.name = name;
       this.areaVisible = areaVisible;
@@ -583,22 +1163,31 @@ public class RoomController implements Controller {
       this.ceilingTexture = ceilingTexture;
       this.ceilingVisible = ceilingVisible;
       this.ceilingShininess = ceilingShininess;
+      this.modifiedWallSides = modifiedWallSides;
+      this.wallSidesColor = wallSidesColor;
+      this.wallSidesTexture = wallSidesTexture;
+      this.wallSidesShininess = wallSidesShininess;
+      this.deletedWalls = deletedWalls;
+      this.addedWalls = addedWalls;
     }
 
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      undoModifyRooms(this.modifiedRooms); 
+      undoModifyRoomsAndWallSides(this.home, this.modifiedRooms, this.modifiedWallSides, this.deletedWalls, this.addedWalls); 
       this.home.setSelectedItems(this.oldSelection); 
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModifyRooms(this.modifiedRooms, this.name, this.areaVisible, 
+      doModifyRoomsAndWallSides(this.home,
+          this.modifiedRooms, this.name, this.areaVisible, 
           this.floorVisible, this.floorColor, this.floorTexture, this.floorShininess, 
-          this.ceilingVisible, this.ceilingColor, this.ceilingTexture, this.ceilingShininess); 
-      this.home.setSelectedItems(this.oldSelection); 
+          this.ceilingVisible, this.ceilingColor, this.ceilingTexture, this.ceilingShininess,
+          this.modifiedWallSides, this.wallSidesColor, this.wallSidesTexture, this.wallSidesShininess,
+          this.deletedWalls, this.addedWalls); 
+      this.home.setSelectedItems(this.newSelection); 
     }
 
     @Override
@@ -608,12 +1197,25 @@ public class RoomController implements Controller {
   }
 
   /**
-   * Modifies rooms properties with the values in parameter.
+   * Modifies rooms and walls properties with the values in parameter.
    */
-  private static void doModifyRooms(ModifiedRoom [] modifiedRooms, 
+  private static void doModifyRoomsAndWallSides(Home home, ModifiedRoom [] modifiedRooms, 
                              String name, Boolean areaVisible, 
                              Boolean floorVisible, Integer floorColor, HomeTexture floorTexture, Float floorShininess,
-                             Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess) {
+                             Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess,
+                             ModifiedWallSide [] modifiedWallSides, 
+                             Integer wallSidesColor, HomeTexture wallSidesTexture, Float wallSidesShininess, 
+                             ModifiedWall [] deletedWalls, 
+                             ModifiedWall [] addedWalls) {
+    if (deletedWalls != null) {
+      for (ModifiedWall newWall : addedWalls) {
+        newWall.reset();
+        home.addWall(newWall.getWall());
+      }
+      for (ModifiedWall deletedWall : deletedWalls) {
+        home.deleteWall(deletedWall.getWall());
+      }
+    }
     for (ModifiedRoom modifiedRoom : modifiedRooms) {
       Room room = modifiedRoom.getRoom();
       if (name != null) {
@@ -649,14 +1251,54 @@ public class RoomController implements Controller {
         room.setCeilingShininess(ceilingShininess);
       }
     }
+    for (ModifiedWallSide modifiedWallSide : modifiedWallSides) {
+      WallSide wallSide = modifiedWallSide.getWallSide();
+      if (wallSidesColor != null) {
+        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+          wallSide.getWall().setLeftSideColor(wallSidesColor);
+        } else {
+          wallSide.getWall().setRightSideColor(wallSidesColor);
+        }
+      }
+      
+      if (wallSidesTexture != null || wallSidesColor != null) {
+        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+          wallSide.getWall().setLeftSideTexture(wallSidesTexture);
+        } else {
+          wallSide.getWall().setRightSideTexture(wallSidesTexture);
+        }
+      }
+
+      if (wallSidesShininess != null) {
+        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+          wallSide.getWall().setLeftSideShininess(wallSidesShininess);
+        } else {
+          wallSide.getWall().setRightSideShininess(wallSidesShininess);
+        }
+      }
+    }
   }
 
   /**
-   * Restores room properties from the values stored in <code>modifiedRooms</code>.
+   * Restores room properties from the values stored in <code>modifiedRooms</code> and <code>modifiedWallSides</code>.
    */
-  private static void undoModifyRooms(ModifiedRoom [] modifiedRooms) {
+  private static void undoModifyRoomsAndWallSides(Home home, 
+                                                  ModifiedRoom [] modifiedRooms,
+                                                  ModifiedWallSide [] modifiedWallSides, 
+                                                  ModifiedWall [] deletedWalls, 
+                                                  ModifiedWall [] addedWalls) {
     for (ModifiedRoom modifiedRoom : modifiedRooms) {
       modifiedRoom.reset();
+    }
+    for (ModifiedWallSide modifiedWallSide : modifiedWallSides) {
+      modifiedWallSide.reset();
+    }
+    for (ModifiedWall newWall : addedWalls) {
+      home.deleteWall(newWall.getWall());
+    }
+    for (ModifiedWall deletedWall : deletedWalls) {
+      deletedWall.reset();
+      home.addWall(deletedWall.getWall());
     }
   }
   
@@ -705,6 +1347,162 @@ public class RoomController implements Controller {
       this.room.setCeilingColor(this.ceilingColor);
       this.room.setCeilingTexture(this.ceilingTexture);
       this.room.setCeilingShininess(this.ceilingShininess);
+    }    
+  }
+
+  /**
+   * A wall side.  
+   */
+  private class WallSide {
+    public static final int LEFT_SIDE = 0;
+    public static final int RIGHT_SIDE = 1;
+    
+    private Wall          wall;
+    private int           side;
+    private final Wall    wallAtStart;
+    private final Wall    wallAtEnd;
+    private final boolean joinedAtEndOfWallAtStart;
+    private final boolean joinedAtStartOfWallAtEnd;
+    
+    public WallSide(Wall wall, int side) {
+      this.wall = wall;
+      this.side = side;
+      this.wallAtStart = wall.getWallAtStart();
+      this.joinedAtEndOfWallAtStart =
+          this.wallAtStart != null
+          && this.wallAtStart.getWallAtEnd() == wall;
+      this.wallAtEnd = wall.getWallAtEnd();
+      this.joinedAtStartOfWallAtEnd =
+          this.wallAtEnd != null
+          && wallAtEnd.getWallAtStart() == wall;
+    }
+    
+    public Wall getWall() {
+      return this.wall;
+    }
+    
+    public int getSide() {
+      return this.side;
+    }
+    
+    public Wall getWallAtStart() {
+      return this.wallAtStart;
+    }
+    
+    public Wall getWallAtEnd() {
+      return this.wallAtEnd;
+    }
+
+    public boolean isJoinedAtEndOfWallAtStart() {
+      return this.joinedAtEndOfWallAtStart;
+    }
+
+    public boolean isJoinedAtStartOfWallAtEnd() {
+      return this.joinedAtStartOfWallAtEnd;
+    }
+  }
+
+  /**
+   * A modified wall.  
+   */
+  private class ModifiedWall {
+    private Wall          wall;
+    private final Wall    wallAtStart;
+    private final Wall    wallAtEnd;
+    private final boolean joinedAtEndOfWallAtStart;
+    private final boolean joinedAtStartOfWallAtEnd;
+    
+    public ModifiedWall(Wall wall) {
+      this.wall = wall;
+      this.wallAtStart = wall.getWallAtStart();
+      this.joinedAtEndOfWallAtStart =
+          this.wallAtStart != null
+          && this.wallAtStart.getWallAtEnd() == wall;
+      this.wallAtEnd = wall.getWallAtEnd();
+      this.joinedAtStartOfWallAtEnd =
+          this.wallAtEnd != null
+          && wallAtEnd.getWallAtStart() == wall;
+    }
+    
+    public Wall getWall() {
+      return this.wall;
+    }
+    
+    public void reset() {
+      if (this.wallAtStart != null) {
+        this.wall.setWallAtStart(this.wallAtStart);
+        if (this.joinedAtEndOfWallAtStart) {
+          this.wallAtStart.setWallAtEnd(this.wall);
+        } else {
+          this.wallAtStart.setWallAtStart(this.wall);
+        }
+      }
+      if (this.wallAtEnd != null) {
+        this.wall.setWallAtEnd(wallAtEnd);
+        if (this.joinedAtStartOfWallAtEnd) {
+          this.wallAtEnd.setWallAtStart(this.wall);
+        } else {
+          this.wallAtEnd.setWallAtEnd(this.wall);
+        }
+      }
+    }    
+  }
+
+  /**
+   * Stores the current properties values of a modified wall side.
+   */
+  private static final class ModifiedWallSide {
+    private final WallSide    wallSide;
+    private final Integer     wallColor;
+    private final HomeTexture wallTexture;
+    private final Float       wallShininess;
+
+    public ModifiedWallSide(WallSide wallSide) {
+      this.wallSide = wallSide;
+      if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+        this.wallColor = wallSide.getWall().getLeftSideColor();
+        this.wallTexture = wallSide.getWall().getLeftSideTexture();
+        this.wallShininess = wallSide.getWall().getLeftSideShininess();
+      } else {
+        this.wallColor = wallSide.getWall().getRightSideColor();
+        this.wallTexture = wallSide.getWall().getRightSideTexture();
+        this.wallShininess = wallSide.getWall().getRightSideShininess();
+      }
+    }
+
+    public WallSide getWallSide() {
+      return this.wallSide;
+    }
+    
+    public void reset() {
+      if (this.wallSide.getSide() == WallSide.LEFT_SIDE) {
+        this.wallSide.getWall().setLeftSideColor(this.wallColor);
+        this.wallSide.getWall().setLeftSideTexture(this.wallTexture);
+        this.wallSide.getWall().setLeftSideShininess(this.wallShininess);
+      } else {
+        this.wallSide.getWall().setRightSideColor(this.wallColor);
+        this.wallSide.getWall().setRightSideTexture(this.wallTexture);
+        this.wallSide.getWall().setRightSideShininess(this.wallShininess);
+      }
+      Wall wall = wallSide.getWall();
+      Wall wallAtStart = wallSide.getWallAtStart();
+      if (wallAtStart != null) {
+        wall.setWallAtStart(wallAtStart);
+        if (wallSide.isJoinedAtEndOfWallAtStart()) {
+          wallAtStart.setWallAtEnd(wall);
+        } else {
+          wallAtStart.setWallAtStart(wall);
+        }
+      }
+      Wall wallAtEnd = wallSide.getWallAtEnd();
+      if (wallAtEnd != null) {
+        wall.setWallAtEnd(wallAtEnd);
+        if (wallSide.isJoinedAtStartOfWallAtEnd()) {
+          wallAtEnd.setWallAtStart(wall);
+        } else {
+          wallAtEnd.setWallAtEnd(wall);
+        }
+      }
     }    
   }
 }
