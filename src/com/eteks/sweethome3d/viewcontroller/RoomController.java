@@ -748,6 +748,7 @@ public class RoomController implements Controller {
 
   /**
    * Returns <code>true</code> if walls around the edited rooms should be split.
+   * @since 4.0
    */
   public boolean isSplitSurroundingWalls() {
     return this.splitSurroundingWalls;
@@ -755,6 +756,7 @@ public class RoomController implements Controller {
   
   /**
    * Sets whether walls around the edited rooms should be split or not.
+   * @since 4.0
    */
   public void setSplitSurroundingWalls(boolean splitSurroundingWalls) {
     if (splitSurroundingWalls != this.splitSurroundingWalls) {
@@ -766,6 +768,7 @@ public class RoomController implements Controller {
   /**
    * Returns <code>true</code> if walls around the edited rooms need to be split 
    * to avoid changing the color of wall sides that belong to neighborhood rooms.
+   * @since 4.0
    */
   public boolean isSplitSurroundingWallsNeeded() {
     return this.splitSurroundingWallsNeeded;
@@ -773,6 +776,7 @@ public class RoomController implements Controller {
   
   /**
    * Sets the edited color of the wall sides.
+   * @since 4.0
    */
   public void setWallSidesColor(Integer wallSidesColor) {
     if (wallSidesColor != this.wallSidesColor) {
@@ -786,6 +790,7 @@ public class RoomController implements Controller {
   
   /**
    * Returns the edited color of the wall sides.
+   * @since 4.0
    */
   public Integer getWallSidesColor() {
     return this.wallSidesColor;
@@ -793,6 +798,7 @@ public class RoomController implements Controller {
 
   /**
    * Sets whether the wall sides are colored, textured or unknown painted.
+   * @since 4.0
    */
   public void setWallSidesPaint(RoomPaint wallSidesPaint) {
     if (wallSidesPaint != this.wallSidesPaint) {
@@ -804,6 +810,7 @@ public class RoomController implements Controller {
   
   /**
    * Returns whether the wall sides are colored, textured or unknown painted.
+   * @since 4.0
    */
   public RoomPaint getWallSidesPaint() {
     return this.wallSidesPaint;
@@ -811,6 +818,7 @@ public class RoomController implements Controller {
 
   /**
    * Sets the edited shininess of the wall sides.
+   * @since 4.0
    */
   public void setWallSidesShininess(Float wallSidesShininess) {
     if (wallSidesShininess != this.wallSidesShininess) {
@@ -822,6 +830,7 @@ public class RoomController implements Controller {
   
   /**
    * Returns the edited shininess of the wall sides.
+   * @since 4.0
    */
   public Float getWallSidesShininess() {
     return this.wallSidesShininess;
@@ -901,10 +910,10 @@ public class RoomController implements Controller {
   /**
    * Splits walls that overfill on other rooms if needed and returns <code>false</code> if the operation wasn't needed. 
    */
-  public boolean splitWalls(List<WallSide> wallSides, 
-                            List<ModifiedWall> deletedWalls,
-                            List<ModifiedWall> addedWalls, 
-                            List<Selectable> selectedItems) {
+  private boolean splitWalls(List<WallSide> wallSides, 
+                             List<ModifiedWall> deletedWalls,
+                             List<ModifiedWall> addedWalls, 
+                             List<Selectable> selectedItems) {
     Map<Wall, ModifiedWall> existingWalls = null;
     List<Wall> newWalls = new ArrayList<Wall>();
     WallSide splitWallSide;

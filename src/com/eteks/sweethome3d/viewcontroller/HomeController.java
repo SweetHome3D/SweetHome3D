@@ -1144,6 +1144,7 @@ public class HomeController implements Controller {
 
   /**
    * Imports a texture to the texture catalog.  
+   * @since 4.0
    */
   public void importTexture() {
     new ImportedTextureWizardController(this.preferences, 
@@ -1722,6 +1723,7 @@ public class HomeController implements Controller {
 
   /**
    * Controls the export of the furniture list of current home to a CSV file.
+   * @since 4.0
    */
   public void exportToCSV() {
     final String csvName = getView().showExportToCSVDialog(this.home.getName());    
