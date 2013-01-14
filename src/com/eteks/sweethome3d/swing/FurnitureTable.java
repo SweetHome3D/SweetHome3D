@@ -31,6 +31,9 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
@@ -596,98 +599,117 @@ public class FurnitureTable extends JTable implements View, Printable {
       }
     }
   }
+  
+  /**
+   * Writes in the given stream the content of the table at CSV format.
+   */
+  public void exportToCSV(Writer writer, char fieldSeparator) throws IOException {
+    exportHeaderToCSV(writer, fieldSeparator);
+    for (int row = 0, n = getRowCount(); row < n; row++) {
+      exportRowToCSV(writer, fieldSeparator, row);
+    }
+  }
+  
+  private void exportHeaderToCSV(Writer writer, char fieldSeparator) throws IOException {
+    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      if (columnIndex > 0) {
+        writer.write(fieldSeparator);
+      }
+      writer.write(String.valueOf(this.columnModel.getColumn(columnIndex).getHeaderValue()));
+    }
+    writer.write(System.getProperty("line.separator"));
+  }
 
+  private void exportRowToCSV(Writer writer, char fieldSeparator, int rowIndex)
+      throws IOException {
+    TableModel model = getModel();
+    HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)model.getValueAt(rowIndex, 0);
+    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      if (columnIndex > 0) {
+        writer.write(fieldSeparator);
+      }
+      TableColumn column = this.columnModel.getColumn(columnIndex);
+      Object columnIdentifier = column.getIdentifier();
+      if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
+        switch ((HomePieceOfFurniture.SortableProperty)columnIdentifier) {
+          case CATALOG_ID :
+            // Copy piece catalog id
+            String catalogId = copiedPiece.getCatalogId();
+            writer.write(catalogId != null ? catalogId : "");
+            break;
+          case NAME :
+            // Copy piece name
+            writer.write(copiedPiece.getName());
+            break;
+          case LEVEL :
+            // Copy level name
+            writer.write(copiedPiece.getLevel() != null 
+                ? copiedPiece.getLevel().getName() 
+                : "");
+            break;
+          case COLOR :
+            if (copiedPiece.getColor() != null) {
+              // Copy piece color at #xxxxxx format              
+              writer.write("#" + Integer.toHexString(copiedPiece.getColor()).substring(2));
+            }
+            break;
+          case TEXTURE :
+            if (copiedPiece.getTexture() != null) {
+              writer.write(copiedPiece.getTexture().getName());
+            }
+          case WIDTH :
+          case DEPTH :
+          case HEIGHT : 
+          case X : 
+          case Y :
+          case ELEVATION : 
+          case ANGLE :
+          case PRICE : 
+          case VALUE_ADDED_TAX_PERCENTAGE : 
+          case VALUE_ADDED_TAX :
+          case PRICE_VALUE_ADDED_TAX_INCLUDED : 
+            // Copy numbers as they are displayed by their renderer
+            writer.write(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
+            break;
+          case MOVABLE :
+            // Copy boolean as true or false
+            writer.write(String.valueOf(copiedPiece.isMovable()));
+            break;
+          case DOOR_OR_WINDOW : 
+            writer.write(String.valueOf(copiedPiece.isDoorOrWindow()));
+            break;
+          case VISIBLE :
+            writer.write(String.valueOf(copiedPiece.isVisible()));
+            break;
+        }
+      } else {
+        Component rendererComponent = column.getCellRenderer().getTableCellRendererComponent(
+            this, copiedPiece, false, false, rowIndex, columnIndex);
+        if (rendererComponent instanceof JLabel) {
+          writer.write(((JLabel)rendererComponent).getText());              
+        } else {
+          writer.write(String.valueOf(model.getValueAt(rowIndex, columnIndex)));
+        }
+      }  
+    }
+    writer.write(System.getProperty("line.separator"));
+  }
+  
   /**
    * Returns a CSV formatted text describing the selected pieces of <code>furniture</code>.  
    */
   public String getClipboardCSV() {
-    StringBuilder csv = new StringBuilder(); 
-    String lineSeparator = System.getProperty("line.separator");
-    // Header
-    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      if (columnIndex > 0) {
-        csv.append("\t");
+    StringWriter writer = new StringWriter();
+    try {
+      exportHeaderToCSV(writer, '\t');
+      for (int row : getSelectedRows()) {
+        exportRowToCSV(writer, '\t', row);
       }
-      csv.append(this.columnModel.getColumn(columnIndex).getHeaderValue());
+    } catch (IOException ex) {
+      // May not happen since there's no IO write
     }
-    csv.append(lineSeparator);
-    
-    // Selected values 
-    for (int rowIndex : getSelectedRows()) {
-      TableModel model = getModel();
-      HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)model.getValueAt(rowIndex, 0);
-      for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-        if (columnIndex > 0) {
-          csv.append("\t");
-        }
-        TableColumn column = this.columnModel.getColumn(columnIndex);
-        Object columnIdentifier = column.getIdentifier();
-        if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
-          switch ((HomePieceOfFurniture.SortableProperty)columnIdentifier) {
-            case CATALOG_ID :
-              // Copy piece catalog id
-              String catalogId = copiedPiece.getCatalogId();
-              csv.append(catalogId != null ? catalogId : "");
-              break;
-            case NAME :
-              // Copy piece name
-              csv.append(copiedPiece.getName());
-              break;
-            case LEVEL :
-              // Copy level name
-              csv.append(copiedPiece.getLevel() != null 
-                  ? copiedPiece.getLevel().getName() 
-                  : "");
-              break;
-            case COLOR :
-              if (copiedPiece.getColor() != null) {
-                // Copy piece color at #xxxxxx format              
-                csv.append("#" + Integer.toHexString(copiedPiece.getColor()).substring(2));
-              }
-              break;
-            case TEXTURE :
-              if (copiedPiece.getTexture() != null) {
-                csv.append(copiedPiece.getTexture().getName());
-              }
-            case WIDTH :
-            case DEPTH :
-            case HEIGHT : 
-            case X : 
-            case Y :
-            case ELEVATION : 
-            case ANGLE :
-            case PRICE : 
-            case VALUE_ADDED_TAX_PERCENTAGE : 
-            case VALUE_ADDED_TAX :
-            case PRICE_VALUE_ADDED_TAX_INCLUDED : 
-              // Copy numbers as they are displayed by their renderer
-              csv.append(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
-                  this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
-              break;
-            case MOVABLE :
-              // Copy boolean as true or false
-              csv.append(copiedPiece.isMovable());
-              break;
-            case DOOR_OR_WINDOW : 
-              csv.append(copiedPiece.isDoorOrWindow());
-              break;
-            case VISIBLE :
-              csv.append(copiedPiece.isVisible());
-              break;
-          }
-        } else {
-          Component rendererComponent = column.getCellRenderer().getTableCellRendererComponent(
-              this, copiedPiece, false, false, rowIndex, columnIndex);
-          if (rendererComponent instanceof JLabel) {
-            csv.append(((JLabel)rendererComponent).getText());              
-          } else {
-            csv.append(model.getValueAt(rowIndex, columnIndex));
-          }
-        }  
-      }
-      csv.append(lineSeparator);
-    }
-    return csv.toString();
+    return writer.toString();
   }
   
   /**

@@ -57,11 +57,14 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.security.AccessControlException;
 import java.util.ArrayList;
@@ -304,6 +307,7 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
     }
     createAction(ActionType.IMPORT_FURNITURE_LIBRARY, preferences, controller, "importFurnitureLibrary");
+    createAction(ActionType.IMPORT_TEXTURE, preferences, controller, "importTexture");
     createAction(ActionType.IMPORT_TEXTURES_LIBRARY, preferences, controller, "importTexturesLibrary");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
@@ -383,6 +387,7 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
+    createAction(ActionType.EXPORT_TO_CSV, preferences, controller, "exportToCSV");
     
     PlanController planController = controller.getPlanController();
     if (planController.getView() != null) {
@@ -945,10 +950,13 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
+    addActionToMenu(ActionType.IMPORT_TEXTURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_TEXTURES_LIBRARY, furnitureMenu);
     furnitureMenu.addSeparator();
     furnitureMenu.add(createFurnitureSortMenu(home, preferences));
     furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
+    furnitureMenu.addSeparator();
+    addActionToMenu(ActionType.EXPORT_TO_CSV, furnitureMenu);
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
@@ -2326,6 +2334,8 @@ public class HomePane extends JRootPane implements HomeView {
       furnitureViewPopup.addSeparator();
       furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
       furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
+      furnitureViewPopup.addSeparator();
+      addActionToPopupMenu(ActionType.EXPORT_TO_CSV, furnitureViewPopup);
       SwingTools.hideDisabledMenuItems(furnitureViewPopup);
       furnitureView.setComponentPopupMenu(furnitureViewPopup);
   
@@ -3404,6 +3414,52 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
   
+  /**
+   * Shows a content chooser save dialog to export furniture list in a CSV file.
+   */
+  public String showExportToCSVDialog(String homeName) {
+    return this.controller.getContentManager().showSaveDialog(this,
+        this.preferences.getLocalizedString(HomePane.class, "exportToCSVDialog.title"), 
+        ContentManager.ContentType.CSV, homeName);
+  }
+
+  /**
+   * Exports furniture list to a given SVG file.
+   */
+  public void exportToCSV(String csvFile) throws RecorderException {
+    View furnitureView = this.controller.getFurnitureController().getView();
+    FurnitureTable furnitureTable;
+    if (furnitureView instanceof FurnitureTable) {
+      furnitureTable = (FurnitureTable)furnitureView;
+    } else {
+      furnitureTable = new FurnitureTable(this.home, this.preferences);
+    }    
+    
+    Writer writer = null;
+    boolean exportInterrupted = false;
+    try {
+      writer = new BufferedWriter(new FileWriter(csvFile));
+      furnitureTable.exportToCSV(writer, '\t');
+    } catch (InterruptedIOException ex) {
+      exportInterrupted = true;
+      throw new InterruptedRecorderException("Export to " + csvFile + " interrupted");
+    } catch (IOException ex) {
+      throw new RecorderException("Couldn't export to SVG in " + csvFile, ex);
+    } finally {
+      if (writer != null) {
+        try {
+          writer.close();
+          // Delete the file if exporting is interrupted
+          if (exportInterrupted) {
+            new File(csvFile).delete();
+          }
+        } catch (IOException ex) {
+          throw new RecorderException("Couldn't export to SVG in " + csvFile, ex);
+        }
+      }
+    }
+  }
+
   /**
    * Shows a content chooser save dialog to export a home plan in a SVG file.
    */

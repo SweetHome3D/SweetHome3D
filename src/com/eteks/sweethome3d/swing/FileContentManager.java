@@ -167,7 +167,7 @@ public class FileContentManager implements ContentManager {
       }};
   private static final String JPEG_EXTENSION = ".jpg";
   /**
-   * Supported OBJ filter.
+   * Supported JPEG filter.
    */
   private static final FileFilter [] JPEG_FILTER = {
       new FileFilter() {
@@ -253,6 +253,24 @@ public class FileContentManager implements ContentManager {
           return "PDF";
         }
       }};
+  private static final String CSV_EXTENSION = ".csv";
+  /**
+   * Supported CSV filter.
+   */
+  private static final FileFilter [] CSV_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .csv files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(CSV_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "CSV - Tab Separated Values";
+        }
+      }};
   private static final String SVG_EXTENSION = ".svg";
   /**
    * Supported SVG filter.
@@ -261,7 +279,7 @@ public class FileContentManager implements ContentManager {
       new FileFilter() {
         @Override
         public boolean accept(File file) {
-          // Accept directories and .obj files
+          // Accept directories and .svg files
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(SVG_EXTENSION);
         }
@@ -299,6 +317,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.PNG, PNG_FILTER);
     this.fileFilters.put(ContentType.JPEG, JPEG_FILTER);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
+    this.fileFilters.put(ContentType.CSV, CSV_FILTER);
     this.fileFilters.put(ContentType.SVG, SVG_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
     this.fileFilters.put(ContentType.SWEET_HOME_3D, new FileFilter [] {
@@ -402,6 +421,7 @@ public class FileContentManager implements ContentManager {
     this.defaultFileExtensions.put(ContentType.JPEG, JPEG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.MOV, MOV_EXTENSION);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.CSV, CSV_EXTENSION);
     this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }

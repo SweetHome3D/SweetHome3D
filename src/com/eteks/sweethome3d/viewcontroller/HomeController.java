@@ -215,6 +215,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomeView.ActionType.IMPORT_FURNITURE, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_FURNITURE_LIBRARY, true);
+    homeView.setEnabled(HomeView.ActionType.IMPORT_TEXTURE, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_TEXTURES_LIBRARY, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
@@ -256,6 +257,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE, true);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, true);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, true);
+    homeView.setEnabled(HomeView.ActionType.EXPORT_TO_CSV, true);
     homeView.setEnabled(HomeView.ActionType.SELECT, true);
     homeView.setEnabled(HomeView.ActionType.PAN, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, true);
@@ -1141,6 +1143,14 @@ public class HomeController implements Controller {
   }
 
   /**
+   * Imports a texture to the texture catalog.  
+   */
+  public void importTexture() {
+    new ImportedTextureWizardController(this.preferences, 
+        this.viewFactory, this.contentManager).displayView(getView());
+  }
+
+  /**
    * Imports a textures library chosen by the user.  
    */
   public void importTexturesLibrary() {
@@ -1711,12 +1721,45 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Controls the export of the 3D view of current home to a SVG file.
+   * Controls the export of the furniture list of current home to a CSV file.
+   */
+  public void exportToCSV() {
+    final String csvName = getView().showExportToCSVDialog(this.home.getName());    
+    if (csvName != null) {
+      // Export furniture list in a threaded task
+      Callable<Void> exportToCsvTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              getView().exportToCSV(csvName);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "exportToCSVError", csvName);
+                  getView().showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToCsvTask, 
+          this.preferences.getLocalizedString(HomeController.class, "exportToCSVMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
+    }
+  }
+  
+  /**
+   * Controls the export of the current home plan to a SVG file.
    */
   public void exportToSVG() {
     final String svgName = getView().showExportToSVGDialog(this.home.getName());    
     if (svgName != null) {
-      // Export 3D view in a threaded task
+      // Export plan in a threaded task
       Callable<Void> exportToSvgTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               getView().exportToSVG(svgName);
