@@ -65,7 +65,6 @@
         <exclude name="com/eteks/sweethome3d/io/resources/*"/>
         <exclude name="com/eteks/sweethome3d/io/resources/contributions/*"/>
         <exclude name="com/eteks/sweethome3d/io/resources/textures/*"/>
-        <exclude name="com/eteks/sweethome3d/swing/resources/icons/jfc/*"/>
         <exclude name="**/help/**"/> 
       </fileset>
     </copy>
