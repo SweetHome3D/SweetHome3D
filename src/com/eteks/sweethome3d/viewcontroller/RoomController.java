@@ -1067,43 +1067,14 @@ public class RoomController implements Controller {
    */
   private float [] computeIntersection(float xPoint1, float yPoint1, float xPoint2, float yPoint2, 
                                        float xPoint3, float yPoint3, float xPoint4, float yPoint4) {    
-    float x = xPoint1;
-    float y = yPoint1;
-    float alpha1 = (yPoint2 - yPoint1) / (xPoint2 - xPoint1);
-    float alpha2 = (yPoint4 - yPoint3) / (xPoint4 - xPoint3);
-    // If the two lines are not parallel
-    if (alpha1 != alpha2) {
-      // If first line is vertical
-      if (Math.abs(alpha1) > 4000)  {
-        if (Math.abs(alpha2) < 4000) {
-          x = xPoint1;
-          float beta2  = yPoint4 - alpha2 * xPoint4;
-          y = alpha2 * x + beta2;
-        }
-      // If second line is vertical
-      } else if (Math.abs(alpha2) > 4000) {
-        if (Math.abs(alpha1) < 4000) {
-          x = xPoint3;
-          float beta1  = yPoint2 - alpha1 * xPoint2;
-          y = alpha1 * x + beta1;
-        }
-      } else {
-        boolean sameSignum = Math.signum(alpha1) == Math.signum(alpha2);
-        if ((sameSignum && (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001)
-            || (!sameSignum && Math.abs(alpha1 - alpha2) > 1E-5)) {
-          float beta1  = yPoint2 - alpha1 * xPoint2;
-          float beta2  = yPoint4 - alpha2 * xPoint4;
-          x = (beta2 - beta1) / (alpha1 - alpha2);
-          y = alpha1 * x + beta1;
-        }
-      } 
-    }
-    if (Line2D.ptSegDistSq(xPoint1, yPoint1, xPoint2, yPoint2, x, y) < 1E-7
-        && (Math.abs(xPoint1 - x) > 1E-4
-            || Math.abs(yPoint1 - y) > 1E-4)
-        && (Math.abs(xPoint2 - x) > 1E-4
-            || Math.abs(yPoint2 - y) > 1E-4)) {
-      return new float [] {x, y};
+    float [] point = PlanController.computeIntersection(xPoint1, yPoint1, xPoint2, yPoint2, 
+        xPoint3, yPoint3, xPoint4, yPoint4);
+    if (Line2D.ptSegDistSq(xPoint1, yPoint1, xPoint2, yPoint2, point [0], point [1]) < 1E-7
+        && (Math.abs(xPoint1 - point [0]) > 1E-4
+            || Math.abs(yPoint1 - point [1]) > 1E-4)
+        && (Math.abs(xPoint2 - point [0]) > 1E-4
+            || Math.abs(yPoint2 - point [1]) > 1E-4)) {
+      return point;
     } else {
       return null;
     }
