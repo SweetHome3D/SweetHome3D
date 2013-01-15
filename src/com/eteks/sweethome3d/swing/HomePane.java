@@ -211,6 +211,7 @@ public class HomePane extends JRootPane implements HomeView {
   private boolean               transferHandlerEnabled;
   private MouseInputAdapter     furnitureCatalogDragAndDropListener;
   private boolean               clipboardEmpty = true;
+  private boolean               exportAllToOBJ = true;
   private ActionMap             menuActionMap;
   private List<Action>          pluginActions;
   
@@ -3510,9 +3511,23 @@ public class HomePane extends JRootPane implements HomeView {
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
   public String showExportToOBJDialog(String homeName) {
-    return this.controller.getContentManager().showSaveDialog(this,
+    homeName = this.controller.getContentManager().showSaveDialog(this,
         this.preferences.getLocalizedString(HomePane.class, "exportToOBJDialog.title"), 
         ContentManager.ContentType.OBJ, homeName);
+    
+    this.exportAllToOBJ = true;
+    if (homeName != null
+        && !this.home.getSelectedItems().isEmpty()) {
+      String message = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.message");
+      String title = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.title");
+      String exportAll = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.exportAll");
+      String exportSelection = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.exportSelection");
+      if (JOptionPane.showOptionDialog(this, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+              null, new Object [] {exportAll, exportSelection}, exportAll) != JOptionPane.YES_OPTION) {
+        this.exportAllToOBJ = false;
+      }
+    }
+    return homeName;
   }
   
   /**
@@ -3525,22 +3540,36 @@ public class HomePane extends JRootPane implements HomeView {
         : "";
         
     // Use a clone of home to ignore selection
-    OBJExporter.exportHomeToFile(this.home.clone(), objFile, header);
+    OBJExporter.exportHomeToFile(this.home.clone(), objFile, header, this.exportAllToOBJ);
   }
   
   /**
    * Export to OBJ in a separate class to be able to run HomePane without Java 3D classes.
    */
   private static class OBJExporter {
-    public static void exportHomeToFile(Home home, String objFile, String header) throws RecorderException {
+    public static void exportHomeToFile(Home home, String objFile, String header, boolean exportAllToOBJ) throws RecorderException {
       OBJWriter writer = null;
       boolean exportInterrupted = false;
       try {
         writer = new OBJWriter(objFile, header, -1);
   
+        List<HomePieceOfFurniture> exportedFurniture;
+        List<Room> exportedRooms;
+        Collection<Wall> exportedWalls;
+        if (exportAllToOBJ) {
+          exportedFurniture = home.getFurniture();
+          exportedRooms = home.getRooms();
+          exportedWalls = home.getWalls();
+        } else {
+          List<Selectable> selectedItems = home.getSelectedItems();
+          exportedFurniture = Home.getFurnitureSubList(selectedItems);
+          exportedRooms = Home.getRoomsSubList(selectedItems);
+          exportedWalls = Home.getWallsSubList(selectedItems);
+        }
+        
         List<Selectable> emptySelection = Collections.emptyList();
         home.setSelectedItems(emptySelection);
-        if (home.getWalls().size() > 0) {
+        if (exportAllToOBJ) {
           // Create a not alive new ground to be able to explore its coordinates without setting capabilities
           Rectangle2D homeBounds = getExportedHomeBounds(home);
           Ground3D groundNode = new Ground3D(home, 
@@ -3551,14 +3580,14 @@ public class HomePane extends JRootPane implements HomeView {
         
         // Write 3D walls 
         int i = 0;
-        for (Wall wall : home.getWalls()) {
+        for (Wall wall : exportedWalls) {
           // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
           Wall3D wallNode = new Wall3D(wall, home, true, true);
           writer.writeNode(wallNode, "wall_" + ++i);
         }
         // Write 3D furniture 
         i = 0;
-        for (HomePieceOfFurniture piece : home.getFurniture()) {
+        for (HomePieceOfFurniture piece : exportedFurniture) {
           if (piece.isVisible()) {
             // Create a not alive new piece to be able to explore its coordinates without setting capabilities
             HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, home, true, true);
@@ -3567,7 +3596,7 @@ public class HomePane extends JRootPane implements HomeView {
         }
         // Write 3D rooms 
         i = 0;
-        for (Room room : home.getRooms()) {
+        for (Room room : exportedRooms) {
           // Create a not alive new room to be able to explore its coordinates without setting capabilities 
           Room3D roomNode = new Room3D(room, home, false, true, true);
           writer.writeNode(roomNode, "room_" + ++i);
@@ -3616,9 +3645,7 @@ public class HomePane extends JRootPane implements HomeView {
     private static List<HomePieceOfFurniture> getVisibleFurniture(List<HomePieceOfFurniture> furniture) {
       List<HomePieceOfFurniture> visibleFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
       for (HomePieceOfFurniture piece : furniture) {
-        if (piece.isVisible()
-            && (piece.getLevel() == null
-                || piece.getLevel().isVisible())) {
+        if (piece.isVisible()) {
           if (piece instanceof HomeFurnitureGroup) {
             visibleFurniture.addAll(getVisibleFurniture(((HomeFurnitureGroup)piece).getFurniture()));
           } else {
