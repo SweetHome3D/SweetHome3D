@@ -997,10 +997,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();          
           if (ev.getButton() == MouseEvent.BUTTON1) {
+            boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX() 
+                ? ev.isShiftDown()
+                : ev.isShiftDown() && !ev.isAltDown();
+            boolean duplicationActivated = OperatingSystem.isMacOSX() 
+                ? ev.isAltDown() 
+                : ev.isControlDown();
+            boolean magnetismToggled = OperatingSystem.isWindows() 
+                ? ev.isAltDown() 
+                : (OperatingSystem.isMacOSX() 
+                       ? ev.isMetaDown()
+                       : ev.isShiftDown() && ev.isAltDown());
             controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
-                ev.getClickCount(), ev.isShiftDown(), ev.isShiftDown(), 
-                OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown(),
-                OperatingSystem.isWindows() ? ev.isAltDown() : ev.isMetaDown());
+                ev.getClickCount(), ev.isShiftDown() && !ev.isControlDown() && !ev.isAltDown() && !ev.isMetaDown(), 
+                alignmentActivated, duplicationActivated, magnetismToggled);
           }
         }
       }
@@ -1157,8 +1167,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("shift control released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.ACTIVATE_EDITIION);
-    } else {
-      // Under other systems, magnetism toggled with Meta key 
+    } else if (OperatingSystem.isMacOSX()) {
+      // Under Windows, magnetism toggled with cmd key 
       inputMap.put(KeyStroke.getKeyStroke("meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
       inputMap.put(KeyStroke.getKeyStroke("released META"), ActionType.TOGGLE_MAGNETISM_OFF);
       inputMap.put(KeyStroke.getKeyStroke("shift meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
@@ -1169,11 +1179,29 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("shift alt released META"), ActionType.TOGGLE_MAGNETISM_OFF);
       inputMap.put(KeyStroke.getKeyStroke("meta ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("meta ENTER"), ActionType.ACTIVATE_EDITIION);
+    } else {
+      // Under other Unix systems, magnetism toggled with Alt + Shift key 
+      inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("control shift alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("control alt shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
+      inputMap.put(KeyStroke.getKeyStroke("control alt released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift  ENTER"), ActionType.ACTIVATE_EDITIION);
+      inputMap.put(KeyStroke.getKeyStroke("control alt shift ESCAPE"), ActionType.ESCAPE);
+      inputMap.put(KeyStroke.getKeyStroke("control alt shift  ENTER"), ActionType.ACTIVATE_EDITIION);
     }
 
     inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
     inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
-    if (OperatingSystem.isMacOSX()) {
+    if (OperatingSystem.isWindows()) {
+      inputMap.put(KeyStroke.getKeyStroke("control shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      
+    } else if (OperatingSystem.isMacOSX()) {
       inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("meta shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
@@ -1181,13 +1209,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       inputMap.put(KeyStroke.getKeyStroke("control shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
-      if (OperatingSystem.isWindows()) {
-        inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
-        inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
-      } else {
-        inputMap.put(KeyStroke.getKeyStroke("meta shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
-        inputMap.put(KeyStroke.getKeyStroke("meta released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
-      }
+      inputMap.put(KeyStroke.getKeyStroke("shift released ALT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("control shift released ALT"), ActionType.ACTIVATE_ALIGNMENT);
     }
   }
   
