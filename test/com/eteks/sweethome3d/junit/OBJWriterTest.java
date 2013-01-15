@@ -155,8 +155,8 @@ public class OBJWriterTest extends TestCase {
     HomeController homeController = new HomeController(home, preferences, viewFactory);
     homeController.getView().exportToOBJ(objFile.toString());
     
-    assertSameContent(OBJWriterTest.class.getResource("resources/holes.obj"), objFile.toURI().toURL());
-    assertSameContent(OBJWriterTest.class.getResource("resources/holes.mtl"), mtlFile.toURI().toURL());
+    assertEquals("Not same line count in OBJ file", 476, getLineCount(objFile.toURI().toURL()));
+    assertEquals("Not same line count in MTL file", 43, getLineCount(mtlFile.toURI().toURL()));
     
     for (File file : dir.listFiles()) {
       if (!file.delete()) {
@@ -169,23 +169,13 @@ public class OBJWriterTest extends TestCase {
   }
 
   /**
-   * Asserts both URLs content is the same.
+   * Returns the line count in the given URL.
    */
-  private void assertSameContent(URL expectedContentUrl, URL actualContentUrl) throws IOException {
-    LineNumberReader expectedIn = new LineNumberReader(new InputStreamReader(expectedContentUrl.openStream(), "ISO-8859-1"));
-    LineNumberReader actualIn = new LineNumberReader(new InputStreamReader(actualContentUrl.openStream(), "ISO-8859-1"));
-    for (String expectedLine; (expectedLine = expectedIn.readLine()) != null; ) {
-      String actualLine = actualIn.readLine();
-      if (actualLine == null) {
-        fail("Unexpected end of file in " + actualContentUrl + " at row " + expectedIn.getLineNumber());
-      } else if (!expectedLine.equals(actualLine)) {
-        fail("Difference in " + actualContentUrl + " at row " + expectedIn.getLineNumber());
-      }
+  private int getLineCount(URL contentUrl) throws IOException {
+    LineNumberReader in = new LineNumberReader(new InputStreamReader(contentUrl.openStream(), "ISO-8859-1"));
+    while (in.readLine() != null) {
     }
-    if (actualIn.readLine() != null) {
-      fail("Expected end of file in " + actualContentUrl + " at row " + actualIn.getLineNumber());
-    }
-    expectedIn.close();
-    actualIn.close();
+    in.close();
+    return in.getLineNumber();
   }
 }
