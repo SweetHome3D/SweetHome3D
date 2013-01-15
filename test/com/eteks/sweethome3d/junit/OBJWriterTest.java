@@ -33,6 +33,7 @@ import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
+import com.eteks.sweethome3d.j3d.OBJLoader;
 import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -157,6 +158,8 @@ public class OBJWriterTest extends TestCase {
     
     assertEquals("Not same line count in OBJ file", 476, getLineCount(objFile.toURI().toURL()));
     assertEquals("Not same line count in MTL file", 43, getLineCount(mtlFile.toURI().toURL()));
+    // Read file to check if its content is correct
+    new OBJLoader().load(objFile.getAbsolutePath());
     
     for (File file : dir.listFiles()) {
       if (!file.delete()) {
