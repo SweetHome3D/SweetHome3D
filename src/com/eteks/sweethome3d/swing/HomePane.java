@@ -3520,11 +3520,15 @@ public class HomePane extends JRootPane implements HomeView {
         && !this.home.getSelectedItems().isEmpty()) {
       String message = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.message");
       String title = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.title");
-      String exportAll = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.exportAll");
-      String exportSelection = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.exportSelection");
-      if (JOptionPane.showOptionDialog(this, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-              null, new Object [] {exportAll, exportSelection}, exportAll) != JOptionPane.YES_OPTION) {
+      String exportAll = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.exportAll");
+      String exportSelection = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.exportSelection");
+      String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.cancel");
+      int response = JOptionPane.showOptionDialog(this, message, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+              null, new Object [] {exportAll, exportSelection, cancel}, exportAll);
+      if (response == JOptionPane.NO_OPTION) {
         this.exportAllToOBJ = false;
+      } else if (response != JOptionPane.YES_OPTION) {
+        return null;
       }
     }
     return homeName;
