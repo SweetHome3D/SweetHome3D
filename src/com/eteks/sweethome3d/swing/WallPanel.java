@@ -21,17 +21,29 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -43,6 +55,7 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -78,6 +91,12 @@ public class WallPanel extends JPanel implements DialogView {
   private JComponent     rightSideTextureComponent;
   private JRadioButton   rightSideMattRadioButton;
   private JRadioButton   rightSideShinyRadioButton;
+  private JLabel         patternLabel;
+  private JComboBox      patternComboBox;
+  private JLabel         topColorLabel;
+  private JRadioButton   topDefaultColorRadioButton;
+  private JRadioButton   topColorRadioButton;
+  private ColorButton    topColorButton;
   private JRadioButton   rectangularWallRadioButton;
   private JLabel         rectangularWallHeightLabel;
   private JSpinner       rectangularWallHeightSpinner;
@@ -410,6 +429,110 @@ public class WallPanel extends JPanel implements DialogView {
     rightSideShininessButtonGroup.add(this.rightSideShinyRadioButton);
     updateRightSideShininessRadioButtons(controller);
     
+    // Top pattern and 3D color
+    this.patternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "patternLabel.text"));    
+    List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
+    if (controller.getPattern() == null) {
+      patterns = new ArrayList<TextureImage>(patterns);
+      patterns.add(0, null);
+    }
+    this.patternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
+    this.patternComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(final JList list, 
+            Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          TextureImage pattern = (TextureImage)value;
+          final Component component = super.getListCellRendererComponent(
+              list, pattern == null ? " " : "", index, isSelected, cellHasFocus);
+          if (pattern != null) {
+            final BufferedImage patternImage = SwingTools.getPatternImage(
+                pattern, list.getBackground(), list.getForeground());
+            setIcon(new Icon() {
+                public int getIconWidth() {
+                  return patternImage.getWidth() * 4 + 1;
+                }
+          
+                public int getIconHeight() {
+                  return patternImage.getHeight() + 2;
+                }
+          
+                public void paintIcon(Component c, Graphics g, int x, int y) {
+                  Graphics2D g2D = (Graphics2D)g;
+                  for (int i = 0; i < 4; i++) {
+                    g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
+                  }
+                  g2D.setColor(list.getForeground());
+                  g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
+                }
+              });
+          }
+          return component;
+        }
+      });
+    this.patternComboBox.setSelectedItem(controller.getPattern());
+    this.patternComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setPattern((TextureImage)patternComboBox.getSelectedItem());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.PATTERN, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            patternComboBox.setSelectedItem(controller.getPattern());
+          }
+        });
+    
+    this.topColorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "topColorLabel.text"));
+    this.topDefaultColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "topDefaultColorRadioButton.text"));
+    this.topDefaultColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (topDefaultColorRadioButton.isSelected()) {
+            controller.setTopPaint(WallController.WallPaint.DEFAULT);
+          }
+        }
+      });
+    this.topColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        WallPanel.class, "topColorRadioButton.text"));
+    this.topColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (topColorRadioButton.isSelected()) {
+            controller.setTopPaint(WallController.WallPaint.COLORED);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.TOP_PAINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateTopColorRadioButtons(controller);
+          }
+        });
+    this.topColorButton = new ColorButton();
+    this.topColorButton.setColorDialogTitle(preferences.getLocalizedString(
+        WallPanel.class, "topColorDialog.title"));
+    this.topColorButton.setColor(controller.getTopColor());
+    this.topColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setTopColor(topColorButton.getColor());
+            controller.setTopPaint(WallController.WallPaint.COLORED);
+          }
+        });
+    controller.addPropertyChangeListener(WallController.Property.TOP_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            topColorButton.setColor(controller.getTopColor());
+          }
+        });
+    
+    ButtonGroup topColorGroup = new ButtonGroup();
+    topColorGroup.add(this.topDefaultColorRadioButton);
+    topColorGroup.add(this.topColorRadioButton);
+    updateTopColorRadioButtons(controller);
+
+    // Create height label and its spinner bound to RECTANGULAR_WALL_HEIGHT controller property
     this.rectangularWallRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "rectangularWallRadioButton.text"));
     this.rectangularWallRadioButton.addChangeListener(new ChangeListener() {
@@ -426,7 +549,6 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
 
-    // Create height label and its spinner bound to RECTANGULAR_WALL_HEIGHT controller property
     this.rectangularWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
@@ -634,6 +756,19 @@ public class WallPanel extends JPanel implements DialogView {
   }
 
   /**
+   * Updates top color radio buttons. 
+   */
+  private void updateTopColorRadioButtons(WallController controller) {
+    if (controller.getTopPaint() == WallController.WallPaint.COLORED) {
+      this.topColorRadioButton.setSelected(true);
+    } else if (controller.getTopPaint() == WallController.WallPaint.DEFAULT) {
+      this.topDefaultColorRadioButton.setSelected(true);
+    } else { // null
+      SwingTools.deselectAllRadioButtons(this.topColorRadioButton, this.topDefaultColorRadioButton);
+    }
+  }
+
+  /**
    * Updates rectangular and sloping wall radio buttons. 
    */
   private void updateWallShapeRadioButtons(WallController controller) {
@@ -684,6 +819,14 @@ public class WallPanel extends JPanel implements DialogView {
       this.rightSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rightSideShinyRadioButton.mnemonic")).getKeyCode());
       
+      this.patternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          WallPanel.class, "patternLabel.mnemonic")).getKeyCode());
+      this.patternLabel.setLabelFor(this.patternComboBox);
+      this.topDefaultColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              WallPanel.class,"topDefaultColorRadioButton.mnemonic")).getKeyCode());
+      this.topColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              WallPanel.class,"topColorRadioButton.mnemonic")).getKeyCode());
+
       this.rectangularWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "rectangularWallRadioButton.mnemonic")).getKeyCode());
       this.rectangularWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
@@ -780,7 +923,34 @@ public class WallPanel extends JPanel implements DialogView {
     add(rightSidePanel, new GridBagConstraints(
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
-    // Fourth row
+    
+    // Forth row
+    JPanel topPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+        WallPanel.class, "topPanel.title"));
+    int leftInset = new JRadioButton().getPreferredSize().width;
+    topPanel.add(this.patternLabel, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, leftInset, 3, 5), 0, 0));
+    topPanel.add(this.patternComboBox, new GridBagConstraints(
+        1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0));
+    topPanel.add(this.topColorLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, leftInset, 0, 5), 0, 0));
+    topPanel.add(this.topDefaultColorRadioButton, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+    topPanel.add(this.topColorRadioButton, new GridBagConstraints(
+        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_END, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    topPanel.add(this.topColorButton, new GridBagConstraints(
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(topPanel, new GridBagConstraints(
+        0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+
+    // Fifth row
     JPanel heightPanel = SwingTools.createTitledPanel(
         preferences.getLocalizedString(WallPanel.class, "heightPanel.title"));   
     // First row of height panel
@@ -817,9 +987,9 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -10, 0));
     
     add(heightPanel, new GridBagConstraints(
-        0, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,
+        0, 4, 2, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
-    // Fifth row
+    // Sixth row
     JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
     ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
@@ -834,11 +1004,11 @@ public class WallPanel extends JPanel implements DialogView {
         3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(ticknessAndArcExtentPanel, new GridBagConstraints(
-        0, 4, 2, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(5, 8, 10, 8), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
-        0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 6, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     
     // Make startPointPanel and endPointPanel visible depending on editable points property
@@ -916,6 +1086,10 @@ public class WallPanel extends JPanel implements DialogView {
       }
       if (dialog.getHeight() > screenHeight) {
         this.wallOrientationLabel.setVisible(false);
+      }
+      dialog.pack();
+      if (dialog.getHeight() > screenHeight) {
+        this.patternLabel.getParent().setVisible(false);
       }
       dialog.dispose();
     }

@@ -35,7 +35,7 @@ public class UserPreferencesController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-      FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
+      FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
       NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
       NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
       AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
@@ -57,6 +57,7 @@ public class UserPreferencesController implements Controller {
   private boolean                       furnitureViewedFromTop;
   private boolean                       roomFloorColoredOrTextured;
   private TextureImage                  wallPattern;
+  private TextureImage                  newWallPattern;
   private float                         newWallThickness;
   private float                         newWallHeight;
   private float                         newFloorThickness;
@@ -134,6 +135,7 @@ public class UserPreferencesController implements Controller {
     setFurnitureViewedFromTop(this.preferences.isFurnitureViewedFromTop());
     setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
     setWallPattern(this.preferences.getWallPattern());
+    setNewWallPattern(this.preferences.getNewWallPattern());
     float minimumLength = getUnit().getMinimumLength();
     float maximumLength = getUnit().getMaximumLength();
     setNewWallThickness(Math.min(Math.max(minimumLength, this.preferences.getNewWallThickness()), maximumLength / 10));
@@ -338,7 +340,7 @@ public class UserPreferencesController implements Controller {
   }
   
   /**
-   * Sets how furniture should be displayed in plan, and notifies
+   * Sets default walls top pattern in plan, and notifies
    * listeners of this change.
    */
   public void setWallPattern(TextureImage wallPattern) {
@@ -351,10 +353,32 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
-   * Returns the wall pattern in plan.
+   * Returns the default walls top pattern in plan.
    */
   public TextureImage getWallPattern() {
     return this.wallPattern;
+  }
+  
+  /**
+   * Sets the edited new wall top pattern in plan, and notifies
+   * listeners of this change.
+   * @since 4.0
+   */
+  public void setNewWallPattern(TextureImage newWallPattern) {
+    if (this.newWallPattern != newWallPattern) {
+      TextureImage oldNewWallPattern = this.newWallPattern;
+      this.newWallPattern = newWallPattern;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_PATTERN.name(), 
+          oldNewWallPattern, newWallPattern);
+    }
+  }
+
+  /**
+   * Returns the edited new wall top pattern in plan.
+   * @since 4.0
+   */
+  public TextureImage getNewWallPattern() {
+    return this.newWallPattern;
   }
   
   /**
@@ -479,6 +503,7 @@ public class UserPreferencesController implements Controller {
     this.preferences.setFurnitureViewedFromTop(isFurnitureViewedFromTop());
     this.preferences.setFloorColoredOrTextured(isRoomFloorColoredOrTextured());
     this.preferences.setWallPattern(getWallPattern());
+    this.preferences.setNewWallPattern(getNewWallPattern());
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
     this.preferences.setNewFloorThickness(getNewFloorThickness());

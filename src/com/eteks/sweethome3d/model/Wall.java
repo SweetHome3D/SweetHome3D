@@ -45,7 +45,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS,
-                        PATTERN, LEVEL}
+                        PATTERN, TOP_COLOR, LEVEL}
   
   private static final long serialVersionUID = 1L;
   
@@ -67,6 +67,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   private float        rightSideShininess;
   private boolean      symmetric = true;
   private TextureImage pattern;  
+  private Integer      topColor;
   private Level        level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -80,11 +81,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    * @deprecated specify a height with the {@linkplain #Wall(float, float, float, float, float, float) other constructor}.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness) {
-    this.xStart = xStart;
-    this.yStart = yStart;
-    this.xEnd = xEnd;
-    this.yEnd = yEnd;
-    this.thickness = thickness;
+    this(xStart, yStart, xEnd, yEnd, thickness, 0);
   }
   
   /**
@@ -93,8 +90,23 @@ public class Wall implements Serializable, Selectable, Elevatable {
    * with given thickness and height. Left and right colors are <code>null</code>.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height) {
-    this(xStart, yStart, xEnd, yEnd, thickness);
+    this(xStart, yStart, xEnd, yEnd, thickness, height, null);
+  }
+  
+  /**
+   * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>), 
+   * with given thickness, height and pattern. 
+   * Colors are <code>null</code>.
+   */
+  public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height, TextureImage pattern) {
+    this.xStart = xStart;
+    this.yStart = yStart;
+    this.xEnd = xEnd;
+    this.yEnd = yEnd;
+    this.thickness = thickness;
     this.height = height;
+    this.pattern = pattern;
   }
   
   /**
@@ -584,7 +596,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   }
 
   /**
-   * Returns the wall pattern in plan.
+   * Returns the pattern of this wall in the plan.
    * @since 3.3
    */
   public TextureImage getPattern() {
@@ -592,7 +604,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   }
   
   /**
-   * Sets how walls should be displayed in plan, and notifies
+   * Sets the pattern of this wall in the plan, and notifies
    * listeners of this change.
    * @since 3.3 
    */
@@ -602,6 +614,28 @@ public class Wall implements Serializable, Selectable, Elevatable {
       this.pattern = pattern;
       this.propertyChangeSupport.firePropertyChange(Property.PATTERN.name(), 
           oldPattern, pattern);
+    }
+  }
+
+  /**
+   * Returns the color of the top of this wall in the 3D view.
+   * @since 4.0
+   */
+  public Integer getTopColor() {
+    return this.topColor;
+  }
+  
+  /**
+   * Sets the color of the top of this wall in the 3D view, and notifies
+   * listeners of this change.
+   * @since 4.0 
+   */
+  public void setTopColor(Integer topColor) {
+    if (this.topColor != topColor) {
+      Integer oldTopColor = this.topColor;
+      this.topColor = topColor;
+      this.propertyChangeSupport.firePropertyChange(Property.TOP_COLOR.name(), 
+          oldTopColor, topColor);
     }
   }
 

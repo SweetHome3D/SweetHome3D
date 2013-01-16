@@ -818,7 +818,7 @@ public class Wall3D extends Object3DBranch {
    */
   private void updateWallAppearance(boolean waitTextureLoadingEnd) {
     Wall wall = (Wall)getUserData();
-    Integer wallsTopColor = this.home.getEnvironment().getWallsTopColor();
+    Integer wallsTopColor = wall.getTopColor();
     Group [] wallLeftSideGroups  = {(Group)getChild(0),  // Bottom group
                                     (Group)getChild(1),  // Main group
                                     (Group)getChild(2)}; // Top group

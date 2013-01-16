@@ -100,6 +100,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JRadioButton   floorColorOrTextureRadioButton;
   private JLabel         wallPatternLabel;
   private JComboBox      wallPatternComboBox;
+  private JLabel         newWallPatternLabel;
+  private JComboBox      newWallPatternComboBox;
   private JLabel         newWallThicknessLabel;
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newWallHeightLabel;
@@ -449,42 +451,35 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
 
-    if (controller.isPropertyEditable(UserPreferencesController.Property.WALL_PATTERN)) {
+    if (controller.isPropertyEditable(UserPreferencesController.Property.NEW_WALL_PATTERN)) {
+      // Create new wall pattern label and combo box bound to controller NEW_WALL_PATTERN property
+      this.newWallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "newWallPatternLabel.text"));    
+      List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
+      this.newWallPatternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
+      this.newWallPatternComboBox.setRenderer(getPatternRenderer());
+      TextureImage newWallPattern = controller.getNewWallPattern();
+      this.newWallPatternComboBox.setSelectedItem(newWallPattern != null 
+          ? newWallPattern  
+          : controller.getWallPattern());
+      this.newWallPatternComboBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setNewWallPattern((TextureImage)newWallPatternComboBox.getSelectedItem());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_PATTERN, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              newWallPatternComboBox.setSelectedItem(controller.getNewWallPattern());
+            }
+          });
+    } else if (controller.isPropertyEditable(UserPreferencesController.Property.WALL_PATTERN)) {
       // Create wall pattern label and combo box bound to controller WALL_PATTERN property
       this.wallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "wallPatternLabel.text"));    
       List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
       this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
-      this.wallPatternComboBox.setRenderer(new DefaultListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(final JList list, 
-              Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            TextureImage wallPattern = (TextureImage)value;
-            final Component component = super.getListCellRendererComponent(
-                list, "", index, isSelected, cellHasFocus);
-            final BufferedImage patternImage = SwingTools.getPatternImage(
-                wallPattern, list.getBackground(), list.getForeground());
-            setIcon(new Icon() {
-                public int getIconWidth() {
-                  return patternImage.getWidth() * 4 + 1;
-                }
-          
-                public int getIconHeight() {
-                  return patternImage.getHeight() + 2;
-                }
-          
-                public void paintIcon(Component c, Graphics g, int x, int y) {
-                  Graphics2D g2D = (Graphics2D)g;
-                  for (int i = 0; i < 4; i++) {
-                    g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
-                  }
-                  g2D.setColor(list.getForeground());
-                  g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
-                }
-              });
-            return component;
-          }
-        });
+      this.wallPatternComboBox.setRenderer(getPatternRenderer());
       this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
       this.wallPatternComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
@@ -619,6 +614,42 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   }
 
   /**
+   * Returns a renderer for patterns combo box.
+   */
+  private DefaultListCellRenderer getPatternRenderer() {
+    return new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(final JList list, 
+            Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          TextureImage wallPattern = (TextureImage)value;
+          final Component component = super.getListCellRendererComponent(
+              list, "", index, isSelected, cellHasFocus);
+          final BufferedImage patternImage = SwingTools.getPatternImage(
+              wallPattern, list.getBackground(), list.getForeground());
+          setIcon(new Icon() {
+              public int getIconWidth() {
+                return patternImage.getWidth() * 4 + 1;
+              }
+        
+              public int getIconHeight() {
+                return patternImage.getHeight() + 2;
+              }
+        
+              public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2D = (Graphics2D)g;
+                for (int i = 0; i < 4; i++) {
+                  g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
+                }
+                g2D.setColor(list.getForeground());
+                g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
+              }
+            });
+          return component;
+        }
+      };
+  }
+
+  /**
    * Preferences property listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  
    */
@@ -720,11 +751,15 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.floorColorOrTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "floorColorOrTextureRadioButton.mnemonic")).getKeyCode());
       }
-      if (this.wallPatternLabel != null) {
+      if (this.newWallPatternLabel != null) {
+        this.newWallPatternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "newWallPatternLabel.mnemonic")).getKeyCode());
+        this.newWallPatternLabel.setLabelFor(this.newWallPatternComboBox);
+      } else if (this.wallPatternLabel != null) {
         this.wallPatternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "wallPatternLabel.mnemonic")).getKeyCode());
         this.wallPatternLabel.setLabelFor(this.wallPatternComboBox);
-      }
+      } 
       if (this.newWallThicknessLabel != null) {
         this.newWallThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "newWallThicknessLabel.mnemonic")).getKeyCode());
@@ -872,7 +907,15 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           2, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     }
-    if (this.wallPatternLabel != null) {
+    if (this.newWallPatternLabel != null) {
+      // Twelfth row
+      add(this.newWallPatternLabel, new GridBagConstraints(
+          0, 11, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newWallPatternComboBox, new GridBagConstraints(
+          1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    } else if (this.wallPatternLabel != null) {
       // Twelfth row
       add(this.wallPatternLabel, new GridBagConstraints(
           0, 11, 1, 1, 0, 0, labelAlignment, 
@@ -880,7 +923,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       add(this.wallPatternComboBox, new GridBagConstraints(
           1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    }
+    } 
     if (this.newWallThicknessLabel != null) {
       // Thirteenth row
       add(this.newWallThicknessLabel, new GridBagConstraints(

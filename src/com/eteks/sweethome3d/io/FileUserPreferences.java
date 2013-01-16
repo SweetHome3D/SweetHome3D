@@ -64,6 +64,7 @@ import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Sash;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -89,6 +90,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
+  private static final String NEW_WALL_PATTERN                          = "newWallPattern";
   private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
   private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
@@ -262,6 +264,14 @@ public class FileUserPreferences extends UserPreferences {
     } catch (IllegalArgumentException ex) {
       // Ensure wall pattern always exists even if new patterns are added in future versions
       setWallPattern(defaultPreferences.getWallPattern());
+    }
+    try {
+      if (defaultPreferences.getNewWallPattern() != null) {
+        setNewWallPattern(patternsCatalog.getPattern(preferences.get(NEW_WALL_PATTERN, 
+            defaultPreferences.getNewWallPattern().getName())));
+      }
+    } catch (IllegalArgumentException ex) {
+      // Keep new wall pattern unchanged
     }
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
         defaultPreferences.getNewWallThickness()));
@@ -623,6 +633,10 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
     preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
     preferences.put(WALL_PATTERN, getWallPattern().getName());
+    TextureImage newWallPattern = getNewWallPattern();
+    if (newWallPattern != null) {
+      preferences.put(NEW_WALL_PATTERN, newWallPattern.getName());
+    }
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());   

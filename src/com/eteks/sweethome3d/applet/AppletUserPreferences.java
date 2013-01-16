@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -71,6 +72,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
+  private static final String NEW_WALL_PATTERN                          = "newWallPattern";
   private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
   private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
@@ -240,6 +242,14 @@ public class AppletUserPreferences extends UserPreferences {
       // Ensure wall pattern always exists even if new patterns are added in future versions
       setWallPattern(defaultPreferences.getWallPattern());
     }
+    try {
+      if (defaultPreferences.getNewWallPattern() != null) {
+        setNewWallPattern(patternsCatalog.getPattern(properties.getProperty(NEW_WALL_PATTERN, 
+            defaultPreferences.getNewWallPattern().getName())));
+      }
+    } catch (IllegalArgumentException ex) {
+      // Keep new wall pattern unchanged
+    }
     setNewWallThickness(Float.parseFloat(properties.getProperty(NEW_WALL_THICKNESS, 
             String.valueOf(defaultPreferences.getNewWallThickness()))));
     setNewWallHeight(Float.parseFloat(properties.getProperty(NEW_WALL_HEIGHT,
@@ -349,6 +359,10 @@ public class AppletUserPreferences extends UserPreferences {
     properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
     properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
     properties.setProperty(WALL_PATTERN, getWallPattern().getName());
+    TextureImage newWallPattern = getNewWallPattern();
+    if (newWallPattern != null) {
+      properties.setProperty(NEW_WALL_PATTERN, newWallPattern.getName());
+    }
     properties.setProperty(NEW_WALL_THICKNESS, String.valueOf(getNewWallThickness()));   
     properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
     properties.setProperty(NEW_FLOOR_THICKNESS, String.valueOf(getNewFloorThickness()));   

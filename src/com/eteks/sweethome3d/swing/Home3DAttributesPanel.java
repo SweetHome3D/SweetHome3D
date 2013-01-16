@@ -65,10 +65,6 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private JLabel        opaqueWallsTransparencyLabel;
   private JLabel        invisibleWallsTransparencyLabel;
   private JSlider       wallsTransparencySlider;
-  private JLabel        wallsTopColorLabel;
-  private JRadioButton  wallsTopDefaultColorRadioButton;
-  private JRadioButton  wallsTopColorRadioButton;
-  private ColorButton   wallsTopColorButton;
   private String        dialogTitle;
 
   /**
@@ -239,50 +235,6 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           }
         });
     
-    // Walls top color label and slider bound to WALLS_TOP_COLOR controller property
-    this.wallsTopColorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        Home3DAttributesPanel.class, "wallsTopColorLabel.text"));
-    this.wallsTopDefaultColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        Home3DAttributesPanel.class, "wallsTopDefaultColorRadioButton.text"));
-    this.wallsTopDefaultColorRadioButton.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          if (wallsTopDefaultColorRadioButton.isSelected()) {
-            controller.setWallsTopColor(null);
-          }
-        }
-      });
-    this.wallsTopColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        Home3DAttributesPanel.class, "wallsTopColorRadioButton.text"));
-    this.wallsTopColorRadioButton.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          if (wallsTopColorRadioButton.isSelected()) {
-            controller.setWallsTopColor(wallsTopColorButton.getColor());
-          }
-        }
-      });
-    this.wallsTopColorButton = new ColorButton();
-    this.wallsTopColorButton.setColorDialogTitle(preferences.getLocalizedString(
-        Home3DAttributesPanel.class, "wallsTopColorDialog.title"));
-    this.wallsTopColorButton.setColor(controller.getWallsTopColor());
-    this.wallsTopColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            controller.setWallsTopColor(wallsTopColorButton.getColor());
-          }
-        });
-    controller.addPropertyChangeListener(Home3DAttributesController.Property.WALLS_TOP_COLOR, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            wallsTopColorButton.setColor(controller.getWallsTopColor());
-            updateWallsTopColorRadioButtons(controller);
-          }
-        });
-    
-    ButtonGroup wallsTopColorGroup = new ButtonGroup();
-    wallsTopColorGroup.add(this.wallsTopDefaultColorRadioButton);
-    wallsTopColorGroup.add(this.wallsTopColorRadioButton);
-    updateWallsTopColorRadioButtons(controller);
-
     this.dialogTitle = preferences.getLocalizedString(
         Home3DAttributesPanel.class, "home3DAttributes.title");
   }
@@ -310,17 +262,6 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Updates walls top color radio buttons. 
-   */
-  private void updateWallsTopColorRadioButtons(Home3DAttributesController controller) {
-    if (controller.getWallsTopColor() != null) {
-      wallsTopColorRadioButton.setSelected(true);
-    } else {
-      wallsTopDefaultColorRadioButton.setSelected(true);
-    }
-  }
-
-  /**
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics(UserPreferences preferences) {
@@ -345,12 +286,6 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               Home3DAttributesPanel.class,"wallsTransparencyLabel.mnemonic")).getKeyCode());
       this.wallsTransparencyLabel.setLabelFor(this.wallsTransparencySlider);
-      this.wallsTopDefaultColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              Home3DAttributesPanel.class,"wallsTopDefaultColorRadioButton.mnemonic")).getKeyCode());
-      this.wallsTopColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              Home3DAttributesPanel.class,"wallsTopColorRadioButton.mnemonic")).getKeyCode());
     }
   }
   
@@ -423,7 +358,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     renderingPanel.add(brightnessLabelsPanel, new GridBagConstraints(
         1, 1, 3, 1, 1, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 3, 0), 0, 0));
-    // Forth row
+    // Last row
     renderingPanel.add(this.wallsTransparencyLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
@@ -437,24 +372,6 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     renderingPanel.add(wallsTransparencyLabelsPanel, new GridBagConstraints(
         1, 3, 3, 1, 1, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 10, 0), 0, 0));
-    // Last row
-    renderingPanel.add(this.wallsTopColorLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    JPanel wallsTopColorPanel = new JPanel(new GridBagLayout());
-    wallsTopColorPanel.setOpaque(false);
-    wallsTopColorPanel.add(this.wallsTopDefaultColorRadioButton, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-    wallsTopColorPanel.add(this.wallsTopColorRadioButton, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_END, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    wallsTopColorPanel.add(this.wallsTopColorButton, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    renderingPanel.add(wallsTopColorPanel, new GridBagConstraints(
-        1, 4, 3, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     add(renderingPanel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));

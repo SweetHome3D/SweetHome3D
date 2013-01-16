@@ -2768,7 +2768,8 @@ public class PlanController extends FurnitureController implements Controller {
     // Create a new wall
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, 
         this.preferences.getNewWallThickness(),
-        this.preferences.getNewWallHeight());
+        this.preferences.getNewWallHeight(),
+        this.preferences.getNewWallPattern());
     this.home.addWall(newWall);
     if (wallStartAtStart != null) {
       newWall.setWallAtStart(wallStartAtStart);

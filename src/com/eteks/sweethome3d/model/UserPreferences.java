@@ -48,7 +48,7 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
+                        FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
                         AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
@@ -86,6 +86,7 @@ public abstract class UserPreferences {
   private boolean          furnitureViewedFromTop;
   private boolean          roomFloorColoredOrTextured;
   private TextureImage     wallPattern;
+  private TextureImage     newWallPattern;
   private float            newWallThickness;
   private float            newWallHeight;
   private float            newFloorThickness;
@@ -648,6 +649,28 @@ public abstract class UserPreferences {
       this.wallPattern = wallPattern;
       this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
           oldWallPattern, wallPattern);
+    }
+  }
+
+  /**
+   * Returns the pattern used for new walls in plan or <code>null</code> if it's not set.
+   * @since 4.0
+   */
+  public TextureImage getNewWallPattern() {
+    return this.newWallPattern;
+  }
+  
+  /**
+   * Sets how new walls should be displayed in plan, and notifies
+   * listeners of this change.
+   * @since 4.0 
+   */
+  public void setNewWallPattern(TextureImage newWallPattern) {
+    if (this.newWallPattern != newWallPattern) {
+      TextureImage oldNewWallPattern = this.newWallPattern;
+      this.newWallPattern = newWallPattern;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_PATTERN.name(), 
+          oldNewWallPattern, newWallPattern);
     }
   }
 
