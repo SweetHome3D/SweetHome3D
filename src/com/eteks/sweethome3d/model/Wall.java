@@ -87,7 +87,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
    * to (<code>xEnd</code>, <code>yEnd</code>), 
-   * with given thickness and height. Left and right colors are <code>null</code>.
+   * with given thickness and height. Pattern, left and right colors are <code>null</code>.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height) {
     this(xStart, yStart, xEnd, yEnd, thickness, height, null);
@@ -98,6 +98,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    * to (<code>xEnd</code>, <code>yEnd</code>), 
    * with given thickness, height and pattern. 
    * Colors are <code>null</code>.
+   * @since 4.0
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height, TextureImage pattern) {
     this.xStart = xStart;
