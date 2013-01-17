@@ -389,9 +389,16 @@ public class RoomPanel extends JPanel implements DialogView {
       // Create visible check box bound to SPLIT_SURROUNDING_WALLS controller property
       this.splitSurroundingWallsCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
           RoomPanel.class, "splitSurroundingWallsCheckBox.text"));
+      final String splitSurroundingWallsToolTip = 
+          preferences.getLocalizedString(RoomPanel.class, "splitSurroundingWallsCheckBox.tooltip");
       PropertyChangeListener splitSurroundingWallsChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           splitSurroundingWallsCheckBox.setEnabled(controller.isSplitSurroundingWallsNeeded());
+          if (splitSurroundingWallsToolTip.length() > 0 && controller.isSplitSurroundingWallsNeeded()) {
+            splitSurroundingWallsCheckBox.setToolTipText(splitSurroundingWallsToolTip);
+          } else {
+            splitSurroundingWallsCheckBox.setToolTipText(null);
+          }
           splitSurroundingWallsCheckBox.setSelected(controller.isSplitSurroundingWalls());
         }
       };
