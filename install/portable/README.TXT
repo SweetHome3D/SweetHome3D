@@ -34,7 +34,7 @@ Start versions), i.e.:
   folder under Windows XP and previous versions of Windows,
 - Library/Application Support/eTeks/Sweet Home 3D
   sub folder of your user folder under Mac OS X, 
-- .eteks/sweethome3d/furniture 
+- .eteks/sweethome3d 
    sub folder of your user folder under Linux.   
 If you need to restore the configuration of Sweet Home 3D you generated with another 
 version of Sweet Home 3D, you can copy the content of the previous folders to 
