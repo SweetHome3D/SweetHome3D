@@ -29,6 +29,7 @@ import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.swing.AbstractAction;
@@ -48,6 +49,7 @@ import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
@@ -100,6 +102,16 @@ public final class ViewerHelper {
 
         @Override
         public void addTexturesLibrary(String name) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Library> getLibraries() throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void deleteLibrary(Library library) throws RecorderException {
           throw new UnsupportedOperationException();
         }
 

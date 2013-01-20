@@ -46,6 +46,7 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -287,6 +288,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
   
+  private List<Library> libraries = new ArrayList<Library>();
+  
   /**
    * Creates a default furniture catalog read from resources in the package of this class.
    */
@@ -370,6 +373,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         try {        
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
               new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+          this.libraries.add(new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), 
+              UserPreferences.FURNITURE_LIBRARY_TYPE, resource));
           readFurniture(resource, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, identifiedFurniture);
         } catch (MissingResourceException ex) {
           // Ignore malformed furniture catalog
@@ -382,6 +387,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault());
       readFurniture(resource, null, furnitureResourcesUrlBase, identifiedFurniture);
     }
+  }
+  
+  /**
+   * Returns the furniture libraries at initialization.
+   * @since 4.0 
+   */
+  public List<Library> getLibraries() {
+    return Collections.unmodifiableList(this.libraries);
   }
 
   private static final Map<File,URL> pluginFurnitureCatalogUrlUpdates = new HashMap<File,URL>(); 
@@ -409,7 +422,9 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-          new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));      
+          new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+      this.libraries.add(new DefaultLibrary(pluginFurnitureCatalogFile.getCanonicalPath(), 
+          UserPreferences.FURNITURE_LIBRARY_TYPE, resourceBundle));
       readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, identifiedFurniture);
     } catch (MissingResourceException ex) {
       // Ignore malformed furniture catalog

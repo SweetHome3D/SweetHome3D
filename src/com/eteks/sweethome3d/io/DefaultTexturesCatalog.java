@@ -39,6 +39,7 @@ import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -112,6 +113,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
 
   private static final String ADDITIONAL_TEXTURES_CATALOG_FAMILY  = "AdditionalTexturesCatalog";
 
+  private List<Library> libraries = new ArrayList<Library>();
+  
   /**
    * Creates a default textures catalog read from resources.
    */
@@ -192,6 +195,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         try {
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
                   new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));
+          this.libraries.add(new DefaultLibrary(pluginTexturesCatalogUrl.toExternalForm(), 
+              UserPreferences.TEXTURES_LIBRARY_TYPE, resource));
           readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, identifiedTextures);
         } catch (MissingResourceException ex) {
           // Ignore malformed textures catalog
@@ -204,6 +209,14 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault());
       readTextures(resource, null, texturesResourcesUrlBase, identifiedTextures);
     }
+  }
+
+  /**
+   * Returns the furniture libraries at initialization.
+   * @since 4.0 
+   */
+  public List<Library> getLibraries() {
+    return Collections.unmodifiableList(this.libraries);
   }
 
   private static final Map<File,URL> pluginTexturesCatalogUrlUpdates = new HashMap<File,URL>(); 
@@ -233,6 +246,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
           new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));      
+      this.libraries.add(new DefaultLibrary(pluginTexturesCatalogFile.getCanonicalPath(), 
+          UserPreferences.TEXTURES_LIBRARY_TYPE, resourceBundle));
       readTextures(resourceBundle, pluginTexturesCatalogUrl, null, identifiedTextures);
     } catch (MissingResourceException ex) {
       // Ignore malformed textures catalog

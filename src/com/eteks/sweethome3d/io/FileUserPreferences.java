@@ -43,7 +43,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.MissingResourceException;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
@@ -61,6 +63,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Sash;
@@ -139,6 +142,9 @@ public class FileUserPreferences extends UserPreferences {
   private Preferences                preferences;
   private Executor                   catalogsLoader;
   private Executor                   updater;
+  private List<Library>              libraries;
+  
+  public static final String PLUGIN_LANGUAGE_LIBRARY_FAMILY = "PluginLanguageLibrary";
   
   static {
     Content dummyURLContent = null;
@@ -186,6 +192,7 @@ public class FileUserPreferences extends UserPreferences {
   public FileUserPreferences(File preferencesFolder,
                              File [] applicationFolders,
                              Executor updater) {
+    this.libraries = new ArrayList<Library>();
     this.preferencesFolder = preferencesFolder;
     this.applicationFolders = applicationFolders;
     Executor defaultExecutor = new Executor() {
@@ -336,6 +343,7 @@ public class FileUserPreferences extends UserPreferences {
    * Updates the default supported languages with languages available in plugin folder. 
    */
   private void updateSupportedLanguages() {
+    List<Library> libraries = getLibrariesExcluding(LANGUAGE_LIBRARY_TYPE);
     List<ClassLoader> resourceClassLoaders = new ArrayList<ClassLoader>();
     String [] defaultSupportedLanguages = getDefaultSupportedLanguages();
     Set<String> supportedLanguages = new TreeSet<String>(Arrays.asList(defaultSupportedLanguages));
@@ -360,7 +368,18 @@ public class FileUserPreferences extends UserPreferences {
               if (!languages.isEmpty()) {
                 supportedLanguages.addAll(languages);
                 URL pluginFurnitureCatalogUrl = pluginLanguageLibraryFile.toURI().toURL();
-                resourceClassLoaders.add(new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+                URLClassLoader classLoader = new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl});
+                resourceClassLoaders.add(classLoader);
+
+                DefaultLibrary languageLibrary;
+                try {
+                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
+                      ResourceBundle.getBundle(PLUGIN_LANGUAGE_LIBRARY_FAMILY, Locale.getDefault(), classLoader));
+                } catch (MissingResourceException ex) {
+                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
+                      null, getLanguageLibraryDefaultName(languages), null, null, null, null);
+                }
+                libraries.add(languageLibrary);
               }
             } catch (IOException ex) {
               // Ignore malformed files
@@ -376,6 +395,7 @@ public class FileUserPreferences extends UserPreferences {
     if (defaultSupportedLanguages.length < supportedLanguages.size()) {
       setSupportedLanguages(supportedLanguages.toArray(new String [supportedLanguages.size()]));
     }
+    this.libraries = libraries;
   }
 
   /**
@@ -413,6 +433,32 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
+   * Returns a text in English describing the given languages.
+   */
+  private String getLanguageLibraryDefaultName(Set<String> languages) {
+    String description = "";
+    for (String language : languages) {
+      if (description.length() > 0) {
+        description += ", ";
+      }
+      int underscoreIndex = language.indexOf('_');
+      Locale locale = underscoreIndex < 0 
+          ? new Locale(language) 
+          : new Locale(language.substring(0, underscoreIndex), language.substring(underscoreIndex + 1));
+      description += locale.getDisplayLanguage(Locale.ENGLISH);
+      if (underscoreIndex >= 0) {
+        description += " (" + locale.getDisplayCountry(Locale.ENGLISH) + ")";
+      }
+    }
+    if (languages.size() > 1) {
+      description += " languages support";
+    } else {
+      description += " language support";
+    }
+    return description;
+  }
+
+  /**
    * Returns the default class loader of user preferences and the class loaders that
    * give access to resources in language libraries plugin folder. 
    */
@@ -426,6 +472,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateFurnitureDefaultCatalog(Executor furnitureCatalogLoader, 
                                              final Executor updater) {
+    final List<Library> libraries = getLibrariesExcluding(FURNITURE_LIBRARY_TYPE);
     // Delete default pieces of current furniture catalog          
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -439,7 +486,7 @@ public class FileUserPreferences extends UserPreferences {
     furnitureCatalogLoader.execute(new Runnable() {
         public void run() {
           // Fill default furniture catalog 
-          DefaultFurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(
+          final DefaultFurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(
               FileUserPreferences.this, getFurnitureLibrariesPluginFolders());
           for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
             for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
@@ -450,8 +497,28 @@ public class FileUserPreferences extends UserPreferences {
                 });
             }
           }
+          updater.execute(new Runnable() {
+              public void run() {
+                libraries.addAll(defaultFurnitureCatalog.getLibraries());
+              }
+            });
         }
       });
+    
+    this.libraries = libraries;
+  }
+
+  /**
+   * Returns the list of libraries excepted the ones of the given type.
+   */
+  private List<Library> getLibrariesExcluding(String libraryType) {
+    final List<Library> libraries = new ArrayList<Library>();
+    for (Library library : this.libraries) {
+      if (library.getType() != libraryType) {
+        libraries.add(library);
+      }
+    }
+    return libraries;
   }
 
   /**
@@ -459,6 +526,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateTexturesDefaultCatalog(Executor texturesCatalogLoader, 
                                             final Executor updater) {
+    final List<Library> libraries = getLibrariesExcluding(TEXTURES_LIBRARY_TYPE);
     // Delete default textures of current textures catalog          
     final TexturesCatalog texturesCatalog = getTexturesCatalog();
     for (TexturesCategory category : texturesCatalog.getCategories()) {
@@ -471,7 +539,7 @@ public class FileUserPreferences extends UserPreferences {
     // Read default textures catalog
     texturesCatalogLoader.execute(new Runnable() {
         public void run() {
-          TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(
+          final DefaultTexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(
               FileUserPreferences.this, getTexturesLibrariesPluginFolders());
           for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
             for (final CatalogTexture texture : category.getTextures()) {
@@ -482,8 +550,15 @@ public class FileUserPreferences extends UserPreferences {
                 });
             }
           }
+          updater.execute(new Runnable() {
+              public void run() {
+                libraries.addAll(defaultTexturesCatalog.getLibraries());
+              }
+            });
         }
       });
+
+    this.libraries = libraries;
   }
 
   /**
@@ -1075,110 +1150,111 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Returns <code>true</code> if the given language library exists in the first 
-   * language libraries folder.
+   * Returns <code>true</code> if the language library at the given location exists 
+   * in the first language libraries folder.
+   * @param location the file path of the resource to check
    */
-  public boolean languageLibraryExists(String name) throws RecorderException {
+  public boolean languageLibraryExists(String location) throws RecorderException {
     File [] languageLibrariesPluginFolders = getLanguageLibrariesPluginFolders();
     if (languageLibrariesPluginFolders == null
         || languageLibrariesPluginFolders.length == 0) {
       throw new RecorderException("Can't access to language libraries plugin folder");
     } else {
-      String libraryFileName = new File(name).getName();
+      String libraryFileName = new File(location).getName();
       return new File(languageLibrariesPluginFolders [0], libraryFileName).exists();
     }
   }
   
   /**
-   * Adds <code>languageLibraryName</code> to the first language libraries folder
+   * Adds <code>languageLibraryPath</code> to the first language libraries folder
    * to make the language library it contains available to supported languages.
    */
-  public void addLanguageLibrary(String languageLibraryName) throws RecorderException {
+  public void addLanguageLibrary(String languageLibraryPath) throws RecorderException {
     try {
       File [] languageLibrariesPluginFolders = getLanguageLibrariesPluginFolders();
       if (languageLibrariesPluginFolders == null
           || languageLibrariesPluginFolders.length == 0) {
         throw new RecorderException("Can't access to language libraries plugin folder");
       }
-      File languageLibraryFile = new File(languageLibraryName);
-      copyToLibraryFolder(languageLibraryFile, languageLibrariesPluginFolders [0]);
+      copyToLibraryFolder(new File(languageLibraryPath), languageLibrariesPluginFolders [0]);
       updateSupportedLanguages();
     } catch (IOException ex) {
       throw new RecorderException(
-          "Can't write " + languageLibraryName +  " in language libraries plugin folder", ex);
+          "Can't write " + languageLibraryPath +  " in language libraries plugin folder", ex);
     }
   }
 
   /**
-   * Returns <code>true</code> if the given furniture library file exists in the first 
-   * furniture libraries folder.
-   * @param name the name of the resource to check
+   * Returns <code>true</code> if the furniture library at the given <code>location</code> exists 
+   * in the first furniture libraries folder.
+   * @param location the file path of the resource to check
    */
   @Override
-  public boolean furnitureLibraryExists(String name) throws RecorderException {
+  public boolean furnitureLibraryExists(String location) throws RecorderException {
     File [] furnitureLibrariesPluginFolders = getFurnitureLibrariesPluginFolders();
     if (furnitureLibrariesPluginFolders == null
         || furnitureLibrariesPluginFolders.length == 0) {
       throw new RecorderException("Can't access to furniture libraries plugin folder");
     } else {
-      String libraryFileName = new File(name).getName();
+      String libraryFileName = new File(location).getName();
       return new File(furnitureLibrariesPluginFolders [0], libraryFileName).exists();
     }
   }
 
   /**
-   * Adds the file <code>furnitureLibraryName</code> to the first furniture libraries folder 
+   * Adds the file <code>furnitureLibraryPath</code> to the first furniture libraries folder 
    * to make the furniture library available to catalog.
    */
   @Override
-  public void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException {
+  public void addFurnitureLibrary(String furnitureLibraryPath) throws RecorderException {
     try {
       File [] furnitureLibrariesPluginFolders = getFurnitureLibrariesPluginFolders();
       if (furnitureLibrariesPluginFolders == null
           || furnitureLibrariesPluginFolders.length == 0) {
         throw new RecorderException("Can't access to furniture libraries plugin folder");
       }
-      copyToLibraryFolder(new File(furnitureLibraryName), furnitureLibrariesPluginFolders [0]);
+      copyToLibraryFolder(new File(furnitureLibraryPath), furnitureLibrariesPluginFolders [0]);
       updateFurnitureDefaultCatalog(this.catalogsLoader, this.updater);
     } catch (IOException ex) {
       throw new RecorderException(
-          "Can't write " + furnitureLibraryName +  " in furniture libraries plugin folder", ex);
+          "Can't write " + furnitureLibraryPath +  " in furniture libraries plugin folder", ex);
     }
   }
 
   /**
-   * Returns <code>true</code> if the given textures library file exists in the first textures libraries folder.
-   * @param name the name of the resource to check
+   * Returns <code>true</code> if the textures library at the given <code>location</code> exists 
+   * in the first textures libraries folder.
+   * @param location the file path of the resource to check
    */
   @Override
-  public boolean texturesLibraryExists(String name) throws RecorderException {
+  public boolean texturesLibraryExists(String location) throws RecorderException {
     File [] texturesLibrariesPluginFolders = getTexturesLibrariesPluginFolders();
     if (texturesLibrariesPluginFolders == null
         || texturesLibrariesPluginFolders.length == 0) {
       throw new RecorderException("Can't access to textures libraries plugin folder");
     } else {
-      String libraryFileName = new File(name).getName();
-      return new File(texturesLibrariesPluginFolders [0], libraryFileName).exists();
+      String libraryLocation = new File(location).getName();
+      return new File(texturesLibrariesPluginFolders [0], libraryLocation).exists();
     }
   }
 
   /**
-   * Adds the file <code>texturesLibraryName</code> to the first textures libraries folder 
+   * Adds the file <code>texturesLibraryPath</code> to the first textures libraries folder 
    * to make the textures library available to catalog.
    */
   @Override
-  public void addTexturesLibrary(String texturesLibraryName) throws RecorderException {
+  public void addTexturesLibrary(String texturesLibraryPath) throws RecorderException {
     try {
       File [] texturesLibrariesPluginFolders = getTexturesLibrariesPluginFolders();
       if (texturesLibrariesPluginFolders == null
           || texturesLibrariesPluginFolders.length == 0) {
         throw new RecorderException("Can't access to textures libraries plugin folder");
       }
-      copyToLibraryFolder(new File(texturesLibraryName), texturesLibrariesPluginFolders [0]);
+      copyToLibraryFolder(new File(texturesLibraryPath), texturesLibrariesPluginFolders [0]);
       updateTexturesDefaultCatalog(this.catalogsLoader, this.updater);
     } catch (IOException ex) {
       throw new RecorderException(
-          "Can't write " + texturesLibraryName +  " in textures libraries plugin folder", ex);
+          "Can't write " + texturesLibraryPath +  " in textures libraries plugin folder", ex);
     }
   }
 
@@ -1214,6 +1290,31 @@ public class FileUserPreferences extends UserPreferences {
     }
   }
   
+  /**
+   * Returns the libraries available in user preferences.
+   */
+  @Override
+  public List<Library> getLibraries() throws RecorderException {
+    return Collections.unmodifiableList(this.libraries);
+  }
+
+  /**
+   * Deletes the given file <code>library</code> and updates user preferences.
+   */
+  @Override
+  public void deleteLibrary(Library library) throws RecorderException {
+    if (new File(library.getLocation()).delete()) {
+      throw new RecorderException("Couldn't delete file " + library.getLocation());
+    }
+    if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
+      updateFurnitureDefaultCatalog(this.catalogsLoader, this.updater);
+    } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
+      updateTexturesDefaultCatalog(this.catalogsLoader, this.updater);
+    }  else if (LANGUAGE_LIBRARY_TYPE.equals(library.getType())) {
+      updateSupportedLanguages();
+    }
+  }
+
   /**
    * Preferences based on the <code>preferences.xml</code> file
    * stored in a preferences folder.  

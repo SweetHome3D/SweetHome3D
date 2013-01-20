@@ -30,6 +30,7 @@ import java.util.Locale;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
@@ -136,7 +137,7 @@ public class DefaultUserPreferences extends UserPreferences {
    */
   @Override
   public void write() throws RecorderException {
-    throw new RecorderException("Default user preferences can't be written");
+    throw new UnsupportedOperationException("Default user preferences can't be written");
   }
 
   /**
@@ -144,7 +145,7 @@ public class DefaultUserPreferences extends UserPreferences {
    */
   @Override
   public boolean languageLibraryExists(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage language libraries");
+    throw new UnsupportedOperationException("Default user preferences can't manage language libraries");
   }
 
   /**
@@ -152,15 +153,15 @@ public class DefaultUserPreferences extends UserPreferences {
    */
   @Override
   public void addLanguageLibrary(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage language libraries");
+    throw new UnsupportedOperationException("Default user preferences can't manage language libraries");
   }
   
   /**
-   * Throws an exception because default user preferences can't manage furniture libraries.
+   * Returns <code>false</code>.
    */
   @Override
   public boolean furnitureLibraryExists(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage furniture libraries");
+    return false;
   }
 
   /**
@@ -168,15 +169,15 @@ public class DefaultUserPreferences extends UserPreferences {
    */
   @Override
   public void addFurnitureLibrary(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage furniture libraries");
+    throw new UnsupportedOperationException("Default user preferences can't manage furniture libraries");
   }
   
   /**
-   * Throws an exception because default user preferences can't manage textures libraries.
+   * Returns <code>false</code>.
    */
   @Override
   public boolean texturesLibraryExists(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage textures libraries");
+    return false;
   }
 
   /**
@@ -184,7 +185,23 @@ public class DefaultUserPreferences extends UserPreferences {
    */
   @Override
   public void addTexturesLibrary(String name) throws RecorderException {
-    throw new RecorderException("Default user preferences can't manage textures libraries");
+    throw new UnsupportedOperationException("Default user preferences can't manage textures libraries");
+  }
+
+  /**
+   * Throws an exception because default user preferences don't support libraries.
+   */
+  @Override
+  public List<Library> getLibraries() throws RecorderException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Throws an exception because default user preferences don't support libraries.
+   */
+  @Override
+  public void deleteLibrary(Library library) throws RecorderException {
+    throw new UnsupportedOperationException();
   }
 }
 

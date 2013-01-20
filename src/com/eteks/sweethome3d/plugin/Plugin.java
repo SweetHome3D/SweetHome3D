@@ -76,6 +76,7 @@ public abstract class Plugin {
   private HomeController      homeController;
   private UndoableEditSupport undoableEditSupport;
 
+
   /**
    * Sets the class loader used to load this plug-in.
    */

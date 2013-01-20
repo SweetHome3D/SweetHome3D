@@ -72,20 +72,20 @@ public class HomePluginController extends HomeController {
   }
 
   /**
-   * Imports a given plugin.
+   * Imports the plugin at the given location.
    */
-  public void importPlugin(String pluginName) {
+  public void importPlugin(String pluginLocation) {
     if (this.pluginManager != null) {
       try {
-        if (!this.pluginManager.pluginExists(pluginName) 
-            || getView().confirmReplacePlugin(pluginName)) {
-          this.pluginManager.addPlugin(pluginName);
+        if (!this.pluginManager.pluginExists(pluginLocation) 
+            || getView().confirmReplacePlugin(pluginLocation)) {
+          this.pluginManager.addPlugin(pluginLocation);
           getView().showMessage(this.application.getUserPreferences().getLocalizedString(HomeController.class, 
               "importedPluginMessage"));
         }
       } catch (RecorderException ex) {
         String message = this.application.getUserPreferences().getLocalizedString(HomeController.class, 
-            "importPluginError", pluginName);
+            "importPluginError", pluginLocation);
         getView().showError(message);
       }
     }

@@ -36,6 +36,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.HomePluginController;
@@ -198,12 +200,35 @@ public class SweetHome3D extends HomeApplication {
       } else {
         applicationFolders = null;
       }
-      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, 
-          new Executor() {
-            public void execute(Runnable command) {
-              EventQueue.invokeLater(command);
+      Executor EventQueueExecutor = new Executor() {
+          public void execute(Runnable command) {
+            EventQueue.invokeLater(command);
+          }
+        };
+      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, EventQueueExecutor) {
+          @Override
+          public List<Library> getLibraries() throws RecorderException {
+            if (pluginManager != null) {
+              List<Library> pluginLibraries = pluginManager.getPluginLibraries();
+              if (!pluginLibraries.isEmpty()) {
+                // Add plug-ins to the list returned by user preferences
+                ArrayList<Library> libraries = new ArrayList<Library>(super.getLibraries());
+                libraries.addAll(pluginLibraries);
+                return Collections.unmodifiableList(libraries);
+              }
             }
-          });
+            return super.getLibraries();
+          }
+          
+          @Override
+          public void deleteLibrary(Library library) throws RecorderException {
+            if (PluginManager.PLUGIN_LIBRARY_TYPE.equals(library.getType())) {
+              pluginManager.deletePlugin(library);
+            } else {
+              super.deleteLibrary(library);
+            }
+          }
+        };
     }
     return this.userPreferences;
   }
@@ -353,7 +378,7 @@ public class SweetHome3D extends HomeApplication {
                 this.firstApplicationHomeAdded = true;
               }
 
-              JFrame homeFrame = (JFrame) SwingUtilities.getRoot((JComponent) controller.getView());
+              JFrame homeFrame = (JFrame)SwingUtilities.getRoot((JComponent) controller.getView());
               homeFrames.put(home, homeFrame);
             } catch (IllegalStateException ex) {
               // Check exception by class name to avoid a mandatory bind to Java 3D

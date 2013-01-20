@@ -53,6 +53,10 @@ public abstract class UserPreferences {
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
                         AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
+  public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
+  public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
+  public static final String LANGUAGE_LIBRARY_TYPE  = "Language library"; 
+  
   private static final String [] DEFAULT_SUPPORTED_LANGUAGES; 
   private static final List<ClassLoader> DEFAULT_CLASS_LOADER = 
       Arrays.asList(new ClassLoader [] {UserPreferences.class.getClassLoader()});
@@ -883,48 +887,59 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Adds <code>languageLibraryName</code> to the first language libraries folder
-   * to make the language library it contains available to supported languages.
-   * @param languageLibraryName  the name of the resource in which the library will be written. 
+   * Adds the language library to make the languages it contains available to supported languages.
+   * @param languageLibraryLocation  the location where the library can be found. 
    * @since 2.3 
    */
-  public abstract void addLanguageLibrary(String languageLibraryName) throws RecorderException;
+  public abstract void addLanguageLibrary(String languageLibraryLocation) throws RecorderException;
   
   /**
-   * Returns <code>true</code> if the given language library exists.
-   * @param languageLibraryName the name of the resource to check
+   * Returns <code>true</code> if the language library at the given location exists.
+   * @param languageLibraryLocation the name of the resource to check
    * @since 2.3 
    */
-  public abstract boolean languageLibraryExists(String languageLibraryName) throws RecorderException;
+  public abstract boolean languageLibraryExists(String languageLibraryLocation) throws RecorderException;
 
   /**
    * Adds <code>furnitureLibraryName</code> to furniture catalog  
-   * to make the furniture library it contains available.
-   * @param furnitureLibraryName  the name of the resource in which the library will be written. 
+   * to make the furniture it contains available.
+   * @param furnitureLibraryLocation  the location where the library can be found. 
    */
-  public abstract void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException;
+  public abstract void addFurnitureLibrary(String furnitureLibraryLocation) throws RecorderException;
   
   /**
-   * Returns <code>true</code> if the given furniture library exists.
-   * @param furnitureLibraryName the name of the resource to check
+   * Returns <code>true</code> if the furniture library at the given location exists.
+   * @param furnitureLibraryLocation the name of the resource to check
    */
-  public abstract boolean furnitureLibraryExists(String furnitureLibraryName) throws RecorderException;
+  public abstract boolean furnitureLibraryExists(String furnitureLibraryLocation) throws RecorderException;
 
   /**
-   * Adds <code>texturesLibraryName</code> to textures catalog  
-   * to make the textures library it contains available.
-   * @param texturesLibraryName  the name of the resource in which the library will be written.
+   * Adds the textures library at the given location to textures catalog  
+   * to make the textures it contains available.
+   * @param texturesLibraryLocation  the location where the library can be found.
    * @since 2.3 
    */
-  public abstract void addTexturesLibrary(String texturesLibraryName) throws RecorderException;
+  public abstract void addTexturesLibrary(String texturesLibraryLocation) throws RecorderException;
   
   /**
-   * Returns <code>true</code> if the given textures library exists.
-   * @param texturesLibraryName the name of the resource to check
+   * Returns <code>true</code> if the textures library at the given location exists.
+   * @param texturesLibraryLocation the name of the resource to check
    * @since 2.3 
    */
-  public abstract boolean texturesLibraryExists(String texturesLibraryName) throws RecorderException;
+  public abstract boolean texturesLibraryExists(String texturesLibraryLocation) throws RecorderException;
 
+  /**
+   * Returns the libraries available in user preferences. 
+   * @since 4.0
+   */
+  public abstract List<Library> getLibraries() throws RecorderException;
+  
+  /**
+   * Deletes the given <code>library</code> from user preferences. 
+   * @since 4.0
+   */
+  public abstract void deleteLibrary(Library library) throws RecorderException;
+  
   /**
    * A resource bundle with a prefix added to resource key.
    */

@@ -31,6 +31,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +50,7 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
@@ -79,15 +81,16 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String RECENT_HOMES                              = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";
 
-  private final URL [] pluginFurnitureCatalogURLs;
-  private final URL    furnitureResourcesUrlBase;
-  private final URL [] pluginTexturesCatalogURLs;
-  private final URL    texturesResourcesUrlBase;
-  private Properties   properties;
-  private final URL    writePreferencesURL;
-  private final URL    readPreferencesURL;
-  private Executor     catalogsLoader;
-  private Executor     updater;
+  private final URL []  pluginFurnitureCatalogURLs;
+  private final URL     furnitureResourcesUrlBase;
+  private final URL []  pluginTexturesCatalogURLs;
+  private final URL     texturesResourcesUrlBase;
+  private Properties    properties;
+  private final URL     writePreferencesURL;
+  private final URL     readPreferencesURL;
+  private Executor      catalogsLoader;
+  private Executor      updater;
+  private List<Library> furnitureAndTexturesLibraries;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
 
@@ -178,6 +181,7 @@ public class AppletUserPreferences extends UserPreferences {
                                URL readPreferencesURL,
                                Executor updater,
                                String userLanguage) {
+    this.furnitureAndTexturesLibraries = new ArrayList<Library>();
     this.pluginFurnitureCatalogURLs = pluginFurnitureCatalogURLs;
     this.furnitureResourcesUrlBase = furnitureResourcesUrlBase;
     this.pluginTexturesCatalogURLs = pluginTexturesCatalogURLs;
@@ -287,6 +291,7 @@ public class AppletUserPreferences extends UserPreferences {
    * Reloads furniture and textures default catalogs.
    */
   private void updateDefaultCatalogs() {
+    final List<Library> furnitureAndTexturesLibraries = new ArrayList<Library>();
     // Delete default pieces of current furniture catalog          
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -299,7 +304,7 @@ public class AppletUserPreferences extends UserPreferences {
     // Add default pieces 
     this.catalogsLoader.execute(new Runnable() {
         public void run() {
-          FurnitureCatalog defaultFurnitureCatalog = 
+          final DefaultFurnitureCatalog defaultFurnitureCatalog = 
               new DefaultFurnitureCatalog(pluginFurnitureCatalogURLs, furnitureResourcesUrlBase);
           for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
             for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
@@ -310,6 +315,11 @@ public class AppletUserPreferences extends UserPreferences {
                 });
             }
           }
+          updater.execute(new Runnable() {
+            public void run() {
+              furnitureAndTexturesLibraries.addAll(defaultFurnitureCatalog.getLibraries());
+            }
+          });
         }
       });
 
@@ -325,7 +335,7 @@ public class AppletUserPreferences extends UserPreferences {
     // Add default textures
     this.catalogsLoader.execute(new Runnable() {
         public void run() {
-          TexturesCatalog defaultTexturesCatalog = 
+          final DefaultTexturesCatalog defaultTexturesCatalog = 
               new DefaultTexturesCatalog(pluginTexturesCatalogURLs, texturesResourcesUrlBase);
           for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
             for (final CatalogTexture texture : category.getTextures()) {
@@ -336,8 +346,15 @@ public class AppletUserPreferences extends UserPreferences {
                 });
             }
           }
+          updater.execute(new Runnable() {
+              public void run() {
+                furnitureAndTexturesLibraries.addAll(defaultTexturesCatalog.getLibraries());
+              }
+            });
         }
       });
+    
+    this.furnitureAndTexturesLibraries = furnitureAndTexturesLibraries;
   }
 
   /**
@@ -501,47 +518,76 @@ public class AppletUserPreferences extends UserPreferences {
    * Throws an exception because applet user preferences can't manage language libraries.
    */
   @Override
-  public void addLanguageLibrary(String languageLibraryName) throws RecorderException {
-    throw new RecorderException("No language libraries");
+  public void addLanguageLibrary(String location) throws RecorderException {
+    throw new UnsupportedOperationException();
   }
 
   /**
    * Throws an exception because applet user preferences can't manage additional language libraries.
    */
   @Override
-  public boolean languageLibraryExists(String languageLibraryName) throws RecorderException {
-    throw new RecorderException("No language libraries");
+  public boolean languageLibraryExists(String location) throws RecorderException {
+    throw new UnsupportedOperationException();
   }
 
   /**
-   * Throws an exception because applet user preferences can't manage furniture libraries.
+   * Returns <code>true</code> if the furniture library at the given <code>location</code> exists.
    */
   @Override
-  public boolean furnitureLibraryExists(String name) throws RecorderException {
-    throw new RecorderException("No furniture libraries");
+  public boolean furnitureLibraryExists(String location) throws RecorderException {
+    for (Library library : this.furnitureAndTexturesLibraries) {
+      if (FURNITURE_LIBRARY_TYPE.equals(library.getType())
+          && location.equals(library.getLocation())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * Throws an exception because applet user preferences can't manage additional furniture libraries.
    */
   @Override
-  public void addFurnitureLibrary(String name) throws RecorderException {
-    throw new RecorderException("No furniture libraries");
+  public void addFurnitureLibrary(String location) throws RecorderException {
+    throw new UnsupportedOperationException();
   }
 
   /**
-   * Throws an exception because applet user preferences can't manage textures libraries.
+   * Returns <code>true</code> if the textures library at the given <code>location</code> exists.
    */
   @Override
-  public boolean texturesLibraryExists(String name) throws RecorderException {
-    throw new RecorderException("No textures libraries");
+  public boolean texturesLibraryExists(String location) throws RecorderException {
+    for (Library library : this.furnitureAndTexturesLibraries) {
+      if (TEXTURES_LIBRARY_TYPE.equals(library.getType())
+          && location.equals(library.getLocation())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * Throws an exception because applet user preferences can't manage additional textures libraries.
    */
   @Override
-  public void addTexturesLibrary(String name) throws RecorderException {
-    throw new RecorderException("No textures libraries");
+  public void addTexturesLibrary(String location) throws RecorderException {
+    throw new UnsupportedOperationException();
+  }
+
+
+  /**
+   * Returns the libraries available in user preferences.
+   */
+  @Override
+  public List<Library> getLibraries() throws RecorderException {
+    return Collections.unmodifiableList(this.furnitureAndTexturesLibraries);
+  }
+
+  /**
+   * Throws an exception because libraries can't be deleted from applet user preferences.
+   */
+  @Override
+  public void deleteLibrary(Library library) throws RecorderException {
+    throw new UnsupportedOperationException();
   }
 }
