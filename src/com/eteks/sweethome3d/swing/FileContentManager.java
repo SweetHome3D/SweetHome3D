@@ -433,24 +433,24 @@ public class FileContentManager implements ContentManager {
    * Returns a {@link URLContent URL content} object that references 
    * the given file path.
    */
-  public Content getContent(String contentName) throws RecorderException {
+  public Content getContent(String contentPath) throws RecorderException {
     try {
-      return new URLContent(new File(contentName).toURI().toURL());
+      return new URLContent(new File(contentPath).toURI().toURL());
     } catch (IOException ex) {
-      throw new RecorderException("Couldn't access to content " + contentName);
+      throw new RecorderException("Couldn't access to content " + contentPath);
     }
   }
   
   /**
    * Returns the file name of the file path in parameter.
    */
-  public String getPresentationName(String contentName, 
+  public String getPresentationName(String contentPath, 
                                     ContentType contentType) {
     switch (contentType) {
       case SWEET_HOME_3D :
-        return new File(contentName).getName();
+        return new File(contentPath).getName();
       default :
-        String fileName = new File(contentName).getName();
+        String fileName = new File(contentPath).getName();
         int pointIndex = fileName.lastIndexOf('.');
         if (pointIndex != -1) {
           fileName = fileName.substring(0, pointIndex);
@@ -464,11 +464,11 @@ public class FileContentManager implements ContentManager {
    * This method may be overridden to add some file filters to existing content types
    * or to define the filters of a user defined content type.
    */
-  protected FileFilter [] getFileFilter(ContentType contentType) {
-    if (contentType == ContentType.USER_DEFINED) {
+  protected FileFilter [] getFileFilter(ContentType contentPath) {
+    if (contentPath == ContentType.USER_DEFINED) {
       throw new IllegalArgumentException("Unknown user defined content type");
     } else {
-      return this.fileFilters.get(contentType);
+      return this.fileFilters.get(contentPath);
     }
   }
   
@@ -491,10 +491,10 @@ public class FileContentManager implements ContentManager {
    * Returns <code>true</code> if the file path in parameter is accepted
    * for <code>contentType</code>.
    */
-  public boolean isAcceptable(String contentName, 
+  public boolean isAcceptable(String contentPath, 
                               ContentType contentType) {
     for (FileFilter filter : getFileFilter(contentType)) {
-      if (filter.accept(new File(contentName))) {
+      if (filter.accept(new File(contentPath))) {
         return true;
       }
     }
@@ -526,33 +526,33 @@ public class FileContentManager implements ContentManager {
   public String showSaveDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType,
-                               String      name) {
+                               String      path) {
     String defaultExtension = getDefaultFileExtension(contentType);
-    if (name != null) {
-      // If name has an extension, remove it and build a name that matches contentType
-      int extensionIndex = name.lastIndexOf('.');
+    if (path != null) {
+      // If path has an extension, remove it and build a path that matches contentType
+      int extensionIndex = path.lastIndexOf('.');
       if (extensionIndex != -1) {
-        name = name.substring(0, extensionIndex);
+        path = path.substring(0, extensionIndex);
         if (defaultExtension != null) {
-          name += defaultExtension;
+          path += defaultExtension;
         }
       }
     }
     
-    String savedName;
+    String savedPath;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()
         && contentType != ContentType.PHOTOS_DIRECTORY) {
-      savedName = showFileDialog(parentView, dialogTitle, contentType, name, true);
+      savedPath = showFileDialog(parentView, dialogTitle, contentType, path, true);
     } else {
-      savedName = showFileChooser(parentView, dialogTitle, contentType, name, true);
+      savedPath = showFileChooser(parentView, dialogTitle, contentType, path, true);
     }
     
     boolean addedExtension = false;
-    if (savedName != null) {
+    if (savedPath != null) {
       if (defaultExtension != null) {
-        if (!savedName.toLowerCase().endsWith(defaultExtension)) {
-          savedName += defaultExtension;
+        if (!savedPath.toLowerCase().endsWith(defaultExtension)) {
+          savedPath += defaultExtension;
           addedExtension = true;
         }
       }
@@ -561,18 +561,18 @@ public class FileContentManager implements ContentManager {
       // FileDialog already asks to user if he wants to overwrite savedName
       if (OperatingSystem.isMacOSX()
           && !addedExtension) {
-        return savedName;
+        return savedPath;
       }
       if (contentType != ContentType.PHOTOS_DIRECTORY) {
         // If the file exists, prompt user if he wants to overwrite it
-        File savedFile = new File(savedName);
+        File savedFile = new File(savedPath);
         if (savedFile.exists()
             && !confirmOverwrite(parentView, savedFile.getName())) {
-          return showSaveDialog(parentView, dialogTitle, contentType, savedName);
+          return showSaveDialog(parentView, dialogTitle, contentType, savedPath);
         }
       }
     }
-    return savedName;
+    return savedPath;
   }
   
   /**
@@ -581,14 +581,14 @@ public class FileContentManager implements ContentManager {
   private String showFileDialog(View               parentView,
                                 String             dialogTitle,
                                 final ContentType  contentType,
-                                String             name, 
+                                String             path, 
                                 boolean            save) {
     FileDialog fileDialog = new FileDialog(
         JOptionPane.getFrameForComponent((JComponent)parentView));
 
     // Set selected file
-    if (save && name != null) {
-      fileDialog.setFile(new File(name).getName());
+    if (save && path != null) {
+      fileDialog.setFile(new File(path).getName());
     }
     // Set supported files filter 
     fileDialog.setFilenameFilter(new FilenameFilter() {
@@ -658,7 +658,7 @@ public class FileContentManager implements ContentManager {
   private String showFileChooser(View          parentView,
                                  String        dialogTitle,
                                  ContentType   contentType,
-                                 String        name,
+                                 String        path,
                                  boolean       save) {
     final JFileChooser fileChooser;
     if (contentType == ContentType.PHOTOS_DIRECTORY) {
@@ -681,8 +681,8 @@ public class FileContentManager implements ContentManager {
     }    
     // Set selected file
     if (save 
-        && name != null) {
-      fileChooser.setSelectedFile(new File(name));
+        && path != null) {
+      fileChooser.setSelectedFile(new File(path));
     }    
     // Set supported files filter 
     FileFilter acceptAllFileFilter = fileChooser.getAcceptAllFileFilter();
@@ -735,12 +735,12 @@ public class FileContentManager implements ContentManager {
     
   /**
    * Displays a dialog that let user choose whether he wants to overwrite 
-   * file <code>fileName</code> or not.
+   * file <code>path</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  protected boolean confirmOverwrite(View parentView, String fileName) {
+  protected boolean confirmOverwrite(View parentView, String path) {
     // Retrieve displayed text in buttons and message
-    String message = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.message", fileName);
+    String message = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.message", path);
     String title = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.title");
     String replace = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.overwrite");
     String cancel = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.cancel");

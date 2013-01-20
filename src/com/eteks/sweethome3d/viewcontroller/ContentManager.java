@@ -30,39 +30,39 @@ public interface ContentManager {
   public enum ContentType {SWEET_HOME_3D, MODEL, IMAGE, CSV, SVG, OBJ, PNG, JPEG, MOV, PDF, LANGUAGE_LIBRARY, TEXTURES_LIBRARY, FURNITURE_LIBRARY, PLUGIN, PHOTOS_DIRECTORY, USER_DEFINED};
 
   /**
-   * Returns a {@link Content content} object that references a given content name.
+   * Returns a {@link Content content} object that references a given content location.
    */
-  public abstract Content getContent(String contentName) throws RecorderException;
+  public abstract Content getContent(String contentLocation) throws RecorderException;
 
   /**
-   * Returns a human readable string for a given content name.
+   * Returns a human readable string for a given content location.
    */
-  public abstract String getPresentationName(String contentName,
+  public abstract String getPresentationName(String contentLocation,
                                              ContentType contentType);
 
   /**
-   * Returns <code>true</code> if the content name in parameter is accepted
+   * Returns <code>true</code> if the content location in parameter is accepted
    * for <code>contentType</code>.
    */
-  public abstract boolean isAcceptable(String contentName,
+  public abstract boolean isAcceptable(String contentLocation,
                                        ContentType contentType);
 
   /**
-   * Returns the content name chosen by user with an open content dialog.
-   * @return the chosen content name or <code>null</code> if user canceled its choice.
+   * Returns the content location chosen by user with an open content dialog.
+   * @return the chosen content location or <code>null</code> if user canceled its choice.
    */
   public abstract String showOpenDialog(View parentView,
                                         String dialogTitle,
                                         ContentType contentType);
 
   /**
-   * Returns the content name chosen by user with a save content dialog.
-   * If the returned name already exists, this method should have confirmed 
+   * Returns the content location chosen by user with a save content dialog.
+   * If the returned location already exists, this method should have confirmed 
    * if the user wants to overwrite it before return. 
-   * @return the chosen content name or <code>null</code> if user canceled its choice.
+   * @return the chosen content location or <code>null</code> if user canceled its choice.
    */
   public abstract String showSaveDialog(View parentView,
                                         String dialogTitle,
                                         ContentType contentType,
-                                        String name);
+                                        String location);
 }
