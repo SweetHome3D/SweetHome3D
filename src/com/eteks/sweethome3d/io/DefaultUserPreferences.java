@@ -190,6 +190,7 @@ public class DefaultUserPreferences extends UserPreferences {
 
   /**
    * Throws an exception because default user preferences don't support libraries.
+   * @since 4.0
    */
   @Override
   public List<Library> getLibraries() throws RecorderException {
@@ -198,10 +199,20 @@ public class DefaultUserPreferences extends UserPreferences {
 
   /**
    * Throws an exception because default user preferences don't support libraries.
+   * @since 4.0
    */
   @Override
   public void deleteLibrary(Library library) throws RecorderException {
     throw new UnsupportedOperationException();
+  }
+  
+  /**
+   * Returns <code>false</code>.
+   * @since 4.0
+   */
+  @Override
+  public boolean isLibraryDeletable(Library library) throws RecorderException {
+    return false;
   }
 }
 

@@ -423,7 +423,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
           new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
-      this.libraries.add(new DefaultLibrary(pluginFurnitureCatalogFile.getCanonicalPath(), 
+      this.libraries.add(new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), 
           UserPreferences.FURNITURE_LIBRARY_TYPE, resourceBundle));
       readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, identifiedFurniture);
     } catch (MissingResourceException ex) {

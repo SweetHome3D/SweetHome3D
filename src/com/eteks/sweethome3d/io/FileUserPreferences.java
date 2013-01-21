@@ -373,10 +373,10 @@ public class FileUserPreferences extends UserPreferences {
 
                 DefaultLibrary languageLibrary;
                 try {
-                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
+                  languageLibrary = new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), LANGUAGE_LIBRARY_TYPE,
                       ResourceBundle.getBundle(PLUGIN_LANGUAGE_LIBRARY_FAMILY, Locale.getDefault(), classLoader));
                 } catch (MissingResourceException ex) {
-                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
+                  languageLibrary = new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), LANGUAGE_LIBRARY_TYPE, 
                       null, getLanguageLibraryDefaultName(languages), null, null, null, null);
                 }
                 libraries.add(languageLibrary);
@@ -1292,6 +1292,7 @@ public class FileUserPreferences extends UserPreferences {
   
   /**
    * Returns the libraries available in user preferences.
+   * @since 4.0
    */
   @Override
   public List<Library> getLibraries() throws RecorderException {
@@ -1300,12 +1301,21 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Deletes the given file <code>library</code> and updates user preferences.
+   * @since 4.0
    */
   @Override
   public void deleteLibrary(Library library) throws RecorderException {
-    if (new File(library.getLocation()).delete()) {
-      throw new RecorderException("Couldn't delete file " + library.getLocation());
+    try {
+      URL libraryUrl = new URL(library.getLocation());
+      if (libraryUrl.getProtocol().equals("file")) {
+        if (!new File(libraryUrl.getFile()).delete()) {
+          throw new RecorderException("Couldn't delete file " + libraryUrl.getFile());
+        }
+      }
+    } catch (MalformedURLException ex) {
+      throw new RecorderException("Couldn't delete " + library.getLocation());
     }
+
     if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
       updateFurnitureDefaultCatalog(this.catalogsLoader, this.updater);
     } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
@@ -1315,6 +1325,24 @@ public class FileUserPreferences extends UserPreferences {
     }
   }
 
+  /**
+   * Returns <code>true</code> if the given <code>library</code> can be deleted. 
+   * @since 4.0
+   */
+  @Override
+  public boolean isLibraryDeletable(Library library) throws RecorderException {
+    try {
+      URL libraryUrl = new URL(library.getLocation());
+      if (libraryUrl.getProtocol().equals("file")) {
+        return new File(library.getLocation()).canWrite();    
+      } else {
+        throw new RecorderException("Protocol not handled for " + library.getLocation());
+      }
+    } catch (MalformedURLException ex) {
+      throw new RecorderException("Malformed URL " + library.getLocation(), ex);
+    }
+  }
+  
   /**
    * Preferences based on the <code>preferences.xml</code> file
    * stored in a preferences folder.  
