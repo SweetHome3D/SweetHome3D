@@ -114,10 +114,9 @@ public class PluginManager {
           Arrays.sort(pluginFiles, Collections.reverseOrder());
           for (File pluginFile : pluginFiles) {
             try {
-              loadPlugins(pluginFile.toURI().toURL(), pluginFile.getCanonicalPath());
-            } catch (IOException ex) {
+              loadPlugins(pluginFile.toURI().toURL());
+            } catch (MalformedURLException ex) {
               // Files are supposed to exist !
-              ex.printStackTrace();
             }
           }
         }
@@ -131,14 +130,14 @@ public class PluginManager {
   public PluginManager(URL [] pluginUrls) {
     this.pluginFolders = null;
     for (URL pluginUrl : pluginUrls) {
-      loadPlugins(pluginUrl, pluginUrl.toExternalForm());
+      loadPlugins(pluginUrl);
     }
   }
 
   /**
    * Loads the plug-ins that may be available in the given URL.
    */
-  private void loadPlugins(URL pluginUrl, String pluginLocation) {
+  private void loadPlugins(URL pluginUrl) {
     ZipInputStream zipIn = null;
     try {
       // Open a zip input from pluginUrl
@@ -156,7 +155,7 @@ public class PluginManager {
             applicationPluginFamily += APPLICATION_PLUGIN_FAMILY;
             ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
             readPlugin(ResourceBundle.getBundle(applicationPluginFamily, Locale.getDefault(), classLoader), 
-                pluginLocation,
+                pluginUrl.toExternalForm(), 
                 "jar:" + pluginUrl.toString() + "!/" + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20"),
                 classLoader);
           } catch (MissingResourceException ex) {
@@ -471,9 +470,10 @@ public class PluginManager {
     /**
      * Creates plug-in properties from parameters. 
      */
-    public PluginLibrary(String location, 
-                         String id, String name, String description, 
-                         String version, String license, String provider,
+    public PluginLibrary(String location,
+                         String id,
+                         String name, String description, String version, 
+                         String license, String provider,
                          Class<? extends Plugin> pluginClass, ClassLoader pluginClassLoader) {
       this.location = location;
       this.id = id;
