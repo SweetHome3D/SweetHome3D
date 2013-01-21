@@ -116,6 +116,11 @@ public final class ViewerHelper {
         }
 
         @Override
+        public boolean isLibraryDeletable(Library library) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void write() throws RecorderException {
           throw new UnsupportedOperationException();
         }

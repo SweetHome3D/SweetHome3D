@@ -590,4 +590,12 @@ public class AppletUserPreferences extends UserPreferences {
   public void deleteLibrary(Library library) throws RecorderException {
     throw new UnsupportedOperationException();
   }
+  
+  /**
+   * Returns <code>false</code>.
+   */
+  @Override
+  public boolean isLibraryDeletable(Library library) throws RecorderException {
+    return false;
+  }
 }

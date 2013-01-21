@@ -941,6 +941,12 @@ public abstract class UserPreferences {
   public abstract void deleteLibrary(Library library) throws RecorderException;
   
   /**
+   * Returns <code>true</code> if the given <code>library</code> can be deleted. 
+   * @since 4.0
+   */
+  public abstract boolean isLibraryDeletable(Library library) throws RecorderException;
+ 
+  /**
    * A resource bundle with a prefix added to resource key.
    */
   private static class PrefixedResourceBundle extends ResourceBundle {
