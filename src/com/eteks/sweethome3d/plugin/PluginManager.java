@@ -397,7 +397,7 @@ public class PluginManager {
         try {
           URL pluginUrl = new URL(pluginLocation);
           if (pluginUrl.getProtocol().equals("file")) {
-            if (pluginDeleted) {
+            if (!pluginDeleted) {
               if (new File(pluginUrl.getFile()).delete()) {
                 pluginDeleted = true;
               } else {
