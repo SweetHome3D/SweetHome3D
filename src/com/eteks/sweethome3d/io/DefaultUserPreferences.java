@@ -202,7 +202,7 @@ public class DefaultUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public void deleteLibrary(Library library) throws RecorderException {
+  public void deleteLibraries(List<Library> libraries) throws RecorderException {
     throw new UnsupportedOperationException();
   }
   

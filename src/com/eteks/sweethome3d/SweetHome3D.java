@@ -221,12 +221,15 @@ public class SweetHome3D extends HomeApplication {
           }
           
           @Override
-          public void deleteLibrary(Library library) throws RecorderException {
-            if (PluginManager.PLUGIN_LIBRARY_TYPE.equals(library.getType())) {
-              pluginManager.deletePlugin(library);
-            } else {
-              super.deleteLibrary(library);
+          public void deleteLibraries(List<Library> libraries) throws RecorderException {
+            super.deleteLibraries(libraries);
+            List<Library> plugins = new ArrayList<Library>();
+            for (Library library : libraries) {
+              if (PluginManager.PLUGIN_LIBRARY_TYPE.equals(library.getType())) {
+                plugins.add(library);
+              }
             }
+            pluginManager.deletePlugins(plugins);            
           }
         };
     }

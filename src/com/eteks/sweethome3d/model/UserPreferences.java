@@ -935,10 +935,10 @@ public abstract class UserPreferences {
   public abstract List<Library> getLibraries() throws RecorderException;
   
   /**
-   * Deletes the given <code>library</code> from user preferences. 
+   * Deletes the given <code>libraries</code> from user preferences. 
    * @since 4.0
    */
-  public abstract void deleteLibrary(Library library) throws RecorderException;
+  public abstract void deleteLibraries(List<Library> libraries) throws RecorderException;
   
   /**
    * Returns <code>true</code> if the given <code>library</code> can be deleted. 

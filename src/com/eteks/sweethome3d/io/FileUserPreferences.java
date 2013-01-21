@@ -1304,23 +1304,38 @@ public class FileUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public void deleteLibrary(Library library) throws RecorderException {
-    try {
-      URL libraryUrl = new URL(library.getLocation());
-      if (libraryUrl.getProtocol().equals("file")) {
-        if (!new File(libraryUrl.getFile()).delete()) {
-          throw new RecorderException("Couldn't delete file " + libraryUrl.getFile());
+  public void deleteLibraries(List<Library> libraries) throws RecorderException {
+    boolean updateFurnitureCatalog = false;
+    boolean updateTexturesCatalog  = false;
+    boolean updateSupportedLanguages = false;
+    for (Library library : libraries) {
+      try {
+        URL libraryUrl = new URL(library.getLocation());
+        if (libraryUrl.getProtocol().equals("file")) {
+          if (!new File(libraryUrl.getFile()).delete()) {
+            throw new RecorderException("Couldn't delete file " + libraryUrl.getFile());
+          } else {
+            if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
+              updateFurnitureCatalog = true;
+            } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
+              updateTexturesCatalog = true;
+            }  else if (LANGUAGE_LIBRARY_TYPE.equals(library.getType())) {
+              updateSupportedLanguages = true;
+            }
+          }
         }
+      } catch (MalformedURLException ex) {
+        throw new RecorderException("Couldn't delete " + library.getLocation());
       }
-    } catch (MalformedURLException ex) {
-      throw new RecorderException("Couldn't delete " + library.getLocation());
     }
 
-    if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
+    if (updateFurnitureCatalog) {
       updateFurnitureDefaultCatalog(this.catalogsLoader, this.updater);
-    } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
+    } 
+    if (updateTexturesCatalog) {
       updateTexturesDefaultCatalog(this.catalogsLoader, this.updater);
-    }  else if (LANGUAGE_LIBRARY_TYPE.equals(library.getType())) {
+    }  
+    if (updateSupportedLanguages) {
       updateSupportedLanguages();
     }
   }

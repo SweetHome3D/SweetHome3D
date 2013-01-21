@@ -386,28 +386,30 @@ public class PluginManager {
   }
 
   /**
-   * Deletes the given <code>library</code> from managed plug-ins. 
+   * Deletes the given plug-in <code>libraries</code> from managed plug-ins. 
    * @since 4.0
    */
-  public void deletePlugin(Library library) throws RecorderException {
+  public void deletePlugins(List<Library> libraries) throws RecorderException {
     boolean pluginDeleted = false;
-    for (Iterator<Map.Entry<String, PluginLibrary>> it = this.pluginLibraries.entrySet().iterator(); it.hasNext(); ) {
-      String pluginLocation = it.next().getValue().getLocation();
-      if (pluginLocation.equals(library.getLocation())) {
-        try {
-          URL pluginUrl = new URL(pluginLocation);
-          if (pluginUrl.getProtocol().equals("file")) {
-            if (!pluginDeleted) {
-              if (new File(pluginUrl.getFile()).delete()) {
-                pluginDeleted = true;
-              } else {
-                throw new RecorderException("Couldn't delete file " + pluginUrl.getFile());
-              }
-            }              
+    for (Library library : libraries) {
+      for (Iterator<Map.Entry<String, PluginLibrary>> it = this.pluginLibraries.entrySet().iterator(); it.hasNext(); ) {
+        String pluginLocation = it.next().getValue().getLocation();
+        if (pluginLocation.equals(library.getLocation())) {
+          try {
+            URL pluginUrl = new URL(pluginLocation);
+            if (pluginUrl.getProtocol().equals("file")) {
+              if (!pluginDeleted) {
+                if (new File(pluginUrl.getFile()).delete()) {
+                  pluginDeleted = true;
+                } else {
+                  throw new RecorderException("Couldn't delete file " + pluginUrl.getFile());
+                }
+              }              
+            }
+            it.remove();
+          } catch (MalformedURLException ex) {
+            throw new RecorderException("Couldn't delete file " + pluginLocation);
           }
-          it.remove();
-        } catch (MalformedURLException ex) {
-          throw new RecorderException("Couldn't delete file " + pluginLocation);
         }
       }
     }
