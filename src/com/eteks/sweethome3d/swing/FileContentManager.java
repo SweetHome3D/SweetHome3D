@@ -866,7 +866,7 @@ public class FileContentManager implements ContentManager {
      */
     @Override
     public void setSelectedFile(File file) {
-      if (file.isFile()) {
+      if (file != null && file.isFile()) {
         file = file.getParentFile();
       }
       super.setSelectedFile(file);
