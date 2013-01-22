@@ -315,7 +315,7 @@ public class Ground3D extends Object3DBranch {
   /**
    * Adds to ground shape the geometry matching the given area.
    */
-  public void addAreaGeometry(Shape3D groundShape, HomeTexture groundTexture, Area area, float elevation) {
+  private void addAreaGeometry(Shape3D groundShape, HomeTexture groundTexture, Area area, float elevation) {
     List<float [][]> levelHolesPoints = new ArrayList<float[][]>();
     for (float [][] points : getAreaPoints(area)) {
       if (new Room(points).isClockwise()) {
