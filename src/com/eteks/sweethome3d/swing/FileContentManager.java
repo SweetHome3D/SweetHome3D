@@ -934,7 +934,8 @@ public class FileContentManager implements ContentManager {
               } finally {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      createDirectoryAction.setEnabled(true);
+                      createDirectoryAction.setEnabled(directoriesTree.getSelectionCount() > 0 
+                          && ((DirectoryNode)directoriesTree.getSelectionPath().getLastPathComponent()).isWritable());
                       directoriesTree.setCursor(Cursor.getDefaultCursor());
                     }
                   });
@@ -946,7 +947,7 @@ public class FileContentManager implements ContentManager {
 
     @Override
     public int showDialog(Component parent, final String approveButtonText) {
-      JButton createDirectoryButton = new JButton(this.createDirectoryAction);
+      final JButton createDirectoryButton = new JButton(this.createDirectoryAction);
       final JButton approveButton = new JButton(approveButtonText);
       Object cancelOption = UIManager.get("FileChooser.cancelButtonText");
       Object [] options;
@@ -963,13 +964,17 @@ public class FileContentManager implements ContentManager {
       dialog.pack();
       if (this.directoriesTree.getSelectionCount() > 0) {
         this.directoriesTree.scrollPathToVisible(this.directoriesTree.getSelectionPath());
-        approveButton.setEnabled(((DirectoryNode)this.directoriesTree.getSelectionPath().getLastPathComponent()).isWritable());
+        boolean validDirectory = ((DirectoryNode)this.directoriesTree.getSelectionPath().getLastPathComponent()).isWritable();
+        approveButton.setEnabled(validDirectory);
+        createDirectoryAction.setEnabled(validDirectory);
       }
       this.directoriesTree.addTreeSelectionListener(new TreeSelectionListener() {
           public void valueChanged(TreeSelectionEvent ev) {
             TreePath selectedPath = ev.getPath();
-            approveButton.setEnabled(selectedPath != null 
-                && ((DirectoryNode)ev.getPath().getLastPathComponent()).isWritable());
+            boolean validDirectory = selectedPath != null 
+                && ((DirectoryNode)ev.getPath().getLastPathComponent()).isWritable();
+            approveButton.setEnabled(validDirectory);
+            createDirectoryAction.setEnabled(validDirectory); 
           }
         });
       approveButton.addActionListener(new ActionListener() {
