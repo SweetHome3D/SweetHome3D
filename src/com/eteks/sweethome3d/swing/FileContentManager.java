@@ -502,6 +502,13 @@ public class FileContentManager implements ContentManager {
   }
   
   /**
+   * Returns <code>true</code> if the given content type is for directories.
+   */
+  protected boolean isDirectory(ContentType contentType) {
+    return contentType == ContentType.PHOTOS_DIRECTORY;
+  }
+  
+  /**
    * Returns the file path chosen by user with an open file dialog.
    * @return the file path or <code>null</code> if user canceled its choice.
    */
@@ -510,7 +517,7 @@ public class FileContentManager implements ContentManager {
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()
-        && contentType != ContentType.PHOTOS_DIRECTORY) {
+        && !isDirectory(contentType)) {
       return showFileDialog(parentView, dialogTitle, contentType, null, false);
     } else {
       return showFileChooser(parentView, dialogTitle, contentType, null, false);
@@ -542,7 +549,7 @@ public class FileContentManager implements ContentManager {
     String savedPath;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()
-        && contentType != ContentType.PHOTOS_DIRECTORY) {
+        && !isDirectory(contentType)) {
       savedPath = showFileDialog(parentView, dialogTitle, contentType, path, true);
     } else {
       savedPath = showFileChooser(parentView, dialogTitle, contentType, path, true);
@@ -563,7 +570,7 @@ public class FileContentManager implements ContentManager {
           && !addedExtension) {
         return savedPath;
       }
-      if (contentType != ContentType.PHOTOS_DIRECTORY) {
+      if (!isDirectory(contentType)) {
         // If the file exists, prompt user if he wants to overwrite it
         File savedFile = new File(savedPath);
         if (savedFile.exists()
@@ -661,7 +668,7 @@ public class FileContentManager implements ContentManager {
                                  String        path,
                                  boolean       save) {
     final JFileChooser fileChooser;
-    if (contentType == ContentType.PHOTOS_DIRECTORY) {
+    if (isDirectory(contentType)) {
       fileChooser = new DirectoryChooser(this.preferences);
     } else {
       fileChooser = new JFileChooser();
@@ -675,13 +682,14 @@ public class FileContentManager implements ContentManager {
     File directory = getLastDirectory(contentType);
     if (directory != null && directory.exists()) {
       fileChooser.setCurrentDirectory(directory);
-      if (contentType == ContentType.PHOTOS_DIRECTORY) {
+      if (isDirectory(contentType)) {
         fileChooser.setSelectedFile(directory);
       }
     }    
     // Set selected file
     if (save 
-        && path != null) {
+        && path != null
+        && (directory == null || !isDirectory(contentType))) {
       fileChooser.setSelectedFile(new File(path));
     }    
     // Set supported files filter 
@@ -698,7 +706,7 @@ public class FileContentManager implements ContentManager {
       fileChooser.setFileFilter(acceptAllFileFilter);
     }
     int option;
-    if (contentType == ContentType.PHOTOS_DIRECTORY) {
+    if (isDirectory(contentType)) {
       option = fileChooser.showDialog((JComponent)parentView,
           this.preferences.getLocalizedString(FileContentManager.class, "selectFolderButton.text"));
     } else if (save) {
@@ -708,7 +716,7 @@ public class FileContentManager implements ContentManager {
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve last directory for future calls
-      if (contentType == ContentType.PHOTOS_DIRECTORY) {
+      if (isDirectory(contentType)) {
         directory = fileChooser.getSelectedFile();
       } else {
         directory = fileChooser.getCurrentDirectory();
