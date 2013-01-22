@@ -862,6 +862,17 @@ public class FileContentManager implements ContentManager {
     }
     
     /**
+     * Selects the given directory or its parent if it's a file.
+     */
+    @Override
+    public void setSelectedFile(File file) {
+      if (file.isFile()) {
+        file = file.getParentFile();
+      }
+      super.setSelectedFile(file);
+    }
+    
+    /**
      * Shows asynchronously the selected file in the directories tree, 
      * filling the parents siblings hierarchy if necessary.
      */
