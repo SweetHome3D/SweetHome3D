@@ -46,6 +46,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -106,6 +107,7 @@ public class PhotosPanel extends JPanel implements DialogView {
 
   private static final String TIP_CARD      = "tip";
   private static final String PROGRESS_CARD = "progress";
+  private static final String END_CARD      = "end";
   
   private final Home               home;
   private final UserPreferences    preferences;
@@ -117,6 +119,7 @@ public class PhotosPanel extends JPanel implements DialogView {
   private JLabel                   tipLabel;
   private JLabel                   progressLabel;
   private JProgressBar             progressBar;
+  private JLabel                   endLabel;
   private ScaledImageComponent     photoComponent; 
   private PhotoSizeAndQualityPanel sizeAndQualityPanel;
   private JLabel                   fileFormatLabel;
@@ -202,18 +205,22 @@ public class PhotosPanel extends JPanel implements DialogView {
     this.selectedCamerasList.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent ev) {
-          int index = selectedCamerasList.locationToIndex(ev.getPoint());
-          if (index >= 0) {
-            toggleCameraSelection((Camera)selectedCamerasList.getModel().getElementAt(index), controller);
+          if (selectedCamerasList.isEnabled()) {
+            int index = selectedCamerasList.locationToIndex(ev.getPoint());
+            if (index >= 0) {
+              toggleCameraSelection((Camera)selectedCamerasList.getModel().getElementAt(index), controller);
+            }
           }
         }
       });
     this.selectedCamerasList.getInputMap().put(KeyStroke.getKeyStroke("pressed SPACE"), "toggleSelection");
     this.selectedCamerasList.getActionMap().put("toggleSelection", new AbstractAction() {
         public void actionPerformed(ActionEvent ev) {
-          Camera camera = (Camera)selectedCamerasList.getSelectedValue();
-          if (camera != null) {
-            toggleCameraSelection(camera, controller);
+          if (selectedCamerasList.isEnabled()) {
+            Camera camera = (Camera)selectedCamerasList.getSelectedValue();
+            if (camera != null) {
+              toggleCameraSelection(camera, controller);
+            }
           }
         }
       });
@@ -222,6 +229,7 @@ public class PhotosPanel extends JPanel implements DialogView {
         public void propertyChange(PropertyChangeEvent ev) {
           selectedCamerasList.repaint();
           getActionMap().get(ActionType.START_PHOTOS_CREATION).setEnabled(!((List)ev.getNewValue()).isEmpty());
+          statusLayout.show(statusPanel, TIP_CARD);
         }
       });
     controller.addPropertyChangeListener(PhotosController.Property.CAMERAS, new PropertyChangeListener() {
@@ -230,7 +238,7 @@ public class PhotosPanel extends JPanel implements DialogView {
         }
       });
 
-    // Create tip / progress components
+    // Create tip / progress / end components
     this.tipLabel = new JLabel();
     Font toolTipFont = UIManager.getFont("ToolTip.font");
     this.tipLabel.setFont(toolTipFont);
@@ -251,6 +259,10 @@ public class PhotosPanel extends JPanel implements DialogView {
           }          
         }
       });
+    
+    this.endLabel = new JLabel();
+    this.endLabel.setFont(toolTipFont);
+    this.endLabel.setHorizontalAlignment(JLabel.CENTER);
 
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(toolTipFont.getSize() * 5, toolTipFont.getSize() * 5));
@@ -334,6 +346,7 @@ public class PhotosPanel extends JPanel implements DialogView {
    */
   private void setComponentTexts(UserPreferences preferences) {
     this.tipLabel.setText(preferences.getLocalizedString(PhotosPanel.class, "tipLabel.text"));
+    this.endLabel.setText(preferences.getLocalizedString(PhotosPanel.class, "endLabel.text"));
     this.selectedCamerasLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotosPanel.class, "selectedCamerasLabel.text"));
     this.fileFormatLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
@@ -408,6 +421,8 @@ public class PhotosPanel extends JPanel implements DialogView {
         1, 1, 1, 1, 0, 1, GridBagConstraints.NORTH, 
         GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
     this.statusPanel.add(progressPanel, PROGRESS_CARD);
+    this.statusPanel.add(this.endLabel, END_CARD);
+    this.endLabel.setMinimumSize(this.endLabel.getPreferredSize());
     // First row
     add(this.selectedCamerasLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -571,6 +586,7 @@ public class PhotosPanel extends JPanel implements DialogView {
       }     
       
       this.photoComponent.setImage(null);
+      this.selectedCamerasList.setEnabled(false);
       this.sizeAndQualityPanel.setEnabled(false);
       getRootPane().setDefaultButton(this.startStopButton);
       this.startStopButton.setAction(getActionMap().get(ActionType.STOP_PHOTOS_CREATION));
@@ -600,6 +616,7 @@ public class PhotosPanel extends JPanel implements DialogView {
    */
   private void computePhotos(Home home, final Map<Camera, File> cameraFiles) {
     BufferedImage image = null;
+    boolean success = false;
     try {
       int photoIndex = 0;
       for (Map.Entry<Camera, File> cameraEntry : cameraFiles.entrySet()) {
@@ -641,10 +658,8 @@ public class PhotosPanel extends JPanel implements DialogView {
           if (this.photosCreationExecutor != null) {
             savePhoto(image, cameraEntry.getValue());
           }
-        } catch (IOException ex) {
-          String messageFormat = this.preferences.getLocalizedString(PhotosPanel.class, "savePhotosError.message");
-          JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), String.format(messageFormat, ex.getMessage()), 
-              this.preferences.getLocalizedString(PhotosPanel.class, "savePhotosError.title"), JOptionPane.ERROR_MESSAGE);
+        } catch (final IOException ex) {
+          showPhotoSaveError(ex);
           return;
         }
 
@@ -652,19 +667,26 @@ public class PhotosPanel extends JPanel implements DialogView {
           return;
         }
       }
+      success = true;
     } catch (OutOfMemoryError ex) {
       showPhotosComputingError(ex);
     } catch (IllegalStateException ex) {
       showPhotosComputingError(ex);
     } catch (IOException ex) {
       showPhotosComputingError(ex);
-    } finally {           
+    } finally { 
+      final boolean succeeded = success;
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             startStopButton.setAction(getActionMap().get(ActionType.START_PHOTOS_CREATION));
+            selectedCamerasList.setEnabled(true);
             sizeAndQualityPanel.setEnabled(true);
             sizeAndQualityPanel.setProportionsChoiceEnabled(true);
-            statusLayout.show(statusPanel, TIP_CARD);
+            if (succeeded) {
+              statusLayout.show(statusPanel, END_CARD);
+            } else {
+              statusLayout.show(statusPanel, TIP_CARD);
+            }
             photosCreationExecutor = null;
           }
         });
@@ -682,6 +704,25 @@ public class PhotosPanel extends JPanel implements DialogView {
       });
   }
   
+  /**
+   * Displays an error message box for save errors.
+   */
+  private void showPhotoSaveError(final Throwable ex) {
+    try {
+      EventQueue.invokeAndWait(new Runnable() {
+          public void run() {
+            String messageFormat = preferences.getLocalizedString(PhotosPanel.class, "savePhotosError.message");
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(PhotosPanel.this), String.format(messageFormat, ex.getMessage()), 
+                preferences.getLocalizedString(PhotosPanel.class, "savePhotosError.title"), JOptionPane.ERROR_MESSAGE);
+          }
+        });
+    } catch (InterruptedException ex1) {
+      ex1.printStackTrace();
+    } catch (InvocationTargetException ex1) {
+      throw new RuntimeException(ex1);
+    }
+  }
+
   /**
    * Displays an error message box.
    */
