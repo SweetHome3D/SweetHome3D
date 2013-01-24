@@ -195,7 +195,7 @@ public class HelpController implements Controller {
    */
   public void setHighlightedText(String highlightedText) {
     if (highlightedText != this.highlightedText
-        || (highlightedText != null && !highlightedText.equals(this.highlightedText))) {
+        && (highlightedText == null || !highlightedText.equals(this.highlightedText))) {
       String oldHighlightedText = this.highlightedText;
       this.highlightedText = highlightedText;
       this.propertyChangeSupport.firePropertyChange(Property.HIGHLIGHTED_TEXT.name(), 
