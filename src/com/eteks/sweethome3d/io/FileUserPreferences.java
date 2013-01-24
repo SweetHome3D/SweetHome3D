@@ -1303,7 +1303,6 @@ public class FileUserPreferences extends UserPreferences {
    * Deletes the given file <code>libraries</code> and updates user preferences.
    * @since 4.0
    */
-  @Override
   public void deleteLibraries(List<Library> libraries) throws RecorderException {
     boolean updateFurnitureCatalog = false;
     boolean updateTexturesCatalog  = false;
@@ -1337,7 +1336,6 @@ public class FileUserPreferences extends UserPreferences {
    * Returns <code>true</code> if the given file <code>library</code> can be deleted. 
    * @since 4.0
    */
-  @Override
   public boolean isLibraryDeletable(Library library) {
     return new File(library.getLocation()).canWrite();    
   }

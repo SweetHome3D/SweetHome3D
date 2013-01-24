@@ -935,18 +935,6 @@ public abstract class UserPreferences {
   public abstract List<Library> getLibraries();
   
   /**
-   * Deletes the given <code>libraries</code> from user preferences. 
-   * @since 4.0
-   */
-  public abstract void deleteLibraries(List<Library> libraries) throws RecorderException;
-  
-  /**
-   * Returns <code>true</code> if the given <code>library</code> can be deleted. 
-   * @since 4.0
-   */
-  public abstract boolean isLibraryDeletable(Library library);
- 
-  /**
    * A resource bundle with a prefix added to resource key.
    */
   private static class PrefixedResourceBundle extends ResourceBundle {

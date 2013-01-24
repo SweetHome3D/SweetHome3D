@@ -582,20 +582,4 @@ public class AppletUserPreferences extends UserPreferences {
   public List<Library> getLibraries() {
     return Collections.unmodifiableList(this.furnitureAndTexturesLibraries);
   }
-
-  /**
-   * Throws an exception because libraries can't be deleted from applet user preferences.
-   */
-  @Override
-  public void deleteLibraries(List<Library> libraries) throws RecorderException {
-    throw new UnsupportedOperationException();
-  }
-  
-  /**
-   * Returns <code>false</code>.
-   */
-  @Override
-  public boolean isLibraryDeletable(Library library) {
-    return false;
-  }
 }

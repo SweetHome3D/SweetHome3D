@@ -196,24 +196,6 @@ public class DefaultUserPreferences extends UserPreferences {
   public List<Library> getLibraries() {
     throw new UnsupportedOperationException();
   }
-
-  /**
-   * Throws an exception because default user preferences don't support libraries.
-   * @since 4.0
-   */
-  @Override
-  public void deleteLibraries(List<Library> libraries) throws RecorderException {
-    throw new UnsupportedOperationException();
-  }
-  
-  /**
-   * Returns <code>false</code>.
-   * @since 4.0
-   */
-  @Override
-  public boolean isLibraryDeletable(Library library) {
-    return false;
-  }
 }
 
 /**
