@@ -1849,7 +1849,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (printedItemBounds != null) {
       float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
       float imageableHeightCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72);
-      float extraMargin = getStrokeWidthExtraMargin(printedItems);
+      float extraMargin = getStrokeWidthExtraMargin(printedItems, PaintMode.PRINT);
       // Compute the largest integer scale possible
       int scaleInverse = (int)Math.ceil(Math.max(
           (printedItemBounds.getWidth() + 2 * extraMargin) / imageableWidthCm,
@@ -1864,13 +1864,38 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the margin that should be added around home items bounds to ensure their
    * line stroke width is always fully visible.
    */
-  private float getStrokeWidthExtraMargin(List<Selectable> items) {
-    float extraMargin = BORDER_STROKE_WIDTH / 2;
-    if (Home.getWallsSubList(items).size() > 0
-        || Home.getRoomsSubList(items).size() > 0) {
-      extraMargin = WALL_STROKE_WIDTH / 2;
+  private float getStrokeWidthExtraMargin(List<Selectable> items, PaintMode paintMode) {
+    float extraMargin = BORDER_STROKE_WIDTH;
+    if (Home.getFurnitureSubList(items).size() > 0) {
+      extraMargin = Math.max(extraMargin, getStrokeWidth(HomePieceOfFurniture.class, paintMode));
+    } 
+    if (Home.getWallsSubList(items).size() > 0) {
+      extraMargin = Math.max(extraMargin, getStrokeWidth(Wall.class, paintMode));
+    } 
+    if (Home.getRoomsSubList(items).size() > 0) {
+      extraMargin = Math.max(extraMargin, getStrokeWidth(Room.class, paintMode));
     }
-    return extraMargin;
+    if (Home.getDimensionLinesSubList(items).size() > 0) {
+      extraMargin = Math.max(extraMargin, getStrokeWidth(DimensionLine.class, paintMode));
+    }
+    return extraMargin / 2;
+  }
+  
+  /**
+   * Returns the stroke width used to paint an item of the given class.
+   */
+  private float getStrokeWidth(Class<? extends Selectable> itemClass, PaintMode paintMode) {
+    float strokeWidth; 
+    if (Wall.class.isAssignableFrom(itemClass)
+        || Room.class.isAssignableFrom(itemClass)) {
+      strokeWidth = WALL_STROKE_WIDTH;
+    } else {
+      strokeWidth = BORDER_STROKE_WIDTH;
+    }
+    if (paintMode == PaintMode.PRINT) {
+      strokeWidth *= 0.5;
+    }
+    return strokeWidth;
   }
   
   /**
@@ -1923,7 +1948,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Change coordinates system to paper imageable origin
       g2D.translate(imageableX - columnIndex * imageableWidth, imageableY - rowIndex * imageableHeight);
       g2D.scale(printScale, printScale);
-      float extraMargin = getStrokeWidthExtraMargin(printedItems);
+      float extraMargin = getStrokeWidthExtraMargin(printedItems, PaintMode.PRINT);
       g2D.translate(-printedItemBounds.getMinX() + extraMargin,
           -printedItemBounds.getMinY() + extraMargin);
       // Center plan in component if possible
@@ -1957,7 +1982,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       // Use a scale of 1
       float clipboardScale = 1f;
-      float extraMargin = getStrokeWidthExtraMargin(this.home.getSelectedItems());
+      float extraMargin = getStrokeWidthExtraMargin(this.home.getSelectedItems(), PaintMode.CLIPBOARD);
       BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin), 
               (int)Math.ceil(selectionBounds.getHeight() * clipboardScale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
       Graphics2D g2D = (Graphics2D)image.getGraphics();
@@ -2001,7 +2026,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       
       float svgScale = 1f;
-      float extraMargin = planComponent.getStrokeWidthExtraMargin(homeItems);
+      float extraMargin = planComponent.getStrokeWidthExtraMargin(homeItems, PaintMode.EXPORT);
       Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
           (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
       
@@ -2199,8 +2224,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (this.otherLevelWallAreaCache != null) {
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
-        fillAndDrawArea(g2D, this.otherLevelWallAreaCache, planScale, 
-            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getWallPattern()), foregroundColor);
+        fillAndDrawWallsArea(g2D, this.otherLevelWallAreaCache, planScale, 
+            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getWallPattern()), 
+            foregroundColor, PaintMode.PAINT);
         g2D.setComposite(oldComposite);
       }
     }
@@ -2574,7 +2600,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         ? Color.WHITE
         : Color.GRAY;
     // Draw rooms area
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
+    g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, paintMode) / planScale));
     for (Room room : this.sortedLevelRooms) { 
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
@@ -2753,7 +2779,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     // Draw rooms area
     g2D.setPaint(foregroundColor);
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
+    g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, PaintMode.PAINT) / planScale));
     for (Room room : rooms) { 
       if (isViewableAtSelectedLevel(room)) {
         g2D.draw(getShape(room.getPoints()));
@@ -2904,22 +2930,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         : planScale;
     for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
       TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
-      fillAndDrawArea(g2D, areaEntry.getValue(), planScale, 
+      fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale, 
           getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
-              wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor);
+              wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor, paintMode);
     }
   }
 
   /**
    * Fills and paints the given area.
    */
-  private void fillAndDrawArea( Graphics2D g2D, Area area, float planScale, Paint fillPaint, Paint drawPaint) {
+  private void fillAndDrawWallsArea(Graphics2D g2D, Area area, float planScale, Paint fillPaint, 
+                                    Paint drawPaint, PaintMode paintMode) {
     // Fill walls area
     g2D.setPaint(fillPaint);
     g2D.fill(area);
     // Draw walls area
     g2D.setPaint(drawPaint);
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
+    g2D.setStroke(new BasicStroke(getStrokeWidth(Wall.class, paintMode) / planScale));
     g2D.draw(area);
   }
   
@@ -3012,7 +3039,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     // Draw walls area
     g2D.setPaint(foregroundColor);
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
+    g2D.setStroke(new BasicStroke(getStrokeWidth(Wall.class, PaintMode.PAINT) / planScale));
     for (Area area : getWallAreas(walls).values()) {
       g2D.draw(area);
     }
@@ -3184,7 +3211,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               Color furnitureOutlineColor,
                               PaintMode paintMode, boolean paintIcon) {    
     if (!furniture.isEmpty()) {
-      BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+      BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
       Boolean allFurnitureViewedFromTop = null;
       // Draw furniture
       for (HomePieceOfFurniture piece : furniture) {
@@ -3207,7 +3234,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
               pieceShape2D = getDoorOrWindowShapeAtWallIntersection(doorOrWindow);
-              paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor);
+              paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor, paintMode);
             } else {
               pieceShape2D = pieceShape;
             }
@@ -3300,8 +3327,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints the sashes of a door or a window.
    */
   private void paintDoorOrWindowSashes(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
-                                       Color foregroundColor) {
-    BasicStroke sashBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+                                       Color foregroundColor, PaintMode paintMode) {
+    BasicStroke sashBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
     g2D.setPaint(foregroundColor);
     g2D.setStroke(sashBorderStroke);
     for (Sash sash : doorOrWindow.getSashes()) {
@@ -3383,8 +3410,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                      Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                                      Paint indicatorPaint, float planScale, 
                                      Color foregroundColor) {
-    BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-    BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * BORDER_STROKE_WIDTH / planScale, 
+    BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale);
+    BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale, 
         BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
     for (HomePieceOfFurniture piece : Home.getFurnitureSubList(items)) {
       if (piece.isVisible() 
@@ -3600,7 +3627,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     // Draw dimension lines
     g2D.setPaint(foregroundColor);
-    BasicStroke dimensionLineStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+    BasicStroke dimensionLineStroke = new BasicStroke(getStrokeWidth(DimensionLine.class, paintMode) / planScale);
     // Change font size
     Font previousFont = g2D.getFont();
     for (DimensionLine dimensionLine : dimensionLines) {
@@ -4301,7 +4328,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraBody);
       g2D.setPaint(foregroundColor);
-      BasicStroke stroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+      BasicStroke stroke = new BasicStroke(getStrokeWidth(ObserverCamera.class, PaintMode.PAINT) / planScale);
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraBody);
   
