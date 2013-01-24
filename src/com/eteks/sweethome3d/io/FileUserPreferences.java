@@ -1295,7 +1295,7 @@ public class FileUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public List<Library> getLibraries() throws RecorderException {
+  public List<Library> getLibraries() {
     return Collections.unmodifiableList(this.libraries);
   }
 
@@ -1345,16 +1345,16 @@ public class FileUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public boolean isLibraryDeletable(Library library) throws RecorderException {
+  public boolean isLibraryDeletable(Library library) {
     try {
       URL libraryUrl = new URL(library.getLocation());
       if (libraryUrl.getProtocol().equals("file")) {
         return new File(library.getLocation()).canWrite();    
       } else {
-        throw new RecorderException("Protocol not handled for " + library.getLocation());
+        return false;
       }
     } catch (MalformedURLException ex) {
-      throw new RecorderException("Malformed URL " + library.getLocation(), ex);
+      return false;
     }
   }
   

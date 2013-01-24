@@ -932,7 +932,7 @@ public abstract class UserPreferences {
    * Returns the libraries available in user preferences. 
    * @since 4.0
    */
-  public abstract List<Library> getLibraries() throws RecorderException;
+  public abstract List<Library> getLibraries();
   
   /**
    * Deletes the given <code>libraries</code> from user preferences. 
@@ -944,7 +944,7 @@ public abstract class UserPreferences {
    * Returns <code>true</code> if the given <code>library</code> can be deleted. 
    * @since 4.0
    */
-  public abstract boolean isLibraryDeletable(Library library) throws RecorderException;
+  public abstract boolean isLibraryDeletable(Library library);
  
   /**
    * A resource bundle with a prefix added to resource key.

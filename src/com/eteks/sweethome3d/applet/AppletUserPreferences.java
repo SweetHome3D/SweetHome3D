@@ -579,7 +579,7 @@ public class AppletUserPreferences extends UserPreferences {
    * Returns the libraries available in user preferences.
    */
   @Override
-  public List<Library> getLibraries() throws RecorderException {
+  public List<Library> getLibraries() {
     return Collections.unmodifiableList(this.furnitureAndTexturesLibraries);
   }
 
@@ -595,7 +595,7 @@ public class AppletUserPreferences extends UserPreferences {
    * Returns <code>false</code>.
    */
   @Override
-  public boolean isLibraryDeletable(Library library) throws RecorderException {
+  public boolean isLibraryDeletable(Library library) {
     return false;
   }
 }

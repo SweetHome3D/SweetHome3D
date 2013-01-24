@@ -207,7 +207,7 @@ public class SweetHome3D extends HomeApplication {
         };
       this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, EventQueueExecutor) {
           @Override
-          public List<Library> getLibraries() throws RecorderException {
+          public List<Library> getLibraries() {
             if (pluginManager != null) {
               List<Library> pluginLibraries = pluginManager.getPluginLibraries();
               if (!pluginLibraries.isEmpty()) {

@@ -193,7 +193,7 @@ public class DefaultUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public List<Library> getLibraries() throws RecorderException {
+  public List<Library> getLibraries() {
     throw new UnsupportedOperationException();
   }
 
@@ -211,7 +211,7 @@ public class DefaultUserPreferences extends UserPreferences {
    * @since 4.0
    */
   @Override
-  public boolean isLibraryDeletable(Library library) throws RecorderException {
+  public boolean isLibraryDeletable(Library library) {
     return false;
   }
 }

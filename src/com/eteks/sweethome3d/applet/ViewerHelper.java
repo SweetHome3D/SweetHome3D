@@ -106,7 +106,7 @@ public final class ViewerHelper {
         }
 
         @Override
-        public List<Library> getLibraries() throws RecorderException {
+        public List<Library> getLibraries() {
           throw new UnsupportedOperationException();
         }
 
@@ -116,7 +116,7 @@ public final class ViewerHelper {
         }
 
         @Override
-        public boolean isLibraryDeletable(Library library) throws RecorderException {
+        public boolean isLibraryDeletable(Library library) {
           throw new UnsupportedOperationException();
         }
 
