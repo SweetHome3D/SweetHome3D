@@ -101,7 +101,7 @@ public class Level implements Serializable, Cloneable {
    */
   public void setName(String name) {
     if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+        && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
       this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);

@@ -92,7 +92,7 @@ public class Label implements Selectable, Serializable, Elevatable {
    */
   public void setText(String text) {
     if (text != this.text
-        || (text != null && !text.equals(this.text))) {
+        && (text == null || !text.equals(this.text))) {
       String oldText = this.text;
       this.text = text;
       this.propertyChangeSupport.firePropertyChange(Property.TEXT.name(), oldText, text);

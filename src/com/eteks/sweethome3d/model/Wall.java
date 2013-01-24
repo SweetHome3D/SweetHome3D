@@ -447,7 +447,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public void setHeightAtEnd(Float heightAtEnd) {
     if (heightAtEnd != this.heightAtEnd
-        || (heightAtEnd != null && !heightAtEnd.equals(this.heightAtEnd))) {
+        && (heightAtEnd == null || !heightAtEnd.equals(this.heightAtEnd))) {
       Float oldHeightAtEnd = this.heightAtEnd;
       this.heightAtEnd = heightAtEnd;
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_AT_END.name(), 
@@ -479,7 +479,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public void setLeftSideColor(Integer leftSideColor) {
     if (leftSideColor != this.leftSideColor
-        || (leftSideColor != null && !leftSideColor.equals(this.leftSideColor))) {
+        && (leftSideColor == null || !leftSideColor.equals(this.leftSideColor))) {
       Integer oldLeftSideColor = this.leftSideColor;
       this.leftSideColor = leftSideColor;
       this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.name(), 
@@ -501,7 +501,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public void setRightSideColor(Integer rightSideColor) {
     if (rightSideColor != this.rightSideColor
-        || (rightSideColor != null && !rightSideColor.equals(this.rightSideColor))) {
+        && (rightSideColor == null || !rightSideColor.equals(this.rightSideColor))) {
       Integer oldLeftSideColor = this.rightSideColor;
       this.rightSideColor = rightSideColor;
       this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.name(), 
@@ -523,7 +523,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public void setLeftSideTexture(HomeTexture leftSideTexture) {
     if (leftSideTexture != this.leftSideTexture
-        || (leftSideTexture != null && !leftSideTexture.equals(this.leftSideTexture))) {
+        && (leftSideTexture == null || !leftSideTexture.equals(this.leftSideTexture))) {
       HomeTexture oldLeftSideTexture = this.leftSideTexture;
       this.leftSideTexture = leftSideTexture;
       this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_TEXTURE.name(), 
@@ -544,7 +544,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public void setRightSideTexture(HomeTexture rightSideTexture) {
     if (rightSideTexture != this.rightSideTexture
-        || (rightSideTexture != null && !rightSideTexture.equals(this.rightSideTexture))) {
+        && (rightSideTexture == null || !rightSideTexture.equals(this.rightSideTexture))) {
       HomeTexture oldLeftSideTexture = this.rightSideTexture;
       this.rightSideTexture = rightSideTexture;
       this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.name(), 
@@ -632,7 +632,8 @@ public class Wall implements Serializable, Selectable, Elevatable {
    * @since 4.0 
    */
   public void setTopColor(Integer topColor) {
-    if (this.topColor != topColor) {
+    if (this.topColor != topColor
+        && (topColor == null || !topColor.equals(this.topColor))) {
       Integer oldTopColor = this.topColor;
       this.topColor = topColor;
       this.propertyChangeSupport.firePropertyChange(Property.TOP_COLOR.name(), 

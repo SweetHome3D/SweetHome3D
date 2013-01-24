@@ -351,7 +351,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public void setName(String name) {
     if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+        && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
       this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
@@ -471,7 +471,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public void setDescription(String description) {
     if (description != this.description
-        || (description != null && !description.equals(this.description))) {
+        && (description == null || !description.equals(this.description))) {
       String oldDescription = this.description;
       this.description = description;
       this.propertyChangeSupport.firePropertyChange(Property.DESCRIPTION.name(), oldDescription, description);
@@ -686,7 +686,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public void setColor(Integer color) {
     if (isTexturable()) {
       if (color != this.color
-          || (color != null && !color.equals(this.color))) {
+          && (color == null || !color.equals(this.color))) {
         Integer oldColor = this.color;
         this.color = color;
         this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
@@ -715,7 +715,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public void setTexture(HomeTexture texture) {
     if (isTexturable()) {
       if (texture != this.texture
-          || (texture != null && !texture.equals(this.texture))) {
+          && (texture == null || !texture.equals(this.texture))) {
         HomeTexture oldTexture = this.texture;
         this.texture = texture;
         this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
@@ -743,7 +743,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public void setShininess(Float shininess) {
     if (isTexturable()) {
       if (shininess != this.shininess
-          || (shininess != null && !shininess.equals(this.shininess))) {
+          && (shininess == null || !shininess.equals(this.shininess))) {
         Float oldShininess = this.shininess;
         this.shininess = shininess;
         this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
@@ -790,7 +790,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public void setPrice(BigDecimal price) {
     if (price != this.price
-        || (price != null && !price.equals(this.price))) {
+        && (price == null || !price.equals(this.price))) {
       BigDecimal oldPrice = this.price;
       this.price = price;
       this.propertyChangeSupport.firePropertyChange(Property.PRICE.name(), oldPrice, price);

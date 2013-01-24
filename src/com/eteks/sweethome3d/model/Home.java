@@ -958,7 +958,7 @@ public class Home implements Serializable, Cloneable {
    */
   public void setName(String name) {
     if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+        && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
       this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
@@ -1017,7 +1017,7 @@ public class Home implements Serializable, Cloneable {
    */
   public void setFurnitureSortedProperty(HomePieceOfFurniture.SortableProperty furnitureSortedProperty) {
     if (furnitureSortedProperty != this.furnitureSortedProperty
-        || (furnitureSortedProperty != null && !furnitureSortedProperty.equals(this.furnitureSortedProperty))) {
+        && (furnitureSortedProperty == null || !furnitureSortedProperty.equals(this.furnitureSortedProperty))) {
       HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
       this.propertyChangeSupport.firePropertyChange(
@@ -1050,7 +1050,11 @@ public class Home implements Serializable, Cloneable {
    * Returns an unmodifiable list of the furniture properties that are visible.
    */
   public List<HomePieceOfFurniture.SortableProperty> getFurnitureVisibleProperties() {
-    return Collections.unmodifiableList(this.furnitureVisibleProperties);
+    if (this.furnitureVisibleProperties == null) {
+      return Collections.emptyList();
+    } else {
+      return Collections.unmodifiableList(this.furnitureVisibleProperties);
+    }
   }
   
   /**
@@ -1059,7 +1063,7 @@ public class Home implements Serializable, Cloneable {
    */
   public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
     if (furnitureVisibleProperties != this.furnitureVisibleProperties
-        || (furnitureVisibleProperties != null && !furnitureVisibleProperties.equals(this.furnitureVisibleProperties))) {
+        && (furnitureVisibleProperties == null || !furnitureVisibleProperties.equals(this.furnitureVisibleProperties))) {
       List<HomePieceOfFurniture.SortableProperty> oldFurnitureVisibleProperties = this.furnitureVisibleProperties;
       this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(furnitureVisibleProperties);
       this.propertyChangeSupport.firePropertyChange(
@@ -1180,8 +1184,7 @@ public class Home implements Serializable, Cloneable {
     if (print != this.print) {
       HomePrint oldPrint = this.print;
       this.print = print;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.PRINT.name(), oldPrint, print);
+      this.propertyChangeSupport.firePropertyChange(Property.PRINT.name(), oldPrint, print);
     }
     this.print = print;
   }

@@ -126,7 +126,7 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   public void setName(String name) {
     if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+        && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
       this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
@@ -473,7 +473,7 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   public void setFloorColor(Integer floorColor) {
     if (floorColor != this.floorColor
-        || (floorColor != null && !floorColor.equals(this.floorColor))) {
+        && (floorColor == null || !floorColor.equals(this.floorColor))) {
       Integer oldFloorColor = this.floorColor;
       this.floorColor = floorColor;
       this.propertyChangeSupport.firePropertyChange(Property.FLOOR_COLOR.name(), 
@@ -494,7 +494,7 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   public void setFloorTexture(HomeTexture floorTexture) {
     if (floorTexture != this.floorTexture
-        || (floorTexture != null && !floorTexture.equals(this.floorTexture))) {
+        && (floorTexture == null || !floorTexture.equals(this.floorTexture))) {
       HomeTexture oldFloorTexture = this.floorTexture;
       this.floorTexture = floorTexture;
       this.propertyChangeSupport.firePropertyChange(Property.FLOOR_TEXTURE.name(), 
@@ -556,7 +556,7 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   public void setCeilingColor(Integer ceilingColor) {
     if (ceilingColor != this.ceilingColor
-        || (ceilingColor != null && !ceilingColor.equals(this.ceilingColor))) {
+        && (ceilingColor == null || !ceilingColor.equals(this.ceilingColor))) {
       Integer oldCeilingColor = this.ceilingColor;
       this.ceilingColor = ceilingColor;
       this.propertyChangeSupport.firePropertyChange(Property.CEILING_COLOR.name(), 
@@ -577,7 +577,7 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   public void setCeilingTexture(HomeTexture ceilingTexture) {
     if (ceilingTexture != this.ceilingTexture
-        || (ceilingTexture != null && !ceilingTexture.equals(this.ceilingTexture))) {
+        && (ceilingTexture == null || !ceilingTexture.equals(this.ceilingTexture))) {
       HomeTexture oldCeilingTexture = this.ceilingTexture;
       this.ceilingTexture = ceilingTexture;
       this.propertyChangeSupport.firePropertyChange(Property.CEILING_TEXTURE.name(), 
