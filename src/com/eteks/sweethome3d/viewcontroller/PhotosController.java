@@ -183,8 +183,7 @@ public class PhotosController extends AbstractPhotoController {
    * Sets the format used to save image files.
    */
   public void setFileFormat(String fileFormat) {
-    if (fileFormat != this.fileFormat
-        || (fileFormat != null && !fileFormat.equals(this.fileFormat))) {
+    if (fileFormat != this.fileFormat) {
       String oldFileFormat = this.fileFormat;
       this.fileFormat = fileFormat;
       this.propertyChangeSupport.firePropertyChange(Property.FILE_FORMAT.name(), oldFileFormat, fileFormat);
@@ -203,8 +202,7 @@ public class PhotosController extends AbstractPhotoController {
    * Sets the compression quality used to save image files.
    */
   public void setFileCompressionQuality(Float fileCompressionQuality) {
-    if (fileCompressionQuality != this.fileCompressionQuality
-        || (fileCompressionQuality != null && !fileCompressionQuality.equals(this.fileCompressionQuality))) {
+    if (fileCompressionQuality != this.fileCompressionQuality) {
       Float oldFileCompressionQuality = this.fileCompressionQuality;
       this.fileCompressionQuality = fileCompressionQuality;
       this.propertyChangeSupport.firePropertyChange(Property.FILE_COMPRESSION_QUALITY.name(), oldFileCompressionQuality, fileCompressionQuality);

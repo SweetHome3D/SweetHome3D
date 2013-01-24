@@ -227,8 +227,7 @@ public class ImportedTextureWizardController extends WizardController
    * Sets the name of the imported texture.
    */
   public void setName(String name) {
-    if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+    if (name != this.name) {
       String oldName = this.name;
       this.name = name;
       if (this.propertyChangeSupport != null) {

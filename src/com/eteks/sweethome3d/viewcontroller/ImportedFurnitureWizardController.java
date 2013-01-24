@@ -430,8 +430,7 @@ public class ImportedFurnitureWizardController extends WizardController
    * Sets the name of the imported piece.
    */
   public void setName(String name) {
-    if (name != this.name
-        || (name != null && !name.equals(this.name))) {
+    if (name != this.name) {
       String oldName = this.name;
       this.name = name;
       if (this.propertyChangeSupport != null) {
@@ -594,8 +593,7 @@ public class ImportedFurnitureWizardController extends WizardController
    * Sets the shape used to cut out upper levels at its intersection with a staircase.
    */
   public void setStaircaseCutOutShape(String staircaseCutOutShape) {
-    if (staircaseCutOutShape != this.staircaseCutOutShape
-        || (staircaseCutOutShape != null && !staircaseCutOutShape.equals(this.staircaseCutOutShape))) {
+    if (staircaseCutOutShape != this.staircaseCutOutShape) {
       String oldStaircaseCutOutShape = this.staircaseCutOutShape;
       this.staircaseCutOutShape = staircaseCutOutShape;
       if (this.propertyChangeSupport != null) {
