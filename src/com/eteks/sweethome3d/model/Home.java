@@ -1395,14 +1395,6 @@ public class Home implements Serializable, Cloneable {
   }
   
   /**
-   * Returns a sub list of <code>items</code> that contains only levels.
-   * @since 3.4
-   */
-  public static List<Level> getLevelsSubList(List<? extends Selectable> items) {
-    return getSubList(items, Level.class);
-  }
-  
-  /**
    * Returns a sub list of <code>items</code> that contains only instances of <code>subListClass</code>.
    * @since 2.2
    */
