@@ -373,10 +373,10 @@ public class FileUserPreferences extends UserPreferences {
 
                 DefaultLibrary languageLibrary;
                 try {
-                  languageLibrary = new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), LANGUAGE_LIBRARY_TYPE,
+                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE,
                       ResourceBundle.getBundle(PLUGIN_LANGUAGE_LIBRARY_FAMILY, Locale.getDefault(), classLoader));
                 } catch (MissingResourceException ex) {
-                  languageLibrary = new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), LANGUAGE_LIBRARY_TYPE, 
+                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
                       null, getLanguageLibraryDefaultName(languages), null, null, null, null);
                 }
                 libraries.add(languageLibrary);
@@ -1300,7 +1300,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Deletes the given file <code>library</code> and updates user preferences.
+   * Deletes the given file <code>libraries</code> and updates user preferences.
    * @since 4.0
    */
   @Override
@@ -1309,23 +1309,16 @@ public class FileUserPreferences extends UserPreferences {
     boolean updateTexturesCatalog  = false;
     boolean updateSupportedLanguages = false;
     for (Library library : libraries) {
-      try {
-        URL libraryUrl = new URL(library.getLocation());
-        if (libraryUrl.getProtocol().equals("file")) {
-          if (!new File(libraryUrl.getFile()).delete()) {
-            throw new RecorderException("Couldn't delete file " + libraryUrl.getFile());
-          } else {
-            if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
-              updateFurnitureCatalog = true;
-            } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
-              updateTexturesCatalog = true;
-            }  else if (LANGUAGE_LIBRARY_TYPE.equals(library.getType())) {
-              updateSupportedLanguages = true;
-            }
-          }
+      if (!new File(library.getLocation()).delete()) {
+        throw new RecorderException("Couldn't delete file " + library.getLocation());
+      } else {
+        if (FURNITURE_LIBRARY_TYPE.equals(library.getType())) {
+          updateFurnitureCatalog = true;
+        } else if (TEXTURES_LIBRARY_TYPE.equals(library.getType())) {
+          updateTexturesCatalog = true;
+        }  else if (LANGUAGE_LIBRARY_TYPE.equals(library.getType())) {
+          updateSupportedLanguages = true;
         }
-      } catch (MalformedURLException ex) {
-        throw new RecorderException("Couldn't delete " + library.getLocation());
       }
     }
 
@@ -1341,21 +1334,12 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns <code>true</code> if the given <code>library</code> can be deleted. 
+   * Returns <code>true</code> if the given file <code>library</code> can be deleted. 
    * @since 4.0
    */
   @Override
   public boolean isLibraryDeletable(Library library) {
-    try {
-      URL libraryUrl = new URL(library.getLocation());
-      if (libraryUrl.getProtocol().equals("file")) {
-        return new File(library.getLocation()).canWrite();    
-      } else {
-        return false;
-      }
-    } catch (MalformedURLException ex) {
-      return false;
-    }
+    return new File(library.getLocation()).canWrite();    
   }
   
   /**

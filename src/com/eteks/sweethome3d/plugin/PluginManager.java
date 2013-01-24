@@ -114,7 +114,7 @@ public class PluginManager {
           Arrays.sort(pluginFiles, Collections.reverseOrder());
           for (File pluginFile : pluginFiles) {
             try {
-              loadPlugins(pluginFile.toURI().toURL());
+              loadPlugins(pluginFile.toURI().toURL(), pluginFile.getAbsolutePath());
             } catch (MalformedURLException ex) {
               // Files are supposed to exist !
             }
@@ -130,14 +130,14 @@ public class PluginManager {
   public PluginManager(URL [] pluginUrls) {
     this.pluginFolders = null;
     for (URL pluginUrl : pluginUrls) {
-      loadPlugins(pluginUrl);
+      loadPlugins(pluginUrl, pluginUrl.toExternalForm());
     }
   }
 
   /**
    * Loads the plug-ins that may be available in the given URL.
    */
-  private void loadPlugins(URL pluginUrl) {
+  private void loadPlugins(URL pluginUrl, String pluginLocation) {
     ZipInputStream zipIn = null;
     try {
       // Open a zip input from pluginUrl
@@ -155,7 +155,7 @@ public class PluginManager {
             applicationPluginFamily += APPLICATION_PLUGIN_FAMILY;
             ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
             readPlugin(ResourceBundle.getBundle(applicationPluginFamily, Locale.getDefault(), classLoader), 
-                pluginUrl.toExternalForm(), 
+                pluginLocation, 
                 "jar:" + pluginUrl.toString() + "!/" + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20"),
                 classLoader);
           } catch (MissingResourceException ex) {
@@ -390,26 +390,15 @@ public class PluginManager {
    * @since 4.0
    */
   public void deletePlugins(List<Library> libraries) throws RecorderException {
-    boolean pluginDeleted = false;
     for (Library library : libraries) {
       for (Iterator<Map.Entry<String, PluginLibrary>> it = this.pluginLibraries.entrySet().iterator(); it.hasNext(); ) {
         String pluginLocation = it.next().getValue().getLocation();
         if (pluginLocation.equals(library.getLocation())) {
-          try {
-            URL pluginUrl = new URL(pluginLocation);
-            if (pluginUrl.getProtocol().equals("file")) {
-              if (!pluginDeleted) {
-                if (new File(pluginUrl.getFile()).delete()) {
-                  pluginDeleted = true;
-                } else {
-                  throw new RecorderException("Couldn't delete file " + pluginUrl.getFile());
-                }
-              }              
-            }
-            it.remove();
-          } catch (MalformedURLException ex) {
-            throw new RecorderException("Couldn't delete file " + pluginLocation);
+          if (new File(pluginLocation).exists()
+              && !new File(pluginLocation).delete()) {
+            throw new RecorderException("Couldn't delete file " + library.getLocation());
           }
+          it.remove();
         }
       }
     }
