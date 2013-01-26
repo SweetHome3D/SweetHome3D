@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.security.AccessControlException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -113,30 +115,71 @@ public class OperatingSystem {
   
   /**
    * Returns <code>true</code> if the given version is greater than or equal to the version 
-   * of the current JVM. Versions are compared only on their first two parts.
+   * of the current JVM. 
    */
   public static boolean isJavaVersionAtLeast(String javaMinimumVersion) {
-    String javaVersion = System.getProperty("java.version");
-    String [] javaVersionParts = javaVersion.split("\\.|_");
-    String [] javaMinimumVersionParts = javaMinimumVersion.split("\\.|_");
-    if (javaVersionParts.length >= 1
-        && javaMinimumVersionParts.length >= 1) {
-      try {
-        // Compare digits in first part
-        int javaVersionFirstPart = Integer.parseInt(javaVersionParts [0]);
-        int javaMinimumVersionFirstPart = Integer.parseInt(javaMinimumVersionParts [0]);        
-        if (javaVersionFirstPart > javaMinimumVersionFirstPart) {
-          return true;
-        } else if (javaVersionFirstPart == javaMinimumVersionFirstPart 
-                   && javaVersionParts.length >= 2
-                   && javaMinimumVersionParts.length >= 2) { 
-          // Compare digits in second part (this may work even if second part is > 10)
-          return Integer.parseInt(javaVersionParts [1]) >= Integer.parseInt(javaMinimumVersionParts [1]);
+    return compareVersions(javaMinimumVersion, System.getProperty("java.version")) <= 0;
+  }
+
+  /**
+   * Returns a negative number if <code>version1</code> &lt; <code>version2</code>,
+   * 0 if <code>version1</code> = <code>version2</code>
+   * and a positive number if <code>version1</code> &gt; <code>version2</code>.
+   * @return
+   */
+  public static int compareVersions(String version1, String version2) {
+    List<Object> version1Parts = splitVersion(version1);
+    List<Object> version2Parts = splitVersion(version2);
+    int i = 0;
+    for ( ; i < version1Parts.size() || i < version2Parts.size(); i++) {
+      Object version1Part = i < version1Parts.size() 
+          ? version1Parts.get(i)
+          : 0; // Missing part is considered as 0
+      Object version2Part = i < version2Parts.size() 
+          ? version2Parts.get(i)
+          : 0;
+      if (version1Part.getClass() == version2Part.getClass()) {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        int comparison = ((Comparable)version1Part).compareTo(version2Part);
+        if (comparison != 0) {
+          return comparison;
         }
-      } catch (NumberFormatException ex) {
+      } else if (version1Part instanceof String) {
+        // A string subpart is smaller than an integer
+        return -1;
+      } else {
+        // An integer subpart is greater than a string 
+        return 1;
       }
     }
-    return false;
+    return 0;
+  }
+  
+  /**
+   * Returns the substrings components of the given <code>version</code>.
+   */
+  private static List<Object> splitVersion(String version) {
+    List<Object> versionParts = new ArrayList<Object>();
+    StringBuilder subPart = new StringBuilder();
+    // First split version with punctuation
+    for (String part : version.split("\\p{Punct}")) {
+      for (int i = 0; i < part.length(); ) {
+        subPart.setLength(0);
+        char c = part.charAt(i);
+        if (Character.isDigit(c)) {
+          for ( ; i < part.length() && Character.isDigit(c = part.charAt(i)); i++) {
+            subPart.append(c);
+          }
+          versionParts.add(new Integer(subPart.toString()));
+        } else {
+          for ( ; i < part.length() && !Character.isDigit(c = part.charAt(i)); i++) {
+            subPart.append(c);
+          }
+          versionParts.add(subPart.toString());
+        }  
+      }
+    }    
+    return versionParts;
   }
 
   /**
