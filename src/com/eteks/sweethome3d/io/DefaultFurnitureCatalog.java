@@ -50,6 +50,7 @@ import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -336,9 +337,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         });
         
         if (pluginFurnitureCatalogFiles != null) {
-          // Treat furniture catalog files in reverse order so file named with a date will be taken into account 
-          // from most recent to least recent
-          Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
+          // Treat furniture catalog files in reverse order of their version
+          Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder(OperatingSystem.getFileVersionComparator()));
           for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
             // Try to load the properties file describing furniture catalog from current file  
             readPluginFurnitureCatalog(pluginFurnitureCatalogFile, identifiedFurniture);

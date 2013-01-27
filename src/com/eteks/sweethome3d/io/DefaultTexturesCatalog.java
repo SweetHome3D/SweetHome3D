@@ -43,6 +43,7 @@ import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -159,9 +160,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         });
         
         if (pluginTexturesCatalogFiles != null) {
-          // Treat textures catalog files in reverse order so file named with a date will be taken into account 
-          // from most recent to least recent
-          Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
+          // Treat textures catalog files in reverse order of their version
+          Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder(OperatingSystem.getFileVersionComparator()));
           for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
             // Try to load the properties file describing textures catalog from current file  
             readPluginTexturesCatalog(pluginTexturesCatalogFile, identifiedTextures);

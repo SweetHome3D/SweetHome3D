@@ -45,10 +45,10 @@ public class OperatingSystemTest extends TestCase {
     assertVersionIsSmaller("1.2rc", "1.2a");
     assertVersionIsSmaller("1.2", "1.2a");
     assertVersionIsSmaller("1.2a", "1.2b");
-    assertVersionIsSmaller("jre1.7.0_11", "jre1.7.0_12");
-    assertVersionIsSmaller("jre1.7.0_11rc1", "jre1.7.0_11rc2");
-    assertVersionIsSmaller("jre1.7.0_11rc", "jre1.7.0_11");
-    assertVersionIsSmaller("jre1.7.0_9", "jre1.7.0_11rc");
+    assertVersionIsSmaller("1.7.0_11", "1.7.0_12");
+    assertVersionIsSmaller("1.7.0_11rc1", "1.7.0_11rc2");
+    assertVersionIsSmaller("1.7.0_11rc", "1.7.0_11");
+    assertVersionIsSmaller("1.7.0_9", "1.7.0_11rc");
     assertVersionIsSmaller("1.2", "1.2.1");
     assertVersionIsSmaller("1.2", "1.2.0.1");
     // Missing information is considered as 0
@@ -56,6 +56,13 @@ public class OperatingSystemTest extends TestCase {
     // Punctuation (or missing punctuation) doesn't influence result
     assertVersionIsEqual("1.2beta4", "1.2 beta-4");
     assertVersionIsEqual("1.2beta4", "1,2,beta,4");
+    
+    // Can be used to compare file names too 
+    // (if their version number uses only aplha, beta and rc pre-release strings)
+    assertVersionIsSmaller("plugin1.2.sh3p", "plugin1.3.sh3p");
+    assertVersionIsSmaller("plugin1.2.1.sh3p", "plugin1.3.sh3p");
+    assertVersionIsSmaller("plugin1.2beta.sh3p", "plugin1.2.sh3p");
+    assertVersionIsSmaller("plugin1.2beta1.sh3p", "plugin1.2-beta2.sh3p");
   }
   
   private void assertVersionIsSmaller(String version1, String version2) {

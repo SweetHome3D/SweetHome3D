@@ -109,9 +109,8 @@ public class PluginManager {
         });
         
         if (pluginFiles != null) {
-          // Treat plug in files in reverse order so file named with a date will be taken into account 
-          // from most recent to least recent
-          Arrays.sort(pluginFiles, Collections.reverseOrder());
+          // Treat plug in files in reverse order of their version number
+          Arrays.sort(pluginFiles, Collections.reverseOrder(OperatingSystem.getFileVersionComparator()));
           for (File pluginFile : pluginFiles) {
             try {
               loadPlugins(pluginFile.toURI().toURL(), pluginFile.getAbsolutePath());
