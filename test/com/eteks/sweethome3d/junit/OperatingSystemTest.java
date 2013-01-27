@@ -41,7 +41,12 @@ public class OperatingSystemTest extends TestCase {
     assertVersionIsSmaller("1.2beta4", "1.2");
     assertVersionIsSmaller("1.2beta4", "1.2rc");
     assertVersionIsSmaller("1.2alpha", "1.2beta");
+    assertVersionIsSmaller("1.2beta", "1.2rc");
+    assertVersionIsSmaller("1.2rc", "1.2a");
+    assertVersionIsSmaller("1.2", "1.2a");
+    assertVersionIsSmaller("1.2a", "1.2b");
     assertVersionIsSmaller("jre1.7.0_11", "jre1.7.0_12");
+    assertVersionIsSmaller("jre1.7.0_11rc1", "jre1.7.0_11rc2");
     assertVersionIsSmaller("jre1.7.0_11rc", "jre1.7.0_11");
     assertVersionIsSmaller("jre1.7.0_9", "jre1.7.0_11rc");
     assertVersionIsSmaller("1.2", "1.2.1");
@@ -49,7 +54,7 @@ public class OperatingSystemTest extends TestCase {
     // Missing information is considered as 0
     assertVersionIsEqual("1.2", "1.2.0.0");
     // Punctuation (or missing punctuation) doesn't influence result
-    assertVersionIsEqual("1.2beta4", "1.2beta-4");
+    assertVersionIsEqual("1.2beta4", "1.2 beta-4");
     assertVersionIsEqual("1.2beta4", "1,2,beta,4");
   }
   

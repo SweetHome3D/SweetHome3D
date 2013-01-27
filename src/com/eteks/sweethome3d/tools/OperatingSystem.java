@@ -125,7 +125,34 @@ public class OperatingSystem {
    * Returns a negative number if <code>version1</code> &lt; <code>version2</code>,
    * 0 if <code>version1</code> = <code>version2</code>
    * and a positive number if <code>version1</code> &gt; <code>version2</code>.
-   * @return
+   * Version strings are first split into parts, each subpart ending at each punctuation, space 
+   * or when a character of a different type is encountered (letter vs digit). Then each numeric 
+   * or string subparts are compared to each other, strings being considered greater than numbers
+   * except for pre release strings (i.e. alpha, beta, rc). Examples:<pre>
+   * "" < "1"
+   * "0" < "1.0"
+   * "1.2beta" < "1.2"
+   * "1.2beta" < "1.2beta2"
+   * "1.2beta" < "1.2.0"
+   * "1.2beta4" < "1.2beta10"
+   * "1.2beta4" < "1.2"
+   * "1.2beta4" < "1.2rc"
+   * "1.2alpha" < "1.2beta"
+   * "1.2beta" < "1.2rc"
+   * "1.2rc" < "1.2a"
+   * "1.2" < "1.2a"
+   * "1.2a" < "1.2b"
+   * "jre1.7.0_11" < "jre1.7.0_12"
+   * "jre1.7.0_11rc1" < "jre1.7.0_11rc2"
+   * "jre1.7.0_11rc" < "jre1.7.0_11"
+   * "jre1.7.0_9" < "jre1.7.0_11rc"
+   * "1.2" < "1.2.1"
+   * "1.2" < "1.2.0.1"
+   * 
+   * "1.2" = "1.2.0.0" (missing information is considered as 0)
+   * "1.2beta4" = "1.2 beta-4" (punctuation, space or missing punctuation doesn't influence result)
+   * "1.2beta4" = "1,2,beta,4"
+   * </pre>
    */
   public static int compareVersions(String version1, String version2) {
     List<Object> version1Parts = splitVersion(version1);
@@ -133,10 +160,10 @@ public class OperatingSystem {
     int i = 0;
     for ( ; i < version1Parts.size() || i < version2Parts.size(); i++) {
       Object version1Part = i < version1Parts.size() 
-          ? version1Parts.get(i)
+          ? convertPreReleaseVersion(version1Parts.get(i))
           : 0; // Missing part is considered as 0
       Object version2Part = i < version2Parts.size() 
-          ? version2Parts.get(i)
+          ? convertPreReleaseVersion(version2Parts.get(i))
           : 0;
       if (version1Part.getClass() == version2Part.getClass()) {
         @SuppressWarnings({"unchecked", "rawtypes"})
@@ -145,11 +172,11 @@ public class OperatingSystem {
           return comparison;
         }
       } else if (version1Part instanceof String) {
-        // A string subpart is smaller than an integer
-        return -1;
-      } else {
-        // An integer subpart is greater than a string 
+        // An integer subpart is smaller than a string (except for pre release strings)
         return 1;
+      } else {
+        // A string subpart is greater than an integer 
+        return -1;
       }
     }
     return 0;
@@ -161,8 +188,8 @@ public class OperatingSystem {
   private static List<Object> splitVersion(String version) {
     List<Object> versionParts = new ArrayList<Object>();
     StringBuilder subPart = new StringBuilder();
-    // First split version with punctuation
-    for (String part : version.split("\\p{Punct}")) {
+    // First split version with punctuation and space
+    for (String part : version.split("\\p{Punct}|\\s")) {
       for (int i = 0; i < part.length(); ) {
         subPart.setLength(0);
         char c = part.charAt(i);
@@ -180,6 +207,24 @@ public class OperatingSystem {
       }
     }    
     return versionParts;
+  }
+  
+  /**
+   * Returns negative values if the given version part matches a pre release (i.e. alpha, beta, rc)
+   * or returns the parameter itself.
+   */
+  private static Object convertPreReleaseVersion(Object versionPart) {
+    if (versionPart instanceof String) {
+      String versionPartString = (String)versionPart;
+      if ("alpha".equalsIgnoreCase(versionPartString)) {
+        return -3;
+      } else if ("beta".equalsIgnoreCase(versionPartString)) {
+        return -2;
+      } else if ("rc".equalsIgnoreCase(versionPartString)) {
+        return -1;
+      }
+    }
+    return versionPart;
   }
 
   /**
