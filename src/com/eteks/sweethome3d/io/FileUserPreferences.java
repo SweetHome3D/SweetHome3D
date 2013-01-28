@@ -97,6 +97,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
   private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
+  private static final String CHECK_UPDATES_ENABLED                     = "checkUpdatesEnabled";
+  private static final String UPDATES_MINIMUM_DATE                      = "updatesMinimumDate";
   private static final String AUTO_SAVE_DELAY_FOR_RECOVERY              = "autoSaveDelayForRecovery";
   private static final String AUTO_COMPLETION_PROPERTY                  = "autoCompletionProperty#";
   private static final String AUTO_COMPLETION_STRINGS                   = "autoCompletionStrings#";
@@ -286,6 +288,11 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.getNewWallHeight()));    
     setNewFloorThickness(preferences.getFloat(NEW_FLOOR_THICKNESS, 
         defaultPreferences.getNewFloorThickness()));
+    setCheckUpdatesEnabled(preferences.getBoolean(CHECK_UPDATES_ENABLED,
+        defaultPreferences.isCheckUpdatesEnabled()));
+    if (preferences.get(UPDATES_MINIMUM_DATE, null) != null) {
+      setUpdatesMinimumDate(preferences.getLong(UPDATES_MINIMUM_DATE, 0));
+    }
     setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
         defaultPreferences.getAutoSaveDelayForRecovery()));
     setCurrency(defaultPreferences.getCurrency());    
@@ -715,6 +722,11 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());   
+    preferences.putBoolean(CHECK_UPDATES_ENABLED, isCheckUpdatesEnabled());
+    Long updatesMinimumDate = getUpdatesMinimumDate();
+    if (updatesMinimumDate != null) {
+      preferences.putLong(UPDATES_MINIMUM_DATE, updatesMinimumDate);
+    }
     preferences.putInt(AUTO_SAVE_DELAY_FOR_RECOVERY, getAutoSaveDelayForRecovery());
     // Write recent homes list
     int i = 1;

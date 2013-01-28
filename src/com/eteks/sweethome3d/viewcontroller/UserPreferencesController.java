@@ -37,8 +37,8 @@ public class UserPreferencesController implements Controller {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
       NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
-      NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
-      AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
+      NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
+      CHECK_UPDATES_ENABLED, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
   
   private final UserPreferences         preferences;
   private final ViewFactory             viewFactory;
@@ -61,6 +61,7 @@ public class UserPreferencesController implements Controller {
   private float                         newWallThickness;
   private float                         newWallHeight;
   private float                         newFloorThickness;
+  private boolean                       checkUpdatesEnabled;
   private int                           autoSaveDelayForRecovery;
   private boolean                       autoSaveForRecoveryEnabled;
 
@@ -141,6 +142,7 @@ public class UserPreferencesController implements Controller {
     setNewWallThickness(Math.min(Math.max(minimumLength, this.preferences.getNewWallThickness()), maximumLength / 10));
     setNewWallHeight(Math.min(Math.max(minimumLength, this.preferences.getNewWallHeight()), maximumLength));
     setNewFloorThickness(Math.min(Math.max(minimumLength, this.preferences.getNewFloorThickness()), maximumLength / 10));
+    setCheckUpdatesEnabled(this.preferences.isCheckUpdatesEnabled());
     setAutoSaveDelayForRecovery(this.preferences.getAutoSaveDelayForRecovery());
     setAutoSaveForRecoveryEnabled(this.preferences.getAutoSaveDelayForRecovery() > 0);
   }  
@@ -436,6 +438,26 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
+   * Sets whether updates should be checked or not.
+   * @since 4.0
+   */
+  public void setCheckUpdatesEnabled(boolean updatesChecked) {
+    if (updatesChecked != this.checkUpdatesEnabled) {
+      this.checkUpdatesEnabled = updatesChecked;
+      this.propertyChangeSupport.firePropertyChange(Property.CHECK_UPDATES_ENABLED.name(), 
+          !updatesChecked, updatesChecked);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if updates should be checked.
+   * @since 4.0
+   */
+  public boolean isCheckUpdatesEnabled() {
+    return this.checkUpdatesEnabled;
+  }
+
+  /**
    * Sets the edited auto recovery save delay.
    */
   public void setAutoSaveDelayForRecovery(int autoSaveDelayForRecovery) {
@@ -473,6 +495,16 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
+   * Checks if some updates are available.
+   * @since 4.0
+   */
+  public void checkUpdates() {
+    if (this.homeController != null) {
+      this.homeController.checkUpdates(false);
+    }
+  }
+
+  /**
    * Returns <code>true</code> if language libraries can be imported.
    */
   public boolean mayImportLanguageLibrary() {
@@ -486,6 +518,13 @@ public class UserPreferencesController implements Controller {
     if (this.homeController != null) {
       this.homeController.importLanguageLibrary();
     }
+  }
+
+  /**
+   * Resets the displayed flags of action tips.
+   */
+  public void resetDisplayedActionTips() {
+    this.preferences.resetIgnoredActionTips();
   }
 
   /**
@@ -507,14 +546,8 @@ public class UserPreferencesController implements Controller {
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
     this.preferences.setNewFloorThickness(getNewFloorThickness());
+    this.preferences.setCheckUpdatesEnabled(isCheckUpdatesEnabled());
     this.preferences.setAutoSaveDelayForRecovery(isAutoSaveForRecoveryEnabled()
         ? getAutoSaveDelayForRecovery() : 0);
-  }
-
-  /**
-   * Resets the displayed flags of action tips.
-   */
-  public void resetDisplayedActionTips() {
-    this.preferences.resetIgnoredActionTips();
   }
 }

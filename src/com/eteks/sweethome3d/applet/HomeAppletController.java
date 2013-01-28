@@ -157,9 +157,10 @@ public class HomeAppletController extends HomePluginController {
         this.viewFactory, this.contentManager) {
       public boolean isPropertyEditable(UserPreferencesController.Property property) {
         switch (property) {
+          case CHECK_UPDATES_ENABLED :
           case AUTO_SAVE_DELAY_FOR_RECOVERY :
           case AUTO_SAVE_FOR_RECOVERY_ENABLED :
-            // No auto recovery with applet
+            // No check updates and auto recovery with applet
             return false;
           default :
             return super.isPropertyEditable(property);

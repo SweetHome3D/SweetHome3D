@@ -21,16 +21,30 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import javax.swing.event.UndoableEditEvent;
@@ -42,6 +56,13 @@ import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
@@ -64,6 +85,7 @@ import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -72,6 +94,7 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
@@ -2186,5 +2209,596 @@ public class HomeController implements Controller {
   public void setVisualProperty(String propertyName,
                                 Object propertyValue) {
     this.home.setVisualProperty(propertyName, propertyValue);
+  }
+
+  /**
+   * Checks if some application or libraries updates are available.
+   * @since 4.0
+   */
+  public void checkUpdates(final boolean displayOnlyIfNewUpdates) {
+    String updatesUrl = getPropertyValue("com.eteks.sweethome3d.updatesUrl", "updatesUrl");
+    if (updatesUrl != null) {
+      final URL url;
+      try {
+        url = new URL(updatesUrl);
+      } catch (MalformedURLException ex) {
+        ex.printStackTrace();
+        return;
+      }
+      
+      final List<Library> libraries = this.preferences.getLibraries();
+      final Long updatesMinimumDate = displayOnlyIfNewUpdates
+          ? this.preferences.getUpdatesMinimumDate()
+          : null;
+
+      // Read updates from XML content in updatesUrl in a threaded task
+      Callable<Void> checkUpdatesTask = new Callable<Void>() {
+          public Void call() throws IOException {
+            final Map<Library, List<Update>> availableUpdates = readAvailableUpdates(url, libraries, updatesMinimumDate);
+            getView().invokeLater(new Runnable () {
+                public void run() {
+                  if (availableUpdates.isEmpty()) {
+                    if (!displayOnlyIfNewUpdates) {
+                      getView().showMessage(preferences.getLocalizedString(HomeController.class, "noUpdateMessage"));
+                    }
+                  } else if (!getView().showUpdatesMessage(getUpdatesMessage(availableUpdates), !displayOnlyIfNewUpdates)) {
+                    TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
+                    GregorianCalendar nowInGmt = new GregorianCalendar(gmtTimeZone); 
+                    GregorianCalendar nextEndOfDayInGmt = new GregorianCalendar(
+                        nowInGmt.get(Calendar.YEAR), nowInGmt.get(Calendar.MONTH), nowInGmt.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
+                    nextEndOfDayInGmt.setTimeZone(gmtTimeZone);
+                    preferences.setUpdatesMinimumDate(nextEndOfDayInGmt.getTime().getTime());
+                  }
+                }
+              });
+            return null;
+          }
+        };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedIOException)) {
+                if (ex instanceof RecorderException) {
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "checkUpdatesError", ex);
+                  getView().showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+          
+      ViewFactory dummyThreadedTaskViewFactory = new ViewFactoryAdapter() {
+          @Override
+          public ThreadedTaskView createThreadedTaskView(String taskMessage, UserPreferences preferences,
+                                                         ThreadedTaskController controller) {
+            // Return a dummy view that doesn't do anything
+            return new ThreadedTaskView() {
+              public void setTaskRunning(boolean taskRunning, View executingView) {
+              }
+              
+              public void invokeLater(Runnable runnable) {
+              }
+            };
+          }
+        };
+      new ThreadedTaskController(checkUpdatesTask, 
+          this.preferences.getLocalizedString(HomeController.class, "checkUpdatesMessage"), exceptionHandler, 
+          this.preferences, displayOnlyIfNewUpdates 
+            ? dummyThreadedTaskViewFactory
+            : this.viewFactory).executeTask(getView(), displayOnlyIfNewUpdates);    
+    }
+  }
+
+  /**
+   * Returns the System property value of the given <code>propertyKey</code>, or the
+   * the resource property value matching <code>resourceKey</code> or <code>null</code>
+   * if none are defined.
+   */
+  private String getPropertyValue(String propertyKey, String resourceKey) {
+    String propertyValue = System.getProperty(propertyKey);
+    if (propertyValue != null) {
+      return propertyValue;
+    } else {
+      try {
+        return this.preferences.getLocalizedString(HomeController.class, resourceKey);
+      } catch (IllegalArgumentException ex) {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Reads the available updates from the XML stream contained in the given <code>url</code>.
+   * Caution : this method is called out of the Event Dispatch Thread.
+   */
+  private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate) throws IOException {
+    try {
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      factory.setValidating(false);
+      SAXParser saxParser = factory.newSAXParser();
+      UpdatesHandler updatesHandler = new UpdatesHandler(url);
+      saxParser.parse(url.openStream(), updatesHandler);
+      
+      // Filter updates according to application version and libraries version
+      Map<Library, List<Update>> availableUpdates = new LinkedHashMap<Library, List<Update>>();
+      if (this.application != null) {
+        String applicationId = this.application.getId();
+        List<Update> applicationUpdates = getAvailableUpdates(updatesHandler.getUpdates(applicationId), 
+            this.application.getVersion(), minDate);
+        if (!applicationUpdates.isEmpty()) {
+          availableUpdates.put(null, applicationUpdates);
+        }
+      }
+      Set<String> updatedLibraryIds = new HashSet<String>();       
+      for (Library library : libraries) {
+        if (Thread.interrupted()) {
+          throw new InterruptedIOException();
+        }
+        String libraryId = library.getId();
+        if (libraryId != null 
+            && !updatedLibraryIds.contains(libraryId)) { 
+          List<Update> libraryUpdates = getAvailableUpdates(updatesHandler.getUpdates(libraryId), library.getVersion(),
+              minDate);
+          if (!libraryUpdates.isEmpty()) {
+            availableUpdates.put(library, libraryUpdates);
+            // Ignore older libraries with same ID
+            updatedLibraryIds.add(libraryId);
+          }
+        }
+      }
+      return availableUpdates;
+    } catch (ParserConfigurationException ex) {
+      throw new IOException(ex);
+    } catch (SAXException ex) {
+      // If task was interrupted (see UpdatesHandler implementation), report the interruption 
+      if (ex.getCause() instanceof InterruptedIOException) {
+        throw (InterruptedIOException)ex.getCause();
+      } else {
+        throw new IOException(ex);
+      }
+    }
+  }
+  
+  /**
+   * Returns the updates sublist which match the given <code>version</code>.
+   * If no update has a date greater that <code>minDate</code>, an empty list is returned.
+   * Caution : this method is called out of the Event Dispatch Thread.
+   */
+  private List<Update> getAvailableUpdates(List<Update> updates, String version, Long minDate) {
+    if (updates != null) {
+      boolean recentUpdates = false;
+      List<Update> availableUpdates = new ArrayList<Update>();      
+      for (Update update : updates) {
+        String minVersion = update.getMinVersion();
+        String maxVersion = update.getMaxVersion();
+        String operatingSystem = update.getOperatingSystem();
+        if (OperatingSystem.compareVersions(version, update.getVersion()) < 0 
+            && (minVersion == null || OperatingSystem.compareVersions(minVersion, version) <= 0) 
+            && (maxVersion == null || OperatingSystem.compareVersions(version, maxVersion) < 0)
+            && (operatingSystem == null || System.getProperty("os.name").matches(operatingSystem))) {
+          Date date = update.getDate();
+          if (date == null || minDate == null || date.getTime() >= minDate) {
+            availableUpdates.add(update);
+            recentUpdates = true;
+          }
+        }
+      }
+      if (recentUpdates) {
+        Collections.sort(availableUpdates, new Comparator<Update>() {
+            public int compare(Update update1, Update update2) {
+              return -OperatingSystem.compareVersions(update1.getVersion(), update2.getVersion());
+            }
+          });
+        return availableUpdates;
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  /**
+   * Returns the message for the given updates.
+   */
+  private String getUpdatesMessage(Map<Library, List<Update>> updates) {
+    if (updates.isEmpty()) {
+      return this.preferences.getLocalizedString(HomeController.class, "noUpdateMessage");
+    } else {
+      String message = "<html><head><style>" 
+          + this.preferences.getLocalizedString(HomeController.class, "updatesMessageStyleSheet")
+          + " .separator { margin: 0px;}</style></head><body>"
+          + this.preferences.getLocalizedString(HomeController.class, "updatesMessageTitle");
+      String applicationUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "applicationUpdateMessage");
+      String libraryUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "libraryUpdateMessage");
+      String sizeUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "sizeUpdateMessage");
+      String downloadUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "downloadUpdateMessage");
+      String updatesMessageSeparator = this.preferences.getLocalizedString(HomeController.class, "updatesMessageSeparator");
+      for (Iterator<Map.Entry<Library, List<Update>>> it = updates.entrySet().iterator(); it.hasNext(); ) {
+        Map.Entry<Library, List<Update>> updateEntry = it.next();
+        Library library = updateEntry.getKey();
+        if (library == null) {
+          // Application itself
+          if (this.application != null) {
+            message += getApplicationOrLibraryUpdateMessage(updateEntry.getValue(), this.application.getName(),
+                applicationUpdateMessage, sizeUpdateMessage, downloadUpdateMessage);
+          }
+        } else {
+          String name = library.getName();
+          if (name == null) {
+            name = library.getDescription();
+            if (name == null) {
+              name = library.getLocation();
+            }
+          }
+          message += getApplicationOrLibraryUpdateMessage(updateEntry.getValue(), name,
+              libraryUpdateMessage, sizeUpdateMessage, downloadUpdateMessage);
+        }
+        if (it.hasNext()) {
+          message += updatesMessageSeparator;
+        }
+      }
+      
+      message += "</body></html>";
+      return message;
+    }
+  }
+
+  /**
+   * Returns the message for the update of the application or a library.
+   */
+  private String getApplicationOrLibraryUpdateMessage(List<Update> updates,
+                                                      String applicationOrLibraryName,
+                                                      String applicationOrLibraryUpdateMessage, 
+                                                      String sizeUpdateMessage, 
+                                                      String downloadUpdateMessage) {
+    String message = "";
+    boolean first = true;
+    DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.LONG);
+    DecimalFormat megabyteSizeFormat = new DecimalFormat("#,##0.#");
+    for (Update update : updates) {
+      String size;
+      if (update.getSize() != null) {
+        // Format at MB format
+        size = String.format(sizeUpdateMessage,
+            megabyteSizeFormat.format(update.getSize() / (1024. * 1024.)));
+      } else {
+        size = "";
+      }
+      message += String.format(applicationOrLibraryUpdateMessage, 
+          applicationOrLibraryName, update.getVersion(), dateFormat.format(update.getDate()), size);
+      if (first) {
+        first = false;
+        URL downloadPage = update.getDownloadPage();
+        if (downloadPage == null) {
+          downloadPage = update.getDefaultDownloadPage();
+        }
+        if (downloadPage != null) {
+          message += String.format(downloadUpdateMessage, downloadPage);
+        }
+      }
+      String comment = update.getComment();
+      if (comment == null) {
+        comment = update.getDefaultComment();
+      }
+      if (comment != null) {
+        message += "<p class='separator'/>";
+        message += comment;
+        message += "<p class='separator'/>";        
+      }
+    }
+    return message;
+  }
+
+  /**
+   * SAX handler used to parse updates XML files.
+   * DTD used in updated files:<pre> 
+   * &lt;!ELEMENT updates (update*)>
+   * 
+   * &lt;!ELEMENT update (downloadPage*, comment*)>
+   * &lt;!ATTLIST update id CDATA #REQUIRED>
+   * &lt;!ATTLIST update version CDATA #REQUIRED>
+   * &lt;!ATTLIST update operatingSystem CDATA #IMPLIED> 
+   * &lt;!ATTLIST update date CDATA #REQUIRED>
+   * &lt;!ATTLIST update minVersion CDATA #IMPLIED>
+   * &lt;!ATTLIST update maxVersion CDATA #IMPLIED> 
+   * &lt;!ATTLIST update size CDATA #IMPLIED> 
+   * &lt;!ATTLIST update inherits CDATA #IMPLIED>
+   * 
+   * &lt;!ELEMENT downloadPage EMPTY>
+   * &lt;!ATTLIST downloadPage url CDATA #REQUIRED> 
+   * &lt;!ATTLIST downloadPage lang CDATA #IMPLIED> 
+   * 
+   * &lt;!ELEMENT comment (#PCDATA)>
+   * &lt;!ATTLIST comment lang CDATA #IMPLIED> 
+   * </pre>
+   * with <code>updates</code> as root element, 
+   * <code>operatingSystem</code> an optional regular expression for the target OS,
+   * <code>inherits</code> the id of an other <code>update</code> element with the same version,
+   * <code>date</code> using <code>yyyy-MM-ddThh:mm:ss<code> or <code>yyyy-MM-dd</code> format 
+   * at GMT and <code>comment</code> element possibly containing HTML.
+   */
+  private class UpdatesHandler extends DefaultHandler {
+    private final URL                       baseUrl;
+    private final StringBuilder             comment = new StringBuilder();
+    private final SimpleDateFormat          dateTimeFormat;
+    private final SimpleDateFormat          dateFormat;
+    private final Map<String, List<Update>> updates = new HashMap<String, List<Update>>();
+    private Update                          update;
+    private boolean                         inComment;
+    private boolean                         inUpdate;
+    private String                          language;
+
+    public UpdatesHandler(URL baseUrl) {
+      this.baseUrl = baseUrl;
+      TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
+      this.dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+      this.dateTimeFormat.setTimeZone(gmtTimeZone);
+      this.dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      this.dateFormat.setTimeZone(gmtTimeZone);
+    }
+    
+    /**
+     * Returns the update matching the given <code>id</code>.
+     */
+    private List<Update> getUpdates(String id) {
+      return this.updates.get(id);
+    }
+    
+    /**
+     * Throws a <code>SAXException</code> exception initialized with a <code>InterruptedRecorderException</code> 
+     * cause if current thread is interrupted. The interrupted status of the current thread 
+     * is cleared when an exception is thrown.
+     */
+    private void checkCurrentThreadIsntInterrupted() throws SAXException {
+      if (Thread.interrupted()) {
+        throw new SAXException(new InterruptedIOException());
+      }
+    }
+    
+    @Override
+    public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
+      checkCurrentThreadIsntInterrupted();
+      if (this.inComment) {
+        // Reproduce comment content
+        this.comment.append("<" + name);
+        for (int i = 0; i < attributes.getLength(); i++) {
+          this.comment.append(attributes.getQName(i) + "=\"" + attributes.getValue(i) + "\"");
+        }
+        this.comment.append(">");
+      } else if (this.inUpdate && "comment".equals(name)) {
+        this.comment.setLength(0);
+        this.language = attributes.getValue("lang");
+        if (this.language == null || preferences.getLanguage().equals(this.language)) {
+          this.inComment = true;
+        }
+      } else if (this.inUpdate && "downloadPage".equals(name)) {
+        String url = attributes.getValue("url");
+        if (url != null) {
+          try {
+            String language = attributes.getValue("lang");
+            if (language == null) {
+              this.update.setDefaultDownloadPage(new URL(this.baseUrl, url));
+            } else if (preferences.getLanguage().equals(language)) {
+              this.update.setDownloadPage(new URL(this.baseUrl, url));
+            }
+          } catch (MalformedURLException ex) {
+            // Ignore bad URLs
+          }
+        }
+      } else if (!this.inUpdate && "update".equals(name)) {
+        String id = attributes.getValue("id");
+        String version = attributes.getValue("version");
+        if (id != null
+            && version != null) {
+          this.update = new Update(id, version);
+          
+          String inheritedUpdate = attributes.getValue("inherits");
+          // If update inherits from an other update, search the update with the same id and version
+          if (inheritedUpdate != null) {
+            List<Update> updates = this.updates.get(inheritedUpdate);
+            if (updates != null) {
+              for (Update update : updates) {
+                if (version.equals(update.getVersion())) {
+                  this.update = update.clone();
+                  this.update.setId(id);
+                  break;
+                }
+              }
+            }
+          }
+  
+          String dateAttibute = attributes.getValue("date");
+          if (dateAttibute != null) {
+            try {
+              this.update.setDate(this.dateTimeFormat.parse(dateAttibute));
+            } catch (ParseException ex) {
+              try {
+                this.update.setDate(this.dateFormat.parse(dateAttibute));
+              } catch (ParseException ex1) {
+              }
+            }
+          }
+          
+          String minVersion = attributes.getValue("minVersion");
+          if (minVersion != null) {
+            this.update.setMinVersion(minVersion);
+          }
+
+          String maxVersion = attributes.getValue("maxVersion");
+          if (maxVersion != null) {
+            this.update.setMaxVersion(maxVersion);
+          }
+          
+          String size = attributes.getValue("size");
+          if (size != null) {
+            try {
+              this.update.setSize(new Long (size));
+            } catch (NumberFormatException ex) { 
+              // Ignore malformed number
+            }
+          }
+          
+          String operatingSystem = attributes.getValue("operatingSystem");
+          if (operatingSystem != null) {
+            this.update.setOperatingSystem(operatingSystem);
+          }
+          
+          List<Update> updates = this.updates.get(id);
+          if (updates == null) {
+            updates = new ArrayList<Update>();
+            this.updates.put(id, updates);
+          }
+          updates.add(this.update);
+          this.inUpdate = true;
+        }
+      }
+    }
+    
+    @Override
+    public void characters(char [] ch, int start, int length) throws SAXException {
+      checkCurrentThreadIsntInterrupted();
+      if (this.inComment) {
+        // Reproduce comment content
+        this.comment.append(ch, start, length);
+      }
+    }
+    
+    @Override
+    public void endElement(String uri, String localName, String name) throws SAXException {
+      if (this.inComment) {
+        if ("comment".equals(name)) {
+          String comment = this.comment.toString().trim().replace('\n', ' ');
+          if (comment.length() == 0) {
+            comment = null;
+          }
+          if (this.language == null) {
+            this.update.setDefaultComment(comment);
+          } else {
+            this.update.setComment(comment);
+          }
+          this.inComment = false;
+        } else {
+          // Reproduce comment content
+          this.comment.append("</" + name + ">");
+        }
+      } else if (this.inUpdate && "update".equals(name)) {
+        this.inUpdate = false;
+      }
+    }
+  }
+  
+  /**
+   * Update info.
+   */
+  private static class Update implements Cloneable {
+    private String id;
+    private final String version;
+    private Date   date;
+    private String minVersion;
+    private String maxVersion;
+    private Long   size;
+    private String operatingSystem;
+    private URL    defaultDownloadPage;
+    private URL    downloadPage;
+    private String defaultComment;
+    private String comment;
+
+    public Update(String id, String version) {
+      this.id = id;
+      this.version = version;
+    }
+
+    public String getId() {
+      return this.id;
+    }
+    
+    public void setId(String id) {
+      this.id = id;
+    }
+
+    public String getVersion() {
+      return this.version;
+    }    
+
+    public Date getDate() {
+      return this.date;
+    }
+
+    public void setDate(Date date) {
+      this.date = date;
+    }
+
+    public String getMinVersion() {
+      return this.minVersion;
+    }
+
+    public void setMinVersion(String minVersion) {
+      this.minVersion = minVersion;
+    }
+
+    public String getMaxVersion() {
+      return this.maxVersion;
+    }
+
+    public void setMaxVersion(String maxVersion) {
+      this.maxVersion = maxVersion;
+    }
+
+    public Long getSize() {
+      return this.size;
+    }
+    
+    public void setSize(Long size) {
+      this.size = size;
+    }
+    
+    public String getOperatingSystem() {
+      return this.operatingSystem;
+    }
+    
+    public void setOperatingSystem(String system) {
+      this.operatingSystem = system;
+    }
+
+    public URL getDefaultDownloadPage() {
+      return this.defaultDownloadPage;
+    }
+
+    public void setDefaultDownloadPage(URL defaultDownloadPage) {
+      this.defaultDownloadPage = defaultDownloadPage;
+    }
+
+    public URL getDownloadPage() {
+      return this.downloadPage;
+    }
+
+    public void setDownloadPage(URL downloadPage) {
+      this.downloadPage = downloadPage;
+    }
+
+    public String getDefaultComment() {
+      return this.defaultComment;
+    }
+
+    public void setDefaultComment(String defaultComment) {
+      this.defaultComment = defaultComment;
+    }
+
+    public String getComment() {
+      return this.comment;
+    }
+
+    public void setComment(String comment) {
+      this.comment = comment;
+    }
+    
+    @Override
+    protected Update clone() {
+      try {
+        return (Update)super.clone();
+      } catch (CloneNotSupportedException ex) {
+        throw new InternalError();
+      }
+    }
   }
 }

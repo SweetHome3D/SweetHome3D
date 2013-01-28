@@ -108,6 +108,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JSpinner       newWallHeightSpinner;
   private JLabel         newFloorThicknessLabel;
   private JSpinner       newFloorThicknessSpinner;
+  private JCheckBox      checkUpdatesCheckBox;
+  private JButton        checkUpdatesNowButton;
   private JCheckBox      autoSaveDelayForRecoveryCheckBox;
   private JSpinner       autoSaveDelayForRecoverySpinner;
   private JLabel         autoSaveDelayForRecoveryUnitLabel;
@@ -557,6 +559,32 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
     
+    if (controller.isPropertyEditable(UserPreferencesController.Property.CHECK_UPDATES_ENABLED)) {
+      // Create check box bound to controller CHECK_UPDATES_ENABLED property
+      this.checkUpdatesCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "checkUpdatesCheckBox.text"), controller.isCheckUpdatesEnabled());
+      this.checkUpdatesCheckBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setCheckUpdatesEnabled(checkUpdatesCheckBox.isSelected());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.CHECK_UPDATES_ENABLED, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              checkUpdatesCheckBox.setSelected(controller.isCheckUpdatesEnabled());
+            }
+          });
+      
+      this.checkUpdatesNowButton = new JButton(new ResourceAction.ButtonAction(
+          new ResourceAction(preferences, UserPreferencesPanel.class, "CHECK_UPDATES_NOW", true) {
+            @Override
+            public void actionPerformed(ActionEvent ev) {
+              controller.checkUpdates();
+            }
+          }));
+    }
+    
+
     if (controller.isPropertyEditable(UserPreferencesController.Property.AUTO_SAVE_DELAY_FOR_RECOVERY)) {
       this.autoSaveDelayForRecoveryCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.text"));
@@ -775,6 +803,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             UserPreferencesPanel.class, "newFloorThicknessLabel.mnemonic")).getKeyCode());
         this.newFloorThicknessLabel.setLabelFor(this.newFloorThicknessSpinner);
       }
+      if (this.checkUpdatesCheckBox != null) {
+        this.checkUpdatesCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "checkUpdatesCheckBox.mnemonic")).getKeyCode());
+      }      
       if (this.autoSaveDelayForRecoveryCheckBox != null) {
         this.autoSaveDelayForRecoveryCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "autoSaveDelayForRecoveryCheckBox.mnemonic")).getKeyCode());
@@ -951,13 +983,36 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           1, 14, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
-    if (this.autoSaveDelayForRecoveryCheckBox != null) {
-      JPanel autoSaveDelayForRecoveryPanel = new JPanel();
+    if (this.checkUpdatesCheckBox != null
+        || this.autoSaveDelayForRecoveryCheckBox != null) {
+      JPanel updatesAndAutoSaveDelayForRecoveryPanel = new JPanel(new GridBagLayout());
       // Sixteenth row
-      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryCheckBox);
-      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoverySpinner);
-      autoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryUnitLabel);
-      add(autoSaveDelayForRecoveryPanel, new GridBagConstraints(
+      if (this.checkUpdatesCheckBox != null) {
+        updatesAndAutoSaveDelayForRecoveryPanel.add(this.checkUpdatesCheckBox,
+            new GridBagConstraints(
+                0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+                GridBagConstraints.NONE, labelInsets, 0, 0));
+        updatesAndAutoSaveDelayForRecoveryPanel.add(this.checkUpdatesNowButton,
+            new GridBagConstraints(
+                1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+                GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+      }
+      // Seventeenth row
+      if (this.autoSaveDelayForRecoveryCheckBox != null) {
+        updatesAndAutoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryCheckBox,
+            new GridBagConstraints(
+                0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+                GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        updatesAndAutoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoverySpinner,
+            new GridBagConstraints(
+                1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+                GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        updatesAndAutoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryUnitLabel,
+            new GridBagConstraints(
+                2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      }
+      add(updatesAndAutoSaveDelayForRecoveryPanel, new GridBagConstraints(
           0, 15, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }

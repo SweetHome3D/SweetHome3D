@@ -51,7 +51,7 @@ public abstract class UserPreferences {
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
-                        AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
+                        CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -95,6 +95,8 @@ public abstract class UserPreferences {
   private float            newWallHeight;
   private float            newFloorThickness;
   private List<String>     recentHomes;
+  private boolean          checkUpdatesEnabled;
+  private Long             updatesMinimumDate;
   private int              autoSaveDelayForRecovery;
   private Map<String, List<String>>  autoCompletionStrings;
 
@@ -671,10 +673,10 @@ public abstract class UserPreferences {
    */
   public void setNewWallPattern(TextureImage newWallPattern) {
     if (this.newWallPattern != newWallPattern) {
-      TextureImage oldNewWallPattern = this.newWallPattern;
+      TextureImage oldWallPattern = this.newWallPattern;
       this.newWallPattern = newWallPattern;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_PATTERN.name(), 
-          oldNewWallPattern, newWallPattern);
+          oldWallPattern, newWallPattern);
     }
   }
 
@@ -733,10 +735,54 @@ public abstract class UserPreferences {
    */
   public void setNewFloorThickness(float newFloorThickness) {
     if (this.newFloorThickness != newFloorThickness) {
-      float oldDefaultThickness = this.newFloorThickness;
+      float oldFloorThickness = this.newFloorThickness;
       this.newFloorThickness = newFloorThickness;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_FLOOR_THICKNESS.name(), 
-          oldDefaultThickness, newFloorThickness);
+          oldFloorThickness, newFloorThickness);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if updates should be checked.
+   * @since 4.0
+   */
+  public boolean isCheckUpdatesEnabled() {
+    return this.checkUpdatesEnabled;
+  }
+
+  /**
+   * Sets whether updates should be checked or not.
+   * @since 4.0
+   */
+  public void setCheckUpdatesEnabled(boolean updatesChecked) {
+    if (updatesChecked != this.checkUpdatesEnabled) {
+      this.checkUpdatesEnabled = updatesChecked;
+      this.propertyChangeSupport.firePropertyChange(Property.CHECK_UPDATES_ENABLED.name(), 
+          !updatesChecked, updatesChecked);
+    }
+  }
+
+  /**
+   * Returns the minimum date of updates that may interest user.
+   * @return the date expressed in millis second since the epoch or <code>null</code> if not defined. 
+   * @since 4.0
+   */
+  public Long getUpdatesMinimumDate() {
+    return this.updatesMinimumDate;
+  }
+
+  /**
+   * Sets the minimum date of updates that may interest user, and notifies
+   * listeners of this change.  
+   * @since 4.0
+   */
+  public void setUpdatesMinimumDate(Long updatesMinimumDate) {
+    if (this.updatesMinimumDate != updatesMinimumDate
+        && (updatesMinimumDate == null || !updatesMinimumDate.equals(this.updatesMinimumDate))) {
+      Long oldUpdatesMinimumDate = this.updatesMinimumDate;
+      this.updatesMinimumDate = updatesMinimumDate;
+      this.propertyChangeSupport.firePropertyChange(Property.UPDATES_MINIMUM_DATE.name(), 
+          oldUpdatesMinimumDate, updatesMinimumDate);
     }
   }
 

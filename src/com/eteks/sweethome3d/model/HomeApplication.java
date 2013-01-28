@@ -130,4 +130,13 @@ public abstract class HomeApplication {
   public String getVersion() {
     return "";
   }
+
+  /**
+   * Returns the id of this application.
+   * Default implementation returns null.
+   * @since 4.0
+   */
+  public String getId() {
+    return null;
+  }
 }

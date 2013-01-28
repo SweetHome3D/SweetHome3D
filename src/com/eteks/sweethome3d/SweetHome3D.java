@@ -21,6 +21,8 @@ package com.eteks.sweethome3d;
 
 import java.awt.EventQueue;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -56,6 +58,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.AutoRecoveryManager;
@@ -140,6 +143,7 @@ public class SweetHome3D extends HomeApplication {
   private ViewFactory             viewFactory;
   private PluginManager           pluginManager;
   private boolean                 pluginManagerInitialized;
+  private boolean                 checkUpdatesNeeded;
   private AutoRecoveryManager     autoRecoveryManager;
   private final Map<Home, JFrame> homeFrames;
 
@@ -200,12 +204,12 @@ public class SweetHome3D extends HomeApplication {
       } else {
         applicationFolders = null;
       }
-      Executor EventQueueExecutor = new Executor() {
+      Executor eventQueueExecutor = new Executor() {
           public void execute(Runnable command) {
             EventQueue.invokeLater(command);
           }
         };
-      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, EventQueueExecutor) {
+      this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, eventQueueExecutor) {
           @Override
           public List<Library> getLibraries() {
             if (pluginManager != null) {
@@ -232,6 +236,7 @@ public class SweetHome3D extends HomeApplication {
             pluginManager.deletePlugins(plugins);            
           }
         };
+      this.checkUpdatesNeeded = this.userPreferences.isCheckUpdatesEnabled();
     }
     return this.userPreferences;
   }
@@ -276,6 +281,23 @@ public class SweetHome3D extends HomeApplication {
     return this.pluginManager;
   }
 
+  /**
+   * Returns Sweet Home 3D application read from resources.
+   */
+  @Override
+  public String getId() {
+    String applicationId = System.getProperty("com.eteks.sweethome3d.applicationId");
+    if (applicationId != null) {
+      return applicationId;
+    } else {
+      try {
+        return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationId");
+      } catch (IllegalArgumentException ex) {
+        return super.getId();
+      }
+    }
+  }
+  
   /**
    * Returns the name of this application read from resources.
    */
@@ -367,7 +389,7 @@ public class SweetHome3D extends HomeApplication {
 
     // Add a listener that opens a frame when a home is added to application
     addHomesListener(new CollectionListener<Home>() {
-      private boolean firstApplicationHomeAdded;
+      private boolean        firstApplicationHomeAdded;
 
       public void collectionChanged(CollectionEvent<Home> ev) {
         switch (ev.getType()) {
@@ -377,8 +399,8 @@ public class SweetHome3D extends HomeApplication {
               HomeFrameController controller = createHomeFrameController(home);
               controller.displayView();
               if (!this.firstApplicationHomeAdded) {
-                addNewHomeCloseListener(home, controller.getHomeController());
                 this.firstApplicationHomeAdded = true;
+                addNewHomeCloseListener(home, controller.getHomeController());
               }
 
               JFrame homeFrame = (JFrame)SwingUtilities.getRoot((JComponent) controller.getView());
@@ -642,8 +664,9 @@ public class SweetHome3D extends HomeApplication {
           });
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
         createHomeFrameController(createHome()).getHomeController().open(args [1]);
+        checkUpdates();
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.LANGUAGE_LIBRARY)) {
-        start(new String [0]);
+        showDefaultHomeFrame();
         final String languageLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
@@ -657,28 +680,31 @@ public class SweetHome3D extends HomeApplication {
                 break;
               }
             }
+            checkUpdates();
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
-        start(new String [0]);
+        showDefaultHomeFrame();
         final String furnitureLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
             // Import furniture library with a dummy controller
             createHomeFrameController(createHome()).getHomeController().importFurnitureLibrary(furnitureLibraryName);
+            checkUpdates();
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.TEXTURES_LIBRARY)) {
-        start(new String [0]);
+        showDefaultHomeFrame();
         final String texturesLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
             // Import textures library with a dummy controller
             createHomeFrameController(createHome()).getHomeController().importTexturesLibrary(texturesLibraryName);
+            checkUpdates();
           }
         });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.PLUGIN)) {
-        start(new String [0]);
+        showDefaultHomeFrame();
         final String pluginName = args [1];
         EventQueue.invokeLater(new Runnable() {
           public void run() {
@@ -687,11 +713,22 @@ public class SweetHome3D extends HomeApplication {
             if (homeController instanceof HomePluginController) {
               ((HomePluginController)homeController).importPlugin(pluginName);
             }
+            checkUpdates();
           }
         });
       }
-    } else if (getHomes().isEmpty()) {
-      if (autoRecoveryManager != null) {
+    } else { 
+      showDefaultHomeFrame();
+      checkUpdates();
+    }
+  }
+
+  /**
+   * Shows a home frame, either a new one when no home is opened, or the last created home frame.  
+   */
+  public void showDefaultHomeFrame() {
+    if (getHomes().isEmpty()) {
+      if (this.autoRecoveryManager != null) {
         this.autoRecoveryManager.openRecoveredHomes();
       }
       if (getHomes().isEmpty()) {
@@ -719,11 +756,28 @@ public class SweetHome3D extends HomeApplication {
           }
         }
       }
-
+ 
       showHomeFrame(home);
     }
   }
 
+  /**
+   * Check updates if needed.
+   */
+  private void checkUpdates() {
+    if (this.checkUpdatesNeeded) {
+      this.checkUpdatesNeeded = false;
+      // Delay updates checking to let program launch finish
+      new Timer(500, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            ((Timer)ev.getSource()).stop();
+            // Check updates with a dummy controller
+            createHomeFrameController(createHome()).getHomeController().checkUpdates(true);
+          }
+        }).start();
+    }
+  }
+  
   /**
    * A file content manager that records the last directories for each content
    * in Java preferences.

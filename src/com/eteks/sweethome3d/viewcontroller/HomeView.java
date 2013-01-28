@@ -260,6 +260,12 @@ public interface HomeView extends View {
   public abstract boolean isClipboardEmpty();
 
   /**
+   * Displays the given message and returns <code>false</code> if the user 
+   * doesn't want to be informed of the displayed updates and <code>showOnlyMessage</code> is <code>false</code>. 
+   */
+  public abstract boolean showUpdatesMessage(String updatesMessage, boolean showOnlyMessage);
+  
+  /**
    * Execute <code>runnable</code> asynchronously in the thread 
    * that manages toolkit events.  
    */

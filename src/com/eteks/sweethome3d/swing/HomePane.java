@@ -38,6 +38,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -78,8 +79,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -116,6 +115,7 @@ import javax.swing.KeyStroke;
 import javax.swing.LayoutFocusTraversalPolicy;
 import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -2607,16 +2607,12 @@ public class HomePane extends JRootPane implements HomeView {
                 if (planView3DSplitPane.getRightComponent().getHeight() == 0) {
                   // If the 3D view is invisible, make it appear during a while
                   planView3DSplitPane.setDividerLocation(dividerLocation - 2);
-                  Executors.newSingleThreadScheduledExecutor().schedule(
-                      new Runnable() {
-                        public void run() {
-                          EventQueue.invokeLater(new Runnable() {
-                              public void run() {
-                                planView3DSplitPane.setDividerLocation(dividerLocation);
-                              }
-                            });
-                        }
-                      }, 1, TimeUnit.SECONDS);
+                  new Timer(1000, new ActionListener() {
+                      public void actionPerformed(ActionEvent ev) {
+                        ((Timer)ev.getSource()).stop();
+                        planView3DSplitPane.setDividerLocation(dividerLocation);
+                      }
+                    }).start();
                 }
               }
               
@@ -3319,6 +3315,19 @@ public class HomePane extends JRootPane implements HomeView {
     String messageFormat = this.preferences.getLocalizedString(HomePane.class, "about.message");
     String aboutVersion = this.controller.getVersion();
     String message = String.format(messageFormat, aboutVersion, System.getProperty("java.version"));
+    JComponent messagePane = createEditorPane(message);
+    
+    String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
+    Icon   icon  = new ImageIcon(HomePane.class.getResource(
+        this.preferences.getLocalizedString(HomePane.class, "about.icon")));
+    JOptionPane.showMessageDialog(this, messagePane, title,  
+        JOptionPane.INFORMATION_MESSAGE, icon);
+  }
+
+  /**
+   * Returns a component able to display message with active links.
+   */
+  private JComponent createEditorPane(String message) {
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
@@ -3331,12 +3340,50 @@ public class HomePane extends JRootPane implements HomeView {
         }
       }
     });
+    return messagePane;
+  }
+
+  /**
+   * Displays the given message and returns <code>false</code> if the user 
+   * doesn't want to be informed of the shown updates anymore. 
+   */
+  public boolean showUpdatesMessage(String updatesMessage, boolean showOnlyMessage) {
+    JPanel updatesPanel = new JPanel(new GridBagLayout());
+    final JScrollPane messageScrollPane = new JScrollPane(createEditorPane(updatesMessage));
+    messageScrollPane.setPreferredSize(new Dimension(500, 400));
+    messageScrollPane.addAncestorListener(new AncestorListener() {
+        public void ancestorAdded(AncestorEvent ev) {
+          // Force view position to the origin
+          messageScrollPane.getViewport().setViewPosition(new Point(0, 0));
+        }
+
+        public void ancestorRemoved(AncestorEvent ev) {
+        }
+
+        public void ancestorMoved(AncestorEvent ev) {
+        }
+      });
+    updatesPanel.add(messageScrollPane, new GridBagConstraints(
+        0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+
+    // Add a check box that lets user choose whether he wants to display the update again at next program launch
+    JCheckBox doNotDisplayShownUpdatesCheckBox = new JCheckBox(
+        SwingTools.getLocalizedLabelText(this.preferences, HomePane.class, "doNotDisplayShownUpdatesCheckBox.text"));
+    if (!OperatingSystem.isMacOSX()) {
+      doNotDisplayShownUpdatesCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          this.preferences.getLocalizedString(HomePane.class, "doNotDisplayShownUpdatesCheckBox.mnemonic")).getKeyCode());
+    }
+    if (!showOnlyMessage) {
+      updatesPanel.add(doNotDisplayShownUpdatesCheckBox, new GridBagConstraints(
+          0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    }
     
-    String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
-    Icon   icon  = new ImageIcon(HomePane.class.getResource(
-        this.preferences.getLocalizedString(HomePane.class, "about.icon")));
-    JOptionPane.showMessageDialog(this, messagePane, title,  
-        JOptionPane.INFORMATION_MESSAGE, icon);
+    SwingTools.showMessageDialog(this, updatesPanel, 
+        this.preferences.getLocalizedString(HomePane.class, "showUpdatesMessage.title"), 
+        JOptionPane.PLAIN_MESSAGE, doNotDisplayShownUpdatesCheckBox);
+    return !doNotDisplayShownUpdatesCheckBox.isSelected();
   }
 
   /**
