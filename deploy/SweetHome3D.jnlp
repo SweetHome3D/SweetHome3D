@@ -65,6 +65,7 @@
     <jar href="lib/batik-svgpathparser-1.7.jar"          part="Batik"       download="lazy"/>
     <jar href="lib/jmf.jar"                              part="JMF"         download="lazy"/>    
     <property name="com.eteks.sweethome3d.deploymentInformation" value="Java Web Start"/>
+    <property name="com.eteks.sweethome3d.applicationId"         value="SweetHome3D#JavaWebStart"/>
   </resources>
  
   <resources os="Windows" arch="x86">
