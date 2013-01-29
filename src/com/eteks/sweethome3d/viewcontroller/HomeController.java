@@ -2528,7 +2528,7 @@ public class HomeController implements Controller {
    * <code>operatingSystem</code> an optional regular expression for the target OS,
    * <code>inherits</code> the id of an other <code>update</code> element with the same version,
    * <code>date</code> using <code>yyyy-MM-ddThh:mm:ss<code> or <code>yyyy-MM-dd</code> format 
-   * at GMT and <code>comment</code> element possibly containing HTML.
+   * at GMT and <code>comment</code> element possibly containing XHTML.
    */
   private class UpdatesHandler extends DefaultHandler {
     private final URL                       baseUrl;
