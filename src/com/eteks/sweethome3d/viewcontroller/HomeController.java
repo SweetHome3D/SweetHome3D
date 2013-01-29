@@ -2575,7 +2575,7 @@ public class HomeController implements Controller {
         // Reproduce comment content
         this.comment.append("<" + name);
         for (int i = 0; i < attributes.getLength(); i++) {
-          this.comment.append(attributes.getQName(i) + "=\"" + attributes.getValue(i) + "\"");
+          this.comment.append(" " + attributes.getQName(i) + "=\"" + attributes.getValue(i) + "\"");
         }
         this.comment.append(">");
       } else if (this.inUpdate && "comment".equals(name)) {
