@@ -2323,10 +2323,11 @@ public class HomeController implements Controller {
       
       // Filter updates according to application version and libraries version
       Map<Library, List<Update>> availableUpdates = new LinkedHashMap<Library, List<Update>>();
+      long now = System.currentTimeMillis();
       if (this.application != null) {
         String applicationId = this.application.getId();
         List<Update> applicationUpdates = getAvailableUpdates(updatesHandler.getUpdates(applicationId), 
-            this.application.getVersion(), minDate);
+            this.application.getVersion(), minDate, now);
         if (!applicationUpdates.isEmpty()) {
           availableUpdates.put(null, applicationUpdates);
         }
@@ -2339,8 +2340,8 @@ public class HomeController implements Controller {
         String libraryId = library.getId();
         if (libraryId != null 
             && !updatedLibraryIds.contains(libraryId)) { 
-          List<Update> libraryUpdates = getAvailableUpdates(updatesHandler.getUpdates(libraryId), library.getVersion(),
-              minDate);
+          List<Update> libraryUpdates = getAvailableUpdates(updatesHandler.getUpdates(libraryId), 
+              library.getVersion(), minDate, now);
           if (!libraryUpdates.isEmpty()) {
             availableUpdates.put(library, libraryUpdates);
             // Ignore older libraries with same ID
@@ -2366,7 +2367,7 @@ public class HomeController implements Controller {
    * If no update has a date greater that <code>minDate</code>, an empty list is returned.
    * Caution : this method is called out of the Event Dispatch Thread.
    */
-  private List<Update> getAvailableUpdates(List<Update> updates, String version, Long minDate) {
+  private List<Update> getAvailableUpdates(List<Update> updates, String version, Long minDate, long maxDate) {
     if (updates != null) {
       boolean recentUpdates = false;
       List<Update> availableUpdates = new ArrayList<Update>();      
@@ -2379,7 +2380,9 @@ public class HomeController implements Controller {
             && (maxVersion == null || OperatingSystem.compareVersions(version, maxVersion) < 0)
             && (operatingSystem == null || System.getProperty("os.name").matches(operatingSystem))) {
           Date date = update.getDate();
-          if (date == null || minDate == null || date.getTime() >= minDate) {
+          if (date == null 
+              || ((minDate == null || date.getTime() >= minDate) 
+                  && date.getTime() < maxDate)) {
             availableUpdates.add(update);
             recentUpdates = true;
           }
