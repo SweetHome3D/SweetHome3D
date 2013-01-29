@@ -653,17 +653,7 @@ public class AppletApplication extends HomeApplication {
    */
   @Override
   public String getVersion() {
-    String applicationVersion = getUserPreferences().getLocalizedString(
-        AppletApplication.class, "applicationVersion");
-    try {
-      String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
-      if (versionInformation != null) {
-        applicationVersion += " " + versionInformation;
-      }
-    } catch (AccessControlException ex) {
-      // Ignore com.eteks.sweethome3d.deploymentInformation property since it can't be read
-    }
-    return applicationVersion;
+    return getUserPreferences().getLocalizedString(AppletApplication.class, "applicationVersion");
   }
   
   /**

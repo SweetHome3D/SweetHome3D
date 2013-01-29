@@ -26,6 +26,7 @@ import java.io.InterruptedIOException;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -1571,11 +1572,20 @@ public class HomeController implements Controller {
   }
   
   /**
-   * Returns the version of the application.
+   * Returns the version of the application for display purpose.
    */
   public String getVersion() {
     if (this.application != null) {
-      return this.application.getVersion();
+      String applicationVersion = this.application.getVersion();
+      try {
+        String deploymentInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
+        if (deploymentInformation != null) {
+          applicationVersion += " " + deploymentInformation;
+        }
+      } catch (AccessControlException ex) {
+        // Ignore com.eteks.sweethome3d.deploymentInformation property since it can't be read
+      }
+      return applicationVersion;
     } else {
       return "";
     }
