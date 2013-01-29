@@ -3316,6 +3316,7 @@ public class HomePane extends JRootPane implements HomeView {
     String aboutVersion = this.controller.getVersion();
     String message = String.format(messageFormat, aboutVersion, System.getProperty("java.version"));
     JComponent messagePane = createEditorPane(message);
+    messagePane.setOpaque(false);
     
     String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
     Icon   icon  = new ImageIcon(HomePane.class.getResource(
@@ -3330,7 +3331,6 @@ public class HomePane extends JRootPane implements HomeView {
   private JComponent createEditorPane(String message) {
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
-    messagePane.setOpaque(false);
     messagePane.setEditable(false);
     // Add a listener that displays hyperlinks content in browser
     messagePane.addHyperlinkListener(new HyperlinkListener() {
