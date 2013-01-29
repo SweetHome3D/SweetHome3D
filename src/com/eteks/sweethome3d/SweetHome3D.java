@@ -310,7 +310,12 @@ public class SweetHome3D extends HomeApplication {
    * Returns information about the version of this application.
    */
   public String getVersion() {
-    return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationVersion");
+    String applicationVersion = System.getProperty("com.eteks.sweethome3d.applicationVersion");
+    if (applicationVersion != null) {
+      return applicationVersion;
+    } else {
+      return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationVersion");
+    }
   }
 
   /**
