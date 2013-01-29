@@ -244,6 +244,8 @@
 			<string>true</string>
 			<key>com.eteks.sweethome3d.deploymentInformation</key>
 			<string>Java 3D 1.5</string>
+			<key>com.eteks.sweethome3d.applicationId</key>
+			<string>SweetHome3D#Installer</string>
 		</dict>
 	</dict>
 </dict>

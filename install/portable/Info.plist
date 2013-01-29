@@ -232,6 +232,7 @@
 		<string>-Dcom.eteks.sweethome3d.preferencesFolder=$APP_ROOT/../data</string>
 		<string>-Dcom.eteks.sweethome3d.applicationFolders=$APP_ROOT/../data</string>
 		<string>-Dcom.eteks.sweethome3d.deploymentInformation=portable Java 3D 1.6 pre5 / JOGL 2.0 rc11</string>
+		<string>-Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</string>
 	</array>
 </dict>
 </plist>

@@ -248,6 +248,8 @@
 			<string>$APP_PACKAGE/../../../../data</string>
 			<key>com.eteks.sweethome3d.deploymentInformation</key>
 			<string>portable Java 3D 1.5.2</string>
+			<key>com.eteks.sweethome3d.applicationId</key>
+			<string>SweetHome3D#Portable</string>
 		</dict>
 	</dict>
 </dict>

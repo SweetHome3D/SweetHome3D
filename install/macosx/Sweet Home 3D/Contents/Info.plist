@@ -230,6 +230,7 @@
 		<string>-Dsweethome3d.bundle=true</string>
 		<string>-Dcom.eteks.sweethome3d.j3d.useOffScreen3DView=true</string>
 		<string>-Dcom.eteks.sweethome3d.deploymentInformation=Java 3D 1.6 pre5 / JOGL 2.0 rc11</string>
+		<string>-Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</string>
 	</array>
 </dict>
 </plist>
