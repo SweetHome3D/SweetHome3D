@@ -581,7 +581,6 @@ public class AppletApplication extends HomeApplication {
       HomeAppletRecorder homeAppletRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
           getURLStringWithCodeBase(codeBase, readHomeURL), 
           getURLStringWithCodeBase(codeBase, listHomesURL));
-      homeAppletRecorder.setReferer(this.applet.getDocumentBase().toExternalForm());
       this.homeRecorder = homeAppletRecorder;
     }
     return this.homeRecorder;
