@@ -128,15 +128,6 @@ public class AppletApplication extends HomeApplication {
     URL codeBase = applet.getCodeBase();
 
     try {
-      // Set User Agent to follow statistics on used operating systems
-      String agent = System.getProperty("http.agent");
-      if (agent == null) {
-        agent = this.name + "/" + getVersion()  
-            + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + ")";
-      } else {
-        agent = this.name + "/" + getVersion() + " " + agent;
-      }
-      System.setProperty("http.agent", agent);
       // Force offscreen in 3D view under Plugin 2 / Java 6 / Mac OS X  
       boolean plugin2 = applet.getAppletContext() != null
                      && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager");
@@ -578,10 +569,9 @@ public class AppletApplication extends HomeApplication {
       final String writeHomeURL = getAppletParameter(this.applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
       final String readHomeURL = getAppletParameter(this.applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
       final String listHomesURL = getAppletParameter(this.applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
-      HomeAppletRecorder homeAppletRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
+      this.homeRecorder =  new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
           getURLStringWithCodeBase(codeBase, readHomeURL), 
           getURLStringWithCodeBase(codeBase, listHomesURL));
-      this.homeRecorder = homeAppletRecorder;
     }
     return this.homeRecorder;
   }
