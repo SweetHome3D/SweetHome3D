@@ -48,6 +48,8 @@ public class HomeAppletRecorder implements HomeRecorder {
   private final String           readHomeURL;
   private final String           listHomesURL;
   private final ContentRecording contentRecording;
+  private long                   availableHomesCacheTime;
+  private String []              availableHomesCache;
 
   /**
    * Creates a recorder that will use the URLs in parameter to write, read and list homes.
@@ -125,7 +127,9 @@ public class HomeAppletRecorder implements HomeRecorder {
       in.close();
       if (read != '1') {
         throw new RecorderException("Saving home " + name + " failed");
-      } 
+      }
+      // Reset availableHomes to force a new request at next getAvailableHomes or exists call
+      this.availableHomesCache = null; 
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Save " + name + " interrupted");
     } catch (IOException ex) {
@@ -178,7 +182,14 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns <code>true</code> if the home <code>name</code> exists.
    */
   public boolean exists(String name) throws RecorderException {
-    String [] availableHomes = getAvailableHomes();
+    String [] availableHomes;    
+    if (this.availableHomesCache != null 
+        && this.availableHomesCacheTime + 100 > System.currentTimeMillis()) {
+      // Return available homes list in cache if the cache is less than 100 ms old  
+      availableHomes = this.availableHomesCache;
+    } else {
+      availableHomes = getAvailableHomes();
+    }
     for (String home : availableHomes) {
       if (home.equals(name)) {
         return true;
@@ -209,10 +220,12 @@ public class HomeAppletRecorder implements HomeRecorder {
       }
       String [] availableHomes = homes.toString().split("\n");
       if (availableHomes.length == 1 && availableHomes [0].length() == 0) {
-        return new String [0];
+        this.availableHomesCache = new String [0];
       } else {
-        return availableHomes;
+        this.availableHomesCache = availableHomes;
       }
+      this.availableHomesCacheTime = System.currentTimeMillis();
+      return this.availableHomesCache;
     } catch (IOException ex) {
       throw new RecorderException("Can't read homes from server", ex);
     } finally {
