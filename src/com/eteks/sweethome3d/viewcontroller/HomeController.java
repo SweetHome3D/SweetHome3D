@@ -2243,7 +2243,7 @@ public class HomeController implements Controller {
 
       // Read updates from XML content in updatesUrl in a threaded task
       Callable<Void> checkUpdatesTask = new Callable<Void>() {
-          public Void call() throws IOException {
+          public Void call() throws IOException, SAXException {
             final Map<Library, List<Update>> availableUpdates = readAvailableUpdates(url, libraries, updatesMinimumDate);
             getView().invokeLater(new Runnable () {
                 public void run() {
@@ -2267,11 +2267,11 @@ public class HomeController implements Controller {
       ThreadedTaskController.ExceptionHandler exceptionHandler = 
           new ThreadedTaskController.ExceptionHandler() {
             public void handleException(Exception ex) {
-              if (!(ex instanceof InterruptedIOException)) {
+              if (!displayOnlyIfNewUpdates && !(ex instanceof InterruptedIOException)) {
                 if (ex instanceof IOException) {
-                  String message = preferences.getLocalizedString(
-                      HomeController.class, "checkUpdatesError", ex);
-                  getView().showError(message);
+                  getView().showError(preferences.getLocalizedString(HomeController.class, "checkUpdatesIOError", ex));
+                } else if (ex instanceof SAXException) {
+                  getView().showError(preferences.getLocalizedString(HomeController.class, "checkUpdatesXMLError", ex.getMessage()));
                 } else {
                   ex.printStackTrace();
                 }
@@ -2289,6 +2289,7 @@ public class HomeController implements Controller {
               }
               
               public void invokeLater(Runnable runnable) {
+                getView().invokeLater(runnable);
               }
             };
           }
@@ -2323,7 +2324,7 @@ public class HomeController implements Controller {
    * Reads the available updates from the XML stream contained in the given <code>url</code>.
    * Caution : this method is called out of the Event Dispatch Thread.
    */
-  private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate) throws IOException {
+  private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate) throws IOException, SAXException {
     try {
       SAXParserFactory factory = SAXParserFactory.newInstance();
       factory.setValidating(false);
@@ -2361,13 +2362,13 @@ public class HomeController implements Controller {
       }
       return availableUpdates;
     } catch (ParserConfigurationException ex) {
-      throw new IOException(ex);
+      throw new SAXException(ex);
     } catch (SAXException ex) {
       // If task was interrupted (see UpdatesHandler implementation), report the interruption 
       if (ex.getCause() instanceof InterruptedIOException) {
         throw (InterruptedIOException)ex.getCause();
       } else {
-        throw new IOException(ex);
+        throw ex;
       }
     }
   }
