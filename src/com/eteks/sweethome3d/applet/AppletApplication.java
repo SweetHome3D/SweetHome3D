@@ -132,7 +132,7 @@ public class AppletApplication extends HomeApplication {
       String agent = System.getProperty("http.agent");
       if (agent == null) {
         agent = this.name + "/" + getVersion()  
-            + " (" + System.getProperty("os.name") + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version") + ")";
+            + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + ")";
       } else {
         agent = this.name + "/" + getVersion() + " " + agent;
       }

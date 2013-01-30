@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
@@ -488,6 +489,9 @@ public class SweetHome3D extends HomeApplication {
       // performance
       System.setProperty("apple.awt.graphics.UseQuartz", "true");
     }
+    // Set User Agent to follow statistics on used operating systems 
+    System.setProperty("http.agent", getId() + "/" + getVersion()  
+         + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + "; " + Locale.getDefault() + ")");
   }
 
   /**
