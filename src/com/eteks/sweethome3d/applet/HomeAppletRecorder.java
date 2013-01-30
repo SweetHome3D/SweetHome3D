@@ -48,6 +48,7 @@ public class HomeAppletRecorder implements HomeRecorder {
   private final String           readHomeURL;
   private final String           listHomesURL;
   private final ContentRecording contentRecording;
+  private String                 referer;
 
   /**
    * Creates a recorder that will use the URLs in parameter to write, read and list homes.
@@ -102,6 +103,9 @@ public class HomeAppletRecorder implements HomeRecorder {
       connection.setDoOutput(true);
       connection.setDoInput(true);
       connection.setUseCaches(false);
+      if (this.referer != null) {
+        connection.setRequestProperty("Referer", this.referer);
+      }
       
       // Post home part
       OutputStream out = connection.getOutputStream();
@@ -153,6 +157,9 @@ public class HomeAppletRecorder implements HomeRecorder {
       connection = new URL(readHomeURL).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
+      if (this.referer != null) {
+        connection.setRequestProperty("Referer", this.referer);
+      }
       in = new DefaultHomeInputStream(connection.getInputStream(), this.contentRecording);
       // Read home with HomeInputStream
       Home home = in.readHome();
@@ -197,6 +204,9 @@ public class HomeAppletRecorder implements HomeRecorder {
       // Open a stream to server 
       connection = new URL(this.listHomesURL).openConnection();
       connection.setUseCaches(false);
+      if (this.referer != null) {
+        connection.setRequestProperty("Referer", this.referer);
+      }
       in = connection.getInputStream();
       String contentEncoding = connection.getContentEncoding();
       if (contentEncoding == null) {
@@ -224,5 +234,19 @@ public class HomeAppletRecorder implements HomeRecorder {
         throw new RecorderException("Can't close connection", ex);
       }
     }
+  }
+  
+  /**
+   * Returns the referer used in HTTP requests.
+   */
+  public String getReferer() {
+    return this.referer;
+  }
+  
+  /**
+   * Sets the referer used in HTTP requests.
+   */
+  public void setReferer(String referer) {
+    this.referer = referer;
   }
 }
