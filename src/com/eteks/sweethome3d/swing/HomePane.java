@@ -87,6 +87,7 @@ import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -113,6 +114,7 @@ import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.RootPaneContainer;
 import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -3013,6 +3015,20 @@ public class HomePane extends JRootPane implements HomeView {
           controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, separateDialog.getY());
         }
       });
+    
+    // Copy action map and input map to enable shortcuts in the window
+    ActionMap actionMap = getActionMap();
+    separateDialog.getRootPane().setActionMap(actionMap);
+    InputMap inputMap = separateDialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    for (Object key : actionMap.allKeys()) {
+      Action action = actionMap.get(key);
+      KeyStroke accelerator = (KeyStroke)action.getValue(Action.ACCELERATOR_KEY);
+      if (key != ActionType.CLOSE
+          && key != ActionType.DETACH_3D_VIEW 
+          && accelerator != null) {
+        inputMap.put(accelerator, key);
+      }
+    }
 
     separateDialog.setBounds(x, y, width, height);
     separateDialog.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateDialog.getBounds()));
@@ -3026,7 +3042,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void attachView(View view) {
     this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
-    
+
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
     if (dummyComponent != null) {
       JComponent component = (JComponent)view;
@@ -3049,6 +3065,7 @@ public class HomePane extends JRootPane implements HomeView {
         parent.remove(componentIndex);
         parent.add(component, componentIndex);
       }
+      ((RootPaneContainer)window).getRootPane().setActionMap(null);
       window.dispose();
     }
   }
