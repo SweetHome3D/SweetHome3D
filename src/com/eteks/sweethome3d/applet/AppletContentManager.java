@@ -19,8 +19,17 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.HomeRecorder;
@@ -101,8 +110,29 @@ public class AppletContentManager extends FileContentManager {
       } else {
         String message = this.preferences.getLocalizedString(
             AppletContentManager.class, "showOpenDialog.message");
-        return (String)JOptionPane.showInputDialog(SwingUtilities.getRootPane((JComponent)parentView), 
-            message, getFileDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
+        final JList availableHomesList = new JList(availableHomes);
+        availableHomesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        availableHomesList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent ev) {
+              // Close the option pane when the user double clicks in the list
+              if (ev.getClickCount() == 2 && availableHomesList.getSelectedValue() != null) {                
+                ((JOptionPane)SwingUtilities.getAncestorOfClass(JOptionPane.class, availableHomesList)).
+                    setValue(JOptionPane.OK_OPTION);
+              }
+            }
+          });
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JLabel(message), BorderLayout.NORTH);
+        panel.add(new JScrollPane(availableHomesList), BorderLayout.CENTER);
+        if (JOptionPane.showConfirmDialog(SwingUtilities.getRootPane((JComponent)parentView), panel, 
+              getFileDialogTitle(false), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+          Object selectedValue = availableHomesList.getSelectedValue();
+          if (selectedValue != null) {
+            return (String)selectedValue;
+          } 
+        }
+        return null;
       }
     } else {
       return super.showOpenDialog(parentView, dialogTitle, contentType);
