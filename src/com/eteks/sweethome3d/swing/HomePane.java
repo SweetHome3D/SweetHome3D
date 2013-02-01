@@ -177,7 +177,6 @@ import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
-import com.sun.j3d.utils.geometry.Cylinder;
 
 /**
  * The MVC view that edits a home. 
