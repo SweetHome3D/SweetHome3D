@@ -240,6 +240,7 @@ public class NullableSpinner extends AutoCommitSpinner {
             preferences.getLengthUnit().centimeterToUnit(minimum), 
             preferences.getLengthUnit().centimeterToUnit(maximum), 
             preferences.getLengthUnit() == LengthUnit.INCH
+            || preferences.getLengthUnit() == LengthUnit.INCH_DECIMALS
               ? 0.125f : preferences.getLengthUnit().centimeterToUnit(0.5f));
       this.preferences = preferences;
     }

@@ -558,7 +558,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
                   }
                   controller.setCategory(userCategory);
                   float defaultWidth = 20;
-                  if (preferences.getLengthUnit() == LengthUnit.INCH) {
+                  LengthUnit lengthUnit = preferences.getLengthUnit();
+                  if (lengthUnit == LengthUnit.INCH
+                      || lengthUnit == LengthUnit.INCH_DECIMALS) {
                     defaultWidth = LengthUnit.inchToCentimeter(8);
                   }
                   controller.setWidth(defaultWidth);

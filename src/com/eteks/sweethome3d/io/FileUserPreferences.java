@@ -84,6 +84,7 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class FileUserPreferences extends UserPreferences {
   private static final String LANGUAGE                                  = "language";
   private static final String UNIT                                      = "unit";
+  private static final String EXTENSIBLE_UNIT                           = "extensibleUnit";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
   private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
   private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
@@ -250,8 +251,19 @@ public class FileUserPreferences extends UserPreferences {
     setPatternsCatalog(patternsCatalog);
 
     // Read other preferences 
-    setUnit(LengthUnit.valueOf(preferences.get(UNIT, 
-        defaultPreferences.getLengthUnit().name())));
+    LengthUnit defaultLengthUnit = defaultPreferences.getLengthUnit();
+    try {
+      // EXTENSIBLE_UNIT was added in version 4.0 to store new additional length unit 
+      // to avoid breaking program if an older version of FileUserPreferences reads new preferences
+      String extensibleUnit = preferences.get(EXTENSIBLE_UNIT, null);
+      if (extensibleUnit != null) {
+        setUnit(LengthUnit.valueOf(extensibleUnit));
+      } else {
+        setUnit(LengthUnit.valueOf(preferences.get(UNIT, defaultLengthUnit.name())));
+      }
+    } catch (IllegalArgumentException ex) {
+      setUnit(defaultLengthUnit);
+    }
     setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
         defaultPreferences.isFurnitureCatalogViewedInTree()));
     setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
@@ -705,7 +717,7 @@ public class FileUserPreferences extends UserPreferences {
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
-    preferences.put(UNIT, getLengthUnit().name());   
+    preferences.put(EXTENSIBLE_UNIT, getLengthUnit().name());   
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());

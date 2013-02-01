@@ -34,8 +34,10 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.security.AccessControlException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -75,10 +77,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JComboBox      languageComboBox;
   private JButton        languageLibraryImportButton;
   private JLabel         unitLabel;
-  private JRadioButton   centimeterRadioButton;
-  private JRadioButton   inchRadioButton;
-  private JRadioButton   millimeterRadioButton;
-  private JRadioButton   meterRadioButton;
+  private JComboBox      unitComboBox;
   private JLabel         furnitureCatalogViewLabel;
   private JRadioButton   treeRadioButton;
   private JRadioButton   listRadioButton;
@@ -191,57 +190,38 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     }
     
     if (controller.isPropertyEditable(UserPreferencesController.Property.UNIT)) {
-      // Create unit label and radio buttons bound to controller UNIT property
+      // Create unit label and combo box bound to controller UNIT property
       this.unitLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "unitLabel.text"));
-      this.centimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-          UserPreferencesPanel.class, "centimeterRadioButton.text"), 
-          controller.getUnit() == LengthUnit.CENTIMETER);
-      this.centimeterRadioButton.setActionCommand(LengthUnit.CENTIMETER.name());
-      this.inchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-          UserPreferencesPanel.class, "inchRadioButton.text"), 
-          controller.getUnit() == LengthUnit.INCH);
-      this.inchRadioButton.setActionCommand(LengthUnit.INCH.name());
-      this.millimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-          UserPreferencesPanel.class, "millimeterRadioButton.text"), 
-          controller.getUnit() == LengthUnit.MILLIMETER);
-      this.millimeterRadioButton.setActionCommand(LengthUnit.MILLIMETER.name());
-      this.meterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-          UserPreferencesPanel.class, "meterRadioButton.text"), 
-          controller.getUnit() == LengthUnit.METER);
-      this.meterRadioButton.setActionCommand(LengthUnit.METER.name());
-      final ButtonGroup unitButtonGroup = new ButtonGroup();
-      unitButtonGroup.add(this.centimeterRadioButton);
-      unitButtonGroup.add(this.inchRadioButton);
-      unitButtonGroup.add(this.millimeterRadioButton);
-      unitButtonGroup.add(this.meterRadioButton);
-
-      ItemListener unitChangeListener = new ItemListener() {
-          public void itemStateChanged(ItemEvent ev) {
-            controller.setUnit(LengthUnit.valueOf(unitButtonGroup.getSelection().getActionCommand())); 
+      this.unitComboBox = new JComboBox(LengthUnit.values());
+      final Map<LengthUnit, String> comboBoxTexts = new HashMap<LengthUnit, String>();
+      comboBoxTexts.put(LengthUnit.MILLIMETER, preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitComboBox.millimeter.text"));
+      comboBoxTexts.put(LengthUnit.CENTIMETER, preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitComboBox.centimeter.text"));
+      comboBoxTexts.put(LengthUnit.METER, preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitComboBox.meter.text"));
+      comboBoxTexts.put(LengthUnit.INCH, preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitComboBox.inch.text"));
+      comboBoxTexts.put(LengthUnit.INCH_DECIMALS, preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitComboBox.inchDecimals.text"));
+      this.unitComboBox.setRenderer(new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                        boolean cellHasFocus) {
+            return super.getListCellRendererComponent(list, comboBoxTexts.get(value), index, isSelected, cellHasFocus);
           }
-        };
-      this.centimeterRadioButton.addItemListener(unitChangeListener);
-      this.inchRadioButton.addItemListener(unitChangeListener);
-      this.millimeterRadioButton.addItemListener(unitChangeListener);
-      this.meterRadioButton.addItemListener(unitChangeListener);
+        });
+      this.unitComboBox.setSelectedItem(controller.getUnit());
+      this.unitComboBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setUnit((LengthUnit)unitComboBox.getSelectedItem());
+          }
+        });
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              switch (controller.getUnit()) {
-                case CENTIMETER :
-                  centimeterRadioButton.setSelected(true);
-                  break;
-                case INCH :
-                  inchRadioButton.setSelected(true);
-                  break;
-                case MILLIMETER :
-                  millimeterRadioButton.setSelected(true);
-                  break;
-                case METER :
-                  meterRadioButton.setSelected(true);
-                  break;
-              }
+              unitComboBox.setSelectedItem(controller.getUnit());
             }
           });
     }
@@ -732,14 +712,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.languageLabel.setLabelFor(this.languageComboBox);
       }
       if (this.unitLabel != null) {
-        this.centimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-            UserPreferencesPanel.class, "centimeterRadioButton.mnemonic")).getKeyCode());
-        this.inchRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-            UserPreferencesPanel.class, "inchRadioButton.mnemonic")).getKeyCode());
-        this.millimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-            UserPreferencesPanel.class, "millimeterRadioButton.mnemonic")).getKeyCode());
-        this.meterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-            UserPreferencesPanel.class, "meterRadioButton.mnemonic")).getKeyCode());
+        this.unitLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "unitLabel.mnemonic")).getKeyCode());
+        this.unitLabel.setLabelFor(this.unitComboBox);
       }
       if (this.furnitureCatalogViewLabel != null) {
         this.treeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
@@ -832,7 +807,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.languageComboBox, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 5), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 5), 0, 0));
       if (this.languageLibraryImportButton != null) {
         add(this.languageLibraryImportButton, new GridBagConstraints(
             2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -843,20 +818,11 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       // Second row
       add(this.unitLabel, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.centimeterRadioButton, new GridBagConstraints(
-          1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-      add(this.inchRadioButton, new GridBagConstraints(
-          2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-      // Third row
-      add(this.millimeterRadioButton, new GridBagConstraints(
-          1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, labelInsetsWithSpace, 0, 0));
-      add(this.meterRadioButton, new GridBagConstraints(
-          2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsetsWithSpace, 0, 0));
+      add(this.unitComboBox, new GridBagConstraints(
+          1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsetsWithSpace, 0, 0));
+      // Keep third row empty (used to contain unit radio buttons)
     }
     if (this.furnitureCatalogViewLabel != null) {
       // Fourth row
@@ -1065,17 +1031,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       float lengthInCentimeter = getLength();
       unit = controller.getUnit();
       switch (controller.getUnit()) {
-        case CENTIMETER :
-          setStepSize(centimeterStepSize);
-          break;
-        case INCH :
-          setStepSize(inchStepSize);
-          break;
         case MILLIMETER :
           setStepSize(millimeterStepSize);
           break;
+        case CENTIMETER :
+          setStepSize(centimeterStepSize);
+          break;
         case METER :
           setStepSize(meterStepSize);
+          break;
+        case INCH :
+        case INCH_DECIMALS :
+          setStepSize(inchStepSize);
           break;
       }
       setLength(lengthInCentimeter);

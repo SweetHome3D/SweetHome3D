@@ -7194,7 +7194,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else { 
         if (this.newWall == null) {
           // Create a new wall once user entered the start point of the first wall 
-          float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
+          LengthUnit lengthUnit = preferences.getLengthUnit();
+          float defaultLength = lengthUnit == LengthUnit.INCH || lengthUnit == LengthUnit.INCH_DECIMALS
               ? LengthUnit.footToCentimeter(10) : 300;
           this.xLastEnd = this.xStart + defaultLength;
           this.yLastEnd = this.yStart;
@@ -8667,7 +8668,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else { 
         if (this.newDimensionLine == null) {
           // Create a new dimension line once user entered its start point 
-          float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
+          LengthUnit lengthUnit = preferences.getLengthUnit();
+          float defaultLength = lengthUnit == LengthUnit.INCH || lengthUnit == LengthUnit.INCH_DECIMALS 
               ? LengthUnit.footToCentimeter(3) : 100;
           this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, 
               this.xStart + defaultLength, this.yStart, 0);
@@ -9574,7 +9576,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else { 
         if (this.newRoom == null) {
           // Create a new side once user entered the start point of the room 
-          float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
+          LengthUnit lengthUnit = preferences.getLengthUnit();
+          float defaultLength = lengthUnit == LengthUnit.INCH || lengthUnit == LengthUnit.INCH_DECIMALS 
               ? LengthUnit.footToCentimeter(10) : 300;
           this.newRoom = createAndSelectRoom(this.xPreviousPoint, this.yPreviousPoint, 
                                              this.xPreviousPoint + defaultLength, this.yPreviousPoint);

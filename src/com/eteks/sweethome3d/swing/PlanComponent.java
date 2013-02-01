@@ -2328,7 +2328,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private float getMainGridSize(float gridScale) {
     float [] mainGridSizes;
-    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+    LengthUnit lengthUnit = this.preferences.getLengthUnit();
+    if (lengthUnit == LengthUnit.INCH 
+        || lengthUnit == LengthUnit.INCH_DECIMALS) {
       // Use a grid in inch and foot with a minimum grid increment of 1 inch
       float oneFoot = 2.54f * 12;
       mainGridSizes = new float [] {oneFoot, 3 * oneFoot, 6 * oneFoot, 
@@ -2350,7 +2352,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private float getGridSize(float gridScale) {
     float [] gridSizes;
-    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+    LengthUnit lengthUnit = this.preferences.getLengthUnit();
+    if (lengthUnit == LengthUnit.INCH 
+        || lengthUnit == LengthUnit.INCH_DECIMALS) {
       // Use a grid in inch and foot with a minimum grid increment of 1 inch
       float oneFoot = 2.54f * 12;
       gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, oneFoot, 3 * oneFoot, 6 * oneFoot, 
@@ -4775,7 +4779,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (toolTipEditedProperties [i] == PlanController.EditableProperty.ANGLE
           || toolTipEditedProperties [i] == PlanController.EditableProperty.ARC_EXTENT) {
         unitLabel = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, "degreeLabel.text"));
-      } else if (this.preferences.getLengthUnit() != LengthUnit.INCH) {
+      } else if (this.preferences.getLengthUnit() != LengthUnit.INCH
+                 || this.preferences.getLengthUnit() != LengthUnit.INCH_DECIMALS) {
         unitLabel = new JLabel(" " + this.preferences.getLengthUnit().getName());
       }
       
@@ -5298,7 +5303,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (Math.abs(value) < 1E-5) {
         value = 0; // Avoid "-0" text
       }
-      if (preferences.getLengthUnit() == LengthUnit.INCH) {
+      LengthUnit lengthUnit = preferences.getLengthUnit();
+      if (lengthUnit == LengthUnit.INCH 
+          || lengthUnit == LengthUnit.INCH_DECIMALS) {
         text = format.format(LengthUnit.centimeterToFoot((float)value)) + "'"; 
       } else {
         text = format.format(value / 100);
