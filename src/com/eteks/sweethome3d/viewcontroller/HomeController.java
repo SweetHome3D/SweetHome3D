@@ -1491,7 +1491,7 @@ public class HomeController implements Controller {
           public Void call() throws RecorderException {
             // Read home with application recorder
             Home openedHome = application.getHomeRecorder().readHome(homeName);
-            openedHome.setName(homeName); 
+            openedHome.setName(homeName);
             addHomeToApplication(openedHome);
             return null;
           }
@@ -1698,11 +1698,22 @@ public class HomeController implements Controller {
     if (this.home.getVersion() <= Home.CURRENT_VERSION
         || !homeName.equals(this.home.getName()) 
         || getView().confirmSaveNewerHome(homeName)) {
-      // Save home in a threaded task
+      final String errorMessage = preferences.getLocalizedString(
+          HomeController.class, "saveError", homeName);
+      final Home savedHome; 
+      try {
+        // Clone home to save it safely in a threaded task
+        savedHome = this.home.clone();
+      } catch (RuntimeException ex) {
+        // If home data is corrupted some way and couldn't be clone 
+        // warn the user his home couldn't be saved
+        getView().showError(errorMessage);
+        throw ex;
+      }
       Callable<Void> saveTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               // Write home with application recorder
-              application.getHomeRecorder(recorderType).writeHome(home, homeName);
+              application.getHomeRecorder(recorderType).writeHome(savedHome, homeName);
               updateSavedHome(homeName, postSaveTask);
               return null;
             }
@@ -1712,9 +1723,7 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 if (ex instanceof RecorderException) {
-                  String message = preferences.getLocalizedString(
-                      HomeController.class, "saveError", homeName);
-                  getView().showError(message);
+                  getView().showError(errorMessage);
                 } else {
                   ex.printStackTrace();
                 }
