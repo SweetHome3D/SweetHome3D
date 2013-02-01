@@ -24,6 +24,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -595,8 +596,9 @@ public class HomeEnvironment implements Serializable, Cloneable {
   public void setVideoCameraPath(List<Camera> cameraPath) {
     if (this.cameraPath != cameraPath) {
       List<Camera> oldCameraPath = this.cameraPath;
-      this.cameraPath = cameraPath;
-      if (this.cameraPath == null) {
+      if (cameraPath != null) {
+        this.cameraPath = new ArrayList<Camera>(cameraPath);
+      } else {
         this.cameraPath = Collections.emptyList();
       }
       this.propertyChangeSupport.firePropertyChange(Property.VIDEO_CAMERA_PATH.name(), oldCameraPath, cameraPath);
@@ -611,6 +613,10 @@ public class HomeEnvironment implements Serializable, Cloneable {
   public HomeEnvironment clone() {
     try {
       HomeEnvironment clone = (HomeEnvironment)super.clone();
+      clone.cameraPath = new ArrayList<Camera>(this.cameraPath.size());
+      for (Camera camera : this.cameraPath) {
+        clone.cameraPath.add(camera.clone());
+      }
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
       return clone;
     } catch (CloneNotSupportedException ex) {
