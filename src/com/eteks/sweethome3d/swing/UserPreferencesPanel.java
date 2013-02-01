@@ -807,21 +807,21 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.languageComboBox, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 5), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, 5, 0), 0, 0));
       if (this.languageLibraryImportButton != null) {
         add(this.languageLibraryImportButton, new GridBagConstraints(
             2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 5, 5, 0), 0, 0));
       }
     }
     if (this.unitLabel != null) {
       // Second row
       add(this.unitLabel, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsetsWithSpace, 0, 0));
+          GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.unitComboBox, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, rightComponentInsetsWithSpace, 0, 0));
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
       // Keep third row empty (used to contain unit radio buttons)
     }
     if (this.furnitureCatalogViewLabel != null) {
