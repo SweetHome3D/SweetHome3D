@@ -62,10 +62,11 @@
         <exclude name="**/*.java"/>
         <exclude name="**/package.html"/> 
         <exclude name="com/eteks/sweethome3d/io/*Catalog*.properties"/>
-        <exclude name="com/eteks/sweethome3d/io/resources/*"/>
-        <exclude name="com/eteks/sweethome3d/io/resources/contributions/*"/>
-        <exclude name="com/eteks/sweethome3d/io/resources/textures/*"/>
+        <exclude name="com/eteks/sweethome3d/io/resources/**"/>
         <exclude name="**/help/**"/> 
+      </fileset>
+      <fileset dir="src">
+        <include name="com/eteks/sweethome3d/io/resources/patterns/**"/>
       </fileset>
     </copy>
     
