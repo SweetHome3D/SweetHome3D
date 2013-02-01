@@ -1,0 +1,46 @@
+# Sweet Home 3D, Copyright (c) 2006-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, and available at http://www.gnu.org/copyleft/gpl.txt
+newmtl bottom
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+    
+newmtl top
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl left
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl right
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl back
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl front
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
