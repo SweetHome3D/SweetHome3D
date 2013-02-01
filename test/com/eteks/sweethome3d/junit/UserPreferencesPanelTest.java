@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.undo.UndoableEditSupport;
@@ -107,14 +108,8 @@ public class UserPreferencesPanelTest extends TestCase {
     UserPreferencesController controller = 
         new UserPreferencesController(preferences, new SwingViewFactory(), null);
     UserPreferencesPanel panel = (UserPreferencesPanel)controller.getView();
-    JRadioButton centimeterRadioButton = 
-        (JRadioButton)TestUtilities.getField(panel, "centimeterRadioButton");
-    JRadioButton inchRadioButton = 
-        (JRadioButton)TestUtilities.getField(panel, "inchRadioButton");
-    JRadioButton meterRadioButton = 
-        (JRadioButton)TestUtilities.getField(panel, "meterRadioButton");
-    JRadioButton millimeterRadioButton = 
-        (JRadioButton)TestUtilities.getField(panel, "millimeterRadioButton");
+    JComboBox unitComboBox = 
+        (JComboBox)TestUtilities.getField(panel, "unitComboBox");
     JCheckBox    magnetismCheckBox = 
         (JCheckBox)TestUtilities.getField(panel, "magnetismCheckBox");
     JCheckBox    rulersCheckBox = 
@@ -134,10 +129,7 @@ public class UserPreferencesPanelTest extends TestCase {
     JSpinner newHomeWallHeightSpinner = 
         (JSpinner)TestUtilities.getField(panel, "newWallHeightSpinner");
     // Check panel components value
-    assertTrue("Centimeter radio button isn't selected", centimeterRadioButton.isSelected());
-    assertFalse("Inch radio button is selected",  inchRadioButton.isSelected());
-    assertFalse("Meter radio button is selected", meterRadioButton.isSelected());
-    assertFalse("Millimeter radio button is selected", millimeterRadioButton.isSelected());
+    assertEquals("Centimeter isn't the current unit", LengthUnit.CENTIMETER, unitComboBox.getSelectedItem());
     assertTrue("Magnestism isn't selected", magnetismCheckBox.isSelected());
     assertTrue("Rulers isn't selected", rulersCheckBox.isSelected());
     assertTrue("Grid isn't selected", gridCheckBox.isSelected());
@@ -152,7 +144,7 @@ public class UserPreferencesPanelTest extends TestCase {
         newHomeWallHeightSpinner.getValue(), defaultPreferences.getNewWallHeight());
     
     // 3. Change panel values
-    inchRadioButton.setSelected(true);
+    unitComboBox.setSelectedItem(LengthUnit.INCH);
     magnetismCheckBox.setSelected(false);
     rulersCheckBox.setSelected(false);
     gridCheckBox.setSelected(false);
