@@ -177,6 +177,7 @@ import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
+import com.sun.j3d.utils.geometry.Cylinder;
 
 /**
  * The MVC view that edits a home. 
@@ -3640,10 +3641,12 @@ public class HomePane extends JRootPane implements HomeView {
         if (exportAllToOBJ) {
           // Create a not alive new ground to be able to explore its coordinates without setting capabilities
           Rectangle2D homeBounds = getExportedHomeBounds(home);
-          Ground3D groundNode = new Ground3D(home, 
-              (float)homeBounds.getX(), (float)homeBounds.getY(), 
-              (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
-          writer.writeNode(groundNode, "ground");
+          if (homeBounds != null) {
+            Ground3D groundNode = new Ground3D(home, 
+                (float)homeBounds.getX(), (float)homeBounds.getY(), 
+                (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
+            writer.writeNode(groundNode, "ground");
+          }
         }
         
         // Write 3D walls 
