@@ -2307,7 +2307,7 @@ public class HomeController implements Controller {
           this.preferences.getLocalizedString(HomeController.class, "checkUpdatesMessage"), exceptionHandler, 
           this.preferences, displayOnlyIfNewUpdates 
             ? dummyThreadedTaskViewFactory
-            : this.viewFactory).executeTask(getView(), displayOnlyIfNewUpdates);    
+            : this.viewFactory).executeTask(getView());    
     }
   }
 

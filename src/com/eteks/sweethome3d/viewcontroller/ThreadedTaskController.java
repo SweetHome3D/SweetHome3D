@@ -25,9 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -36,8 +33,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class ThreadedTaskController implements Controller {
-  private static ThreadPoolExecutor tasksExecutor;
-  private static ExecutorService    waitingTasksExecutor;
+  private static ExecutorService    tasksExecutor;
   private final UserPreferences     preferences;
   private final ViewFactory         viewFactory;
   private final Callable<Void>      threadedTask;
@@ -79,86 +75,57 @@ public class ThreadedTaskController implements Controller {
    * Executes in a separated thread the task given in constructor. This task shouldn't
    * modify any model objects shared with other threads. 
    */
-  public void executeTask(View view) {
-    executeTask(view, false);
-  }
-  
-  /**
-   * Executes in a separated thread the task given in constructor. This task shouldn't
-   * modify any model objects shared with other threads. If <code>waitPendingTasksToExecuteTask</code>
-   * is <code>true</code>, then the task will be executed only other threaded tasks have finished.
-   */
-  public void executeTask(final View executingView, boolean waitPendingTasksToExecuteTask) {
-    if (waitPendingTasksToExecuteTask 
-        && tasksExecutor != null
-        && tasksExecutor.getActiveCount() > 0) {
-      if (waitingTasksExecutor == null) {
-        waitingTasksExecutor = Executors.newSingleThreadExecutor();
-      }
-      waitingTasksExecutor.submit(new Callable<Void>() {
-          public Void call() throws InterruptedException {
-            // Wait until no other tasks are active
-            do {
-              Thread.sleep(100);
-            } while (tasksExecutor.getActiveCount() > 0);
-            // Execute again task without waiting
-            executeTask(executingView);
-            return null;
-          }
-        });
-    } else {
-      if (tasksExecutor == null) {
-        tasksExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 10L, TimeUnit.SECONDS,
-            new SynchronousQueue<Runnable>());
-      }
-  
-      this.task = tasksExecutor.submit(new FutureTask<Void>(this.threadedTask) {
-          @Override
-          public void run() {
-            // Update running status in view
-            getView().invokeLater(new Runnable() {
-                public void run() {
-                  getView().setTaskRunning(true, executingView);
-                }
-              });
-            super.run();
-          }
-        
-          @Override
-          protected void done() {
-            // Update running status in view
-            getView().invokeLater(new Runnable() {
-                public void run() {
-                  getView().setTaskRunning(false, executingView);
-                  task = null;
-                }
-              });
-            
-            try {
-              get();
-            } catch (ExecutionException ex) {
-              // Handle exceptions with handler            
-              final Throwable throwable = ex.getCause();
-              if (throwable instanceof Exception) {
-                getView().invokeLater(new Runnable() {
-                    public void run() {
-                      exceptionHandler.handleException((Exception)throwable);
-                    }
-                  });
-              } else {
-                throwable.printStackTrace();
+  public void executeTask(final View executingView) {
+    if (tasksExecutor == null) {
+      tasksExecutor = Executors.newSingleThreadExecutor();
+    }
+
+    this.task = tasksExecutor.submit(new FutureTask<Void>(this.threadedTask) {
+        @Override
+        public void run() {
+          // Update running status in view
+          getView().invokeLater(new Runnable() {
+              public void run() {
+                getView().setTaskRunning(true, executingView);
               }
-            } catch (final InterruptedException ex) {
-              // Handle exception with handler            
+            });
+          super.run();
+        }
+      
+        @Override
+        protected void done() {
+          // Update running status in view
+          getView().invokeLater(new Runnable() {
+              public void run() {
+                getView().setTaskRunning(false, executingView);
+                task = null;
+              }
+            });
+          
+          try {
+            get();
+          } catch (ExecutionException ex) {
+            // Handle exceptions with handler            
+            final Throwable throwable = ex.getCause();
+            if (throwable instanceof Exception) {
               getView().invokeLater(new Runnable() {
                   public void run() {
-                    exceptionHandler.handleException(ex);
+                    exceptionHandler.handleException((Exception)throwable);
                   }
                 });
+            } else {
+              throwable.printStackTrace();
             }
+          } catch (final InterruptedException ex) {
+            // Handle exception with handler            
+            getView().invokeLater(new Runnable() {
+                public void run() {
+                  exceptionHandler.handleException(ex);
+                }
+              });
           }
-        });
-    }
+        }
+      });
   }
   
   /**
