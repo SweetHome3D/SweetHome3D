@@ -2589,9 +2589,9 @@ public class PlanController extends FurnitureController implements Controller {
       // Create level 0
       String level0Name = this.preferences.getLocalizedString(PlanController.class, "levelName", 0);
       level0 = createLevel(level0Name, 0, newFloorThickness, newWallHeight);
+      moveHomeItemsToLevel(level0);
       level0.setBackgroundImage(homeBackgroundImage);
       this.home.setBackgroundImage(null);
-      moveHomeItemsToLevel(level0);
       levels = this.home.getLevels();
     } else {
       level0 = null;
