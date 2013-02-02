@@ -67,6 +67,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,6 +80,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -3451,6 +3453,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Prints a home to a given PDF file. This method may be overridden
    * to write to another kind of output stream.
+   * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void printToPDF(String pdfFile) throws RecorderException {
     OutputStream outputStream = null;
@@ -3490,6 +3493,7 @@ public class HomePane extends JRootPane implements HomeView {
 
   /**
    * Exports furniture list to a given SVG file.
+   * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToCSV(String csvFile) throws RecorderException {
     View furnitureView = this.controller.getFurnitureController().getView();
@@ -3536,14 +3540,15 @@ public class HomePane extends JRootPane implements HomeView {
 
   /**
    * Exports the plan objects to a given SVG file.
+   * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToSVG(String svgFile) throws RecorderException {
     View planView = this.controller.getPlanController().getView();
-    PlanComponent planComponent;
+    final PlanComponent planComponent;
     if (planView instanceof PlanComponent) {
       planComponent = (PlanComponent)planView;
     } else {
-      planComponent = new PlanComponent(this.home, this.preferences, null);
+      planComponent = new PlanComponent(cloneHomeInEventDispatchThread(this.home), this.preferences, null);
     }    
     
     OutputStream outputStream = null;
@@ -3600,6 +3605,7 @@ public class HomePane extends JRootPane implements HomeView {
   
   /**
    * Exports the objects of the 3D view to the given OBJ file.
+   * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToOBJ(String objFile) throws RecorderException {
     String header = this.preferences != null
@@ -3607,8 +3613,31 @@ public class HomePane extends JRootPane implements HomeView {
                                               "exportToOBJ.header", new Date())
         : "";
         
-    // Use a clone of home to ignore selection
-    OBJExporter.exportHomeToFile(this.home.clone(), objFile, header, this.exportAllToOBJ);
+    // Use a clone of home to ignore selection and for thread safety
+    OBJExporter.exportHomeToFile(cloneHomeInEventDispatchThread(this.home), objFile, header, this.exportAllToOBJ);
+  }
+
+  /**
+   * Returns a clone of the given <code>home</code> safely cloned in the EDT.
+   */
+  private Home cloneHomeInEventDispatchThread(final Home home) throws RecorderException {
+    if (EventQueue.isDispatchThread()) {
+      return home.clone();
+    } else {
+      try {
+        final AtomicReference<Home> clonedHome = new AtomicReference<Home>();
+        EventQueue.invokeAndWait(new Runnable() {
+            public void run() {
+              clonedHome.set(home.clone());
+            }
+          });
+        return clonedHome.get();
+      } catch (InterruptedException ex) {
+        throw new InterruptedRecorderException(ex.getMessage());
+      } catch (InvocationTargetException ex) {
+        throw new RecorderException("Couldn't clone home", ex.getCause());
+      } 
+    }
   }
   
   /**
