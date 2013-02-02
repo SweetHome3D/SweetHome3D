@@ -1269,19 +1269,37 @@ public class Home implements Serializable, Cloneable {
           clone.levels.add(level.clone());
         }
         for (int i = 0; i < this.furniture.size(); i++) {
-          clone.furniture.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.furniture.get(i).getLevel())));
+          Level pieceLevel = this.furniture.get(i).getLevel();
+          if (pieceLevel != null) {
+            // As soon as there's more than one level, every object is supposed to have its level set
+            // but as level can still be null for a undetermined reason, prefer to keep level
+            // to null in the cloned object and having errors further than throwing exception here
+            clone.furniture.get(i).setLevel(clone.levels.get(this.levels.indexOf(pieceLevel)));
+          }
         }
         for (int i = 0; i < this.rooms.size(); i++) {
-          clone.rooms.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.rooms.get(i).getLevel())));
+          Level roomLevel = this.rooms.get(i).getLevel();
+          if (roomLevel != null) {
+            clone.rooms.get(i).setLevel(clone.levels.get(this.levels.indexOf(roomLevel)));
+          }
         }
         for (int i = 0; i < this.dimensionLines.size(); i++) {
-          clone.dimensionLines.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.dimensionLines.get(i).getLevel())));
+          Level dimensionLineLevel = this.dimensionLines.get(i).getLevel();
+          if (dimensionLineLevel != null) {
+            clone.dimensionLines.get(i).setLevel(clone.levels.get(this.levels.indexOf(dimensionLineLevel)));
+          }
         }
         for (int i = 0; i < this.labels.size(); i++) {
-          clone.labels.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.labels.get(i).getLevel())));
+          Level labelLevel = this.labels.get(i).getLevel();
+          if (labelLevel != null) {
+            clone.labels.get(i).setLevel(clone.levels.get(this.levels.indexOf(labelLevel)));
+          }
         }
         for (int i = 0; i < this.walls.size(); i++) {
-          clone.walls.get(i).setLevel(clone.levels.get(this.levels.indexOf(this.walls.get(i).getLevel())));
+          Level wallLevel = this.walls.get(i).getLevel();
+          if (wallLevel != null) {
+            clone.walls.get(i).setLevel(clone.levels.get(this.levels.indexOf(wallLevel)));
+          }
         }
         if (this.selectedLevel != null) {
           clone.selectedLevel = clone.levels.get(this.levels.indexOf(this.selectedLevel));
