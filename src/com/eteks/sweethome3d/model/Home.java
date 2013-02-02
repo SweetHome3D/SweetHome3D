@@ -313,79 +313,82 @@ public class Home implements Serializable, Cloneable {
     this.version = CURRENT_VERSION;
         
     if (KEEP_BACKWARD_COMPATIBLITY) {
-      HomePieceOfFurniture.SortableProperty currentFurnitureSortedProperty = this.furnitureSortedProperty;
-      if (this.furnitureSortedProperty != null) {
-        this.furnitureSortedPropertyName = this.furnitureSortedProperty.name();
-        // Store in furnitureSortedProperty only backward compatible property
-        if (!isFurnitureSortedPropertyBackwardCompatible(this.furnitureSortedProperty)) {
-          this.furnitureSortedProperty = null;
-        }
-      }
-      
-      this.furnitureVisiblePropertyNames = new ArrayList<String>();
-      // Store in furnitureVisibleProperties only backward compatible properties
-      List<HomePieceOfFurniture.SortableProperty> currentFurnitureVisibleProperties = this.furnitureVisibleProperties;
-      this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
-      for (HomePieceOfFurniture.SortableProperty visibleProperty : currentFurnitureVisibleProperties) {
-        this.furnitureVisiblePropertyNames.add(visibleProperty.name());
-        if (isFurnitureSortedPropertyBackwardCompatible(visibleProperty)) {
-          this.furnitureVisibleProperties.add(visibleProperty);
-        }
-      }
-    
-      // Store referenced HomeFurnitureGroup instances in a separate field 
-      // for backward compatibility reasons (version < 2.3)
-      this.furnitureWithGroups = this.furniture;
-      // Serialize a furnitureWithDoorsAndWindows field that contains only 
-      // HomePieceOfFurniture, HomeDoorOrWindow and HomeLight instances
-      // for backward compatibility reasons (version < 1.7)
-      this.furnitureWithDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
-      // Serialize a furniture field that contains only HomePieceOfFurniture instances
-      this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
-      for (HomePieceOfFurniture piece : this.furnitureWithGroups) {
-        if (piece.getClass() == HomePieceOfFurniture.class) {
-          this.furnitureWithDoorsAndWindows.add(piece);
-          this.furniture.add(piece);
-        } else {
-          if (piece.getClass() == HomeFurnitureGroup.class) {
-            // Add the ungrouped pieces to furniture and furnitureWithDoorsAndWindows list 
-            for (HomePieceOfFurniture groupPiece : getGroupFurniture((HomeFurnitureGroup)piece)) {
-              this.furnitureWithDoorsAndWindows.add(groupPiece);
-              if (groupPiece.getClass() == HomePieceOfFurniture.class) {
-                this.furniture.add(groupPiece);
-              } else {
-                // Create backward compatible instances
-                this.furniture.add(new HomePieceOfFurniture(groupPiece));
-              }
-            }            
-          } else {
-            this.furnitureWithDoorsAndWindows.add(piece);
-            // Create backward compatible instances
-            this.furniture.add(new HomePieceOfFurniture(piece));
+      HomePieceOfFurniture.SortableProperty homeFurnitureSortedProperty = this.furnitureSortedProperty;
+      List<HomePieceOfFurniture.SortableProperty> homeFurnitureVisibleProperties = this.furnitureVisibleProperties;
+      List<HomePieceOfFurniture> homeFurniture = this.furniture;
+      try {
+        if (this.furnitureSortedProperty != null) {
+          this.furnitureSortedPropertyName = this.furnitureSortedProperty.name();
+          // Store in furnitureSortedProperty only backward compatible property
+          if (!isFurnitureSortedPropertyBackwardCompatible(this.furnitureSortedProperty)) {
+            this.furnitureSortedProperty = null;
           }
         }
-      }
+        
+        this.furnitureVisiblePropertyNames = new ArrayList<String>();
+        // Store in furnitureVisibleProperties only backward compatible properties
+        this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+        for (HomePieceOfFurniture.SortableProperty visibleProperty : homeFurnitureVisibleProperties) {
+          this.furnitureVisiblePropertyNames.add(visibleProperty.name());
+          if (isFurnitureSortedPropertyBackwardCompatible(visibleProperty)) {
+            this.furnitureVisibleProperties.add(visibleProperty);
+          }
+        }
       
-      // Store environment fields in home fields for compatibility reasons
-      this.groundColor = this.environment.getGroundColor();
-      this.groundTexture = this.environment.getGroundTexture();
-      this.skyColor = this.environment.getSkyColor();
-      this.lightColor = this.environment.getLightColor();
-      this.wallsAlpha = this.environment.getWallsAlpha();
-
-      out.defaultWriteObject();
-    
-      // Restore current values
-      this.furniture = this.furnitureWithGroups;
-      this.furnitureWithDoorsAndWindows = null;
-      this.furnitureWithGroups = null;
-    
-      this.furnitureSortedProperty = currentFurnitureSortedProperty;
-      this.furnitureVisibleProperties = currentFurnitureVisibleProperties;
-      // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
-      // (they are used only for serialization)
-      this.furnitureSortedPropertyName = null;
-      this.furnitureVisiblePropertyNames = null;
+        // Store referenced HomeFurnitureGroup instances in a separate field 
+        // for backward compatibility reasons (version < 2.3)
+        this.furnitureWithGroups = this.furniture;
+        // Serialize a furnitureWithDoorsAndWindows field that contains only 
+        // HomePieceOfFurniture, HomeDoorOrWindow and HomeLight instances
+        // for backward compatibility reasons (version < 1.7)
+        this.furnitureWithDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
+        // Serialize a furniture field that contains only HomePieceOfFurniture instances
+        this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
+        for (HomePieceOfFurniture piece : this.furnitureWithGroups) {
+          if (piece.getClass() == HomePieceOfFurniture.class) {
+            this.furnitureWithDoorsAndWindows.add(piece);
+            this.furniture.add(piece);
+          } else {
+            if (piece.getClass() == HomeFurnitureGroup.class) {
+              // Add the ungrouped pieces to furniture and furnitureWithDoorsAndWindows list 
+              for (HomePieceOfFurniture groupPiece : getGroupFurniture((HomeFurnitureGroup)piece)) {
+                this.furnitureWithDoorsAndWindows.add(groupPiece);
+                if (groupPiece.getClass() == HomePieceOfFurniture.class) {
+                  this.furniture.add(groupPiece);
+                } else {
+                  // Create backward compatible instances
+                  this.furniture.add(new HomePieceOfFurniture(groupPiece));
+                }
+              }            
+            } else {
+              this.furnitureWithDoorsAndWindows.add(piece);
+              // Create backward compatible instances
+              this.furniture.add(new HomePieceOfFurniture(piece));
+            }
+          }
+        }
+        
+        // Store environment fields in home fields for compatibility reasons
+        this.groundColor = this.environment.getGroundColor();
+        this.groundTexture = this.environment.getGroundTexture();
+        this.skyColor = this.environment.getSkyColor();
+        this.lightColor = this.environment.getLightColor();
+        this.wallsAlpha = this.environment.getWallsAlpha();
+  
+        out.defaultWriteObject();
+      } finally {
+        // Restore home values
+        this.furniture = homeFurniture;
+        this.furnitureWithDoorsAndWindows = null;
+        this.furnitureWithGroups = null;
+      
+        this.furnitureSortedProperty = homeFurnitureSortedProperty;
+        this.furnitureVisibleProperties = homeFurnitureVisibleProperties;
+        // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
+        // (they are used only for serialization)
+        this.furnitureSortedPropertyName = null;
+        this.furnitureVisiblePropertyNames = null;
+      }
     } else {
       out.defaultWriteObject();
     }
