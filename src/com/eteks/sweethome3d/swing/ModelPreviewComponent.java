@@ -44,7 +44,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
@@ -86,9 +90,11 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
+import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -106,6 +112,7 @@ public class ModelPreviewComponent extends JComponent {
   private float              viewPitch = -(float)Math.PI / 16;
   private float              viewScale = 1;
   private Object             iconImageLock;
+  private Content            model; 
 
   /**
    * Returns an 3D model preview component.
@@ -264,7 +271,7 @@ public class ModelPreviewComponent extends JComponent {
   
         @Override
         public void mouseDragged(MouseEvent ev) {
-          if (getModel() != null) {
+          if (getModelNode() != null) {
             // Mouse move along X axis changes yaw 
             setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));    
             this.xLastMouseMove = ev.getX();
@@ -388,7 +395,7 @@ public class ModelPreviewComponent extends JComponent {
    * Creates a view bound to the universe that views current model from a point of view oriented with 
    * <code>yaw</code> and <code>pitch</code> angles.
    */
-  protected View createView(float yaw, float pitch, float scale, int projectionPolicy) {
+  View createView(float yaw, float pitch, float scale, int projectionPolicy) {
     if (this.universe == null) {
       createUniverse();
     }
@@ -560,9 +567,67 @@ public class ModelPreviewComponent extends JComponent {
   }
 
   /**
-   * Returns the <code>model</code> displayed by this component. 
+   * Sets the model content displayed by this component. 
+   * The model is shown at its default orientation and in a box 1 unit wide.
    */
-  public BranchGroup getModel() {
+  public void setModel(final Content model) {
+    final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
+    modelTransformGroup.removeAllChildren();
+    if (model != null) {
+      final AtomicReference<IllegalArgumentException> exception = new AtomicReference<IllegalArgumentException>();
+      // Load content model synchronously (or get it from cache)
+      ModelManager.getInstance().loadModel(model, true, new ModelManager.ModelObserver() {        
+          public void modelUpdated(BranchGroup modelRoot) { 
+            modelRoot.setCapability(BranchGroup.ALLOW_DETACH);
+            setNodeCapabilities(modelRoot);
+            
+            if (modelRoot.numChildren() > 0) {
+              BoundingBox bounds = null;
+              try {
+                bounds = ModelManager.getInstance().getBounds(modelRoot);
+              } catch (IllegalArgumentException ex) {
+                // Model is empty
+              }
+              if (bounds != null) {
+                Point3d lower = new Point3d();
+                bounds.getLower(lower);
+                Point3d upper = new Point3d();
+                bounds.getUpper(upper);
+                
+                // Translate model to center
+                Transform3D translation = new Transform3D ();
+                translation.setTranslation(
+                    new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+                                 -lower.y - (upper.y - lower.y) / 2, 
+                                 -lower.z - (upper.z - lower.z) / 2));
+                // Scale model to make it fit in a 1.8 unit wide box
+                Transform3D modelTransform = new Transform3D();
+                modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
+                                                         upper.z - lower.z));
+                modelTransform.mul(translation);
+                
+                modelTransformGroup.setTransform(modelTransform);
+                modelTransformGroup.addChild(modelRoot);
+              }
+            }
+          }
+          
+          public void modelError(Exception ex) {
+            exception.set(new IllegalArgumentException("Couldn't load model", ex));
+          }
+        });
+      
+      if (exception.get() != null) {
+        throw exception.get(); 
+      }
+    }
+    this.model = model;
+  }
+  
+  /**
+   * Returns the 3D model node displayed by this component. 
+   */
+  BranchGroup getModelNode() {
     TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     if (modelTransformGroup.numChildren() > 0) {
       return (BranchGroup)modelTransformGroup.getChild(0);
@@ -570,51 +635,7 @@ public class ModelPreviewComponent extends JComponent {
       return null;
     }
   }
-  
-  /**
-   * Sets the <code>model</code> displayed by this component. 
-   * The model is shown at its default orientation and in a box 1 unit wide.
-   */
-  public void setModel(BranchGroup model) {
-    TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-    modelTransformGroup.removeAllChildren();
-    if (model != null) {
-      model = (BranchGroup)ModelManager.getInstance().cloneNode(model);
-      model.setCapability(BranchGroup.ALLOW_DETACH);
-      setNodeCapabilities(model);
-      
-      if (model.numChildren() > 0) {
-        BoundingBox bounds = null;
-        try {
-          bounds = ModelManager.getInstance().getBounds(model);
-        } catch (IllegalArgumentException ex) {
-          // Model is empty
-        }
-        if (bounds != null) {
-          Point3d lower = new Point3d();
-          bounds.getLower(lower);
-          Point3d upper = new Point3d();
-          bounds.getUpper(upper);
-          
-          // Translate model to center
-          Transform3D translation = new Transform3D ();
-          translation.setTranslation(
-              new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                           -lower.y - (upper.y - lower.y) / 2, 
-                           -lower.z - (upper.z - lower.z) / 2));
-          // Scale model to make it fit in a 1.8 unit wide box
-          Transform3D modelTransform = new Transform3D();
-          modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
-                                                   upper.z - lower.z));
-          modelTransform.mul(translation);
-          
-          modelTransformGroup.setTransform(modelTransform);
-          modelTransformGroup.addChild(model);
-        }
-      }
-    }
-  }
-  
+
   /**
    * Sets the capability to read bounds, to write polygon and material attributes  
    * for all children of <code>node</code>.
@@ -670,7 +691,7 @@ public class ModelPreviewComponent extends JComponent {
   }
   
   /**
-   * Sets the back face visibility of all <code>Shape3D</code> children nodes of displayed model.
+   * Sets the back face visibility of all <code>Shape3D</code> children nodes of displayed 3D model.
    */
   protected void setBackFaceShown(boolean backFaceShown) {
     setBackFaceShown(this.sceneTree.getChild(0), backFaceShown);
@@ -692,22 +713,24 @@ public class ModelPreviewComponent extends JComponent {
       Appearance appearance = ((Shape3D)node).getAppearance();
       PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
       // Change cull face
-      polygonAttributes.setCullFace(backFaceShown 
-          ? PolygonAttributes.CULL_FRONT
-          : PolygonAttributes.CULL_BACK);
+      if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
+        polygonAttributes.setCullFace(backFaceShown 
+            ? PolygonAttributes.CULL_FRONT
+            : PolygonAttributes.CULL_BACK);
+      }
       // Change back face normal flip
       polygonAttributes.setBackFaceNormalFlip(backFaceShown);
     }
   }
 
   /**
-   * Updates the rotation of the model displayed by this component. 
+   * Updates the rotation of the 3D model displayed by this component. 
    * The model is shown at its default size.
    */
   protected void setModelRotation(float [][] modelRotation) {
-    BranchGroup model = getModel();
-    if (model != null && model.numChildren() > 0) {
-      BoundingBox bounds = ModelManager.getInstance().getBounds(model);
+    BranchGroup modelNode = getModelNode();
+    if (modelNode != null && modelNode.numChildren() > 0) {
+      BoundingBox bounds = ModelManager.getInstance().getBounds(modelNode);
       Point3d lower = new Point3d();
       bounds.getLower(lower);
       Point3d upper = new Point3d();
@@ -739,13 +762,13 @@ public class ModelPreviewComponent extends JComponent {
   }
   
   /**
-   * Updates the rotation and the size of the model displayed by this component. 
+   * Updates the rotation and the size of the 3D model displayed by this component. 
    */
   protected void setModelRotationAndSize(float [][] modelRotation,
                                          float width, float depth, float height) {
-    BranchGroup model = getModel();
-    if (model != null && model.numChildren() > 0) {
-      Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(model, modelRotation, 1f);
+    BranchGroup modelNode = getModelNode();
+    if (modelNode != null && modelNode.numChildren() > 0) {
+      Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, modelRotation, 1f);
       // Scale model to its size
       Transform3D scaleTransform = new Transform3D();
       if (width != 0 && depth != 0 && height != 0) {
@@ -757,7 +780,7 @@ public class ModelPreviewComponent extends JComponent {
       if (width != 0 && depth != 0 && height != 0) {
         modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
       } else {
-        Vector3f size = ModelManager.getInstance().getSize(model);
+        Vector3f size = ModelManager.getInstance().getSize(modelNode);
         modelTransform.setScale(1.8 / Math.max(Math.max(size.x, size.z), size.y));
       }
       modelTransform.mul(scaleTransform);
@@ -899,12 +922,57 @@ public class ModelPreviewComponent extends JComponent {
   }
 
   /**
-   * Returns the icon content matching the displayed view.
+   * Returns a temporary content of the icon matching the displayed view.
    */
   public Content getIcon(int maxWaitingDelay) throws IOException {
     File tempIconFile = OperatingSystem.createTemporaryFile("icon", ".png");
     ImageIO.write(getIconImage(maxWaitingDelay), "png", tempIconFile);
     return new TemporaryURLContent(tempIconFile.toURI().toURL());
+  }
+  
+  /**
+   * Returns a temporary content of the displayed 3D model (without transformation).
+   */
+  public Content getModel() throws IOException {
+    if (this.model != null) {
+      String objFile = getOBJFileName(this.model);
+      File tempZipFile = OperatingSystem.createTemporaryFile("model", ".zip");
+      tempZipFile.deleteOnExit();
+      OBJWriter.writeNodeInZIPFile(getModelNode(), tempZipFile, 0, objFile, "3D model " + objFile);
+      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" 
+          + URLEncoder.encode(objFile, "UTF-8").replace("+", "%20")));
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns an OBJ file name as close as the file referenced by the given content. 
+   */
+  private String getOBJFileName(Content modelContent) throws IOException {
+    String objFile;
+    if (modelContent instanceof URLContent) {
+      objFile = ((URLContent)modelContent).getURL().getFile();
+      if (objFile.lastIndexOf('/') != -1) {
+        objFile = objFile.substring(objFile.lastIndexOf('/') + 1);
+      }
+      objFile = new File(objFile).getName();
+      if (!objFile.toLowerCase().endsWith(".obj")) {
+        if (objFile.lastIndexOf('.') != -1) {
+          objFile = objFile.substring(0, objFile.lastIndexOf('.')); 
+        }
+        objFile += ".obj";
+      }
+      // Decode file name (replace %.. values)
+      objFile = URLDecoder.decode(objFile.replace("+", "%2B"), "UTF-8");
+      // Ensure the file contains only letters, figures, underscores, dots, hyphens or spaces
+      if (objFile.matches(".*[^a-zA-Z0-9_\\.\\-\\ ].*")) {
+        objFile = "model.obj";
+      }
+    } else {
+      objFile = "model.obj";
+    }
+    return objFile;
   }
   
   /**

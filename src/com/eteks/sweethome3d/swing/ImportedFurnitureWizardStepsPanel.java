@@ -47,6 +47,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -54,8 +55,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -1046,49 +1049,41 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   private void updateController(final CatalogPieceOfFurniture piece,
                                 final UserPreferences preferences) {
+    updatePreviewComponentsModel(null);
     if (piece == null) {
       setModelChoiceTexts(preferences);
-      updatePreviewComponentsModel(null);
     } else {
       setModelChangeTexts(preferences);
-      // Read model in modelLoader executor
-      this.modelLoader.execute(new Runnable() {
-          public void run() {
-            BranchGroup model = null;
-            try {
-              model = readModel(piece.getModel());
-            } catch (IOException ex) {
-              // Model loading failed
+      setReadingState();
+      // Load piece model asynchronously
+      ModelManager.getInstance().loadModel(piece.getModel(), 
+          new ModelManager.ModelObserver() {
+            public void modelUpdated(BranchGroup modelRoot) {
+              controller.setModel(piece.getModel());
+              controller.setModelRotation(piece.getModelRotation());
+              controller.setBackFaceShown(piece.isBackFaceShown());
+              controller.setName(piece.getName());
+              controller.setCategory(piece.getCategory());
+              controller.setWidth(piece.getWidth());
+              controller.setDepth(piece.getDepth());
+              controller.setHeight(piece.getHeight());
+              controller.setMovable(piece.isMovable());
+              controller.setDoorOrWindow(piece.isDoorOrWindow());
+              controller.setElevation(piece.getElevation());
+              controller.setColor(piece.getColor());
+              controller.setIconYaw(piece.getIconYaw());
+              controller.setProportional(piece.isProportional());
+              updatePreviewComponentsModel(piece.getModel());
+              setDefaultState();
             }
-            final BranchGroup readModel = model;
-            // Update components in dispatch thread
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  if (readModel != null) {
-                    controller.setModel(piece.getModel());
-                    controller.setModelRotation(piece.getModelRotation());
-                    controller.setBackFaceShown(piece.isBackFaceShown());
-                    controller.setName(piece.getName());
-                    controller.setCategory(piece.getCategory());
-                    controller.setWidth(piece.getWidth());
-                    controller.setDepth(piece.getDepth());
-                    controller.setHeight(piece.getHeight());
-                    controller.setMovable(piece.isMovable());
-                    controller.setDoorOrWindow(piece.isDoorOrWindow());
-                    controller.setElevation(piece.getElevation());
-                    controller.setColor(piece.getColor());
-                    controller.setIconYaw(piece.getIconYaw());
-                    controller.setProportional(piece.isProportional());
-                  } else {
-                    controller.setModel(null);
-                    setModelChoiceTexts(preferences);
-                    modelChoiceErrorLabel.setVisible(true);
-                  }
-                } 
-              });
             
-          } 
-        });
+            public void modelError(Exception ex) {
+              controller.setModel(null);
+              setModelChoiceTexts(preferences);
+              modelChoiceErrorLabel.setVisible(true);
+              setDefaultState();
+            }
+          });
     }
   }
 
@@ -1102,6 +1097,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                 final boolean ignoreException) {
     // Cancel current model
     this.controller.setModel(null);
+    updatePreviewComponentsModel(null);
+    setReadingState();
     // Read model in modelLoader executor
     this.modelLoader.execute(new Runnable() {
         public void run() {
@@ -1109,134 +1106,173 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           try {
             modelContent = contentManager.getContent(modelName);
           } catch (RecorderException ex) {
-            if (!ignoreException) {
-              showModelChoiceError(modelName, preferences);
-            }
-            return;
+            setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
           } 
           
-          BranchGroup model = null;
-          Vector3f    modelSize = null;
           try {
-            model = readModel(modelContent);
-            modelSize = ModelManager.getInstance().getSize(model);
+            BranchGroup model = ModelManager.getInstance().loadModel(modelContent);
+            final Vector3f  modelSize = ModelManager.getInstance().getSize(model);
             // Copy model to a temporary OBJ content with materials and textures
-            modelContent = copyToTemporaryOBJContent(model, modelName);
-          } catch (IOException ex) {
-            model = null;
+            final Content copiedContent = copyToTemporaryOBJContent(model, modelName);
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  // Load copied content using cache to make it accessible by preview components
+                  ModelManager.getInstance().loadModel(copiedContent, new ModelManager.ModelObserver() {
+                      public void modelUpdated(BranchGroup modelRoot) {
+                        setDefaultStateAndInitializeReadModel(copiedContent, modelName, defaultCategory, 
+                            modelSize, preferences, contentManager);
+                      }
+                      
+                      public void modelError(Exception ex) {
+                        setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
+                      }
+                    });
+                }
+              });
+            return;
           } catch (IllegalArgumentException ex) {
-            // Model is empty
-            model = null;
+            // Thrown by getSize if model is empty
+          } catch (IOException ex) {
+            // Try with zipped content
+          }
+                   
+          try {
+            // Copy model content to a temporary content
+            modelContent = TemporaryURLContent.copyToTemporaryURLContent(modelContent);
+          } catch (IOException ex2) {
+            setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
+            return;
           }
           
-          if (model == null) {
-            try {
-              // Copy model content to a temporary content
-              modelContent = TemporaryURLContent.copyToTemporaryURLContent(modelContent);
-            } catch (IOException ex2) {
-              if (!ignoreException) {
-                showModelChoiceError(modelName, preferences);
-              }
-              return;
-            }
-            
-            // If content couldn't be loaded, try to load model as a zipped file
-            ZipInputStream zipIn = null;
-            try {
-              URLContent urlContent = (URLContent)modelContent;
-              // Open zipped stream
-              zipIn = new ZipInputStream(urlContent.openStream());
-              // Parse entries to see if one is readable
-              for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-                try {
-                  String entryName = entry.getName();
-                  // Ignore directory entries and entries starting by a dot
-                  if (!entryName.endsWith("/")) {
-                    int slashIndex = entryName.lastIndexOf('/');
-                    String entryFileName = entryName.substring(++slashIndex);
-                    if (!entryFileName.startsWith(".")) {
-                      URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" 
-                          + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20").replace("%2F", "/"));
-                      modelContent = new TemporaryURLContent(entryUrl);
-                      model = readModel(modelContent);
-                      modelSize = ModelManager.getInstance().getSize(model);
-                      break;
-                    }
+          // If content couldn't be loaded, try to load model as a zipped file
+          ZipInputStream zipIn = null;
+          try {
+            URLContent urlContent = (URLContent)modelContent;
+            // Open zipped stream
+            zipIn = new ZipInputStream(urlContent.openStream());
+            // Parse entries to see if one is readable
+            for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+              String entryName = entry.getName();
+              // Ignore directory entries and entries starting by a dot
+              if (!entryName.endsWith("/")) {
+                int slashIndex = entryName.lastIndexOf('/');
+                String entryFileName = entryName.substring(++slashIndex);
+                if (!entryFileName.startsWith(".")) {
+                  URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" 
+                      + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20").replace("%2F", "/"));
+                  final Content entryContent = new TemporaryURLContent(entryUrl);
+                  final AtomicBoolean loaded = new AtomicBoolean();
+                  final CountDownLatch latch = new CountDownLatch(1);
+                  EventQueue.invokeAndWait(new Runnable() {
+                      public void run() {
+                        // Load content using cache to make it accessible by preview components
+                        ModelManager.getInstance().loadModel(entryContent, new ModelManager.ModelObserver() {
+                            public void modelUpdated(BranchGroup modelRoot) {
+                              try {
+                                final Vector3f modelSize = ModelManager.getInstance().getSize(modelRoot);
+                                setDefaultStateAndInitializeReadModel(entryContent, modelName, defaultCategory, 
+                                    modelSize, preferences, contentManager);
+                                loaded.set(true);
+                              } catch (IllegalArgumentException ex) {
+                                // Thrown by getSize if model is empty                              
+                              }
+                              latch.countDown();
+                            }
+                            
+                            public void modelError(Exception ex) {
+                              latch.countDown();
+                            }
+                          });
+                      }
+                    });
+                  
+                  latch.await();
+                  if (loaded.get()) {
+                    return;
                   }
-                } catch (IOException ex3) {
-                  // Ignore exception and try next entry
-                  model = null;
-                } catch (IllegalArgumentException ex3) {
-                  // Model is empty
-                  model = null;
                 }
               }
-            } catch (IOException ex2) {
-              model = null;
-            } finally {
-              try {
-                if (zipIn != null) {
-                  zipIn.close();
-                }
-              } catch (IOException ex2) {
-                // Ignore close exception
+            }
+          } catch (IOException ex) {
+            setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
+            return;
+          } catch (InterruptedException ex) {
+            setDefaultState();
+            return;
+          } catch (InvocationTargetException ex) {
+            // Show next message
+          } finally {
+            try {
+              if (zipIn != null) {
+                zipIn.close();
               }
+            } catch (IOException ex) {
+              // Ignore close exception
             }
           }
           
-          final BranchGroup readModel = model;
-          final Vector3f    readModelSize = modelSize;
-          final Content     readContent = modelContent;
-          // Update components in dispatch thread
-          EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                if (readModel != null) {
-                  controller.setModel(readContent);
-                  setModelChangeTexts(preferences);
-                  modelChoiceErrorLabel.setVisible(false);
-                  controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
-                  controller.setBackFaceShown(false);
-                  controller.setName(contentManager.getPresentationName(
-                      modelName, ContentManager.ContentType.MODEL));
-                  controller.setCategory(defaultCategory);
-                  // Initialize size with default values
-                  controller.setWidth(readModelSize.x);
-                  controller.setDepth(readModelSize.z);
-                  controller.setHeight(readModelSize.y);
-                  controller.setMovable(true);
-                  controller.setDoorOrWindow(false);
-                  controller.setColor(null);                  
-                  controller.setIconYaw((float)Math.PI / 8);
-                  controller.setProportional(true);
-                } else if (isShowing()) {
-                  controller.setModel(null);
-                  setModelChoiceTexts(preferences);
-                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
-                }
-              }
-            });
+          // Found no readable model
+          if (isShowing()) {
+            setDefaultState();
+            setModelChoiceTexts(preferences);
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+                preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
+          }
         }
       });
   }
+  
+  /**
+   * Restores default state and initializes read model.
+   */
+  private void setDefaultStateAndInitializeReadModel(final Content modelContent, 
+                                                     final String modelName,
+                                                     final FurnitureCategory defaultCategory, 
+                                                     final Vector3f modelSize,
+                                                     final UserPreferences preferences, 
+                                                     final ContentManager contentManager) {
+    setDefaultState();
+    updatePreviewComponentsModel(modelContent);
+    controller.setModel(modelContent);
+    setModelChangeTexts(preferences);
+    modelChoiceErrorLabel.setVisible(false);
+    controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
+    controller.setBackFaceShown(false);
+    controller.setName(contentManager.getPresentationName(
+        modelName, ContentManager.ContentType.MODEL));
+    controller.setCategory(defaultCategory);
+    // Initialize size with default values
+    controller.setWidth(modelSize.x);
+    controller.setDepth(modelSize.z);
+    controller.setHeight(modelSize.y);
+    controller.setMovable(true);
+    controller.setDoorOrWindow(false);
+    controller.setColor(null);                  
+    controller.setIconYaw((float)Math.PI / 8);
+    controller.setProportional(true);
+  }
 
   /**
-   * Shows an error message about the chosen model.
+   * Restores default state and shows an error message about the chosen model.
    */
-  private void showModelChoiceError(final String modelName,
-                                    final UserPreferences preferences) {
-    EventQueue.invokeLater(new Runnable() {
-      public void run() {
-        JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-            preferences.getLocalizedString(
-                ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
-      }
-    });
+  private void setDefaultStateAndShowModelChoiceError(final String modelName,
+                                                      final UserPreferences preferences, 
+                                                      boolean showError) {
+    setDefaultState();
+    if (showError) {
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+                preferences.getLocalizedString(
+                    ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
+          }
+        });
+    }
   }
   
   /**
    * Returns a copy of a given <code>model</code> as a zip content at OBJ format.
-   * Caution : this method must be thread safe because it's called from model loader executor. 
+   * Caution : this method must be thread safe because it can be called from model loader executor. 
    */
   private Content copyToTemporaryOBJContent(BranchGroup model, String modelName) throws IOException {
     try {
@@ -1259,65 +1295,57 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   }
 
   /**
-   * Reads 3D model from <code>modelContent</code>.
-   * Caution : this method must be thread safe because it's called from model loader executor. 
-   */
-  private BranchGroup readModel(Content modelContent) throws IOException {
-    try {
-      setReadingState();
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            updatePreviewComponentsModel(null);
-          }
-        });
-            
-      // Load piece model 
-      final BranchGroup modelNode = ModelManager.getInstance().loadModel(modelContent);
-      
-      // Change live object in Event Dispatch Thread
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            updatePreviewComponentsModel(modelNode);
-          }
-        });
-      return modelNode;
-    } finally {
-      setDefaultState();
-    } 
-  }
-
-  /**
    * Sets the cursor to wait cursor and disables model choice button.
    */
   private void setReadingState() {
-    EventQueue.invokeLater(new Runnable() {
-        public void run() {
-          modelChoiceOrChangeButton.setEnabled(false);
-          Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
-          if (defaultCursor == null) {
-            defaultCursor = rootPane.getCursor();
+    this.modelChoiceOrChangeButton.setEnabled(false);
+    Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
+    if (rootPane != null) {
+      if (this.defaultCursor == null) {
+        this.defaultCursor = rootPane.getCursor();
+      }
+      rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    } else {
+      addAncestorListener(new AncestorListener() {
+        public void ancestorAdded(AncestorEvent event) {
+          removeAncestorListener(this);
+          if (!modelChoiceOrChangeButton.isEnabled()) {
+            setReadingState();
           }
-          rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
+
+        public void ancestorRemoved(AncestorEvent event) {
+        }
+        
+        public void ancestorMoved(AncestorEvent event) {
+        }        
       });
+    }
   }
 
   /**
    * Sets the default cursor and enables model choice button.
    */
   private void setDefaultState() {
-    EventQueue.invokeLater(new Runnable() {
-        public void run() {
-          modelChoiceOrChangeButton.setEnabled(true);
-          SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(defaultCursor);
-        }
-      });
+    if (EventQueue.isDispatchThread()) {
+      this.modelChoiceOrChangeButton.setEnabled(true);
+      Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
+      if (rootPane != null) {
+        rootPane.setCursor(this.defaultCursor);
+      }
+    } else {
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            setDefaultState();
+          }
+        });
+    }
   }
   
   /**
-   * Updates the <code>image</code> displayed by preview components.  
+   * Updates the model displayed by preview components.  
    */
-  private void updatePreviewComponentsModel(final BranchGroup model) {
+  private void updatePreviewComponentsModel(final Content model) {
     modelPreviewComponent.setModel(model);
     rotationPreviewComponent.setModel(model);
     attributesPreviewComponent.setModel(model);
@@ -1353,7 +1381,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               ImportedFurnitureWizardStepsPanel.class, "modelChoiceButton.mnemonic")).getKeyCode());
     }
   }
-  
+
   /**
    * Returns the model name chosen for a file chooser dialog.
    */
@@ -1402,7 +1430,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             setModelRotation(controller.getModelRotation());
             
             // Update size when a new rotation is provided
-            BranchGroup model = getModel();
+            BranchGroup model = getModelNode();
             if (ev.getOldValue() != null
                 && model != null) {
               try {
