@@ -2236,7 +2236,7 @@ public class HomeController implements Controller {
    */
   public void checkUpdates(final boolean displayOnlyIfNewUpdates) {
     String updatesUrl = getPropertyValue("com.eteks.sweethome3d.updatesUrl", "updatesUrl");
-    if (updatesUrl != null) {
+    if (updatesUrl != null && updatesUrl.length() > 0) {
       final URL url;
       try {
         url = new URL(updatesUrl);
