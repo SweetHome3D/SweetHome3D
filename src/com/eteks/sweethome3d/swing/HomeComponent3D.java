@@ -208,8 +208,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
    * with no controller.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *             by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   public HomeComponent3D(Home home) {
     this(home, null);  
@@ -217,8 +216,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *             by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   public HomeComponent3D(Home home, HomeController3D controller) {
     this(home, null, controller);
@@ -227,8 +225,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
    * with shadows on the floor.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *             by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   public HomeComponent3D(Home home, 
                          UserPreferences  preferences, 
@@ -238,8 +235,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *            by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
@@ -255,8 +251,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
    *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
    * @param controller the controller that manages modifications in <code>home</code>.           
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *            by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
@@ -267,8 +262,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
-   *            by this component couldn't be created.
+   * @throws IllegalStateException  if the 3D component couldn't be created.
    */
   private HomeComponent3D(Home home,
                           UserPreferences  preferences,
