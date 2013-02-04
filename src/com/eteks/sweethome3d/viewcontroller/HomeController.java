@@ -2244,7 +2244,7 @@ public class HomeController implements Controller {
         ex.printStackTrace();
         return;
       }
-      
+            
       final List<Library> libraries = this.preferences.getLibraries();
       final Long updatesMinimumDate = displayOnlyIfNewUpdates
           ? this.preferences.getUpdatesMinimumDate()
@@ -2331,7 +2331,7 @@ public class HomeController implements Controller {
 
   /**
    * Reads the available updates from the XML stream contained in the given <code>url</code>.
-   * Caution : this method is called out of the Event Dispatch Thread.
+   * Caution : this method is called from a separate thread.
    */
   private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate) throws IOException, SAXException {
     try {
@@ -2385,7 +2385,7 @@ public class HomeController implements Controller {
   /**
    * Returns the updates sublist which match the given <code>version</code>.
    * If no update has a date greater that <code>minDate</code>, an empty list is returned.
-   * Caution : this method is called out of the Event Dispatch Thread.
+   * Caution : this method is called from a separate thread.
    */
   private List<Update> getAvailableUpdates(List<Update> updates, String version, Long minDate, long maxDate) {
     if (updates != null) {
