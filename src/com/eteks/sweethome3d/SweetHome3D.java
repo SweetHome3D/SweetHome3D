@@ -288,7 +288,7 @@ public class SweetHome3D extends HomeApplication {
   @Override
   public String getId() {
     String applicationId = System.getProperty("com.eteks.sweethome3d.applicationId");
-    if (applicationId != null) {
+    if (applicationId != null && applicationId.length() > 0) {
       return applicationId;
     } else {
       try {
