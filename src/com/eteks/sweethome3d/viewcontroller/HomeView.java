@@ -215,7 +215,7 @@ public interface HomeView extends View {
   /**
    * Prints a home to a given PDF file. This method may be overridden
    * to write to another kind of output stream.
-   * Caution !!! This method may be called from an other thread than EDT.  
+   * Caution !!! This method may be called from a threaded task.  
    */
   public abstract void printToPDF(String pdfFile) throws RecorderException;
 
@@ -226,7 +226,7 @@ public interface HomeView extends View {
 
   /**
    * Exports furniture list to a given SVG file.
-   * Caution !!! This method may be called from an other thread than EDT.  
+   * Caution !!! This method may be called from a threaded task.  
    */
   public abstract void exportToCSV(String csvName) throws RecorderException;
 
@@ -237,7 +237,7 @@ public interface HomeView extends View {
 
   /**
    * Exports the plan objects to a given SVG file.
-   * Caution !!! This method may be called from an other thread than EDT.  
+   * Caution !!! This method may be called from a threaded task.  
    */
   public abstract void exportToSVG(String svgName) throws RecorderException;
 
@@ -248,7 +248,7 @@ public interface HomeView extends View {
   
   /**
    * Exports the 3D home objects to a given OBJ file.
-   * Caution !!! This method may be called from an other thread than EDT.  
+   * Caution !!! This method may be called from a threaded task.  
    */
   public abstract void exportToOBJ(String objFile) throws RecorderException;
 
