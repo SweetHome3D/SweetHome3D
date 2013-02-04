@@ -104,7 +104,7 @@ public class ModelMaterialsController implements Controller {
   /**
    * Sets the materials displayed by view and fires a <code>PropertyChangeEvent</code>.
    */
-  public void setModelMaterials(HomeMaterial [] texture) {
+  public void setMaterials(HomeMaterial [] texture) {
     if (!Arrays.equals(this.materials, texture)) {
       HomeMaterial [] oldMaterials = this.materials;
       this.materials = texture;

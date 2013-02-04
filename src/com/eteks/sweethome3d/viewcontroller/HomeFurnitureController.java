@@ -234,7 +234,7 @@ public class HomeFurnitureController implements Controller {
         textureController.setTexture(null);
       }
       if (modelMaterialsController != null) {
-        modelMaterialsController.setModelMaterials(null);
+        modelMaterialsController.setMaterials(null);
         modelMaterialsController.setModel(null);
       }
       setPaint(null);
@@ -423,7 +423,7 @@ public class HomeFurnitureController implements Controller {
       }
       if (modelMaterialsController != null) {
         // Materials management available since version 4.0 only
-        modelMaterialsController.setModelMaterials(modelMaterials);
+        modelMaterialsController.setMaterials(modelMaterials);
         modelMaterialsController.setModel(model);
       }
       

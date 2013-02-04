@@ -499,7 +499,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       dialog.setVisible(true);
       dialog.dispose();
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
-        this.controller.setModelMaterials(((MaterialsListModel)this.materialsList.getModel()).getMaterials());
+        this.controller.setMaterials(((MaterialsListModel)this.materialsList.getModel()).getMaterials());
       }
     }
  
