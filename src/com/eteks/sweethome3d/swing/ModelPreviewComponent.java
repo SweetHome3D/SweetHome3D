@@ -44,9 +44,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -90,11 +87,9 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
-import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
-import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -567,7 +562,14 @@ public class ModelPreviewComponent extends JComponent {
   }
 
   /**
-   * Sets the model content displayed by this component. 
+   * Returns the 3D model content displayed by this component.
+   */
+  public Content getModel() throws IOException {
+    return this.model;
+  }
+
+  /**
+   * Sets the 3D model content displayed by this component. 
    * The model is shown at its default orientation and in a box 1 unit wide.
    */
   public void setModel(final Content model) {
@@ -928,51 +930,6 @@ public class ModelPreviewComponent extends JComponent {
     File tempIconFile = OperatingSystem.createTemporaryFile("icon", ".png");
     ImageIO.write(getIconImage(maxWaitingDelay), "png", tempIconFile);
     return new TemporaryURLContent(tempIconFile.toURI().toURL());
-  }
-  
-  /**
-   * Returns a temporary content of the displayed 3D model (without transformation).
-   */
-  public Content getModel() throws IOException {
-    if (this.model != null) {
-      String objFile = getOBJFileName(this.model);
-      File tempZipFile = OperatingSystem.createTemporaryFile("model", ".zip");
-      tempZipFile.deleteOnExit();
-      OBJWriter.writeNodeInZIPFile(getModelNode(), tempZipFile, 0, objFile, "3D model " + objFile);
-      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" 
-          + URLEncoder.encode(objFile, "UTF-8").replace("+", "%20")));
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns an OBJ file name as close as the file referenced by the given content. 
-   */
-  private String getOBJFileName(Content modelContent) throws IOException {
-    String objFile;
-    if (modelContent instanceof URLContent) {
-      objFile = ((URLContent)modelContent).getURL().getFile();
-      if (objFile.lastIndexOf('/') != -1) {
-        objFile = objFile.substring(objFile.lastIndexOf('/') + 1);
-      }
-      objFile = new File(objFile).getName();
-      if (!objFile.toLowerCase().endsWith(".obj")) {
-        if (objFile.lastIndexOf('.') != -1) {
-          objFile = objFile.substring(0, objFile.lastIndexOf('.')); 
-        }
-        objFile += ".obj";
-      }
-      // Decode file name (replace %.. values)
-      objFile = URLDecoder.decode(objFile.replace("+", "%2B"), "UTF-8");
-      // Ensure the file contains only letters, figures, underscores, dots, hyphens or spaces
-      if (objFile.matches(".*[^a-zA-Z0-9_\\.\\-\\ ].*")) {
-        objFile = "model.obj";
-      }
-    } else {
-      objFile = "model.obj";
-    }
-    return objFile;
   }
   
   /**
