@@ -71,9 +71,9 @@ public class HomeFurnitureController implements Controller {
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
   private final UndoableEditSupport   undoSupport;
+  private final PropertyChangeSupport propertyChangeSupport;
   private TextureChoiceController     textureController;
   private ModelMaterialsController    modelMaterialsController;
-  private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeFurnitureView;
 
   private Content            icon;
@@ -170,6 +170,18 @@ public class HomeFurnitureController implements Controller {
               setPaint(FurniturePaint.MODEL_MATERIALS);
             }
           });
+      
+      PropertyChangeListener sizeChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // Update model content size in materials controller
+            if (getWidth() != null && getDepth() != null && getHeight() != null) {
+              modelMaterialsController.setModelSize(getWidth(), getDepth(), getHeight());
+            }
+          }
+        };
+      addPropertyChangeListener(Property.WIDTH, sizeChangeListener);
+      addPropertyChangeListener(Property.DEPTH, sizeChangeListener);
+      addPropertyChangeListener(Property.HEIGHT, sizeChangeListener);
     }
     return this.modelMaterialsController;
   }
@@ -425,6 +437,8 @@ public class HomeFurnitureController implements Controller {
         // Materials management available since version 4.0 only
         modelMaterialsController.setMaterials(modelMaterials);
         modelMaterialsController.setModel(model);
+        modelMaterialsController.setModelRotation(firstPiece.getModelRotation());
+        modelMaterialsController.setBackFaceShown(firstPiece.isBackFaceShown());
       }
       
       boolean defaultColorsAndTextures = true;

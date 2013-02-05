@@ -81,6 +81,7 @@ import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -699,12 +700,22 @@ public class ModelPreviewComponent extends JComponent {
   }
 
   /**
-   * Sets the color applied to piece model.
+   * Sets the color applied to 3D model.
    */
   protected void setModelColor(Integer color) {
     if (this.previewedPiece != null
         && this.previewedPiece.getColor() != color) {
       this.previewedPiece.setColor(color);
+      getModelNode().update();
+    }
+  }
+
+  /**
+   * Sets the materials applied to 3D model.
+   */
+  public void setModelMaterials(HomeMaterial [] materials) {
+    if (this.previewedPiece != null) {
+      this.previewedPiece.setModelMaterials(materials);
       getModelNode().update();
     }
   }

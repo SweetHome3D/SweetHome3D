@@ -45,6 +45,11 @@ public class ModelMaterialsController implements Controller {
   private TextureChoiceController     textureController;
 
   private Content                     model;
+  private float                       modelWidth;
+  private float                       modelDepth;
+  private float                       modelHeight;
+  private float [][]                  modelRotation;
+  private boolean                     backFaceShown;
   private HomeMaterial []             materials;
 
   public ModelMaterialsController(String title, 
@@ -84,7 +89,8 @@ public class ModelMaterialsController implements Controller {
   }
 
   /**
-   * Sets the model displayed by view and fires a <code>PropertyChangeEvent</code>.
+   * Sets the 3D model which materials are displayed by the view 
+   * and fires a <code>PropertyChangeEvent</code>.
    */
   public void setModel(Content model) {
     if (this.model !=  model) {
@@ -95,12 +101,70 @@ public class ModelMaterialsController implements Controller {
   }
   
   /**
-   * Returns the model displayed by view.
+   * Returns the 3D model which materials are displayed by the view.
    */
   public Content getModel() {
     return this.model;
   }
 
+  /**
+   * Sets the rotation of the 3D model used to preview materials change.
+   */
+  void setModelRotation(float [][] modelRotation) {
+    this.modelRotation = modelRotation;
+  }
+  
+  /**
+   * Returns the rotation of the 3D model used to preview materials change.
+   */
+  public float [][] getModelRotation() {
+    return this.modelRotation;
+  }
+
+  /**
+   * Sets the size of the 3D model used to preview materials change.
+   */
+  void setModelSize(float width, float depth, float height) {
+    this.modelWidth = width;
+    this.modelDepth = depth;
+    this.modelHeight = height;
+  }
+  
+  /**
+   * Returns the width of the 3D model used to preview materials change.
+   */
+  public float getModelWidth() {
+    return this.modelWidth;
+  }
+  
+  /**
+   * Returns the depth of the 3D model used to preview materials change.
+   */
+  public float getModelDepth() {
+    return this.modelDepth;
+  }
+  
+  /**
+   * Returns the height of the 3D model used to preview materials change.
+   */
+  public float getModelHeight() {
+    return this.modelHeight;
+  }
+  
+  /**
+   * Sets whether the 3D model used to preview materials change should show back face.
+   */
+  void setBackFaceShown(boolean backFaceShown) {
+    this.backFaceShown = backFaceShown;
+  }
+
+  /**
+   * Returns <code>true</code> if the 3D model used to preview materials change should show back face.
+   */
+  public boolean isBackFaceShown() {
+    return this.backFaceShown;
+  }
+  
   /**
    * Sets the materials displayed by view and fires a <code>PropertyChangeEvent</code>.
    */

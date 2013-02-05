@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -104,16 +105,18 @@ public class ModelMaterialsComponent extends JButton implements View {
   private static class ModelMaterialsPanel extends JPanel {
     private final ModelMaterialsController controller;
     
-    private JLabel       materialsLabel;
-    private JList        materialsList;
-    private JLabel       colorAndTextureLabel;
-    private JRadioButton defaultColorAndTextureRadioButton;
-    private JRadioButton colorRadioButton;
-    private ColorButton  colorButton;
-    private JRadioButton textureRadioButton;
-    private JComponent   textureComponent;
-    private JLabel       shininessLabel;
-    private JSlider      shininessSlider;
+    private JLabel                 previewLabel;
+    private ModelPreviewComponent  previewComponent;
+    private JLabel                 materialsLabel;
+    private JList                  materialsList;
+    private JLabel                 colorAndTextureLabel;
+    private JRadioButton           defaultColorAndTextureRadioButton;
+    private JRadioButton           colorRadioButton;
+    private ColorButton            colorButton;
+    private JRadioButton           textureRadioButton;
+    private JComponent             textureComponent;
+    private JLabel                 shininessLabel;
+    private JSlider                shininessSlider;
 
     public ModelMaterialsPanel(UserPreferences preferences, 
                                ModelMaterialsController controller) {
@@ -134,6 +137,38 @@ public class ModelMaterialsComponent extends JButton implements View {
       this.materialsList = new JList(new MaterialsListModel(controller));
       this.materialsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.materialsList.setCellRenderer(new MaterialListCellRenderer());
+      
+      this.previewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          ModelMaterialsComponent.class, "previewLabel.text"));
+      this.previewComponent = new ModelPreviewComponent(true);
+      this.previewComponent.setFocusable(false);
+      ModelManager.getInstance().loadModel(controller.getModel(), new ModelManager.ModelObserver() {
+          public void modelUpdated(BranchGroup modelRoot) {
+            final MaterialsListModel materialsListModel = (MaterialsListModel)materialsList.getModel();
+            previewComponent.setModel(controller.getModel());
+            previewComponent.setModelRotationAndSize(controller.getModelRotation(),
+                controller.getModelWidth(), controller.getModelDepth(), controller.getModelHeight());
+            previewComponent.setBackFaceShown(controller.isBackFaceShown());
+            previewComponent.setModelMaterials(materialsListModel.getMaterials());
+            materialsListModel.addListDataListener(new ListDataListener() {
+                public void contentsChanged(ListDataEvent ev) {
+                  previewComponent.setModelMaterials(materialsListModel.getMaterials());
+                }
+                
+                public void intervalRemoved(ListDataEvent ev) {
+                }
+                
+                public void intervalAdded(ListDataEvent ev) {
+                }
+              });
+          }
+  
+          public void modelError(Exception ex) {
+            // Should happen only if model is missing
+            previewLabel.setVisible(false); 
+            previewComponent.setVisible(false);
+          }
+        });
       
       this.colorAndTextureLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           ModelMaterialsComponent.class, "colorAndTextureLabel.text"));
@@ -298,7 +333,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             }
             
             public void contentsChanged(ListDataEvent ev) {
-              intervalAdded(null);
+              intervalAdded(ev);
             }
             
             public void intervalRemoved(ListDataEvent ev) {
@@ -435,11 +470,23 @@ public class ModelMaterialsComponent extends JButton implements View {
      * Layouts components in panel with their labels. 
      */
     private void layoutComponents() {
+      // Preview
+      add(this.previewLabel, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
+      this.previewComponent.setPreferredSize(new Dimension(150, 150));
+      add(this.previewComponent, new GridBagConstraints(
+          0, 1, 1, 5, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
+      
       // Materials list
       add(this.materialsLabel, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
-      add(new JScrollPane(this.materialsList), new GridBagConstraints(
+      JScrollPane scrollPane = new JScrollPane(this.materialsList);
+      Dimension preferredSize = scrollPane.getPreferredSize();
+      scrollPane.setPreferredSize(new Dimension(Math.min(150, preferredSize.width), preferredSize.height));
+      add(scrollPane, new GridBagConstraints(
           1, 1, 1, 5, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
       SwingTools.installFocusBorder(this.materialsList);
