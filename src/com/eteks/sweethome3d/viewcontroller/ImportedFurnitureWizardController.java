@@ -721,21 +721,19 @@ public class ImportedFurnitureWizardController extends WizardController
    * Furniture model step state (first step).
    */
   private class FurnitureModelStepState extends ImportedFurnitureWizardStepState {
-    public FurnitureModelStepState() {
-      ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.MODEL, 
-          new PropertyChangeListener() {
-              public void propertyChange(PropertyChangeEvent evt) {
-                setNextStepEnabled(getModel() != null);
-              }
-            });
-    }
-
+    private PropertyChangeListener modelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          setNextStepEnabled(getModel() != null);
+        }
+      };
+      
     @Override
     public void enter() {
       super.enter();
       setFirstStep(true);
       // First step is valid once a model is available
       setNextStepEnabled(getModel() != null);
+      addPropertyChangeListener(Property.MODEL, this.modelChangeListener);
     }
 
     @Override
@@ -746,6 +744,11 @@ public class ImportedFurnitureWizardController extends WizardController
     @Override
     public void goToNextStep() {
       setStepState(getFurnitureOrientationStepState());
+    }
+    
+    @Override
+    public void exit() {
+      removePropertyChangeListener(Property.MODEL, this.modelChangeListener);
     }
   }
 
