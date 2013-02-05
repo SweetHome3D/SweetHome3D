@@ -1417,6 +1417,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    * Preview component for model changes. 
    */
   private static abstract class AbstractModelPreviewComponent extends ModelPreviewComponent {
+    private BranchGroup modelNode;
+    
     /**
      * Adds listeners to <code>controller</code> to update the rotation of the piece model
      * displayed by this component.
@@ -1428,52 +1430,67 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               setBackFaceShown(controller.isBackFaceShown());
             }
           });
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL,  
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              modelNode = null;
+            }
+          });
       PropertyChangeListener rotationChangeListener = new PropertyChangeListener () {
           public void propertyChange(final PropertyChangeEvent ev) {
             setModelRotation(controller.getModelRotation());
             
             if (ev.getOldValue() != null
-                && getModel() != null) {
+                && getModel() != null) {              
               // Update size when a new rotation is provided
-              ModelManager.getInstance().loadModel(getModel(), new ModelManager.ModelObserver() {
-                  public void modelUpdated(BranchGroup modelNode) {
-                    try {
-                      float [][] oldModelRotation = (float [][])ev.getOldValue();
-                      Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, oldModelRotation, 1f);
-                      Transform3D scaleTransform = new Transform3D();
-                      scaleTransform.setScale(new Vector3d(controller.getWidth(), controller.getHeight(), controller.getDepth()));
-                      scaleTransform.mul(normalization);
-                      
-                      // Compute rotation before old model rotation
-                      Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
-                          oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
-                          oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
-                      oldModelRotationMatrix.invert();
-                      Transform3D backRotationTransform = new Transform3D();
-                      backRotationTransform.setRotation(oldModelRotationMatrix);
-                      backRotationTransform.mul(scaleTransform);
-                      
-                      // Compute size after new model rotation
-                      float [][] newModelRotation = (float [][])ev.getNewValue();
-                      Matrix3f newModelRotationMatrix = new Matrix3f(newModelRotation [0][0], newModelRotation [0][1], newModelRotation [0][2],
-                          newModelRotation [1][0], newModelRotation [1][1], newModelRotation [1][2],
-                          newModelRotation [2][0], newModelRotation [2][1], newModelRotation [2][2]);
-                      Transform3D transform = new Transform3D();
-                      transform.setRotation(newModelRotationMatrix);
-                      transform.mul(backRotationTransform);
-                      
-                      Vector3f newSize = ModelManager.getInstance().getSize(modelNode, transform);
-                      controller.setWidth(newSize.x);
-                      controller.setHeight(newSize.y);
-                      controller.setDepth(newSize.z);
-                    } catch (IllegalArgumentException ex) {
-                      // Model is empty
+              if (modelNode == null) {
+                ModelManager.getInstance().loadModel(getModel(), new ModelManager.ModelObserver() {
+                    public void modelUpdated(BranchGroup modelRoot) {
+                      modelNode = modelRoot;
+                      updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
                     }
-                  }
-                  
-                  public void modelError(Exception ex) {
-                  }
-                });
+  
+                    public void modelError(Exception ex) {
+                    }
+                  });
+              } else {
+                updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
+              }
+            }
+          }
+          
+          private void updateSize(final ImportedFurnitureWizardController controller,
+                                  float [][] oldModelRotation,
+                                  float [][] newModelRotation) {
+            try {
+              Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, oldModelRotation, 1f);
+              Transform3D scaleTransform = new Transform3D();
+              scaleTransform.setScale(new Vector3d(controller.getWidth(), controller.getHeight(), controller.getDepth()));
+              scaleTransform.mul(normalization);
+              
+              // Compute rotation before old model rotation
+              Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
+                  oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
+                  oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
+              oldModelRotationMatrix.invert();
+              Transform3D backRotationTransform = new Transform3D();
+              backRotationTransform.setRotation(oldModelRotationMatrix);
+              backRotationTransform.mul(scaleTransform);
+              
+              // Compute size after new model rotation
+              Matrix3f newModelRotationMatrix = new Matrix3f(newModelRotation [0][0], newModelRotation [0][1], newModelRotation [0][2],
+                  newModelRotation [1][0], newModelRotation [1][1], newModelRotation [1][2],
+                  newModelRotation [2][0], newModelRotation [2][1], newModelRotation [2][2]);
+              Transform3D transform = new Transform3D();
+              transform.setRotation(newModelRotationMatrix);
+              transform.mul(backRotationTransform);
+              
+              Vector3f newSize = ModelManager.getInstance().getSize(modelNode, transform);
+              controller.setWidth(newSize.x);
+              controller.setHeight(newSize.y);
+              controller.setDepth(newSize.z);
+            } catch (IllegalArgumentException ex) {
+              // Model is empty
             }
           }
         };
