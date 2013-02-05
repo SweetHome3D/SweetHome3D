@@ -44,30 +44,21 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
-import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
-import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
-import javax.media.j3d.Geometry;
-import javax.media.j3d.GeometryArray;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
-import javax.media.j3d.Link;
-import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PhysicalBody;
 import javax.media.j3d.PhysicalEnvironment;
-import javax.media.j3d.PolygonAttributes;
-import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
@@ -86,8 +77,11 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
+import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.sun.j3d.exp.swing.JCanvas3D;
@@ -99,15 +93,15 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * Super class of 3D preview component for model. 
  */
 public class ModelPreviewComponent extends JComponent {
-  private SimpleUniverse     universe;
-  private JPanel             component3DPanel;
-  private Component          component3D;
-  private BranchGroup        sceneTree;
-  private float              viewYaw = (float) Math.PI / 8;
-  private float              viewPitch = -(float)Math.PI / 16;
-  private float              viewScale = 1;
-  private Object             iconImageLock;
-  private Content            model; 
+  private SimpleUniverse          universe;
+  private JPanel                  component3DPanel;
+  private Component               component3D;
+  private BranchGroup             sceneTree;
+  private float                   viewYaw   = (float) Math.PI / 8;
+  private float                   viewPitch = -(float) Math.PI / 16;
+  private float                   viewScale = 1;
+  private Object                  iconImageLock;
+  private HomePieceOfFurniture    previewedPiece;
 
   /**
    * Returns an 3D model preview component.
@@ -505,9 +499,9 @@ public class ModelPreviewComponent extends JComponent {
     root.setCapability(BranchGroup.ALLOW_DETACH);
     root.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     // Build scene tree
-    root.addChild(getModelTree());
-    root.addChild(getBackgroundNode());
-    for (Light light : getLights()) {
+    root.addChild(createModelTree());
+    root.addChild(createBackgroundNode());
+    for (Light light : createLights()) {
       root.addChild(light);
     }
     return root;
@@ -516,7 +510,7 @@ public class ModelPreviewComponent extends JComponent {
   /**
    * Returns the background node.  
    */
-  private Node getBackgroundNode() {
+  private Node createBackgroundNode() {
     Background background = new Background(new Color3f(0.9f, 0.9f, 0.9f));
     background.setCapability(Background.ALLOW_COLOR_WRITE);
     background.setApplicationBounds(new BoundingSphere(new Point3d(0, 0, 0), 100));
@@ -534,7 +528,7 @@ public class ModelPreviewComponent extends JComponent {
   /**
    * Returns the lights of the scene.
    */
-  private Light [] getLights() {
+  private Light [] createLights() {
     Light [] lights = {
         new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(1.732f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(-1.732f, -0.8f, -1)), 
@@ -550,7 +544,7 @@ public class ModelPreviewComponent extends JComponent {
   /**
    * Returns the root of model tree.
    */
-  private Node getModelTree() {
+  private Node createModelTree() {
     TransformGroup modelTransformGroup = new TransformGroup();      
     //  Allow transform group to have new children
     modelTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
@@ -564,8 +558,8 @@ public class ModelPreviewComponent extends JComponent {
   /**
    * Returns the 3D model content displayed by this component.
    */
-  public Content getModel() throws IOException {
-    return this.model;
+  public Content getModel() {
+    return this.previewedPiece.getModel();
   }
 
   /**
@@ -575,41 +569,29 @@ public class ModelPreviewComponent extends JComponent {
   public void setModel(final Content model) {
     final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
+    this.previewedPiece = null;
     if (model != null) {
       final AtomicReference<IllegalArgumentException> exception = new AtomicReference<IllegalArgumentException>();
       // Load content model synchronously (or get it from cache)
       ModelManager.getInstance().loadModel(model, true, new ModelManager.ModelObserver() {        
-          public void modelUpdated(BranchGroup modelRoot) { 
-            modelRoot.setCapability(BranchGroup.ALLOW_DETACH);
-            setNodeCapabilities(modelRoot);
-            
+          public void modelUpdated(BranchGroup modelRoot) {
             if (modelRoot.numChildren() > 0) {
-              BoundingBox bounds = null;
               try {
-                bounds = ModelManager.getInstance().getBounds(modelRoot);
+                Vector3f size = ModelManager.getInstance().getSize(modelRoot);
+                previewedPiece = new HomePieceOfFurniture(
+                    new CatalogPieceOfFurniture(null, null, model, 
+                        size.x, size.z, size.y, 0, false, null, null, false, 0, false));
+                previewedPiece.setX(0);
+                previewedPiece.setY(0);
+                previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
+                
+                Transform3D modelTransform = new Transform3D();
+                modelTransform.setScale(1.8 / Math.max(Math.max(size.x, size.z), size.y));
+                modelTransformGroup.setTransform(modelTransform);
+
+                modelTransformGroup.addChild(new HomePieceOfFurniture3D(previewedPiece, null, true, true));
               } catch (IllegalArgumentException ex) {
                 // Model is empty
-              }
-              if (bounds != null) {
-                Point3d lower = new Point3d();
-                bounds.getLower(lower);
-                Point3d upper = new Point3d();
-                bounds.getUpper(upper);
-                
-                // Translate model to center
-                Transform3D translation = new Transform3D ();
-                translation.setTranslation(
-                    new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                                 -lower.y - (upper.y - lower.y) / 2, 
-                                 -lower.z - (upper.z - lower.z) / 2));
-                // Scale model to make it fit in a 1.8 unit wide box
-                Transform3D modelTransform = new Transform3D();
-                modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
-                                                         upper.z - lower.z));
-                modelTransform.mul(translation);
-                
-                modelTransformGroup.setTransform(modelTransform);
-                modelTransformGroup.addChild(modelRoot);
               }
             }
           }
@@ -623,108 +605,44 @@ public class ModelPreviewComponent extends JComponent {
         throw exception.get(); 
       }
     }
-    this.model = model;
   }
-  
+
+  /**
+   * Sets the back face visibility of the children nodes of the displayed 3D model.
+   */
+  protected void setBackFaceShown(boolean backFaceShown) {
+    if (this.previewedPiece != null) {
+      // Create a new piece from the existing one with an updated backFaceShown flag 
+      this.previewedPiece = new HomePieceOfFurniture(
+          new CatalogPieceOfFurniture(null, null, this.previewedPiece.getModel(), 
+              this.previewedPiece.getWidth(), 
+              this.previewedPiece.getDepth(),
+              this.previewedPiece.getHeight(),
+              0, false, this.previewedPiece.getColor(), null, backFaceShown, 0, false));
+      this.previewedPiece.setX(0);
+      this.previewedPiece.setY(0);
+      this.previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
+    
+      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
+      modelTransformGroup.addChild(new HomePieceOfFurniture3D(this.previewedPiece, null, true, true));
+      if (modelTransformGroup.numChildren() > 1) {
+        modelTransformGroup.removeChild(0);
+      }
+    }
+  }
+
   /**
    * Returns the 3D model node displayed by this component. 
    */
-  BranchGroup getModelNode() {
+  private HomePieceOfFurniture3D getModelNode() {
     TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     if (modelTransformGroup.numChildren() > 0) {
-      return (BranchGroup)modelTransformGroup.getChild(0);
+      return (HomePieceOfFurniture3D)modelTransformGroup.getChild(0);
     } else {
       return null;
     }
   }
-
-  /**
-   * Sets the capability to read bounds, to write polygon and material attributes  
-   * for all children of <code>node</code>.
-   */
-  private void setNodeCapabilities(Node node) {
-    if (node instanceof Group) {
-      node.setCapability(Group.ALLOW_CHILDREN_READ);
-      if (node instanceof TransformGroup) {
-        node.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-      }
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        setNodeCapabilities((Node)enumeration.nextElement());
-      }
-    } else if (node instanceof Link) {
-      node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
-      setNodeCapabilities(((Link)node).getSharedGroup());
-    } else if (node instanceof Shape3D) {
-      Shape3D shape = (Shape3D)node;
-      node.setCapability(Node.ALLOW_BOUNDS_READ);
-      Appearance appearance = ((Shape3D)node).getAppearance();
-      if (appearance == null) {
-        appearance = new Appearance();
-        shape.setAppearance(appearance);
-      }
-      appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
-      appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
-      appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-      node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-
-      PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-      if (polygonAttributes == null) {
-        polygonAttributes = new PolygonAttributes();
-        appearance.setPolygonAttributes(polygonAttributes);
-      }
-      polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
-      polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
-      
-      Enumeration<?> enumeration = shape.getAllGeometries();
-      while (enumeration.hasMoreElements()) {
-        Geometry geometry = (Geometry) enumeration.nextElement();
-        if (!geometry.isLive()
-            && geometry instanceof GeometryArray) {
-          geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-          geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
-          geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-          geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-          geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-          geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
-        }
-      }
-    }
-  }
   
-  /**
-   * Sets the back face visibility of all <code>Shape3D</code> children nodes of displayed 3D model.
-   */
-  protected void setBackFaceShown(boolean backFaceShown) {
-    setBackFaceShown(this.sceneTree.getChild(0), backFaceShown);
-  }
-  
-  /**
-   * Sets the back face visibility of all <code>Shape3D</code> children nodes of <code>node</code>.
-   */
-  private void setBackFaceShown(Node node, boolean backFaceShown) {
-    if (node instanceof Group) {
-      // Set visibility of all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        setBackFaceShown((Node)enumeration.nextElement(), backFaceShown);
-      }
-    } else if (node instanceof Link) {
-      setBackFaceShown(((Link)node).getSharedGroup(), backFaceShown);
-    } else if (node instanceof Shape3D) {
-      Appearance appearance = ((Shape3D)node).getAppearance();
-      PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-      // Change cull face
-      if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
-        polygonAttributes.setCullFace(backFaceShown 
-            ? PolygonAttributes.CULL_FRONT
-            : PolygonAttributes.CULL_BACK);
-      }
-      // Change back face normal flip
-      polygonAttributes.setBackFaceNormalFlip(backFaceShown);
-    }
-  }
-
   /**
    * Updates the rotation of the 3D model displayed by this component. 
    * The model is shown at its default size.
@@ -732,18 +650,6 @@ public class ModelPreviewComponent extends JComponent {
   protected void setModelRotation(float [][] modelRotation) {
     BranchGroup modelNode = getModelNode();
     if (modelNode != null && modelNode.numChildren() > 0) {
-      BoundingBox bounds = ModelManager.getInstance().getBounds(modelNode);
-      Point3d lower = new Point3d();
-      bounds.getLower(lower);
-      Point3d upper = new Point3d();
-      bounds.getUpper(upper);
-    
-      // Translate model to center
-      Transform3D translation = new Transform3D ();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                       -lower.y - (upper.y - lower.y) / 2, 
-                       -lower.z - (upper.z - lower.z) / 2));
       // Apply model rotation
       Transform3D rotationTransform = new Transform3D();
       if (modelRotation != null) {
@@ -752,10 +658,10 @@ public class ModelPreviewComponent extends JComponent {
             modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
         rotationTransform.setRotation(modelRotationMatrix);
       }
-      rotationTransform.mul(translation);
       // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
+      Vector3f size = ModelManager.getInstance().getSize(modelNode);
+      modelTransform.setScale(1.8 / Math.max(Math.max(size.x, size.z), size.y));
       modelTransform.mul(rotationTransform);
       
       TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
@@ -796,52 +702,10 @@ public class ModelPreviewComponent extends JComponent {
    * Sets the color applied to piece model.
    */
   protected void setModelColor(Integer color) {
-    if (color != null) {
-      Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 255f,
-                                           ((color >>> 8) & 0xFF) / 255f,
-                                                   (color & 0xFF) / 255f);
-      setMaterial(this.sceneTree.getChild(0), 
-          new Material(materialColor, new Color3f(), materialColor, materialColor, 64));
-    } else {
-      // Set default material of model
-      setMaterial(this.sceneTree.getChild(0), null);
-    }
-  }
-
-  /**
-   * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
-   * with a given <code>material</code>. 
-   */
-  private void setMaterial(Node node, Material material) {
-    if (node instanceof Group) {
-      // Set material of all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        setMaterial((Node)enumeration.nextElement(), material);
-      }
-    } else if (node instanceof Link) {
-      setMaterial(((Link)node).getSharedGroup(), material);
-    } else if (node instanceof Shape3D) {
-      Shape3D shape = (Shape3D)node;
-      String shapeName = (String)shape.getUserData();
-      // Change material of all shape that are not window panes
-      if (shapeName == null
-          || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
-        Appearance appearance = shape.getAppearance();
-        // Use appearance user data to store shape default material
-        Material defaultMaterial = (Material)appearance.getUserData();
-        if (defaultMaterial == null) {
-          defaultMaterial = appearance.getMaterial();
-          appearance.setUserData(defaultMaterial);
-        }
-        // Change material
-        if (material != null) {
-          appearance.setMaterial(material);
-        } else {
-          // Restore default material
-          appearance.setMaterial(defaultMaterial);
-        }
-      }
+    if (this.previewedPiece != null
+        && this.previewedPiece.getColor() != color) {
+      this.previewedPiece.setColor(color);
+      getModelNode().update();
     }
   }
 
