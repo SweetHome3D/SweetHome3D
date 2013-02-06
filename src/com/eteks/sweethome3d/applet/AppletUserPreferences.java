@@ -31,7 +31,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -90,7 +89,6 @@ public class AppletUserPreferences extends UserPreferences {
   private final URL     readPreferencesURL;
   private Executor      catalogsLoader;
   private Executor      updater;
-  private List<Library> furnitureAndTexturesLibraries;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
 
@@ -181,7 +179,6 @@ public class AppletUserPreferences extends UserPreferences {
                                URL readPreferencesURL,
                                Executor updater,
                                String userLanguage) {
-    this.furnitureAndTexturesLibraries = new ArrayList<Library>();
     this.pluginFurnitureCatalogURLs = pluginFurnitureCatalogURLs;
     this.furnitureResourcesUrlBase = furnitureResourcesUrlBase;
     this.pluginTexturesCatalogURLs = pluginTexturesCatalogURLs;
@@ -291,7 +288,6 @@ public class AppletUserPreferences extends UserPreferences {
    * Reloads furniture and textures default catalogs.
    */
   private void updateDefaultCatalogs() {
-    final List<Library> furnitureAndTexturesLibraries = new ArrayList<Library>();
     // Delete default pieces of current furniture catalog          
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -315,11 +311,6 @@ public class AppletUserPreferences extends UserPreferences {
                 });
             }
           }
-          updater.execute(new Runnable() {
-            public void run() {
-              furnitureAndTexturesLibraries.addAll(defaultFurnitureCatalog.getLibraries());
-            }
-          });
         }
       });
 
@@ -346,15 +337,8 @@ public class AppletUserPreferences extends UserPreferences {
                 });
             }
           }
-          updater.execute(new Runnable() {
-              public void run() {
-                furnitureAndTexturesLibraries.addAll(defaultTexturesCatalog.getLibraries());
-              }
-            });
         }
       });
-    
-    this.furnitureAndTexturesLibraries = furnitureAndTexturesLibraries;
   }
 
   /**
@@ -535,13 +519,7 @@ public class AppletUserPreferences extends UserPreferences {
    */
   @Override
   public boolean furnitureLibraryExists(String location) throws RecorderException {
-    for (Library library : this.furnitureAndTexturesLibraries) {
-      if (FURNITURE_LIBRARY_TYPE.equals(library.getType())
-          && location.equals(library.getLocation())) {
-        return true;
-      }
-    }
-    return false;
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -557,13 +535,7 @@ public class AppletUserPreferences extends UserPreferences {
    */
   @Override
   public boolean texturesLibraryExists(String location) throws RecorderException {
-    for (Library library : this.furnitureAndTexturesLibraries) {
-      if (TEXTURES_LIBRARY_TYPE.equals(library.getType())
-          && location.equals(library.getLocation())) {
-        return true;
-      }
-    }
-    return false;
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -576,10 +548,10 @@ public class AppletUserPreferences extends UserPreferences {
 
 
   /**
-   * Returns the libraries available in user preferences.
+   * Throws an exception because applet user preferences don't manage additional libraries.
    */
   @Override
   public List<Library> getLibraries() {
-    return Collections.unmodifiableList(this.furnitureAndTexturesLibraries);
+    throw new UnsupportedOperationException();
   }
 }

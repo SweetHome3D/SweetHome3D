@@ -158,11 +158,11 @@ public class DefaultUserPreferences extends UserPreferences {
   }
   
   /**
-   * Returns <code>false</code>.
+   * Throws an exception because default user preferences can't manage additional furniture libraries.
    */
   @Override
   public boolean furnitureLibraryExists(String name) throws RecorderException {
-    return false;
+    throw new UnsupportedOperationException("Default user preferences can't manage furniture libraries");
   }
 
   /**
@@ -174,11 +174,11 @@ public class DefaultUserPreferences extends UserPreferences {
   }
   
   /**
-   * Returns <code>false</code>.
+   * Throws an exception because default user preferences can't manage textures libraries.
    */
   @Override
   public boolean texturesLibraryExists(String name) throws RecorderException {
-    return false;
+    throw new UnsupportedOperationException("Default user preferences can't manage textures libraries");
   }
 
   /**
