@@ -396,7 +396,7 @@ public class FileUserPreferences extends UserPreferences {
                       ResourceBundle.getBundle(PLUGIN_LANGUAGE_LIBRARY_FAMILY, Locale.getDefault(), classLoader));
                 } catch (MissingResourceException ex) {
                   languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
-                      null, getLanguageLibraryDefaultName(languages), null, null, null, null);
+                      null, getLanguageLibraryDefaultName(languages), null, getDefaultVersion(pluginLanguageLibraryFile), null, null);
                 }
                 libraries.add(languageLibrary);
               }
@@ -475,6 +475,26 @@ public class FileUserPreferences extends UserPreferences {
       description += " language support";
     }
     return description;
+  }
+
+  /**
+   * Returns a version number from the given file name or <code>null</code>.
+   */
+  private String getDefaultVersion(File pluginLanguageLibraryFile) {
+    String fileName = pluginLanguageLibraryFile.getName();
+    // Search version number between last hyphen and last point
+    int hyphenIndex = fileName.lastIndexOf('-');
+    if (hyphenIndex > 0) {
+      int pointIndex = fileName.lastIndexOf('.');
+      if (pointIndex < 0) {
+        pointIndex = fileName.length();
+      }
+      String version = fileName.substring(hyphenIndex + 1, pointIndex);
+      if (version.matches("[\\d\\.]+")) {
+        return version;
+      }
+    }
+    return null;
   }
 
   /**
