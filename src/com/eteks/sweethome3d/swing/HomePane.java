@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
@@ -27,6 +28,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -68,6 +71,9 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,6 +116,7 @@ import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -135,6 +142,9 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.j3d.Ground3D;
@@ -158,6 +168,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
+import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -169,6 +180,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.plugin.HomePluginController;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
+import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
@@ -3340,8 +3352,24 @@ public class HomePane extends JRootPane implements HomeView {
     String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
     Icon   icon  = new ImageIcon(HomePane.class.getResource(
         this.preferences.getLocalizedString(HomePane.class, "about.icon")));
-    JOptionPane.showMessageDialog(this, messagePane, title,  
-        JOptionPane.INFORMATION_MESSAGE, icon);
+    try {      
+      String close = this.preferences.getLocalizedString(HomePane.class, "about.close");
+      String showLibraries = this.preferences.getLocalizedString(HomePane.class, "about.showLibraries");
+      List<Library> libraries = this.preferences.getLibraries();
+      if (!libraries.isEmpty()) {
+        if (JOptionPane.showOptionDialog(this, messagePane, title, 
+              JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
+              icon, new Object [] {close, showLibraries}, close) == JOptionPane.NO_OPTION) {
+          showLibrariesDialog(libraries);
+        }
+        return;
+      }
+    } catch (UnsupportedOperationException ex) {
+      // Environment doesn't support libraries
+    } catch (IllegalArgumentException ex) {
+      // Unknown about.close or about.libraries libraries
+    }
+    JOptionPane.showMessageDialog(this, messagePane, title, JOptionPane.INFORMATION_MESSAGE, icon);
   }
 
   /**
@@ -3360,6 +3388,200 @@ public class HomePane extends JRootPane implements HomeView {
       }
     });
     return messagePane;
+  }
+
+  /**
+   * Displays the given <code>libraries</code> in a dialog.
+   */
+  private void showLibrariesDialog(List<Library> libraries) {
+    String title = this.preferences.getLocalizedString(HomePane.class, "libraries.title");
+    Map<String, String> librariesLabels = new LinkedHashMap<String, String>();
+    librariesLabels.put(UserPreferences.FURNITURE_LIBRARY_TYPE, 
+        this.preferences.getLocalizedString(HomePane.class, "libraries.furnitureLibraries"));
+    librariesLabels.put(UserPreferences.TEXTURES_LIBRARY_TYPE, 
+        this.preferences.getLocalizedString(HomePane.class, "libraries.texturesLibraries"));
+    librariesLabels.put(UserPreferences.LANGUAGE_LIBRARY_TYPE, 
+        this.preferences.getLocalizedString(HomePane.class, "libraries.languageLibraries"));
+    librariesLabels.put(PluginManager.PLUGIN_LIBRARY_TYPE, 
+        this.preferences.getLocalizedString(HomePane.class, "libraries.plugins"));
+    
+    JPanel messagePanel = new JPanel(new GridBagLayout());
+    int row = 0;
+    for (Map.Entry<String, String> librariesEntry : librariesLabels.entrySet()) {
+      final List<Library> typeLibraries = new ArrayList<Library>();
+      for (Library library : libraries) {
+        if (librariesEntry.getKey().equals(library.getType())) {
+          typeLibraries.add(library);
+        }
+      }
+      // If there's some library of the given type
+      if (!typeLibraries.isEmpty()) {
+        // Add a label
+        messagePanel.add(new JLabel(librariesEntry.getValue()), new GridBagConstraints(
+            0, row++, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, new Insets(row == 0 ? 0 : 5, 2, 2, 0), 0, 0));
+        // Add a description table
+        JTable librariesTable = createLibrariesTable(typeLibraries);
+        JScrollPane librariesScrollPane = SwingTools.createScrollPane(librariesTable);
+        librariesScrollPane.setPreferredSize(new Dimension(500, 85));
+        messagePanel.add(librariesScrollPane, new GridBagConstraints(
+            0, row++, 1, 1, 1, 1, GridBagConstraints.CENTER, 
+            GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+      }
+    }
+    JOptionPane.showMessageDialog(this, messagePanel, title, JOptionPane.PLAIN_MESSAGE);
+  }
+
+  /**
+   * Returns a table describing each library of the given collection.
+   */
+  private JTable createLibrariesTable(final List<Library> libraries) {
+    AbstractTableModel librariesTableModel = new AbstractTableModel() {
+        private String [] columnNames = {
+            preferences.getLocalizedString(HomePane.class, "libraries.libraryFileColumn"),
+            preferences.getLocalizedString(HomePane.class, "libraries.libraryNameColumn"),
+            preferences.getLocalizedString(HomePane.class, "libraries.libraryVersionColumn"),
+            preferences.getLocalizedString(HomePane.class, "libraries.libraryLicenseColumn"),
+            preferences.getLocalizedString(HomePane.class, "libraries.libraryProviderColumn")};
+
+        public int getRowCount() {
+          return libraries.size();
+        }
+ 
+        public int getColumnCount() {
+          return columnNames.length;
+        }
+        
+        @Override
+        public String getColumnName(int column) {
+          return columnNames [column];
+        }
+ 
+        public Object getValueAt(int rowIndex, int columnIndex) {
+          Library library = libraries.get(rowIndex);
+          switch (columnIndex) {
+            case 0 : return library.getLocation();
+            case 1 : return library.getName() != null 
+                ? library.getName()
+                : library.getDescription();
+            case 2 : return library.getVersion();
+            case 3 : return library.getLicense();
+            case 4 : return library.getProvider();
+            default : throw new IllegalArgumentException();
+          }
+        }
+      };
+      
+    final JTable librariesTable = new JTable(librariesTableModel) {
+        @Override
+        public String getToolTipText(MouseEvent ev) {
+          if (columnAtPoint(ev.getPoint()) == 0) {
+            int row = rowAtPoint(ev.getPoint());
+            if (row >= 0) {
+              // Display the full path of the library as a tool tip
+              return libraries.get(row).getLocation();
+            }
+          }
+          return null;
+        }
+      };
+    
+    // Set column widths
+    librariesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    TableColumnModel columnModel = librariesTable.getColumnModel();
+    int [] columnMinWidths = {15, 20, 7, 50, 20};
+    Font defaultFont = new DefaultTableCellRenderer().getFont();
+    int charWidth;
+    if (defaultFont != null) {
+      charWidth = getFontMetrics(defaultFont).getWidths() ['A'];
+    } else {
+      charWidth = 10;
+    }      
+    for (int i = 0; i < columnMinWidths.length; i++) {
+      columnModel.getColumn(i).setPreferredWidth(columnMinWidths [i] * charWidth);
+    }
+
+    // Check if it's possible to show a folder
+    Object desktopInstance = null;
+    Method openMethod = null; 
+    if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+      try {
+        // Call Java SE 6 java.awt.Desktop browse method by reflection to
+        // ensure Java SE 5 compatibility
+        Class<?> desktopClass = Class.forName("java.awt.Desktop");
+        desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+        openMethod = desktopClass.getMethod("open", File.class);
+      } catch (Exception ex) {
+        // For any exception, let's consider simply the open method isn't available
+      }
+    }
+    final boolean canOpenFolder = openMethod != null || OperatingSystem.isMacOSX() || OperatingSystem.isLinux();
+    
+    // Display first column as a link
+    columnModel.getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+        {
+          if (canOpenFolder) {
+            setForeground(Color.BLUE);
+          }
+        }
+        
+        public Component getTableCellRendererComponent(JTable table, Object value, 
+                              boolean isSelected, boolean hasFocus, int row, int column) {
+          String location = (String)value;
+          try {
+            location = new URL(location).getFile().substring(location.lastIndexOf('/') + 1);
+          } catch (MalformedURLException ex) {
+            // Must be a file
+            location = location.substring(location.lastIndexOf(File.separatorChar) + 1);
+          }
+          super.getTableCellRendererComponent(table, location, isSelected, hasFocus, row, column);
+          return this;
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          if (canOpenFolder) {
+            // Paint underline
+            Insets insets = getInsets();
+            g.drawLine(insets.left, getHeight() - 1 - insets.bottom, 
+                Math.min(getPreferredSize().width, getWidth()) - insets.right, 
+                getHeight() - 1 - insets.bottom);
+          }
+        }
+      });
+    if (canOpenFolder) {
+      final Object finalDesktopInstance = desktopInstance;
+      final Method finalOpenMethod = openMethod; 
+      librariesTable.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent ev) {
+            if (librariesTable.columnAtPoint(ev.getPoint()) == 0) {
+              int row = librariesTable.rowAtPoint(ev.getPoint());
+              if (row >= 0) {
+                String location = libraries.get(row).getLocation();
+                try {
+                  new URL(location);
+                } catch (MalformedURLException ex) {
+                  File directory = new File(location).getParentFile();
+                  try {
+                    if (finalOpenMethod != null) {
+                      finalOpenMethod.invoke(finalDesktopInstance, directory);
+                    } else if (OperatingSystem.isMacOSX()) {
+                      Runtime.getRuntime().exec(new String [] {"open", directory.getAbsolutePath()});
+                    } else { // Linux
+                      Runtime.getRuntime().exec(new String [] {"xdg-open", directory.getAbsolutePath()});
+                    } 
+                  } catch (Exception ex2) {
+                    ex2.printStackTrace();
+                  }
+                }
+              }
+            }
+          }
+        });
+    }
+    return librariesTable;
   }
 
   /**
