@@ -878,24 +878,27 @@ public class SweetHome3D extends HomeApplication {
    */
   private static class StandaloneBasicService implements BasicService {
     public boolean showDocument(URL url) {
-      if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
-        try {
+      try {
+        if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
           // Call Java SE 6 java.awt.Desktop browse method by reflection to
           // ensure Java SE 5 compatibility
-          Class desktopClass = Class.forName("java.awt.Desktop");
+          Class<?> desktopClass = Class.forName("java.awt.Desktop");
           Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
           desktopClass.getMethod("browse", URI.class).invoke(desktopInstance, url.toURI());
           return true;
-        } catch (Exception ex) {
-          // For any exception, let's consider simply the showDocument method
-          // failed
         }
-      } else if (OperatingSystem.isMacOSX()) {
+      } catch (Exception ex) {
         try {
-          Runtime.getRuntime().exec(new String [] {"open", url.toString()});
-          return true;
-        } catch (IOException ex) {
+          if (OperatingSystem.isMacOSX()) {
+            Runtime.getRuntime().exec(new String [] {"open", url.toString()});
+            return true;
+          } else if (OperatingSystem.isLinux()) {
+            Runtime.getRuntime().exec(new String [] {"xdg-open", url.toString()});
+            return true;
+          }  
+        } catch (IOException ex2) {
         }
+        // For other cases, let's consider simply the showDocument method failed
       }
       return false;
     }
@@ -913,20 +916,21 @@ public class SweetHome3D extends HomeApplication {
       if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
         try {
           // Call Java SE 6 java.awt.Desktop isSupported(Desktop.Action.BROWSE)
-          // method by reflection to
-          // ensure Java SE 5 compatibility
-          Class desktopClass = Class.forName("java.awt.Desktop");
+          // method by reflection to ensure Java SE 5 compatibility
+          Class<?> desktopClass = Class.forName("java.awt.Desktop");
           Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
-          Class desktopActionClass = Class.forName("java.awt.Desktop$Action");
+          Class<?> desktopActionClass = Class.forName("java.awt.Desktop$Action");
           Object desktopBrowseAction = desktopActionClass.getMethod("valueOf", String.class).invoke(null, "BROWSE");
-          return (Boolean) desktopClass.getMethod("isSupported", desktopActionClass).invoke(desktopInstance,
-              desktopBrowseAction);
+          if ((Boolean)desktopClass.getMethod("isSupported", desktopActionClass).invoke(desktopInstance,
+              desktopBrowseAction)) {
+            return true;
+          }
         } catch (Exception ex) {
           // For any exception, let's consider simply the isSupported method failed
         }
       }
-      // For other Java versions, let's support only Mac OS X
-      return OperatingSystem.isMacOSX();
+      // For other Java versions, let's support Mac OS X and Linux
+      return OperatingSystem.isMacOSX() || OperatingSystem.isLinux();
     }
   }
 
