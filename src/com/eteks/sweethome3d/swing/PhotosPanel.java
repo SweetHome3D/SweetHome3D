@@ -588,6 +588,7 @@ public class PhotosPanel extends JPanel implements DialogView {
       this.photoComponent.setImage(null);
       this.selectedCamerasList.setEnabled(false);
       this.sizeAndQualityPanel.setEnabled(false);
+      this.fileFormatComboBox.setEnabled(false);
       getRootPane().setDefaultButton(this.startStopButton);
       this.startStopButton.setAction(getActionMap().get(ActionType.STOP_PHOTOS_CREATION));
       this.statusLayout.show(this.statusPanel, PROGRESS_CARD);
@@ -682,6 +683,7 @@ public class PhotosPanel extends JPanel implements DialogView {
             selectedCamerasList.setEnabled(true);
             sizeAndQualityPanel.setEnabled(true);
             sizeAndQualityPanel.setProportionsChoiceEnabled(true);
+            fileFormatComboBox.setEnabled(true);
             if (succeeded) {
               statusLayout.show(statusPanel, END_CARD);
             } else {
