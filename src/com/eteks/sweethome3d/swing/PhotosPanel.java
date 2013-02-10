@@ -79,6 +79,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -224,6 +225,7 @@ public class PhotosPanel extends JPanel implements DialogView {
           }
         }
       });
+    this.selectedCamerasList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     this.selectedCamerasList.setSelectedIndex(0);
     controller.addPropertyChangeListener(PhotosController.Property.SELECTED_CAMERAS, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
