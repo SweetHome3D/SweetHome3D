@@ -230,7 +230,22 @@ public class HomeController3D implements Controller {
     storedCameras.add(0, camera);
     this.home.setStoredCameras(storedCameras);
   }
-  
+
+  /**
+   * Deletes the given list of cameras from the ones stored in home.
+   */
+  public void deleteCameras(List<Camera> cameras) {
+    List<Camera> homeStoredCameras = this.home.getStoredCameras();
+    // Build a list of cameras that will contain only the cameras not in the camera list in parameter
+    ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() - cameras.size());
+    for (Camera camera : homeStoredCameras) {
+      if (!cameras.contains(camera)) {
+        storedCameras.add(camera);
+      }
+    }
+    this.home.setStoredCameras(storedCameras);
+  }
+
   /**
    * Makes all levels visible.
    */

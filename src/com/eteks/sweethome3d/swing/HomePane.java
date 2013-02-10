@@ -105,6 +105,7 @@ import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -123,6 +124,8 @@ import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.RootPaneContainer;
 import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
@@ -459,6 +462,7 @@ public class HomePane extends JRootPane implements HomeView {
           preferences, homeController3D, "viewFromObserver");
       createAction(ActionType.MODIFY_OBSERVER, preferences, planController, "modifyObserverCamera");
       createAction(ActionType.STORE_POINT_OF_VIEW, preferences, controller, "storeCamera");
+      createAction(ActionType.DELETE_POINTS_OF_VIEW, preferences, controller, "deleteCameras");
       getActionMap().put(ActionType.DETACH_3D_VIEW, 
           new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
             @Override
@@ -1025,6 +1029,7 @@ public class HomePane extends JRootPane implements HomeView {
     if (goToPointOfViewMenu != null) {
       preview3DMenu.add(goToPointOfViewMenu);
     }
+    addActionToMenu(ActionType.DELETE_POINTS_OF_VIEW, preview3DMenu);
     preview3DMenu.addSeparator();
     JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, false);
     if (attachDetach3DViewMenuItem != null) {
@@ -2581,6 +2586,7 @@ public class HomePane extends JRootPane implements HomeView {
       if (goToPointOfViewMenu != null) {
         view3DPopup.add(goToPointOfViewMenu);
       }
+      addActionToPopupMenu(ActionType.DELETE_POINTS_OF_VIEW, view3DPopup);
       view3DPopup.addSeparator();
       JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
       if (attachDetach3DViewMenuItem != null) {
@@ -4060,6 +4066,80 @@ public class HomePane extends JRootPane implements HomeView {
     } 
       
     return null;
+  }
+
+  /**
+   * Displays a dialog showing the list of cameras stored in home 
+   * and returns the ones selected by the user to be deleted.  
+   */
+  public List<Camera> showDeletedCamerasDialog() {    
+    // Build stored cameras list
+    List<Camera> storedCameras = this.home.getStoredCameras();
+    final List<Camera> selectedCameras = new ArrayList<Camera>();
+    final JList camerasList = new JList(storedCameras.toArray());
+    camerasList.setCellRenderer(new ListCellRenderer() {
+        private JCheckBox cameraCheckBox = new JCheckBox();
+        
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                      boolean cellHasFocus) {
+          this.cameraCheckBox.setText(((Camera)value).getName());
+          this.cameraCheckBox.setSelected(selectedCameras.contains(value));
+          this.cameraCheckBox.setOpaque(true);
+          if (isSelected && list.hasFocus()) {
+            this.cameraCheckBox.setBackground(list.getSelectionBackground());
+            this.cameraCheckBox.setForeground(list.getSelectionForeground());
+          }
+          else {
+            this.cameraCheckBox.setBackground(list.getBackground());
+            this.cameraCheckBox.setForeground(list.getForeground());
+          }
+          return this.cameraCheckBox;
+        }
+      });
+    camerasList.getInputMap().put(KeyStroke.getKeyStroke("pressed SPACE"), "toggleSelection");
+    final AbstractAction toggleSelectionAction = new AbstractAction() {
+        public void actionPerformed(ActionEvent ev) {
+          Camera selectedCamera = (Camera)camerasList.getSelectedValue();
+          if (selectedCamera != null) {
+            int index = selectedCameras.indexOf(selectedCamera);
+            if (index >= 0) {
+              selectedCameras.remove(index);
+            } else {
+              selectedCameras.add(selectedCamera);
+            }
+            camerasList.repaint();
+          }
+        }
+      };
+    camerasList.getActionMap().put("toggleSelection", toggleSelectionAction);
+    camerasList.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent ev) {
+          toggleSelectionAction.actionPerformed(null);
+        }
+      });
+    camerasList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    camerasList.setSelectedIndex(0);
+
+    // Retrieve displayed text in dialog
+    String message = this.preferences.getLocalizedString(HomePane.class, "showDeletedCamerasDialog.message");
+    String title = this.preferences.getLocalizedString(HomePane.class, "showDeletedCamerasDialog.title");
+
+    JPanel camerasPanel = new JPanel(new BorderLayout(0, 5));
+    camerasPanel.add(new JLabel(message), BorderLayout.NORTH);
+    camerasPanel.add(SwingTools.createScrollPane(camerasList), BorderLayout.CENTER);
+
+    if (SwingTools.showConfirmDialog(this, camerasPanel, title, camerasList) == JOptionPane.OK_OPTION) {
+      String confirmMessage = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.message");
+      String delete = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.delete");
+      String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.cancel");      
+      if (JOptionPane.showOptionDialog(this, confirmMessage, title, 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+            null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION) {
+        return selectedCameras;
+      }
+    } 
+    return null;    
   }
 
   /**

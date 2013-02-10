@@ -19,8 +19,10 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 
@@ -63,7 +65,7 @@ public interface HomeView extends View {
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, HIDE_BACKGROUND_IMAGE, SHOW_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, 
       ADD_LEVEL, DELETE_LEVEL, MODIFY_LEVEL,
       ZOOM_OUT, ZOOM_IN, EXPORT_TO_SVG,
-      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_OBSERVER, STORE_POINT_OF_VIEW, CREATE_PHOTOS_AT_POINTS_OF_VIEW, DETACH_3D_VIEW, ATTACH_3D_VIEW,  
+      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_OBSERVER, STORE_POINT_OF_VIEW, DELETE_POINTS_OF_VIEW, CREATE_PHOTOS_AT_POINTS_OF_VIEW, DETACH_3D_VIEW, ATTACH_3D_VIEW,  
       DISPLAY_ALL_LEVELS, DISPLAY_SELECTED_LEVEL, MODIFY_3D_ATTRIBUTES, CREATE_PHOTO, CREATE_VIDEO, EXPORT_TO_OBJ,
       HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
@@ -256,6 +258,12 @@ public interface HomeView extends View {
    * Displays a dialog that lets the user choose a name for the current camera.
    */
   public abstract String showStoreCameraDialog(String cameraName);
+
+  /**
+   * Displays a dialog showing the list of cameras stored in home 
+   * and returns the ones selected by the user to be deleted.  
+   */
+  public abstract List<Camera> showDeletedCamerasDialog();
   
   /**
    * Returns <code>true</code> if clipboard contains data that

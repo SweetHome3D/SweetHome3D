@@ -307,7 +307,9 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_OBSERVER, this.home.getCamera() == this.home.getObserverCamera());
     homeView.setEnabled(HomeView.ActionType.STORE_POINT_OF_VIEW, true);
-    homeView.setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !this.home.getStoredCameras().isEmpty());
+    boolean emptyStoredCameras = home.getStoredCameras().isEmpty();
+    homeView.setEnabled(HomeView.ActionType.DELETE_POINTS_OF_VIEW, !emptyStoredCameras);
+    homeView.setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !emptyStoredCameras);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
@@ -1016,7 +1018,9 @@ public class HomeController implements Controller {
   private void addStoredCamerasListener() {
     this.home.addPropertyChangeListener(Home.Property.STORED_CAMERAS, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !home.getStoredCameras().isEmpty());
+          boolean emptyStoredCameras = home.getStoredCameras().isEmpty();
+          getView().setEnabled(HomeView.ActionType.DELETE_POINTS_OF_VIEW, !emptyStoredCameras);
+          getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !emptyStoredCameras);
         }
       });
   }
@@ -2180,6 +2184,16 @@ public class HomeController implements Controller {
     String name = getView().showStoreCameraDialog(now);
     if (name != null) {
       getHomeController3D().storeCamera(name);
+    }
+  }
+
+  /**
+   * Prompts stored cameras in home to be deleted and deletes the ones selected by the user.
+   */
+  public void deleteCameras() {
+    List<Camera> deletedCameras = getView().showDeletedCamerasDialog();
+    if (deletedCameras != null) {
+      getHomeController3D().deleteCameras(deletedCameras);
     }
   }
 
