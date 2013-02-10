@@ -1702,8 +1702,6 @@ public class HomeController implements Controller {
     if (this.home.getVersion() <= Home.CURRENT_VERSION
         || !homeName.equals(this.home.getName()) 
         || getView().confirmSaveNewerHome(homeName)) {
-      final String errorMessage = preferences.getLocalizedString(
-          HomeController.class, "saveError", homeName);
       final Home savedHome; 
       try {
         // Clone home to save it safely in a threaded task
@@ -1711,7 +1709,8 @@ public class HomeController implements Controller {
       } catch (RuntimeException ex) {
         // If home data is corrupted some way and couldn't be clone 
         // warn the user his home couldn't be saved
-        getView().showError(errorMessage);
+        getView().showError(preferences.getLocalizedString(
+            HomeController.class, "saveError", homeName, ex));
         throw ex;
       }
       Callable<Void> saveTask = new Callable<Void>() {
@@ -1726,11 +1725,20 @@ public class HomeController implements Controller {
           new ThreadedTaskController.ExceptionHandler() {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
+                String cause = ex.toString();
                 if (ex instanceof RecorderException) {
-                  getView().showError(errorMessage);
-                } else {
-                  ex.printStackTrace();
+                  cause = "RecorderException";
+                  String message = ex.getMessage();
+                  if (message != null) {
+                    cause += ": " + message;
+                  }
+                  if (ex.getCause() != null) {
+                    cause += " - " + ex.getCause();
+                  }
                 }
+                ex.printStackTrace();
+                getView().showError(preferences.getLocalizedString(
+                    HomeController.class, "saveError", homeName, cause));
               }
             }
           };
