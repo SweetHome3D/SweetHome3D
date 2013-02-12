@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -27,6 +28,10 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,6 +39,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.FieldPosition;
@@ -46,9 +54,11 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
@@ -59,9 +69,11 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
@@ -165,9 +177,12 @@ public class ColorButton extends JButton {
               }
             }, null);   
         if (preferences != null) {
-          ((ColorChooserPanel)colorChooser.getChooserPanels() [0]).setInitialColor(colorChooser.getColor());
-          colorChooser.getPreviewPanel().getParent().setVisible(!preferences.getRecentColors().isEmpty());
-          colorDialog.pack();
+          AbstractColorChooserPanel colorChooserPanel = colorChooser.getChooserPanels() [0];
+          if (colorChooserPanel instanceof PalettesColorChooserPanel) {
+            ((PalettesColorChooserPanel)colorChooserPanel).setInitialColor(colorChooser.getColor());
+            colorChooser.getPreviewPanel().getParent().setVisible(!preferences.getRecentColors().isEmpty());
+            colorDialog.pack();
+          }
         }
         colorDialog.setVisible(true);
       }
@@ -185,8 +200,8 @@ public class ColorButton extends JButton {
           preferences.getLocalizedString(ColorButton.class, "recentPanel.title"));
       ColorSelectionModel colorSelectionModel = new DefaultColorSelectionModel();
       final JPanel previewPanel = new RecentColorsPanel(colorSelectionModel, preferences);          
-      final ColorChooserPanel panel = new ColorChooserPanel(preferences);
-      panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+      final PalettesColorChooserPanel palettesPanel = new PalettesColorChooserPanel(preferences);
+      palettesPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
       colorChooser = new JColorChooser(colorSelectionModel) {
           public void updateUI() {
             super.updateUI();
@@ -197,17 +212,17 @@ public class ColorButton extends JButton {
             if (chooserPanels.get(0).getClass().getName().contains("DefaultSwatchChooserPanel")) {
               chooserPanels.remove(0);
             }
-            chooserPanels.add(0, panel);
+            chooserPanels.add(0, palettesPanel);
             setChooserPanels(chooserPanels.toArray(new AbstractColorChooserPanel [chooserPanels.size()]));
             setPreviewPanel(previewPanel);
+            // Add auto selection to color chooser panels text fields
+            addAutoSelectionOnTextFields(this);
           }
         };
     } else {
       colorChooser = new JColorChooser();
     }
     
-    // Add auto selection to color chooser panels text fields
-    addAutoSelectionOnTextFields(colorChooser);
     // Add Esc key management
     colorChooser.getActionMap().put("close", new AbstractAction() {
         public void actionPerformed(ActionEvent ev) {
@@ -280,7 +295,7 @@ public class ColorButton extends JButton {
   /**
    * Color chooser panel showing different palettes.
    */
-  private static class ColorChooserPanel extends AbstractColorChooserPanel {
+  private static class PalettesColorChooserPanel extends AbstractColorChooserPanel {
     private final UserPreferences preferences;
     private GrayColorChart        grayColorChart;
     private ColorChart            colorChart;
@@ -290,7 +305,7 @@ public class ColorButton extends JButton {
     private PaletteComboBox       creativeCommonsComboBox;
     private Color                 initialColor;
       
-    public ColorChooserPanel(UserPreferences preferences) {
+    public PalettesColorChooserPanel(UserPreferences preferences) {
       this.preferences = preferences;
       addAncestorListener(new AncestorListener() {
           private int initialDelay;
@@ -336,7 +351,13 @@ public class ColorButton extends JButton {
       // Create components
       this.grayColorChart = new GrayColorChart();
       this.grayColorChart.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-      this.grayColorChart.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      final Cursor pipetteCursor = SwingTools.createCustomCursor(
+          OperatingSystem.isMacOSX()
+              ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
+              : ColorButton.class.getResource("resources/cursors/pipette16x16.png"),
+          ColorButton.class.getResource("resources/cursors/pipette32x32.png"), 
+          0, 1, "Pipette", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      this.grayColorChart.setCursor(pipetteCursor);
       ToolTipManager.sharedInstance().registerComponent(this.grayColorChart);
       MouseAdapter grayColorCharMouseListener = new MouseAdapter() {
           @Override
@@ -354,7 +375,7 @@ public class ColorButton extends JButton {
 
       this.colorChart = new ColorChart();
       this.colorChart.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-      this.colorChart.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      this.colorChart.setCursor(pipetteCursor);
       ToolTipManager.sharedInstance().registerComponent(this.colorChart);
       MouseAdapter colorChartMouseListener = new MouseAdapter() {
           @Override
@@ -401,7 +422,87 @@ public class ColorButton extends JButton {
             }
           }
         });
+      this.colorComponent.setCursor(pipetteCursor);
       
+      AbstractAction pipetteAction = new AbstractAction() {
+          public void actionPerformed(ActionEvent ev) {
+            // Grab desktop with a 1x1 window
+            final JDialog pipetteWindow = new JDialog((Window)SwingUtilities.getRoot(getParent()));
+            pipetteWindow.setUndecorated(true);
+            pipetteWindow.setModal(true);
+            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            pipetteWindow.setBounds(mouseLocation.x - 1, mouseLocation.y - 1, 3, 3);
+            try {
+              if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+                // Call pipetteWindow.setOpacity(0.05f) by reflection to ensure Java SE 5 compatibility
+                // Opacity is set to 0.05f to be almost transparent but still visible enough by the
+                // the system not to switch to another application when the user clicks
+                Window.class.getMethod("setOpacity", float.class).invoke(pipetteWindow, 0.05f);
+              } else if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+                // Call com.sun.awt.AWTUtilities.setWindowOpacity(pipetteWindow, 0.05f)
+                Class<?> awtUtilitiesClass = Class.forName("com.sun.awt.AWTUtilities");
+                awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class).invoke(null, pipetteWindow, 0.05f);
+              } 
+            } catch (Exception ex) {
+              // For any exception, let's consider simply the method failed or doesn't exist
+            }
+            pipetteWindow.setCursor(pipetteCursor);
+            // Follow mouse moves with a timer because mouse listeners would miss some events
+            final Timer timer = new Timer(50, new ActionListener() {
+                public void actionPerformed(ActionEvent ev) {
+                  Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+                  pipetteWindow.setLocation(mouseLocation.x - 1, mouseLocation.y - 1);
+                  pipetteWindow.setCursor(pipetteCursor);
+                }
+              });
+            timer.start();
+            pipetteWindow.getRootPane().getInputMap(JRootPane.WHEN_IN_FOCUSED_WINDOW).
+                put(KeyStroke.getKeyStroke("ESCAPE"), "Close");
+            final AbstractAction closeAction = new AbstractAction() {
+                public void actionPerformed(ActionEvent ev) {
+                  timer.stop();
+                  pipetteWindow.dispose();
+                }
+              };
+            pipetteWindow.getRootPane().getActionMap().put("Close", closeAction);
+            pipetteWindow.addWindowFocusListener(new WindowFocusListener() {
+                public void windowLostFocus(WindowEvent ev) {
+                  closeAction.actionPerformed(null);
+                }
+                
+                public void windowGainedFocus(WindowEvent ev) {
+                }
+              });
+            pipetteWindow.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent ev) {
+                  try {
+                    closeAction.actionPerformed(null);
+                    getColorSelectionModel().setSelectedColor(getColorAtMouseLocation());
+                  } catch (AWTException ex) {
+                    ex.printStackTrace();
+                  }
+                }
+              });
+            
+            pipetteWindow.setVisible(true);
+          }
+
+          private Color getColorAtMouseLocation() throws AWTException {
+            BufferedImage screenCapture = new Robot().createScreenCapture(
+                new Rectangle(MouseInfo.getPointerInfo().getLocation(), new Dimension(1, 1)));
+            int [] pixel = screenCapture.getRGB(0, 0, 1, 1, null, 0, 1);
+            return new Color(pixel [0]);
+          }
+        };
+      pipetteAction.putValue(Action.SMALL_ICON, 
+          new ImageIcon(OperatingSystem.isMacOSX()
+              ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
+              : ColorButton.class.getResource("resources/cursors/pipette16x16.png")));
+      JButton pipetteButton = new JButton(pipetteAction);
+      pipetteButton.setFocusable(false);
+      pipetteButton.setPreferredSize(new Dimension(30, 30));
+
       JLabel rgbLabel = new JLabel(this.preferences.getLocalizedString(ColorButton.class, "rgbLabel.text"));
       this.rgbTextField = new JFormattedTextField(new Format() {
           @Override
@@ -486,27 +587,30 @@ public class ColorButton extends JButton {
           GridBagConstraints.NONE, new Insets(0, 0, 8, 5), 0, 0));           
       add(this.colorComponent, new GridBagConstraints(
           3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, OperatingSystem.isMacOSX()  ? 3  : 0), 0, 0));           
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
+      add(pipetteButton, new GridBagConstraints(
+          4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 5, 8, 0), 0, 0));
       add(rgbLabel, new GridBagConstraints(
-          2, 1, 2, 1, 0, 0, labelAlignment, 
+          2, 1, 3, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
       add(this.rgbTextField, new GridBagConstraints(
-          2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 2, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, 
           OperatingSystem.isMacOSX() 
               ? new Insets(0, 1, 5, 1) 
               : new Insets(0, 0, 5, 0), 0, 0));           
       add(ralLabel, new GridBagConstraints(
-          2, 3, 2, 1, 0, 0, labelAlignment, 
+          2, 3, 3, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
       add(this.ralComboBox, new GridBagConstraints(
-          2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));           
       add(creativeCommonsLabel, new GridBagConstraints(
-          2, 5, 2, 1, 0, 0, labelAlignment, 
+          2, 5, 3, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
       add(this.creativeCommonsComboBox, new GridBagConstraints(
-          2, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 6, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
       
       getColorSelectionModel().addChangeListener(new ChangeListener() {
@@ -978,9 +1082,17 @@ public class ColorButton extends JButton {
   private static class RecentColorsPanel extends JPanel {
     public static final int MAX_COLORS = 20;
     
+    private Cursor pipetteCursor;
+    
     private RecentColorsPanel(final ColorSelectionModel colorSelectionModel,
                               final UserPreferences preferences) {
       super(new GridBagLayout());
+      this.pipetteCursor = SwingTools.createCustomCursor(
+          OperatingSystem.isMacOSX()
+              ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
+              : ColorButton.class.getResource("resources/cursors/pipette16x16.png"),
+          ColorButton.class.getResource("resources/cursors/pipette32x32.png"), 
+          0, 1, "Pipette", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       preferences.addPropertyChangeListener(UserPreferences.Property.RECENT_COLORS, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -1025,6 +1137,7 @@ public class ColorButton extends JButton {
               colorSelectionModel.setSelectedColor(new Color(color));
             }
           });
+        colorComponent.setCursor(this.pipetteCursor);
         add(colorComponent, new GridBagConstraints(
             i++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
