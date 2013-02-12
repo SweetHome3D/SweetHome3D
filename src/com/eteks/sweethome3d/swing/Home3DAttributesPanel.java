@@ -154,7 +154,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           }
         });
   
-    this.skyColorButton = new ColorButton();
+    this.skyColorButton = new ColorButton(preferences);
     this.skyColorButton.setColorDialogTitle(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "skyColorDialog.title"));
     this.skyColorButton.setColor(controller.getSkyColor());
