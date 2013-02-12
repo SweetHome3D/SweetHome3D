@@ -195,7 +195,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         try {
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
                   new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));
-          this.libraries.add(new DefaultLibrary(pluginTexturesCatalogUrl.toExternalForm(), 
+          this.libraries.add(0, new DefaultLibrary(pluginTexturesCatalogUrl.toExternalForm(), 
               UserPreferences.TEXTURES_LIBRARY_TYPE, resource));
           readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, identifiedTextures);
         } catch (MissingResourceException ex) {
@@ -246,7 +246,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
           new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));      
-      this.libraries.add(new DefaultLibrary(pluginTexturesCatalogFile.getCanonicalPath(), 
+      this.libraries.add(0, new DefaultLibrary(pluginTexturesCatalogFile.getCanonicalPath(), 
           UserPreferences.TEXTURES_LIBRARY_TYPE, resourceBundle));
       readTextures(resourceBundle, pluginTexturesCatalogUrl, null, identifiedTextures);
     } catch (MissingResourceException ex) {

@@ -390,7 +390,7 @@ public class FileUserPreferences extends UserPreferences {
         if (pluginLanguageLibraryFiles != null) {
           // Treat language files in reverse order so file named with a date or a version 
           // will be taken into account from most recent to least recent
-          Arrays.sort(pluginLanguageLibraryFiles, Collections.reverseOrder());
+          Arrays.sort(pluginLanguageLibraryFiles, Collections.reverseOrder(OperatingSystem.getFileVersionComparator()));
           for (File pluginLanguageLibraryFile : pluginLanguageLibraryFiles) {
             try {
               Set<String> languages = getLanguages(pluginLanguageLibraryFile);
@@ -408,7 +408,7 @@ public class FileUserPreferences extends UserPreferences {
                   languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
                       null, getLanguageLibraryDefaultName(languages), null, getDefaultVersion(pluginLanguageLibraryFile), null, null);
                 }
-                libraries.add(languageLibrary);
+                libraries.add(0, languageLibrary);
               }
             } catch (IOException ex) {
               // Ignore malformed files
