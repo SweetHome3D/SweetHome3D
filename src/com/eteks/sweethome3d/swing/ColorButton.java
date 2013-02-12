@@ -430,9 +430,7 @@ public class ColorButton extends JButton {
             final JDialog pipetteWindow = new JDialog((Window)SwingUtilities.getRoot(getParent()));
             pipetteWindow.setUndecorated(true);
             pipetteWindow.setModal(true);
-            final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
-            pipetteWindow.setBounds(mouseLocation.x - 1, mouseLocation.y - 1, 3, 3);
-            mouseLocation.setLocation(-1, -1); // Reset location to help window update its cursor 
+            pipetteWindow.setSize(3, 3);
             try {
               if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
                 // Call pipetteWindow.setOpacity(0.05f) by reflection to ensure Java SE 5 compatibility
@@ -444,9 +442,15 @@ public class ColorButton extends JButton {
                 Class<?> awtUtilitiesClass = Class.forName("com.sun.awt.AWTUtilities");
                 awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class).invoke(null, pipetteWindow, 0.05f);
               } 
+              // Enlarge window to reduce mouse cursor change
+              pipetteWindow.setSize(10, 10);
             } catch (Exception ex) {
               // For any exception, let's consider simply the method failed or doesn't exist
             }
+            final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2, 
+                mouseLocation.y - pipetteWindow.getHeight() / 2);
+            mouseLocation.setLocation(-1, -1); // Reset location to help window update its cursor 
             pipetteWindow.setCursor(pipetteCursor);
             // Follow mouse moves with a timer because mouse listeners would miss some events
             final Timer timer = new Timer(10, new ActionListener() {
@@ -454,7 +458,8 @@ public class ColorButton extends JButton {
                   Point newMouseLocation = MouseInfo.getPointerInfo().getLocation();
                   if (!mouseLocation.equals(newMouseLocation)) {
                     mouseLocation.setLocation(newMouseLocation);
-                    pipetteWindow.setLocation(mouseLocation.x - 1, mouseLocation.y - 1);
+                    pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2, 
+                        mouseLocation.y - pipetteWindow.getHeight() / 2);
                     pipetteWindow.setCursor(pipetteCursor);
                   }
                 }
