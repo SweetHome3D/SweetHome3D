@@ -34,7 +34,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -1428,38 +1427,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */ 
   protected Cursor createCustomCursor(URL smallCursorImageUrl, 
                                       URL largeCursorImageUrl,
-                                      float yCursorHotSpot,
                                       float xCursorHotSpot,
+                                      float yCursorHotSpot,
                                       String cursorName,
                                       Cursor defaultCursor) {
-    if (GraphicsEnvironment.isHeadless()) {
-      return defaultCursor;
-    }
-    // Retrieve system cursor size
-    Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
-    URL cursorImageResource;
-    // If returned cursor size is 0, system doesn't support custom cursor  
-    if (cursorSize.width == 0) {      
-      return defaultCursor;      
-    } else {
-      // Use a different cursor image depending on system cursor size 
-      if (cursorSize.width > 16) {
-        cursorImageResource = largeCursorImageUrl;
-      } else {
-        cursorImageResource = smallCursorImageUrl;
-      }
-      try {
-        // Read cursor image
-        BufferedImage cursorImage = ImageIO.read(cursorImageResource);
-        // Create custom cursor from image
-        return getToolkit().createCustomCursor(cursorImage, 
-            new Point(Math.round(cursorSize.width * xCursorHotSpot), 
-                      Math.round(cursorSize.height * yCursorHotSpot)),
-            cursorName);
-      } catch (IOException ex) {
-        throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
-      }
-    }
+    return SwingTools.createCustomCursor(smallCursorImageUrl, largeCursorImageUrl, 
+        xCursorHotSpot, yCursorHotSpot, cursorName, defaultCursor);
   }
 
   /**

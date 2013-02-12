@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -30,6 +31,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
@@ -782,5 +784,44 @@ public class SwingTools {
       devicesArea.add(new Area(device.getDefaultConfiguration().getBounds()));
     }
     return devicesArea.contains(rectangle);
+  }
+  
+  /**
+   * Returns a new custom cursor.
+   */
+  public static Cursor createCustomCursor(URL smallCursorImageUrl, 
+                                          URL largeCursorImageUrl,
+                                          float xCursorHotSpot,
+                                          float yCursorHotSpot,
+                                          String cursorName,
+                                          Cursor defaultCursor) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return defaultCursor;
+    }
+    // Retrieve system cursor size
+    Dimension cursorSize = Toolkit.getDefaultToolkit().getBestCursorSize(16, 16);
+    URL cursorImageResource;
+    // If returned cursor size is 0, system doesn't support custom cursor  
+    if (cursorSize.width == 0) {      
+      return defaultCursor;      
+    } else {
+      // Use a different cursor image depending on system cursor size 
+      if (cursorSize.width > 16) {
+        cursorImageResource = largeCursorImageUrl;
+      } else {
+        cursorImageResource = smallCursorImageUrl;
+      }
+      try {
+        // Read cursor image
+        BufferedImage cursorImage = ImageIO.read(cursorImageResource);
+        // Create custom cursor from image
+        return Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, 
+            new Point(Math.min(cursorSize.width - 1, Math.round(cursorSize.width * xCursorHotSpot)), 
+                      Math.min(cursorSize.height - 1, Math.round(cursorSize.height * yCursorHotSpot))),
+            cursorName);
+      } catch (IOException ex) {
+        throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
+      }
+    }
   }
 }
