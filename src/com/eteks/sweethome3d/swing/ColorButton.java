@@ -430,8 +430,9 @@ public class ColorButton extends JButton {
             final JDialog pipetteWindow = new JDialog((Window)SwingUtilities.getRoot(getParent()));
             pipetteWindow.setUndecorated(true);
             pipetteWindow.setModal(true);
-            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
             pipetteWindow.setBounds(mouseLocation.x - 1, mouseLocation.y - 1, 3, 3);
+            mouseLocation.setLocation(-1, -1); // Reset location to help window update its cursor 
             try {
               if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
                 // Call pipetteWindow.setOpacity(0.05f) by reflection to ensure Java SE 5 compatibility
@@ -448,11 +449,14 @@ public class ColorButton extends JButton {
             }
             pipetteWindow.setCursor(pipetteCursor);
             // Follow mouse moves with a timer because mouse listeners would miss some events
-            final Timer timer = new Timer(50, new ActionListener() {
+            final Timer timer = new Timer(10, new ActionListener() {
                 public void actionPerformed(ActionEvent ev) {
-                  Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
-                  pipetteWindow.setLocation(mouseLocation.x - 1, mouseLocation.y - 1);
-                  pipetteWindow.setCursor(pipetteCursor);
+                  Point newMouseLocation = MouseInfo.getPointerInfo().getLocation();
+                  if (!mouseLocation.equals(newMouseLocation)) {
+                    mouseLocation.setLocation(newMouseLocation);
+                    pipetteWindow.setLocation(mouseLocation.x - 1, mouseLocation.y - 1);
+                    pipetteWindow.setCursor(pipetteCursor);
+                  }
                 }
               });
             timer.start();
