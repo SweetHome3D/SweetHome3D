@@ -200,7 +200,7 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         };
       this.colorRadioButton.addChangeListener(colorChangeListener);
-      this.colorButton = new ColorButton();
+      this.colorButton = new ColorButton(preferences);
       this.colorButton.setColorDialogTitle(preferences.getLocalizedString(ModelMaterialsComponent.class, "colorDialog.title"));
       this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {

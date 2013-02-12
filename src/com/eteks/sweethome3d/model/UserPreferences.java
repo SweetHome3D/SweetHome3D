@@ -51,7 +51,8 @@ public abstract class UserPreferences {
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
-                        CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS}
+                        CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS,
+                        RECENT_COLORS}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -99,6 +100,7 @@ public abstract class UserPreferences {
   private Long             updatesMinimumDate;
   private int              autoSaveDelayForRecovery;
   private Map<String, List<String>>  autoCompletionStrings;
+  private List<Integer>    recentColors;
 
   /**
    * Creates user preferences.</br> 
@@ -932,6 +934,27 @@ public abstract class UserPreferences {
     }
   }
   
+  /**
+   * Returns an unmodifiable list of the recent colors.
+   * @since 4.0
+   */
+  public List<Integer> getRecentColors() {
+    return Collections.unmodifiableList(this.recentColors);
+  }
+
+  /**
+   * Sets the recent colors list and notifies listeners of this change.
+   * @since 4.0
+   */
+  public void setRecentColors(List<Integer> recentColors) {
+    if (!recentColors.equals(this.recentColors)) {
+      List<Integer> oldRecentColors = this.recentColors;
+      this.recentColors = new ArrayList<Integer>(recentColors);
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_COLORS.name(), 
+          oldRecentColors, getRecentColors());
+    }
+  }
+
   /**
    * Adds the language library to make the languages it contains available to supported languages.
    * @param languageLibraryLocation  the location where the library can be found. 

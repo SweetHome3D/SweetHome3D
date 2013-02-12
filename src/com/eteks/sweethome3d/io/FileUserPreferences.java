@@ -103,6 +103,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String AUTO_SAVE_DELAY_FOR_RECOVERY              = "autoSaveDelayForRecovery";
   private static final String AUTO_COMPLETION_PROPERTY                  = "autoCompletionProperty#";
   private static final String AUTO_COMPLETION_STRINGS                   = "autoCompletionStrings#";
+  private static final String RECENT_COLORS                             = "recentColors";
   private static final String RECENT_HOMES                              = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
 
@@ -308,6 +309,15 @@ public class FileUserPreferences extends UserPreferences {
     setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
         defaultPreferences.getAutoSaveDelayForRecovery()));
     setCurrency(defaultPreferences.getCurrency());    
+    // Read recent colors list
+    String [] recentColors = preferences.get(RECENT_COLORS, "").split(",");
+    List<Integer> recentColorsList = new ArrayList<Integer>(recentColors.length);
+    for (String color : recentColors) {
+      if (color.length() > 0) {
+        recentColorsList.add(Integer.decode(color) | 0xFF000000);
+      }
+    }
+    setRecentColors(recentColorsList);
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
@@ -769,6 +779,16 @@ public class FileUserPreferences extends UserPreferences {
     for ( ; i <= getRecentHomesMaxCount(); i++) {
       preferences.remove(RECENT_HOMES + i);
     }
+    // Write recent colors
+    StringBuilder recentColors = new StringBuilder();
+    Iterator<Integer> itColor = getRecentColors().iterator();
+    for (int j = 0; j < 100 && itColor.hasNext(); j++) {
+      if (j > 0) {
+        recentColors.append(",");
+      } 
+      recentColors.append(String.format("#%6X", itColor.next() & 0xFFFFFF).replace(' ', '0'));
+    }
+    preferences.put(RECENT_COLORS, recentColors.toString());
     // Write ignored action tips
     i = 1;
     for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();

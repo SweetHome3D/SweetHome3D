@@ -103,7 +103,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           }
         });
   
-    this.groundColorButton = new ColorButton();
+    this.groundColorButton = new ColorButton(preferences);
     this.groundColorButton.setColorDialogTitle(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "groundColorDialog.title"));
     this.groundColorButton.setColor(controller.getGroundColor());

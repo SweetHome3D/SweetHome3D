@@ -542,7 +542,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           }
         });
       
-      this.colorButton = new ColorButton();
+      this.colorButton = new ColorButton(preferences);
       if (OperatingSystem.isMacOSX()) {
         this.colorButton.putClientProperty("JButton.buttonType", "segmented");
         this.colorButton.putClientProperty("JButton.segmentPosition", "only");

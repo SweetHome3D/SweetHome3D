@@ -272,7 +272,7 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
     
-    this.leftSideColorButton = new ColorButton();
+    this.leftSideColorButton = new ColorButton(preferences);
     this.leftSideColorButton.setColorDialogTitle(preferences.getLocalizedString(
         WallPanel.class, "leftSideColorDialog.title"));
     this.leftSideColorButton.setColor(controller.getLeftSideColor());
@@ -359,7 +359,7 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
 
-    this.rightSideColorButton = new ColorButton();
+    this.rightSideColorButton = new ColorButton(preferences);
     this.rightSideColorButton.setColor(controller.getRightSideColor());
     this.rightSideColorButton.setColorDialogTitle(preferences.getLocalizedString(
         WallPanel.class, "rightSideColorDialog.title"));

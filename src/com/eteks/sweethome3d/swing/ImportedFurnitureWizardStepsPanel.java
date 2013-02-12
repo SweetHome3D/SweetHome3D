@@ -677,7 +677,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.colorLabel = new JLabel(
         String.format(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "colorLabel.text"), unitName));
-    this.colorButton = new ColorButton();
+    this.colorButton = new ColorButton(preferences);
     this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "colorDialog.title"));
     this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 

@@ -199,7 +199,7 @@ public class RoomPanel extends JPanel implements DialogView {
             }
           });
       
-      this.floorColorButton = new ColorButton();
+      this.floorColorButton = new ColorButton(preferences);
       this.floorColorButton.setColorDialogTitle(preferences.getLocalizedString(
           RoomPanel.class, "floorColorDialog.title"));
       this.floorColorButton.setColor(controller.getFloorColor());
@@ -312,7 +312,7 @@ public class RoomPanel extends JPanel implements DialogView {
             }
           });
     
-      this.ceilingColorButton = new ColorButton();
+      this.ceilingColorButton = new ColorButton(preferences);
       this.ceilingColorButton.setColor(controller.getCeilingColor());
       this.ceilingColorButton.setColorDialogTitle(preferences.getLocalizedString(
           RoomPanel.class, "ceilingColorDialog.title"));
@@ -431,7 +431,7 @@ public class RoomPanel extends JPanel implements DialogView {
             }
           });
   
-      this.wallSidesColorButton = new ColorButton();
+      this.wallSidesColorButton = new ColorButton(preferences);
       this.wallSidesColorButton.setColor(controller.getWallSidesColor());
       this.wallSidesColorButton.setColorDialogTitle(preferences.getLocalizedString(
           RoomPanel.class, "wallSidesColorDialog.title"));

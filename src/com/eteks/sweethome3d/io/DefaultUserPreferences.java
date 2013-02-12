@@ -107,6 +107,7 @@ public class DefaultUserPreferences extends UserPreferences {
     setCheckUpdatesEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "checkUpdatesEnabled", "false")));
     setAutoSaveDelayForRecovery(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "autoSaveDelayForRecovery", "0")));
     setRecentHomes(new ArrayList<String>());
+    setRecentColors(new ArrayList<Integer>());
     setCurrency(getOptionalLocalizedString(localizedPreferences, "currency", null)); 
     for (String property : new String [] {"LevelName", "HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
       String autoCompletionStringsList = getOptionalLocalizedString(localizedPreferences, "autoCompletionStrings#" + property, null);
