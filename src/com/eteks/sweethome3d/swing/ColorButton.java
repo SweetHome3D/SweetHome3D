@@ -426,7 +426,7 @@ public class ColorButton extends JButton {
       
       AbstractAction pipetteAction = new AbstractAction() {
           public void actionPerformed(ActionEvent ev) {
-            // Grab desktop with a 1x1 window
+            // Grab desktop with a tiny undecorated dialog
             final JDialog pipetteWindow = new JDialog((Window)SwingUtilities.getRoot(getParent()));
             pipetteWindow.setUndecorated(true);
             pipetteWindow.setModal(true);
