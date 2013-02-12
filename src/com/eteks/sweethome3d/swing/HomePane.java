@@ -3429,7 +3429,8 @@ public class HomePane extends JRootPane implements HomeView {
         // Add a description table
         JTable librariesTable = createLibrariesTable(typeLibraries);
         JScrollPane librariesScrollPane = SwingTools.createScrollPane(librariesTable);
-        librariesScrollPane.setPreferredSize(new Dimension(500, 85));
+        librariesScrollPane.setPreferredSize(new Dimension(500, 
+            OperatingSystem.isWindows() ? 95 : 100));
         messagePanel.add(librariesScrollPane, new GridBagConstraints(
             0, row++, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
