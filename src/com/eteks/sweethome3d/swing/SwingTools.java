@@ -381,10 +381,12 @@ public class SwingTools {
    */
   public static void deselectAllRadioButtons(JRadioButton ... radioButtons) {
     for (JRadioButton radioButton : radioButtons) {
-      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
-      group.remove(radioButton);
-      radioButton.setSelected(false);
-      group.add(radioButton);
+      if (radioButton != null) {
+        ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
+        group.remove(radioButton);
+        radioButton.setSelected(false);
+        group.add(radioButton);
+      }
     }    
   }
   

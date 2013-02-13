@@ -27,6 +27,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
+import java.security.AccessControlException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
@@ -581,26 +582,31 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         buttonGroup.add(this.textureRadioButton);
       }
 
-      ModelMaterialsController modelMaterialsController = controller.getModelMaterialsController();
-      if (modelMaterialsController != null) {
-        this.modelMaterialsRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
-            HomeFurniturePanel.class, "modelMaterialsRadioButton.text"));
-        this.modelMaterialsRadioButton.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent ev) {
-              if (modelMaterialsRadioButton.isSelected()) {
-                controller.setPaint(HomeFurnitureController.FurniturePaint.MODEL_MATERIALS);
+      try {
+        ModelMaterialsController modelMaterialsController = controller.getModelMaterialsController();
+        if (modelMaterialsController != null
+            && !Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+          this.modelMaterialsRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
+              HomeFurniturePanel.class, "modelMaterialsRadioButton.text"));
+          this.modelMaterialsRadioButton.addChangeListener(new ChangeListener() {
+              public void stateChanged(ChangeEvent ev) {
+                if (modelMaterialsRadioButton.isSelected()) {
+                  controller.setPaint(HomeFurnitureController.FurniturePaint.MODEL_MATERIALS);
+                }
               }
-            }
-          });
-        this.modelMaterialsComponent = (JComponent)modelMaterialsController.getView();
-        if (OperatingSystem.isMacOSX()) {
-          this.modelMaterialsComponent.putClientProperty("JButton.buttonType", "segmented");
-          this.modelMaterialsComponent.putClientProperty("JButton.segmentPosition", "only");
+            });
+          this.modelMaterialsComponent = (JComponent)modelMaterialsController.getView();
+          if (OperatingSystem.isMacOSX()) {
+            this.modelMaterialsComponent.putClientProperty("JButton.buttonType", "segmented");
+            this.modelMaterialsComponent.putClientProperty("JButton.segmentPosition", "only");
+          }
+          buttonGroup.add(this.modelMaterialsRadioButton);
+          boolean uniqueModel = modelMaterialsController.getModel() != null;
+          this.modelMaterialsRadioButton.setEnabled(uniqueModel);
+          this.modelMaterialsComponent.setEnabled(uniqueModel);
         }
-        buttonGroup.add(this.modelMaterialsRadioButton);
-        boolean uniqueModel = modelMaterialsController.getModel() != null;
-        this.modelMaterialsRadioButton.setEnabled(uniqueModel);
-        this.modelMaterialsComponent.setEnabled(uniqueModel);
+      } catch (AccessControlException ex) {
+        // com.eteks.sweethome3d.no3D property can't be read
       }
     }
     
