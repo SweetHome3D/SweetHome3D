@@ -42,6 +42,7 @@ public class OperatingSystemTest extends TestCase {
     assertVersionIsSmaller("1.2beta4", "1.2rc");
     assertVersionIsSmaller("1.2alpha", "1.2beta");
     assertVersionIsSmaller("1.2beta", "1.2rc");
+    assertVersionIsSmaller("1.2rc", "1.2");
     assertVersionIsSmaller("1.2rc", "1.2a");
     assertVersionIsSmaller("1.2", "1.2a");
     assertVersionIsSmaller("1.2a", "1.2b");
@@ -58,7 +59,7 @@ public class OperatingSystemTest extends TestCase {
     assertVersionIsEqual("1.2beta4", "1,2,beta,4");
     
     // Can be used to compare file names too 
-    // (if their version number uses only aplha, beta and rc pre-release strings)
+    // (if their version number uses only alpha, beta and rc pre-release strings)
     assertVersionIsSmaller("plugin1.2.sh3p", "plugin1.3.sh3p");
     assertVersionIsSmaller("plugin1.2.1.sh3p", "plugin1.3.sh3p");
     assertVersionIsSmaller("plugin1.2beta.sh3p", "plugin1.2.sh3p");
