@@ -22,6 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -404,8 +406,8 @@ public class RoomPanel extends JPanel implements DialogView {
       };
       splitSurroundingWallsChangeListener.propertyChange(null);
       controller.addPropertyChangeListener(RoomController.Property.SPLIT_SURROUNDING_WALLS, splitSurroundingWallsChangeListener);
-      this.splitSurroundingWallsCheckBox.addChangeListener(new ChangeListener() {
-          public void stateChanged(ChangeEvent ev) {
+      this.splitSurroundingWallsCheckBox.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
             controller.setSplitSurroundingWalls(splitSurroundingWallsCheckBox.isSelected());
             firstWallChange = false;
           }
@@ -596,9 +598,9 @@ public class RoomPanel extends JPanel implements DialogView {
 
   private void selectSplitSurroundingWallsAtFirstChange() {
     if (this.firstWallChange
-        && splitSurroundingWallsCheckBox != null
-        && splitSurroundingWallsCheckBox.isEnabled()) {
-      splitSurroundingWallsCheckBox.setSelected(true);
+        && this.splitSurroundingWallsCheckBox != null
+        && this.splitSurroundingWallsCheckBox.isEnabled()) {
+      this.splitSurroundingWallsCheckBox.doClick();
       this.firstWallChange = false;
     }    
   }
