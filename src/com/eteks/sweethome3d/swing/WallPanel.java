@@ -509,7 +509,7 @@ public class WallPanel extends JPanel implements DialogView {
             updateTopColorRadioButtons(controller);
           }
         });
-    this.topColorButton = new ColorButton();
+    this.topColorButton = new ColorButton(preferences);
     this.topColorButton.setColorDialogTitle(preferences.getLocalizedString(
         WallPanel.class, "topColorDialog.title"));
     this.topColorButton.setColor(controller.getTopColor());
