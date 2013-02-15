@@ -223,34 +223,38 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         }
       });
-    this.findModelsButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
-        ImportedFurnitureWizardStepsPanel.class, "findModelsButton.text"));
-    this.findModelsButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          boolean documentShown = false;
-          try { 
-            // Display Find models page in browser
-            final URL findModelsUrl = new URL(preferences.getLocalizedString(
-                ImportedFurnitureWizardStepsPanel.class, "findModelsButton.url"));
-            documentShown = SwingTools.showDocumentInBrowser(findModelsUrl); 
-          } catch (MalformedURLException ex) {
-            // Document isn't shown
+    try {
+      this.findModelsButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
+          ImportedFurnitureWizardStepsPanel.class, "findModelsButton.text"));
+      final String findModelsUrl = preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "findModelsButton.url");
+      this.findModelsButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            boolean documentShown = false;
+            try { 
+              // Display Find models page in browser
+              documentShown = SwingTools.showDocumentInBrowser(new URL(findModelsUrl)); 
+            } catch (MalformedURLException ex) {
+              // Document isn't shown
+            }
+            if (!documentShown) {
+              // If the document wasn't shown, display a message 
+              // with a copiable URL in a message box 
+              JTextArea findModelsMessageTextArea = new JTextArea(preferences.getLocalizedString(
+                  ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.text"));
+              String findModelsTitle = preferences.getLocalizedString(
+                  ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.title");
+              findModelsMessageTextArea.setEditable(false);
+              findModelsMessageTextArea.setOpaque(false);
+              JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+                  findModelsMessageTextArea, findModelsTitle, 
+                  JOptionPane.INFORMATION_MESSAGE);
+            }
           }
-          if (!documentShown) {
-            // If the document wasn't shown, display a message 
-            // with a copiable URL in a message box 
-            JTextArea findModelsMessageTextArea = new JTextArea(preferences.getLocalizedString(
-                ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.text"));
-            String findModelsTitle = preferences.getLocalizedString(
-                ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.title");
-            findModelsMessageTextArea.setEditable(false);
-            findModelsMessageTextArea.setOpaque(false);
-            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-                findModelsMessageTextArea, findModelsTitle, 
-                JOptionPane.INFORMATION_MESSAGE);
-          }
-        }
-      });
+        });
+    } catch (IllegalArgumentException ex) {
+      // Don't create findModelsButton if its text or url isn't defined
+    }
     this.modelChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrorLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occurred during model content loading
@@ -816,8 +820,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.findModelsButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          ImportedFurnitureWizardStepsPanel.class, "findModelsButton.mnemonic")).getKeyCode());
+      if (this.findModelsButton != null) {
+        this.findModelsButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            ImportedFurnitureWizardStepsPanel.class, "findModelsButton.mnemonic")).getKeyCode());
+      }
       this.backFaceShownCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "backFaceShownCheckBox.mnemonic")).getKeyCode());
       this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
@@ -867,12 +873,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     modelPanel.add(this.modelChoiceOrChangeLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
-    modelPanel.add(this.modelChoiceOrChangeButton, new GridBagConstraints(
-        0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_END, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-    modelPanel.add(this.findModelsButton, new GridBagConstraints(
-        1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    if (this.findModelsButton != null) {
+      modelPanel.add(this.modelChoiceOrChangeButton, new GridBagConstraints(
+          0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_END, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+      modelPanel.add(this.findModelsButton, new GridBagConstraints(
+          1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    } else {
+      modelPanel.add(this.modelChoiceOrChangeButton, new GridBagConstraints(
+          0, 1, 2, 1, 1, 0, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    }
     modelPanel.add(this.modelChoiceErrorLabel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
