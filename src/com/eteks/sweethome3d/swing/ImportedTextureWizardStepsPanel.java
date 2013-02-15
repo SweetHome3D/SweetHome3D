@@ -43,6 +43,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +62,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -90,6 +93,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private CardLayout                      cardLayout;
   private JLabel                          imageChoiceOrChangeLabel;
   private JButton                         imageChoiceOrChangeButton;
+  private JButton                         findImagesButton;
   private JLabel                          imageChoiceErrorLabel;
   private ScaledImageComponent            imageChoicePreviewComponent;
   private JLabel                          attributesLabel;
@@ -149,6 +153,38 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           }
         }
       });
+    try {
+      this.findImagesButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
+          ImportedTextureWizardStepsPanel.class, "findImagesButton.text"));
+      final String findImagesUrl = preferences.getLocalizedString(
+          ImportedTextureWizardStepsPanel.class, "findImagesButton.url");
+      this.findImagesButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            boolean documentShown = false;
+            try { 
+              // Display Find models page in browser
+              documentShown = SwingTools.showDocumentInBrowser(new URL(findImagesUrl)); 
+            } catch (MalformedURLException ex) {
+              // Document isn't shown
+            }
+            if (!documentShown) {
+              // If the document wasn't shown, display a message 
+              // with a copiable URL in a message box 
+              JTextArea findImagesMessageTextArea = new JTextArea(preferences.getLocalizedString(
+                  ImportedTextureWizardStepsPanel.class, "findImagesMessage.text"));
+              String findImagesTitle = preferences.getLocalizedString(
+                  ImportedTextureWizardStepsPanel.class, "findImagesMessage.title");
+              findImagesMessageTextArea.setEditable(false);
+              findImagesMessageTextArea.setOpaque(false);
+              JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
+                  findImagesMessageTextArea, findImagesTitle, 
+                  JOptionPane.INFORMATION_MESSAGE);
+            }
+          }
+        });
+    } catch (IllegalArgumentException ex) {
+      // Don't create findImagesButton if its text or url isn't defined
+    }
     this.imageChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
         ImportedTextureWizardStepsPanel.class, "imageChoiceErrorLabel.text"));
     // Make imageChoiceErrorLabel visible only if an error occurred during image content loading
@@ -357,6 +393,10 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
+      if (this.findImagesButton != null) {
+        this.findImagesButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            ImportedTextureWizardStepsPanel.class, "findImagesButton.mnemonic")).getKeyCode());
+      }
       this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedTextureWizardStepsPanel.class, "nameLabel.mnemonic")).getKeyCode());
       this.nameLabel.setLabelFor(this.nameTextField);
@@ -381,14 +421,23 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     
     JPanel imageChoiceTopPanel = new JPanel(new GridBagLayout());
     imageChoiceTopPanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     this.imageChoicePreviewComponent.setPreferredSize(new Dimension(150, 150));
-    imageChoiceTopPanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    if (this.findImagesButton != null) {
+      imageChoiceTopPanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
+          0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_END, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+      imageChoiceTopPanel.add(this.findImagesButton, new GridBagConstraints(
+          1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    } else {
+      imageChoiceTopPanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
+          0, 1, 2, 1, 1, 0, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    }
     imageChoiceTopPanel.add(this.imageChoiceErrorLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     
     JPanel imageChoicePanel = new JPanel(new ProportionalLayout());
