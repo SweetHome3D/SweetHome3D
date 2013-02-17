@@ -459,20 +459,22 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       if (previewTexture != null) {
         this.texturePreviewLabel.setIcon(
             IconManager.getInstance().getIcon(previewTexture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel));
+        this.texturePreviewLabel.setToolTipText(previewTexture.getName());
       } else {
         // Preview a dummy empty icon
         this.texturePreviewLabel.setIcon(new Icon() {
-          public int getIconHeight() {
-            return PREVIEW_ICON_HEIGHT;
-          }
-          
-          public int getIconWidth() {
-            return PREVIEW_ICON_HEIGHT;
-          }
-          
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-          }
-        });
+            public int getIconHeight() {
+              return PREVIEW_ICON_HEIGHT;
+            }
+            
+            public int getIconWidth() {
+              return PREVIEW_ICON_HEIGHT;
+            }
+            
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+            }
+          });
+        this.texturePreviewLabel.setToolTipText(null);
       }
       // Update selection in texture list
       this.availableTexturesList.setSelectedValue(previewTexture, true);
