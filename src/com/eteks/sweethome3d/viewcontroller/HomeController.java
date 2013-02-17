@@ -33,11 +33,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2283,12 +2281,14 @@ public class HomeController implements Controller {
                       getView().showMessage(preferences.getLocalizedString(HomeController.class, "noUpdateMessage"));
                     }
                   } else if (!getView().showUpdatesMessage(getUpdatesMessage(availableUpdates), !displayOnlyIfNewUpdates)) {
-                    TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
-                    GregorianCalendar nowInGmt = new GregorianCalendar(gmtTimeZone); 
-                    GregorianCalendar nextEndOfDayInGmt = new GregorianCalendar(
-                        nowInGmt.get(Calendar.YEAR), nowInGmt.get(Calendar.MONTH), nowInGmt.get(Calendar.DAY_OF_MONTH), 23, 59, 59);
-                    nextEndOfDayInGmt.setTimeZone(gmtTimeZone);
-                    preferences.setUpdatesMinimumDate(nextEndOfDayInGmt.getTime().getTime());
+                    // Search the latest date among updates
+                    long latestUpdateDate = Long.MIN_VALUE;
+                    for (List<Update> libraryAvailableUpdates : availableUpdates.values()) {
+                      for (Update update : libraryAvailableUpdates) {
+                        latestUpdateDate = Math.max(latestUpdateDate, update.getDate().getTime());
+                      }
+                    }
+                    preferences.setUpdatesMinimumDate(latestUpdateDate + 1);
                   }
                 }
               });
