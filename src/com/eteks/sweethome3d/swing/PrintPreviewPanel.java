@@ -160,7 +160,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       };
     this.toolBar.setFloatable(false);
     ActionMap actions = getActionMap();    
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       // Add buttons with higher insets to ensure the top and bottom of segmented buttons are correctly drawn
       class HigherInsetsButton extends JButton {
         public HigherInsetsButton(Action action) {

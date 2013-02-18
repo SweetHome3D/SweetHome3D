@@ -432,12 +432,12 @@ public class ColorButton extends JButton {
             pipetteWindow.setModal(true);
             pipetteWindow.setSize(3, 3);
             try {
-              if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+              if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
                 // Call pipetteWindow.setOpacity(0.05f) by reflection to ensure Java SE 5 compatibility
                 // Opacity is set to 0.05f to be almost transparent but still visible enough by the
                 // the system not to switch to another application when the user clicks
                 Window.class.getMethod("setOpacity", float.class).invoke(pipetteWindow, 0.05f);
-              } else if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+              } else if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
                 // Call com.sun.awt.AWTUtilities.setWindowOpacity(pipetteWindow, 0.05f)
                 Class<?> awtUtilitiesClass = Class.forName("com.sun.awt.AWTUtilities");
                 awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class).invoke(null, pipetteWindow, 0.05f);
@@ -1154,7 +1154,7 @@ public class ColorButton extends JButton {
     }
 
     public Insets getInsets() { 
-      if (OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         return super.getInsets();
       } else {
         if (UIManager.getLookAndFeel().getID().equals("GTK")) {

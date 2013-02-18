@@ -104,7 +104,7 @@ public class VisualTransferHandler extends TransferHandler {
     private final Image EMPTY_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
     // Set dragged image offset which is strangely very different from an OS to the other 
     private final Point OFFSET = OperatingSystem.isMacOSX() 
-        ? (OperatingSystem.isJavaVersionAtLeast("1.7") ?  new Point(12, -120) :  new Point(12, 24))
+        ? (OperatingSystem.isJavaVersionGreaterOrEqual("1.7") ?  new Point(12, -120) :  new Point(12, 24))
         : new Point(-12, -24);
 
     public void dragGestureRecognized(DragGestureEvent ev) {

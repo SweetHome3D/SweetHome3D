@@ -1029,7 +1029,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       int buttonPadY;
       int buttonsBottomInset;
       if (OperatingSystem.isMacOSXLeopardOrSuperior() 
-          && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         // Ensure the top and bottom of segmented buttons are correctly drawn 
         buttonPadY = 4;
         buttonsBottomInset = -4;

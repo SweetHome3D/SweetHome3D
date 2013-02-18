@@ -117,8 +117,9 @@ public class OperatingSystem {
   /**
    * Returns <code>true</code> if the given version is greater than or equal to the version 
    * of the current JVM. 
+   * @since 4.0
    */
-  public static boolean isJavaVersionAtLeast(String javaMinimumVersion) {
+  public static boolean isJavaVersionGreaterOrEqual(String javaMinimumVersion) {
     return compareVersions(javaMinimumVersion, System.getProperty("java.version")) <= 0;
   }
 
@@ -140,6 +141,7 @@ public class OperatingSystem {
    * "1.2beta4" < "1.2rc"
    * "1.2alpha" < "1.2beta"
    * "1.2beta" < "1.2rc"
+   * "1.2rc" < "1.2"
    * "1.2rc" < "1.2a"
    * "1.2" < "1.2a"
    * "1.2a" < "1.2b"
@@ -154,6 +156,7 @@ public class OperatingSystem {
    * "1.2beta4" = "1.2 beta-4" (punctuation, space or missing punctuation doesn't influence result)
    * "1.2beta4" = "1,2,beta,4"
    * </pre>
+   * @since 4.0
    */
   public static int compareVersions(String version1, String version2) {
     List<Object> version1Parts = splitVersion(version1);

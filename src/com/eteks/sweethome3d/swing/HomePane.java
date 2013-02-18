@@ -1913,7 +1913,7 @@ public class HomePane extends JRootPane implements HomeView {
       } 
     }
 
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       // Reduce tool bar height to balance segmented buttons with higher insets 
       toolBar.setPreferredSize(new Dimension(0, toolBar.getPreferredSize().height - 4));
     }
@@ -1931,7 +1931,7 @@ public class HomePane extends JRootPane implements HomeView {
     if (action!= null && action.getValue(Action.NAME) != null) {
       Action toolBarAction = new ResourceAction.ToolBarAction(action);    
       JToggleButton toggleButton;
-      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         // Use higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
         toggleButton = new JToggleButton(toolBarAction) {
             @Override
@@ -1966,7 +1966,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addActionToToolBar(Action action,
                                   JToolBar toolBar) {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
       toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)) {
           @Override
@@ -3511,7 +3511,7 @@ public class HomePane extends JRootPane implements HomeView {
     // Check if it's possible to show a folder
     Object desktopInstance = null;
     Method openMethod = null; 
-    if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
       try {
         // Call Java SE 6 java.awt.Desktop browse method by reflection to
         // ensure Java SE 5 compatibility

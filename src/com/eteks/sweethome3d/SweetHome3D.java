@@ -879,7 +879,7 @@ public class SweetHome3D extends HomeApplication {
   private static class StandaloneBasicService implements BasicService {
     public boolean showDocument(URL url) {
       try {
-        if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+        if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
           // Call Java SE 6 java.awt.Desktop browse method by reflection to
           // ensure Java SE 5 compatibility
           Class<?> desktopClass = Class.forName("java.awt.Desktop");
@@ -913,7 +913,7 @@ public class SweetHome3D extends HomeApplication {
     }
 
     public boolean isWebBrowserSupported() {
-      if (OperatingSystem.isJavaVersionAtLeast("1.6")) {
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
         try {
           // Call Java SE 6 java.awt.Desktop isSupported(Desktop.Action.BROWSE)
           // method by reflection to ensure Java SE 5 compatibility

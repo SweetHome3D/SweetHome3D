@@ -517,7 +517,7 @@ public class AppletApplication extends HomeApplication {
    * Adds the given action to the tool bar.
    */
   private void addActionToToolBar(Action action, JToolBar toolBar) {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
       toolBar.add(new JButton(action) {
           @Override
@@ -540,7 +540,7 @@ public class AppletApplication extends HomeApplication {
     Action action = getToolBarAction(homeView, actionType);
     if (action != null) {
       JToggleButton toggleButton;
-      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionAtLeast("1.7")) {
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         // Use higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
         toggleButton = new JToggleButton(action) {
             @Override

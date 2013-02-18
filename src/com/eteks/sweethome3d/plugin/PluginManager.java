@@ -186,7 +186,7 @@ public class PluginManager {
 
       // Check Java and application versions
       String javaMinimumVersion = resource.getString(JAVA_MINIMUM_VERSION);
-      if (!OperatingSystem.isJavaVersionAtLeast(javaMinimumVersion)) {
+      if (!OperatingSystem.isJavaVersionGreaterOrEqual(javaMinimumVersion)) {
         System.err.println("Invalid plug-in " + pluginEntry + ":\n" 
             + "Not compatible Java version " + System.getProperty("java.version"));
         return;
