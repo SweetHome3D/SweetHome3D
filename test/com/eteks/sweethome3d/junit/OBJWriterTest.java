@@ -147,7 +147,7 @@ public class OBJWriterTest extends TestCase {
       @Override
       public String getLocalizedString(Class<?> resourceClass, String resourceKey, Object ... resourceParameters) {
         if ("exportToOBJ.header".equals(resourceKey)) {
-          return ""; // Avoid header with a date to simply comparison
+          return ""; // Avoid header with a date to simplify comparison
         } else {
           return super.getLocalizedString(resourceClass, resourceKey, resourceParameters);
         }
@@ -156,7 +156,7 @@ public class OBJWriterTest extends TestCase {
     HomeController homeController = new HomeController(home, preferences, viewFactory);
     homeController.getView().exportToOBJ(objFile.toString());
     
-    assertEquals("Not same line count in OBJ file", 476, getLineCount(objFile.toURI().toURL()));
+    assertEquals("Not same line count in OBJ file", 475, getLineCount(objFile.toURI().toURL()));
     assertEquals("Not same line count in MTL file", 43, getLineCount(mtlFile.toURI().toURL()));
     // Read file to check if its content is correct
     new OBJLoader().load(objFile.getAbsolutePath());
