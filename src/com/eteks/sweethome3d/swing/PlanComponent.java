@@ -1468,12 +1468,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (this.backgroundImageCache != null) {
         BackgroundImage backgroundImage = this.home.getBackgroundImage();
         if (backgroundImage != null) {
+          this.planBoundsCache.add(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
           this.planBoundsCache.add(this.backgroundImageCache.getWidth() * backgroundImage.getScale() - backgroundImage.getXOrigin(),
               this.backgroundImageCache.getHeight() * backgroundImage.getScale() - backgroundImage.getYOrigin());
         }
         for (Level level : this.home.getLevels()) {
           BackgroundImage levelBackgroundImage = level.getBackgroundImage();
           if (levelBackgroundImage != null) {
+            this.planBoundsCache.add(-levelBackgroundImage.getXOrigin(), -levelBackgroundImage.getYOrigin());
             this.planBoundsCache.add(this.backgroundImageCache.getWidth() * levelBackgroundImage.getScale() - levelBackgroundImage.getXOrigin(),
                 this.backgroundImageCache.getHeight() * levelBackgroundImage.getScale() - levelBackgroundImage.getYOrigin());
           }
