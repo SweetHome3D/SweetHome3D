@@ -219,10 +219,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.yOriginLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             BackgroundImageWizardStepsPanel.class, "yOriginLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getXOrigin(), -maximumLength, maximumLength);
     this.xOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
     final NullableSpinner.NullableSpinnerLengthModel yOriginSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, maximumLength);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getYOrigin(), -maximumLength, maximumLength);
     this.yOriginSpinner = new NullableSpinner(yOriginSpinnerModel);
     ChangeListener originSpinnersListener = new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
