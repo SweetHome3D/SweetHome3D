@@ -178,13 +178,13 @@ public class FileContentManager implements ContentManager {
         public boolean accept(File file) {
           // Accept directories and .png files
           return file.isDirectory()
-              || file.getName().toLowerCase().endsWith(PNG_EXTENSION)
+              || file.getName().toLowerCase().endsWith(JPEG_EXTENSION)
               || file.getName().toLowerCase().endsWith("jpeg");
         }
         
         @Override
         public String getDescription() {
-          return "PNG";
+          return "JPEG";
         }
       }};
   /**
