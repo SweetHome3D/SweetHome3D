@@ -11,7 +11,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>SweetHome3DLauncher</string>
+	<string>SweetHome3D</string>
 	<key>CFBundleIconFile</key>
 	<string>SweetHome3D.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -213,24 +213,38 @@
 			<string>Viewer</string>
 		</dict>
 	</array>
-		
-	<!-- JavaAppLauncher arguments for Java 7 -->
-	<key>JVMRuntime</key>
-	<string>jre7</string>	
-	<key>JVMMainClassName</key>
-	<string>com.eteks.sweethome3d.SweetHome3D</string>
-	<key>JVMOptions</key>
-	<array>
+
+	<!-- JavaApplicationStub arguments for Java 5 & 6 -->
+	<key>Java</key>
+	<dict>
+		<key>JVMVersion</key>
+		<string>1.5*</string>
+		<key>MainClass</key>
+		<string>com.eteks.sweethome3d.SweetHome3D</string>
+		<key>VMOptions</key>
 		<string>-Xmx1024m</string>
-		<string>-cp</string>
-		<string>$APP_ROOT/Contents/Resources/Java/SweetHome3D.jar:$APP_ROOT/Contents/Resources/Java/Furniture.jar:$APP_ROOT/Contents/Resources/Java/Textures.jar:$APP_ROOT/Contents/Resources/Java/Help.jar:$APP_ROOT/Contents/Resources/Java/freehep-vectorgraphics-svg-2.1.1.jar:$APP_ROOT/Contents/Resources/Java/sunflow-0.07.3g.jar:$APP_ROOT/Contents/Resources/Java/Loader3DS1_2u.jar:$APP_ROOT/Contents/Resources/Java/batik-svgpathparser-1.7.jar</string>
-		<string>-Djava.ext.dirs=$APP_ROOT/Contents/Resources/Java/ext/java3d-1.6:$APP_ROOT/Contents/Resources/Java/ext:$APP_ROOT/Contents/PlugIns/jre1.7.0_11.jre/Contents/Home/jre/lib/ext</string>
-		<string>-Djava.library.path=$APP_ROOT/Contents/Resources/Java/ext/java3d-1.6</string>
-		<string>-Djogamp.gluegen.UseTempJarCache=false</string>
-		<string>-Dsweethome3d.bundle=true</string>
-		<string>-Dcom.eteks.sweethome3d.j3d.useOffScreen3DView=true</string>
-		<string>-Dcom.eteks.sweethome3d.deploymentInformation=Java 3D 1.6 pre5 / JOGL 2.0 rc11</string>
-		<string>-Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</string>
-	</array>
+		<key>ClassPath</key>
+		<array>
+			<string>$JAVAROOT/SweetHome3D.jar</string>
+			<string>$JAVAROOT/Furniture.jar</string>
+			<string>$JAVAROOT/Textures.jar</string>
+			<string>$JAVAROOT/Help.jar</string>
+			<string>$JAVAROOT/freehep-vectorgraphics-svg-2.1.1.jar</string>
+			<string>$JAVAROOT/sunflow-0.07.3g.jar</string>
+			<string>$JAVAROOT/Loader3DS1_2u.jar</string>
+			<string>$JAVAROOT/batik-svgpathparser-1.7.jar</string>
+		</array>
+		<key>Properties</key>
+		<dict>
+			<key>java.ext.dirs</key>
+			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home/lib/ext</string>
+			<key>apple.awt.graphics.UseQuartz</key>
+			<string>true</string>
+			<key>sweethome3d.bundle</key>
+			<string>true</string>
+			<key>com.eteks.sweethome3d.applicationId</key>
+			<string>SweetHome3D#Installer</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

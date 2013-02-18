@@ -26,6 +26,9 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+
+import javax.swing.JOptionPane;
 
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
@@ -60,19 +63,17 @@ public class SweetHome3DBootstrap {
           "macosx/libjogl_awt.jnilib",
           "macosx/libjogl_cg.jnilib"}));
     } else {
-      extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
-          "macosx/java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
-          "macosx/java3d-1.6/vecmath.jar",
-          "macosx/java3d-1.6/j3dutils.jar",
-          "macosx/java3d-1.6/gluegen.jar", 
-          "macosx/java3d-1.6/jogl-java3d.jar",
-          "macosx/java3d-1.6/libgluegen-rt.jnilib",
-          "macosx/java3d-1.6/libjogl_desktop.jnilib",
-          "macosx/java3d-1.6/libnativewindow_awt.jnilib",
-          "macosx/java3d-1.6/libnativewindow_macosx.jnilib"}));
-      // Disable JOGL library loader
-      System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
-      System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
+      String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
+          ? "Sweet Home 3D ne peut pas encore fonctionner avec Java %c.\n" 
+            + "Merci de télécharger le programme d'installation depuis\n" 
+            + "http://www.sweethome3d.com/fr/download.jsp\n" 
+            + "ou d'utiliser Java 6."
+      	  : "Sweet Home 3D can't run with Java %c yet.\n" 
+            + "Please download the installer version from\n" 
+            + "http://www.sweethome3d.com/download.jsp\n" 
+            + "or use Java 6.";
+      JOptionPane.showMessageDialog(null, String.format(message, System.getProperty("java.version").charAt(2)));
+      return;
     }
     if ("64".equals(System.getProperty("sun.arch.data.model"))) {
       extensionJarsAndDlls.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
