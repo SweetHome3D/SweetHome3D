@@ -363,6 +363,9 @@ public class ColorButton extends JButton {
           @Override
           public void mousePressed(MouseEvent ev) {
             getColorSelectionModel().setSelectedColor(grayColorChart.getColorAt(ev.getY()));
+            if (ev.getClickCount() == 2) {
+              clickOnOk();
+            }
           }
          
           @Override
@@ -381,6 +384,9 @@ public class ColorButton extends JButton {
           @Override
           public void mousePressed(MouseEvent ev) {
             getColorSelectionModel().setSelectedColor(colorChart.getColorAt(ev.getX(), ev.getY()));
+            if (ev.getClickCount() == 2) {
+              clickOnOk();
+            }
           }
           
           @Override
@@ -629,6 +635,20 @@ public class ColorButton extends JButton {
         });
     }
 
+    /**
+     * Simulates a click on the button in the root pane with an OK action command.
+     */
+    private void clickOnOk() {
+      JRootPane rootPane = (JRootPane)SwingUtilities.getAncestorOfClass(JRootPane.class, PalettesColorChooserPanel.this);
+      if (rootPane != null) {
+        for (JButton button : SwingTools.findChildren(rootPane, JButton.class)) {
+          if ("OK".equals(button.getActionCommand())) {
+            button.doClick();
+          }
+        }
+      }
+    }
+    
     @Override
     public String getDisplayName() {
       return this.preferences.getLocalizedString(ColorButton.class, "chooserPanel.title");
@@ -1144,6 +1164,16 @@ public class ColorButton extends JButton {
             @Override
             public void mousePressed(MouseEvent ev) {
               colorSelectionModel.setSelectedColor(new Color(color));
+              if (ev.getClickCount() == 2) {
+                JRootPane rootPane = (JRootPane)SwingUtilities.getAncestorOfClass(JRootPane.class, RecentColorsPanel.this);
+                if (rootPane != null) {
+                  for (JButton button : SwingTools.findChildren(rootPane, JButton.class)) {
+                    if ("OK".equals(button.getActionCommand())) {
+                      button.doClick();
+                    }
+                  }
+                }
+              }
             }
           });
         colorComponent.setCursor(this.pipetteCursor);
