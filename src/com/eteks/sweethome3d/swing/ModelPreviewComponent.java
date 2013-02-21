@@ -44,10 +44,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
+import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
@@ -56,9 +60,12 @@ import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
 import javax.media.j3d.Node;
 import javax.media.j3d.PhysicalBody;
 import javax.media.j3d.PhysicalEnvironment;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
@@ -103,6 +110,7 @@ public class ModelPreviewComponent extends JComponent {
   private float                   viewScale = 1;
   private Object                  iconImageLock;
   private HomePieceOfFurniture    previewedPiece;
+  private Map<Texture, Texture>   pieceTextures = new HashMap<Texture, Texture>();
 
   /**
    * Returns an 3D model preview component.
@@ -534,6 +542,7 @@ public class ModelPreviewComponent extends JComponent {
         new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(1.732f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(-1.732f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(0, -0.8f, 1)), 
+        new DirectionalLight(new Color3f(0.66f, 0.66f, 0.66f), new Vector3f(0, 1f, 0)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
 
     for (Light light : lights) {
@@ -571,6 +580,7 @@ public class ModelPreviewComponent extends JComponent {
     final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
     this.previewedPiece = null;
+    this.pieceTextures.clear();
     if (model != null) {
       final AtomicReference<IllegalArgumentException> exception = new AtomicReference<IllegalArgumentException>();
       // Load content model synchronously (or get it from cache)
@@ -717,7 +727,37 @@ public class ModelPreviewComponent extends JComponent {
     if (this.previewedPiece != null) {
       this.previewedPiece.setModelMaterials(materials);
       getModelNode().update();
+      // Replace textures by clones because Java 3D doesn't accept all the time to share textures 
+      cloneTexture(getModelNode(), this.pieceTextures);
     }
+  }
+
+  /**
+   * Replace the textures set on <code>node</code> shapes by clones. 
+   */
+  private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
+    if (node instanceof Group) {
+      // Enumerate children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        cloneTexture((Node)enumeration.nextElement(), replacedTextures);
+      }
+    } else if (node instanceof Link) {
+      cloneTexture(((Link)node).getSharedGroup(), replacedTextures);
+    } else if (node instanceof Shape3D) {
+      Appearance appearance = ((Shape3D)node).getAppearance();
+      if (appearance != null) {
+        Texture texture = appearance.getTexture();
+        if (texture != null) {
+          Texture replacedTexture = replacedTextures.get(texture);
+          if (replacedTexture == null) {
+            replacedTexture = (Texture)texture.cloneNodeComponent(false);
+            replacedTextures.put(texture, replacedTexture);
+          }
+          appearance.setTexture(replacedTexture);
+        }
+      }
+    } 
   }
 
   /**
