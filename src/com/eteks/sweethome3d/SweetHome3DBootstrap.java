@@ -73,7 +73,7 @@ public class SweetHome3DBootstrap {
             + "http://www.sweethome3d.com/download.jsp\n" 
             + "or use Java 6.";
       JOptionPane.showMessageDialog(null, String.format(message, System.getProperty("java.version").charAt(2)));
-      return;
+      System.exit(1);
     }
     if ("64".equals(System.getProperty("sun.arch.data.model"))) {
       extensionJarsAndDlls.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
