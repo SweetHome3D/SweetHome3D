@@ -29,15 +29,25 @@
 	<td><p>To edit Sweet Home 3D preferences, choose <i>Sweet Home 3D &gt; Preferences...</i> under Mac OS X or <i>File &gt; Preferences...</i> under
 	    other systems.</p>
 	    <p align="center"><img src="images/editingPreferences.png"></p>
-	  <p>In the preferences pane, you can choose the <i>Language</i> used in Sweet Home 3D user interface and the <i>Unit</i> used
-	    to draw  the rulers and grid of the home plan, and to display lengths and areas.<br>
-	    The button beside the <i>Language</i> drop down list lets you also import some additional languages library files with a SH3L extension. </p>
-	    <p> The <i>Category folders</i> and the <i>Searchable list</i> radio buttons 
+	  <p>In the preferences pane, the <i>Language</i> drop down list lets you choose the language used in the user interface of Sweet Home 3D,  
+	  	and the button at its right lets you import some additional languages library files with a SH3L extension. <br>
+	    The <i>Unit</i> drop down list lets you choose the unit used to draw  the rulers and grid of the home plan, 
+	    and to display lengths and areas. <i>Millimeter</i>, <i>Centimeter</i> and <i>Meter</i> units are available 
+	    for the metric system, and two units are proposed for  the imperial system&nbsp;: the <i>Foot/Inch/Fraction</i> 
+	    unit which displays a length in feet and inches followed by the closest eighth inch fraction, like in 
+	    <b>20'10&#8539;&quot;</b>, and the <i>Inch/Decimals</i> unit  which displays lengths only in inches followed 
+	    by decimals of an inch, like in <b>250.122&quot;</b>. For areas, the <i>Foot/Inch/Fraction</i>  always 
+	    displays the closest value in square feet, whereas the <i>Inch/Decimals</i> unit displays some decimals 
+	    when necessary.</p>
+	  <p> The <i>Category folders</i> and the <i>Searchable list</i> radio buttons 
           let you choose how the furniture catalog should be displayed in each 
-          <a href="ui.html">Sweet Home 3D window</a>.<br>
-          The <i>3D navigation arrows</i> check box allows to display arrow buttons 
+        <a href="ui.html">Sweet Home 3D window</a>.</p>
+	  <p>The <i>3D navigation arrows</i> check box allows to display arrow buttons 
           that will help you to <a href="editing3DView.html">navigate in the 3D 
-        view</a>.</p>
+        view</a>.<br>
+        When enabled, the  <i>Aerial view centered on selection</i> option will center the 3D aerial view 
+        on the selected items in the 2D plan. If no item is selected or if this option is disabled, 
+        the aerial view will be centered on the center of the home, that may vary according to the items it contains. </p>
         <p> The <i>Magnetism</i> check box enables or disables the magnetism used 
           in the home plan during <a href="drawingWalls.html">walls drawing</a> 
           and <a href="editingFurniture.html">furniture placing</a>.<br>
@@ -51,13 +61,18 @@
           let you choose whether rooms should be drawn in plan filled with the 
           color or texture you chose for their floor, or with a grey color (printed 
           as white).<br>
-          The <i>Wall pattern in plan</i> combo box lets you choose the pattern 
-          used to fill walls in plan.</p>
-        <p>	      The <i>New walls thickness</i> value sets the thickness of all the walls that will be created once the preferences
+          The <i>New walls pattern in plan</i> drop down list lets you choose the pattern 
+        in the plan used to fill the walls  that will be created once the preferences
 	        pane will be closed.<br>
+          The <i>New walls thickness</i> value sets the thickness of the new walls.<br>
           The <i>New  walls height</i> value 
 	        sets the height of the new walls and of the new levels. <br>
-        The <i>New floors thickness</i> sets the thickness of the floors of new levels. </p>	  
+        The <i>New levels floor thickness</i> sets the thickness of the floors of new levels. </p>
+        <p>When selected, the  <i>Check updates at program launch</i> option will check whether 
+        some updates of Sweet Home 3D are available or not each time the program is launched, 
+        and will display them in a dialog box. This option checks also the availability of some updates for the furniture libraries 
+        (SH3F files),  textures libraries (SH3T files),  language libraries (SH3L files) and plug-ins 
+        (SH3P files) that you installed, depending on how they are configured. </p>	  
         <p>The value of the field associated to the <i>Save home data for recovery</i> 
           check box sets the delay in minutes between two save operations of the 
           opened homes. These homes are automatically saved in private files, 
@@ -75,7 +90,7 @@
           <td><img src="../images/coloredRendering.png" width="332" height="296"></td>
         </tr>
         <tr>
-          <td align="center" valign="top">Default plan rendering with catalog icons,<br>
+          <td align="center" valign="top">Plan rendering with catalog icons,<br>
             monochrome floors and walls filled with a hatch pattern</td>
           <td align="center" valign="top">Plan rendering with top view furniture icons,<br>
             floor colors, and walls filled with black color</td>
@@ -121,11 +136,17 @@
               <td><p>Magnetism set in preferences pane can be temporarily toggled 
               in the home plan, by pressing the <i>Alt</i> key under Windows, the <i>cmd</i> key under Mac OS X or the <i>Shift</i> +<i> Alt</i> keys under Linux.</p></td>
             </tr>
-            <tr valign="top"> 
+            <tr valign="top">
               <td width="16"><p>&#149;</p></td>
               <td><p>Once a wall is created, you may <a href="editingWalls.html">change</a> 
                   its thickness and its height whatever the values you set in 
                   preferences pane.</p></td>
+            </tr>
+            <tr valign="top"> 
+              <td width="16"><p>&#149;</p></td>
+              <td><p>Updates information can be retrieved only if your computer has access to the Internet. 
+              In case of doubts, click on the <i>Check now</i> button to display available updates, 
+              or a message stating that no update is available, or an error message stating udaptes couldn't be read.</p></td>
             </tr>
           </table>
 	</td>
