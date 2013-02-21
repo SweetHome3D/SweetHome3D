@@ -259,7 +259,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrorLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occurred during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
-    this.modelPreviewComponent = new ModelPreviewComponent();
+    this.modelPreviewComponent = new ModelPreviewComponent(true);
     // Add a transfer handler to model preview component to let user drag and drop a file in component
     this.modelPreviewComponent.setTransferHandler(new TransferHandler() {
         @Override
@@ -1431,6 +1431,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private static abstract class AbstractModelPreviewComponent extends ModelPreviewComponent {
     private BranchGroup modelNode;
     
+    public AbstractModelPreviewComponent(boolean pitchAndScaleChangeSupported) {
+      super(pitchAndScaleChangeSupported);
+    }
+    
     /**
      * Adds listeners to <code>controller</code> to update the rotation of the piece model
      * displayed by this component.
@@ -1584,6 +1588,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
     public RotationPreviewComponent(UserPreferences preferences, 
                                     final ImportedFurnitureWizardController controller) {
+      super(true);
       addRotationListener(controller);
       createComponents(preferences);
       layoutComponents();
@@ -1802,8 +1807,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Preview component for model attributes. 
    */
-  private static class AttributesPreviewComponent extends AbstractModelPreviewComponent {
+  private static class AttributesPreviewComponent extends AbstractModelPreviewComponent {    
     public AttributesPreviewComponent(ImportedFurnitureWizardController controller) {
+      super(true);
       addSizeListeners(controller);
       addColorListener(controller);
     }
@@ -1817,6 +1823,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private ImportedFurnitureWizardController controller;
 
     public IconPreviewComponent(ImportedFurnitureWizardController controller) {
+      super(false);
       this.controller = controller;
       addSizeListeners(controller);
       addColorListener(controller);
