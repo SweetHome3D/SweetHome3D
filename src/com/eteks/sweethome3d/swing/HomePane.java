@@ -25,6 +25,7 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
@@ -3607,7 +3608,7 @@ public class HomePane extends JRootPane implements HomeView {
       for (Frame frame : Frame.getFrames()) {
         if (frame != SwingUtilities.getWindowAncestor(this)) {
           for (Window window : frame.getOwnedWindows()) {
-            if (window.isShowing()) {
+            if (window.isShowing() && window instanceof Dialog) {
               return true;
             }
           }
