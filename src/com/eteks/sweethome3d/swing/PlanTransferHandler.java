@@ -24,6 +24,8 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -52,6 +54,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private List<Selectable>     copiedItems;
   private BufferedImage        copiedImage;
   private boolean              isDragging;
+  private WindowAdapter        windowDeactivationListener;
   
   /**
    * Creates a handler able to transfer furniture and walls in plan.
@@ -140,7 +143,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
    * flavor and destination is a plan.  
    */
   @Override
-  protected void dragEntered(JComponent destination, Transferable transferable, int dragAction) {
+  protected void dragEntered(final JComponent destination, Transferable transferable, int dragAction) {
     if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
         && destination instanceof PlanComponent
         && this.homeController.getPlanController() != null) {
@@ -150,6 +153,15 @@ public class PlanTransferHandler extends LocatedTransferHandler {
         Point2D dropLocation = getDropModelLocation(destination);
         this.homeController.getPlanController().startDraggedItems(transferedItems, 
             (float)dropLocation.getX(), (float)dropLocation.getY());
+        // Add a window deactivation listener to stop drag and drop in case current window is deactivated
+        // because a dialog was opened while dragging 
+        this.windowDeactivationListener = new WindowAdapter() {
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+              dragExited(destination);
+            }
+          };
+        SwingUtilities.getWindowAncestor(destination).addWindowListener(this.windowDeactivationListener);
         this.isDragging = true;
       } catch (UnsupportedFlavorException ex) {
         throw new RuntimeException("Can't import", ex);
@@ -182,6 +194,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   @Override
   protected void dragExited(JComponent destination) {
     if (this.isDragging) {
+      SwingUtilities.getWindowAncestor(destination).removeWindowListener(this.windowDeactivationListener);
       this.homeController.getPlanController().stopDraggedItems();
       this.isDragging = false;
     }
