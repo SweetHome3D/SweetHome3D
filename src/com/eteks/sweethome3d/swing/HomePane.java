@@ -29,6 +29,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -3594,8 +3595,26 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Displays the given message and returns <code>false</code> if the user 
    * doesn't want to be informed of the shown updates anymore. 
+   * @param updatesMessage the message to display
+   * @param showOnlyMessage if <code>false</code> a check box proposing not to display 
+   *                    again shown updates will be shown. 
    */
-  public boolean showUpdatesMessage(String updatesMessage, boolean showOnlyMessage) {
+  public boolean showUpdatesMessage(String updatesMessage, 
+                                    boolean showOnlyMessage) {
+    if (!showOnlyMessage) {
+      // Ignore the request if a frame in the program different from the ancestor of this pane 
+      // is already showing a dialog box 
+      for (Frame frame : Frame.getFrames()) {
+        if (frame != SwingUtilities.getWindowAncestor(this)) {
+          for (Window window : frame.getOwnedWindows()) {
+            if (window.isShowing()) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
     JPanel updatesPanel = new JPanel(new GridBagLayout());
     final JScrollPane messageScrollPane = new JScrollPane(createEditorPane(updatesMessage));
     messageScrollPane.setPreferredSize(new Dimension(500, 400));
