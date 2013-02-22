@@ -163,7 +163,10 @@ public class PhotoController extends AbstractPhotoController {
       long oldTime = this.time;
       this.time = time;
       this.propertyChangeSupport.firePropertyChange(Property.TIME.name(), oldTime, time);
-      this.home.getCamera().setTime(time);
+      Camera homeCamera = this.home.getCamera();
+      homeCamera.removePropertyChangeListener(this.cameraChangeListener);
+      homeCamera.setTime(time);
+      homeCamera.addPropertyChangeListener(this.cameraChangeListener);
     }
   }
   
