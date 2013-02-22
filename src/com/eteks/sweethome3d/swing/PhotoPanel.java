@@ -753,7 +753,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         if (camera.getLens() == Camera.Lens.FISHEYE) {
           bestImageHeight = imageWidth;
         } else if (camera.getLens() == Camera.Lens.SPHERICAL) {
-          bestImageHeight = imageWidth * 2;
+          bestImageHeight = imageWidth / 2;
         } else {           
           bestImageHeight = imageHeight;
         }
