@@ -20,8 +20,10 @@
 package com.eteks.sweethome3d.swing;
 
 import java.text.ParseException;
+import java.util.Date;
 
 import javax.swing.JFormattedTextField;
+import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.text.NumberFormatter;
 
@@ -60,7 +62,6 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
-              @SuppressWarnings("unchecked")
               @Override
               public Comparable getMaximum() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -70,7 +71,6 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
-              @SuppressWarnings("unchecked")
               @Override
               public Comparable getMinimum() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -80,7 +80,6 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
-              @SuppressWarnings("unchecked")
               @Override
               public void setMaximum(Comparable maximum) {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -90,7 +89,6 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
-              @SuppressWarnings("unchecked")
               @Override
               public void setMinimum(Comparable minimum) {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -122,6 +120,82 @@ public class NullableSpinner extends AutoCommitSpinner {
             };
         }
       });
+  }
+  
+  /**
+   * Spinner date model that accepts <code>null</code> values. 
+   */
+  public static class NullableSpinnerDateModel extends SpinnerDateModel {
+    private boolean isNull;
+    private boolean nullable;
+
+    @Override
+    public Object getNextValue() {
+      if (this.isNull) {
+        return super.getValue();
+      } 
+      return super.getNextValue();
+    }
+
+    @Override
+    public Object getPreviousValue() {
+      if (this.isNull) {
+        return super.getValue();
+      } 
+      return super.getPreviousValue();
+    }
+
+    @Override
+    public Object getValue() {
+      if (this.isNull) {
+        return null;
+      } else {
+        return super.getValue();
+      }
+    }
+
+    /**
+     * Sets model value. This method is overridden to store whether current value is <code>null</code> 
+     * or not (super class <code>setValue</code> doesn't accept <code>null</code> value).
+     */
+    @Override
+    public void setValue(Object value) {
+      if (value == null && isNullable()) {
+        if (!this.isNull) {
+          this.isNull = true;
+          fireStateChanged();
+        }
+      } else {
+        if (this.isNull 
+            && value != null 
+            && value.equals(super.getValue())) {
+          // Fire a state change if the value set is the same one as the one stored by number model
+          // and this model exposed a null value before
+          this.isNull = false;
+          fireStateChanged();
+        } else {
+          this.isNull = false;
+          super.setValue(value);
+        }
+      }
+    }
+
+    /**
+     * Returns <code>true</code> if this spinner model is nullable.
+     */
+    public boolean isNullable() {
+      return this.nullable;
+    }
+
+    /**
+     * Sets whether this spinner model is nullable.
+     */
+    public void setNullable(boolean nullable) {
+      this.nullable = nullable;
+      if (!nullable && getValue() == null) {
+        setValue(new Date());
+      }
+    }
   }
   
   /**
