@@ -239,9 +239,10 @@ public class Room3D extends Object3DBranch {
             roomLevel.getElevation() == firstLevelElevation);
       }
 
-      // Check points are at the same elevation
+      // Check ceiling points of the last level are at the same elevation
       boolean sameElevation = true;
-      if (roomPart == CEILING_PART) {
+      if (roomPart == CEILING_PART
+          && (roomLevel == null || lastLevel)) {
         float firstPointElevation = getRoomHeightAt(points [0][0], points [0][1]);
         for (int i = 1; i < points.length && sameElevation; i++) {
           sameElevation = getRoomHeightAt(points [i][0], points [i][1]) == firstPointElevation;
