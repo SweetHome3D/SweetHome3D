@@ -239,14 +239,24 @@ public class Room3D extends Object3DBranch {
             roomLevel.getElevation() == firstLevelElevation);
       }
 
+      // Check points are at the same elevation
+      boolean sameElevation = true;
+      if (roomPart == CEILING_PART) {
+        float firstPointElevation = getRoomHeightAt(points [0][0], points [0][1]);
+        for (int i = 1; i < points.length && sameElevation; i++) {
+          sameElevation = getRoomHeightAt(points [i][0], points [i][1]) == firstPointElevation;
+        }
+      }
+      
       // Retrieve room points
       List<float [][]> roomPoints;
       Map<Integer, List<float [][]>> roomHoles;
       Area roomVisibleArea;
       // If room isn't singular retrieve all the points of its different polygons 
       if (!room.isSingular() 
-          || roomsAtSameElevation.get(roomsAtSameElevation.size() - 1) != room
-          || visibleStaircases.size() > 0) {        
+          || sameElevation
+              && (roomsAtSameElevation.get(roomsAtSameElevation.size() - 1) != room
+                  || visibleStaircases.size() > 0)) {        
         roomVisibleArea = new Area(getShape(points));
         if (roomsAtSameElevation.contains(room)) {
           // Remove other rooms surface that may overlap the current room
@@ -304,17 +314,17 @@ public class Room3D extends Object3DBranch {
       for ( ; i < roomPoints.size(); i++) {
         float [][] roomPartPoints = roomPoints.get(i);
         float [] roomPartPointElevations = new float [roomPartPoints.length];
-        boolean  sameElevation = true;
+        boolean roomPartAtSameElevation = true;
         for (int j = 0; j < roomPartPoints.length; j++) {
           roomPartPointElevations [j] = roomPart == FLOOR_PART 
               ? roomElevation 
               : getRoomHeightAt(roomPartPoints [j][0], roomPartPoints [j][1]);
-          if (sameElevation && j > 0) {
-            sameElevation = roomPartPointElevations [j] == roomPartPointElevations [j - 1];
+          if (roomPartAtSameElevation && j > 0) {
+            roomPartAtSameElevation = roomPartPointElevations [j] == roomPartPointElevations [j - 1];
           }
         }
         
-        if (sameElevation && subpartSize > 0) {
+        if (roomPartAtSameElevation && subpartSize > 0) {
           // Subdivide area in smaller squares to ensure a smoother effect with point lights         
           float xMin = Float.MAX_VALUE;
           float xMax = Float.MIN_VALUE;
