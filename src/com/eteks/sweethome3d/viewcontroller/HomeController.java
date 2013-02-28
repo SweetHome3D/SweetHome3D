@@ -1705,7 +1705,7 @@ public class HomeController implements Controller {
         // Clone home to save it safely in a threaded task
         savedHome = this.home.clone();
       } catch (RuntimeException ex) {
-        // If home data is corrupted some way and couldn't be clone 
+        // If home data is corrupted some way and couldn't be cloned 
         // warn the user his home couldn't be saved
         getView().showError(preferences.getLocalizedString(
             HomeController.class, "saveError", homeName, ex));
