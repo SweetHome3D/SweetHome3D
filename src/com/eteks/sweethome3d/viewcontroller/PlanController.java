@@ -1637,6 +1637,7 @@ public class PlanController extends FurnitureController implements Controller {
               || Wall.Property.WALL_AT_START.name().equals(propertyName)
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
               || Wall.Property.THICKNESS.name().equals(propertyName)
+              || Wall.Property.ARC_EXTENT.name().equals(propertyName)
               || Wall.Property.LEVEL.name().equals(propertyName)
               || Wall.Property.HEIGHT.name().equals(propertyName)
               || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)) {
