@@ -706,26 +706,58 @@ public class Room3D extends Object3DBranch {
     List<Level> levels = this.home.getLevels();
     if (roomLevel == null || isLastLevel(roomLevel, levels)) {
       // Search the closest wall point to x, y at last level
+      Wall closestWall = null;
+      float [][] closestWallPoints = null;
+      int closestIndex = -1;
       for (Wall wall : this.home.getWalls()) {
         if (wall.isAtLevel(roomLevel)) {
-          float wallElevation = wall.getLevel() == null ? 0 : wall.getLevel().getElevation();
-          Float wallHeightAtStart = wall.getHeight();
           float [][] points = wall.getPoints();
           for (int i = 0; i < points.length; i++) {
             double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], x, y);
             if (distanceToWallPoint < smallestDistance) {
-              smallestDistance = distanceToWallPoint; 
-              if (i == 0 || i == points.length - 1) { // Wall start
-                roomHeight = wallHeightAtStart != null 
-                    ? wallHeightAtStart 
-                    : this.home.getWallHeight();
-              } else { // Wall end
-                roomHeight = wall.isTrapezoidal() 
-                    ? wall.getHeightAtEnd() 
-                    : (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
-              }
-              roomHeight += wallElevation;
+              closestWall = wall;
+              closestWallPoints = points;
+              closestIndex = i;
+              smallestDistance = distanceToWallPoint;
             }
+          }
+        }
+      }
+      
+      if (closestWall != null) {
+        roomHeight = closestWall.getLevel() == null ? 0 : closestWall.getLevel().getElevation();
+        Float wallHeightAtStart = closestWall.getHeight();
+        if (closestIndex == 0 || closestIndex == closestWallPoints.length - 1) { // Wall start
+          roomHeight += wallHeightAtStart != null 
+              ? wallHeightAtStart 
+              : this.home.getWallHeight();
+        } else { // Wall end
+          if (closestWall.isTrapezoidal()) {
+            Float arcExtent = closestWall.getArcExtent();
+            if (arcExtent == null
+                || closestIndex == closestWallPoints.length / 2 
+                || closestIndex == closestWallPoints.length / 2 - 1) {
+              roomHeight += closestWall.getHeightAtEnd();
+            } else {
+              // Compute the angle between start point and the current point of the wall
+              // to get the relative height at that point
+              float xArcCircleCenter = closestWall.getXArcCircleCenter();
+              float yArcCircleCenter = closestWall.getYArcCircleCenter();
+              float xClosestPoint = closestWallPoints [closestIndex][0];
+              float yClosestPoint = closestWallPoints [closestIndex][1];
+              double centerToClosestPointDistance = Point2D.distance(xArcCircleCenter, yArcCircleCenter, xClosestPoint, yClosestPoint);
+              float xStart = closestWall.getXStart();
+              float yStart = closestWall.getYStart();
+              double centerToStartPointDistance = Point2D.distance(xArcCircleCenter, yArcCircleCenter, xStart, yStart);
+              double scalarProduct = (xClosestPoint - xArcCircleCenter) * (xStart - xArcCircleCenter) 
+                  + (yClosestPoint - yArcCircleCenter) * (yStart - yArcCircleCenter);
+              scalarProduct /= (centerToClosestPointDistance * centerToStartPointDistance);
+              double arcExtentToClosestWallPoint = Math.acos(scalarProduct) * Math.signum(arcExtent);
+              roomHeight += (float)(wallHeightAtStart 
+                  + (closestWall.getHeightAtEnd() - wallHeightAtStart) * arcExtentToClosestWallPoint / arcExtent);
+            }
+          } else {
+            roomHeight += (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
           }
         }
       }
