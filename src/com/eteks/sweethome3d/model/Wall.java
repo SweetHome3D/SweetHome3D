@@ -263,6 +263,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   /**
    * Returns the abscissa of the arc circle center of this wall.
    * If the wall isn't round, the return abscissa is at the middle of the wall. 
+   * @since 3.0
    */
   public float getXArcCircleCenter() {
     if (this.arcExtent == null) {
@@ -275,6 +276,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   /**
    * Returns the ordinate of the arc circle center of this wall.
    * If the wall isn't round, the return ordinate is at the middle of the wall. 
+   * @since 3.0
    */
   public float getYArcCircleCenter() {
     if (this.arcExtent == null) {
