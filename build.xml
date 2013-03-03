@@ -313,6 +313,7 @@
     <javac srcdir="src" destdir="build/classes"
            encoding="ISO-8859-1" target="1.5">
       <include name="com/eteks/sweethome3d/applet/ViewerHelper.java"/>
+      <include name="com/eteks/sweethome3d/io/DefaultUserPreferences.java"/>    	
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
@@ -328,6 +329,7 @@
         <include name="com/eteks/sweethome3d/applet/*.properties"/>
         <include name="com/eteks/sweethome3d/model/*.properties"/>
         <include name="com/eteks/sweethome3d/tools/*.properties"/>
+        <include name="com/eteks/sweethome3d/io/resources/patterns/*.png"/>    	
         <include name="com/eteks/sweethome3d/swing/resources/icons/tango/go-*.png"/>
         <include name="com/eteks/sweethome3d/swing/HomeComponent3D.properties"/>
       </fileset>
@@ -338,7 +340,7 @@
     <zip destfile="deploy/lib/SweetHome3DViewer.jar"  
          basedir="build/classes">
       <include name="com/eteks/sweethome3d/applet/*"/>
-      <include name="com/eteks/sweethome3d/io/*"/>
+      <include name="com/eteks/sweethome3d/io/**"/>
       <include name="com/eteks/sweethome3d/j3d/*"/>
       <include name="com/eteks/sweethome3d/model/*"/>
       <include name="com/eteks/sweethome3d/swing/**"/>
