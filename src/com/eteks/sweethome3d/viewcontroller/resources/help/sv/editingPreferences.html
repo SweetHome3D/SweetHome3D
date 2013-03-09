@@ -29,20 +29,23 @@
 	    <p align="center"><img src="images/editingPreferences.png"></p>
 	  <p>I inställningsrutan kan du välja vilket <i>Språk</i> som används i Sweet Home 3D:s användargränssnitt och vilken <i>Enhet</i> som används när du ritar hemmet, på planlösningens linjaler och rutnät, samt på längder
 	    som visas.<br>
-	    Knappen bredvid listknappen f&ouml;r spr&aring;kval l&aring;ter dig importera ytterligare spr&aring;kfiler med fil&auml;ndelsen SH3L.	  </p>
+	    Knappen bredvid listknappen f&ouml;r spr&aring;kval l&aring;ter dig importera ytterligare spr&aring;kfiler med fil&auml;ndelsen SH3L.</p>
 	  <p> Radioknapparna <i>Kategorimappar</i> och <i>Sökbar lista</i> låter dig välja hur möbelkatalogen ska visas i varje <a href="ui.html">Sweet Home 3D-fönster</a>.<br>
-		  Kryssrutan för <i>3D-navigationspilarna</i> låter dig visa pilknapparna som hjälper dig att <a href="editing3DView.html">navigera i 3D-vyn</a>.<br>          
-          Kryssrutan <i>Magnetism</i> slår av eller på magnetismen som används i planlösningen när man <a href="drawingWalls.html">ritar väggar</a> och <a href="editingFurniture.html">placerar ut möbler</a>.<br>
+		  Kryssrutan för <i>3D-navigationspilarna</i> låter dig visa pilknapparna som hjälper dig att <a href="editing3DView.html">navigera i 3D-vyn</a>.<br>
+		  När alternativet <i>Centrera vyn ovanifrån vid markering</i> aktiveras kommer centrum för 3D-vyns Vy ovanifrån att vara på de objekt som markeras i planlösningen. Om inget objekt är valt eller om detta alternativ är inaktiverat, så kommer vyn att centreras på hemmets centrum, som kan variera beroende på vilka objekt de innehåller.</p>          
+      <p> Kryssrutan <i>Magnetism</i> slår av eller på magnetismen som används i planlösningen när man <a href="drawingWalls.html">ritar väggar</a> och <a href="editingFurniture.html">placerar ut möbler</a>.<br>
 	      Kryssrutan <i>Linjaler</i> visar eller tar bort linjalerna runt planlösningens ruta.<br>
 	      Kryssrutan <i>Rutnät</i> visar eller tar bort rutnätet i planlösningen.<br>
 	      Alternativen <i>Katalogikoner</i> och <i>Toppvy</i> låter dig välja hur möbler ska ritas i planlösningen (se bilderna
 	      nedan).<br>
 	      Alternativen <i>Monokrom</i> och <i>Golvfärg eller textur</i> låter dig välja om rummen i planlösningen ska
 	      ritas med färg eller texturen som du valt för deras golv, eller med en grå färg (skrivs ut som vitt).<br>
-	  Listrutan <i>Väggmönster i planlösningen</i> låter dig välja mönstret som ska användas för att fylla i väggarna i planlösningen.</p>
-	  <p> Fältet <i>Tjocklek på nya väggar</i> ställer in tjockleken på nya väggar och gäller från och med när inställningsrutan stängs.<br>
+	  Listrutan <i>Snittm&ouml;nster f&ouml;r nya v&auml;ggar</i> låter dig välja mönstret som ska användas för att fylla i väggarna i planlösningen.<br>
+Fältet <i>Tjocklek på nya väggar</i> ställer in tjockleken på nya väggar och gäller från och med när inställningsrutan stängs.<br>
 	      Fältet <i>Höjden på nya väggar</i> ställer in höjden på nya väggar och gäller från och med när inställningsrutan stängs.<br>
-        <i>Tjocklek f&ouml;r nya golv</i> st&auml;ller in tjockleken p&aring; golv p&aring; nya niv&aring;er.	  </p>
+        <i>Tjocklek f&ouml;r nya golv</i> st&auml;ller in tjockleken p&aring; golv p&aring; nya niv&aring;er.</p>
+<p>När alternativet <i>Sök efter uppdateringar vid programstart</i> är valt så kommer en sökning efter uppdateringar till Sweet Home 3D att göras varje gång programmet startas och resultatet visas i en dialogruta. Detta alternativ söker även efter uppdateringar till vissa möbelbibliotek
+  (SH3F-filer), texturbibliotek (SH3T-filer), språkbibliotek (SH3L-filer) och insticksmoduler (SH3P-filer) som du har installerat, beroende på hur de konfigurerats.</p>  
 	  <p>Rutan efter <i>Spara hemmets data för återställning var</i> bestämmer antalet minuter mellan två sparningar för öppnade hem. Dessa hem sparas automatiskt i privata filer som kommer att öppnas för återställning nästa gång Sweet Home 3D startar, om programmet kraschade vid senaste användningen.</p>
 	  <p>Slutligen, knappen <i>Visa alla tips igen</i> återställer svaret du gav i kryssrutan <i>Visa inte detta tips igen</i> i tips-dialogrutorna som visas när du klickar på något verktyg. Detta betyder att alla dialogrutorna där du markerade kryssrutan kommer att visas igen.</p>
 	  <table border="0" align="center" cellpadding="0" cellspacing="5">
@@ -52,10 +55,8 @@
           <td><img src="../images/coloredRendering.png" width="332" height="296"></td>
         </tr>
         <tr>
-          <td align="center" valign="top">Standardrenderingen av planlösningen med <br>
-            katalogikoner,
-            
-            monokroma golv och väggar <br>
+          <td align="center" valign="top">Rendering av planlösningen med <br>
+            katalogikoner, monokroma golv och väggar <br>
             ifyllda med mönster för snittyta</td>
           <td align="center" valign="top">Rendering av planlösning med toppvy-ikoner <br>
             av möblerna,
@@ -97,8 +98,13 @@ ifyllda med svart</td>
 	        dator. I så fall kommer alternativen <i>Katalogikoner</i> och <i>Toppvy</i> att vara inaktiverade.</p>
 	      </td>
 	    </tr>
-	  <tr valign="top"><td width="16"><p>&#149;</p></td><td><p>Magnetism-inställningen som ställs in i inställningsrutan kan temporärt växlas av/på genom att trycka ner Alt-tangenten.</p></td></tr>
-		<tr valign="top"><td width="16"><p>&#149;</p></td><td><p>När en väg väl är skapad kan du <a href="editingWalls.html">ändra</a> dess tjocklek och höjd, oavsett vilka värden du ställt in i inställningsrutan.</p></td></tr></table>
+	  <tr valign="top"><td width="16"><p>&#149;</p></td><td><p>Magnetism-inställningen som kontrolleras i inställningsrutan kan temporärt växlas av/på i planlösningen genom att trycka ner Alt-tangenten i Windows, cmd-tangenten i Mac OS X eller Shift + Alt-tangenterna i Linux.</p></td></tr>
+	  <tr valign="top"><td width="16"><p>&#149;</p></td><td><p>När en väg väl är skapad kan du <a href="editingWalls.html">ändra</a> dess tjocklek och höjd, oavsett vilka värden du ställt in i inställningsrutan.</p></td></tr>
+	  <tr valign="top">
+	  <td width="16"><p>&#149;</p></td>
+	  <td><p>Information om uppdateringar kan endast hämtas om datorn har Internetåtkomst. Om du är osäker kan du klicka på <i>Sök nu</i>-knappen för att visa tillgängliga uppdateringar, eller så ser du ett meddelande om att inga uppdateringar finns tillgängliga, eller ett felmeddelande att uppdateringar inte kunde läsas.</p></td>
+	  </tr>
+	  </table>
 	</td>
 	</tr>
 </table></div>
