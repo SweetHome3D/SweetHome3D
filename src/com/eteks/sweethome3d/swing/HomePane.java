@@ -3834,8 +3834,11 @@ public class HomePane extends JRootPane implements HomeView {
         ContentManager.ContentType.OBJ, homeName);
     
     this.exportAllToOBJ = true;
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (homeName != null
-        && !this.home.getSelectedItems().isEmpty()) {
+        && !selectedItems.isEmpty()
+        && (selectedItems.size() > 1
+             || !(selectedItems.get(0) instanceof Camera))) {
       String message = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.message");
       String title = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.title");
       String exportAll = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.exportAll");
