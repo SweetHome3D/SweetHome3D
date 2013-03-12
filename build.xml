@@ -17,7 +17,7 @@
      - jarExecutable                  : Builds SweetHome3D-version.jar file in install directory
      - windowsInstaller               : Builds SweetHome3D-version-windows.exe file in install directory     
      - windowsSignedInstaller         : Builds signed SweetHome3D-version-windows.exe file in install directory     
-     - macosxInstaller        : Builds SweetHome3D-version-macosx.dmg file in install directory
+     - macosxInstaller                : Builds SweetHome3D-version-macosx.dmg file in install directory
      - macosxSignedInstaller          : Builds signed SweetHome3D-version-macosx.dmg file in install directory
      - linux32Installer               : Builds SweetHome3D-version-linux-x86.tgz file in install directory
      - linux64Installer               : Builds SweetHome3D-version-linux-x64.tgz file in install directory
