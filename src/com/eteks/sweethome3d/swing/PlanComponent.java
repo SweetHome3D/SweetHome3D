@@ -2247,7 +2247,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     if (OperatingSystem.isMacOSX()
         && System.getProperty("apple.awt.graphics.UseQuartz", "false").equals("false")) {
-      // Draw grid with an image texture in under Mac OS X, because default 2D rendering engine 
+      // Draw grid with an image texture under Mac OS X, because default 2D rendering engine 
       // is too slow and can't be replaced by Quartz engine in applet environment 
       int imageWidth = Math.round(mainGridSize * gridScale);
       BufferedImage gridImage = new BufferedImage(imageWidth, imageWidth, BufferedImage.TYPE_INT_ARGB);
