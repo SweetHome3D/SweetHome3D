@@ -372,7 +372,7 @@ public class FileUserPreferences extends UserPreferences {
    * Updates the default supported languages with languages available in plugin folder. 
    */
   private void updateSupportedLanguages() {
-    List<Library> libraries = getLibrariesExcluding(LANGUAGE_LIBRARY_TYPE);
+    removeLibraries(LANGUAGE_LIBRARY_TYPE);
     List<ClassLoader> resourceClassLoaders = new ArrayList<ClassLoader>();
     String [] defaultSupportedLanguages = getDefaultSupportedLanguages();
     Set<String> supportedLanguages = new TreeSet<String>(Arrays.asList(defaultSupportedLanguages));
@@ -424,7 +424,6 @@ public class FileUserPreferences extends UserPreferences {
     if (defaultSupportedLanguages.length < supportedLanguages.size()) {
       setSupportedLanguages(supportedLanguages.toArray(new String [supportedLanguages.size()]));
     }
-    this.libraries = libraries;
   }
 
   /**
@@ -521,7 +520,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateFurnitureDefaultCatalog(Executor furnitureCatalogLoader, 
                                              final Executor updater) {
-    final List<Library> libraries = getLibrariesExcluding(FURNITURE_LIBRARY_TYPE);
+    removeLibraries(FURNITURE_LIBRARY_TYPE);
     // Delete default pieces of current furniture catalog          
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -553,21 +552,18 @@ public class FileUserPreferences extends UserPreferences {
             });
         }
       });
-    
-    this.libraries = libraries;
   }
 
   /**
-   * Returns the list of libraries excepted the ones of the given type.
+   * Removes from the list of libraries the ones of the given type.
    */
-  private List<Library> getLibrariesExcluding(String libraryType) {
-    final List<Library> libraries = new ArrayList<Library>();
-    for (Library library : this.libraries) {
-      if (library.getType() != libraryType) {
-        libraries.add(library);
+  private void removeLibraries(String libraryType) {
+    for (Iterator<Library> it = this.libraries.iterator(); it.hasNext(); ) {
+      Library library = it.next();
+      if (library.getType() == libraryType) {
+        it.remove();
       }
     }
-    return libraries;
   }
 
   /**
@@ -575,7 +571,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateTexturesDefaultCatalog(Executor texturesCatalogLoader, 
                                             final Executor updater) {
-    final List<Library> libraries = getLibrariesExcluding(TEXTURES_LIBRARY_TYPE);
+    removeLibraries(TEXTURES_LIBRARY_TYPE);
     // Delete default textures of current textures catalog          
     final TexturesCatalog texturesCatalog = getTexturesCatalog();
     for (TexturesCategory category : texturesCatalog.getCategories()) {
@@ -606,8 +602,6 @@ public class FileUserPreferences extends UserPreferences {
             });
         }
       });
-
-    this.libraries = libraries;
   }
 
   /**
@@ -1360,7 +1354,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   @Override
   public List<Library> getLibraries() {
-    return Collections.unmodifiableList(this.libraries);
+    return Collections.unmodifiableList(new ArrayList<Library>(this.libraries));
   }
 
   /**
