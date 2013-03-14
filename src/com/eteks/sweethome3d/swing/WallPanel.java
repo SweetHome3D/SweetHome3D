@@ -236,7 +236,7 @@ public class WallPanel extends JPanel implements DialogView {
         new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 2 * maximumLength * (float)Math.sqrt(2));
     this.distanceToEndPointSpinner = new NullableSpinner(distanceToEndPointSpinnerModel);
     distanceToEndPointSpinnerModel.setNullable(controller.getLength() == null);
-    distanceToEndPointSpinnerModel.setLength(controller.getLength());
+    distanceToEndPointSpinnerModel.setLength(controller.getDistanceToEndPoint());
     final PropertyChangeListener distanceToEndPointChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           distanceToEndPointSpinnerModel.setNullable(ev.getNewValue() == null);
@@ -249,7 +249,7 @@ public class WallPanel extends JPanel implements DialogView {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT, 
               distanceToEndPointChangeListener);
-          controller.setLength(distanceToEndPointSpinnerModel.getLength());
+          controller.setDistanceToEndPoint(distanceToEndPointSpinnerModel.getLength());
           controller.addPropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT, 
               distanceToEndPointChangeListener);
         }
