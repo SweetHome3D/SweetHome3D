@@ -36,29 +36,33 @@
         <p> Die Auswahlkn&ouml;pfe (radio buttons) <i>Katalogordner</i> und <i>Durchsuchbare 
           Liste</i> geben Ihnen die M&ouml;glichkeit auszusuchen, wie der M&ouml;belkatalog 
           angezeigt wird in jedem Sweet Home 3D-Fenster.<br>
-          Die <i>3D Navigationspfeile</i> -Checkbox erlaubt es, die Pfeile als 
-          Kn&ouml;pfe in der 3D-Sicht einzublenden als Hilfe zum navigieren.<br>
-          Die <i>Magnetismus</i> -Checkbox aktiviert oder deaktiviert den Magnetismus 
+          Die Option <i>3D-Navigationspfeile</i> erlaubt es, die Pfeile als Hilfe zum Navigieren in Form von 
+          Kn&ouml;pfen in der 3D-Sicht einzublenden.<br>
+		  Wenn die Luftansicht aktiv ist, sorgt die Option <i>Luftansicht auf Auswahl zentrieren</i> dafür, dass die ausgewählten Objekte im Wohnungsplan als Mittelpunkt für die 3D-Luftansicht gewählt werden.
+		  Ist im Plan nichts ausgewählt, oder ist die Option nicht aktiviert, wird die Luftansicht auf den Mittelpunkt der Wohnung zentriert, welcher sich in Abhängigkeit der enthaltenen Objekte ändern kann.</p>
+        <p>Die Option <i>Magnetismus</i> aktiviert oder deaktiviert den Magnetismus 
           beim <a href="drawingWalls.html">Zeichnen von Wänden</a> und <a href="editingFurniture.html">setzen 
           von Möbeln</a>.<br>
-          Die <i>Lineal</i> -Checkbox macht es möglich, die Lineale sichtbar oder 
+          Die Option <i>Lineal</i> macht es möglich, die Lineale sichtbar oder 
           unsichtbar zu machen.<br>
-          Die <i>Gitter</i> -Checkbox macht das Gitter sichtbar oder unsichtbar.<br>
+          Die Option <i>Gitter</i> macht das Gitter sichtbar oder unsichtbar.<br>
           Die Auswahlkn&ouml;pfe (radio buttons) <i>Mobiliarbilder</i> und <i>Von-Oben-Ansicht</i> 
           geben Ihnen die M&ouml;glichkeit auszuw&auml;hlen, wie M&ouml;bel im 
           Plan angezeigt werden sollen (Siehe Bilder weiter unten).<br>
           Die Auswahlkn&ouml;pfe <i>Schwarz-Wei&szlig;</i> und <i>Bodenfarbe /-textur</i> 
           erlauben es, ob R&auml;ume im Plan farblich, mit einer Textur oder Graustufen 
           dargestellt werden sollen (ausgedruckt = wei&szlig;).<br>
-          Die <i>Wandmuster im Plan</i> -ComboBox bietet die M&ouml;glichkeit, 
-          ein bestimmtes Muster zu w&auml;hlen um die W&auml;nde zu f&uuml;llen. 
-        </p>
-        <p>Der Wert <i>Standarddicke f&uuml;r W&auml;nde</i> setzt die Dicke von allen W&auml;nden, 
+          Die <i>Neues Wandmuster im Plan</i> -ComboBox bietet die M&ouml;glichkeit, 
+          ein bestimmtes Muster zu w&auml;hlen um die W&auml;nde zu f&uuml;llen.<br>
+          Der Wert <i>Standarddicke f&uuml;r W&auml;nde</i> setzt die Dicke von allen W&auml;nden, 
           die erstellt werden nachdem die Einstellungen mit &quot;OK&quot; geschlossen werden.<br>
           Der Wert <i>Standardh&ouml;he f&uuml;r W&auml;nde</i> setzt die H&ouml;he von allen W&auml;nden, 
           die erstellt werden nachdem die Einstellungen mit &quot;OK&quot; geschlossen werden.<br>
           Der Wert <i>Standarddicke f&uuml;r B&ouml;den</i> setzt die Dicke von allen B&ouml;den,
           die nach dem Schlie&szlig;en der Einstellungen mit &quot;OK&quot; erstellt werden.</p>
+		  <p>Falls aktiviert, sorgt die Option <i>Bei Programmstart nach Updates suchen</i> dafür, dass jedes Mal, wenn Sweet Home 3D gestartet wird, überprüft wird, ob Updates für das Programm vorliegen.
+		  Falls es Updates gibt, werden diese in einem Dialogfenster angezeigt.
+		  Durch die Option wird abhängig von ihrer Konfiguration auch die Verfügbarkeit für Updates der Mobiliarbibliotheken (SH3F-Dateien), Texturbibliotheken (SH3T-Dateien) und Sprachbibliotheken (SH3L-Dateien) sowie installierter Plug-ins (SH3P-Dateien) überprüft.</p>
         <p>Über das Feld <i>Intervall zum automatischen Speichern</i> wird, sofern diese Option 
           aktiviert ist, der Zeitraum in Minuten festgelegt, nach dem die geöffneten 
           Wohnungspläne immer wieder automatisch gespeichert werden sollen. 
@@ -69,8 +73,21 @@
           setzt die Antworten in den Tipp-Fenstern zur&uuml;ck (Tipp nicht wieder 
           anzeigen) das erscheint, wenn Sie bestimmte Werkzeuge benutzen. Dies 
           bedeutet, dass alle Dialogboxen, bei denen ausgew&auml;hlt wurde, sie 
-          sollen nicht mehr erscheinen, wieder angezeigt werden!<br>
+          sollen nicht mehr erscheinen, wieder angezeigt werden.<br>
         </p>
+        <table border="0" align="center" cellpadding="0" cellspacing="5">
+        <tr align="center">
+          <td><img src="../images/defaultRendering.png" width="332" height="296"></td>
+          <td rowspan="2">&nbsp;&nbsp;&nbsp;</td>
+          <td><img src="../images/coloredRendering.png" width="332" height="296"></td>
+        </tr>
+        <tr>
+          <td align="center" valign="top">Wohnungsplandarstellung mit Katalog-Icons,<br>
+		    zweifarbigen Böden und Wänden, die mit Füllmuster gefüllt sind</td>
+          <td align="center" valign="top">Wohnungsplandarstellung mit Luftansichts-Mobiliaricons,<br>
+		    Bodenfarben, und schwarz gefüllten Wänden</td>
+        </tr>
+      </table>
         </td>
 	</tr>
 </table>
@@ -104,19 +121,26 @@
               <td><p>&#149;</p></td>
               <td><p>In manchen F&auml;llen (abh&auml;ngig von der Konfiguration 
                   Ihres Computers) ist es m&ouml;glich, dass M&ouml;belbilder 
-                  in der Draufsicht (<i>Von-Oben-Ansicht</i>) nicht verf&uuml;gbar 
+                  in der Luftansicht (<i>Von-Oben-Ansicht</i>) nicht verf&uuml;gbar 
                   sind. In diesem Fall sind die Optionen in den Einstellungen 
                   deaktiviert.</p></td>
             </tr>
             <tr valign="top"> 
               <td width="16"><p>&#149;</p></td>
-              <td><p>Die Einstellungen zum Magnetismus können kurzzeitig verändert 
-              werden im Plan indem Sie die <i>Alt</i>-Taste drücken.</p></td>
-            </tr>
+			  <td><p>Die Einstellungen zum Magnetismus können vorübergehend im Wohnungsplan umgeschaltet werden,
+			  	 indem man unter Windows die <i>Alt</i>-Taste, unter Mac OS X die <i>cmd</i>-Taste und unter Linux gleichzeitig die 
+			  	 <i>Umschalttaste</i> und die <i>Alt</i>-Taste drücken.</p></td>
+			  </tr>
             <tr valign="top"> 
               <td width="16"><p>&#149;</p></td>
               <td><p>Ist eine Wand einmal erstellt, können Sie deren Dicke und 
                   Höhe unabhängig von den Werten in den Einstellungen <a href="editingWalls.html">verändern</a>.</p></td>
+            </tr>
+            <tr valign="top"> 
+              <td width="16"><p>&#149;</p></td>
+              <td><p>Informationen über Updates können nur abgerufen werden, wenn Ihr Computer über eine Verbindung zum Internet verfügt.
+			    Klicken Sie im Zweifelsfall die Schaltfläche <i>Jetzt prüfen</i> an, um verfügbare Updates anzuzeigen.
+				Wurden keine Updates gefunden, so wird dies in einer Meldung angezeigt; kann keine Information über Updates bezogen werden, dann erscheint eine Fehlermeldung.</p></td>
             </tr>
           </table>
 	</td>
