@@ -197,7 +197,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Offscreen printed image cache
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
-  private BufferedImage                            printedImage;
+  private BufferedImage                            printedImageCache;
+  private BoundingBox                              approximateHomeBoundsCache;
   private SimpleUniverse                           offscreenUniverse;
   
   private JComponent                               navigationPanel;
@@ -324,7 +325,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             }
           }
           // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D );
+          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
           component3D.setFocusable(false);
           updateNavigationPanelImage();
         }
@@ -790,10 +791,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       double printSize = Math.min(pageFormat.getImageableWidth(), 
           pageFormat.getImageableHeight());
       int printedImageSize = (int)(printSize / 72 * 150);
-      if (this.printedImage == null 
-          || this.printedImage.getWidth() != printedImageSize) {
+      if (this.printedImageCache == null 
+          || this.printedImageCache.getWidth() != printedImageSize) {
         try {          
-          this.printedImage = getOffScreenImage(printedImageSize, printedImageSize);
+          this.printedImageCache = getOffScreenImage(printedImageSize, printedImageSize);
         } catch (IllegalRenderingStateException ex) {
           // If off screen canvas failed, consider that 3D view page doesn't exist
           return NO_SUCH_PAGE;
@@ -806,7 +807,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           pageFormat.getImageableY() + (pageFormat.getImageableHeight() - printSize) / 2);
       double scale = printSize / printedImageSize;
       g2D.scale(scale, scale);
-      g2D.drawImage(this.printedImage, 0, 0, this);
+      g2D.drawImage(this.printedImageCache, 0, 0, this);
       g2D.dispose();
 
       return PAGE_EXISTS;
@@ -948,13 +949,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     view.setFieldOfView(fieldOfView);
     double frontClipDistance;
     if (topCamera) {
-      // Use a variable front clip distance for top camera 
-      // depending on the distance to scene center      
-      frontClipDistance = 1 + Math.abs(camera.getZ() / Math.sin(camera.getPitch())) / 50;
+      BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
+      if (approximateHomeBounds == null) {
+        frontClipDistance = 5;
+      } else {
+        Point3d lower = new Point3d();
+        approximateHomeBounds.getLower(lower);
+        Point3d upper = new Point3d();
+        approximateHomeBounds.getUpper(upper);
+        // Use a variable front clip distance for top camera depending on the distance to home objects center
+        frontClipDistance = 1 + Math.sqrt(Math.pow((lower.x + upper.x) / 2 - camera.getX(), 2) 
+            + Math.pow((lower.y + upper.y) / 2 - camera.getY(), 2) 
+            + Math.pow((lower.z + upper.z) / 2 - camera.getZ(), 2)) / 100;
+      }
     } else {
       // Use a variable front clip distance for observer camera 
       // depending on the elevation (at an elevation higher than 3 m
-      // back clip distance must be greater than 6000 or a black zone appears 
+      // back clip distance must be greater than 6000 or a white zone appears 
       // at the horizon in off screen images)
       frontClipDistance = 2.5;
       if (camera.getZ() > 200) {
@@ -968,10 +979,51 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
+   * Returns quickly computed bounds of the objects in home.
+   */
+  private BoundingBox getApproximateHomeBoundsCache() {
+    if (this.approximateHomeBoundsCache == null) {
+      BoundingBox approximateHomeBounds = null;
+      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+        if (piece.isVisible()) {
+          Point3d pieceLocation = new Point3d(piece.getX(), piece.getY(), piece.getGroundElevation());
+          if (approximateHomeBounds == null) {
+            approximateHomeBounds = new BoundingBox(pieceLocation, pieceLocation);
+          } else {
+            approximateHomeBounds.combine(pieceLocation);
+          }
+        }
+      }
+      for (Wall wall : this.home.getWalls()) {
+        Point3d startPoint = new Point3d(wall.getXStart(), wall.getYStart(), 
+            wall.getLevel() != null ? wall.getLevel().getElevation() : 0);
+        if (approximateHomeBounds == null) {
+          approximateHomeBounds = new BoundingBox(startPoint, startPoint);
+        } else {
+          approximateHomeBounds.combine(startPoint);
+        }
+        approximateHomeBounds.combine(new Point3d(wall.getXEnd(), wall.getYEnd(), 
+            startPoint.z + (wall.getHeight() != null ? wall.getHeight() : this.home.getWallHeight())));
+      }
+      for (Room room : this.home.getRooms()) {
+        Point3d center = new Point3d(room.getXCenter(), room.getYCenter(), 
+            room.getLevel() != null ? room.getLevel().getElevation() : 0);
+        if (approximateHomeBounds == null) {
+          approximateHomeBounds = new BoundingBox(center, center);
+        } else {
+          approximateHomeBounds.combine(center);
+        }
+      }
+      this.approximateHomeBoundsCache = approximateHomeBounds;
+    }
+    return approximateHomeBoundsCache;
+  }
+
+  /**
    * Frees printed image kept in cache.
    */
   private void clearPrintedImageCache() {
-    this.printedImage = null;
+    this.printedImageCache = null;
   }
   
   /**
@@ -1086,7 +1138,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     Transform3D pitchRotation = new Transform3D();
     pitchRotation.rotX(-cameraPitch);
     yawRotation.mul(pitchRotation);
-    
+
     transform.setIdentity();
     transform.setTranslation(new Vector3f(cameraX, cameraZ, cameraY));
     transform.mul(yawRotation);
@@ -2197,6 +2249,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       });
     }
     clearPrintedImageCache();
+    this.approximateHomeBoundsCache = null;
   }
   
   /**

@@ -19,13 +19,11 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -353,12 +351,15 @@ public class HomeController3D implements Controller {
    * Top camera controller state. 
    */
   private class TopCameraState extends CameraControllerState {
-    private final Rectangle2D MIN_BOUNDS = new Rectangle2D.Float(0, 0, 1000, 1000);
+    private final float MIN_WIDTH  = 1000;
+    private final float MIN_DEPTH  = 1000;
+    private final float MIN_HEIGHT = 20;
     
     private Camera      topCamera;
-    private Rectangle2D homeBounds;
-    private float       minDistanceToHomeCenter;
-    private float       maxDistanceToHomeCenter;
+    private float []    aerialViewBoundsLowerPoint;
+    private float []    aerialViewBoundsUpperPoint;
+    private float       minDistanceToAerialViewCenter;
+    private float       maxDistanceToAerialViewCenter;
     private boolean     aerialViewCenteredOnSelectionEnabled;
     private PropertyChangeListener levelVisibilityChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -459,35 +460,73 @@ public class HomeController3D implements Controller {
      * Updates camera location from home bounds.
      */
     private void updateCameraFromHomeBounds() {
-      if (this.homeBounds == null) {
-        this.homeBounds = getHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
+      if (this.aerialViewBoundsLowerPoint == null) {
+        updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
       }
-      float distanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
-          + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
-          + Math.pow(this.topCamera.getZ(), 2));
-      this.homeBounds = getHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
-      this.minDistanceToHomeCenter = getMinDistanceToHomeCenter(this.homeBounds, this.aerialViewCenteredOnSelectionEnabled);
-      this.maxDistanceToHomeCenter = getMaxDistanceToHomeCenter(this.homeBounds, this.minDistanceToHomeCenter);
+      float distanceToCenter = getCameraToAerialViewCenterDistance();
+      updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
+      updateCameraIntervalToAerialViewCenter();
       placeCameraAt(distanceToCenter);
     }
 
     /**
-     * Returns home bounds that includes walls, furniture and rooms.
+     * Returns the distance between the current camera location and home bounds center.
      */
-    private Rectangle2D getHomeBounds(boolean centerOnSelection) {
-      List<Selectable> selectedItems = home.getSelectedItems();
+    private float getCameraToAerialViewCenterDistance() {
+      return (float)Math.sqrt(Math.pow((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - this.topCamera.getX(), 2) 
+          + Math.pow((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - this.topCamera.getY(), 2) 
+          + Math.pow((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 - this.topCamera.getZ(), 2));
+    }
+
+    /**
+     * Sets the bounds that includes walls, furniture and rooms, or only selected items 
+     * if <code>centerOnSelection</code> is <code>true</code>.
+     */
+    private void updateAerialViewBounds(boolean centerOnSelection) {
+      this.aerialViewBoundsLowerPoint = 
+      this.aerialViewBoundsUpperPoint = null;
+      List<Selectable> selectedItems = null;
+      if (centerOnSelection) { 
+        selectedItems = new ArrayList<Selectable>();
+        for (Selectable item : home.getSelectedItems()) {
+          if (item instanceof Elevatable 
+              && isItemAtVisibleLevel((Elevatable)item)
+              && (!(item instanceof HomePieceOfFurniture)
+                  || ((HomePieceOfFurniture)item).isVisible())) {
+            selectedItems.add(item);
+          }
+        }
+      }
       boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
 
       // Compute plan bounds to include rooms, walls and furniture
-      Rectangle2D homeBounds = null;
       boolean containsVisibleWalls = false;
       for (Wall wall : selectionEmpty
                            ? home.getWalls()
                            : Home.getWallsSubList(selectedItems)) {
         if (isItemAtVisibleLevel(wall)) {
           containsVisibleWalls = true;
+          
+          float wallElevation = wall.getLevel() != null 
+              ? wall.getLevel().getElevation() 
+              : 0;
+          float minZ = centerOnSelection
+              ? wallElevation
+              : 0;
+          
+          Float height = wall.getHeight();
+          float maxZ;
+          if (height != null) {
+            maxZ = wallElevation + height;
+          } else {
+            maxZ = wallElevation + home.getWallHeight();
+          }
+          Float heightAtEnd = wall.getHeightAtEnd();
+          if (heightAtEnd != null) {
+            maxZ = Math.max(maxZ, wallElevation + heightAtEnd);
+          }
           for (float [] point : wall.getPoints()) {
-            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }
         }
       }
@@ -495,8 +534,17 @@ public class HomeController3D implements Controller {
                                             ? home.getFurniture()
                                             : Home.getFurnitureSubList(selectedItems)) {
         if (piece.isVisible() && isItemAtVisibleLevel(piece)) {
+          float minZ;
+          float maxZ;
+          if (centerOnSelection) {
+            minZ = piece.getGroundElevation();
+            maxZ = piece.getGroundElevation() + piece.getHeight();
+          } else {
+            minZ = Math.max(0, piece.getGroundElevation());
+            maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeight());
+          }
           for (float [] point : piece.getPoints()) {
-            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }
         }
       }
@@ -504,30 +552,57 @@ public class HomeController3D implements Controller {
                            ? home.getRooms()
                            : Home.getRoomsSubList(selectedItems)) {
         if (isItemAtVisibleLevel(room)) {
+          float minZ = 0;
+          float maxZ = MIN_HEIGHT;
+          Level roomLevel = room.getLevel();
+          if (roomLevel != null) {
+            minZ = roomLevel.getElevation() - roomLevel.getFloorThickness();
+            maxZ = roomLevel.getElevation();
+            if (!centerOnSelection) {
+              minZ = Math.max(0, roomLevel.getElevation() - roomLevel.getFloorThickness());
+              maxZ = Math.max(MIN_HEIGHT, roomLevel.getElevation());
+            }
+          }
           for (float [] point : room.getPoints()) {
-            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }
         }
       }
 
-      if (homeBounds != null) {
-        if (!containsVisibleWalls || !selectionEmpty) {
-          // If home contains only rooms and furniture don't fix minimum size
-          return homeBounds;
-        } else {
-          // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
-          return new Rectangle2D.Float(
-              (float)(MIN_BOUNDS.getWidth() < homeBounds.getWidth() 
-                          ? homeBounds.getMinX()
-                          : homeBounds.getCenterX() - MIN_BOUNDS.getWidth() / 2), 
-              (float)(MIN_BOUNDS.getHeight() < homeBounds.getHeight() 
-                          ? homeBounds.getMinY()
-                          : homeBounds.getCenterY() - MIN_BOUNDS.getHeight() / 2), 
-              (float)Math.max(MIN_BOUNDS.getWidth(), homeBounds.getWidth()), 
-              (float)Math.max(MIN_BOUNDS.getHeight(), homeBounds.getHeight()));
+      if (this.aerialViewBoundsLowerPoint == null) {
+        this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
+        this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
+      } else if (containsVisibleWalls && selectionEmpty) {
+        // If home contains walls, ensure bounds are always minimum 10 meters wide centered in middle of 3D view
+        if (MIN_WIDTH > this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0]) {
+          this.aerialViewBoundsLowerPoint [0] = (this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - MIN_WIDTH / 2;
+          this.aerialViewBoundsUpperPoint [0] = this.aerialViewBoundsLowerPoint [0] + MIN_WIDTH;
         }
+        if (MIN_DEPTH > this.aerialViewBoundsUpperPoint [1] - this.aerialViewBoundsLowerPoint [1]) {
+          this.aerialViewBoundsLowerPoint [1] = (this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - MIN_DEPTH / 2;
+          this.aerialViewBoundsUpperPoint [1] = this.aerialViewBoundsLowerPoint [1] + MIN_DEPTH;
+        }
+        if (MIN_HEIGHT > this.aerialViewBoundsUpperPoint [2] - this.aerialViewBoundsLowerPoint [2]) {
+          this.aerialViewBoundsLowerPoint [2] = (this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 - MIN_HEIGHT / 2;
+          this.aerialViewBoundsUpperPoint [2] = this.aerialViewBoundsLowerPoint [2] + MIN_HEIGHT;
+        }
+      }
+    }
+
+    /**
+     * Adds the point at the given coordinates to aerial view bounds.
+     */
+    private void updateAerialViewBounds(float x, float y, float minZ, float maxZ) {
+      if (this.aerialViewBoundsLowerPoint == null) {
+        this.aerialViewBoundsLowerPoint = new float [] {x, y, minZ};
+        this.aerialViewBoundsUpperPoint = new float [] {x, y, maxZ};
       } else {
-        return MIN_BOUNDS;
+        this.aerialViewBoundsLowerPoint [0] = Math.min(this.aerialViewBoundsLowerPoint [0], x); 
+        this.aerialViewBoundsUpperPoint [0] = Math.max(this.aerialViewBoundsUpperPoint [0], x);
+        this.aerialViewBoundsLowerPoint [1] = Math.min(this.aerialViewBoundsLowerPoint [1], y); 
+        this.aerialViewBoundsUpperPoint [1] = Math.max(this.aerialViewBoundsUpperPoint [1], y);
+        this.aerialViewBoundsLowerPoint [2] = Math.min(this.aerialViewBoundsLowerPoint [2], minZ); 
+        this.aerialViewBoundsUpperPoint [2] = Math.max(this.aerialViewBoundsUpperPoint [2], maxZ);
       }
     }
 
@@ -539,130 +614,60 @@ public class HomeController3D implements Controller {
     }
     
     /**
-     * Adds the point at the given coordinates to <code>homeBounds</code>.
+     * Updates the minimum and maximum distances of the camera to the center of the aerial view.
      */
-    private Rectangle2D updateHomeBounds(Rectangle2D homeBounds,
-                                         float x, float y) {
-      if (homeBounds == null) {
-        homeBounds = new Rectangle2D.Float(x, y, 0, 0);
-      } else {
-        homeBounds.add(x, y);
-      }
-      return homeBounds;
+    private void updateCameraIntervalToAerialViewCenter() {  
+      float homeBoundsWidth = this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0];
+      float homeBoundsDepth = this.aerialViewBoundsUpperPoint [1] - this.aerialViewBoundsLowerPoint [1];
+      float homeBoundsHeight = this.aerialViewBoundsUpperPoint [2] - this.aerialViewBoundsLowerPoint [2];
+      float halfDiagonal = (float)Math.sqrt(homeBoundsWidth * homeBoundsWidth + homeBoundsDepth * homeBoundsDepth + homeBoundsHeight * homeBoundsHeight) / 2;
+      this.minDistanceToAerialViewCenter = halfDiagonal * 1.05f;
+      this.maxDistanceToAerialViewCenter = 5 * this.minDistanceToAerialViewCenter;
     }
-
-    /**
-     * Returns the minimum distance of the camera to home center.
-     */
-    private float getMinDistanceToHomeCenter(Rectangle2D homeBounds,
-                                             boolean centerOnSelection) {
-      List<Selectable> selectedItems = home.getSelectedItems();
-      boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
-      
-      float maxHeight = 0;
-      Collection<Wall> walls = selectionEmpty 
-          ? home.getWalls() 
-          : Home.getWallsSubList(selectedItems);
-      if (walls.isEmpty()) {
-        // If home contains no wall, search the max height of the highest piece
-        for (HomePieceOfFurniture piece : selectionEmpty 
-                                              ? home.getFurniture()
-                                              : Home.getFurnitureSubList(selectedItems)) {
-          if (piece.isVisible()) {
-            maxHeight = Math.max(maxHeight, piece.getGroundElevation() + piece.getHeight());
-          }
-        }
-      } else {
-         // Search the max height of the highest wall
-        for (Wall wall : walls) {
-          Float height = wall.getHeight();
-          Level wallLevel = wall.getLevel();
-          float levelElevation = wallLevel == null 
-              ? 0
-              : wallLevel.getElevation(); 
-          if (height != null) {
-            maxHeight = Math.max(maxHeight, levelElevation + height);
-          }
-          Float heightAtEnd = wall.getHeightAtEnd();
-          if (heightAtEnd != null) {
-            maxHeight = Math.max(maxHeight, levelElevation + heightAtEnd);
-          }
-        }
-      }
-      if (maxHeight > 0) {
-        maxHeight = Math.max(10, maxHeight);
-      } else {
-        maxHeight = home.getWallHeight();        
-      }
-      double halfDiagonal = Math.sqrt(homeBounds.getWidth() * homeBounds.getWidth() + homeBounds.getHeight() * homeBounds.getHeight()) / 2;
-      return (float)Math.sqrt(maxHeight * maxHeight + halfDiagonal * halfDiagonal) * 1.1f;
-    }
-    
-    /**
-     * Returns the maximum distance of the camera to home center.
-     */
-    private float getMaxDistanceToHomeCenter(Rectangle2D homeBounds, float minDistanceToHomeCenter) {
-      List<Selectable> selectedItems = home.getSelectedItems();
-      boolean selectionEmpty = selectedItems.size() == 0 || !this.aerialViewCenteredOnSelectionEnabled;
-      if (selectionEmpty) {
-        return 5 * minDistanceToHomeCenter;
-      } else {
-        return 5 * getMinDistanceToHomeCenter(homeBounds, false);
-      }
-    }
-    
+       
     @Override
     public void moveCamera(float delta) {
       // Use a 5 times bigger delta for top camera move
       delta *= 5;
-      float newDistanceToCenter = (float)Math.sqrt(Math.pow(this.homeBounds.getCenterX() - this.topCamera.getX(), 2) 
-          + Math.pow(this.homeBounds.getCenterY() - this.topCamera.getY(), 2) 
-          + Math.pow(this.topCamera.getZ(), 2)) - delta;
+      float newDistanceToCenter = getCameraToAerialViewCenterDistance() - delta;
       placeCameraAt(newDistanceToCenter);
     }
 
     public void placeCameraAt(float distanceToCenter) {
       // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
-      distanceToCenter = Math.max(distanceToCenter, this.minDistanceToHomeCenter);
+      distanceToCenter = Math.max(distanceToCenter, this.minDistanceToAerialViewCenter);
       // Check camera isn't too far
-      distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToHomeCenter);
+      distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToAerialViewCenter);
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
-      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
-          * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
-          * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ((float)Math.sin(this.topCamera.getPitch()) * distanceToCenter);
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 + (float)Math.sin(this.topCamera.getPitch()) * distanceToCenter);
     }
 
     @Override
     public void rotateCameraYaw(float delta) {
-      float  newYaw = this.topCamera.getYaw() + delta;
-      double distanceToCenterAtGroundLevel = this.topCamera.getZ() / Math.tan(this.topCamera.getPitch());
+      float newYaw = this.topCamera.getYaw() + delta;
+      double distanceToCenterAtGroundLevel = getCameraToAerialViewCenterDistance() * Math.cos(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
       this.topCamera.setYaw(newYaw); 
-      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
     }
     
     @Override
     public void rotateCameraPitch(float delta) {
       float newPitch = this.topCamera.getPitch() + delta;
-      // Check new pitch is between PI / 2 and PI / 16  
-      newPitch = Math.max(newPitch, (float)Math.PI / 16);
+      // Check new pitch is between 0 and PI / 2  
+      newPitch = Math.max(newPitch, (float)0);
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
       // Compute new z to keep the same distance to view center
-      double cameraToBoundsCenterDistance = Math.sqrt(Math.pow(this.topCamera.getX() - this.homeBounds.getCenterX(), 2)
-          + Math.pow(this.topCamera.getY() - this.homeBounds.getCenterY(), 2)
-          + Math.pow(this.topCamera.getZ(), 2));
-      float newZ = (float)(cameraToBoundsCenterDistance * Math.sin(newPitch));
-      double distanceToCenterAtGroundLevel = newZ / Math.tan(newPitch);
+      double distanceToCenter = getCameraToAerialViewCenterDistance();
+      double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(newPitch);
       // Change camera pitch 
       this.topCamera.setPitch(newPitch); 
-      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
-          * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
-          * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ(newZ);
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 + (float)(distanceToCenter * Math.sin(newPitch)));
     }
     
     @Override
