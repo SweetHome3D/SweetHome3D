@@ -353,7 +353,7 @@ public class PhotosPanel extends JPanel implements DialogView {
         PhotosPanel.class, "selectedCamerasLabel.text"));
     this.fileFormatLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotosPanel.class, "fileFormatLabel.text"));
-    this.dialogTitle = preferences.getLocalizedString(PhotosPanel.class, "createPhoto.title");
+    this.dialogTitle = preferences.getLocalizedString(PhotosPanel.class, "createPhotos.title");
     Window window = SwingUtilities.getWindowAncestor(this);  
     if (window != null) {
       ((JDialog)window).setTitle(this.dialogTitle);
