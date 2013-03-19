@@ -31,8 +31,12 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
  * to return the actions that will be available to user.
  * This class should be packed in a JAR file with a family of properties file named 
  * <code>ApplicationPlugin.properties</code> at its root or in one of its subfolders. 
- * This file describes a plug-in with the following keys (all of them are mandatory):
- * <ul><li>The <code>name</code> key specifies the name of the plug-in.</li>
+ * This file describes a plug-in with the following keys (all of them are mandatory
+ * except <code>id</code>):
+ * <ul><li>The <code>id</code> key gives an optional id to the plug-in, 
+ *     which can be useful to determine if an update for this plug-in is available 
+ *     during libraries updates checking.</li>
+ *     <li>The <code>name</code> key specifies the name of the plug-in.</li>
  *     <li>The <code>class</code> key specifies the fully qualified class name
  *     of the plug-in.</li>
  *     <li>The <code>description</code> key specifies the description of 
