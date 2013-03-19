@@ -191,7 +191,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     
     if (controller.isPropertyEditable(UserPreferencesController.Property.UNIT)) {
       // Create unit label and combo box bound to controller UNIT property
-      this.unitLabel = new JLabel(preferences.getLocalizedString(
+      this.unitLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           UserPreferencesPanel.class, "unitLabel.text"));
       this.unitComboBox = new JComboBox(LengthUnit.values());
       final Map<LengthUnit, String> comboBoxTexts = new HashMap<LengthUnit, String>();
