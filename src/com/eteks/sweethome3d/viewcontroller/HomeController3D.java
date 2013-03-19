@@ -510,9 +510,9 @@ public class HomeController3D implements Controller {
           float wallElevation = wall.getLevel() != null 
               ? wall.getLevel().getElevation() 
               : 0;
-          float minZ = centerOnSelection
-              ? wallElevation
-              : 0;
+          float minZ = selectionEmpty
+              ? 0
+              : wallElevation;
           
           Float height = wall.getHeight();
           float maxZ;
@@ -530,24 +530,26 @@ public class HomeController3D implements Controller {
           }
         }
       }
+
       for (HomePieceOfFurniture piece : selectionEmpty 
                                             ? home.getFurniture()
                                             : Home.getFurnitureSubList(selectedItems)) {
         if (piece.isVisible() && isItemAtVisibleLevel(piece)) {
           float minZ;
           float maxZ;
-          if (centerOnSelection) {
-            minZ = piece.getGroundElevation();
-            maxZ = piece.getGroundElevation() + piece.getHeight();
-          } else {
+          if (selectionEmpty) {
             minZ = Math.max(0, piece.getGroundElevation());
             maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeight());
+          } else {
+            minZ = piece.getGroundElevation();
+            maxZ = piece.getGroundElevation() + piece.getHeight();
           }
           for (float [] point : piece.getPoints()) {
             updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }
         }
       }
+      
       for (Room room : selectionEmpty 
                            ? home.getRooms()
                            : Home.getRoomsSubList(selectedItems)) {
@@ -558,8 +560,8 @@ public class HomeController3D implements Controller {
           if (roomLevel != null) {
             minZ = roomLevel.getElevation() - roomLevel.getFloorThickness();
             maxZ = roomLevel.getElevation();
-            if (!centerOnSelection) {
-              minZ = Math.max(0, roomLevel.getElevation() - roomLevel.getFloorThickness());
+            if (selectionEmpty) {
+              minZ = Math.max(0, minZ);
               maxZ = Math.max(MIN_HEIGHT, roomLevel.getElevation());
             }
           }
@@ -568,7 +570,7 @@ public class HomeController3D implements Controller {
           }
         }
       }
-
+      
       if (this.aerialViewBoundsLowerPoint == null) {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
         this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
