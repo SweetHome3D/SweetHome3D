@@ -518,7 +518,7 @@ public class ColorButton extends JButton {
       pipetteButton.setFocusable(false);
       pipetteButton.setPreferredSize(new Dimension(30, 30));
 
-      JLabel rgbLabel = new JLabel(this.preferences.getLocalizedString(ColorButton.class, "rgbLabel.text"));
+      JLabel rgbLabel = new JLabel(SwingTools.getLocalizedLabelText(this.preferences, ColorButton.class, "rgbLabel.text"));
       this.rgbTextField = new JFormattedTextField(new Format() {
           @Override
           public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
@@ -559,7 +559,7 @@ public class ColorButton extends JButton {
           }
         });
       
-      JLabel ralLabel = new JLabel(this.preferences.getLocalizedString(ColorButton.class, "ralLabel.text"));
+      JLabel ralLabel = new JLabel(SwingTools.getLocalizedLabelText(this.preferences, ColorButton.class, "ralLabel.text"));
       this.ralComboBox = new PaletteComboBox(ColorCode.RAL_COLORS);
       ItemListener paletteChangeListener = new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
@@ -572,7 +572,7 @@ public class ColorButton extends JButton {
       this.ralComboBox.addItemListener(paletteChangeListener);
 
       JLabel creativeCommonsLabel = new JLabel(
-          this.preferences.getLocalizedString(ColorButton.class, "creativeCommonsLabel.text"));
+          SwingTools.getLocalizedLabelText(this.preferences, ColorButton.class, "creativeCommonsLabel.text"));
       this.creativeCommonsComboBox = new PaletteComboBox(ColorCode.CREATIVE_COMMONS_COLORS);
       this.creativeCommonsComboBox.addItemListener(paletteChangeListener);
 
