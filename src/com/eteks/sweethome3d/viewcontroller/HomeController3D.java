@@ -616,7 +616,9 @@ public class HomeController3D implements Controller {
       float homeBoundsWidth = this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0];
       float homeBoundsDepth = this.aerialViewBoundsUpperPoint [1] - this.aerialViewBoundsLowerPoint [1];
       float homeBoundsHeight = this.aerialViewBoundsUpperPoint [2] - this.aerialViewBoundsLowerPoint [2];
-      float halfDiagonal = (float)Math.sqrt(homeBoundsWidth * homeBoundsWidth + homeBoundsDepth * homeBoundsDepth + homeBoundsHeight * homeBoundsHeight) / 2;
+      float halfDiagonal = (float)Math.sqrt(homeBoundsWidth * homeBoundsWidth 
+          + homeBoundsDepth * homeBoundsDepth 
+          + homeBoundsHeight * homeBoundsHeight) / 2;
       this.minDistanceToAerialViewCenter = halfDiagonal * 1.05f;
       this.maxDistanceToAerialViewCenter = Math.max(5 * this.minDistanceToAerialViewCenter, 1000);
     }
@@ -635,9 +637,12 @@ public class HomeController3D implements Controller {
       // Check camera isn't too far
       distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToAerialViewCenter);
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
-      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 + (float)Math.sin(this.topCamera.getPitch()) * distanceToCenter);
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 
+          + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 
+          - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 
+          + (float)Math.sin(this.topCamera.getPitch()) * distanceToCenter);
     }
 
     @Override
@@ -646,8 +651,10 @@ public class HomeController3D implements Controller {
       double distanceToCenterAtGroundLevel = getCameraToAerialViewCenterDistance() * Math.cos(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
       this.topCamera.setYaw(newYaw); 
-      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 
+          + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 
+          - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
     }
     
     @Override
@@ -661,9 +668,12 @@ public class HomeController3D implements Controller {
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(newPitch);
       // Change camera pitch 
       this.topCamera.setPitch(newPitch); 
-      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
-      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
-      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 + (float)(distanceToCenter * Math.sin(newPitch)));
+      this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 
+          + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 
+          - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 
+          + (float)(distanceToCenter * Math.sin(newPitch)));
     }
     
     @Override
