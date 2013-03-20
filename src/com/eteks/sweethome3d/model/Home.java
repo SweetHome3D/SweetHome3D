@@ -254,7 +254,7 @@ public class Home implements Serializable, Cloneable {
           HomePieceOfFurniture.SortableProperty.VISIBLE});
     }
     // Create a default top camera that matches default point of view in previous versions 
-    this.topCamera = new Camera(500, 1500, 1000, 
+    this.topCamera = new Camera(500, 1500, 1010, 
         (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
     // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
     this.observerCamera = new ObserverCamera(50, 50, 170, 
