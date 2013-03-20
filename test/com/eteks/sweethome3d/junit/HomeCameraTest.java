@@ -133,27 +133,27 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1052.5009f, 1098.4805f, 
         (float)Math.PI, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
-    // 4. Remove 10° from camera yaw 
+    // 4. Remove 1° from camera yaw 
     tester.actionKeyStroke(KeyEvent.VK_LEFT);
     // Check camera location and angles
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(147.02121f, 1051.095f, 1098.4805f, 
         (float)Math.PI - (float)Math.PI / 60, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
-    // Add 1° to camera yaw 
+    // Add 10° to camera yaw 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-119.9497f, 1030.084f, 1098.4805f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-119.94972f, 1030.084f, 1098.4805f, 
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
-    // 5. Move camera 1cm forward
+    // 5. Move camera 10cm forward
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_UP);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-95.4424f, 914.7864f, 986.62274f, 
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
-    // Move camera 10 backward 
+    // Move camera 1 backward 
     tester.actionKeyStroke(KeyEvent.VK_DOWN);
     // Check camera location and angles
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-100.3438f, 937.8459f, 1008.99426f, 
