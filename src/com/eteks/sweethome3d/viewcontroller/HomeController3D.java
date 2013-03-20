@@ -24,6 +24,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -361,25 +362,18 @@ public class HomeController3D implements Controller {
     private float       minDistanceToAerialViewCenter;
     private float       maxDistanceToAerialViewCenter;
     private boolean     aerialViewCenteredOnSelectionEnabled;
-    private PropertyChangeListener levelVisibilityChangeListener = new PropertyChangeListener() {
+    private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
-            updateCameraFromHomeBounds();
-          }
+          updateCameraFromHomeBounds();
         }
       };
     private CollectionListener<Level> levelsListener = new CollectionListener<Level>() {
         public void collectionChanged(CollectionEvent<Level> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(levelVisibilityChangeListener);
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(levelVisibilityChangeListener);
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds();
-        }
-      };
-    private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
           updateCameraFromHomeBounds();
         }
       };
@@ -430,7 +424,7 @@ public class HomeController3D implements Controller {
       this.topCamera = home.getCamera();
       updateCameraFromHomeBounds();
       for (Level level : home.getLevels()) {
-        level.addPropertyChangeListener(this.levelVisibilityChangeListener);
+        level.addPropertyChangeListener(this.objectChangeListener);
       }
       home.addLevelsListener(this.levelsListener);
       for (Wall wall : home.getWalls()) {
@@ -485,7 +479,7 @@ public class HomeController3D implements Controller {
     private void updateAerialViewBounds(boolean centerOnSelection) {
       this.aerialViewBoundsLowerPoint = 
       this.aerialViewBoundsUpperPoint = null;
-      List<Selectable> selectedItems = null;
+      List<Selectable> selectedItems = Collections.emptyList();
       if (centerOnSelection) { 
         selectedItems = new ArrayList<Selectable>();
         for (Selectable item : home.getSelectedItems()) {
@@ -695,8 +689,8 @@ public class HomeController3D implements Controller {
         room.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeRoomsListener(this.roomsListener);
-      for (Level room : home.getLevels()) {
-        room.removePropertyChangeListener(this.levelVisibilityChangeListener);
+      for (Level level : home.getLevels()) {
+        level.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeLevelsListener(this.levelsListener);
       home.removeSelectionListener(this.selectionListener);
