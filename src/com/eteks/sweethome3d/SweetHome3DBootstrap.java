@@ -64,11 +64,11 @@ public class SweetHome3DBootstrap {
           "macosx/libjogl_cg.jnilib"}));
     } else {
       String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
-          ? "Sweet Home 3D ne peut pas encore fonctionner avec Java %c.\n" 
+          ? "Sweet Home 3D ne peut pas encore fonctionner avec Java %c sous Mac OS X.\n" 
             + "Merci de télécharger le programme d'installation depuis\n" 
             + "http://www.sweethome3d.com/fr/download.jsp\n" 
             + "ou d'utiliser Java 6."
-      	  : "Sweet Home 3D can't run with Java %c yet.\n" 
+      	  : "Sweet Home 3D can't run with Java %c under Mac OS X yet.\n" 
             + "Please download the installer version from\n" 
             + "http://www.sweethome3d.com/download.jsp\n" 
             + "or use Java 6.";
