@@ -102,7 +102,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertSame("Default camera isn't top camera", 
         home.getTopCamera(), home.getCamera());
     // Check default camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(500, 1500, 1000, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(500, 1500, 1010, 
         (float)Math.PI, (float)Math.PI / 4, home.getCamera());
     
     // 2. Create one wall between points (50, 50) and (150, 50) at a bigger scale
@@ -120,7 +120,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     float xWallMiddle = (wall.getXEnd() + wall.getXStart()) / 2;
     float yWallMiddle = (wall.getYEnd() + wall.getYStart()) / 2;
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, yWallMiddle + 1000, 1000, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, yWallMiddle + 1000, 1125, 
         (float)Math.PI, (float)Math.PI / 4, home.getCamera());
     
     // 3. Transfer focus to 3D view with TAB key 
@@ -130,20 +130,20 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Add 1° to camera pitch
     tester.actionKeyStroke(KeyEvent.VK_PAGE_UP);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1052.5009f, 973.4803f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(xWallMiddle, 1052.5009f, 1098.4805f, 
         (float)Math.PI, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 4. Remove 10° from camera yaw 
     tester.actionKeyStroke(KeyEvent.VK_LEFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(147.02121f, 1051.095f, 973.4803f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(147.02121f, 1051.095f, 1098.4805f, 
         (float)Math.PI - (float)Math.PI / 60, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     // Add 1° to camera yaw 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-119.9497f, 1030.084f, 973.4803f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-119.9497f, 1030.084f, 1098.4805f, 
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 5. Move camera 1cm forward
@@ -151,12 +151,12 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionKeyStroke(KeyEvent.VK_UP);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-95.4424f, 914.7864f, 861.6227f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-95.4424f, 914.7864f, 986.62274f, 
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     // Move camera 10 backward 
     tester.actionKeyStroke(KeyEvent.VK_DOWN);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-100.3438f, 937.8459f, 883.9942f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(-100.3438f, 937.8459f, 1008.99426f, 
         (float)Math.PI - (float)Math.PI / 60 + (float)Math.PI / 12, (float)Math.PI / 4 - (float)Math.PI / 120, home.getCamera());
     
     // 6. View from observer
