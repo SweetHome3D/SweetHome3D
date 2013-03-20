@@ -11,9 +11,11 @@ http://download.java.net/media/java3d/builds/release/1.5.2/vecmath-1_5_2-src.zip
 https://j3d-core-utils.dev.java.net/build-instr.html
 
 Java 3D 1.6 libraries used for Java 7 under Mac OS X are available at:
-https://github.com/hharrison/java3d-core/downloads
-https://github.com/hharrison/java3d-utils/downloads
-https://github.com/hharrison/vecmath/downloads
+http://jogamp.org/deployment/java3d/
+and source code can be dosnwloaded at:
+http://github.com/hharrison/java3d-core/
+http://github.com/hharrison/java3d-utils/
+http://github.com/hharrison/vecmath/
 
 
 j3dutils.jar is licensed under Berkeley Software Distribution (BSD) License
