@@ -2993,7 +2993,7 @@ public class HomePane extends JRootPane implements HomeView {
     if (!(window instanceof JFrame)) {
       window = JOptionPane.getRootFrame();
     }
-    JFrame defaultFrame = (JFrame)window;
+    Frame defaultFrame = (Frame)window;
     // Create a dialog with the same title as home frame 
     final JDialog separateDialog = new JDialog(defaultFrame, defaultFrame.getTitle(), false);
     separateDialog.setResizable(true);
@@ -3002,20 +3002,23 @@ public class HomePane extends JRootPane implements HomeView {
           separateDialog.setTitle((String)ev.getNewValue());
         }
       });
-    // Use same document modified indicator
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      defaultFrame.getRootPane().addPropertyChangeListener("Window.documentModified", new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          separateDialog.getRootPane().putClientProperty("Window.documentModified", ev.getNewValue());
-        }
-      });      
-    } else if (OperatingSystem.isMacOSX()) {
-      defaultFrame.getRootPane().addPropertyChangeListener("windowModified", new PropertyChangeListener() {
+    if (defaultFrame instanceof RootPaneContainer) {
+      // Use same document modified indicator
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        ((RootPaneContainer)defaultFrame).getRootPane().addPropertyChangeListener("Window.documentModified", new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            separateDialog.getRootPane().putClientProperty("windowModified", ev.getNewValue());
+            separateDialog.getRootPane().putClientProperty("Window.documentModified", ev.getNewValue());
           }
         });      
+      } else if (OperatingSystem.isMacOSX()) {
+        ((RootPaneContainer)defaultFrame).getRootPane().addPropertyChangeListener("windowModified", new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              separateDialog.getRootPane().putClientProperty("windowModified", ev.getNewValue());
+            }
+          });      
+      }
     }
+    
     separateDialog.setContentPane(component);
     separateDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
     separateDialog.addWindowListener(new WindowAdapter() {
