@@ -41,6 +41,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -820,8 +821,8 @@ public class ModelManager {
    * given <code>node</code> have a name.
    */
   public void checkAppearancesName(Node node) {
-    // Search appearances used by node shapes 
-    Set<Appearance> appearances = new HashSet<Appearance>(); 
+    // Search appearances used by node shapes keeping their enumeration order 
+    Set<Appearance> appearances = new LinkedHashSet<Appearance>(); 
     searchMaterials(node, appearances);
     int i = 0;
     for (Appearance appearance : appearances) {
