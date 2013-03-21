@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -67,6 +68,7 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
@@ -85,6 +87,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
@@ -359,7 +362,7 @@ public class ColorButton extends JButton {
           0, 1, "Pipette", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       this.grayColorChart.setCursor(pipetteCursor);
       ToolTipManager.sharedInstance().registerComponent(this.grayColorChart);
-      MouseAdapter grayColorCharMouseListener = new MouseAdapter() {
+      MouseInputAdapter grayColorCharMouseListener = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
             getColorSelectionModel().setSelectedColor(grayColorChart.getColorAt(ev.getY()));
@@ -380,7 +383,7 @@ public class ColorButton extends JButton {
       this.colorChart.setBorder(BorderFactory.createLineBorder(Color.GRAY));
       this.colorChart.setCursor(pipetteCursor);
       ToolTipManager.sharedInstance().registerComponent(this.colorChart);
-      MouseAdapter colorChartMouseListener = new MouseAdapter() {
+      MouseInputAdapter colorChartMouseListener = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
             getColorSelectionModel().setSelectedColor(colorChart.getColorAt(ev.getX(), ev.getY()));
@@ -433,7 +436,11 @@ public class ColorButton extends JButton {
       AbstractAction pipetteAction = new AbstractAction() {
           public void actionPerformed(ActionEvent ev) {
             // Grab desktop with a tiny undecorated dialog
-            final JDialog pipetteWindow = new JDialog((Window)SwingUtilities.getRoot(getParent()));
+            Window window = SwingUtilities.getWindowAncestor(getParent());
+            if (!(window instanceof Frame)) {
+              window = JOptionPane.getRootFrame();
+            }
+            final JDialog pipetteWindow = new JDialog((Frame)window);
             pipetteWindow.setUndecorated(true);
             pipetteWindow.setModal(true);
             pipetteWindow.setSize(3, 3);
