@@ -105,7 +105,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -2990,7 +2989,7 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Display view in a separate non modal dialog
     Window window = SwingUtilities.getWindowAncestor(this);
-    if (!(window instanceof JFrame)) {
+    if (!(window instanceof Frame)) {
       window = JOptionPane.getRootFrame();
     }
     Frame defaultFrame = (Frame)window;
