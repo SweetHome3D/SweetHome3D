@@ -390,7 +390,7 @@ public class SweetHome3D extends HomeApplication {
 
     // Add a listener that opens a frame when a home is added to application
     addHomesListener(new CollectionListener<Home>() {
-      private boolean        firstApplicationHomeAdded;
+      private boolean firstApplicationHomeAdded;
 
       public void collectionChanged(CollectionEvent<Home> ev) {
         switch (ev.getType()) {
@@ -440,9 +440,12 @@ public class SweetHome3D extends HomeApplication {
 
     addComponent3DRenderingErrorObserver();
 
+    getUserPreferences();
+    // Set User Agent to follow statistics on used operating systems 
+    System.setProperty("http.agent", getId() + "/" + getVersion()  
+         + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + "; " + Locale.getDefault() + ")");
     // Init look and feel afterwards to ensure that Swing takes into account
     // default locale change
-    getUserPreferences();
     initLookAndFeel();
     try {
       this.autoRecoveryManager = new AutoRecoveryManager(this);
@@ -489,9 +492,6 @@ public class SweetHome3D extends HomeApplication {
       // performance
       System.setProperty("apple.awt.graphics.UseQuartz", "true");
     }
-    // Set User Agent to follow statistics on used operating systems 
-    System.setProperty("http.agent", getId() + "/" + getVersion()  
-         + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + "; " + Locale.getDefault() + ")");
   }
 
   /**
