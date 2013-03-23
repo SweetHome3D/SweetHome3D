@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.tools;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -201,7 +202,7 @@ public class OperatingSystem {
           for ( ; i < part.length() && Character.isDigit(c = part.charAt(i)); i++) {
             subPart.append(c);
           }
-          versionParts.add(new Integer(subPart.toString()));
+          versionParts.add(new BigInteger(subPart.toString()));
         } else {
           for ( ; i < part.length() && !Character.isDigit(c = part.charAt(i)); i++) {
             subPart.append(c);
