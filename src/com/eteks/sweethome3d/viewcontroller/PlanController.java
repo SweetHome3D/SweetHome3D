@@ -3938,7 +3938,7 @@ public class PlanController extends FurnitureController implements Controller {
 
         @Override
         public String getPresentationName() {
-          return preferences.getLocalizedString(PlanController.class, "undAddItemsName");
+          return preferences.getLocalizedString(PlanController.class, "undoAddItemsName");
         }      
       });
     // End compound edit
