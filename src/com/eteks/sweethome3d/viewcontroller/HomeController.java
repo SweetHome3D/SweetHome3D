@@ -26,6 +26,7 @@ import java.io.InterruptedIOException;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.AccessControlException;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -2273,9 +2274,10 @@ public class HomeController implements Controller {
       // Read updates from XML content in updatesUrl in a threaded task
       Callable<Void> checkUpdatesTask = new Callable<Void>() {
           public Void call() throws IOException, SAXException {
-            final Map<Library, List<Update>> availableUpdates = readAvailableUpdates(url, libraries, updatesMinimumDate);
+            final Map<Library, List<Update>> availableUpdates = readAvailableUpdates(url, libraries, updatesMinimumDate,
+                displayOnlyIfNewUpdates ? 3000 : -1);
             getView().invokeLater(new Runnable () {
-                public void run() {
+                public void run() {                  
                   if (availableUpdates.isEmpty()) {
                     if (!displayOnlyIfNewUpdates) {
                       getView().showMessage(preferences.getLocalizedString(HomeController.class, "noUpdateMessage"));
@@ -2298,6 +2300,7 @@ public class HomeController implements Controller {
       ThreadedTaskController.ExceptionHandler exceptionHandler = 
           new ThreadedTaskController.ExceptionHandler() {
             public void handleException(Exception ex) {
+              ex.printStackTrace();
               if (!displayOnlyIfNewUpdates && !(ex instanceof InterruptedIOException)) {
                 if (ex instanceof IOException) {
                   getView().showError(preferences.getLocalizedString(HomeController.class, "checkUpdatesIOError", ex));
@@ -2355,13 +2358,18 @@ public class HomeController implements Controller {
    * Reads the available updates from the XML stream contained in the given <code>url</code>.
    * Caution : this method is called from a separate thread.
    */
-  private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate) throws IOException, SAXException {
+  private Map<Library, List<Update>> readAvailableUpdates(URL url, List<Library> libraries, Long minDate, int timeout) throws IOException, SAXException {
     try {
       SAXParserFactory factory = SAXParserFactory.newInstance();
       factory.setValidating(false);
       SAXParser saxParser = factory.newSAXParser();
       UpdatesHandler updatesHandler = new UpdatesHandler(url);
-      saxParser.parse(url.openStream(), updatesHandler);
+      URLConnection connection = url.openConnection();
+      if (timeout > 0) {
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
+      }
+      saxParser.parse(connection.getInputStream(), updatesHandler);
       
       // Filter updates according to application version and libraries version
       Map<Library, List<Update>> availableUpdates = new LinkedHashMap<Library, List<Update>>();
