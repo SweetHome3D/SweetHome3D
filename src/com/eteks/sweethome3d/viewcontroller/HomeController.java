@@ -2300,7 +2300,6 @@ public class HomeController implements Controller {
       ThreadedTaskController.ExceptionHandler exceptionHandler = 
           new ThreadedTaskController.ExceptionHandler() {
             public void handleException(Exception ex) {
-              ex.printStackTrace();
               if (!displayOnlyIfNewUpdates && !(ex instanceof InterruptedIOException)) {
                 if (ex instanceof IOException) {
                   getView().showError(preferences.getLocalizedString(HomeController.class, "checkUpdatesIOError", ex));
