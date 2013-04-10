@@ -283,7 +283,12 @@ public class OperatingSystem {
    */
   private synchronized static File getDefaultTemporaryFolder(boolean create) throws IOException {
     if (TEMPORARY_SUB_FOLDER != null) {
-      File temporaryFolder = new File(getDefaultApplicationFolder(), TEMPORARY_SUB_FOLDER);
+      File temporaryFolder;
+      if (new File(TEMPORARY_SUB_FOLDER).isAbsolute()) {
+        temporaryFolder = new File(TEMPORARY_SUB_FOLDER);
+      } else {
+        temporaryFolder = new File(getDefaultApplicationFolder(), TEMPORARY_SUB_FOLDER);
+      }
       final String versionPrefix = Home.CURRENT_VERSION + "-";
       final File sessionTemporaryFolder = new File(temporaryFolder, 
           versionPrefix + TEMPORARY_SESSION_SUB_FOLDER);      
