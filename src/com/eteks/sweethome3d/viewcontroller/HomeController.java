@@ -2393,9 +2393,9 @@ public class HomeController implements Controller {
               library.getVersion(), minDate, now);
           if (!libraryUpdates.isEmpty()) {
             availableUpdates.put(library, libraryUpdates);
-            // Ignore older libraries with same ID
-            updatedLibraryIds.add(libraryId);
           }
+          // Ignore older libraries with same ID
+          updatedLibraryIds.add(libraryId);
         }
       }
       return availableUpdates;
