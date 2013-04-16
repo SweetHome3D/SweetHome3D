@@ -19,15 +19,25 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * An URL content read from a home stream.
+ * An URL content read from a home stream stored in a temporary file.
  */
 class HomeURLContent extends URLContent {
   public HomeURLContent(URL url) {
     super(url);
+  }
+  
+  @Override
+  public InputStream openStream() throws IOException {
+    URLConnection connection = getURL().openConnection();
+    connection.setUseCaches(false);
+    return connection.getInputStream();
   }
 }

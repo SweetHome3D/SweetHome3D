@@ -143,13 +143,14 @@ public class DefaultHomeInputStream extends FilterInputStream {
           // Replace "temp" in URL by current temporary file
           String entryName = url.substring(url.indexOf('!') + 2);
           URL fileURL = new URL("jar:file:" + tempFile.toString() + "!/" + entryName);
+          HomeURLContent urlContent = new HomeURLContent(fileURL);
           try {
             // Check entry exists
-            fileURL.openStream().close();
+            urlContent.openStream().close();
           } catch (IOException ex) {
             throw new IOException("Missing entry \"" + entryName + "\"");
           }
-          return new HomeURLContent(fileURL);
+          return urlContent;
         } else {
           return obj;
         }
