@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import javax.media.j3d.Transform3D;
@@ -41,7 +42,6 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.sun.j3d.utils.geometry.Box;
@@ -127,12 +127,9 @@ public class OBJWriterTest extends TestCase {
    * Tests if the content of an OBJ file is as expected after exporting a complex home
    * (with holes for windows and staircase).
    */
-  public void testExportToOBJContent() throws RecorderException, IOException {
+  public void testExportToOBJContent() throws RecorderException, IOException, URISyntaxException {
     // 1. Read an existing file
-    String testFile = OBJWriterTest.class.getResource("resources/holes.sh3d").getFile();
-    if (OperatingSystem.isWindows()) {
-      testFile = testFile.substring(1).replace("%20", " ");
-    }
+    String testFile = new File(OBJWriterTest.class.getResource("resources/holes.sh3d").toURI()).getAbsolutePath();
     Home home = new HomeFileRecorder().readHome(testFile);
     
     // 2. Export home to OBJ file

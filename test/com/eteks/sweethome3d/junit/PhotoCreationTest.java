@@ -100,10 +100,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
     // Create a dummy controller to load a home test file
     HomeController controller = new HomeController(new Home(), application, viewFactory);
     
-    String testFile = PhotoCreationTest.class.getResource("resources/home1.sh3d").getFile();
-    if (OperatingSystem.isWindows()) {
-      testFile = testFile.substring(1).replace("%20", " ");
-    }
+    String testFile = new File(PhotoCreationTest.class.getResource("resources/home1.sh3d").toURI()).getAbsolutePath();
     controller.open(testFile);
     // Wait home is opened
     for (int i = 0; i < 100 && application.getHomes().size() == 0; i++) {

@@ -22,6 +22,8 @@ package com.eteks.sweethome3d.junit;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 
@@ -63,7 +65,6 @@ import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.LevelPanel;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WallPanel;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -73,17 +74,14 @@ import com.eteks.sweethome3d.viewcontroller.PlanView;
  * @author Emmanuel Puybaret
  */
 public class LevelTest extends ComponentTestFixture {
-  public void testLevels() throws RecorderException, NoSuchFieldException, IllegalAccessException, InterruptedException, ComponentSearchException {
+  public void testLevels() throws RecorderException, NoSuchFieldException, IllegalAccessException, InterruptedException, ComponentSearchException, URISyntaxException {
     UserPreferences preferences = new DefaultUserPreferences() {
         @Override
         public void write() throws RecorderException {
         }
       };
     SwingViewFactory viewFactory = new SwingViewFactory();
-    String testFile = LevelTest.class.getResource("resources/home1.sh3d").getFile();
-    if (OperatingSystem.isWindows()) {
-      testFile = testFile.substring(1).replace("%20", " ");
-    }
+    String testFile = new File(LevelTest.class.getResource("resources/home1.sh3d").toURI()).getAbsolutePath();
     Home home = new HomeFileRecorder().readHome(testFile);
     assertHomeItemsAtLevel(home, null);
     HomeController homeController = new HomeController(home, preferences, viewFactory);
