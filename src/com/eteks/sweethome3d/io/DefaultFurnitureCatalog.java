@@ -22,8 +22,10 @@ package com.eteks.sweethome3d.io;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessControlException;
@@ -405,7 +407,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private void readPluginFurnitureCatalog(File pluginFurnitureCatalogFile,
                                           List<String> identifiedFurniture) {
     try {
-      URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
+      final URL pluginFurnitureCatalogUrl;
       long urlModificationDate = pluginFurnitureCatalogFile.lastModified();
       URL urlUpdate = pluginFurnitureCatalogUrlUpdates.get(pluginFurnitureCatalogFile);
       if (pluginFurnitureCatalogFile.canWrite()
@@ -413,20 +415,27 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
               || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
         // Copy updated resource URL content to a temporary file to ensure furniture added to home can safely 
         // reference any file of the catalog file even if its content is changed afterwards
-        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginFurnitureCatalogUrl));
+        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginFurnitureCatalogFile.toURI().toURL()));
         URL temporaryFurnitureCatalogUrl = contentCopy.getURL();
         pluginFurnitureCatalogUrlUpdates.put(pluginFurnitureCatalogFile, temporaryFurnitureCatalogUrl);
         pluginFurnitureCatalogUrl = temporaryFurnitureCatalogUrl;
       } else if (urlUpdate != null) {
         pluginFurnitureCatalogUrl = urlUpdate;
+      } else {
+        pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
       }
       
-      final URLClassLoader urlLoader = new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}) {
-          protected void finalize() throws Throwable {
-            // Close loader when the loader is garbage collected to ensure we can delete temporary files if needed
-            if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-              URLClassLoader.class.getMethod("close").invoke(this);
-            } 
+      final ClassLoader urlLoader = new ClassLoader() {
+          @Override
+          public InputStream getResourceAsStream(String name) {
+            try {
+              // Return a stream managed by URLContent to be able to delete the writable files accessed with jar protocol
+              return new URLContent(new URL("jar:" + pluginFurnitureCatalogUrl.toURI() + "!/" + name)).openStream();
+            } catch (IOException ex) {
+              return null;
+            } catch (URISyntaxException ex) {
+              return null;
+            }
           }
         };
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), urlLoader);

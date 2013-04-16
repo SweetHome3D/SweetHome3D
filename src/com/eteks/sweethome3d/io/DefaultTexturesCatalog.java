@@ -22,7 +22,9 @@ package com.eteks.sweethome3d.io;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessControlException;
@@ -227,7 +229,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private void readPluginTexturesCatalog(File pluginTexturesCatalogFile,
                                          List<String> identifiedTextures) {
     try {
-      URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
+      final URL pluginTexturesCatalogUrl;;
       long urlModificationDate = pluginTexturesCatalogFile.lastModified();
       URL urlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogFile);
       if (pluginTexturesCatalogFile.canWrite()
@@ -235,19 +237,26 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
               || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
         // Copy updated resource URL content to a temporary file to ensure textures used in home can safely 
         // reference any file of the catalog file even if its content is changed afterwards
-        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogUrl));
+        TemporaryURLContent contentCopy = TemporaryURLContent.copyToTemporaryURLContent(new URLContent(pluginTexturesCatalogFile.toURI().toURL()));
         URL temporaryTexturesCatalogUrl = contentCopy.getURL();
         pluginTexturesCatalogUrlUpdates.put(pluginTexturesCatalogFile, temporaryTexturesCatalogUrl);
         pluginTexturesCatalogUrl = temporaryTexturesCatalogUrl;
       } else if (urlUpdate != null) {
         pluginTexturesCatalogUrl = urlUpdate;
+      } else {
+        pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
       }
       
-      final URLClassLoader urlLoader = new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}) {
-          protected void finalize() throws Throwable {
-            if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-              // Close loader when the loader is garbage collected to ensure we can delete temporary files if needed
-              URLClassLoader.class.getMethod("close").invoke(this);
+      final ClassLoader urlLoader = new ClassLoader() {
+          @Override
+          public InputStream getResourceAsStream(String name) {
+            try {
+              // Return a stream managed by URLContent to be able to delete the writable files accessed with jar protocol
+              return new URLContent(new URL("jar:" + pluginTexturesCatalogUrl.toURI() + "!/" + name)).openStream();
+            } catch (IOException ex) {
+              return null;
+            } catch (URISyntaxException ex) {
+              return null;
             }
           }
         };
