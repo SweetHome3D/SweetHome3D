@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -89,6 +90,22 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author apptaro (bug fixes)
  */
 public class DAELoader extends LoaderBase implements Loader {
+  private final Boolean useCaches;
+
+  /**
+   * Creates a loader using default cache access.
+   */
+  public DAELoader() {
+    this.useCaches = null;
+  }
+  
+  /**
+   * Creates a loader that will avoid accessing to URLs with cache if <code>useCaches</code> is <code>false</code>.
+   */
+  public DAELoader(boolean useCaches) {
+    this.useCaches = Boolean.valueOf(useCaches);
+  }
+  
   /**
    * Returns the scene described in the given DAE file.
    */
@@ -116,11 +133,22 @@ public class DAELoader extends LoaderBase implements Loader {
     } 
     InputStream in;
     try {
-      in = url.openStream();
+      in = openStream(url);
     } catch (IOException ex) {
       throw new FileNotFoundException("Can't read " + url);
     }
     return load(new BufferedInputStream(in), baseUrl);
+  }
+
+  /**
+   * Returns an input stream ready to read data from the given URL.
+   */
+  private InputStream openStream(URL url) throws IOException {
+    URLConnection connection = url.openConnection();
+    if (this.useCaches != null) {
+      connection.setUseCaches(this.useCaches.booleanValue());
+    }
+    return connection.getInputStream();
   }
 
   /**
@@ -173,7 +201,7 @@ public class DAELoader extends LoaderBase implements Loader {
   /**
    * SAX handler for DAE Collada stream.
    */
-  private static class DAEHandler extends DefaultHandler {
+  private class DAEHandler extends DefaultHandler {
     private final SceneBase scene;
     private final URL       baseUrl;
     private final Stack<Group>   parentGroups = new Stack<Group>();
@@ -610,9 +638,11 @@ public class DAELoader extends LoaderBase implements Loader {
      */
     private void handleImageElementsEnd(String name) throws SAXException {
       if ("init_from".equals(name)) {
+        InputStream in = null;
         try {
-          URL textureImageUrl = new URL(baseUrl, getCharacters());
-          BufferedImage textureImage = ImageIO.read(textureImageUrl);
+          URL textureImageUrl = new URL(this.baseUrl, getCharacters());
+          in = openStream(textureImageUrl);
+          BufferedImage textureImage = ImageIO.read(in);
           if (textureImage != null) {
             TextureLoader textureLoader = new TextureLoader(textureImage);
             Texture texture = textureLoader.getTexture();
@@ -629,6 +659,14 @@ public class DAELoader extends LoaderBase implements Loader {
             // Ignore images not supported by TextureLoader
           } else {
             throw ex;
+          }
+        } finally {
+          if (in != null) {
+            try {
+              in.close();
+            } catch (IOException ex) {
+              throw new SAXException("Issue while closing stream", ex);
+            }
           }
         }
       } else if ("data".equals(name)) {

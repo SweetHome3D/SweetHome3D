@@ -33,6 +33,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -986,13 +987,14 @@ public class OBJLoader extends LoaderBase implements Loader {
   
   static {
     try {
-      DEFAULT_APPEARANCES = parseMaterialStream(new StringReader(JAVA_3D_MATERIALS), null);
+      DEFAULT_APPEARANCES = parseMaterialStream(new StringReader(JAVA_3D_MATERIALS), null, null);
     } catch (IOException ex) {
       // Can't happen because materials are read from a string
       throw new InternalError("Can't access to default materials");
     }
   }
   
+  private final Boolean           useCaches;
   private List<Point3f>           vertices;
   private List<TexCoord2f>        textureCoodinates;
   private List<Vector3f>          normals;
@@ -1000,6 +1002,21 @@ public class OBJLoader extends LoaderBase implements Loader {
   private Group                   currentGroup;
   private String                  currentMaterial;
   private Map<String, Appearance> appearances;
+  
+
+  /**
+   * Creates a loader using default cache access.
+   */
+  public OBJLoader() {
+    this.useCaches = null;
+  }
+  
+  /**
+   * Creates a loader that will avoid accessing to URLs with cache if <code>useCaches</code> is <code>false</code>.
+   */
+  public OBJLoader(boolean useCaches) {
+    this.useCaches = Boolean.valueOf(useCaches);
+  }
   
   /**
    * Returns the scene described in the given OBJ file.
@@ -1024,7 +1041,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the scene described in the given OBJ file url.
+   * Returns the scene described in the given OBJ file URL.
    */
   public Scene load(URL url) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
     URL baseUrl = this.baseUrl;
@@ -1033,7 +1050,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     } 
     InputStream in;
     try {
-      in = url.openStream();
+      in = openStream(url, this.useCaches);
     } catch (IOException ex) {
       throw new FileNotFoundException("Can't read " + url);
     }
@@ -1043,6 +1060,17 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Shouldn't happen 
       return load(new InputStreamReader(in));
     }
+  }
+  
+  /**
+   * Returns an input stream ready to read data from the given URL.
+   */
+  private static InputStream openStream(URL url, Boolean useCaches) throws IOException {
+    URLConnection connection = url.openConnection();
+    if (useCaches != null) {
+      connection.setUseCaches(useCaches.booleanValue());
+    }
+    return connection.getInputStream();
   }
 
   /**
@@ -1563,7 +1591,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     InputStream in = null;
     try {
       if (baseUrl != null) {
-        in = new URL(baseUrl, file).openStream();
+        in = openStream(new URL(baseUrl, file), this.useCaches);
       } else {
         in = new FileInputStream(file);
       }
@@ -1573,7 +1601,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     if (in != null) {
       try {        
         this.appearances.putAll(parseMaterialStream(
-            new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl));
+            new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl, this.useCaches));
         return true;
       } catch (IOException ex) {
         throw new ParsingErrorException(ex.getMessage());
@@ -1593,7 +1621,8 @@ public class OBJLoader extends LoaderBase implements Loader {
    * Parses a map of appearances parsed from the given stream. 
    */
   private static Map<String, Appearance> parseMaterialStream(Reader reader, 
-                                                             URL baseUrl) throws IOException {
+                                                             URL baseUrl, 
+                                                             Boolean useCaches) throws IOException {
     Map<String, Appearance> appearances = new HashMap<String, Appearance>();
     Appearance              currentAppearance = null;    
     StreamTokenizer tokenizer = createTokenizer(reader);
@@ -1601,7 +1630,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       switch (tokenizer.ttype) {
         case StreamTokenizer.TT_WORD :
           currentAppearance = parseMaterialLine(tokenizer, 
-              appearances, currentAppearance, baseUrl);
+              appearances, currentAppearance, baseUrl, useCaches);
           break;
         case StreamTokenizer.TT_EOL:
           break;
@@ -1619,7 +1648,8 @@ public class OBJLoader extends LoaderBase implements Loader {
   private static Appearance parseMaterialLine(StreamTokenizer tokenizer, 
                                               Map<String, Appearance> appearances,
                                               Appearance currentAppearance,
-                                              URL baseUrl) throws IOException {
+                                              URL baseUrl, 
+                                              Boolean useCaches) throws IOException {
     if ("newmtl".equals(tokenizer.sval)) {
       // Read material name newmtl name
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
@@ -1735,11 +1765,13 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       
       if (imageFileName != null) {
+        InputStream in = null;
         try {
           URL textureImageUrl = baseUrl != null
               ? new URL(baseUrl, imageFileName)
               : new File(imageFileName).toURI().toURL();
-          BufferedImage textureImage = ImageIO.read(textureImageUrl);          
+          in = openStream(textureImageUrl, useCaches);
+          BufferedImage textureImage = ImageIO.read(in);          
           if (textureImage != null) {
             TextureLoader textureLoader = new TextureLoader(textureImage);
             Texture texture = textureLoader.getTexture();
@@ -1756,6 +1788,10 @@ public class OBJLoader extends LoaderBase implements Loader {
             // Ignore images not supported by TextureLoader
           } else {
             throw ex;
+          }
+        } finally {
+          if (in != null) {
+            in.close();
           }
         }
       } else {
