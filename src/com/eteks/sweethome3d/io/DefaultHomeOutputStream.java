@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -165,15 +166,19 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         }
       } else {
         // This should be the case only when resource isn't in a JAR file during development
-        File contentFile = new File(urlContent.getURL().getFile());
-        File parentFile = new File(contentFile.getParent());
-        File [] siblingFiles = parentFile.listFiles();
-        // Write in home stream each file that is stored in the same directory  
-        for (File siblingFile : siblingFiles) {
-          if (!siblingFile.isDirectory()) {
-            writeZipEntry(zipOut, entryNameOrDirectory + "/" + siblingFile.getName(), 
-                new URLContent(siblingFile.toURI().toURL()));
+        try {
+          File contentFile = new File(urlContent.getURL().toURI());
+          File parentFile = new File(contentFile.getParent());
+          File [] siblingFiles = parentFile.listFiles();
+          // Write in home stream each file that is stored in the same directory  
+          for (File siblingFile : siblingFiles) {
+            if (!siblingFile.isDirectory()) {
+              writeZipEntry(zipOut, entryNameOrDirectory + "/" + siblingFile.getName(), 
+                  new URLContent(siblingFile.toURI().toURL()));
+            }
           }
+        } catch (URISyntaxException ex) {
+          throw new IOException(ex);
         }
       }
     } else {
@@ -327,7 +332,11 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             // If content is a resource coming from a directory (this should be the case 
             // only when resource isn't in a JAR file during development), retrieve its file name
             if (resourceUrlContent.isMultiPartResource()) {
-              subEntryName = "/" + new File(resourceUrlContent.getURL().getFile()).getName();
+              try {
+                subEntryName = "/" + new File(resourceUrlContent.getURL().toURI()).getName();
+              } catch (URISyntaxException ex) {
+                throw new IOException(ex);
+              }
             }
           }
         } 
