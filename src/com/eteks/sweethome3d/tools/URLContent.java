@@ -19,10 +19,13 @@
  */
 package com.eteks.sweethome3d.tools;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 
 import com.eteks.sweethome3d.model.Content;
 
@@ -51,7 +54,23 @@ public class URLContent implements Content {
    * @throws IOException if URL stream can't be opened. 
    */
   public InputStream openStream() throws IOException {
-    return this.url.openStream();
+    URLConnection connection = getURL().openConnection();
+    if (isJAREntry()) {
+      URL jarEntryURL = getJAREntryURL();
+      if (jarEntryURL.getProtocol().equalsIgnoreCase("file")) {
+        try {
+          if (new File(jarEntryURL.toURI()).canWrite()) {
+            // Even if cache is actually not used for JAR entries of files, refuse explicitly to use 
+            // cache to be able to delete the writable files accessed with jar protocol, as suggested in 
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+            connection.setUseCaches(false);
+          }
+        } catch (URISyntaxException ex) {
+          throw new IOException(ex);
+        }
+      }
+    }
+    return connection.getInputStream();
   }
   
   /**
