@@ -397,7 +397,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     return Collections.unmodifiableList(this.libraries);
   }
 
-  private static final Map<File,URL> pluginFurnitureCatalogUrlUpdates = new HashMap<File,URL>(); 
+  private static final Map<File,URL> pluginFurnitureCatalogUrlUpdates = new HashMap<File, URL>(); 
   
   /**
    * Reads plug-in furniture catalog from the <code>pluginFurnitureCatalogFile</code> file. 
@@ -407,7 +407,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     try {
       URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
       long urlModificationDate = pluginFurnitureCatalogFile.lastModified();
-      URL urlUpdate = pluginFurnitureCatalogUrlUpdates.get(pluginFurnitureCatalogUrl.toString());
+      URL urlUpdate = pluginFurnitureCatalogUrlUpdates.get(pluginFurnitureCatalogFile);
       if (pluginFurnitureCatalogFile.canWrite()
           && (urlUpdate == null 
               || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
@@ -421,8 +421,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         pluginFurnitureCatalogUrl = urlUpdate;
       }
       
-      ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-          new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+      final URLClassLoader urlLoader = new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}) {
+          protected void finalize() throws Throwable {
+            // Close loader when the loader is garbage collected to ensure we can delete temporary files if needed
+            if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+              URLClassLoader.class.getMethod("close").invoke(this);
+            } 
+          }
+        };
+      ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), urlLoader);
       this.libraries.add(0, new DefaultLibrary(pluginFurnitureCatalogFile.getCanonicalPath(), 
           UserPreferences.FURNITURE_LIBRARY_TYPE, resourceBundle));
       readFurniture(resourceBundle, pluginFurnitureCatalogUrl, null, identifiedFurniture);

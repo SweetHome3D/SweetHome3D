@@ -230,8 +230,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
       long urlModificationDate = pluginTexturesCatalogFile.lastModified();
       URL urlUpdate = pluginTexturesCatalogUrlUpdates.get(pluginTexturesCatalogFile);
-      boolean modifiableUrl = pluginTexturesCatalogFile.canWrite();
-      if (modifiableUrl
+      if (pluginTexturesCatalogFile.canWrite()
           && (urlUpdate == null 
               || urlUpdate.openConnection().getLastModified() < urlModificationDate)) {
         // Copy updated resource URL content to a temporary file to ensure textures used in home can safely 
@@ -244,8 +243,15 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         pluginTexturesCatalogUrl = urlUpdate;
       }
       
-      ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
-          new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));      
+      final URLClassLoader urlLoader = new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}) {
+          protected void finalize() throws Throwable {
+            if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+              // Close loader when the loader is garbage collected to ensure we can delete temporary files if needed
+              URLClassLoader.class.getMethod("close").invoke(this);
+            }
+          }
+        };
+      ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), urlLoader);      
       this.libraries.add(0, new DefaultLibrary(pluginTexturesCatalogFile.getCanonicalPath(), 
           UserPreferences.TEXTURES_LIBRARY_TYPE, resourceBundle));
       readTextures(resourceBundle, pluginTexturesCatalogUrl, null, identifiedTextures);
