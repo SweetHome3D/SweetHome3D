@@ -26,6 +26,7 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,10 @@ import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -657,8 +661,9 @@ public class ModelManager {
       }
     };
 
-    Loader []  defaultLoaders = new Loader [] {new OBJLoader(),
-                                               new DAELoader(),
+    boolean useCaches = shouldUseCaches(urlContent);
+    Loader []  defaultLoaders = new Loader [] {new OBJLoader(useCaches),
+                                               new DAELoader(useCaches),
                                                loader3DSWithNoStackTraces,
                                                new Lw3dLoader()};
     Loader [] loaders = new Loader [defaultLoaders.length + this.additionalLoaderClasses.length];
@@ -732,6 +737,29 @@ public class ModelManager {
       throw otherException;
     } 
   }  
+  
+  /**
+   * Returns <code>true</code> if reading from the given content should be done using caches.
+   */
+  private boolean shouldUseCaches(URLContent urlContent) throws IOException {
+    URLConnection connection = urlContent.getURL().openConnection();
+    if (connection instanceof JarURLConnection) {
+      JarURLConnection urlConnection = (JarURLConnection)connection;
+      URL jarFileUrl = urlConnection.getJarFileURL();
+      if (jarFileUrl.getProtocol().equalsIgnoreCase("file")) {
+        try {
+          if (new File(jarFileUrl.toURI()).canWrite()) {
+            // Refuse to use cache to be able to delete the writable files accessed with jar protocol, as suggested in 
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+            return false;
+          }
+        } catch (URISyntaxException ex) {
+          throw new IOException(ex);
+        }
+      }
+    }
+    return connection.getDefaultUseCaches();
+  }
   
   /**
    * Updates the name of scene shapes and transparency window panes shapes.
