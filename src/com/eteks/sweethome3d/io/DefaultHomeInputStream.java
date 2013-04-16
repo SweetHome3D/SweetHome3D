@@ -142,7 +142,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         if (url.startsWith("jar:file:temp!/")) {
           // Replace "temp" in URL by current temporary file
           String entryName = url.substring(url.indexOf('!') + 2);
-          URL fileURL = new URL("jar:file:" + tempFile.toString() + "!/" + entryName);
+          URL fileURL = new URL("jar:" + tempFile.toURI() + "!/" + entryName);
           HomeURLContent urlContent = new HomeURLContent(fileURL);
           try {
             // Check entry exists
