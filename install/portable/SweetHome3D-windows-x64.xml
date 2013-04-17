@@ -50,12 +50,12 @@
     <opt>-Djava.library.path=lib/ext/windows/x64 -Xmx1024m -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</opt>
   </jre>
   <versionInfo>
-    <fileVersion>4.0.0.0</fileVersion>
-    <txtFileVersion>4.0</txtFileVersion>
+    <fileVersion>4.1.0.0</fileVersion>
+    <txtFileVersion>4.1</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2013 eTeks</copyright>
-    <productVersion>4.0.0.0</productVersion>
-    <txtProductVersion>4.0</txtProductVersion>
+    <productVersion>4.1.0.0</productVersion>
+    <txtProductVersion>4.1</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
