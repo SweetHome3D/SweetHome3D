@@ -1,11 +1,11 @@
-The following additional provisions apply to sunflow-0.07.3g.jar third party software
+The following additional provisions apply to sunflow-0.07.3h.jar third party software
 included as part of this product.
 
 SunFlow library is used for global illumination rendering.
 
 SunFlow library is available at:
 http://sourceforge.net/projects/sunflow/ 
-To build sunflow-0.07.3g.jar file, download the source code of its unreleased 0.07.3 version with the following SVN command:
+To build sunflow-0.07.3h.jar file, download the source code of its unreleased 0.07.3 version with the following SVN command:
 svn co -r 396 https://sunflow.svn.sourceforge.net/svnroot/sunflow/trunk sunflow
 and use sunflow-0.07.3g-src-diff.zip included in Sweet Home 3D project for source differences and instructions
 
