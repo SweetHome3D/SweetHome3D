@@ -41,11 +41,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -55,7 +52,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultComboBoxModel;
@@ -70,13 +66,13 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JToolTip;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.LayoutFocusTraversalPolicy;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.AncestorEvent;
@@ -103,7 +99,6 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
-import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -111,7 +106,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * A furniture catalog view that displays furniture in a list, with a combo and search text field.
  * @author Emmanuel Puybaret
  */
-public class FurnitureCatalogListPanel extends JPanel implements View {
+class FurnitureCatalogListPanel extends JPanel implements View {
   private ListSelectionListener listSelectionListener;
   private JLabel                categoryFilterLabel;
   private JComboBox             categoryFilterComboBox;
@@ -140,46 +135,21 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
                                 final FurnitureCatalogController controller) {
     final CatalogListModel catalogListModel = new CatalogListModel(catalog);
     this.catalogFurnitureList = new JList(catalogListModel) {
+        private FurnitureToolTip toolTip = new FurnitureToolTip(false, preferences);
+        
+        @Override
+        public JToolTip createToolTip() {
+          this.toolTip.setComponent(this);
+          return this.toolTip;
+        }
+      
         @Override
         public String getToolTipText(MouseEvent ev) {
           // Return a tooltip for furniture pieces described in the list.
           int index = locationToIndex(ev.getPoint());
           if (index != -1) {
-            CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)getModel().getElementAt(index);
-            String tooltip = "<html><table><tr><td align='center'>- <b>" + piece.getCategory().getName() + "</b> -" 
-                + "<br><b>" + piece.getName() + "</b>";
-            String creator = piece.getCreator();
-            if (creator != null) {
-              tooltip += "<br>" + preferences.getLocalizedString(FurnitureCatalogTree.class, 
-                  "tooltipCreator", creator + "</td></tr>");
-            }
-            if (piece.getIcon() instanceof URLContent) {
-              InputStream iconStream = null;
-              try {
-                // Ensure image will always be viewed in a 128x128 pixels cell
-                iconStream = piece.getIcon().openStream();
-                BufferedImage image = ImageIO.read(iconStream);
-                if (image == null) {
-                  return null;
-                }
-                int width = Math.round(128f * Math.min(1, image.getWidth() / image.getHeight()));
-                int height = Math.round((float)width * image.getHeight() / image.getWidth());
-                tooltip += "<tr><td width='128' height='128' align='center' valign='middle'><img width='" + width 
-                    + "' height='" + height + "' src='" 
-                    + ((URLContent)piece.getIcon()).getURL() + "'></td></tr>";
-              } catch (IOException ex) {
-                return null;
-              } finally {
-                if (iconStream != null) {
-                  try {
-                    iconStream.close();
-                  } catch (IOException ex) {
-                    return null;
-                  }
-                }
-              }
-            }
-            return tooltip + "</table>";
+            this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)getModel().getElementAt(index));
+            return this.toolTip.getToolTipText();
           } else {
             return null;
           }
@@ -205,7 +175,6 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           spreadFurnitureIconsAlongListWidth();
         }
       });
-    ToolTipManager.sharedInstance().registerComponent(this.catalogFurnitureList);
     this.catalogFurnitureList.addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
           spreadFurnitureIconsAlongListWidth();

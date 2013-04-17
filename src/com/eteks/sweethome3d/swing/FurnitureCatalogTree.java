@@ -32,9 +32,6 @@ import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,10 +39,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
+import javax.swing.JToolTip;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -72,7 +69,6 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -83,6 +79,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class FurnitureCatalogTree extends JTree implements View {
   private final UserPreferences preferences;
   private TreeSelectionListener treeSelectionListener;
+  private FurnitureToolTip      toolTip;
 
   /**
    * Creates a tree that displays <code>catalog</code> content.
@@ -108,6 +105,7 @@ public class FurnitureCatalogTree extends JTree implements View {
                               UserPreferences preferences, 
                               FurnitureCatalogController controller) {
     this.preferences = preferences;
+    this.toolTip = new FurnitureToolTip(true, preferences);
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -248,6 +246,15 @@ public class FurnitureCatalogTree extends JTree implements View {
   }
 
   /**
+   * Returns the tool tip displayed by this tree.
+   */
+  @Override
+  public JToolTip createToolTip() {    
+    this.toolTip.setComponent(this);
+    return this.toolTip;
+  }
+
+  /**
    * Returns a tooltip for furniture pieces described in this tree.
    */
   @Override
@@ -256,40 +263,8 @@ public class FurnitureCatalogTree extends JTree implements View {
     if (this.preferences != null
         && path != null
         && path.getPathCount() == 3) {
-      CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
-      String tooltip = "<html><table><tr><td align='center'><b>" + piece.getName() + "</b>";
-      String creator = piece.getCreator();
-      if (creator != null) {
-        tooltip += "<br>" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
-            "tooltipCreator", creator + "</td></tr>");
-      }
-      if (piece.getIcon() instanceof URLContent) {
-        InputStream iconStream = null;
-        try {
-          // Ensure image will always be viewed in a 128x128 pixels cell
-          iconStream = piece.getIcon().openStream();
-          BufferedImage image = ImageIO.read(iconStream);
-          if (image == null) {
-            return null;
-          }
-          int width = Math.round(128f * Math.min(1, image.getWidth() / image.getHeight()));
-          int height = Math.round((float)width * image.getHeight() / image.getWidth());
-          tooltip += "<tr><td width='128' height='128' align='center' valign='middle'><img width='" + width 
-              + "' height='" + height + "' src='" 
-              + ((URLContent)piece.getIcon()).getURL() + "'></td></tr>";
-        } catch (IOException ex) {
-          return null;
-        } finally {
-          if (iconStream != null) {
-            try {
-              iconStream.close();
-            } catch (IOException ex) {
-              return null;
-            }
-          }
-        }
-      }
-      return tooltip + "</table>";
+      this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)path.getLastPathComponent());
+      return this.toolTip.getToolTipText();
     } else {
       return null;
     }
