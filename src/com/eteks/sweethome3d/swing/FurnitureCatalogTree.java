@@ -34,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -263,9 +264,11 @@ public class FurnitureCatalogTree extends JTree implements View {
             "tooltipCreator", creator + "</td></tr>");
       }
       if (piece.getIcon() instanceof URLContent) {
+        InputStream iconStream = null;
         try {
           // Ensure image will always be viewed in a 128x128 pixels cell
-          BufferedImage image = ImageIO.read(((URLContent)piece.getIcon()).getURL());
+          iconStream = piece.getIcon().openStream();
+          BufferedImage image = ImageIO.read(iconStream);
           if (image == null) {
             return null;
           }
@@ -276,6 +279,14 @@ public class FurnitureCatalogTree extends JTree implements View {
               + ((URLContent)piece.getIcon()).getURL() + "'></td></tr>";
         } catch (IOException ex) {
           return null;
+        } finally {
+          if (iconStream != null) {
+            try {
+              iconStream.close();
+            } catch (IOException ex) {
+              return null;
+            }
+          }
         }
       }
       return tooltip + "</table>";
