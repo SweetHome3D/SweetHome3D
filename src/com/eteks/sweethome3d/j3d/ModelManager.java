@@ -100,6 +100,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.microcrowd.loader.java3d.max3ds.Loader3DS;
@@ -780,14 +781,15 @@ public class ModelManager {
    */
   private boolean shouldUseCaches(URLContent urlContent) throws IOException {
     URLConnection connection = urlContent.getURL().openConnection();
-    if (connection instanceof JarURLConnection) {
+    if (OperatingSystem.isWindows() 
+        && (connection instanceof JarURLConnection)) {
       JarURLConnection urlConnection = (JarURLConnection)connection;
       URL jarFileUrl = urlConnection.getJarFileURL();
       if (jarFileUrl.getProtocol().equalsIgnoreCase("file")) {
         try {
           if (new File(jarFileUrl.toURI()).canWrite()) {
-            // Refuse to use cache to be able to delete the writable files accessed with jar protocol, as suggested in 
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+            // Refuse to use caches to be able to delete the writable files accessed with jar protocol under Windows, 
+            // as suggested in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
             return false;
           }
         } catch (URISyntaxException ex) {

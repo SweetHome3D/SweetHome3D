@@ -55,14 +55,14 @@ public class URLContent implements Content {
    */
   public InputStream openStream() throws IOException {
     URLConnection connection = getURL().openConnection();
-    if (isJAREntry()) {
+    if (OperatingSystem.isWindows() && isJAREntry()) {
       URL jarEntryURL = getJAREntryURL();
       if (jarEntryURL.getProtocol().equalsIgnoreCase("file")) {
         try {
           if (new File(jarEntryURL.toURI()).canWrite()) {
             // Even if cache is actually not used for JAR entries of files, refuse explicitly to use 
-            // cache to be able to delete the writable files accessed with jar protocol, as suggested in 
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+            // caches to be able to delete the writable files accessed with jar protocol under Windows, 
+            // as suggested in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
             connection.setUseCaches(false);
           }
         } catch (URISyntaxException ex) {
