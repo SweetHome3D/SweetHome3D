@@ -302,10 +302,8 @@ public class OperatingSystem {
           });
         
         // Create temporary folder  
-        if (!sessionTemporaryFolder.mkdirs()) {
+        if (!createTemporaryFolders(sessionTemporaryFolder)) {
           throw new IOException("Can't create temporary folder " + sessionTemporaryFolder);
-        } else {
-          sessionTemporaryFolder.deleteOnExit();
         }
         
         // Launch a timer that updates modification date of the temporary folder each minute
@@ -345,6 +343,35 @@ public class OperatingSystem {
       return sessionTemporaryFolder;
     } else {
       return null;
+    }
+  }
+  
+  /**
+   * Creates the temporary folders in parameters and returns <code>true</code> if it was successful.
+   */
+  private static boolean createTemporaryFolders(File temporaryFolder) {
+    // Inspired from java.io.File#mkdirs
+    if (temporaryFolder.exists()) {
+      return false;
+    }
+    if (temporaryFolder.mkdir()) {
+      temporaryFolder.deleteOnExit();
+      return true;
+    }
+    File canonicalFile = null;
+    try {
+      canonicalFile = temporaryFolder.getCanonicalFile();
+    } catch (IOException e) {
+      return false;
+    }
+    File parent = canonicalFile.getParentFile();
+    if (parent != null 
+        && (createTemporaryFolders(parent) || parent.exists()) 
+        && canonicalFile.mkdir()) {
+      temporaryFolder.deleteOnExit();
+      return true;
+    } else {
+      return false;
     }
   }
   
