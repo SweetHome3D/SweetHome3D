@@ -682,11 +682,15 @@ public class ModelManager {
     Exception lastException = null;
     Boolean useCaches = shouldUseCaches(urlContent);
     for (Loader loader : loaders) {
+      boolean loadSynchronously = false;
       try {
         // Call setUseCaches(Boolean) by reflection
         loader.getClass().getMethod("setUseCaches", Boolean.class).invoke(loader, useCaches);
       } catch (NoSuchMethodException ex) {
-        // Ignore the call if the method doesn't exist
+        // If the method setUseCaches doesn't exist, set default cache use if different 
+        // from the required one and load models synchronously
+        URLConnection connection = urlContent.getURL().openConnection();
+        loadSynchronously = connection.getDefaultUseCaches() != useCaches;        
       } catch (InvocationTargetException ex) {
         if (ex instanceof Exception) {
           lastException = (Exception)ex.getTargetException();
@@ -704,7 +708,24 @@ public class ModelManager {
             & ~(Loader.LOAD_LIGHT_NODES | Loader.LOAD_FOG_NODES 
                 | Loader.LOAD_BACKGROUND_NODES | Loader.LOAD_VIEW_GROUPS));
         // Return the first scene that can be loaded from model URL content
-        Scene scene = loader.load(urlContent.getURL());
+        Scene scene;
+        if (loadSynchronously) {
+          synchronized (this.modelsLoader) {
+            URLConnection connection = urlContent.getURL().openConnection();
+            try {
+              connection.setDefaultUseCaches(useCaches);
+              scene = loader.load(urlContent.getURL());
+            } finally {
+              if (connection.getDefaultUseCaches() == useCaches) {
+                // Restore the default global value only when it didn't change yet,
+                // in case an other thread not synchronized on the same lock changed it
+                connection.setDefaultUseCaches(!useCaches);
+              }
+            }
+          }
+        } else {
+          scene = loader.load(urlContent.getURL());
+        }
 
         BranchGroup modelNode = scene.getSceneGroup();
         // If model doesn't have any child, consider the file as wrong
