@@ -1154,7 +1154,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           try {
             // Copy model content to a temporary content
             modelContent = TemporaryURLContent.copyToTemporaryURLContent(modelContent);
-          } catch (IOException ex2) {
+          } catch (IOException ex) {
             setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
             return;
           }
@@ -1227,12 +1227,16 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
           
           // Found no readable model
-          if (isShowing()) {
-            setDefaultState();
-            setModelChoiceTexts(preferences);
-            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-                preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
-          }
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                if (isShowing()) {
+                  setDefaultState();
+                  setModelChoiceTexts(preferences);
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
+                }
+              }
+            });
         }
       });
   }
