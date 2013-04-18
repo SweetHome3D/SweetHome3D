@@ -661,9 +661,8 @@ public class ModelManager {
       }
     };
 
-    boolean useCaches = shouldUseCaches(urlContent);
-    Loader []  defaultLoaders = new Loader [] {new OBJLoader(useCaches),
-                                               new DAELoader(useCaches),
+    Loader []  defaultLoaders = new Loader [] {new OBJLoader(),
+                                               new DAELoader(),
                                                loader3DSWithNoStackTraces,
                                                new Lw3dLoader()};
     Loader [] loaders = new Loader [defaultLoaders.length + this.additionalLoaderClasses.length];
@@ -681,7 +680,24 @@ public class ModelManager {
     }
     
     Exception lastException = null;
+    Boolean useCaches = shouldUseCaches(urlContent);
     for (Loader loader : loaders) {
+      try {
+        // Call setUseCaches(Boolean) by reflection
+        loader.getClass().getMethod("setUseCaches", Boolean.class).invoke(loader, useCaches);
+      } catch (NoSuchMethodException ex) {
+        // Ignore the call if the method doesn't exist
+      } catch (InvocationTargetException ex) {
+        if (ex instanceof Exception) {
+          lastException = (Exception)ex.getTargetException();
+          continue;
+        } else {
+          ex.printStackTrace();
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      
       try {     
         // Ask loader to ignore lights, fogs...
         loader.setFlags(loader.getFlags() 

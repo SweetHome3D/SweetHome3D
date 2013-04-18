@@ -90,19 +90,15 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author apptaro (bug fixes)
  */
 public class DAELoader extends LoaderBase implements Loader {
-  private final Boolean useCaches;
+  private Boolean useCaches;
 
   /**
-   * Creates a loader using default cache access.
+   * Sets whether this loader should try or avoid accessing to URLs with cache.
+   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or 
+   *    <code>null</code> then caches will be used according to the value 
+   *    returned by {@link URLConnection#getDefaultUseCaches()}.
    */
-  public DAELoader() {
-    this.useCaches = null;
-  }
-  
-  /**
-   * Creates a loader that will avoid accessing to URLs with cache if <code>useCaches</code> is <code>false</code>.
-   */
-  public DAELoader(boolean useCaches) {
+  public void setUseCaches(Boolean useCaches) {
     this.useCaches = Boolean.valueOf(useCaches);
   }
   

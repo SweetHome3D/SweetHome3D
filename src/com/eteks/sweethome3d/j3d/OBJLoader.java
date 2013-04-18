@@ -994,7 +994,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     }
   }
   
-  private final Boolean           useCaches;
+  private Boolean                 useCaches;
   private List<Point3f>           vertices;
   private List<TexCoord2f>        textureCoodinates;
   private List<Vector3f>          normals;
@@ -1005,16 +1005,12 @@ public class OBJLoader extends LoaderBase implements Loader {
   
 
   /**
-   * Creates a loader using default cache access.
+   * Sets whether this loader should try or avoid accessing to URLs with cache.
+   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or 
+   *    <code>null</code> then caches will be used according to the value 
+   *    returned by {@link URLConnection#getDefaultUseCaches()}.
    */
-  public OBJLoader() {
-    this.useCaches = null;
-  }
-  
-  /**
-   * Creates a loader that will avoid accessing to URLs with cache if <code>useCaches</code> is <code>false</code>.
-   */
-  public OBJLoader(boolean useCaches) {
+  public void setUseCaches(Boolean useCaches) {
     this.useCaches = Boolean.valueOf(useCaches);
   }
   
