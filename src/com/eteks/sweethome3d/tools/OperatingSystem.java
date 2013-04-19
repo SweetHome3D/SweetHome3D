@@ -116,6 +116,16 @@ public class OperatingSystem {
   }
   
   /**
+   * Returns <code>true</code> if current operating is Mac OS X 10.7 
+   * or superior.
+   */
+  public static boolean isMacOSXLionOrSuperior() {
+    System.out.println(System.getProperty("os.version"));
+    return isMacOSX()
+        && compareVersions(System.getProperty("os.version"), "10.7") >= 0;
+  }
+  
+  /**
    * Returns <code>true</code> if the given version is greater than or equal to the version 
    * of the current JVM. 
    * @since 4.0
@@ -166,10 +176,10 @@ public class OperatingSystem {
     for ( ; i < version1Parts.size() || i < version2Parts.size(); i++) {
       Object version1Part = i < version1Parts.size() 
           ? convertPreReleaseVersion(version1Parts.get(i))
-          : 0; // Missing part is considered as 0
+          : BigInteger.ZERO; // Missing part is considered as 0
       Object version2Part = i < version2Parts.size() 
           ? convertPreReleaseVersion(version2Parts.get(i))
-          : 0;
+          : BigInteger.ZERO;
       if (version1Part.getClass() == version2Part.getClass()) {
         @SuppressWarnings({"unchecked", "rawtypes"})
         int comparison = ((Comparable)version1Part).compareTo(version2Part);
@@ -222,11 +232,11 @@ public class OperatingSystem {
     if (versionPart instanceof String) {
       String versionPartString = (String)versionPart;
       if ("alpha".equalsIgnoreCase(versionPartString)) {
-        return -3;
+        return new BigInteger("-3");
       } else if ("beta".equalsIgnoreCase(versionPartString)) {
-        return -2;
+        return new BigInteger("-2");
       } else if ("rc".equalsIgnoreCase(versionPartString)) {
-        return -1;
+        return new BigInteger("-1");
       }
     }
     return versionPart;
