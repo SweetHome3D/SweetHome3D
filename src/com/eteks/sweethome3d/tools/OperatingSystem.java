@@ -119,7 +119,6 @@ public class OperatingSystem {
    * @since 4.1
    */
   public static boolean isMacOSXLionOrSuperior() {
-    System.out.println(System.getProperty("os.version"));
     return isMacOSX()
         && compareVersions(System.getProperty("os.version"), "10.7") >= 0;
   }
