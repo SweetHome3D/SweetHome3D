@@ -26,6 +26,7 @@ import java.awt.EventQueue;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -358,6 +359,18 @@ public class HomeFramePane extends JRootPane implements View {
             // Update the home icon in window title bar for home files
             putClientProperty("Window.documentFile", homeFile);
           }
+        }
+      }
+
+      if (!frame.isVisible() 
+          && OperatingSystem.isMacOSXLionOrSuperior()) {
+        try {
+          // Call Mac OS X specific FullScreenUtilities.setWindowCanFullScreen(homeFrame, true) by reflection 
+          Class.forName("com.apple.eawt.FullScreenUtilities").
+              getMethod("setWindowCanFullScreen", new Class<?> [] {Window.class, boolean.class}).
+              invoke(null, frame, true);
+        } catch (Exception ex) {
+          // Full screen mode is not supported
         }
       }
     } else {
