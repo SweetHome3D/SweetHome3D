@@ -105,8 +105,7 @@ public class OperatingSystem {
   }
 
   /**
-   * Returns <code>true</code> if current operating is Mac OS X 10.5 
-   * or superior.
+   * Returns <code>true</code> if current operating is Mac OS X 10.5 or superior.
    */
   public static boolean isMacOSXLeopardOrSuperior() {
     // Just need to test is OS version is different of 10.4 because Sweet Home 3D
@@ -116,8 +115,8 @@ public class OperatingSystem {
   }
   
   /**
-   * Returns <code>true</code> if current operating is Mac OS X 10.7 
-   * or superior.
+   * Returns <code>true</code> if current operating is Mac OS X 10.7 or superior.
+   * @since 4.1
    */
   public static boolean isMacOSXLionOrSuperior() {
     System.out.println(System.getProperty("os.version"));
