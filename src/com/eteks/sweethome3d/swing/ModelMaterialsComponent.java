@@ -89,7 +89,11 @@ public class ModelMaterialsComponent extends JButton implements View {
    */
   public ModelMaterialsComponent(final UserPreferences preferences,
                                  final ModelMaterialsController controller) {
-    setText(preferences.getLocalizedString(ModelMaterialsComponent.class, "modifyButton.text"));
+    setText(SwingTools.getLocalizedLabelText(preferences, ModelMaterialsComponent.class, "modifyButton.text"));
+    if (!OperatingSystem.isMacOSX()) {
+      setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ModelMaterialsComponent.class, "modifyButton.mnemonic")).getKeyCode());
+    }
     // Add a listener to update materials
     addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
