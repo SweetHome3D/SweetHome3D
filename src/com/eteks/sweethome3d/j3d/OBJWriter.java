@@ -35,10 +35,12 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -460,13 +462,14 @@ public class OBJWriter extends FilterWriter {
       int [] vertexIndexSubstitutes = new int [geometryArray.getVertexCount()];
       
       boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
-      Map<Vector3f, Integer> previousNormalIndices = null;
       StringBuilder normalsBuffer;
+      List<Vector3f> addedNormals;
       if (normalsDefined) {
         normalsBuffer = new StringBuilder(geometryArray.getVertexCount() * 3 * 10);
-        previousNormalIndices = new HashMap<Vector3f, Integer>(this.normalIndices);
+        addedNormals = new ArrayList<Vector3f>();
       } else {
         normalsBuffer = null;
+        addedNormals = null;
       }
       int [] normalIndexSubstitutes = new int [geometryArray.getVertexCount()];
       int [] oppositeSideNormalIndexSubstitutes;
@@ -531,8 +534,8 @@ public class OBJWriter extends FilterWriter {
             for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                  normalsDefined && index < n; index++, i += vertexSize) {
               Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, 
-                  normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
+              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
             }
           }
         } else {
@@ -564,8 +567,8 @@ public class OBJWriter extends FilterWriter {
             float [] normalCoordinates = geometryArray.getNormalRefFloat();
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); normalsDefined && index < n; index++, i += 3) {
               Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, 
-                  normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
+              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
             }
           }
         }
@@ -600,8 +603,8 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, n = geometryArray.getVertexCount(); normalsDefined && index < n; index++) {
             Vector3f normal = new Vector3f();
             geometryArray.getNormal(index, normal);
-            normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, 
-                normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
+            normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+                oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
           }
         }
       }
@@ -609,8 +612,11 @@ public class OBJWriter extends FilterWriter {
       if (normalsDefined) {
         // Write normals only if they all contain valid values 
         out.write(normalsBuffer.toString());
-      } else if (previousNormalIndices != null) {
-        this.normalIndices = previousNormalIndices;
+      } else if (addedNormals != null) {
+        // Remove ignored normals
+        for (Vector3f normal : addedNormals) {
+          this.normalIndices.remove(normal);
+        }
       }
 
       checkCurrentThreadIsntInterrupted();
@@ -794,13 +800,13 @@ public class OBJWriter extends FilterWriter {
    * its values in a line vn at OBJ format, if the normal wasn't written yet.  
    * @return <code>true</code> if the written normal doens't contain any NaN value 
    */
-  private boolean writeNormal(StringBuilder normalsBuffer,
-                              Transform3D transformationToParent, Vector3f normal,
-                              int index,
-                              int [] normalIndexSubstitutes, 
+  private boolean writeNormal(StringBuilder normalsBuffer, 
+                              Transform3D transformationToParent, 
+                              Vector3f normal, int index,
+                              int [] normalIndexSubstitutes,
                               int [] oppositeSideNormalIndexSubstitutes, 
-                              int cullFace, 
-                              boolean backFaceNormalFlip) throws IOException {
+                              List<Vector3f> addedNormals, 
+                              int cullFace, boolean backFaceNormalFlip) throws IOException {
     if (Float.isNaN(normal.x) || Float.isNaN(normal.y) || Float.isNaN(normal.z)) {
       return false;
     }
@@ -815,6 +821,7 @@ public class OBJWriter extends FilterWriter {
     if (normalIndex == null) {
       normalIndexSubstitutes [index] = this.normalIndices.size() + 1;
       this.normalIndices.put(normal, normalIndexSubstitutes [index]);
+      addedNormals.add(normal);
       // Write only once unique normals
       normalsBuffer.append("vn " + format(normal.x) 
           + " " + format(normal.y) 
@@ -827,8 +834,8 @@ public class OBJWriter extends FilterWriter {
       Vector3f oppositeNormal = new Vector3f(); 
       oppositeNormal.negate(normal);
       // Fill opposite side normal index substitutes array
-      return writeNormal(normalsBuffer, transformationToParent, oppositeNormal, index, 
-          oppositeSideNormalIndexSubstitutes, null, PolygonAttributes.CULL_FRONT, false);
+      return writeNormal(normalsBuffer, transformationToParent, oppositeNormal, index, oppositeSideNormalIndexSubstitutes, 
+          null, addedNormals, PolygonAttributes.CULL_FRONT, false);
     } else {
       return true;
     }
