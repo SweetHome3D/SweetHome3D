@@ -34,12 +34,17 @@
           El botón al lado de la lista desplegable del Idioma, también te permite importar algunos archivos de idiomas de la biblioteca con una extensión SH3L.        </p>
         <p>Los botones <i>Carpetas por categorias</i> y <i>Lista de búsqueda</i> 
           botones te permiten elegir como se mostrara el catalogo de muebles en 
-          cada ventana de <a href="ui.html">Sweet Home 3D</a>.<br>
-		  La casilla de 
+          cada ventana de <a href="ui.html">Sweet Home 3D</a>.</p>
+		<p>La casilla de 
           verificacion <i>Flechas de navegacion en 3D</i> mostrara las flechas 
-          que te ayudaran a <i><a href="editing3DView.html">navegar en 
-          la vista 3D</a>.</i><br>
-          La casilla <i>Magnetismo</i> activa o desactiva el magnetismo usado 
+          que te ayudaran a <a href="editing3DView.html">navegar en 
+          la vista 3D</a>.<br>
+          Cuando está activada, la opción <i>Vista Aérea Centrada en la Selección</i>  
+          centrará la vista aérea 3D sobre los elementos seleccionados en el plano 2D. 
+          Si no hay ningún elemento seleccionado o si esta opción está deshabilitada, 
+          la vista aérea estará centrada en el medio de la casa, que puede variar de 
+          acuerdo con los elementos que contenga.</p>         
+        <p>La casilla <i>Magnetismo</i> activa o desactiva el magnetismo usado 
           en el plano mientras <a href="drawingWalls.html">dibujas las paredes</a> 
           y <a href="editingFurniture.html">colocas el mobiliario</a>.<br>
           La casilla <i>Reglas</i> permite mostrar u ocultar las reglas del plano.<br>
@@ -52,14 +57,19 @@
           que elegiste para el suelo, o con un color gris (impreso como blanco). 
           <br>
           La lista desplegable <i>Modelo de pared en el plano</i> te permite elegir 
-          el relleno usado en las paredes en el plano.</p>
-        <p> El valor <i>Nuevo grosor de las paredes</i> establece el grosor de 
+          el relleno usado en las paredes en el plano.<br>
+          El valor <i>Nuevo grosor de las paredes</i> establece el grosor de 
           todas las paredes que seran creadas una vez que el panel de preferencias 
           se cierre.<br>
           El valor <i>Nueva anchura de las paredes</i> establece la anchura de 
           todas las paredes que sean creadas una vez que el panel de preferencias 
           se cierre.<br>
           El <i>Nuevo espesor de los suelos</i> establece el grosor de los suelos de los nuevos niveles. </p>
+          <p>Cuando selecciona la opción <i>Comprobar actualizaciones al inicio del programa</i> comprobará 
+          si existen actualizaciones de Sweet Home 3D cada vez que se lance el programa, y lo mostrará en un cuadro de diálogo.  
+          Esta opción comprueba también la disponibilidad de algunas actualizaciones para las bibliotecas de mobiliario 
+          (Archivos SH3F), bibliotecas de texturas (Archivos SH3T), bibliotecas de idioma (Archivos SH3L) y complementos 
+          (Archivos SH3P) que tienes instalados, dependiendo de cómo estén configuradas.</p>        
 	<p>El valor de la casilla Guardar trabajo automaticamente cada..., establece
 	  el tiempo que transcurrira entre dos operaciones de guardado, de las casas
 	  abiertas, en minutos. Las casas son automaticamente almacenadas en ficheros
@@ -78,7 +88,7 @@
             <td><img src="../images/coloredRendering.png" width="332" height="296"></td>
           </tr>
           <tr> 
-            <td valign="top" align="center">Plano por defecto renderizado con 
+            <td valign="top" align="center">Plano renderizado con 
               catalogo de iconos, <br>
               suelos monocromos y relleno de paredes rallado a 45 grados</td>
             <td valign="top" align="center">Plano renderizado con vista superior,<br>
@@ -123,8 +133,9 @@
             </tr>
             <tr valign="top"> 
               <td width="16"><p>•</p></td>
-              <td><p>El Magnetismo establecido en el panel preferencias puede 
-                  ser deshabilitado temporalmente, presionando la tecla  <i>Alt</i> en Windows, la tecla <i>cmd</i> en Mac OS X o las teclas <i>Shift</i> +<i> Alt</i> en Linux.</p></td>
+              <td><p>El Magnetismo establecido en el panel de preferencias se puede cambiar 
+                  temporalmente en el plano de la casa, pulsando la tecla <i>Alt</i> bajo Windows, 
+                  la tecla <i>cmd</i> en Mac OS X o las teclas <i>Shift</i>+<i>Alt</i> en Linux.</p></td>
             </tr>
             <tr valign="top"> 
               <td width="16"><p>•</p></td>
@@ -132,7 +143,14 @@
                   su grosor y altura independientemente de los valores establecidos 
                   en el panel de preferencias.</p></td>
             </tr>
-          </tbody></table></td>
+			<tr valign="top">
+				<td width="16"><p>•</p></td>
+				<td><p>La información de las actualizaciones solo es accesible si el equipo tiene acceso a Internet. En caso de duda, haz clic en
+						el botón <i>Comprobar ahora</i> para mostrar las actualizaciones disponibles o un mensaje que indicará que no hay ninguna actualización
+						disponible, o un mensaje de error que indica que las actualizaciones no se pudieron comprobar.
+				</p></td>
+			</tr>
+		</tbody></table></td>
       </tr>
     </tbody></table>
   </div>
