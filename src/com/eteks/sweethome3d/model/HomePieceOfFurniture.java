@@ -80,7 +80,13 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.NAME, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          return collator.compare(piece1.name, piece2.name);
+          if (piece1.name == null) {
+            return -1;
+          } else if (piece2.name == null) {
+            return 1; 
+          } else {
+            return collator.compare(piece1.name, piece2.name);
+          }
         }
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.WIDTH, new Comparator<HomePieceOfFurniture>() {
