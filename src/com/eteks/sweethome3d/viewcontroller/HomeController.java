@@ -1732,7 +1732,7 @@ public class HomeController implements Controller {
                     cause += ": " + message;
                   }
                   if (ex.getCause() != null) {
-                    cause += " - " + ex.getCause();
+                    cause += "<br>" + ex.getCause();
                   }
                 }
                 ex.printStackTrace();
