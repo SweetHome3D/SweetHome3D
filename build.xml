@@ -313,7 +313,7 @@
     <javac srcdir="src" destdir="build/classes"
            encoding="ISO-8859-1" target="1.5">
       <include name="com/eteks/sweethome3d/applet/ViewerHelper.java"/>
-      <include name="com/eteks/sweethome3d/io/DefaultPatternTexture.java"/>    	
+      <include name="com/eteks/sweethome3d/io/DefaultPatternTexture.java"/>
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
@@ -329,7 +329,7 @@
         <include name="com/eteks/sweethome3d/applet/*.properties"/>
         <include name="com/eteks/sweethome3d/model/*.properties"/>
         <include name="com/eteks/sweethome3d/tools/*.properties"/>
-        <include name="com/eteks/sweethome3d/io/resources/patterns/*.png"/>    	
+        <include name="com/eteks/sweethome3d/io/resources/patterns/*.png"/>
         <include name="com/eteks/sweethome3d/swing/resources/icons/tango/go-*.png"/>
         <include name="com/eteks/sweethome3d/swing/HomeComponent3D.properties"/>
       </fileset>
@@ -409,8 +409,10 @@
           description="Builds install/SweetHome3D-version.jar executable Jar">
     <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
          and other DLLs and jars -->
-    <jar destfile="install/SweetHome3D-${version}.jar" 
-         manifest="install/jar/MANIFEST.MF">
+    <jar destfile="install/SweetHome3D-${version}.jar">
+      <manifest>
+        <attribute name="Main-Class" value="com.eteks.sweethome3d.SweetHome3DBootstrap"/>
+      </manifest>
       <zipfileset src="build/SweetHome3D.jar"/>
       <zipfileset src="build/Furniture.jar"/>
       <zipfileset src="build/Textures.jar"/>
