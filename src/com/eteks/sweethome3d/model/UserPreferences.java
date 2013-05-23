@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
@@ -66,8 +67,21 @@ public abstract class UserPreferences {
   private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f);
 
   static {
-    ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
-    DEFAULT_SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
+    Properties supportedLanguagesProperties = new Properties();
+    String [] defaultSupportedLanguages;
+    try {
+      // As of version 4.1 where Trusted-Library manifest attribute was added to applet jars, 
+      // UserPreferences.properties was renamed as SupportedLanguages.properties
+      // because strangely UserPreferences.properties resource couldn't be found in applet environment
+      InputStream in = UserPreferences.class.getResourceAsStream("SupportedLanguages.properties");
+      supportedLanguagesProperties.load(in);
+      in.close();
+      // Get property value of supportedLanguages
+      defaultSupportedLanguages = supportedLanguagesProperties.getProperty("supportedLanguages", "en").split("\\s");
+    } catch (IOException ex) {
+      defaultSupportedLanguages = new String [] {"en"};
+    }
+    DEFAULT_SUPPORTED_LANGUAGES = defaultSupportedLanguages;
   }
   
   private final PropertyChangeSupport          propertyChangeSupport;

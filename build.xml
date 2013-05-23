@@ -125,11 +125,19 @@
     </zip>
   </target>
 
-  <target name="java3dLibraries" depends="jogl-java3d"
+  <target name="manifest" depends="build"
+  	      description="Builds build/META-INF/MANIFEST.MF with Trusted-Library attribute set to true">
+    <mkdir dir="build/META-INF"/>
+  	<manifest file="build/META-INF/MANIFEST.MF">
+      <attribute name="Trusted-Library" value="true"/>    	
+    </manifest>
+  </target>
+		
+  <target name="java3dLibraries" depends="jogl-java3d,manifest"
           description="Builds JNLP Java 3D libraries in deploy/lib subdirectories">
     <!-- Create java3d.jar containing Windows 32 bits Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows/i386"/>
-    <zip destfile="deploy/lib/windows/i386/java3d.jar">
+    <jar destfile="deploy/lib/windows/i386/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -138,11 +146,11 @@
       <fileset dir="lib">
         <include name="windows/i386/*.dll"/>
       </fileset>
-    </zip>
+    </jar>
 
     <!-- Create java3d.jar containing Windows 64 bits Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows/x64"/>
-    <zip destfile="deploy/lib/windows/x64/java3d.jar">
+    <jar destfile="deploy/lib/windows/x64/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -151,11 +159,11 @@
       <fileset dir="lib">
         <include name="windows/x64/*.dll"/>
       </fileset>
-    </zip>
+    </jar>
 
     <!-- Create java3d.jar containing Linux 32 bits Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/linux/i386"/>
-    <zip destfile="deploy/lib/linux/i386/java3d.jar">
+    <jar destfile="deploy/lib/linux/i386/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -164,11 +172,11 @@
       <fileset dir="lib">
         <include name="linux/i386/*.so"/>
       </fileset>
-    </zip>
+    </jar>
  
     <!-- Create java3d.jar containing Linux 64 bits Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/linux/x64"/>
-    <zip destfile="deploy/lib/linux/x64/java3d.jar">
+    <jar destfile="deploy/lib/linux/x64/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -177,11 +185,11 @@
       <fileset dir="lib">
         <include name="linux/x64/*.so"/>
       </fileset>
-    </zip>
+    </jar>
  
     <!-- Create java3d.jar containing Mac OS X Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/macosx"/>
-    <zip destfile="deploy/lib/macosx/java3d.jar">
+    <jar destfile="deploy/lib/macosx/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -195,7 +203,7 @@
       <fileset dir="build">
         <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
-    </zip>
+    </jar>
   </target>
 
   <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries"
@@ -244,18 +252,18 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <target name="applet" depends="build,java3dLibraries"
+  <target name="applet" depends="build,java3dLibraries,manifest"
           description="Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet">
     <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
-    <mkdir dir="deploy/lib"/>
-    <zip destfile="deploy/lib/SweetHome3DApplet.jar">
+    <mkdir dir="deploy/lib"/>  	
+    <jar destfile="deploy/lib/SweetHome3DApplet.jar" manifest="build/META-INF/MANIFEST.MF">
       <zipfileset src="build/SweetHome3D.jar" 
                   excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**, com/eteks/sweethome3d/applet/*Viewer*.*"/>
-    </zip>
+    </jar>
  
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux 32/64 bits and Mac OS X 
          (this library is used when Javascript doesn't succeed to detect user's OS) -->
-    <zip destfile="deploy/lib/java3d.jar">
+    <jar destfile="deploy/lib/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
@@ -271,18 +279,52 @@
       <fileset dir="build">
         <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
-    </zip>
+    </jar>
 
-    <!-- Copy other jar files -->
-    <copy todir="deploy/lib">
-      <fileset dir="lib">
-        <include name="*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
-      </fileset>
-    </copy>
-    <copy todir="deploy/lib" file="libtest/jnlp.jar"/>
+    <!-- Copy other jar files adding to their manifest a Trusted-Library attribute set to true 
+         (this attribute is necessary to be able to call applet methods from JavaScript) -->
+    <jar destfile="deploy/lib/jnlp.jar" filesetmanifest="merge" >
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="libtest/jnlp.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/Loader3DS1_2u.jar" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/Loader3DS1_2u.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/batik-svgpathparser-1.7.jar">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/batik-svgpathparser-1.7.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1.jar" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/freehep-vectorgraphics-svg-2.1.1.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/sunflow-0.07.3h.jar" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/sunflow-0.07.3h.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/iText-2.1.7.jar" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/iText-2.1.7.jar"/>
+    </jar>
+    <jar destfile="deploy/lib/jmf.jar">
+      <manifest>
+        <attribute name="Trusted-Library" value="true"/>    	
+      </manifest>
+      <zipfileset src="lib/jmf.jar"/>
+    </jar>
 
     <!-- Clean build directory -->
     <delete dir="build"/>
@@ -337,7 +379,7 @@
     
     <!-- Create SweetHome3DViewer.jar containing only classes and resources required by Sweet Home 3D Viewer -->
     <mkdir dir="deploy/lib"/>
-    <zip destfile="deploy/lib/SweetHome3DViewer.jar"  
+    <zip destfile="deploy/lib/SweetHome3DViewer.jar" 
          basedir="build/classes">
       <include name="com/eteks/sweethome3d/applet/*"/>
       <include name="com/eteks/sweethome3d/io/**"/>
