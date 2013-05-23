@@ -313,7 +313,6 @@ public class SweetHome3DApplet extends JApplet {
       
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
-          "com.eteks.sweethome3d",
           "javax.media",
           "javax.vecmath",
           "com.sun.j3d",
