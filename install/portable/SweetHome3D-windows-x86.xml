@@ -46,8 +46,9 @@
     <maxVersion></maxVersion>
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
-    <maxHeapSize>0</maxHeapSize>
-    <opt>-Djava.library.path=lib/ext/windows/i386 -Xmx512m -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</opt>
+    <maxHeapSize>640</maxHeapSize>
+    <maxHeapPercent>25</maxHeapPercent>
+    <opt>-Djava.library.path=lib/ext/windows/i386 -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</opt>
   </jre>
   <versionInfo>
     <fileVersion>4.1.0.0</fileVersion>

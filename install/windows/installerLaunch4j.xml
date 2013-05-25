@@ -46,8 +46,9 @@
     <maxVersion></maxVersion>
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
-    <maxHeapSize>0</maxHeapSize>
-    <opt>-Djava.library.path=lib -Xmx512m -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
+    <maxHeapSize>640</maxHeapSize>
+    <maxHeapPercent>25</maxHeapPercent>
+    <opt>-Djava.library.path=lib -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
   </jre>
   <versionInfo>
     <fileVersion>4.1.0.0</fileVersion>
