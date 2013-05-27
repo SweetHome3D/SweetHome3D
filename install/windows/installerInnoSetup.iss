@@ -44,10 +44,10 @@ Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "hungarian"; MessagesFile: "compiler:Languages\Hungarian.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "greek"; MessagesFile: "compiler:Languages\Greek.isl"
+Name: "japanese"; Messagesfile: "compiler:Languages\Japanese.isl"
 Name: "swedish"; MessagesFile: "Swedish.isl"
-Name: "greek"; MessagesFile: "Greek.isl"
 Name: "chinesesimp"; Messagesfile: "ChineseSimp.isl"
-Name: "japanese"; Messagesfile: "Japanese.isl"
 Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
