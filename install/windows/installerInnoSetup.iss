@@ -52,7 +52,6 @@ Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-;Name: associate; Description: "{cm:AssocFileExtension,Sweet Home 3D,sh3d}"; GroupDescription: "{cm:OtherTasks}"
 
 [Files]
 Source: "build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -77,9 +76,6 @@ czech.SweetHome3DComment=Sestavte si design interieru vaseho domu
 polish.SweetHome3DComment=Zaprojektuj wnetrze swojego domu
 hungarian.SweetHome3DComment=Keszitse el lakasanak belso kialakitasat!
 chinesesimp.SweetHome3DComment=布置您的温馨小家
-OtherTasks=Other tasks:
-french.OtherTasks=Autres t鈉hes :
-chinesesimp.OtherTasks=其他任务:
 
 [Registry]
 Root: HKCR; Subkey: ".sh3d"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D"; Flags: uninsdeletevalue
