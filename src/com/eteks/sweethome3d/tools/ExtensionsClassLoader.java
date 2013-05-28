@@ -70,7 +70,7 @@ public class ExtensionsClassLoader extends ClassLoader {
    * than the ones of default classpath, and will load itself all the classes belonging to packages of 
    * <code>applicationPackages</code>.<br>
    * Copies of <code>extensionJarAndDllResources</code> and <code>extensionJarAndDllUrls</code> will be stored 
-   * in the given cache folder, each file being prefixed by <code>cachedFilesPrefix</code>.
+   * in the given cache folder if possible, each file being prefixed by <code>cachedFilesPrefix</code>.
    */
   public ExtensionsClassLoader(ClassLoader parent, 
                                ProtectionDomain protectionDomain, 
@@ -108,7 +108,9 @@ public class ExtensionsClassLoader extends ClassLoader {
         extensionJarsAndDlls.add(extensionJarOrDllUrl);
       }
     }
-    extensionJarsAndDlls.addAll(Arrays.asList(extensionJarAndDllUrls));
+    if (extensionJarAndDllUrls != null) {
+      extensionJarsAndDlls.addAll(Arrays.asList(extensionJarAndDllUrls));
+    }
     
     // Find extension Jars and DLLs
     ArrayList extensionJars = new ArrayList();
@@ -118,34 +120,45 @@ public class ExtensionsClassLoader extends ClassLoader {
         String extensionJarOrDllUrlFile = extensionJarOrDllUrl.getFile();
         URLConnection connection = null;
         long extensionJarOrDllFileDate;
+        int  extensionJarOrDllFileLength;
         String extensionJarOrDllFile;
         if (extensionJarOrDllUrl.getProtocol().equals("jar")) {
           // Don't instantiate connection to a file accessed by jar protocol otherwise it might download again its jar container
           URL jarEntryUrl = new URL(extensionJarOrDllUrlFile.substring(0, extensionJarOrDllUrlFile.indexOf('!')));
           URLConnection jarEntryUrlConnection = jarEntryUrl.openConnection(); 
-          // As connection.getLastModified() on an entry returns get modification date of the jar file itself 
+          // connection.getLastModified() on an entry returns get modification date of the jar file itself 
           extensionJarOrDllFileDate = jarEntryUrlConnection.getLastModified();
+          extensionJarOrDllFileLength = jarEntryUrlConnection.getContentLength();
           extensionJarOrDllFile = extensionJarOrDllUrlFile.substring(extensionJarOrDllUrlFile.indexOf('!') + 2);
         } else {
           connection = extensionJarOrDllUrl.openConnection();
           extensionJarOrDllFileDate = connection.getLastModified();
+          extensionJarOrDllFileLength = connection.getContentLength();
           extensionJarOrDllFile = extensionJarOrDllUrlFile;
-        }        
-        String extensionJarOrDllFileName;
+        }
         int lastSlashIndex = extensionJarOrDllFile.lastIndexOf('/');
+        String libraryName;
         if (extensionJarOrDllFile.endsWith(".jar")) {
-          extensionJarOrDllFileName = extensionPrefix 
-              + extensionJarOrDllFile.substring(lastSlashIndex + 1);
+          libraryName = null;
+        } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
+          libraryName = extensionJarOrDllFile.substring(lastSlashIndex + 1 + dllPrefix.length(),
+              extensionJarOrDllFile.length() - dllSuffix.length()); 
         } else {
-          extensionJarOrDllFileName = extensionPrefix 
-              + extensionJarOrDllFile.substring(lastSlashIndex + 1 + dllPrefix.length());
+          // Ignore DLLs of other platforms
+          continue;
         }
         
         if (cacheFolder != null 
+            && extensionJarOrDllFileDate != 0
+            && extensionJarOrDllFileLength != -1
             && ((cacheFolder.exists()
                   && cacheFolder.isDirectory())
                 || cacheFolder.mkdirs())) {
           try {
+            String extensionJarOrDllFileName = extensionPrefix
+                + extensionJarOrDllFileLength + "-"
+                + (extensionJarOrDllFileDate / 1000L) + "-"
+                + extensionJarOrDllFile.substring(lastSlashIndex + 1);
             File cachedFile = new File(cacheFolder, extensionJarOrDllFileName);            
             if (!cachedFile.exists() 
                 || cachedFile.lastModified() < extensionJarOrDllFileDate) {
@@ -160,8 +173,7 @@ public class ExtensionsClassLoader extends ClassLoader {
               extensionJars.add(new JarFile(cachedFile.toString(), false));
             } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
               // Add tmp file to extension DLLs map
-              this.extensionDlls.put(extensionJarOrDllFileName.substring(extensionPrefix.length(), 
-                  extensionJarOrDllFileName.indexOf(dllSuffix)), cachedFile.toString());
+              this.extensionDlls.put(libraryName, cachedFile.toString());
             }
             continue;
           } catch (IOException ex) {
@@ -182,8 +194,7 @@ public class ExtensionsClassLoader extends ClassLoader {
           // Copy DLL to a tmp file
           String extensionDll = copyInputStreamToTmpFile(input, dllSuffix);
           // Add tmp file to extension DLLs map
-          this.extensionDlls.put(extensionJarOrDllFileName.substring(extensionPrefix.length(), 
-              extensionJarOrDllFileName.indexOf(dllSuffix)), extensionDll);
+          this.extensionDlls.put(libraryName, extensionDll);
         }          
       } catch (IOException ex) {
         throw new RuntimeException("Couldn't extract extension " + extensionJarOrDllUrl, ex);
