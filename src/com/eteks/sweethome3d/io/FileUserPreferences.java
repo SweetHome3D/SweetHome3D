@@ -520,20 +520,23 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateFurnitureDefaultCatalog(Executor furnitureCatalogLoader, 
                                              final Executor updater) {
-    removeLibraries(FURNITURE_LIBRARY_TYPE);
-    // Delete default pieces of current furniture catalog          
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
-    for (FurnitureCategory category : furnitureCatalog.getCategories()) {
-      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        if (!piece.isModifiable()) {
-          furnitureCatalog.delete(piece);
-        }
-      }
-    }
-    // Read default furniture catalog
     furnitureCatalogLoader.execute(new Runnable() {
         public void run() {
-          // Fill default furniture catalog 
+          updater.execute(new Runnable() {
+              public void run() {
+                // Delete default furniture of current furniture catalog          
+                for (FurnitureCategory category : furnitureCatalog.getCategories()) {
+                  for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+                    if (!piece.isModifiable()) {
+                      furnitureCatalog.delete(piece);
+                    }
+                  }
+                }
+              }
+            });
+          
+          // Read default furniture catalog
           final DefaultFurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(
               FileUserPreferences.this, getFurnitureLibrariesPluginFolders());
           for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
@@ -547,6 +550,7 @@ public class FileUserPreferences extends UserPreferences {
           }
           updater.execute(new Runnable() {
               public void run() {
+                removeLibraries(FURNITURE_LIBRARY_TYPE);
                 libraries.addAll(defaultFurnitureCatalog.getLibraries());
               }
             });
@@ -571,19 +575,23 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void updateTexturesDefaultCatalog(Executor texturesCatalogLoader, 
                                             final Executor updater) {
-    removeLibraries(TEXTURES_LIBRARY_TYPE);
-    // Delete default textures of current textures catalog          
     final TexturesCatalog texturesCatalog = getTexturesCatalog();
-    for (TexturesCategory category : texturesCatalog.getCategories()) {
-      for (CatalogTexture texture : category.getTextures()) {
-        if (!texture.isModifiable()) {
-          texturesCatalog.delete(texture);
-        }
-      }
-    }
-    // Read default textures catalog
     texturesCatalogLoader.execute(new Runnable() {
         public void run() {
+          updater.execute(new Runnable() {
+              public void run() {
+                // Delete default textures of current textures catalog          
+                for (TexturesCategory category : texturesCatalog.getCategories()) {
+                  for (CatalogTexture texture : category.getTextures()) {
+                    if (!texture.isModifiable()) {
+                      texturesCatalog.delete(texture);
+                    }
+                  }
+                }
+              }
+            });
+            
+          // Read default textures catalog
           final DefaultTexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(
               FileUserPreferences.this, getTexturesLibrariesPluginFolders());
           for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
@@ -597,6 +605,7 @@ public class FileUserPreferences extends UserPreferences {
           }
           updater.execute(new Runnable() {
               public void run() {
+                removeLibraries(TEXTURES_LIBRARY_TYPE);
                 libraries.addAll(defaultTexturesCatalog.getLibraries());
               }
             });
@@ -1358,7 +1367,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Deletes the given file <code>libraries</code> and updates user preferences.
+   * Deletes the given <code>libraries</code> and updates user preferences.
    * @since 4.0
    */
   public void deleteLibraries(List<Library> libraries) throws RecorderException {
