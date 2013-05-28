@@ -364,7 +364,7 @@ public class HomeController3D implements Controller {
     private boolean     aerialViewCenteredOnSelectionEnabled;
     private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateCameraFromHomeBounds();
+          updateCameraFromHomeBounds(false);
         }
       };
     private CollectionListener<Level> levelsListener = new CollectionListener<Level>() {
@@ -374,7 +374,7 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds();
+          updateCameraFromHomeBounds(false);
         }
       };
     private CollectionListener<Wall> wallsListener = new CollectionListener<Wall>() {
@@ -384,17 +384,20 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds();
+          updateCameraFromHomeBounds(false);
         }
       };
     private CollectionListener<HomePieceOfFurniture> furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
             ev.getItem().addPropertyChangeListener(objectChangeListener);
+            updateCameraFromHomeBounds(home.getFurniture().size() == 1
+                && home.getWalls().isEmpty()
+                && home.getRooms().isEmpty());
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
+            updateCameraFromHomeBounds(false);
           } 
-          updateCameraFromHomeBounds();
         }
       };
     private CollectionListener<Room> roomsListener = new CollectionListener<Room>() {
@@ -404,12 +407,12 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds();
+          updateCameraFromHomeBounds(false);
         }
       };
     private SelectionListener selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          updateCameraFromHomeBounds();
+          updateCameraFromHomeBounds(false);
         }
       };
 
@@ -422,7 +425,7 @@ public class HomeController3D implements Controller {
     @Override
     public void enter() {
       this.topCamera = home.getCamera();
-      updateCameraFromHomeBounds();
+      updateCameraFromHomeBounds(false);
       for (Level level : home.getLevels()) {
         level.addPropertyChangeListener(this.objectChangeListener);
       }
@@ -447,20 +450,20 @@ public class HomeController3D implements Controller {
      */
     public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      updateCameraFromHomeBounds();
+      updateCameraFromHomeBounds(false);
     }
     
     /**
      * Updates camera location from home bounds.
      */
-    private void updateCameraFromHomeBounds() {
+    private void updateCameraFromHomeBounds(boolean firstPieceOfFurnitureAddedToEmptyHome) {
       if (this.aerialViewBoundsLowerPoint == null) {
         updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
       }
       float distanceToCenter = getCameraToAerialViewCenterDistance();
       updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
       updateCameraIntervalToAerialViewCenter();
-      placeCameraAt(distanceToCenter);
+      placeCameraAt(distanceToCenter, firstPieceOfFurnitureAddedToEmptyHome);
     }
 
     /**
@@ -628,14 +631,18 @@ public class HomeController3D implements Controller {
       // Use a 5 times bigger delta for top camera move
       delta *= 5;
       float newDistanceToCenter = getCameraToAerialViewCenterDistance() - delta;
-      placeCameraAt(newDistanceToCenter);
+      placeCameraAt(newDistanceToCenter, false);
     }
 
-    public void placeCameraAt(float distanceToCenter) {
+    public void placeCameraAt(float distanceToCenter, boolean firstPieceOfFurnitureAddedToEmptyHome) {
       // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
       distanceToCenter = Math.max(distanceToCenter, this.minDistanceToAerialViewCenter);
       // Check camera isn't too far
       distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToAerialViewCenter);
+      if (firstPieceOfFurnitureAddedToEmptyHome) {
+        // Get closer to the first piece of furniture added to an empty home when that is small
+        distanceToCenter = Math.min(distanceToCenter, 3 * this.minDistanceToAerialViewCenter);
+      }
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 
           + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
@@ -681,7 +688,7 @@ public class HomeController3D implements Controller {
       this.topCamera.setCamera(camera);
       this.topCamera.setTime(camera.getTime());
       this.topCamera.setLens(camera.getLens());
-      updateCameraFromHomeBounds();
+      updateCameraFromHomeBounds(false);
     }
     
     @Override
