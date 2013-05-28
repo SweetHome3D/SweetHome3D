@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -105,12 +106,19 @@ public class SweetHome3DBootstrap {
         "com.microcrowd.loader.java3d",
         "org.sunflow",
         "org.apache.batik"};
-    ClassLoader java3DClassLoader = new ExtensionsClassLoader(
-        sweetHome3DBootstrapClass.getClassLoader(), 
-        sweetHome3DBootstrapClass.getProtectionDomain(),
-        extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);  
-    
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
+    ClassLoader java3DClassLoader = System.getProperty("os.name").startsWith("Windows")
+        ? new ExtensionsClassLoader(
+            sweetHome3DBootstrapClass.getClassLoader(), 
+            sweetHome3DBootstrapClass.getProtectionDomain(),
+            extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), null, applicationPackages,
+            // Use cache under Windows because temporary files tagged as deleteOnExit can't 
+            // be deleted if they are still opened when program exits 
+            new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-")  
+        : new ExtensionsClassLoader(
+              sweetHome3DBootstrapClass.getClassLoader(), 
+              sweetHome3DBootstrapClass.getProtectionDomain(),
+              extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);      
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
     Method applicationClassMain = 
       applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());

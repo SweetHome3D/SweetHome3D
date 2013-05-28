@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -343,10 +344,18 @@ public class SweetHome3DApplet extends JApplet {
         applicationPackages.add(applicationClassPackageBase);
       }
       
-      ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
-          sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
-          (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
-          (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
+      ClassLoader extensionsClassLoader =  System.getProperty("os.name").startsWith("Windows")
+          ? new ExtensionsClassLoader(
+              sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
+              (String [])java3DFiles.toArray(new String [java3DFiles.size()]), null, 
+              (String [])applicationPackages.toArray(new String [applicationPackages.size()]),
+              // Use cache under Windows because temporary files tagged as deleteOnExit can't 
+              // be deleted if they are still opened when program exits 
+              new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-")  
+          : new ExtensionsClassLoader(
+              sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
+              (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
+              (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
       startApplication(applicationClassName, extensionsClassLoader);
     } catch (AccessControlException ex) {
       String runWithoutSignature = getParameter("runWithoutSignature");
