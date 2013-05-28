@@ -29,6 +29,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -448,10 +450,24 @@ public class AppletApplication extends HomeApplication {
       if (createPhotoAction != null) {
         boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
         controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
-        controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, enableCreatePhoto);
+        controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, 
+            enableCreatePhoto && !home.getStoredCameras().isEmpty());
         if (enableCreatePhoto) {
           toolBar.addSeparator();
           addActionToToolBar(createPhotoAction, toolBar);
+        } else {
+          // Ensure CREATE_PHOTOS_AT_POINTS_OF_VIEW action will remain disabled even after points of view are created
+          homeView.getActionMap().get(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW).addPropertyChangeListener(
+              new PropertyChangeListener() {
+                public void propertyChange(PropertyChangeEvent ev) {  
+                  if ("enabled".equals(ev.getPropertyName())) {
+                    Action action = (Action)ev.getSource();
+                    action.removePropertyChangeListener(this);
+                    action.setEnabled(false);
+                    action.addPropertyChangeListener(this);
+                  }
+                }
+              });
         }
       }
     }
