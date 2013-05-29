@@ -450,13 +450,15 @@ public class ColorButton extends JButton {
                 // Opacity is set to 0.05f to be almost transparent but still visible enough by the
                 // the system not to switch to another application when the user clicks
                 Window.class.getMethod("setOpacity", float.class).invoke(pipetteWindow, 0.05f);
+                // Enlarge window to reduce mouse cursor change
+                pipetteWindow.setSize(10, 10);
               } else if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
                 // Call com.sun.awt.AWTUtilities.setWindowOpacity(pipetteWindow, 0.05f)
                 Class<?> awtUtilitiesClass = Class.forName("com.sun.awt.AWTUtilities");
                 awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class).invoke(null, pipetteWindow, 0.05f);
+                // Enlarge window to reduce mouse cursor change
+                pipetteWindow.setSize(10, 10);
               } 
-              // Enlarge window to reduce mouse cursor change
-              pipetteWindow.setSize(10, 10);
             } catch (Exception ex) {
               // For any exception, let's consider simply the method failed or doesn't exist
             }
