@@ -350,7 +350,8 @@ public class SweetHome3DApplet extends JApplet {
               (String [])java3DFiles.toArray(new String [java3DFiles.size()]), null, 
               (String [])applicationPackages.toArray(new String [applicationPackages.size()]),
               // Use cache under Windows because temporary files tagged as deleteOnExit can't 
-              // be deleted if they are still opened when program exits 
+              // be deleted if they are still opened when program exits (as DLLs can't be shared 
+              // by two class loaders, manage only Jar files in cache)
               new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-", true)  
           : new ExtensionsClassLoader(
               sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
