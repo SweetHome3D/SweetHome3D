@@ -79,6 +79,26 @@ public class ExtensionsClassLoader extends ClassLoader {
                                String [] applicationPackages,
                                File cacheFolder,
                                String cachedFilesPrefix) {
+    this(parent, protectionDomain, extensionJarAndDllResources, extensionJarAndDllUrls, applicationPackages, 
+        cacheFolder, cachedFilesPrefix, false);
+  }
+
+  /**
+   * Creates a class loader. It will consider JARs and DLLs of <code>extensionJarAndDllResources</code>
+   * and <code>extensionJarAndDllUrls</code> as classpath and libclasspath elements with a higher priority 
+   * than the ones of default classpath, and will load itself all the classes belonging to packages of 
+   * <code>applicationPackages</code>.<br>
+   * Copies of <code>extensionJarAndDllResources</code> and <code>extensionJarAndDllUrls</code> will be stored 
+   * in the given cache folder if possible, each file being prefixed by <code>cachedFilesPrefix</code>.
+   */
+  public ExtensionsClassLoader(ClassLoader parent, 
+                               ProtectionDomain protectionDomain, 
+                               String [] extensionJarAndDllResources,
+                               URL [] extensionJarAndDllUrls,
+                               String [] applicationPackages,
+                               File cacheFolder,
+                               String cachedFilesPrefix,
+                               boolean cacheOnlyJars) {
     super(parent);
     this.protectionDomain = protectionDomain;
     this.applicationPackages = applicationPackages;
@@ -138,7 +158,8 @@ public class ExtensionsClassLoader extends ClassLoader {
         }
         int lastSlashIndex = extensionJarOrDllFile.lastIndexOf('/');
         String libraryName;
-        if (extensionJarOrDllFile.endsWith(".jar")) {
+        boolean extensionJarFile = extensionJarOrDllFile.endsWith(".jar");
+        if (extensionJarFile) {
           libraryName = null;
         } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
           libraryName = extensionJarOrDllFile.substring(lastSlashIndex + 1 + dllPrefix.length(),
@@ -149,6 +170,7 @@ public class ExtensionsClassLoader extends ClassLoader {
         }
         
         if (cacheFolder != null 
+            && (!cacheOnlyJars || extensionJarFile)
             && extensionJarOrDllFileDate != 0
             && extensionJarOrDllFileLength != -1
             && ((cacheFolder.exists()
@@ -168,7 +190,7 @@ public class ExtensionsClassLoader extends ClassLoader {
               }
               copyInputStreamToFile(connection.getInputStream(), cachedFile);
             }
-            if (extensionJarOrDllFile.endsWith(".jar")) {
+            if (extensionJarFile) {
               // Add tmp file to extension jars list
               extensionJars.add(new JarFile(cachedFile.toString(), false));
             } else if (extensionJarOrDllFile.endsWith(dllSuffix)) {
@@ -185,7 +207,7 @@ public class ExtensionsClassLoader extends ClassLoader {
           connection = extensionJarOrDllUrl.openConnection();
         }
         InputStream input = connection.getInputStream();          
-        if (extensionJarOrDllFile.endsWith(".jar")) {
+        if (extensionJarFile) {
           // Copy jar to a tmp file
           String extensionJar = copyInputStreamToTmpFile(input, ".jar");
           // Add tmp file to extension jars list
