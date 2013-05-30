@@ -37,8 +37,10 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.text.MessageFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -119,6 +121,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private final Font           headerFooterFont;
   private int                  page;
   private int                  pageCount = -1;
+  private Set<Integer>         printablePages = new HashSet<Integer>();
   private int                  furniturePageCount;
   private int                  planPageCount;
   private Date                 printDate;
@@ -303,10 +306,6 @@ public class HomePrintableComponent extends JComponent implements Printable {
       }
     }
     
-    if (page == 0) {
-      this.furniturePageCount = 0;
-      this.planPageCount = 0;
-    }
     View furnitureView = this.controller.getFurnitureController().getView();
     if (furnitureView != null 
         && (homePrint == null || homePrint.isFurniturePrinted())) {
@@ -335,7 +334,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
         // Restore previous filter
         ((FurnitureTable)furnitureView).setFurnitureFilter(furnitureFilter);
       }
-      if (pageExists == PAGE_EXISTS) {
+      if (pageExists == PAGE_EXISTS
+          && !this.printablePages.contains(page)) {
+        this.printablePages.add(page);
         this.furniturePageCount++;
       }
     }
@@ -344,7 +345,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
         && (homePrint == null || homePrint.isPlanPrinted())) {
       // Try to print next plan view page
       pageExists = ((Printable)planView).print(g2D, pageFormat, page - this.furniturePageCount);
-      if (pageExists == PAGE_EXISTS) {
+      if (pageExists == PAGE_EXISTS
+          && !this.printablePages.contains(page)) {
+        this.printablePages.add(page);
         this.planPageCount++;
       }
     }
@@ -353,6 +356,10 @@ public class HomePrintableComponent extends JComponent implements Printable {
         && view3D != null
         && (homePrint == null || homePrint.isView3DPrinted())) {
       pageExists = ((Printable)view3D).print(g2D, pageFormat, page - this.planPageCount - this.furniturePageCount);
+      if (pageExists == PAGE_EXISTS
+          && !this.printablePages.contains(page)) {
+        this.printablePages.add(page);
+      }
     }
     
     // Print header and footer
