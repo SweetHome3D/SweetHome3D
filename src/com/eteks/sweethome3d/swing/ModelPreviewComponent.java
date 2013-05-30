@@ -156,6 +156,48 @@ public class ModelPreviewComponent extends JComponent {
     }
   }
 
+  @Override
+  public void addMouseMotionListener(final MouseMotionListener l) {
+    super.addMouseMotionListener(l);
+    if (this.component3D != null) {
+      this.component3D.addMouseMotionListener(new MouseMotionListener() {
+          public void mouseMoved(MouseEvent ev) {
+            l.mouseMoved(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+          
+          public void mouseDragged(MouseEvent ev) {
+            l.mouseDragged(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+        });
+    }
+  }
+  
+  @Override
+  public void addMouseListener(final MouseListener l) {
+    super.addMouseListener(l);
+    this.component3D.addMouseListener(new MouseListener() {
+        public void mouseReleased(MouseEvent ev) {
+          l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+        }
+        
+        public void mousePressed(MouseEvent ev) {
+          l.mousePressed(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+        }
+        
+        public void mouseExited(MouseEvent ev) {
+          l.mouseExited(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+        }
+        
+        public void mouseEntered(MouseEvent ev) {
+          l.mouseEntered(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+        }
+        
+        public void mouseClicked(MouseEvent ev) {
+          l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+        }
+      });
+  }
+  
   /**
    * Returns the 3D component of this component.
    */
@@ -301,37 +343,37 @@ public class ModelPreviewComponent extends JComponent {
     }
     
     // Redirect mouse events to the 3D component
-    for (final MouseListener l : getMouseListeners()) {
-      component3D.addMouseListener(new MouseListener() {
-          public void mouseReleased(MouseEvent ev) {
-            l.mouseReleased(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
-          }
-          
-          public void mousePressed(MouseEvent ev) {
-            l.mousePressed(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
-          }
-          
-          public void mouseExited(MouseEvent ev) {
-            l.mouseExited(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
-          }
-          
-          public void mouseEntered(MouseEvent ev) {
-            l.mouseEntered(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
-          }
-          
-          public void mouseClicked(MouseEvent ev) {
-            l.mouseClicked(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
-          }
-        });
-    }
-    for (final MouseMotionListener l : getMouseMotionListeners()) {
+    for (final MouseMotionListener l : getListeners(MouseMotionListener.class)) {
       component3D.addMouseMotionListener(new MouseMotionListener() {
           public void mouseMoved(MouseEvent ev) {
-            l.mouseMoved(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
+            l.mouseMoved(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
           }
           
           public void mouseDragged(MouseEvent ev) {
-            l.mouseDragged(SwingUtilities.convertMouseEvent(ev.getComponent(), ev, component3D));
+            l.mouseDragged(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+        });
+    }
+    for (final MouseListener l : getListeners(MouseListener.class)) {
+      component3D.addMouseListener(new MouseListener() {
+          public void mouseReleased(MouseEvent ev) {
+            l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+          
+          public void mousePressed(MouseEvent ev) {
+            l.mousePressed(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+          
+          public void mouseExited(MouseEvent ev) {
+            l.mouseExited(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+          
+          public void mouseEntered(MouseEvent ev) {
+            l.mouseEntered(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
+          }
+          
+          public void mouseClicked(MouseEvent ev) {
+            l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, ModelPreviewComponent.this));
           }
         });
     }
