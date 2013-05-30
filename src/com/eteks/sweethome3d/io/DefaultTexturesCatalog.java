@@ -22,11 +22,8 @@ package com.eteks.sweethome3d.io;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -196,7 +193,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
         try {
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(),
-                  new URLClassLoader(new URL [] {pluginTexturesCatalogUrl}));
+              new URLContentClassLoader(pluginTexturesCatalogUrl));
           this.libraries.add(0, new DefaultLibrary(pluginTexturesCatalogUrl.toExternalForm(), 
               UserPreferences.TEXTURES_LIBRARY_TYPE, resource));
           readTextures(resource, pluginTexturesCatalogUrl, texturesResourcesUrlBase, identifiedTextures);
@@ -247,19 +244,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
       }
       
-      final ClassLoader urlLoader = new ClassLoader() {
-          @Override
-          public InputStream getResourceAsStream(String name) {
-            try {
-              // Return a stream managed by URLContent to be able to delete the writable files accessed with jar protocol
-              return new URLContent(new URL("jar:" + pluginTexturesCatalogUrl.toURI() + "!/" + name)).openStream();
-            } catch (IOException ex) {
-              return null;
-            } catch (URISyntaxException ex) {
-              return null;
-            }
-          }
-        };
+      final ClassLoader urlLoader = new URLContentClassLoader(pluginTexturesCatalogUrl);
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), urlLoader);      
       this.libraries.add(0, new DefaultLibrary(pluginTexturesCatalogFile.getCanonicalPath(), 
           UserPreferences.TEXTURES_LIBRARY_TYPE, resourceBundle));

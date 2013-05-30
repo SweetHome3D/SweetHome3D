@@ -22,12 +22,9 @@ package com.eteks.sweethome3d.io;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.AccessControlException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -374,7 +371,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
         try {        
           ResourceBundle resource = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-              new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl}));
+              new URLContentClassLoader(pluginFurnitureCatalogUrl));
           this.libraries.add(0, new DefaultLibrary(pluginFurnitureCatalogUrl.toExternalForm(), 
               UserPreferences.FURNITURE_LIBRARY_TYPE, resource));
           readFurniture(resource, pluginFurnitureCatalogUrl, furnitureResourcesUrlBase, identifiedFurniture);
@@ -425,19 +422,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
       }
       
-      final ClassLoader urlLoader = new ClassLoader() {
-          @Override
-          public InputStream getResourceAsStream(String name) {
-            try {
-              // Return a stream managed by URLContent to be able to delete the writable files accessed with jar protocol
-              return new URLContent(new URL("jar:" + pluginFurnitureCatalogUrl.toURI() + "!/" + name)).openStream();
-            } catch (IOException ex) {
-              return null;
-            } catch (URISyntaxException ex) {
-              return null;
-            }
-          }
-        };
+      final ClassLoader urlLoader = new URLContentClassLoader(pluginFurnitureCatalogUrl);
       ResourceBundle resourceBundle = ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), urlLoader);
       this.libraries.add(0, new DefaultLibrary(pluginFurnitureCatalogFile.getCanonicalPath(), 
           UserPreferences.FURNITURE_LIBRARY_TYPE, resourceBundle));
