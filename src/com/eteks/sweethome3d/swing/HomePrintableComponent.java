@@ -35,6 +35,7 @@ import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.security.AccessControlException;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -179,6 +180,22 @@ public class HomePrintableComponent extends JComponent implements Printable {
     g2D.setFont(this.defaultFont);
     g2D.setColor(Color.WHITE);
     g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), pageFormat.getHeight()));
+
+    Paper oldPaper = pageFormat.getPaper();
+    try {
+      // Let the user be able to force a fixed margin in case of bugs in page setup dialogs or printer drivers
+      String fixedPrintMargin = System.getProperty("com.eteks.sweethome3d.swing.fixedPrintMargin", null);
+      if (fixedPrintMargin != null) {
+        float margin = LengthUnit.centimeterToInch(Float.parseFloat(fixedPrintMargin)) * 72;
+        Paper noMarginPaper = pageFormat.getPaper();
+        noMarginPaper.setImageableArea(margin, margin, oldPaper.getWidth() - 2 * margin, oldPaper.getHeight() - 2 * margin);
+        pageFormat.setPaper(noMarginPaper);
+      }
+    } catch (NumberFormatException ex) {
+      ex.printStackTrace();
+    } catch (AccessControlException ex) {
+      // If com.eteks.sweethome3d.swing.fixedPrintMargin can't be read, ignore fixed margin
+    }
     int pageExists = NO_SUCH_PAGE;
     HomePrint homePrint = this.home.getPrint();
     
@@ -213,7 +230,6 @@ public class HomePrintableComponent extends JComponent implements Printable {
     
     Rectangle clipBounds = g2D.getClipBounds();
     AffineTransform oldTransform = g2D.getTransform();
-    Paper oldPaper = pageFormat.getPaper();
     final PlanView planView = this.controller.getPlanController().getView();
     if (homePrint != null
         || this.fixedHeaderLabel != null
@@ -297,6 +313,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
           break;
       }
       pageFormat.setPaper(paper);
+      
       if (clipBounds == null) {
         g2D.clipRect((int)pageFormat.getImageableX(), (int)pageFormat.getImageableY(), 
             (int)pageFormat.getImageableWidth(), (int)pageFormat.getImageableHeight());
