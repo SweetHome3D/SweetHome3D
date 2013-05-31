@@ -2607,7 +2607,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (textureImage == null
                   || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
-                if (!isTextureManagerAvailable()) {
+                if (isTextureManagerAvailable()) {
                   // Prefer to share textures images with texture manager if it's available
                   TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
                       new TextureManager.TextureObserver() {
