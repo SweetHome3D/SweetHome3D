@@ -133,6 +133,17 @@ public class OperatingSystem {
   }
 
   /**
+   * Returns <code>true</code> if the version of the current JVM is greater or equal to the 
+   * <code>javaMinimumVersion</code> and smaller than <code>javaMaximumVersion</code>. 
+   * @since 4.2
+   */
+  public static boolean isJavaVersionBetween(String javaMinimumVersion, String javaMaximumVersion) {
+    String javaVersion = System.getProperty("java.version");
+    return compareVersions(javaMinimumVersion, javaVersion) <= 0 
+        && compareVersions(javaVersion, javaMaximumVersion) < 0;
+  }
+
+  /**
    * Returns a negative number if <code>version1</code> &lt; <code>version2</code>,
    * 0 if <code>version1</code> = <code>version2</code>
    * and a positive number if <code>version1</code> &gt; <code>version2</code>.

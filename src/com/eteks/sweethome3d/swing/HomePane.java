@@ -1914,7 +1914,7 @@ public class HomePane extends JRootPane implements HomeView {
       } 
     }
 
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_40")) {
       // Reduce tool bar height to balance segmented buttons with higher insets 
       toolBar.setPreferredSize(new Dimension(0, toolBar.getPreferredSize().height - 4));
     }
@@ -1932,7 +1932,7 @@ public class HomePane extends JRootPane implements HomeView {
     if (action!= null && action.getValue(Action.NAME) != null) {
       Action toolBarAction = new ResourceAction.ToolBarAction(action);    
       JToggleButton toggleButton;
-      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_40")) {
         // Use higher insets to ensure the top and bottom of segmented buttons are correctly drawn 
         toggleButton = new JToggleButton(toolBarAction) {
             @Override
