@@ -27,6 +27,8 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -43,6 +45,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import javax.swing.Timer;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -294,7 +297,17 @@ public class HomeFramePane extends JRootPane implements View {
               // Resize to home non maximized bounds
               frame.setBounds(frameBounds);
               // Finally maximize
-              frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+              if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+                new Timer(200, new ActionListener() {
+                    public void actionPerformed(ActionEvent ev) {
+                      // Maximize later otherwise it won't be taken into account
+                      ((Timer)ev.getSource()).stop();
+                      frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                    }
+                  }).start();
+              } else {
+                frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+              }
             }
           });
       } else {
