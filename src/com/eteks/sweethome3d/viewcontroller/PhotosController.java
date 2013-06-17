@@ -142,7 +142,7 @@ public class PhotosController extends AbstractPhotoController {
   }
 
   /**
-   * Sets the selected cameras to create photos.
+   * Sets the cameras available to create photos.
    */
   private void setCameras(List<Camera> cameras) {
     if (!cameras.equals(this.cameras)) {
