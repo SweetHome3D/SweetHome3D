@@ -57,58 +57,46 @@
 
   <resources>
     <j2se version="1.5+" max-heap-size="640m"/>
-    <jar href="lib/SweetHome3DJavaWebStartBootstrap.jar"/>
-    <jar href="lib/SweetHome3D.jar"                      part="SweetHome3D" download="lazy"/>
-    <jar href="lib/Loader3DS1_2u.jar"                    part="Loader3DS"   download="lazy"/>
-    <jar href="lib/freehep-vectorgraphics-svg-2.1.1.jar" part="FreeHep"     download="lazy"/>
-    <jar href="lib/sunflow-0.07.3h.jar"                  part="SunFlow"     download="lazy"/>    
-    <jar href="lib/batik-svgpathparser-1.7.jar"          part="Batik"       download="lazy"/>
-    <jar href="lib/jmf.jar"                              part="JMF"         download="lazy"/>    
+    <jar href="lib/SweetHome3DJavaWebStart.jar"/>
+    <jar href="lib/SweetHome3D.jar"/>
+    <jar href="lib/Loader3DS1_2u.jar"/>
+    <jar href="lib/freehep-vectorgraphics-svg-2.1.1.jar"/>
+    <jar href="lib/sunflow-0.07.3h.jar"/>    
+    <jar href="lib/batik-svgpathparser-1.7.jar"/>
+    <jar href="lib/jmf.jar"/>    
     <property name="com.eteks.sweethome3d.deploymentInformation" value="Java Web Start"/>
     <property name="com.eteks.sweethome3d.applicationId"         value="SweetHome3D#JavaWebStart"/>
   </resources>
  
   <resources os="Windows" arch="x86">
-    <jar href="lib/iText-2.1.7.jar"         part="iText"  download="lazy"/>
-    <jar href="lib/windows/i386/java3d.jar" part="Java3D" download="lazy"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (Windows; x86)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF iText Java3D"/>
+    <jar href="lib/iText-2.1.7.jar"/>
+    <jar href="lib/windows/i386/java3d.jar"/>
   </resources>
   <resources os="Windows" arch="amd64">
-    <jar href="lib/iText-2.1.7.jar"        part="iText"  download="lazy"/>
-    <jar href="lib/windows/x64/java3d.jar" part="Java3D" download="lazy"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (Windows; amd64)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF iText Java3D"/>
+    <jar href="lib/iText-2.1.7.jar"/>
+    <jar href="lib/windows/x64/java3d.jar"/>
   </resources>
 
   <resources os="Mac\ OS\ X">
-    <jar href="lib/macosx/java3d.jar" part="Java3D" download="lazy"/>
+    <jar href="lib/macosx/java3d.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="j3d.rend" value="jogl"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (Mac OS X)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF Java3D"/>
   </resources>
 
   <resources os="Linux" arch="x86 i386">
-    <jar href="lib/iText-2.1.7.jar"       part="iText"  download="lazy"/>
-    <jar href="lib/linux/i386/java3d.jar" part="Java3D" download="lazy"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (Linux; x86)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF iText Java3D"/>
+    <jar href="lib/iText-2.1.7.jar"/>
+    <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="amd64 x86_64">
-    <jar href="lib/iText-2.1.7.jar"      part="iText"  download="lazy"/>
-    <jar href="lib/linux/x64/java3d.jar" part="Java3D" download="lazy"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (Linux; amd64)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF iText Java3D"/>
+    <jar href="lib/iText-2.1.7.jar"/>
+    <jar href="lib/linux/x64/java3d.jar"/>
   </resources>
 
   <resources os="SunOS">
-    <jar href="lib/iText-2.1.7.jar" part="iText" download="lazy"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
-    <property name="http.agent" value="SweetHome3D#JavaWebStart (SunOS)"/>
-    <property name="com.eteks.sweethome3d.lazyParts" value="SweetHome3D Loader3DS FreeHep SunFlow JMF iText"/>
   </resources>
   
-  <application-desc main-class="com.eteks.sweethome3d.SweetHome3DJavaWebStartBootstrap"/>
+  <application-desc main-class="com.eteks.sweethome3d.SweetHome3DBootstrap"/>
 </jnlp>
