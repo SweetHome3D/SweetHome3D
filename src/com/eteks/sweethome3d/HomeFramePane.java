@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -320,6 +321,35 @@ public class HomeFramePane extends JRootPane implements View {
       frame.pack();
       frame.setSize(Math.min(screenSize.width * 4 / 5, frame.getWidth()), 
               Math.min(screenSize.height * 4 / 5, frame.getHeight()));
+      if (OperatingSystem.isMacOSX() 
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+        // JFrame#setLocationByPlatform does nothing under Java 7
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (Frame applicationFrame : Frame.getFrames()) {
+          if (applicationFrame.isShowing() 
+              && applicationFrame.getBackground().getAlpha() != 0) {
+            minX = Math.min(minX, applicationFrame.getX());
+            minY = Math.min(minY, applicationFrame.getY());
+            maxX = Math.max(maxX, applicationFrame.getX());
+            maxY = Math.max(maxY, applicationFrame.getY());
+          }
+        }
+        
+        if (minX == Integer.MAX_VALUE || minX >= 23) {
+          x = 0;
+        } else {
+          x = maxX + 23;
+        }
+        if (minY == Integer.MAX_VALUE || minY >= 23) {
+          y = 0;
+        } else {
+          y = maxY + 23;
+        }
+        frame.setLocation(x, y);
+      }
     }
   }
 
