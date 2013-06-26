@@ -2657,11 +2657,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Returns <code>true</code> if <code>TextureManager</code> can be used to manage textures.
-   * @return
    */
   private static boolean isTextureManagerAvailable() {
     try {
-      return !Boolean.getBoolean("com.eteks.sweethome3d.no3D");
+      return !Boolean.getBoolean("com.eteks.sweethome3d.no3D")
+          // Refuse to share textures under Mac OS X with Java 1.7 for performance reasons
+          && !(OperatingSystem.isMacOSX() 
+               && OperatingSystem.isJavaVersionGreaterOrEqual("1.7"));
     } catch (AccessControlException ex) {
       // If com.eteks.sweethome3d.no3D can't be read, 
       // security manager won't allow to access to Java 3D DLLs required by TextureManager class too 
