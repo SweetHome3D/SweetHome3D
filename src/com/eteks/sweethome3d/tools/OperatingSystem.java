@@ -269,12 +269,23 @@ public class OperatingSystem {
   }
   
   /**
-   * Returns a file comparator that sorts file names according to their version number. 
+   * Returns a file comparator that sorts file names according to their version number (excluding their extension when they are the same). 
    */
   public static Comparator<File> getFileVersionComparator() {
     return new Comparator<File>() {
         public int compare(File file1, File file2) {
-          return OperatingSystem.compareVersions(file1.getName(), file2.getName());
+          String fileName1 = file1.getName();
+          String fileName2 = file2.getName();
+          int extension1Index = fileName1.lastIndexOf('.');
+          String extension1 = extension1Index != -1  ? fileName1.substring(extension1Index)  : null;
+          int extension2Index = fileName2.lastIndexOf('.');
+          String extension2 = extension2Index != -1  ? fileName2.substring(extension2Index)  : null;
+          // If the files have the same extension, remove it 
+          if (extension1 != null && extension1.equals(extension2)) {
+            fileName1 = fileName1.substring(0, extension1Index);
+            fileName2 = fileName2.substring(0, extension2Index);
+          }
+          return OperatingSystem.compareVersions(fileName1, fileName2);
         }
       };
   }
