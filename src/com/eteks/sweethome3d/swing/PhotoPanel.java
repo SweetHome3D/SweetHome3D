@@ -200,7 +200,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoComponent.setPreferredSize(new Dimension(getToolkit().getScreenSize().width <= 1024 ? 320 : 400, 400));
     // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
     // to let the user drag and drop the created image (Windows support seems to fail) 
-    if (OperatingSystem.isMacOSX()) {
+    if (OperatingSystem.isMacOSX()
+        && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       this.photoComponent.setTransferHandler(new VisualTransferHandler() {
           @Override
           public int getSourceActions(JComponent component) {
