@@ -171,8 +171,10 @@ public class ColorButton extends JButton {
                   // Move color at the beginning of the list and ensure it doesn't contain more than 20 colors
                   if (colorIndex > 0) {
                     recentColors.remove(colorIndex);
-                  } else if (recentColors.size() == RecentColorsPanel.MAX_COLORS) {
-                    recentColors.remove(RecentColorsPanel.MAX_COLORS - 1);
+                  } else {
+                    while (recentColors.size() > RecentColorsPanel.MAX_COLORS) {
+                      recentColors.remove(recentColors.size() - 1);
+                    }
                   }
                   recentColors.add(0, color);
                   preferences.setRecentColors(recentColors);     
@@ -309,6 +311,7 @@ public class ColorButton extends JButton {
     private Color                 initialColor;
       
     public PalettesColorChooserPanel(UserPreferences preferences) {
+      setOpaque(false);
       this.preferences = preferences;
       addAncestorListener(new AncestorListener() {
           private int initialDelay;
@@ -1118,7 +1121,7 @@ public class ColorButton extends JButton {
    * Panel showing recent colors.
    */
   private static class RecentColorsPanel extends JPanel {
-    public static final int MAX_COLORS = 20;
+    public static final int MAX_COLORS = OperatingSystem.isJavaVersionGreaterOrEqual("1.7") ? 25 : 20;
     
     private Cursor pipetteCursor;
     
@@ -1138,6 +1141,7 @@ public class ColorButton extends JButton {
             }
           });
       setRecentColors(colorSelectionModel, preferences);
+      setOpaque(false);
     }
 
     private void setRecentColors(final ColorSelectionModel colorSelectionModel, 
@@ -1150,7 +1154,9 @@ public class ColorButton extends JButton {
             i++, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
             GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       }      
-      for (final Integer color : preferences.getRecentColors()) {
+      List<Integer> recentColors = preferences.getRecentColors();
+      for (int j = 0; j < recentColors.size() && j < MAX_COLORS; j++) {
+        final Integer color = recentColors.get(j);
         Component colorComponent = new JComponent() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1194,7 +1200,11 @@ public class ColorButton extends JButton {
 
     public Insets getInsets() { 
       if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-        return super.getInsets();
+        Insets insets = super.getInsets();
+        if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+          insets.top += 10;
+        }
+        return insets;
       } else {
         if (UIManager.getLookAndFeel().getID().equals("GTK")) {
           return new Insets(5, 5, 5, 5);
