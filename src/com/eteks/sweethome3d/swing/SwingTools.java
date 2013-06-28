@@ -47,6 +47,8 @@ import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -232,41 +234,52 @@ public class SwingTools {
   }
 
   /**
-   * Updates the Swing resource bundles in use from the current Locale and class loader. 
+   * Updates the Swing resource bundles in use from the default Locale and class loader. 
    */
   public static void updateSwingResourceLanguage() {
-    updateSwingResourceLanguage(Arrays.asList(new ClassLoader [] {SwingTools.class.getClassLoader()}));
+    updateSwingResourceLanguage(Arrays.asList(new ClassLoader [] {SwingTools.class.getClassLoader()}), null);
   }
 
   /**
-   * Updates the Swing resource bundles in use from the current Locale and the class loaders of preferences.
+   * Updates the Swing resource bundles in use from the preferences Locale and the class loaders of preferences.
    */
   public static void updateSwingResourceLanguage(UserPreferences preferences) {
-    updateSwingResourceLanguage(preferences.getResourceClassLoaders());
+    updateSwingResourceLanguage(preferences.getResourceClassLoaders(), preferences.getLanguage());
   }
 
   /**
-   * Updates the Swing resource bundles in use from the current Locale and class loaders.
+   * Updates the Swing resource bundles in use from the preferences Locale and class loaders.
    */
-  private static void updateSwingResourceLanguage(List<ClassLoader> classLoaders) {
+  private static void updateSwingResourceLanguage(List<ClassLoader> classLoaders,
+                                                  String language) {
+    // Clear resource cache
+    UIManager.getDefaults().removeResourceBundle(null);
+    UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
     // Read Swing localized properties because Swing doesn't update its internal strings automatically
     // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
-    updateSwingResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal", classLoaders);
-    updateSwingResourceBundle("com.sun.swing.internal.plaf.basic.resources.basic", classLoaders);
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal", classLoaders, language);
+    updateSwingResourceBundle("com.sun.swing.internal.plaf.basic.resources.basic", classLoaders, language);
     if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
-      updateSwingResourceBundle("com.sun.java.swing.plaf.gtk.resources.gtk", classLoaders);
+      updateSwingResourceBundle("com.sun.java.swing.plaf.gtk.resources.gtk", classLoaders, language);
     } else if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.motif.MotifLookAndFeel")) {
-      updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif", classLoaders);
+      updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif", classLoaders, language);
     } 
   }
 
   /**
    * Updates a Swing resource bundle in use from the current Locale. 
    */
-  private static void updateSwingResourceBundle(String swingResource, List<ClassLoader> classLoaders) {
-    ResourceBundle resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
+  private static void updateSwingResourceBundle(String swingResource, 
+                                                List<ClassLoader> classLoaders,
+                                                String language) {
+    ResourceBundle resource;
     try {
-      Locale defaultLocale = Locale.getDefault();
+      Locale defaultLocale = language == null 
+          ? Locale.getDefault()
+              : (language.indexOf('_') == -1 
+              ? new Locale(language)
+              : new Locale(language.substring(0, 2), language.substring(3, 5)));
+      resource = ResourceBundle.getBundle(swingResource, defaultLocale);
       for (ClassLoader classLoader : classLoaders) {
         ResourceBundle bundle = ResourceBundle.getBundle(swingResource, defaultLocale, classLoader);
         if (defaultLocale.equals(bundle.getLocale())) {
@@ -279,11 +292,29 @@ public class SwingTools {
         }
       }
     } catch (MissingResourceException ex) {
+      resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
     }
-    // Update UIManager properties
+    
+    // Update UIManager properties    
+    final String textAndMnemonicSuffix = ".textAndMnemonic";
     for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
-      String property = (String)it.nextElement();
-      UIManager.put(property, resource.getString(property));
+      String key = (String)it.nextElement();
+      String value = resource.getString(key);
+      UIManager.put(key, value);
+      if (key.endsWith(textAndMnemonicSuffix)) {
+        // Decompose now property value like in javax.swing.UIDefaults.TextAndMnemonicHashMap because  
+        // UIDefaults#getResourceCache(Locale) doesn't store the the correct localized value for non English resources 
+        // (.textAndMnemonic suffix appeared with Java 1.7) 
+        String text = value.replace("&", "");
+        String keyPrefix = key.substring(0, key.length() - textAndMnemonicSuffix.length());
+        UIManager.put(keyPrefix + "NameText", text);
+        UIManager.put(keyPrefix + "Text", text); 
+        int index = value.indexOf('&');
+        if (index >= 0 && index < value.length() - 1) {
+          UIManager.put(key.replace(textAndMnemonicSuffix, "Mnemonic"), 
+              String.valueOf(Character.toUpperCase(value.charAt(index + 1))));
+        }
+      }
     }
   }
   
