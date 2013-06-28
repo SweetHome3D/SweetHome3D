@@ -47,8 +47,6 @@ import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -299,10 +297,10 @@ public class SwingTools {
     final String textAndMnemonicSuffix = ".textAndMnemonic";
     for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
       String key = (String)it.nextElement();
-      String value = resource.getString(key);
-      UIManager.put(key, value);
       if (key.endsWith(textAndMnemonicSuffix)) {
-        // Decompose now property value like in javax.swing.UIDefaults.TextAndMnemonicHashMap because  
+        String value = resource.getString(key);
+        UIManager.put(key, value);
+        // Decompose property value like in javax.swing.UIDefaults.TextAndMnemonicHashMap because  
         // UIDefaults#getResourceCache(Locale) doesn't store the correct localized value for non English resources 
         // (.textAndMnemonic suffix appeared with Java 1.7) 
         String text = value.replace("&", "");
@@ -314,6 +312,13 @@ public class SwingTools {
           UIManager.put(key.replace(textAndMnemonicSuffix, "Mnemonic"), 
               String.valueOf(Character.toUpperCase(value.charAt(index + 1))));
         }
+      }
+    }
+    // Store other properties coming from read resource and give them a higher priority if already set in previous loop 
+    for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
+      String key = (String)it.nextElement();
+      if (!key.endsWith(textAndMnemonicSuffix)) {
+        UIManager.put(key, resource.getString(key));
       }
     }
   }
