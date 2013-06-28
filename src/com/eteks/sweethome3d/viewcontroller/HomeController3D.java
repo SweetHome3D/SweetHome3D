@@ -623,7 +623,7 @@ public class HomeController3D implements Controller {
           + homeBoundsDepth * homeBoundsDepth 
           + homeBoundsHeight * homeBoundsHeight) / 2;
       this.minDistanceToAerialViewCenter = halfDiagonal * 1.05f;
-      this.maxDistanceToAerialViewCenter = Math.max(5 * this.minDistanceToAerialViewCenter, 1000);
+      this.maxDistanceToAerialViewCenter = Math.max(5 * this.minDistanceToAerialViewCenter, 2500);
     }
        
     @Override
