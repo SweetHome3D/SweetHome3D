@@ -38,6 +38,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -109,15 +110,18 @@ public class HomeFramePane extends JRootPane implements View {
       }
     };
     // Update frame image and title 
-    Image [] frameImages = {new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon.png")).getImage(),
-                            new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon32x32.png")).getImage()};
+    List<Image> frameImages = new ArrayList<Image>(3);
+    frameImages.add(new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
+    frameImages.add(new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon32x32.png")).getImage());
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      frameImages.add(new ImageIcon(HomeFramePane.class.getResource("resources/frameIcon128x128.png")).getImage());
+    }
     try {
       // Call Java 1.6 setIconImages by reflection
-      homeFrame.getClass().getMethod("setIconImages", List.class)
-          .invoke(homeFrame, Arrays.asList(frameImages));
+      homeFrame.getClass().getMethod("setIconImages", List.class).invoke(homeFrame, frameImages);
     } catch (Exception ex) {
       // Call setIconImage available in previous versions
-      homeFrame.setIconImage(frameImages [0]);
+      homeFrame.setIconImage(frameImages.get(0));
     }
     updateFrameTitle(homeFrame, this.home, this.application);
     // Change component orientation
