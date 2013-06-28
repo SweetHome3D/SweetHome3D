@@ -147,7 +147,7 @@ public class SweetHome3D extends HomeApplication {
   private boolean                 pluginManagerInitialized;
   private boolean                 checkUpdatesNeeded;
   private AutoRecoveryManager     autoRecoveryManager;
-  private final Map<Home, JFrame> homeFrames;
+  private final Map<Home, HomeFrameController> homeFrameControllers;
 
   /**
    * Creates a home application instance. Recorders, user preferences, content
@@ -155,7 +155,7 @@ public class SweetHome3D extends HomeApplication {
    * lazily instantiated to let subclasses override their creation.
    */
   protected SweetHome3D() {
-    this.homeFrames = new HashMap<Home, JFrame>();
+    this.homeFrameControllers = new HashMap<Home, HomeFrameController>();
   }
 
   /**
@@ -321,10 +321,17 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
-   * Returns the frame that displays a given <code>home</code>.
+   * Returns the frame that displays the given <code>home</code>.
    */
   JFrame getHomeFrame(Home home) {
-    return this.homeFrames.get(home);
+    return (JFrame)SwingUtilities.getRoot((JComponent)this.homeFrameControllers.get(home).getView());
+  }
+
+  /**
+   * Returns the controller of the given <code>home</code>.
+   */
+  HomeFrameController getHomeFrameController(Home home) {
+    return this.homeFrameControllers.get(home);
   }
 
   /**
@@ -405,8 +412,7 @@ public class SweetHome3D extends HomeApplication {
                 addNewHomeCloseListener(home, controller.getHomeController());
               }
 
-              JFrame homeFrame = (JFrame)SwingUtilities.getRoot((JComponent) controller.getView());
-              homeFrames.put(home, homeFrame);
+              homeFrameControllers.put(home, controller);
             } catch (IllegalStateException ex) {
               // Check exception by class name to avoid a mandatory bind to Java 3D
               if ("javax.media.j3d.IllegalRenderingStateException".equals(ex.getClass().getName())) {
@@ -419,7 +425,7 @@ public class SweetHome3D extends HomeApplication {
             }
             break;
           case DELETE:
-            homeFrames.remove(ev.getItem());
+            homeFrameControllers.remove(ev.getItem());
 
             // If application has no more home
             if (getHomes().isEmpty() && !OperatingSystem.isMacOSX()) {
