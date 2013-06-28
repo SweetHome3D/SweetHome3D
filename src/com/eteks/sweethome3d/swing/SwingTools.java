@@ -303,7 +303,7 @@ public class SwingTools {
       UIManager.put(key, value);
       if (key.endsWith(textAndMnemonicSuffix)) {
         // Decompose now property value like in javax.swing.UIDefaults.TextAndMnemonicHashMap because  
-        // UIDefaults#getResourceCache(Locale) doesn't store the the correct localized value for non English resources 
+        // UIDefaults#getResourceCache(Locale) doesn't store the correct localized value for non English resources 
         // (.textAndMnemonic suffix appeared with Java 1.7) 
         String text = value.replace("&", "");
         String keyPrefix = key.substring(0, key.length() - textAndMnemonicSuffix.length());
