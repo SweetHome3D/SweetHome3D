@@ -39,10 +39,12 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Canvas3D;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -114,7 +116,7 @@ class MacOSXConfiguration {
       public void handleQuit(ApplicationEvent ev) { 
         handleAction(new Runnable() {
             public void run() {
-              defaultController.exit();
+              getHomeController().exit();
             }
           });
         if (homeApplication.getHomes().isEmpty()) {
@@ -126,7 +128,7 @@ class MacOSXConfiguration {
       public void handleAbout(ApplicationEvent ev) {
         handleAction(new Runnable() {
             public void run() {
-              defaultController.about();
+              getHomeController().about();
             }
           });
         ev.setHandled(true);
@@ -136,12 +138,26 @@ class MacOSXConfiguration {
       public void handlePreferences(ApplicationEvent ev) {
         handleAction(new Runnable() {
             public void run() {
-              defaultController.editPreferences();
+              getHomeController().editPreferences();
             }
           });
       }
       
-      private void handleAction(Runnable runnable) {
+      private HomeController getHomeController() {
+        if (defaultFrame != null) {
+          Frame activeFrame = getActiveFrame();
+          if (activeFrame != null) {
+            for (Home home : homeApplication.getHomes()) {
+              if (homeApplication.getHomeFrame(home) == activeFrame) {
+                return homeApplication.getHomeFrameController(home).getHomeController();
+              }
+            }
+          }
+        }
+        return defaultController;
+      }
+      
+      private Frame getActiveFrame() {
         Frame activeFrame = null;
         for (Frame frame : Frame.getFrames()) {
           if (frame != defaultFrame && frame.isActive()) {
@@ -149,30 +165,37 @@ class MacOSXConfiguration {
             break;
           }
         }
-        if (defaultFrame != null) {
+        return activeFrame;
+      }
+
+      private void handleAction(Runnable runnable) {
+        Frame activeFrame = getActiveFrame();        
+        if (defaultFrame != null && activeFrame == null) {
           // Move default frame to center to display dialogs at center
           defaultFrame.setLocationRelativeTo(null);
           defaultFrame.toFront();
           defaultFrame.setAlwaysOnTop(true);
-          // Disable About and Preferences menu items 
-          macosxApplication.setEnabledAboutMenu(false);
-          macosxApplication.setEnabledPreferencesMenu(false);
         }
         
-        runnable.run();
+        // Disable About and Preferences menu items 
+        macosxApplication.setEnabledAboutMenu(false);
+        macosxApplication.setEnabledPreferencesMenu(false);
         
+        runnable.run();
+
+        // Enable About and Preferences menu items again
+        macosxApplication.setEnabledAboutMenu(true);
+        macosxApplication.setEnabledPreferencesMenu(true);
+
         // Activate previous frame again
         if (activeFrame != null) {
           activeFrame.toFront();
         }
-        if (defaultFrame != null) {
+        if (defaultFrame != null && activeFrame == null) {
           defaultFrame.setAlwaysOnTop(false);
           // Move default frame out of user view
           defaultFrame.toBack();
           defaultFrame.setLocation(-10, 0);
-          // Enable About and Preferences menu items again
-          macosxApplication.setEnabledAboutMenu(true);
-          macosxApplication.setEnabledPreferencesMenu(true);
         }
       }
 
