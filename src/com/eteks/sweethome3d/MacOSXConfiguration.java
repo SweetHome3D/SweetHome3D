@@ -461,7 +461,7 @@ class MacOSXConfiguration {
           
           @Override
           public Insets getBorderInsets(Component c) {
-            return new Insets(0, 4, 0, 4);
+            return new Insets(-4, 4, 0, 4);
           }
           
           @Override
