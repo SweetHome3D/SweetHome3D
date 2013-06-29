@@ -24,9 +24,15 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Frame;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -39,25 +45,35 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Canvas3D;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JRootPane;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.AbstractBorder;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.event.MouseInputAdapter;
 
+import com.apple.eawt.AppEvent.FullScreenEvent;
 import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
+import com.apple.eawt.FullScreenAdapter;
+import com.apple.eawt.FullScreenListener;
+import com.apple.eawt.FullScreenUtilities;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.sun.j3d.exp.swing.JCanvas3D;
@@ -71,6 +87,9 @@ import com.sun.j3d.exp.swing.JCanvas3D;
  * @author Emmanuel Puybaret
  */
 class MacOSXConfiguration {
+  private MacOSXConfiguration() {    
+  }
+  
   /**
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
@@ -417,5 +436,121 @@ class MacOSXConfiguration {
           menuDeselected(ev);
         }
       });
+  }
+  
+  /**
+   * Updates pane tool bar to integrate it with frame title under Mac OS X.
+   */
+  public static void installToolBar(final JRootPane rootPane) {
+    List<JToolBar> toolBars = SwingTools.findChildren(rootPane, JToolBar.class);
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7.0_12")
+        && toolBars.size() == 1) {
+      rootPane.putClientProperty("apple.awt.brushMetalLook", true);
+      final JToolBar toolBar = toolBars.get(0);
+      toolBar.setFloatable(false);
+      toolBar.setBorder(new AbstractBorder() {
+          private final Color TOP_GRADIENT_COLOR_ACTIVATED_FRAME = new Color(222, 222, 222);
+          private final Color BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME = new Color(178, 178, 178);
+          private final Color TOP_GRADIENT_COLOR_DEACTIVATED_FRAME  = new Color(244, 244, 244);
+          private final Color BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME = TOP_GRADIENT_COLOR_ACTIVATED_FRAME;
+
+          @Override
+          public boolean isBorderOpaque() {
+            return true;
+          }
+          
+          @Override
+          public Insets getBorderInsets(Component c) {
+            return new Insets(0, 4, 0, 4);
+          }
+          
+          @Override
+          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            // Paint the tool bar with a gradient different if the frame is activated or not
+            Component root = SwingUtilities.getRoot(rootPane);
+            boolean active = ((JFrame)root).isActive();
+            ((Graphics2D)g).setPaint(new GradientPaint(0, y, 
+                active ? TOP_GRADIENT_COLOR_ACTIVATED_FRAME : TOP_GRADIENT_COLOR_DEACTIVATED_FRAME, 
+                0, y + height - 1, 
+                active ? BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME : BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME));
+            g.fillRect(x, y, x + width, y + height);
+          }
+        });
+      
+      // Manage frame moves when the user clicks in the tool bar background
+      final MouseInputAdapter mouseListener = new MouseInputAdapter() {
+          private Point lastLocation;
+          
+          @Override
+          public void mousePressed(MouseEvent ev) {
+            this.lastLocation = ev.getPoint();
+            SwingUtilities.convertPointToScreen(this.lastLocation, ev.getComponent());
+          }
+    
+          @Override
+          public void mouseDragged(MouseEvent ev) {
+            Point newLocation = ev.getPoint();
+            SwingUtilities.convertPointToScreen(newLocation, ev.getComponent());
+            Component root = SwingUtilities.getRoot(rootPane);
+            root.setLocation(root.getX() + newLocation.x - this.lastLocation.x, 
+                root.getY() + newLocation.y - this.lastLocation.y);
+            this.lastLocation = newLocation;
+          }
+        };
+      toolBar.addMouseListener(mouseListener);
+      toolBar.addMouseMotionListener(mouseListener);
+      
+      toolBar.addAncestorListener(new AncestorListener() {
+          private Object fullScreenListener;
+
+          public void ancestorAdded(AncestorEvent ev) {
+            ((Window)SwingUtilities.getRoot(toolBar)).addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowActivated(WindowEvent ev) {
+                  toolBar.repaint();
+                }
+                
+                @Override
+                public void windowDeactivated(WindowEvent ev) {
+                  toolBar.repaint();
+                }
+              });
+            toolBar.repaint();
+
+            try {
+              Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
+              this.fullScreenListener = new FullScreenAdapter() {
+                  public void windowEnteredFullScreen(FullScreenEvent ev) {
+                    toolBar.removeMouseListener(mouseListener);
+                    toolBar.removeMouseMotionListener(mouseListener);
+                  }
+                  
+                  public void windowExitedFullScreen(FullScreenEvent ev) {
+                    toolBar.addMouseListener(mouseListener);
+                    toolBar.addMouseMotionListener(mouseListener);
+                  }
+                };
+              FullScreenUtilities.addFullScreenListenerTo((Window)SwingUtilities.getRoot(rootPane), 
+                  (FullScreenListener)this.fullScreenListener);
+            } catch (ClassNotFoundException ex) {
+              // If FullScreenUtilities isn't supported, ignore mouse listener switch
+            }
+          }
+  
+          public void ancestorMoved(AncestorEvent ev) {
+          }
+  
+          public void ancestorRemoved(AncestorEvent ev) {
+            toolBar.removeAncestorListener(this);
+            try {
+              Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
+              FullScreenUtilities.removeFullScreenListenerFrom((Window)SwingUtilities.getRoot(rootPane), 
+                  (FullScreenListener)this.fullScreenListener);
+            } catch (ClassNotFoundException ex) {
+              // If FullScreenUtilities isn't supported, ignore mouse listener switch
+            }
+          }
+        });
+    }
   }
 }

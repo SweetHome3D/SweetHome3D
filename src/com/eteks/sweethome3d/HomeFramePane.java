@@ -122,6 +122,9 @@ public class HomeFramePane extends JRootPane implements View {
       // Call setIconImage available in previous versions
       homeFrame.setIconImage(frameImages.get(0));
     }
+    if (OperatingSystem.isMacOSXLionOrSuperior()) {
+      MacOSXConfiguration.installToolBar(this);
+    }
     updateFrameTitle(homeFrame, this.home, this.application);
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
