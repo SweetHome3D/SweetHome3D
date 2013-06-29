@@ -905,22 +905,26 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.NEW_HOME, fileMenu);
     addActionToMenu(ActionType.OPEN, fileMenu);
     
-    final JMenu openRecentHomeMenu = 
-        new JMenu(this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU));
-    addActionToMenu(ActionType.DELETE_RECENT_HOMES, openRecentHomeMenu);
-    openRecentHomeMenu.addMenuListener(new MenuListener() {
-        public void menuSelected(MenuEvent ev) {
-          updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
-        }
-      
-        public void menuCanceled(MenuEvent ev) {
-        }
-  
-        public void menuDeselected(MenuEvent ev) {
-        }
-      });
     
-    fileMenu.add(openRecentHomeMenu);
+    Action openRecentHomeAction = this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU);
+    if (openRecentHomeAction.getValue(Action.NAME) != null) {
+      final JMenu openRecentHomeMenu = 
+          new JMenu(openRecentHomeAction);
+      addActionToMenu(ActionType.DELETE_RECENT_HOMES, openRecentHomeMenu);
+      openRecentHomeMenu.addMenuListener(new MenuListener() {
+          public void menuSelected(MenuEvent ev) {
+            updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
+          }
+        
+          public void menuCanceled(MenuEvent ev) {
+          }
+    
+          public void menuDeselected(MenuEvent ev) {
+          }
+        });
+      
+      fileMenu.add(openRecentHomeMenu);
+    }
     fileMenu.addSeparator();
     addActionToMenu(ActionType.CLOSE, fileMenu);
     addActionToMenu(ActionType.SAVE, fileMenu);
