@@ -517,8 +517,7 @@ public class FileContentManager implements ContentManager {
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()
-        && (!isDirectory(contentType)
-            || Boolean.getBoolean("com.eteks.sweethome3d.sandboxed"))) {
+        && !isDirectory(contentType)) {
       return showFileDialog(parentView, dialogTitle, contentType, null, false);
     } else {
       return showFileChooser(parentView, dialogTitle, contentType, null, false);
@@ -550,8 +549,7 @@ public class FileContentManager implements ContentManager {
     String savedPath;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()
-        && (!isDirectory(contentType)
-            || Boolean.getBoolean("com.eteks.sweethome3d.sandboxed"))) {
+        && !isDirectory(contentType)) {
       savedPath = showFileDialog(parentView, dialogTitle, contentType, path, true);
     } else {
       savedPath = showFileChooser(parentView, dialogTitle, contentType, path, true);
@@ -627,12 +625,7 @@ public class FileContentManager implements ContentManager {
     }
     fileDialog.setTitle(dialogTitle);
     
-    try {
-      System.setProperty("apple.awt.fileDialogForDirectories", String.valueOf(isDirectory(contentType)));
-      fileDialog.setVisible(true);
-    } finally {
-      System.setProperty("apple.awt.fileDialogForDirectories", "false");
-    }
+    fileDialog.setVisible(true);
 
     String selectedFile = fileDialog.getFile();
     // If user chose a file
