@@ -592,65 +592,64 @@ public class FileContentManager implements ContentManager {
                                 final ContentType  contentType,
                                 String             path, 
                                 boolean            save) {
+    FileDialog fileDialog = new FileDialog(
+        JOptionPane.getFrameForComponent((JComponent)parentView));
+
+    // Set selected file
+    if (save && path != null) {
+      fileDialog.setFile(new File(path).getName());
+    }
+    // Set supported files filter 
+    fileDialog.setFilenameFilter(new FilenameFilter() {
+        public boolean accept(File dir, String name) {          
+          return isAcceptable(new File(dir, name).toString(), contentType);
+        }
+      });
+
+      // Update directory
+    File directory = getLastDirectory(contentType);
+    if (directory != null && directory.exists()) {
+      if (isDirectory(contentType)) {
+        fileDialog.setDirectory(directory.getParent());
+        fileDialog.setFile(directory.getName());
+      } else {
+        fileDialog.setDirectory(directory.toString());
+      }
+    }
+    if (save) {
+      fileDialog.setMode(FileDialog.SAVE);
+    } else {
+      fileDialog.setMode(FileDialog.LOAD);
+    }
+
+    if (dialogTitle == null) {
+      dialogTitle = getFileDialogTitle(save);
+    }
+    fileDialog.setTitle(dialogTitle);
+    
     try {
       System.setProperty("apple.awt.fileDialogForDirectories", String.valueOf(isDirectory(contentType)));
-      
-      FileDialog fileDialog = new FileDialog(
-          JOptionPane.getFrameForComponent((JComponent)parentView));
-  
-      // Set selected file
-      if (save && path != null) {
-        fileDialog.setFile(new File(path).getName());
-      }
-      // Set supported files filter 
-      fileDialog.setFilenameFilter(new FilenameFilter() {
-          public boolean accept(File dir, String name) {          
-            return isAcceptable(new File(dir, name).toString(), contentType);
-          }
-        });
-  
-        // Update directory
-      File directory = getLastDirectory(contentType);
-      if (directory != null && directory.exists()) {
-        if (isDirectory(contentType)) {
-          fileDialog.setDirectory(directory.getParent());
-          fileDialog.setFile(directory.getName());
-        } else {
-          fileDialog.setDirectory(directory.toString());
-        }
-      }
-      if (save) {
-        fileDialog.setMode(FileDialog.SAVE);
-      } else {
-        fileDialog.setMode(FileDialog.LOAD);
-      }
-  
-      if (dialogTitle == null) {
-        dialogTitle = getFileDialogTitle(save);
-      }
-      fileDialog.setTitle(dialogTitle);
-    
       fileDialog.setVisible(true);
-
-      String selectedFile = fileDialog.getFile();
-      // If user chose a file
-      if (selectedFile != null) {
-        selectedFile = new File(fileDialog.getDirectory(), selectedFile).toString();
-        // Retrieve directory for future calls
-        if (isDirectory(contentType)) {
-          directory = new File(selectedFile);
-        } else {
-          directory = new File(fileDialog.getDirectory());
-        }
-        // Store current directory
-        setLastDirectory(contentType, directory);
-        // Return selected file
-        return selectedFile;
-      } else {
-        return null;
-      }
     } finally {
       System.setProperty("apple.awt.fileDialogForDirectories", "false");
+    }
+
+    String selectedFile = fileDialog.getFile();
+    // If user chose a file
+    if (selectedFile != null) {
+      selectedFile = new File(fileDialog.getDirectory(), selectedFile).toString();
+      // Retrieve directory for future calls
+      if (isDirectory(contentType)) {
+        directory = new File(selectedFile);
+      } else {
+        directory = new File(fileDialog.getDirectory());
+      }
+      // Store current directory
+      setLastDirectory(contentType, directory);
+      // Return selected file
+      return selectedFile;
+    } else {
+      return null;
     }
   }
 
