@@ -96,6 +96,10 @@ public class FileContentManager implements ContentManager {
   /**
    * Supported 3D model file filters.
    */
+  private static final String LWS_EXTENSION = ".lws";
+  private static final String THREEDS_EXTENSION = ".3ds";
+  private static final String DAE_EXTENSION = ".dae";
+  private static final String ZIP_EXTENSION = ".zip";
   private static final FileFilter [] MODEL_FILTERS = {
      OBJ_FILTER [0],
      new FileFilter() {
@@ -103,7 +107,7 @@ public class FileContentManager implements ContentManager {
        public boolean accept(File file) {
          // Accept directories and LWS files
          return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".lws");
+                || file.getName().toLowerCase().endsWith(LWS_EXTENSION);
        }
    
        @Override
@@ -116,7 +120,7 @@ public class FileContentManager implements ContentManager {
        public boolean accept(File file) {
          // Accept directories and 3DS files
          return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".3ds");
+                || file.getName().toLowerCase().endsWith(THREEDS_EXTENSION);
        }
    
        @Override
@@ -129,7 +133,7 @@ public class FileContentManager implements ContentManager {
        public boolean accept(File file) {
          // Accept directories and 3DS files
          return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".dae");
+                || file.getName().toLowerCase().endsWith(DAE_EXTENSION);
        }
    
        @Override
@@ -142,7 +146,7 @@ public class FileContentManager implements ContentManager {
        public boolean accept(File file) {
          // Accept directories and ZIP files
          return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".zip");
+                || file.getName().toLowerCase().endsWith(ZIP_EXTENSION);
        }
    
        @Override
@@ -190,14 +194,17 @@ public class FileContentManager implements ContentManager {
   /**
    * Supported image file filters.
    */
+  private static final String BMP_EXTENSION = ".bmp";
+  private static final String WBMP_EXTENSION = ".wbmp";
+  private static final String GIF_EXTENSION = ".gif";
   private static final FileFilter [] IMAGE_FILTERS = {
       new FileFilter() {
         @Override
         public boolean accept(File file) {
           // Accept directories and .sh3d files
           return file.isDirectory()
-                 || file.getName().toLowerCase().endsWith(".bmp")
-                 || file.getName().toLowerCase().endsWith(".wbmp");
+                 || file.getName().toLowerCase().endsWith(BMP_EXTENSION)
+                 || file.getName().toLowerCase().endsWith(WBMP_EXTENSION);
         }
     
         @Override
@@ -210,7 +217,7 @@ public class FileContentManager implements ContentManager {
         public boolean accept(File file) {
           // Accept directories and GIF files
           return file.isDirectory()
-                 || file.getName().toLowerCase().endsWith(".gif");
+                 || file.getName().toLowerCase().endsWith(GIF_EXTENSION);
         }
     
         @Override
@@ -301,7 +308,7 @@ public class FileContentManager implements ContentManager {
   private final String                    pluginFileExtension;
   private Map<ContentType, File>          lastDirectories;
   private Map<ContentType, FileFilter []> fileFilters;
-  private Map<ContentType, String>        defaultFileExtensions;
+  private Map<ContentType, String []>     fileExtensions;
 
   public FileContentManager(final UserPreferences preferences) {  
     this.preferences = preferences;
@@ -414,19 +421,23 @@ public class FileContentManager implements ContentManager {
       });
 
     // Fill file default extension map
-    this.defaultFileExtensions = new HashMap<ContentType, String>();
-    this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, sweetHome3DFileExtension);
-    this.defaultFileExtensions.put(ContentType.LANGUAGE_LIBRARY, languageLibraryFileExtension);
-    this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
-    this.defaultFileExtensions.put(ContentType.TEXTURES_LIBRARY, texturesLibraryFileExtension);
-    this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
-    this.defaultFileExtensions.put(ContentType.PNG, PNG_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.JPEG, JPEG_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.MOV, MOV_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.CSV, CSV_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
+    this.fileExtensions = new HashMap<ContentType, String []>();
+    this.fileExtensions.put(ContentType.SWEET_HOME_3D,     new String [] {sweetHome3DFileExtension});
+    this.fileExtensions.put(ContentType.LANGUAGE_LIBRARY,  new String [] {languageLibraryFileExtension});
+    this.fileExtensions.put(ContentType.FURNITURE_LIBRARY, new String [] {furnitureLibraryFileExtension});
+    this.fileExtensions.put(ContentType.TEXTURES_LIBRARY,  new String [] {texturesLibraryFileExtension});
+    this.fileExtensions.put(ContentType.PLUGIN,            new String [] {pluginFileExtension});
+    this.fileExtensions.put(ContentType.PNG,               new String [] {PNG_EXTENSION});
+    this.fileExtensions.put(ContentType.JPEG,              new String [] {JPEG_EXTENSION});
+    this.fileExtensions.put(ContentType.MOV,               new String [] {MOV_EXTENSION});
+    this.fileExtensions.put(ContentType.PDF,               new String [] {PDF_EXTENSION});
+    this.fileExtensions.put(ContentType.CSV,               new String [] {CSV_EXTENSION});
+    this.fileExtensions.put(ContentType.SVG,               new String [] {SVG_EXTENSION});
+    this.fileExtensions.put(ContentType.OBJ,               new String [] {OBJ_EXTENSION});
+    this.fileExtensions.put(ContentType.MODEL,             
+        new String [] {OBJ_EXTENSION, LWS_EXTENSION, THREEDS_EXTENSION, DAE_EXTENSION, ZIP_EXTENSION});
+    this.fileExtensions.put(ContentType.IMAGE,             
+        new String [] {PNG_EXTENSION, JPEG_EXTENSION, BMP_EXTENSION, WBMP_EXTENSION, GIF_EXTENSION} );
   }
   
   /**
@@ -480,11 +491,20 @@ public class FileContentManager implements ContentManager {
    * or to define the default file extension of a user defined content type.
    */
   public String getDefaultFileExtension(ContentType contentType) {
-    if (contentType == ContentType.USER_DEFINED) {
-      return null;
-    } else {
-      return this.defaultFileExtensions.get(contentType);
+    String [] fileExtensions = this.fileExtensions.get(contentType);
+    if (fileExtensions != null) {
+      return fileExtensions [0];
     }
+    return null;
+  }
+  
+  /**
+   * Returns the supported file extensions for a given content type. 
+   * This method may be overridden to change the file extensions of an existing content type
+   * or to define the file extensions of a user defined content type.
+   */
+  protected String [] getFileExtensions(ContentType contentType) {
+    return this.fileExtensions.get(contentType);
   }
   
   /**
