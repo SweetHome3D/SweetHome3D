@@ -2625,9 +2625,11 @@ public class HomePane extends JRootPane implements HomeView {
 
         final Integer dividerLocation = (Integer)home.getVisualProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
         if (OperatingSystem.isMacOSX() 
-            && !detachedView3D && dividerLocation != null && dividerLocation > 2) {
+            && !detachedView3D && dividerLocation != null && dividerLocation > 2
+            && !Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
           // Under Mac OS X, ensure that the 3D view of an existing home will be displayed during a while
           // to avoid a freeze when the 3D view was saved as hidden and then the window displaying the 3D view is enlarged 
+          // (this issue happens with on screen canvas under Java3D 1.5.2 and 1.6)
           planView3DSplitPane.addAncestorListener(new AncestorListener() {
               public void ancestorAdded(AncestorEvent event) {
                 planView3DSplitPane.removeAncestorListener(this);
