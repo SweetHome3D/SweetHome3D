@@ -45,15 +45,20 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Canvas3D;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRootPane;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.MenuEvent;
@@ -551,6 +556,34 @@ class MacOSXConfiguration {
             }
           }
         });
+      
+      // Empty left, bottom and right borders of sibling split pane
+      List<JSplitPane> siblings = SwingTools.findChildren((JComponent)toolBar.getParent(), JSplitPane.class);
+      if (siblings.size() >= 1) {
+        JComponent siblingComponent = siblings.get(0);
+        if (siblingComponent.getParent() == toolBar.getParent()) {
+          Border border = siblingComponent.getBorder();
+          final Insets borderInsets = border.getBorderInsets(siblingComponent);
+          final Insets filledBorderInsets = new Insets(1, 0, 0, 0);
+          siblingComponent.setBorder(new CompoundBorder(border, 
+              new AbstractBorder() {
+                @Override
+                public Insets getBorderInsets(Component c) {
+                  return filledBorderInsets;
+                }
+                
+                @Override
+                public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                  Color background = c.getBackground();
+                  g.setColor(background);
+                  g.fillRect(x, y, width, 1);
+                  g.fillRect(x - borderInsets.left, y, borderInsets.left, height + borderInsets.bottom);
+                  g.fillRect(x + width, y, borderInsets.right, height + borderInsets.bottom);
+                  g.fillRect(x, y + height, width, borderInsets.bottom);
+                }              
+              }));
+        }
+      }
     }
   }
 }
