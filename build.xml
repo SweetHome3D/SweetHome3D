@@ -306,13 +306,13 @@
       </manifest>
       <zipfileset src="lib/batik-svgpathparser-1.7.jar"/>
     </jar>
-    <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1.jar" filesetmanifest="merge">
+    <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1a.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Trusted-Library" value="true"/>
         <attribute name="Permissions"     value="all-permissions"/>
         <attribute name="Codebase"        value="*"/>
       </manifest>
-      <zipfileset src="lib/freehep-vectorgraphics-svg-2.1.1.jar"/>
+      <zipfileset src="lib/freehep-vectorgraphics-svg-2.1.1a.jar"/>
     </jar>
     <jar destfile="deploy/lib/sunflow-0.07.3h.jar" filesetmanifest="merge">
       <manifest>
@@ -438,7 +438,7 @@
         <exclude name="vecmath.jar"/>
         <!-- No Print to PDF, Export to SVG, Export to PNG and Create video in viewer -->
         <exclude name="iText-2.1.7.jar"/>
-        <exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
+        <exclude name="freehep-vectorgraphics-svg-2.1.1a.jar"/>
         <exclude name="sunflow-0.07.3h.jar"/>
         <exclude name="jmf.jar"/>
       </fileset>
