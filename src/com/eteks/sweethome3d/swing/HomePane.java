@@ -816,6 +816,10 @@ public class HomePane extends JRootPane implements HomeView {
           previousPlanControllerMode = planController.getMode();
           planController.setMode(PlanController.Mode.PANNING);
           ev.consume();
+        } else if (OperatingSystem.isMacOSX() 
+            && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+          // Manage events with cmd key + special key from keyPressed because keyTyped won't be called
+          keyTyped(ev);
         }
       }
       
