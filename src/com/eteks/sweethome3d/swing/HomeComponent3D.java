@@ -306,6 +306,25 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (offscreenUniverse != null) {
             throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
           }
+          
+          // Create component 3D only if once it's visible
+          Insets insets = getInsets();
+          if (getHeight() <= insets.top + insets.bottom
+              || getWidth() <= insets.left + insets.right) {
+            addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent ev) {
+                  ancestorAdded(null);
+                  removeComponentListener(this);
+                }
+              });
+            return;
+          } else if (ev == null) {
+            // Force a resize event to make the component 3D appear
+            Component root = SwingUtilities.getRoot(HomeComponent3D.this);
+            root.dispatchEvent(new ComponentEvent(root, ComponentEvent.COMPONENT_RESIZED));
+          }
+          
           // Create component 3D only once the graphics configuration of its parent is known
           if (component3D == null) {
             createComponent3D(ev.getAncestor().getGraphicsConfiguration(), preferences, controller);
