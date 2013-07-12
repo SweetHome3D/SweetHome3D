@@ -98,6 +98,7 @@ public class AppletApplication extends HomeApplication {
   private static final String WRITE_PREFERENCES_URL_PARAMETER        = "writePreferencesURL";
   private static final String DEFAULT_HOME_PARAMETER                 = "defaultHome";
   private static final String ENABLE_EXPORT_TO_SH3D                  = "enableExportToSH3D";
+  private static final String ENABLE_EXPORT_TO_CSV                   = "enableExportToCSV";
   private static final String ENABLE_EXPORT_TO_SVG                   = "enableExportToSVG";
   private static final String ENABLE_EXPORT_TO_OBJ                   = "enableExportToOBJ";
   private static final String ENABLE_PRINT_TO_PDF                    = "enablePrintToPDF";
@@ -486,6 +487,8 @@ public class AppletApplication extends HomeApplication {
       addActionToToolBar(aboutAction, toolBar);
     }
     
+    controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_CSV, 
+        getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_CSV));
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
         getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SVG));
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 

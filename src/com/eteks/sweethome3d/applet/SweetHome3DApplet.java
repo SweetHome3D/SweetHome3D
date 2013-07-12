@@ -139,6 +139,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     the action that lets the user export the edited home to a SH3D file. 
  *     <br>By default, the value of this parameter is <code>false</code>.</li>
  *     
+ *     <li><code>enableExportToCSV</code> specifies whether this applet should enable
+ *     the action that lets the user export the furniture list of the edited home to a CSV file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
  *     <li><code>enableExportToSVG</code> specifies whether this applet should enable
  *     the action that lets the user export the plan of the edited home to a SVG file. 
  *     <br>By default, the value of this parameter is <code>false</code>.</li>
