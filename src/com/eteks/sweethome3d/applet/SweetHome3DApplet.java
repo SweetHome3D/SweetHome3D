@@ -179,7 +179,8 @@ public class SweetHome3DApplet extends JApplet {
   public void init() {
     if (!isJava5OrSuperior()) {
       showText(getLocalizedString("requirementsMessage"));
-    } else if (!getDocumentBase().getHost().equals(getCodeBase().getHost())) {
+    } else if (getCodeBase() != null
+               && !getDocumentBase().getHost().equals(getCodeBase().getHost())) {
       showText(getLocalizedString("unauthorizedHostError"));
     } else {
       createAppletApplication();
