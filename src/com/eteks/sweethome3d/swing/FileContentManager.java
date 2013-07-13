@@ -475,11 +475,11 @@ public class FileContentManager implements ContentManager {
    * This method may be overridden to add some file filters to existing content types
    * or to define the filters of a user defined content type.
    */
-  protected FileFilter [] getFileFilter(ContentType contentPath) {
-    if (contentPath == ContentType.USER_DEFINED) {
+  protected FileFilter [] getFileFilter(ContentType contentType) {
+    if (contentType == ContentType.USER_DEFINED) {
       throw new IllegalArgumentException("Unknown user defined content type");
     } else {
-      return this.fileFilters.get(contentPath);
+      return this.fileFilters.get(contentType);
     }
   }
   
