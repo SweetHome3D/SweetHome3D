@@ -295,7 +295,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceError"));
+                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrorLabel.text"));
                 }
               });
           }

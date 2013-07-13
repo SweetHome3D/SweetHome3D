@@ -224,7 +224,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
-                      preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "imageChoiceError"));
+                      preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "imageChoiceErrorLabel.text"));
                 }
               });
           }
