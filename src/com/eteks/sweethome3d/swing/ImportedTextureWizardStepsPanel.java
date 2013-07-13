@@ -199,19 +199,26 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
         
         @Override
         public boolean importData(JComponent comp, Transferable transferedFiles) {
-          boolean success = true;
+          boolean success = false;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            final String textureName = files.get(0).getAbsolutePath();
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  updateController(textureName, controller.getContentManager(), preferences, false);
-                }
-              });
+            for (File file : files) {
+              final String textureName = file.getAbsolutePath();
+              // Try to import the first file that would be accepted by content manager
+              if (controller.getContentManager().isAcceptable(textureName, ContentManager.ContentType.IMAGE)) {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      updateController(textureName, controller.getContentManager(), preferences, false);
+                    }
+                  });
+                success = true;
+                break;
+              }
+            }
           } catch (UnsupportedFlavorException ex) {
-            success = false;
+            // No success
           } catch (IOException ex) {
-            success = false;
+            // No success
           }
           if (!success) {
             EventQueue.invokeLater(new Runnable() {

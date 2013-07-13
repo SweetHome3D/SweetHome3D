@@ -269,20 +269,27 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         
         @Override
         public boolean importData(JComponent comp, Transferable transferedFiles) {
-          boolean success = true;
+          boolean success = false;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            final String modelName = files.get(0).getAbsolutePath();
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  updateController(modelName, preferences, 
-                      controller.getContentManager(), defaultModelCategory, false);
-                }
-              });
+            for (File file : files) {
+              final String modelName = file.getAbsolutePath();
+              // Try to import the first file that would be accepted by content manager
+              if (controller.getContentManager().isAcceptable(modelName, ContentManager.ContentType.MODEL)) {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      updateController(modelName, preferences, 
+                          controller.getContentManager(), defaultModelCategory, false);
+                    }
+                  });
+                success = true;
+                break;
+              }
+            }
           } catch (UnsupportedFlavorException ex) {
-            success = false;
+            // No success
           } catch (IOException ex) {
-            success = false;
+            // No success
           }
           if (!success) {
             EventQueue.invokeLater(new Runnable() {
