@@ -1689,6 +1689,16 @@ public class HomeController implements Controller {
   }
   
   /**
+   * Saves the home managed by this controller with a different name and compresses it. 
+   * This method displays a {@link HomeView#showSaveDialog(String) save dialog} in  view, 
+   * and saves home with the chosen name if any.
+   * @since 4.2 
+   */
+  public void saveAsAndCompress() {
+    saveAs(HomeRecorder.Type.COMPRESSED, null);
+  }
+
+  /**
    * Actually saves the home managed by this controller and executes <code>postSaveTask</code> 
    * if it's not <code>null</code>.
    */
