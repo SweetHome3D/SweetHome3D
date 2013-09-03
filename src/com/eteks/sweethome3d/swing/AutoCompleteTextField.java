@@ -37,17 +37,27 @@ import javax.swing.text.PlainDocument;
  */
 public class AutoCompleteTextField extends JTextField {
   private List<String> autoCompletionStrings;
+  private boolean directChange; 
   
   public AutoCompleteTextField(String text, int preferredLength, List<String> autoCompletionStrings) {
     super(preferredLength);
     this.autoCompletionStrings = autoCompletionStrings;
     setDocument(new AutoCompleteDocument(text));    
+    this.directChange = true;
+  }
+  
+  @Override
+  public void setText(String t) {
+    this.directChange = false;
+    super.setText(t);
+    this.directChange = true;
   }
   
   /**
    * Document able to autocomplete.
    */
   private class AutoCompleteDocument extends PlainDocument {
+    
     public AutoCompleteDocument(String text) {
       try {
         replace(0, 0, text, null);
@@ -58,7 +68,7 @@ public class AutoCompleteTextField extends JTextField {
     
     @Override
     public void insertString(int offset, String string, AttributeSet attr) throws BadLocationException {
-      if (string != null && string.length() > 0) {
+      if (directChange && (string != null && string.length() > 0)) {
         int length = getLength();
         if (offset == length || (offset == getSelectionStart() && length - 1 == getSelectionEnd())) {
           String textAtOffset = getText(0, offset); 
