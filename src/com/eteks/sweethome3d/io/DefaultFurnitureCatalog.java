@@ -89,7 +89,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     TAGS("tags"),
     /**
-     * The key for the creation date of a piece of furniture at <code>yyyy-MM-dd</code> format (optional).
+     * The key for the creation or publication date of a piece of furniture at 
+     * <code>yyyy-MM-dd</code> format (optional).
      */
     CREATION_DATE("creationDate"),
     /**
