@@ -460,7 +460,7 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <target name="jarExecutable" depends="application,furniture,textures,help"
+  <target name="jarExecutable" depends="application,furniture,textures,help,jogl-java3d"
           description="Builds install/SweetHome3D-version.jar executable Jar">
     <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
          and other DLLs and jars -->
@@ -478,8 +478,12 @@
       <fileset dir="lib">
         <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
-        <include name="macosx/*.jnilib"/>
-        <include name="macosx/*.jar"/>
+        <include name="macosx/**/*.jnilib"/>
+        <include name="macosx/**/*.jar"/>
+        <exclude name="macosx/*/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
       <fileset dir="libtest">
         <include name="jnlp.jar"/>
