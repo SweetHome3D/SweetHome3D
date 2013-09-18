@@ -21,6 +21,10 @@ package com.eteks.sweethome3d.model;
 
 import java.math.BigDecimal;
 import java.text.Collator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * A catalog piece of furniture.
@@ -28,6 +32,7 @@ import java.text.Collator;
  */
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+  private static final byte [][]  EMPTY_CRITERIA     = new byte [0][];
 
   private final String            id;
   private final String            name;
@@ -61,8 +66,16 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private final String            currency;
 
   private FurnitureCategory       category;
+  private byte []                 filterCollationKey;
 
-  private static final Collator COMPARATOR = Collator.getInstance();
+  private static final Collator               COMPARATOR;
+  private static final Map<String, byte [][]> recentFilters;
+  
+  static {
+    COMPARATOR = Collator.getInstance();
+    COMPARATOR.setStrength(Collator.PRIMARY); 
+    recentFilters = new WeakHashMap<String, byte[][]>();
+  }
 
   /**
    * Creates a catalog piece of furniture.
@@ -700,5 +713,104 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
           ? 0
           : (this.modifiable ? 1 : -1); 
     }
+  }
+  
+  /**
+   * Returns <code>true</code> if this piece matches the given <code>filter</code> text. 
+   * Each substring of the <code>filter</code> is considered as a search criterion that can math
+   * the name, the category name, the creator, the description or the tags of this piece.
+   * @since 4.2  
+   */
+  public boolean matchesFilter(String filter) {
+    byte [][] filterCriteriaCollationKeys = getFilterCollationKeys(filter);
+    int checkedCriteria = 0;
+    if (filterCriteriaCollationKeys.length > 0) {
+      byte [] furnitureCollationKey = getPieceOfFurnitureCollationKey();
+      for (int i = 0; i < filterCriteriaCollationKeys.length; i++) {
+        if (isSubCollationKey(furnitureCollationKey, filterCriteriaCollationKeys [i], 0)) {
+          checkedCriteria++;
+        } else {
+          break;
+        }
+      }
+    }
+    return checkedCriteria == filterCriteriaCollationKeys.length;
+  }
+  
+  /**
+   * Returns the collation key bytes of each criterion in the given <code>filter</code>.
+   */
+  private byte [][] getFilterCollationKeys(String filter) {
+    if (filter.length() == 0) {
+      return EMPTY_CRITERIA;
+    }
+    byte [][] filterCollationKeys = recentFilters.get(filter);
+    if (filterCollationKeys == null) {
+      // Each substring in filter is a search criterion that must be verified 
+      String [] filterCriteria = filter.split("\\s|\\p{Punct}");
+      List<byte []> filterCriteriaCollationKeys = new ArrayList<byte []>(filterCriteria.length);
+      for (String criterion : filterCriteria) {
+        if (criterion.length() > 0) {
+          filterCriteriaCollationKeys.add(COMPARATOR.getCollationKey(criterion).toByteArray());
+        }
+      }
+      if (filterCriteriaCollationKeys.size() == 0) {
+        filterCollationKeys = EMPTY_CRITERIA;
+      } else {
+        filterCollationKeys = filterCriteriaCollationKeys.toArray(new byte [filterCriteriaCollationKeys.size()][]);
+      }
+      recentFilters.put(filter, filterCollationKeys);
+    }
+    return filterCollationKeys;
+  }
+
+  /**
+   * Returns the collation key bytes used to compare the given <code>piece</code> with filter.
+   */
+  private byte [] getPieceOfFurnitureCollationKey() {
+    if (this.filterCollationKey == null) {
+      // Prepare filter string collation key  
+      // (collect the name, category, creator, description and tags of each piece)
+      StringBuilder search = new StringBuilder();
+      search.append(getName());
+      search.append('\t');
+      if (getCategory() != null) {
+        search.append(getCategory().getName());
+        search.append('\t');
+      }
+      if (getCreator() != null) {
+        search.append(getCreator());
+        search.append('\t');
+      }
+      if (getDescription() != null) {
+        search.append(getDescription());
+        search.append('\t');
+      }
+      for (String tag : getTags()) {
+        search.append(tag);
+        search.append('\t');
+      }
+      
+      this.filterCollationKey = COMPARATOR.getCollationKey(search.toString()).toByteArray();
+    }
+    return this.filterCollationKey;
+  }
+  
+  /**
+   * Returns <code>true</code> if the given filter collation key is a sub part of the first array collator key.
+   */
+  private boolean isSubCollationKey(byte [] collationKey, byte [] filterCollationKey, int start) {
+    // Ignore the last 4 bytes of the collator key
+    for (int i = start, n = collationKey.length - 4, m = filterCollationKey.length - 4; i < n && i < n - m + 1; i++) {
+      if (collationKey [i] == filterCollationKey [0]) {
+        for (int j = 1; j < m; j++) {
+          if (collationKey [i + j] != filterCollationKey [j]) {
+            return isSubCollationKey(collationKey, filterCollationKey, i + 1);
+          }
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }

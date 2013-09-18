@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
@@ -744,15 +743,15 @@ class FurnitureCatalogListPanel extends JPanel implements View {
    * List model adaptor to CatalogPieceOfFurniture instances of catalog.  
    */
   private static class CatalogListModel extends AbstractListModel {
-    private FurnitureCatalog              catalog;
-    private List<CatalogPieceOfFurniture> furniture;
-    private FurnitureCategory             filterCategory;
-    private Pattern                       filterNamePattern;
+    private FurnitureCatalog                catalog;
+    private List<CatalogPieceOfFurniture>   furniture;
+    private FurnitureCategory               filterCategory;
+    private String                          filterText;
     
     public CatalogListModel(FurnitureCatalog catalog) {
       this.catalog = catalog;
       this.furniture = new ArrayList<CatalogPieceOfFurniture>();
-      this.filterNamePattern = Pattern.compile(".*");
+      this.filterText = "";
       catalog.addFurnitureListener(new CatalogFurnitureListener(this));
       updateFurnitureList();
     }
@@ -763,7 +762,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     }
 
     public void setFilterText(String filterText) {
-      this.filterNamePattern = Pattern.compile(".*" + filterText + ".*", Pattern.CASE_INSENSITIVE);
+      this.filterText = filterText;
       updateFurnitureList();
     }
 
@@ -779,21 +778,10 @@ class FurnitureCatalogListPanel extends JPanel implements View {
       this.furniture.clear();
       for (FurnitureCategory category : this.catalog.getCategories()) {
         for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-          if (this.filterCategory == null
-               || piece.getCategory().equals(this.filterCategory)) {
-            if (this.filterNamePattern.matcher(piece.getName()).matches()
-                 || this.filterNamePattern.matcher(piece.getCategory().getName()).matches()                   
-                 || (piece.getCreator() != null && this.filterNamePattern.matcher(piece.getCreator()).matches())
-                 || (piece.getDescription() != null && this.filterNamePattern.matcher(piece.getDescription()).matches())) {
-              this.furniture.add(piece);
-            } else {
-              for (String tag : piece.getTags()) {
-                if (this.filterNamePattern.matcher(tag).matches()) {
-                  this.furniture.add(piece);
-                  break;
-                }
-              }
-            }
+          if ((this.filterCategory == null
+                || piece.getCategory().equals(this.filterCategory))
+              && piece.matchesFilter(this.filterText)) {
+            furniture.add(piece);
           }
         }
       }
