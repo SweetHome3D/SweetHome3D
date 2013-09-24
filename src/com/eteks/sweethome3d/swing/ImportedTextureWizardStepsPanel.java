@@ -280,17 +280,20 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           name = name.trim();
           // If category is empty, replace it by the last selected item
           if (name.length() == 0) {
-            setItem(categoryComboBox.getSelectedItem());
+            Object selectedItem = categoryComboBox.getSelectedItem();
+            setItem(selectedItem);
+            return selectedItem;
+          } else {
+            TexturesCategory category = new TexturesCategory(name);
+            // Search an existing category
+            List<TexturesCategory> categories = preferences.getTexturesCatalog().getCategories();
+            int categoryIndex = Collections.binarySearch(categories, category);
+            if (categoryIndex >= 0) {
+              return categories.get(categoryIndex);
+            }
+            // If no existing category was found, return a new one          
+            return category;
           }
-          TexturesCategory category = new TexturesCategory(name);
-          // Search an existing category
-          List<TexturesCategory> categories = preferences.getTexturesCatalog().getCategories();
-          int categoryIndex = Collections.binarySearch(categories, category);
-          if (categoryIndex >= 0) {
-            return categories.get(categoryIndex);
-          }
-          // If no existing category was found, return a new one          
-          return category;
         }
       
         public void setItem(Object value) {
