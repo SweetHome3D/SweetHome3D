@@ -102,7 +102,7 @@ public class HomeFramePane extends JRootPane implements View {
    * Builds and shows the frame that displays this pane.
    */
   public void displayView() {
-    JFrame homeFrame = new JFrame() {
+    final JFrame homeFrame = new JFrame() {
       {
         // Replace frame rootPane by home controller view
         setRootPane(HomeFramePane.this);
@@ -145,8 +145,12 @@ public class HomeFramePane extends JRootPane implements View {
     // Add listeners to model and frame    
     addListeners(this.home, this.application, this.controller.getHomeController(), homeFrame);
     
-    // Show frame
-    homeFrame.setVisible(true);
+    // Show frame later to ensure it will be in front after closing possible waiting dialog 
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          homeFrame.setVisible(true);
+        }
+      });
   }
   
   /**
