@@ -231,7 +231,9 @@ public class PhotosPanel extends JPanel implements DialogView {
         public void propertyChange(PropertyChangeEvent ev) {
           selectedCamerasList.repaint();
           getActionMap().get(ActionType.START_PHOTOS_CREATION).setEnabled(!((List)ev.getNewValue()).isEmpty());
-          statusLayout.show(statusPanel, TIP_CARD);
+          if (startStopButton.getAction() == getActionMap().get(ActionType.START_PHOTOS_CREATION)) {
+            statusLayout.show(statusPanel, TIP_CARD);
+          }
         }
       });
     controller.addPropertyChangeListener(PhotosController.Property.CAMERAS, new PropertyChangeListener() {
