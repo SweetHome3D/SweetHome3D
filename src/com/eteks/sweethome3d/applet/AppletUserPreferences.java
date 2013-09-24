@@ -89,6 +89,7 @@ public class AppletUserPreferences extends UserPreferences {
   private final URL     readPreferencesURL;
   private Executor      catalogsLoader;
   private Executor      updater;
+  private boolean       writtenPropertiesUpdated;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
 
@@ -283,6 +284,34 @@ public class AppletUserPreferences extends UserPreferences {
           updateDefaultCatalogs();
         }
       });
+    
+    // Add a listener to track written properties and ignore the other ones during a call to write 
+    PropertyChangeListener savedPropertyListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          writtenPropertiesUpdated = true;
+        }
+      };
+    Property [] writtenProperties = {
+        Property.LANGUAGE,
+        Property.UNIT,
+        Property.FURNITURE_CATALOG_VIEWED_IN_TREE,
+        Property.NAVIGATION_PANEL_VISIBLE,
+        Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
+        Property.MAGNETISM_ENABLED,
+        Property.RULERS_VISIBLE,
+        Property.GRID_VISIBLE,
+        Property.FURNITURE_VIEWED_FROM_TOP,
+        Property.ROOM_FLOOR_COLORED_OR_TEXTURED,
+        Property.WALL_PATTERN,
+        Property.NEW_WALL_PATTERN,
+        Property.NEW_WALL_THICKNESS,
+        Property.NEW_WALL_HEIGHT,
+        Property.NEW_FLOOR_THICKNESS,
+        Property.RECENT_HOMES,
+        Property.IGNORED_ACTION_TIP};
+    for (Property writtenProperty : writtenProperties) {
+      addPropertyChangeListener(writtenProperty, savedPropertyListener);
+    }
   }
 
   /**
@@ -348,48 +377,53 @@ public class AppletUserPreferences extends UserPreferences {
    */
   @Override
   public void write() throws RecorderException {
-    Properties properties = getProperties();
-    // Write other preferences 
-    properties.setProperty(LANGUAGE, getLanguage());
-    properties.setProperty(UNIT, getLengthUnit().name());   
-    properties.setProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, String.valueOf(isFurnitureCatalogViewedInTree()));
-    properties.setProperty(NAVIGATION_PANEL_VISIBLE, String.valueOf(isNavigationPanelVisible()));    
-    properties.setProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, String.valueOf(isAerialViewCenteredOnSelectionEnabled()));    
-    properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
-    properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
-    properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));
-    properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
-    properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
-    properties.setProperty(WALL_PATTERN, getWallPattern().getName());
-    TextureImage newWallPattern = getNewWallPattern();
-    if (newWallPattern != null) {
-      properties.setProperty(NEW_WALL_PATTERN, newWallPattern.getName());
-    }
-    properties.setProperty(NEW_WALL_THICKNESS, String.valueOf(getNewWallThickness()));   
-    properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
-    properties.setProperty(NEW_FLOOR_THICKNESS, String.valueOf(getNewFloorThickness()));   
-    // Write recent homes list
-    int i = 1;
-    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
-      properties.setProperty(RECENT_HOMES + i, it.next());
-    }
-    // Write ignored action tips
-    i = 1;
-    for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
-         it.hasNext(); ) {
-      Entry<String, Boolean> ignoredActionTipEntry = it.next();
-      if (ignoredActionTipEntry.getValue()) {
-        properties.setProperty(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
-      } 
-    }
-    
-    try {
-      // Write preferences 
-      if (this.writePreferencesURL != null) {
-        writePreferences(getProperties());
+    if (this.writtenPropertiesUpdated) {
+      // Write actually preferences only if written properties were updated
+      this.writtenPropertiesUpdated = false;
+      
+      Properties properties = getProperties();
+      // Write other preferences 
+      properties.setProperty(LANGUAGE, getLanguage());
+      properties.setProperty(UNIT, getLengthUnit().name());   
+      properties.setProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, String.valueOf(isFurnitureCatalogViewedInTree()));
+      properties.setProperty(NAVIGATION_PANEL_VISIBLE, String.valueOf(isNavigationPanelVisible()));    
+      properties.setProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, String.valueOf(isAerialViewCenteredOnSelectionEnabled()));    
+      properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
+      properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
+      properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));
+      properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
+      properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
+      properties.setProperty(WALL_PATTERN, getWallPattern().getName());
+      TextureImage newWallPattern = getNewWallPattern();
+      if (newWallPattern != null) {
+        properties.setProperty(NEW_WALL_PATTERN, newWallPattern.getName());
       }
-    } catch (IOException ex) {
-      throw new RecorderException("Couldn't write preferences", ex);
+      properties.setProperty(NEW_WALL_THICKNESS, String.valueOf(getNewWallThickness()));   
+      properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
+      properties.setProperty(NEW_FLOOR_THICKNESS, String.valueOf(getNewFloorThickness()));   
+      // Write recent homes list
+      int i = 1;
+      for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= getRecentHomesMaxCount(); i ++) {
+        properties.setProperty(RECENT_HOMES + i, it.next());
+      }
+      // Write ignored action tips
+      i = 1;
+      for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
+          it.hasNext(); ) {
+        Entry<String, Boolean> ignoredActionTipEntry = it.next();
+        if (ignoredActionTipEntry.getValue()) {
+          properties.setProperty(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
+        } 
+      }
+      
+      try {
+        // Write preferences 
+        if (this.writePreferencesURL != null) {
+          writePreferences(getProperties());
+        }
+      } catch (IOException ex) {
+        throw new RecorderException("Couldn't write preferences", ex);
+      }
     }
   }
 
