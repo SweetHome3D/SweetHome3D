@@ -1003,7 +1003,20 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     return this.level == level 
         || this.level != null && level != null
             && this.level.getElevation() < level.getElevation()
-            && this.level.getElevation() + this.elevation + this.height > level.getElevation();
+            && isTopAtLevel(level);
+  }
+  
+  /**
+   * Returns <code>true</code> if the top of this piece is visible at the given level.
+   */
+  private boolean isTopAtLevel(Level level) {
+    float topElevation = this.level.getElevation() + this.elevation + this.height;
+    if (this.staircaseCutOutShape != null) {
+      // Consider the top of stair cases is at the given level if their elevation is higher or equal
+      return topElevation >= level.getElevation();
+    } else {
+      return topElevation > level.getElevation();
+    }
   }
   
   /**
