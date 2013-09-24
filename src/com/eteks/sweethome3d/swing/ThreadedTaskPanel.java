@@ -32,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
@@ -145,24 +146,24 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
         });
       this.dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)executingView), dialogTitle);
       
-      try {
-        // Sleep 200 ms before showing dialog to avoid displaying it 
-        // when the task doesn't last so long
-        Thread.sleep(200);
-      } catch (InterruptedException ex) {
-      }
-      
-      if (this.controller.isTaskRunning()) {
-        this.dialog.setVisible(true);
-        
-        this.dialog.dispose();
-        if (this.taskRunning 
-            && (cancelButton == optionPane.getValue() 
-                || new Integer(JOptionPane.CLOSED_OPTION).equals(optionPane.getValue()))) {
-          this.dialog = null;
-          this.controller.cancelTask();
-        }
-      }
+      // Wait 200 ms before showing dialog to avoid displaying it 
+      // when the task doesn't last so long
+      new Timer(200, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            ((Timer)ev.getSource()).stop();
+            if (controller.isTaskRunning()) {
+              dialog.setVisible(true);
+              
+              dialog.dispose();
+              if (ThreadedTaskPanel.this.taskRunning 
+                  && (cancelButton == optionPane.getValue() 
+                      || new Integer(JOptionPane.CLOSED_OPTION).equals(optionPane.getValue()))) {
+                dialog = null;
+                controller.cancelTask();
+              }
+            }
+          }
+        }).start();
     } else if (!taskRunning && this.dialog != null) {
       this.dialog.setVisible(false);
     }
