@@ -1309,7 +1309,8 @@ public class HomeFurnitureController implements Controller {
       if (description != null) {
         piece.setDescription(description);
       }
-      if (price != null) {
+      if (price != null
+          &&!(piece instanceof HomeFurnitureGroup)) {
         piece.setPrice(price);
       }
       if (x != null) {
@@ -1443,7 +1444,9 @@ public class HomeFurnitureController implements Controller {
       this.piece.setName(this.name);
       this.piece.setNameVisible(this.nameVisible);
       this.piece.setDescription(this.description);
-      this.piece.setPrice(this.price);
+      if (!(this.piece instanceof HomeFurnitureGroup)) {
+        this.piece.setPrice(this.price);
+      }
       this.piece.setX(this.x);
       this.piece.setY(this.y);
       this.piece.setElevation(this.elevation);
