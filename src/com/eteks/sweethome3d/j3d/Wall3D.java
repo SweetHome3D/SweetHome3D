@@ -396,14 +396,26 @@ public class Wall3D extends Object3DBranch {
                 }
               }
               float doorOrWindowTop = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
-              // Compute the minimum vertical position of wallPartPoints
-              double minTopY = maxWallHeight;
-              for (int i = 0; i < wallPartPoints.length; i++) {
-                double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
-                minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-              }            
+              boolean generateGeometry = true;
+              if (topLineAlpha != 0) {
+                // Translate points of wall part under doorOrWindowTop along sloping wall top  
+                for (int i = 0; i < wallPartPoints.length; i++) {
+                  double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
+                  double topPointWithZeroYawElevation = topLineAlpha * xTopPointWithZeroYaw + topLineBeta;
+                  if (doorOrWindowTop > topPointWithZeroYawElevation) {
+                    if (roundWall) {
+                      // Ignore geometry of round sloping wall above doors and windows partially running over the wall top
+                      generateGeometry = false;
+                      break;
+                    }
+                    double translation = (doorOrWindowTop - topPointWithZeroYawElevation) / topLineAlpha;
+                    wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
+                    wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
+                  }
+                }
+              }
               // Generate geometry for wall part above window
-              if (doorOrWindowTop < minTopY) {
+              if (generateGeometry) {
                 wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
                     cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint, wallSide));
                 wallGeometries.add(createWallHorizontalPartGeometry(
