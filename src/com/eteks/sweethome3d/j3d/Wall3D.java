@@ -397,21 +397,19 @@ public class Wall3D extends Object3DBranch {
               }
               float doorOrWindowTop = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
               boolean generateGeometry = true;
-              if (topLineAlpha != 0) {
-                // Translate points of wall part under doorOrWindowTop along sloping wall top  
-                for (int i = 0; i < wallPartPoints.length; i++) {
-                  double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
-                  double topPointWithZeroYawElevation = topLineAlpha * xTopPointWithZeroYaw + topLineBeta;
-                  if (doorOrWindowTop > topPointWithZeroYawElevation) {
-                    if (roundWall) {
-                      // Ignore geometry of round sloping wall above doors and windows partially running over the wall top
-                      generateGeometry = false;
-                      break;
-                    }
-                    double translation = (doorOrWindowTop - topPointWithZeroYawElevation) / topLineAlpha;
-                    wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
-                    wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
+              // Translate points of wall part under doorOrWindowTop along sloping wall top  
+              for (int i = 0; i < wallPartPoints.length; i++) {
+                double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
+                double topPointWithZeroYawElevation = topLineAlpha * xTopPointWithZeroYaw + topLineBeta;
+                if (doorOrWindowTop > topPointWithZeroYawElevation) {
+                  if (topLineAlpha == 0 || roundWall) {
+                    // Ignore geometry above window for flat wall or round sloping wall
+                    generateGeometry = false;
+                    break;
                   }
+                  double translation = (doorOrWindowTop - topPointWithZeroYawElevation) / topLineAlpha;
+                  wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
+                  wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
                 }
               }
               // Generate geometry for wall part above window
@@ -477,12 +475,12 @@ public class Wall3D extends Object3DBranch {
 
   /**
    * Returns the vertical rectangles that join each point of <code>points</code>
-   * and spread from <code>yMin</code> to a top line (y = ax + b) described by <code>topLineAlpha</code>
+   * and spread from <code>minElevation</code> to a top line (y = ax + b) described by <code>topLineAlpha</code>
    * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
    * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
    */
   private Geometry createWallVerticalPartGeometry(Wall wall, 
-                                                  float [][] points, float yMin, 
+                                                  float [][] points, float minElevation, 
                                                   double cosWallYawAngle, double sinWallYawAngle, 
                                                   double topLineAlpha, double topLineBeta, 
                                                   HomeTexture texture,
@@ -526,7 +524,7 @@ public class Wall3D extends Object3DBranch {
           textureReferencePoint [0] - arcCircleCenter [0]);
     }
     for (int i = 0; i < points.length; i++) {
-      bottom [i] = new Point3f(points [i][0], yMin, points [i][1]);
+      bottom [i] = new Point3f(points [i][0], minElevation, points [i][1]);
       if (arcCircleCenter == null) {
         distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
       } else {
@@ -535,8 +533,7 @@ public class Wall3D extends Object3DBranch {
         distanceSqToWallMiddle [i] *= distanceSqToWallMiddle [i];
       }
       // Compute vertical top point 
-      double xTopPointWithZeroYaw = cosWallYawAngle * points [i][0] + sinWallYawAngle * points [i][1];
-      float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+      float topY = getWallPointElevation(points [i][0], points [i][1], cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta);
       top [i] = new Point3f(points [i][0], topY, points [i][1]);
     }
     // Search which rectangles should be ignored
@@ -561,7 +558,7 @@ public class Wall3D extends Object3DBranch {
     List<Point3f> coords = new ArrayList<Point3f> (rectanglesCount * 4);
     for (int index = 0; index < points.length; index++) {
       if (usedRectangle [index]) {
-        float y = yMin;
+        float y = minElevation;
         Point3f point1 = bottom [index];
         int nextIndex = (index + 1) % points.length;
         Point3f point2 = bottom [nextIndex];
@@ -589,8 +586,8 @@ public class Wall3D extends Object3DBranch {
     if (texture != null) {
       float halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
       TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
-      float yMinTextureCoords = yMin / texture.getHeight();
-      TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
+      float minElevationTextureCoords = minElevation / texture.getHeight();
+      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevationTextureCoords);
       int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null 
@@ -632,17 +629,17 @@ public class Wall3D extends Object3DBranch {
               secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
             }
 
-            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
-            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
+            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevationTextureCoords);
+            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevationTextureCoords);
           } else {
             textureCoords1 = firstTextureCoords;
             float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1], 
                 points [nextIndex][0], points [nextIndex][1]) / texture.getWidth();
-            textureCoords2 = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
+            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevationTextureCoords);
           }
           
           if (subpartSize > 0) {
-            float y = yMin;
+            float y = minElevation;
             for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
               textureCoords [j++] = textureCoords1;
               textureCoords [j++] = textureCoords2;
@@ -670,6 +667,16 @@ public class Wall3D extends Object3DBranch {
     }
     normalGenerator.generateNormals(geometryInfo);
     return geometryInfo.getIndexedGeometryArray();
+  }
+
+  /**
+   * Returns the elevation of the wall at the given point.
+   */
+  private float getWallPointElevation(float xWallPoint, float yWallPoint, 
+                                      double cosWallYawAngle, double sinWallYawAngle,
+                                      double topLineAlpha, double topLineBeta) {
+    double xTopPointWithZeroYaw = cosWallYawAngle * xWallPoint + sinWallYawAngle * yWallPoint;
+    return (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
   }
 
   /**
