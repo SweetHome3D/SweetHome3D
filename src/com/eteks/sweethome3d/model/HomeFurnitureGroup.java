@@ -733,7 +733,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     // Deep clone furniture managed by this group
     clone.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
     for (HomePieceOfFurniture piece : this.furniture) {
-      clone.furniture.add(piece.clone());
+      HomePieceOfFurniture pieceClone = piece.clone();
+      clone.furniture.add(pieceClone);
+      if (piece instanceof HomeDoorOrWindow
+          && ((HomeDoorOrWindow)piece).isBoundToWall()) {
+        ((HomeDoorOrWindow)pieceClone).setBoundToWall(true);
+      }
     }
     clone.furniture = Collections.unmodifiableList(clone.furniture);
     if (this.furnitureDefaultColors != null)  {
