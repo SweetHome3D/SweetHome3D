@@ -100,6 +100,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -441,11 +442,7 @@ public class ModelManager {
     Transform3D modelTransform;
     if (modelRotation != null) {
       // Get model bounding box size with model rotation
-      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-      modelTransform = new Transform3D();
-      modelTransform.setRotation(modelRotationMatrix);
+      modelTransform = getRotationTransformation(modelRotation);
       modelTransform.mul(translation);
       BoundingBox rotatedModelBounds = getBounds(node, modelTransform);
       rotatedModelBounds.getLower(lower);
@@ -463,7 +460,47 @@ public class ModelManager {
     scaleOneTransform.mul(modelTransform);
     return scaleOneTransform;
   }
+
+  /**
+   * Returns a transformation matching the given rotation.
+   */
+  Transform3D getRotationTransformation(float [][] modelRotation) {
+    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+    Transform3D modelTransform = new Transform3D();
+    modelTransform.setRotation(modelRotationMatrix);
+    return modelTransform;
+  }
   
+  /**
+   * Returns a transformation able to place in the scene the normalized model 
+   * of the given <code>piece</code>.
+   */
+  Transform3D getPieceOFFurnitureNormalizedModelTransformation(HomePieceOfFurniture piece) {
+    // Set piece size
+    Transform3D scale = new Transform3D();
+    float pieceWidth = piece.getWidth();
+    // If piece model is mirrored, inverse its width
+    if (piece.isModelMirrored()) {
+      pieceWidth *= -1;
+    }
+    scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
+    // Change its angle around y axis
+    Transform3D orientation = new Transform3D();
+    orientation.rotY(-piece.getAngle());
+    orientation.mul(scale);
+    // Translate it to its location
+    Transform3D pieceTransform = new Transform3D();
+    float z = piece.getElevation() + piece.getHeight() / 2;
+    if (piece.getLevel() != null) {
+      z += piece.getLevel().getElevation();
+    }
+    pieceTransform.setTranslation(new Vector3f(piece.getX(), z, piece.getY()));      
+    pieceTransform.mul(orientation);
+    return pieceTransform;
+  }
+
   /**
    * Reads asynchronously a 3D node from <code>content</code> with supported loaders
    * and notifies the loaded model to the given <code>modelObserver</code> once available. 
@@ -979,6 +1016,77 @@ public class ModelManager {
   }
 
   /**
+   * Returns the AWT shape matching the given cut out shape if not <code>null</code> 
+   * or the 2D area of the 3D shapes children of the <code>node</code> 
+   * projected on its front side. The returned area is normalized in a 1 unit square
+   * centered at the origin.
+   */
+  Area getFrontArea(String cutOutShape, Node node) {
+    Area frontArea;
+    if (cutOutShape != null) {
+      frontArea = new Area(parseShape(cutOutShape));
+      frontArea.transform(AffineTransform.getScaleInstance(1, -1));
+      frontArea.transform(AffineTransform.getTranslateInstance(-.5, .5));
+    } else {
+      int vertexCount = getVertexCount(node);
+      if (vertexCount < 10000) {
+        Area frontAreaWithHoles = new Area();
+        computeBottomOrFrontArea(node, frontAreaWithHoles, new Transform3D(), false);
+        // Remove holes and duplicated points
+        frontArea = new Area();
+        List<float []> currentPathPoints = new ArrayList<float[]>();
+        float [] previousRoomPoint = null;
+        for (PathIterator it = frontAreaWithHoles.getPathIterator(null, 1); !it.isDone(); it.next()) {
+          float [] areaPoint = new float[2];
+          switch (it.currentSegment(areaPoint)) {
+            case PathIterator.SEG_MOVETO :
+            case PathIterator.SEG_LINETO : 
+              if (previousRoomPoint == null
+                  || areaPoint [0] != previousRoomPoint [0] 
+                  || areaPoint [1] != previousRoomPoint [1]) {
+                currentPathPoints.add(areaPoint);
+              }
+              previousRoomPoint = areaPoint;
+              break;
+            case PathIterator.SEG_CLOSE :
+              if (currentPathPoints.get(0) [0] == previousRoomPoint [0] 
+                  && currentPathPoints.get(0) [1] == previousRoomPoint [1]) {
+                currentPathPoints.remove(currentPathPoints.size() - 1);
+              }
+              if (currentPathPoints.size() > 2) {
+                float [][] pathPoints = 
+                    currentPathPoints.toArray(new float [currentPathPoints.size()][]);
+                Room subRoom = new Room(pathPoints);
+                if (subRoom.getArea() > 0) {
+                  if (!subRoom.isClockwise()) {
+                    // Ignore clockwise points that match holes
+                    GeneralPath currentPath = new GeneralPath();
+                    currentPath.moveTo(pathPoints [0][0], pathPoints [0][1]);
+                    for (int i = 1; i < pathPoints.length; i++) {
+                      currentPath.lineTo(pathPoints [i][0], pathPoints [i][1]);
+                    }
+                    currentPath.closePath();
+                    frontArea.add(new Area(currentPath));
+                  }
+                }
+              }
+              currentPathPoints.clear();
+              previousRoomPoint = null;
+              break;
+          }
+        }
+        Rectangle2D bounds = frontAreaWithHoles.getBounds2D();
+        frontArea.transform(AffineTransform.getTranslateInstance(-bounds.getCenterX(), -bounds.getCenterY()));
+        frontArea.transform(AffineTransform.getScaleInstance(1 / bounds.getWidth(), 1 / bounds.getHeight()));
+      } else {
+        frontArea = new Area(new Rectangle2D.Float(-.5f, -.5f, 1, 1));
+      }    
+    }
+    return frontArea;
+  }
+  
+  
+  /**
    * Returns the 2D area of the 3D shapes children of the given <code>node</code> 
    * projected on the floor (plan y = 0). 
    */
@@ -987,7 +1095,7 @@ public class ModelManager {
     int vertexCount = getVertexCount(node);
     if (vertexCount < 10000) {
       modelAreaOnFloor = new Area();
-      computeAreaOnFloor(node, modelAreaOnFloor, new Transform3D());
+      computeBottomOrFrontArea(node, modelAreaOnFloor, new Transform3D(), true);
     } else {
       List<float []> vertices = new ArrayList<float[]>(vertexCount); 
       computeVerticesOnFloor(node, vertices, new Transform3D());
@@ -1035,9 +1143,12 @@ public class ModelManager {
   }
   
   /**
-   * Computes the vertices coordinates projected on floor of the 3D shapes children of <code>node</code>.
+   * Computes the 2D area on floor or on front side of the 3D shapes children of <code>node</code>.
    */
-  private void computeVerticesOnFloor(Node node, List<float []> vertices, Transform3D parentTransformations) {
+  private void computeBottomOrFrontArea(Node node, 
+                                        Area nodeArea, 
+                                        Transform3D parentTransformations,
+                                        boolean bottom) {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
         parentTransformations = new Transform3D(parentTransformations);
@@ -1048,10 +1159,10 @@ public class ModelManager {
       // Compute all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        computeVerticesOnFloor((Node)enumeration.nextElement(), vertices, parentTransformations);
+        computeBottomOrFrontArea((Node)enumeration.nextElement(), nodeArea, parentTransformations, bottom);
       }
     } else if (node instanceof Link) {
-      computeVerticesOnFloor(((Link)node).getSharedGroup(), vertices, parentTransformations);
+      computeBottomOrFrontArea(((Link)node).getSharedGroup(), nodeArea, parentTransformations, bottom);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -1065,92 +1176,20 @@ public class ModelManager {
               || transparencyAttributes.getTransparency() < 1)) {
         // Compute shape geometries area
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-          Geometry geometry = shape.getGeometry(i);
-          if (geometry instanceof GeometryArray) {
-            GeometryArray geometryArray = (GeometryArray)geometry;      
-
-            int vertexCount = geometryArray.getVertexCount();
-            Point3f vertex = new Point3f();
-            if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
-              if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-                float [] vertexData = geometryArray.getInterleavedVertices();
-                int vertexSize = vertexData.length / vertexCount;
-                // Store vertices coordinates 
-                for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
-                  vertex.x = vertexData [j];
-                  vertex.y = vertexData [j + 1];
-                  vertex.z = vertexData [j + 2];
-                  parentTransformations.transform(vertex);
-                  vertices.add(new float [] {vertex.x, vertex.z});
-                }
-              } else {
-                // Store vertices coordinates
-                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
-                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
-                  vertex.x = vertexCoordinates [j];
-                  vertex.y = vertexCoordinates [j + 1];
-                  vertex.z = vertexCoordinates [j + 2];
-                  parentTransformations.transform(vertex);
-                  vertices.add(new float [] {vertex.x, vertex.z});
-                }
-              }
-            } else {
-              // Store vertices coordinates
-              for (int index = 0, j = 0; index < vertexCount; j++, index++) {
-                geometryArray.getCoordinate(j, vertex);
-                parentTransformations.transform(vertex);
-                vertices.add(new float [] {vertex.x, vertex.z});
-              }
-            }
-          }
+          computeBottomOrFrontGeometryArea(shape.getGeometry(i), nodeArea, parentTransformations, bottom);
         }
       }
     }    
   }
   
   /**
-   * Computes the 2D area on floor of the 3D shapes children of <code>node</code>.
+   * Computes the bottom area of a 3D geometry if <code>bottom</code> is <code>true</code>, 
+   * and the front area if not.
    */
-  private void computeAreaOnFloor(Node node, Area nodeArea, Transform3D parentTransformations) {
-    if (node instanceof Group) {
-      if (node instanceof TransformGroup) {
-        parentTransformations = new Transform3D(parentTransformations);
-        Transform3D transform = new Transform3D();
-        ((TransformGroup)node).getTransform(transform);
-        parentTransformations.mul(transform);
-      }
-      // Compute all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        computeAreaOnFloor((Node)enumeration.nextElement(), nodeArea, parentTransformations);
-      }
-    } else if (node instanceof Link) {
-      computeAreaOnFloor(((Link)node).getSharedGroup(), nodeArea, parentTransformations);
-    } else if (node instanceof Shape3D) {
-      Shape3D shape = (Shape3D)node;
-      Appearance appearance = shape.getAppearance();
-      RenderingAttributes renderingAttributes = appearance != null 
-          ? appearance.getRenderingAttributes() : null;
-      TransparencyAttributes transparencyAttributes = appearance != null 
-          ? appearance.getTransparencyAttributes() : null;
-      if ((renderingAttributes == null
-            || renderingAttributes.getVisible())
-          && (transparencyAttributes == null
-              || transparencyAttributes.getTransparency() < 1)) {
-        // Compute shape geometries area
-        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-          computeGeometryAreaOnFloor(shape.getGeometry(i), parentTransformations, nodeArea);
-        }
-      }
-    }    
-  }
-  
-  /**
-   * Computes the area on floor of a 3D geometry.
-   */
-  private void computeGeometryAreaOnFloor(Geometry geometry, 
-                                          Transform3D parentTransformations, 
-                                          Area nodeArea) {
+  private void computeBottomOrFrontGeometryArea(Geometry geometry, 
+                                                Area nodeArea, 
+                                                Transform3D parentTransformations,
+                                                boolean bottom) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
 
@@ -1168,7 +1207,11 @@ public class ModelManager {
             vertex.z = vertexData [i + 2];
             parentTransformations.transform(vertex);
             vertices [index++] = vertex.x;
-            vertices [index++] = vertex.z;
+            if (bottom) {
+              vertices [index++] = vertex.z;
+            } else {
+              vertices [index++] = vertex.y;
+            }
           }
         } else {
           // Store vertices coordinates
@@ -1179,7 +1222,11 @@ public class ModelManager {
             vertex.z = vertexCoordinates [i + 2];
             parentTransformations.transform(vertex);
             vertices [index++] = vertex.x;
-            vertices [index++] = vertex.z;
+            if (bottom) {
+              vertices [index++] = vertex.z;
+            } else {
+              vertices [index++] = vertex.y;
+            }
           }
         }
       } else {
@@ -1188,7 +1235,11 @@ public class ModelManager {
           geometryArray.getCoordinate(i, vertex);
           parentTransformations.transform(vertex);
           vertices [index++] = vertex.x;
-          vertices [index++] = vertex.z;
+          if (bottom) {
+            vertices [index++] = vertex.z;
+          } else {
+            vertices [index++] = vertex.y;
+          }
         }
       }
 
@@ -1376,6 +1427,80 @@ public class ModelManager {
     }
   }
 
+  /**
+   * Computes the vertices coordinates projected on floor of the 3D shapes children of <code>node</code>.
+   */
+  private void computeVerticesOnFloor(Node node, List<float []> vertices, Transform3D parentTransformations) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
+      // Compute all children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        computeVerticesOnFloor((Node)enumeration.nextElement(), vertices, parentTransformations);
+      }
+    } else if (node instanceof Link) {
+      computeVerticesOnFloor(((Link)node).getSharedGroup(), vertices, parentTransformations);
+    } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
+      RenderingAttributes renderingAttributes = appearance != null 
+          ? appearance.getRenderingAttributes() : null;
+      TransparencyAttributes transparencyAttributes = appearance != null 
+          ? appearance.getTransparencyAttributes() : null;
+      if ((renderingAttributes == null
+            || renderingAttributes.getVisible())
+          && (transparencyAttributes == null
+              || transparencyAttributes.getTransparency() < 1)) {
+        // Compute shape geometries area
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          Geometry geometry = shape.getGeometry(i);
+          if (geometry instanceof GeometryArray) {
+            GeometryArray geometryArray = (GeometryArray)geometry;      
+
+            int vertexCount = geometryArray.getVertexCount();
+            Point3f vertex = new Point3f();
+            if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+              if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+                float [] vertexData = geometryArray.getInterleavedVertices();
+                int vertexSize = vertexData.length / vertexCount;
+                // Store vertices coordinates 
+                for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+                  vertex.x = vertexData [j];
+                  vertex.y = vertexData [j + 1];
+                  vertex.z = vertexData [j + 2];
+                  parentTransformations.transform(vertex);
+                  vertices.add(new float [] {vertex.x, vertex.z});
+                }
+              } else {
+                // Store vertices coordinates
+                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+                  vertex.x = vertexCoordinates [j];
+                  vertex.y = vertexCoordinates [j + 1];
+                  vertex.z = vertexCoordinates [j + 2];
+                  parentTransformations.transform(vertex);
+                  vertices.add(new float [] {vertex.x, vertex.z});
+                }
+              }
+            } else {
+              // Store vertices coordinates
+              for (int index = 0, j = 0; index < vertexCount; j++, index++) {
+                geometryArray.getCoordinate(j, vertex);
+                parentTransformations.transform(vertex);
+                vertices.add(new float [] {vertex.x, vertex.z});
+              }
+            }
+          }
+        }
+      }
+    }    
+  }
+  
   /**
    * Returns the convex polygon that surrounds the given <code>vertices</code>.
    * From Andrew's monotone chain 2D convex hull algorithm described at

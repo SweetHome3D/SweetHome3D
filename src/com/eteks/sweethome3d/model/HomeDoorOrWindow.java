@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 /**
  * A door or a window in {@linkplain Home home}.
  * @author Emmanuel Puybaret
@@ -30,7 +33,9 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   private final float   wallThickness;
   private final float   wallDistance;
   private final Sash [] sashes;
+  private String  cutOutShape;
   private boolean boundToWall;
+
 
   /**
    * Creates a home door or window from an existing one.
@@ -41,8 +46,18 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     this.wallThickness = doorOrWindow.getWallThickness();
     this.wallDistance = doorOrWindow.getWallDistance();
     this.sashes = doorOrWindow.getSashes();
+    this.cutOutShape = doorOrWindow.getCutOutShape();
   }
 
+  /**
+   * Initializes new fields to their default values 
+   * and reads object from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.cutOutShape = "M0,0 v1 h1 v-1 z";
+    in.defaultReadObject();
+  }
+  
   /**
    * Returns the default thickness of the wall in which this door or window should be placed.
    * @return a value in percentage of the depth of the door or the window.
@@ -69,6 +84,14 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     } else {
       return this.sashes.clone();
     }
+  }
+
+  /**
+   * Returns the shape used to cut out walls that intersect this new door or window.
+   * @since 4.2
+   */
+  public String getCutOutShape() {
+    return this.cutOutShape;
   }
 
   /**

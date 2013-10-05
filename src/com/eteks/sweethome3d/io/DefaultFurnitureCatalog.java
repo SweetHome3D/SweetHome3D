@@ -155,6 +155,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     DOOR_OR_WINDOW("doorOrWindow"),
     /**
+     * The key for the shape of a door or window used to cut out walls when they intersect it (optional).
+     * This shape should be defined with the syntax of the d attribute of a 
+     * <a href="http://www.w3.org/TR/SVG/paths.html">SVG path element</a>
+     * and should fit in a square spreading from (0, 0) to (1, 1) which will be 
+     * scaled afterwards to the real size of the piece. 
+     * If not specified, then this shape will be automatically computed from the actual shape of the model.  
+     */
+    DOOR_OR_WINDOW_CUT_OUT_SHAPE("doorOrWindowCutOutShape"),
+    /**
      * The key for the wall thickness in centimeters of a door or a window (optional).
      * By default, a door or a window has the same depth as the wall it belongs to.
      */
@@ -604,6 +613,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     String currency = getOptionalString(resource, PropertyKey.CURRENCY.getKey(index), null);
 
     if (doorOrWindow) {
+      String doorOrWindowCutOutShape = getOptionalString(resource, PropertyKey.DOOR_OR_WINDOW_CUT_OUT_SHAPE.getKey(index), null);     
       float wallThicknessPercentage = getOptionalFloat(
           resource, PropertyKey.DOOR_OR_WINDOW_WALL_THICKNESS.getKey(index), depth) / depth;
       float wallDistancePercentage = getOptionalFloat(
@@ -611,7 +621,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       Sash [] sashes = getDoorOrWindowSashes(resource, index, width, depth);
       return new CatalogDoorOrWindow(id, name, description, information, tags, creationDate, grade, 
           icon, planIcon, model, width, depth, height, elevation, movable, 
-          wallThicknessPercentage, wallDistancePercentage, sashes, 
+          doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, sashes,
           modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);

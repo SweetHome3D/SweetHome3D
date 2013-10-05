@@ -21,14 +21,18 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Shape;
 import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
@@ -39,10 +43,14 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
+import javax.vecmath.Vector3f;
 
+import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
@@ -59,13 +67,16 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
 public class Wall3D extends Object3DBranch {
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   private static final float LEVEL_ELEVATION_SHIFT = 0.1f;
+  private static final Area  FULL_FACE_CUT_OUT_AREA = new Area(new Rectangle2D.Float(-0.5f, 0.5f, 1, 1));
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
-  
+
   private static final int WALL_LEFT_SIDE  = 0;
   private static final int WALL_RIGHT_SIDE = 1;
+  
+  private static Map<HomePieceOfFurniture, Area> doorOrWindowFrontAreas = new WeakHashMap<HomePieceOfFurniture, Area>();
   
   private final Home home;
 
@@ -80,7 +91,7 @@ public class Wall3D extends Object3DBranch {
    * Creates the 3D wall matching the given home <code>wall</code>.
    */
   public Wall3D(Wall wall, Home home, boolean ignoreDrawingMode, 
-                boolean waitTextureLoadingEnd) {
+                boolean waitModelAndTextureLoadingEnd) {
     setUserData(wall);
     this.home = home;
 
@@ -102,8 +113,8 @@ public class Wall3D extends Object3DBranch {
     }
         
     // Set wall shape geometry and appearance
-    updateWallGeometry();
-    updateWallAppearance(waitTextureLoadingEnd);
+    updateWallGeometry(waitModelAndTextureLoadingEnd);
+    updateWallAppearance(waitModelAndTextureLoadingEnd);
   }
 
   /**
@@ -146,19 +157,20 @@ public class Wall3D extends Object3DBranch {
 
   @Override
   public void update() {
-    updateWallGeometry();
+    updateWallGeometry(false);
     updateWallAppearance(false);
   }
   
   /**
    * Sets the 3D geometry of this wall shapes that matches its 2D geometry.  
    */
-  private void updateWallGeometry() {    
-    updateWallSideGeometry(WALL_LEFT_SIDE, ((Wall)getUserData()).getLeftSideTexture());
-    updateWallSideGeometry(WALL_RIGHT_SIDE, ((Wall)getUserData()).getRightSideTexture());
+  private void updateWallGeometry(boolean waitDoorOrWindowModelsLoadingEnd) {    
+    updateWallSideGeometry(WALL_LEFT_SIDE, ((Wall)getUserData()).getLeftSideTexture(), waitDoorOrWindowModelsLoadingEnd);
+    updateWallSideGeometry(WALL_RIGHT_SIDE, ((Wall)getUserData()).getRightSideTexture(), waitDoorOrWindowModelsLoadingEnd);
   }
   
-  private void updateWallSideGeometry(int wallSide, HomeTexture texture) {
+  private void updateWallSideGeometry(int wallSide, HomeTexture texture, 
+                                      boolean waitDoorOrWindowModelsLoadingEnd) {
     Group [] wallSideGroups = {(Group)getChild(wallSide * 3),      // Bottom group
                                (Group)getChild(wallSide * 3 + 1),  // Main group
                                (Group)getChild(wallSide * 3 + 2)}; // Top group
@@ -177,7 +189,8 @@ public class Wall3D extends Object3DBranch {
       List [] wallGeometries = {new ArrayList<Geometry>(), 
                                 new ArrayList<Geometry>(), 
                                 new ArrayList<Geometry>()};
-      createWallGeometries(wallGeometries [0], wallGeometries [1], wallGeometries [2], wallSide, texture);
+      createWallGeometries(wallGeometries [0], wallGeometries [1], wallGeometries [2], wallSide, 
+          texture, waitDoorOrWindowModelsLoadingEnd);
       for (int i = 0; i < wallSideGroups.length; i++) {
         for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
           if (wallGeometry != null) {
@@ -204,16 +217,17 @@ public class Wall3D extends Object3DBranch {
    * that intersect wall.
    */
   private void createWallGeometries(List<Geometry> wallBottomGeometries, 
-                                    List<Geometry> wallGeometries, 
-                                    List<Geometry> wallTopGeometries, 
-                                    int wallSide, HomeTexture texture) {
-    float [][] wallSidePoints = getWallSidePoints(wallSide);
-    float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
+                                    final List<Geometry> wallGeometries, 
+                                    final List<Geometry> wallTopGeometries, 
+                                    final int wallSide, final HomeTexture texture,
+                                    final boolean waitDoorOrWindowModelsLoadingEnd) {
+    final float [][] wallSidePoints = getWallSidePoints(wallSide);
+    final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSidePoints [0]
         : wallSidePoints [wallSidePoints.length - 1];
     Shape wallShape = getShape(wallSidePoints);
     Area wallArea = new Area(wallShape);
-    float wallElevation = getWallElevation();
+    final float wallElevation = getWallElevation();
     float wallHeightAtStart = getWallHeightAtStart();
     float wallHeightAtEnd = getWallHeightAtEnd();
     float maxWallHeight = Math.max(wallHeightAtStart, wallHeightAtEnd);
@@ -221,13 +235,13 @@ public class Wall3D extends Object3DBranch {
     // Compute wall angles and top line factors
     Wall wall = (Wall)getUserData();
     double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart()); 
-    double cosWallYawAngle = Math.cos(wallYawAngle);
-    double sinWallYawAngle = Math.sin(wallYawAngle);
+    final double cosWallYawAngle = Math.cos(wallYawAngle);
+    final double sinWallYawAngle = Math.sin(wallYawAngle);
     double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
     double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
     boolean roundWall = wall.getArcExtent() != null && wall.getArcExtent() != 0; 
-    double topLineAlpha;
-    double topLineBeta;
+    final double topLineAlpha;
+    final double topLineBeta;
     if (wallHeightAtStart == wallHeightAtEnd) {
       topLineAlpha = 0;
       topLineBeta = wallHeightAtStart;
@@ -238,6 +252,7 @@ public class Wall3D extends Object3DBranch {
     
     // Search which doors or windows intersect with this wall side
     List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
+    List<HomePieceOfFurniture> intersectingDoorOrWindows = new ArrayList<HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(this.home.getFurniture())) {
       float pieceElevation = piece.getGroundElevation();
       if (pieceElevation + piece.getHeight() > wallElevation
@@ -248,6 +263,7 @@ public class Wall3D extends Object3DBranch {
         intersectionArea.intersect(pieceArea);
         if (!intersectionArea.isEmpty()) {
           windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
+          intersectingDoorOrWindows.add(piece);
           // Remove from wall area the piece shape
           wallArea.subtract(pieceArea);
         }
@@ -432,6 +448,50 @@ public class Wall3D extends Object3DBranch {
           it.next();
         }
       } 
+    }
+
+    // Generate geometry around non rectangular doors and windows placed in straight walls along the same axis 
+    if (!roundWall) {
+      double epsilon = Math.PI / 720; // Quarter a degree
+      for (final HomePieceOfFurniture doorOrWindow : intersectingDoorOrWindows) {
+        if (doorOrWindow instanceof DoorOrWindow
+            && !"M0,0 v1 h1 v-1 z".equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
+          double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
+          if (angleDifference < epsilon
+              || angleDifference > 2 * Math.PI - epsilon
+              || Math.abs(angleDifference - Math.PI) < epsilon) {
+            final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
+            Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
+            if (frontArea == null) {
+              ModelManager.getInstance().loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
+                  new ModelManager.ModelObserver() {
+                    public void modelUpdated(BranchGroup modelRoot) {
+                      // Add piece model scene to a normalized transform group
+                      TransformGroup rotation = new TransformGroup(
+                          ModelManager.getInstance().getRotationTransformation(doorOrWindow.getModelRotation()));
+                      rotation.addChild(modelRoot);
+                      Area frontArea = ModelManager.getInstance().getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
+                      // Keep front area in cache for future updates
+                      doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
+                      createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
+                          wallGeometries, wallTopGeometries, 
+                          wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                          texture, textureReferencePoint, wallSide);
+                    }
+                    
+                    public void modelError(Exception ex) {
+                      // In case of problem ignore door or window geometry
+                    }
+                  });
+            } else {
+              createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
+                  wallGeometries, wallTopGeometries, 
+                  wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                  texture, textureReferencePoint, wallSide);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -755,6 +815,188 @@ public class Wall3D extends Object3DBranch {
     return geometryInfo.getIndexedGeometryArray ();
   }
   
+  /**
+   * Creates the geometry surrounding the given non rectangular door or window. 
+   * @param topLineBeta2 
+   */
+  private void createGeometriesSurroundingDoorOrWindow(HomePieceOfFurniture doorOrWindow, 
+                                                       Area doorOrWindowFrontArea,
+                                                       float frontOrBackSide,
+                                                       List<Geometry> wallGeometries, 
+                                                       List<Geometry> wallTopGeometries,
+                                                       float [][] wallSidePoints, 
+                                                       float wallElevation, 
+                                                       double cosWallYawAngle, double sinWallYawAngle, 
+                                                       double topLineAlpha, double topLineBeta,
+                                                       HomeTexture texture, float [] textureReferencePoint, 
+                                                       int wallSide) {
+    Area fullFaceArea = new Area(FULL_FACE_CUT_OUT_AREA);
+    fullFaceArea.subtract(doorOrWindowFrontArea);
+    if (!fullFaceArea.isEmpty()) {
+      // Compute the depth position of the surrounding wall part in normalized piece space  
+      float doorOrWindowDepth = doorOrWindow.getDepth();
+      float xPieceSide = (float)(doorOrWindow.getX() - frontOrBackSide * doorOrWindowDepth / 2 * Math.sin(doorOrWindow.getAngle()));
+      float yPieceSide = (float)(doorOrWindow.getY() + frontOrBackSide * doorOrWindowDepth / 2 * Math.cos(doorOrWindow.getAngle()));
+      float [] wallFirstPoint = wallSide == WALL_LEFT_SIDE 
+          ? wallSidePoints [0]
+          : wallSidePoints [wallSidePoints.length - 1];
+      float [] wallSecondPoint = wallSide == WALL_LEFT_SIDE 
+          ? wallSidePoints [wallSidePoints.length / 2 - 1]
+          : wallSidePoints [wallSidePoints.length / 2];
+      float frontSideToWallDistance = (float)Line2D.ptLineDist(wallFirstPoint [0], wallFirstPoint [1], 
+              wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide);
+      float depthTranslation = frontOrBackSide * (0.5f - frontSideToWallDistance / doorOrWindowDepth);
+      
+      // Compute surrounding part transformation matrix
+      Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOFFurnitureNormalizedModelTransformation(doorOrWindow);       
+      Transform3D frontAreaTranslation = new Transform3D();
+      frontAreaTranslation.setTranslation(new Vector3f(0, 0, depthTranslation));
+      frontAreaTransform.mul(frontAreaTranslation);
+  
+      // Generate wall side path in normalized piece space
+      Transform3D invertedFrontAreaTransform = new Transform3D();
+      invertedFrontAreaTransform.invert(frontAreaTransform);    
+      GeneralPath wallPath = new GeneralPath();
+      Point3f wallPoint = new Point3f(wallFirstPoint [0], wallElevation, wallFirstPoint [1]);
+      invertedFrontAreaTransform.transform(wallPoint);
+      wallPath.moveTo(wallPoint.x, wallPoint.y);
+      wallPoint = new Point3f(wallSecondPoint [0], wallElevation, wallSecondPoint [1]);
+      invertedFrontAreaTransform.transform(wallPoint);
+      wallPath.lineTo(wallPoint.x, wallPoint.y);
+      wallPoint = new Point3f(wallSecondPoint [0], 
+          getWallPointElevation(wallSecondPoint [0], wallSecondPoint [1], 
+              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta), wallSecondPoint [1]);
+      invertedFrontAreaTransform.transform(wallPoint);
+      wallPath.lineTo(wallPoint.x, wallPoint.y);
+      wallPoint = new Point3f(wallFirstPoint [0], 
+          getWallPointElevation(wallFirstPoint [0], wallFirstPoint [1], 
+              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta), wallFirstPoint [1]);
+      invertedFrontAreaTransform.transform(wallPoint);
+      wallPath.lineTo(wallPoint.x, wallPoint.y);
+      wallPath.closePath();
+  
+      GeneralPath doorOrWindowSurroundingPath = new GeneralPath();
+      doorOrWindowSurroundingPath.moveTo(-.5f, -.5f);
+      doorOrWindowSurroundingPath.lineTo(-.5f,  .5f);
+      doorOrWindowSurroundingPath.lineTo( .5f, .5f);
+      doorOrWindowSurroundingPath.lineTo( .5f, -.5f);
+      doorOrWindowSurroundingPath.closePath();
+      
+      Area doorOrWindowSurroundingArea = new Area(doorOrWindowSurroundingPath);
+      doorOrWindowSurroundingArea.intersect(new Area(wallPath));
+      if (topLineAlpha != 0) {
+        // Create missing top wall part for segment that is not horizontal or vertical 
+        float [] previousPoint = null;
+        for (PathIterator it = doorOrWindowSurroundingArea.getPathIterator(null); !it.isDone(); it.next()) {
+          float [] point = new float[2];
+          switch (it.currentSegment(point)) {
+            case PathIterator.SEG_LINETO : 
+              if (previousPoint != null
+                  && Math.abs(point [0] - previousPoint [0]) > 1E-4
+                  && Math.abs(point [1] - previousPoint [1]) > 1E-4) {
+                Point3f coords;
+                Point3f previousCoords;
+                if (frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored()) {
+                  coords = new Point3f(previousPoint [0], previousPoint [1], 0);
+                  previousCoords = new Point3f(point [0], point [1], 0);
+                } else {
+                  coords = new Point3f(point [0], point [1], 0);
+                  previousCoords = new Point3f(previousPoint [0], previousPoint [1], 0);
+                }
+                float deltaXToWallMiddle = wallSidePoints [0][0] - wallSidePoints [wallSidePoints.length - 1][0];
+                float deltaYToWallMiddle = wallSidePoints [0][1] - wallSidePoints [wallSidePoints.length - 1][1];
+                if (wallSide == WALL_LEFT_SIDE) {
+                  deltaXToWallMiddle *= -1;
+                  deltaYToWallMiddle *= -1;
+                }
+                frontAreaTransform.transform(coords);
+                frontAreaTransform.transform(previousCoords);
+                float [][] topWallPartPoints = {
+                  {coords.x + deltaXToWallMiddle, coords.z + deltaYToWallMiddle},
+                  {coords.x, coords.z},
+                  {previousCoords.x, previousCoords.z},
+                  {previousCoords.x + deltaXToWallMiddle, previousCoords.z + deltaYToWallMiddle}};
+                wallTopGeometries.add(createWallTopPartGeometry(topWallPartPoints, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, false));
+              }
+            case PathIterator.SEG_MOVETO :
+              previousPoint = point;
+              break;
+          }
+        }
+      }
+      
+      // Retrieve the points of the surrounding area as one polygon where holes are removed
+      doorOrWindowSurroundingArea.subtract(doorOrWindowFrontArea);
+      if (!doorOrWindowSurroundingArea.isEmpty()) {
+        List<float []> doorOrWindowSurroundingAreaPoints = new ArrayList<float[]>();
+        int index = 0; 
+        for (PathIterator pathIterator = doorOrWindowSurroundingArea.getPathIterator(null, 1 / (Math.max(doorOrWindow.getWidth(), doorOrWindow.getHeight()))); 
+             !pathIterator.isDone(); ) {
+          float [] point = new float [2];
+          switch (pathIterator.currentSegment(point)) {
+            case PathIterator.SEG_MOVETO :
+              if (doorOrWindowSurroundingAreaPoints.isEmpty()) {
+                // First moveTo is the beginning of the enclosing area
+                doorOrWindowSurroundingAreaPoints.add(index++, point);
+              } else {
+                // Others are holes in the enclosing area transformed as a contour part joined at the closest point
+                float minDistance = Float.MAX_VALUE;
+                for (int i = 0; i < doorOrWindowSurroundingAreaPoints.size(); i++) {
+                  float distance = (float)Point2D.distanceSq(point [0], point [1], 
+                      doorOrWindowSurroundingAreaPoints.get(i) [0], doorOrWindowSurroundingAreaPoints.get(i) [1]);
+                  if (distance < minDistance) {
+                    minDistance = distance;
+                    index = i;
+                  }
+                }
+                doorOrWindowSurroundingAreaPoints.add(index, doorOrWindowSurroundingAreaPoints.get(index));            
+                doorOrWindowSurroundingAreaPoints.add(++index, point);
+                doorOrWindowSurroundingAreaPoints.add(++index, point);
+              }
+              break;
+            case PathIterator.SEG_LINETO : 
+              doorOrWindowSurroundingAreaPoints.add(index++, point);
+              break;
+          }
+          pathIterator.next();        
+        }
+        if (frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored()) {
+          Collections.reverse(doorOrWindowSurroundingAreaPoints);
+        }
+      
+        // Generate coordinates
+        Point3f [] coords = new Point3f [doorOrWindowSurroundingAreaPoints.size()];
+        for (int i = 0; i < coords.length; i++) {
+          float [] point = doorOrWindowSurroundingAreaPoints.get(i);
+          coords [i] = new Point3f(point [0], point [1], 0);
+          frontAreaTransform.transform(coords [i]);
+        }
+        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+        geometryInfo.setStripCounts(new int [] {coords.length});
+        geometryInfo.setContourCounts(new int [] {1});
+        geometryInfo.setCoordinates(coords);
+        
+        if (texture != null) {
+          // Compute texture coordinates of wall side according to textureReferencePoint
+          TexCoord2f [] textureCoords = new TexCoord2f [coords.length];
+          for (int i = 0; i < coords.length; i++) {
+            float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                coords [i].x, coords [i].z) / texture.getWidth();
+            if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
+              horizontalTextureCoords = -horizontalTextureCoords;
+            }
+            textureCoords [i] = new TexCoord2f(horizontalTextureCoords, coords [i].y / texture.getHeight());
+          }
+          geometryInfo.setTextureCoordinateParams(1, 2);
+          geometryInfo.setTextureCoordinates(0, textureCoords);
+        }
+        
+        new NormalGenerator().generateNormals(geometryInfo);
+        wallGeometries.add(geometryInfo.getIndexedGeometryArray());
+      }
+    }
+  }
+
   /**
    * Returns the elevation of the wall managed by this 3D object.
    */

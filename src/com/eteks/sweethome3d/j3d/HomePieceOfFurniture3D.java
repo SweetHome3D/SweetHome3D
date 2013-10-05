@@ -54,7 +54,6 @@ import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
@@ -199,32 +198,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * its location, its angle and its size.
    */
   private void updatePieceOfFurnitureTransform() {
-    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
-    // Set piece size
-    Transform3D scale = new Transform3D();
-    float pieceWidth = piece.getWidth();
-    // If piece model is mirrored, inverse its width
-    if (piece.isModelMirrored()) {
-      pieceWidth *= -1;
-    }
-    scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
-    // Change its angle around y axis
-    Transform3D orientation = new Transform3D();
-    orientation.rotY(-piece.getAngle());
-    orientation.mul(scale);
-    // Translate it to its location
-    Transform3D pieceTransform = new Transform3D();
-    float z = piece.getElevation() + piece.getHeight() / 2;
-    if (piece.getLevel() != null) {
-      z += piece.getLevel().getElevation();
-    }
-    pieceTransform.setTranslation(new Vector3f(piece.getX(), z, piece.getY()));      
-    pieceTransform.mul(orientation);
-    
+    Transform3D pieceTransform = ModelManager.getInstance().
+        getPieceOFFurnitureNormalizedModelTransformation((HomePieceOfFurniture)getUserData());
     // Change model transformation      
     ((TransformGroup)getChild(0)).setTransform(pieceTransform);
   }
-  
+
   /**
    * Sets the color and the texture applied to piece model.
    */
