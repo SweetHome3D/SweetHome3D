@@ -1031,7 +1031,7 @@ public class ModelManager {
       int vertexCount = getVertexCount(node);
       if (vertexCount < 10000) {
         Area frontAreaWithHoles = new Area();
-        computeBottomOrFrontArea(node, frontAreaWithHoles, new Transform3D(), false);
+        computeBottomOrFrontArea(node, frontAreaWithHoles, new Transform3D(), false, false);
         // Remove holes and duplicated points
         frontArea = new Area();
         List<float []> currentPathPoints = new ArrayList<float[]>();
@@ -1077,7 +1077,7 @@ public class ModelManager {
         }
         Rectangle2D bounds = frontAreaWithHoles.getBounds2D();
         frontArea.transform(AffineTransform.getTranslateInstance(-bounds.getCenterX(), -bounds.getCenterY()));
-        frontArea.transform(AffineTransform.getScaleInstance(1 / bounds.getWidth(), 1 / bounds.getHeight()));
+        frontArea.transform(AffineTransform.getScaleInstance(1 / bounds.getWidth(), 1 / bounds.getHeight()));        
       } else {
         frontArea = new Area(new Rectangle2D.Float(-.5f, -.5f, 1, 1));
       }    
@@ -1095,7 +1095,7 @@ public class ModelManager {
     int vertexCount = getVertexCount(node);
     if (vertexCount < 10000) {
       modelAreaOnFloor = new Area();
-      computeBottomOrFrontArea(node, modelAreaOnFloor, new Transform3D(), true);
+      computeBottomOrFrontArea(node, modelAreaOnFloor, new Transform3D(), true, true);
     } else {
       List<float []> vertices = new ArrayList<float[]>(vertexCount); 
       computeVerticesOnFloor(node, vertices, new Transform3D());
@@ -1148,6 +1148,7 @@ public class ModelManager {
   private void computeBottomOrFrontArea(Node node, 
                                         Area nodeArea, 
                                         Transform3D parentTransformations,
+                                        boolean ignoreTransparentShapes, 
                                         boolean bottom) {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
@@ -1159,10 +1160,10 @@ public class ModelManager {
       // Compute all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        computeBottomOrFrontArea((Node)enumeration.nextElement(), nodeArea, parentTransformations, bottom);
+        computeBottomOrFrontArea((Node)enumeration.nextElement(), nodeArea, parentTransformations, ignoreTransparentShapes, bottom);
       }
     } else if (node instanceof Link) {
-      computeBottomOrFrontArea(((Link)node).getSharedGroup(), nodeArea, parentTransformations, bottom);
+      computeBottomOrFrontArea(((Link)node).getSharedGroup(), nodeArea, parentTransformations, ignoreTransparentShapes, bottom);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -1172,7 +1173,8 @@ public class ModelManager {
           ? appearance.getTransparencyAttributes() : null;
       if ((renderingAttributes == null
             || renderingAttributes.getVisible())
-          && (transparencyAttributes == null
+          && (!ignoreTransparentShapes
+              || transparencyAttributes == null
               || transparencyAttributes.getTransparency() < 1)) {
         // Compute shape geometries area
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
