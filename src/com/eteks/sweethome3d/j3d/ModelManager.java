@@ -1029,7 +1029,7 @@ public class ModelManager {
       frontArea.transform(AffineTransform.getTranslateInstance(-.5, .5));
     } else {
       int vertexCount = getVertexCount(node);
-      if (vertexCount < 10000) {
+      if (vertexCount < 1000000) {
         Area frontAreaWithHoles = new Area();
         computeBottomOrFrontArea(node, frontAreaWithHoles, new Transform3D(), false, false);
         // Remove holes and duplicated points
