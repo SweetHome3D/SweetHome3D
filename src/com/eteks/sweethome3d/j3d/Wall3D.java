@@ -463,16 +463,20 @@ public class Wall3D extends Object3DBranch {
             final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
             Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
             if (frontArea == null) {
-              ModelManager.getInstance().loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
+              final ModelManager modelManager = ModelManager.getInstance();
+              modelManager.loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
                   new ModelManager.ModelObserver() {
                     public void modelUpdated(BranchGroup modelRoot) {
-                      // Add piece model scene to a normalized transform group
-                      TransformGroup rotation = new TransformGroup(
-                          ModelManager.getInstance().getRotationTransformation(doorOrWindow.getModelRotation()));
-                      rotation.addChild(modelRoot);
-                      Area frontArea = ModelManager.getInstance().getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
-                      // Keep front area in cache for future updates
-                      doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
+                      // Check again whether front area wasn't recently put in cache
+                      Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
+                      if (frontArea == null) {
+                        // Add piece model scene to a normalized transform group
+                        TransformGroup rotation = new TransformGroup(modelManager.getRotationTransformation(doorOrWindow.getModelRotation()));
+                        rotation.addChild(modelRoot);
+                        frontArea = modelManager.getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
+                        // Keep front area in cache for future updates
+                        doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
+                      }
                       createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
                           wallGeometries, wallTopGeometries, 
                           wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
@@ -481,6 +485,7 @@ public class Wall3D extends Object3DBranch {
                     
                     public void modelError(Exception ex) {
                       // In case of problem ignore door or window geometry
+                      doorOrWindowFrontAreas.put(doorOrWindow, FULL_FACE_CUT_OUT_AREA);
                     }
                   });
             } else {
