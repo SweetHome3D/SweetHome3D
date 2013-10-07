@@ -244,7 +244,8 @@ class MacOSXConfiguration {
       public void collectionChanged(CollectionEvent<Home> ev) {
         if (ev.getType() == CollectionEvent.Type.ADD) {
           final JFrame homeFrame = homeApplication.getHomeFrame(ev.getItem());
-          if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+          if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")
+              && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
             // To avoid a possible freeze of the program when the user requests a window enlargement 
             // while the frame canvas 3D is instantiated, forbid window to be resized
             homeFrame.setResizable(false);

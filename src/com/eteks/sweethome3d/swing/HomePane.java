@@ -2629,6 +2629,7 @@ public class HomePane extends JRootPane implements HomeView {
 
         final Integer dividerLocation = (Integer)home.getVisualProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
         if (OperatingSystem.isMacOSX() 
+            && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
             && !detachedView3D && dividerLocation != null && dividerLocation > 2
             && !Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
           // Under Mac OS X, ensure that the 3D view of an existing home will be displayed during a while
