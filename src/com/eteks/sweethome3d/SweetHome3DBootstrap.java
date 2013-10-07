@@ -65,6 +65,19 @@ public class SweetHome3DBootstrap {
           "macosx/libjogl.jnilib",
           "macosx/libjogl_awt.jnilib",
           "macosx/libjogl_cg.jnilib"}));
+    } else if (javaVersion.startsWith("1.6")
+               && System.getProperty("com.eteks.sweethome3d.deploymentInformation", "").startsWith("Java Web Start")) {
+      String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
+          ? "Sweet Home 3D ne peut pas fonctionner avec Java\n"
+            + "Web Start 6 sous Mac OS X de façon fiable.\n" 
+            + "Merci de télécharger le programme d'installation depuis\n" 
+            + "http://www.sweethome3d.com/fr/download.jsp"
+          : "Sweet Home 3D can't reliably run with Java Web Start 6\n" 
+            + "under Mac OS X.\n" 
+            + "Please download the installer version from\n" 
+            + "http://www.sweethome3d.com/download.jsp";
+      JOptionPane.showMessageDialog(null, message);
+      System.exit(1);
     } else if (javaVersion.startsWith(java7Prefix)
                && javaVersion.length() >= java7Prefix.length() + 1
                && Character.isDigit(javaVersion.charAt(java7Prefix.length()))
@@ -82,20 +95,7 @@ public class SweetHome3DBootstrap {
             + "or run Sweet Home 3D under Java 6.";
       JOptionPane.showMessageDialog(null, message);
       System.exit(1);
-    } else if (javaVersion.startsWith("1.6")
-               && System.getProperty("com.eteks.sweethome3d.deploymentInformation", "").startsWith("Java Web Start")) {
-      String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
-          ? "Sweet Home 3D ne peut pas fonctionner avec Java\n"
-            + "Web Start %c sous Mac OS X de façon fiable.\n" 
-            + "Merci de télécharger le programme d'installation depuis\n" 
-            + "http://www.sweethome3d.com/fr/download.jsp"
-          : "Sweet Home 3D can't reliably run with Java Web Start %c\n" 
-            + "under Mac OS X.\n" 
-            + "Please download the installer version from\n" 
-            + "http://www.sweethome3d.com/download.jsp";
-      JOptionPane.showMessageDialog(null, String.format(message, System.getProperty("java.version").charAt(2)));
-      System.exit(1);
-    } else { // Java 6 and Java >= 1.7.0_40    
+    } else { // Java >= 1.7.0_40    
       extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
           "macosx/java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
           "macosx/java3d-1.6/vecmath.jar",
