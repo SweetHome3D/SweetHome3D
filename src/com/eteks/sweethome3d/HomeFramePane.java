@@ -145,10 +145,12 @@ public class HomeFramePane extends JRootPane implements View {
     // Add listeners to model and frame    
     addListeners(this.home, this.application, this.controller.getHomeController(), homeFrame);
     
-    // Show frame later to ensure it will be in front after closing possible waiting dialog 
+    homeFrame.setVisible(true);
+    // Request the frame to go to front again because closing waiting dialog meanwhile  
+    // could put in front the already opened frame  
     EventQueue.invokeLater(new Runnable() {
         public void run() {
-          homeFrame.setVisible(true);
+          homeFrame.toFront();
         }
       });
   }
