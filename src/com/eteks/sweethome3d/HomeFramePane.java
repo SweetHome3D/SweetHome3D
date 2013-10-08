@@ -301,25 +301,39 @@ public class HomeFramePane extends JRootPane implements View {
         && screenHeight <= screenSize.height) {
       final Rectangle frameBounds = new Rectangle(x, y, width, height);
       if (maximized != null && maximized) {
-        // Display first the frame at its maximum size to keep splitters location 
-        Insets insets = frame.getInsets();
-        frame.setSize(screenSize.width + insets.left + insets.right, 
-            screenSize.height + insets.bottom);
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              // Resize to home non maximized bounds
-              frame.setBounds(frameBounds);
-              // Finally maximize
-              if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-                new Timer(200, new ActionListener() {
-                    public void actionPerformed(ActionEvent ev) {
-                      // Maximize later otherwise it won't be taken into account
-                      ((Timer)ev.getSource()).stop();
-                      frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-                    }
-                  }).start();
-              } else {
-                frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        if (OperatingSystem.isMacOSX() 
+            && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+          // Display the frame at its maximum size because calling setExtendedState to maximize 
+          // the frame moves it to the bottom left at its minimum size  
+          Insets insets = frame.getInsets();
+          frame.setSize(screenSize.width + insets.left + insets.right, 
+              screenSize.height + insets.bottom);
+        } else {
+          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
+        // Add a listener that will set the normal size when the frame leaves the maximized state
+        frame.addWindowStateListener(new WindowAdapter() {
+            @Override
+            public void windowStateChanged(WindowEvent ev) {
+              if ((ev.getOldState() == JFrame.MAXIMIZED_BOTH 
+                    || (OperatingSystem.isMacOSX() 
+                        && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
+                        && ev.getOldState() == JFrame.NORMAL))
+                  && ev.getNewState() == JFrame.NORMAL) {
+                if (OperatingSystem.isMacOSXLionOrSuperior()) {
+                  // Set back frame size later once frame reduce animation is finished 
+                  new Timer(20, new ActionListener() {
+                      public void actionPerformed(ActionEvent ev) {
+                        if (frame.getHeight() < 40) {
+                          ((Timer)ev.getSource()).stop();
+                          frame.setBounds(frameBounds);
+                        }
+                      }
+                    }).start();
+                } else {
+                  frame.setBounds(frameBounds);
+                }
+                frame.removeWindowStateListener(this);
               }
             }
           });
