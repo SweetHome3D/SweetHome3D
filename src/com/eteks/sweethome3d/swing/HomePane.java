@@ -2280,10 +2280,44 @@ public class HomePane extends JRootPane implements HomeView {
     if (!showBorder) {
       splitPane.setBorder(null);
     }
+    // Add a listener to the divider that will keep invisible components hidden when the split pane is resized 
+    final PropertyChangeListener resizeWeightUpdater = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        if (splitPane.getDividerLocation() <= 0) {
+          splitPane.setResizeWeight(0);
+        } else if (splitPane.getDividerLocation() + splitPane.getDividerSize() >= 
+            (splitPane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT 
+                ? splitPane.getWidth() - splitPane.getInsets().left
+                : splitPane.getHeight() - splitPane.getInsets().top)) {
+          splitPane.setResizeWeight(1);
+        } else {
+          splitPane.setResizeWeight(defaultResizeWeight);
+        }
+      }
+    };
+    splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, resizeWeightUpdater);
+    
     // Restore divider location previously set 
     Integer dividerLocation = (Integer)home.getVisualProperty(dividerLocationProperty);
     if (dividerLocation != null) {
       splitPane.setDividerLocation(dividerLocation);
+      // Update resize weight once split pane location is set
+      splitPane.addAncestorListener(new AncestorListener() {
+        private boolean firstCall = true;
+        
+        public void ancestorAdded(AncestorEvent ev) {
+          if (this.firstCall) {
+            this.firstCall = false;
+            resizeWeightUpdater.propertyChange(null);
+          }
+        }
+  
+        public void ancestorRemoved(AncestorEvent ev) {
+        }
+        
+        public void ancestorMoved(AncestorEvent ev) {
+        }
+      });
     }
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, 
         new PropertyChangeListener() {
@@ -2680,9 +2714,6 @@ public class HomePane extends JRootPane implements HomeView {
             });
           return planView3DPane;
         }
-        if (planView3DPane instanceof JSplitPane) {
-          ((JSplitPane)planView3DPane).setDividerLocation(0.5);
-        }
         controller.setVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
       }
       
@@ -2977,8 +3008,9 @@ public class HomePane extends JRootPane implements HomeView {
     }
     
     // Replace component by a dummy label to find easily where to attach back the component
-    JLabel dummyLabel = new JLabel();
+    JPanel dummyLabel = new JPanel();
     dummyLabel.setMaximumSize(new Dimension());
+    dummyLabel.setMinimumSize(new Dimension());
     dummyLabel.setName(view.getClass().getName());
     dummyLabel.setBorder(component.getBorder());
     
