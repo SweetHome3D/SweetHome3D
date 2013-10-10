@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.EventQueue;
 import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
@@ -452,9 +451,10 @@ public class Wall3D extends Object3DBranch {
     }
 
     // Generate geometry around non rectangular doors and windows placed in straight walls along the same axis 
-    if (!roundWall) {
-      double epsilon = Math.PI / 720; // Quarter a degree
-      final List<HomePieceOfFurniture> missingModels = new ArrayList<HomePieceOfFurniture>();
+    if (!roundWall && intersectingDoorOrWindows.size() > 0) {
+      final double epsilon = Math.PI / 720; // Quarter of a degree
+      final ArrayList<HomePieceOfFurniture> missingModels = new ArrayList<HomePieceOfFurniture>(intersectingDoorOrWindows.size());
+      // Compute geometry for doors or windows that have a known front area
       for (final HomePieceOfFurniture doorOrWindow : intersectingDoorOrWindows) {
         if (doorOrWindow instanceof DoorOrWindow
             && !"M0,0 v1 h1 v-1 z".equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
@@ -464,53 +464,59 @@ public class Wall3D extends Object3DBranch {
               || Math.abs(angleDifference - Math.PI) < epsilon) {
             final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
             Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
-            if (frontArea == null) {
-              if (!waitDoorOrWindowModelsLoadingEnd) {
-                missingModels.add(doorOrWindow);
-              }
-              final ModelManager modelManager = ModelManager.getInstance();
-              modelManager.loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
-                  new ModelManager.ModelObserver() {
-                    public void modelUpdated(BranchGroup modelRoot) {
-                      // Check again whether front area wasn't recently put in cache
-                      Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
-                      if (frontArea == null) {
-                        // Add piece model scene to a normalized transform group
-                        TransformGroup rotation = new TransformGroup(modelManager.getRotationTransformation(doorOrWindow.getModelRotation()));
-                        rotation.addChild(modelRoot);
-                        frontArea = modelManager.getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
-                        // Keep front area in cache for future updates
-                        doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
-                      }
-                      if (waitDoorOrWindowModelsLoadingEnd) {
-                        createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
-                            wallGeometries, wallTopGeometries, 
-                            wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
-                            texture, textureReferencePoint, wallSide);
-                      } else {
-                        missingModels.remove(doorOrWindow);
-                        if (missingModels.size() == 0) {
-                          // Request a new update only once all missing models are loaded
-                          updateWallSideGeometry(wallSide, texture, waitDoorOrWindowModelsLoadingEnd);
-                        }
-                      }
-                    }
-                    
-                    public void modelError(Exception ex) {
-                      // In case of problem ignore door or window geometry
-                      doorOrWindowFrontAreas.put(doorOrWindow, FULL_FACE_CUT_OUT_AREA);
-                      if (!waitDoorOrWindowModelsLoadingEnd) {
-                        missingModels.remove(doorOrWindow);
-                      }
-                    }
-                  });
-            } else {
+            if (frontArea != null 
+                && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
               createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
                   wallGeometries, wallTopGeometries, 
                   wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                   texture, textureReferencePoint, wallSide);
+            } else {
+              missingModels.add(doorOrWindow);
             }
           }
+        }
+      }
+      if (missingModels.size() > 0) {
+        final ModelManager modelManager = ModelManager.getInstance();
+        for (final HomePieceOfFurniture doorOrWindow : (List<HomePieceOfFurniture>)missingModels.clone()) {
+          double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
+          final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
+          // Load the model of the door or window to compute its front area  
+          modelManager.loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
+              new ModelManager.ModelObserver() {
+                public void modelUpdated(BranchGroup modelRoot) {
+                  // Check again whether front area wasn't recently put in cache
+                  Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
+                  if (frontArea == null) {
+                    // Add piece model scene to a normalized transform group
+                    TransformGroup rotation = new TransformGroup(modelManager.getRotationTransformation(doorOrWindow.getModelRotation()));
+                    rotation.addChild(modelRoot);
+                    frontArea = modelManager.getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
+                    // Keep front area in cache for future updates
+                    doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
+                  }
+                  if (waitDoorOrWindowModelsLoadingEnd) {
+                    createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
+                        wallGeometries, wallTopGeometries, 
+                        wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                        texture, textureReferencePoint, wallSide);
+                  } else {
+                    missingModels.remove(doorOrWindow);
+                    if (missingModels.size() == 0) {
+                      // Request a new update only once all missing models are loaded
+                      updateWallSideGeometry(wallSide, texture, waitDoorOrWindowModelsLoadingEnd);
+                    }
+                  }
+                }
+                
+                public void modelError(Exception ex) {
+                  // In case of problem, ignore door or window geometry by using default full face cut out area
+                  doorOrWindowFrontAreas.put(doorOrWindow, FULL_FACE_CUT_OUT_AREA);
+                  if (!waitDoorOrWindowModelsLoadingEnd) {
+                    missingModels.remove(doorOrWindow);
+                  }
+                }
+              });
         }
       }
     }
