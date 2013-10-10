@@ -956,33 +956,50 @@ public class Wall3D extends Object3DBranch {
       doorOrWindowSurroundingArea.subtract(doorOrWindowFrontArea);
       if (!doorOrWindowSurroundingArea.isEmpty()) {
         List<float []> doorOrWindowSurroundingAreaPoints = new ArrayList<float[]>();
-        int index = 0; 
+        List<float []> areaPartPoints = new ArrayList<float[]>();
         for (PathIterator pathIterator = doorOrWindowSurroundingArea.getPathIterator(null, 1 / (Math.max(doorOrWindow.getWidth(), doorOrWindow.getHeight()))); 
              !pathIterator.isDone(); ) {
           float [] point = new float [2];
           switch (pathIterator.currentSegment(point)) {
             case PathIterator.SEG_MOVETO :
+            case PathIterator.SEG_LINETO : 
+              areaPartPoints.add(point);
+              break;
+            case PathIterator.SEG_CLOSE:
+              float [] firstPoint = areaPartPoints.get(0);
+              float [] lastPoint = areaPartPoints.get(areaPartPoints.size() - 1);
+              if (firstPoint [0] == lastPoint [0]
+                  && firstPoint [1] == lastPoint [1]) {
+                areaPartPoints.remove(areaPartPoints.size() - 1);
+              }
               if (doorOrWindowSurroundingAreaPoints.isEmpty()) {
-                // First moveTo is the beginning of the enclosing area
-                doorOrWindowSurroundingAreaPoints.add(index++, point);
+                doorOrWindowSurroundingAreaPoints.addAll(areaPartPoints);
               } else {
-                // Others are holes in the enclosing area transformed as a contour part joined at the closest point
+                // Search the closest points in the existing area and the area part that mist be added
                 float minDistance = Float.MAX_VALUE;
-                for (int i = 0; i < doorOrWindowSurroundingAreaPoints.size(); i++) {
-                  float distance = (float)Point2D.distanceSq(point [0], point [1], 
-                      doorOrWindowSurroundingAreaPoints.get(i) [0], doorOrWindowSurroundingAreaPoints.get(i) [1]);
-                  if (distance < minDistance) {
-                    minDistance = distance;
-                    index = i;
+                int areaPartClosestPointIndex = 0;
+                int areaClosestPointIndex = 0;
+                for (int i = 0; i < areaPartPoints.size() && minDistance > 0; i++) {
+                  for (int j = 0; j < doorOrWindowSurroundingAreaPoints.size() && minDistance > 0; j++) {
+                    float distance = (float)Point2D.distanceSq(areaPartPoints.get(i) [0], areaPartPoints.get(i) [1],
+                        doorOrWindowSurroundingAreaPoints.get(j) [0], doorOrWindowSurroundingAreaPoints.get(j) [1]);
+                    if (distance < minDistance) {
+                      minDistance = distance;
+                      areaPartClosestPointIndex = i;
+                      areaClosestPointIndex = j;
+                    }
                   }
                 }
-                doorOrWindowSurroundingAreaPoints.add(index, doorOrWindowSurroundingAreaPoints.get(index));            
-                doorOrWindowSurroundingAreaPoints.add(++index, point);
-                doorOrWindowSurroundingAreaPoints.add(++index, point);
+                // Join the areas at their closest points
+                if (minDistance != 0) {
+                  doorOrWindowSurroundingAreaPoints.add(areaClosestPointIndex, doorOrWindowSurroundingAreaPoints.get(areaClosestPointIndex));
+                  doorOrWindowSurroundingAreaPoints.add(++areaClosestPointIndex, areaPartPoints.get(areaPartClosestPointIndex));
+                }
+                List<float []> lastPartPoints = areaPartPoints.subList(areaPartClosestPointIndex, areaPartPoints.size());
+                doorOrWindowSurroundingAreaPoints.addAll(areaClosestPointIndex, lastPartPoints);
+                doorOrWindowSurroundingAreaPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), areaPartPoints.subList(0, areaPartClosestPointIndex));
               }
-              break;
-            case PathIterator.SEG_LINETO : 
-              doorOrWindowSurroundingAreaPoints.add(index++, point);
+              areaPartPoints.clear();
               break;
           }
           pathIterator.next();        
