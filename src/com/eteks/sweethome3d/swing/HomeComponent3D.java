@@ -1706,11 +1706,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Add a listener on subpart size property change to home
       this.subpartSizeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            Collection<Selectable> homeItems = new ArrayList<Selectable>(home.getWalls());
-            homeItems.addAll(home.getRooms());
-            homeItems.addAll(Home.getSubList(home.getFurniture(), HomeLight.class));
-            updateObjects(homeItems);
-            clearPrintedImageCache();
+            if (ev != null) { 
+              // Update 3D objects if not at initialization 
+              Collection<Selectable> homeItems = new ArrayList<Selectable>(home.getWalls());
+              homeItems.addAll(home.getRooms());
+              homeItems.addAll(Home.getSubList(home.getFurniture(), HomeLight.class));
+              updateObjects(homeItems);
+              clearPrintedImageCache();
+            }
             
             // Update default lights scope
             List<Group> scope = null;
