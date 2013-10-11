@@ -396,11 +396,9 @@ public class Ground3D extends Object3DBranch {
                                     float elevation, 
                                     float sideHeight) {
     Point3f [] geometryCoords = new Point3f [areaPoints.length * 4];
-    int [] stripCounts = new int [areaPoints.length];
     TexCoord2f [] geometryTextureCoords = groundTexture != null 
         ? new TexCoord2f [geometryCoords.length]
         : null;
-    Arrays.fill(stripCounts, 4);
     for (int i = 0, j = 0; i < areaPoints.length; i++) {
       float [] point = areaPoints [i];
       float [] nextPoint = areaPoints [i < areaPoints.length - 1 ? i + 1 : 0];
@@ -417,13 +415,12 @@ public class Ground3D extends Object3DBranch {
       }
     }
 
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates (geometryCoords);
     if (groundTexture != null) {
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, geometryTextureCoords);
     }
-    geometryInfo.setStripCounts(stripCounts);
     new NormalGenerator(0).generateNormals(geometryInfo);
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
