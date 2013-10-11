@@ -233,7 +233,7 @@ public class Wall3D extends Object3DBranch {
     float maxWallHeight = Math.max(wallHeightAtStart, wallHeightAtEnd);
 
     // Compute wall angles and top line factors
-    Wall wall = (Wall)getUserData();
+    final Wall wall = (Wall)getUserData();
     double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart()); 
     final double cosWallYawAngle = Math.cos(wallYawAngle);
     final double sinWallYawAngle = Math.sin(wallYawAngle);
@@ -467,7 +467,7 @@ public class Wall3D extends Object3DBranch {
             if (frontArea != null 
                 && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
               createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
-                  wallGeometries, wallTopGeometries, 
+                  wall, wallGeometries, wallTopGeometries, 
                   wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                   texture, textureReferencePoint, wallSide);
             } else {
@@ -497,7 +497,7 @@ public class Wall3D extends Object3DBranch {
                   }
                   if (waitDoorOrWindowModelsLoadingEnd) {
                     createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
-                        wallGeometries, wallTopGeometries, 
+                        wall, wallGeometries, wallTopGeometries, 
                         wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                         texture, textureReferencePoint, wallSide);
                   } else {
@@ -844,12 +844,11 @@ public class Wall3D extends Object3DBranch {
   
   /**
    * Creates the geometry surrounding the given non rectangular door or window. 
-   * @param topLineBeta2 
    */
   private void createGeometriesSurroundingDoorOrWindow(HomePieceOfFurniture doorOrWindow, 
                                                        Area doorOrWindowFrontArea,
                                                        float frontOrBackSide,
-                                                       List<Geometry> wallGeometries, 
+                                                       Wall wall, List<Geometry> wallGeometries, 
                                                        List<Geometry> wallTopGeometries,
                                                        float [][] wallSidePoints, 
                                                        float wallElevation, 
@@ -930,21 +929,23 @@ public class Wall3D extends Object3DBranch {
                   coords = new Point3f(point [0], point [1], 0);
                   previousCoords = new Point3f(previousPoint [0], previousPoint [1], 0);
                 }
-                float deltaXToWallMiddle = wallSidePoints [0][0] - wallSidePoints [wallSidePoints.length - 1][0];
-                float deltaYToWallMiddle = wallSidePoints [0][1] - wallSidePoints [wallSidePoints.length - 1][1];
+                float halfThickness = wall.getThickness() / 2;
+                float deltaXToWallMiddle = (float)(halfThickness * sinWallYawAngle);
+                float deltaZToWallMiddle = -(float)(halfThickness * cosWallYawAngle);
                 if (wallSide == WALL_LEFT_SIDE) {
                   deltaXToWallMiddle *= -1;
-                  deltaYToWallMiddle *= -1;
+                  deltaZToWallMiddle *= -1;
                 }
                 frontAreaTransform.transform(coords);
                 frontAreaTransform.transform(previousCoords);
                 float [][] topWallPartPoints = {
-                  {coords.x + deltaXToWallMiddle, coords.z + deltaYToWallMiddle},
+                  {coords.x + deltaXToWallMiddle, coords.z + deltaZToWallMiddle},
                   {coords.x, coords.z},
                   {previousCoords.x, previousCoords.z},
-                  {previousCoords.x + deltaXToWallMiddle, previousCoords.z + deltaYToWallMiddle}};
+                  {previousCoords.x + deltaXToWallMiddle, previousCoords.z + deltaZToWallMiddle}};
                 wallTopGeometries.add(createWallTopPartGeometry(topWallPartPoints, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, false));
               }
+              // Falls through
             case PathIterator.SEG_MOVETO :
               previousPoint = point;
               break;
