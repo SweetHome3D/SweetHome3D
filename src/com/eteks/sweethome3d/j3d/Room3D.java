@@ -281,67 +281,70 @@ public class Room3D extends Object3DBranch {
         roomVisibleArea = null;
       }
       
-      List<float []> roomPointElevations = new ArrayList<float[]>();
-      boolean roomAtSameElevation = true;
-      for (int i = 0; i < roomPointsWithoutHoles.size(); i++) {
-        float [][] roomPartPoints = roomPointsWithoutHoles.get(i);
-        float [] roomPartPointElevations = new float [roomPartPoints.length];
-        for (int j = 0; j < roomPartPoints.length; j++) {
-          roomPartPointElevations [j] = roomPart == FLOOR_PART 
-              ? roomElevation 
-              : getRoomHeightAt(roomPartPoints [j][0], roomPartPoints [j][1]);
-          if (roomAtSameElevation && j > 0) {
-            roomAtSameElevation = roomPartPointElevations [j] == roomPartPointElevations [j - 1];
-          }
-        }
-        roomPointElevations.add(roomPartPointElevations);
-      }
-
-      List<Geometry> geometries = new ArrayList<Geometry> (3);
-      // Compute room geometry
+      List<Geometry> geometries = new ArrayList<Geometry> (3);      
       final float subpartSize = this.home.getEnvironment().getSubpartSizeUnderLight();
-      if (roomAtSameElevation && subpartSize > 0) {
+      
+      if (!roomPointsWithoutHoles.isEmpty()) {
+        List<float []> roomPointElevations = new ArrayList<float[]>();
+        boolean roomAtSameElevation = true;
         for (int i = 0; i < roomPointsWithoutHoles.size(); i++) {
           float [][] roomPartPoints = roomPointsWithoutHoles.get(i);
-          // Subdivide area in smaller squares to ensure a smoother effect with point lights         
-          float xMin = Float.MAX_VALUE;
-          float xMax = Float.MIN_VALUE;
-          float zMin = Float.MAX_VALUE;
-          float zMax = Float.MIN_VALUE;
-          for (float [] point : roomPartPoints) {
-            xMin = Math.min(xMin, point [0]);
-            xMax = Math.max(xMax, point [0]);
-            zMin = Math.min(zMin, point [1]);
-            zMax = Math.max(zMax, point [1]);
+          float [] roomPartPointElevations = new float [roomPartPoints.length];
+          for (int j = 0; j < roomPartPoints.length; j++) {
+            roomPartPointElevations [j] = roomPart == FLOOR_PART 
+                ? roomElevation 
+                : getRoomHeightAt(roomPartPoints [j][0], roomPartPoints [j][1]);
+            if (roomAtSameElevation && j > 0) {
+              roomAtSameElevation = roomPartPointElevations [j] == roomPartPointElevations [j - 1];
+            }
           }
-          
-          Area roomPartArea = new Area(getShape(roomPartPoints));        
-          for (float xSquare = xMin; xSquare < xMax; xSquare += subpartSize) {
-            for (float zSquare = zMin; zSquare < zMax; zSquare += subpartSize) {
-              Area roomPartSquare = new Area(new Rectangle2D.Float(xSquare, zSquare, subpartSize, subpartSize));
-              roomPartSquare.intersect(roomPartArea);
-              if (!roomPartSquare.isEmpty()) {
-                List<float [][]> geometryPartPointsWithoutHoles = 
-                    getAreaPoints(roomPartSquare, 1, roomPart == CEILING_PART);
-                if (!geometryPartPointsWithoutHoles.isEmpty()) {
-                  geometries.add(computeRoomPartGeometry(geometryPartPointsWithoutHoles, 
-                      null, roomLevel, roomPointElevations.get(i) [0], floorBottomElevation, 
-                      roomPart == FLOOR_PART, false, texture));
+          roomPointElevations.add(roomPartPointElevations);
+        }
+
+        // Compute room geometry
+        if (roomAtSameElevation && subpartSize > 0) {
+          for (int i = 0; i < roomPointsWithoutHoles.size(); i++) {
+            float [][] roomPartPoints = roomPointsWithoutHoles.get(i);
+            // Subdivide area in smaller squares to ensure a smoother effect with point lights         
+            float xMin = Float.MAX_VALUE;
+            float xMax = Float.MIN_VALUE;
+            float zMin = Float.MAX_VALUE;
+            float zMax = Float.MIN_VALUE;
+            for (float [] point : roomPartPoints) {
+              xMin = Math.min(xMin, point [0]);
+              xMax = Math.max(xMax, point [0]);
+              zMin = Math.min(zMin, point [1]);
+              zMax = Math.max(zMax, point [1]);
+            }
+            
+            Area roomPartArea = new Area(getShape(roomPartPoints));        
+            for (float xSquare = xMin; xSquare < xMax; xSquare += subpartSize) {
+              for (float zSquare = zMin; zSquare < zMax; zSquare += subpartSize) {
+                Area roomPartSquare = new Area(new Rectangle2D.Float(xSquare, zSquare, subpartSize, subpartSize));
+                roomPartSquare.intersect(roomPartArea);
+                if (!roomPartSquare.isEmpty()) {
+                  List<float [][]> geometryPartPointsWithoutHoles = 
+                      getAreaPoints(roomPartSquare, 1, roomPart == CEILING_PART);
+                  if (!geometryPartPointsWithoutHoles.isEmpty()) {
+                    geometries.add(computeRoomPartGeometry(geometryPartPointsWithoutHoles, 
+                        null, roomLevel, roomPointElevations.get(i) [0], floorBottomElevation, 
+                        roomPart == FLOOR_PART, false, texture));
+                  }
                 }
               }
             }
           }
+        } else {
+          geometries.add(computeRoomPartGeometry(roomPointsWithoutHoles, roomPointElevations, roomLevel,
+              roomElevation, floorBottomElevation, roomPart == FLOOR_PART, false, texture));
         }
-      } else {
-        geometries.add(computeRoomPartGeometry(roomPointsWithoutHoles, roomPointElevations, roomLevel,
-            roomElevation, floorBottomElevation, roomPart == FLOOR_PART, false, texture));
-      }
-        
-      // Compute border geometry
-      if (roomLevel != null
-          && roomPart == FLOOR_PART 
-          && roomLevel.getElevation() != firstLevelElevation) {
-        geometries.add(computeRoomBorderGeometry(roomPoints, roomHoles, roomLevel, roomElevation, texture));
+          
+        // Compute border geometry
+        if (roomLevel != null
+            && roomPart == FLOOR_PART 
+            && roomLevel.getElevation() != firstLevelElevation) {
+          geometries.add(computeRoomBorderGeometry(roomPoints, roomHoles, roomLevel, roomElevation, texture));
+        }
       }
 
       // Retrieve points of the room floor bottom
