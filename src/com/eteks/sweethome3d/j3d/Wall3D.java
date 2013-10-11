@@ -961,12 +961,10 @@ public class Wall3D extends Object3DBranch {
             frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored());
       
         // Generate coordinates
-        int [] contourCounts = new int [doorOrWindowSurroundingAreasPoints.size()];
-        int [] stripCounts = new int [contourCounts.length];
+        int [] stripCounts = new int [doorOrWindowSurroundingAreasPoints.size()];
         int vertexCount = 0;
         for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size(); i++) {
           float [][] areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
-          contourCounts [i] = 1;
           stripCounts [i] = areaPoints.length;
           vertexCount += stripCounts [i]; 
         }
@@ -980,7 +978,6 @@ public class Wall3D extends Object3DBranch {
         }
         GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
         geometryInfo.setStripCounts(stripCounts);
-        geometryInfo.setContourCounts(contourCounts);
         geometryInfo.setCoordinates(coords);
         
         if (texture != null) {

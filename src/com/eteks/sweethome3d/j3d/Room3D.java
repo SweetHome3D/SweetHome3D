@@ -413,12 +413,10 @@ public class Room3D extends Object3DBranch {
                                            float roomPartElevation, float floorBottomElevation,
                                            boolean floorPart, boolean floorBottomPart, 
                                            HomeTexture texture) {
-    int [] contourCounts = new int [geometryPoints.size()];
-    int [] stripCounts = new int [contourCounts.length];
+    int [] stripCounts = new int [geometryPoints.size()];
     int vertexCount = 0;
     for (int i = 0; i < geometryPoints.size(); i++) {
       float [][] areaPoints = geometryPoints.get(i);
-      contourCounts [i] = 1;
       stripCounts [i] = areaPoints.length;
       vertexCount += stripCounts [i]; 
     }
@@ -441,7 +439,6 @@ public class Room3D extends Object3DBranch {
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
     geometryInfo.setCoordinates(coords);
     geometryInfo.setStripCounts(stripCounts);
-    geometryInfo.setContourCounts(contourCounts);
     
     if (texture != null) {
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
