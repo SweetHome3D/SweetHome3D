@@ -20,8 +20,14 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.Shape;
+import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.media.j3d.BranchGroup;
@@ -30,6 +36,8 @@ import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.vecmath.Color3f;
+
+import com.eteks.sweethome3d.model.Room;
 
 /**
  * Root of a branch that matches a home object. 
@@ -97,5 +105,135 @@ public abstract class Object3DBranch extends BranchGroup {
     } else {
       return getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess);
     }
+  }
+  
+  /**
+   * Returns the list of polygons points matching the given <code>area</code>.
+   */
+  protected List<float [][]> getAreaPoints(Area area, 
+                                           float flatness, 
+                                           boolean reversed) {
+    return getAreaPoints(area, null, null, flatness, reversed);
+  }
+  
+  /**
+   * Returns the list of polygons points matching the given <code>area</code> with detailed information in 
+   * <code>areaPoints</code> and <code>areaHoles</code>.
+   */
+  protected List<float [][]> getAreaPoints(Area area, 
+                                           List<float [][]> areaPoints,
+                                           List<float [][]> areaHoles,
+                                           float flatness, 
+                                           boolean reversed) {
+    List<List<float []>> areaPointsLists = new ArrayList<List<float[]>>();
+    List<List<float []>> areaHolesLists = new ArrayList<List<float[]>>();
+    ArrayList<float []>  currentPathPoints = null;
+    float [] previousPoint = null;
+    for (PathIterator pathIterator = area.getPathIterator(null, flatness); 
+         !pathIterator.isDone(); ) {
+      float [] point = new float [2];
+      switch (pathIterator.currentSegment(point)) {
+        case PathIterator.SEG_MOVETO :
+          currentPathPoints = new ArrayList<float[]>();
+          currentPathPoints.add(point);
+          previousPoint = point;          
+          break;
+        case PathIterator.SEG_LINETO : 
+          if (point [0] != previousPoint [0] 
+              || point [1] != previousPoint [1]) {
+            currentPathPoints.add(point);
+          }
+          previousPoint = point;          
+          break;
+        case PathIterator.SEG_CLOSE:
+          float [] firstPoint = currentPathPoints.get(0);
+          if (firstPoint [0] == previousPoint [0]
+              && firstPoint [1] == previousPoint [1]) {
+            currentPathPoints.remove(currentPathPoints.size() - 1);
+          }
+          if (currentPathPoints.size() > 2) {
+            float [][] areaPartPoints = currentPathPoints.toArray(new float [currentPathPoints.size()][]); 
+            Room subRoom = new Room(areaPartPoints);
+            if (subRoom.getArea() > 0) {
+              boolean pathPointsClockwise = subRoom.isClockwise();
+              if (pathPointsClockwise) {
+                // Keep holes points to remove them from the area once all points are retrieved
+                areaHolesLists.add(currentPathPoints);
+              } else {
+                areaPointsLists.add(currentPathPoints);
+              }
+              
+              if (areaPoints != null || areaHoles != null) {
+                // Store path points in returned lists
+                if (pathPointsClockwise ^ reversed) {
+                  currentPathPoints = (ArrayList<float []>)currentPathPoints.clone();
+                  Collections.reverse(currentPathPoints);
+                  currentPathPoints.toArray(areaPartPoints);
+                }
+                if (pathPointsClockwise) {
+                  if (areaHoles != null) {
+                    areaHoles.add(areaPartPoints);
+                  }
+                } else {
+                  if (areaPoints != null) {
+                    areaPoints.add(areaPartPoints);
+                  }
+                }
+              }
+            }
+          }
+          break;
+      }
+      pathIterator.next();        
+    }
+    
+    List<float [][]> areaPointsWithoutHoles = new ArrayList<float[][]>(); 
+    if (areaHolesLists.isEmpty() && areaPoints != null) {
+      areaPointsWithoutHoles.addAll(areaPoints);
+    } else if (areaPointsLists.isEmpty() && !areaHolesLists.isEmpty()) {
+      if (areaHoles != null) {
+        areaHoles.clear();
+      }
+    } else {
+      for (List<float []> holePoints : areaHolesLists) {
+        // Search the closest points in the current area and the hole part
+        float minDistance = Float.MAX_VALUE;
+        int holeClosestPointIndex = 0;
+        int areaClosestPointIndex = 0;
+        List<float []> closestAreaPartPoints = null;
+        for (int i = 0; i < areaPointsLists.size() && minDistance > 0; i++) {
+          List<float []> areaPartPoints = areaPointsLists.get(i);
+          for (int j = 0; j < holePoints.size() && minDistance > 0; j++) {
+            for (int k = 0; k < areaPartPoints.size() && minDistance > 0; k++) {
+              float distance = (float)Point2D.distanceSq(holePoints.get(j) [0], holePoints.get(j) [1],
+                  areaPartPoints.get(k) [0], areaPartPoints.get(k) [1]);
+              if (distance < minDistance) {
+                minDistance = distance;
+                holeClosestPointIndex = j;
+                areaClosestPointIndex = k;
+                closestAreaPartPoints = areaPartPoints;
+              }
+            }
+          }
+        }
+        // Combine the areas at their closest points
+        if (minDistance != 0) {
+          closestAreaPartPoints.add(areaClosestPointIndex, closestAreaPartPoints.get(areaClosestPointIndex));
+          closestAreaPartPoints.add(++areaClosestPointIndex, holePoints.get(holeClosestPointIndex));
+        }
+        List<float []> lastPartPoints = holePoints.subList(holeClosestPointIndex, holePoints.size());
+        closestAreaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
+        closestAreaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, holeClosestPointIndex));
+      }
+      
+      for (List<float []> pathPoints : areaPointsLists) {
+        if (reversed) {
+          Collections.reverse(pathPoints);
+        }
+        areaPointsWithoutHoles.add(pathPoints.toArray(new float [pathPoints.size()][]));
+      }
+    }
+    
+    return areaPointsWithoutHoles;
   }
 }

@@ -57,7 +57,6 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
-import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -957,86 +956,23 @@ public class Wall3D extends Object3DBranch {
       // Retrieve the points of the surrounding area as polygons where holes are removed
       doorOrWindowSurroundingArea.subtract(doorOrWindowFrontArea);
       if (!doorOrWindowSurroundingArea.isEmpty()) {
-        List<List<float []>> doorOrWindowSurroundingAreasPoints = new ArrayList<List<float[]>>();
-        List<List<float []>> currentAreaHolesPoints = new ArrayList<List<float[]>>();
-        ArrayList<float []> areaPartPoints = null;
-        for (PathIterator pathIterator = doorOrWindowSurroundingArea.getPathIterator(null, 1 / (Math.max(doorOrWindow.getWidth(), doorOrWindow.getHeight()))); 
-             !pathIterator.isDone(); ) {
-          float [] point = new float [2];
-          switch (pathIterator.currentSegment(point)) {
-            case PathIterator.SEG_MOVETO :
-              areaPartPoints = new ArrayList<float[]>();
-              // Falls through
-            case PathIterator.SEG_LINETO : 
-              areaPartPoints.add(point);
-              break;
-            case PathIterator.SEG_CLOSE:
-              float [] firstPoint = areaPartPoints.get(0);
-              float [] lastPoint = areaPartPoints.get(areaPartPoints.size() - 1);
-              if (firstPoint [0] == lastPoint [0]
-                  && firstPoint [1] == lastPoint [1]) {
-                areaPartPoints.remove(areaPartPoints.size() - 1);
-              }
-              if (new Room(areaPartPoints.toArray(new float [areaPartPoints.size()][])).isClockwise()) {
-                // Keep holes points to remove them from the surrounding area later
-                currentAreaHolesPoints.add(areaPartPoints);
-              } else {
-                doorOrWindowSurroundingAreasPoints.add(areaPartPoints);
-              }
-              break;
-          }
-          pathIterator.next();        
-        }
-        for (List<float []> holePoints : currentAreaHolesPoints) {
-          // Search the closest points in the current area and the hole part
-          float minDistance = Float.MAX_VALUE;
-          int areaPartClosestPointIndex = 0;
-          int areaClosestPointIndex = 0;
-          List<float []> closestAreaPoints = null;
-          for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size() && minDistance > 0; i++) {
-            List<float []> areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
-            for (int j = 0; j < holePoints.size() && minDistance > 0; j++) {
-              for (int k = 0; k < areaPoints.size() && minDistance > 0; k++) {
-                float distance = (float)Point2D.distanceSq(holePoints.get(j) [0], holePoints.get(j) [1],
-                    areaPoints.get(k) [0], areaPoints.get(k) [1]);
-                if (distance < minDistance) {
-                  minDistance = distance;
-                  areaPartClosestPointIndex = j;
-                  areaClosestPointIndex = k;
-                  closestAreaPoints = areaPoints;
-                }
-              }
-            }
-          }
-          // Combine the areas at their closest points
-          if (minDistance != 0) {
-            closestAreaPoints.add(areaClosestPointIndex, closestAreaPoints.get(areaClosestPointIndex));
-            closestAreaPoints.add(++areaClosestPointIndex, holePoints.get(areaPartClosestPointIndex));
-          }
-          List<float []> lastPartPoints = holePoints.subList(areaPartClosestPointIndex, holePoints.size());
-          closestAreaPoints.addAll(areaClosestPointIndex, lastPartPoints);
-          closestAreaPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, areaPartClosestPointIndex));
-        }
-        
-        if (frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored()) {
-          for (List<float []> areaPoints : doorOrWindowSurroundingAreasPoints) {
-            Collections.reverse(areaPoints);
-          }
-        }
+        List<float [][]> doorOrWindowSurroundingAreasPoints = getAreaPoints(doorOrWindowSurroundingArea,  
+            1 / (Math.max(doorOrWindow.getWidth(), doorOrWindow.getHeight())), 
+            frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored());
       
         // Generate coordinates
         int [] contourCounts = new int [doorOrWindowSurroundingAreasPoints.size()];
         int [] stripCounts = new int [contourCounts.length];
         int vertexCount = 0;
         for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size(); i++) {
-          List<float []> areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
+          float [][] areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
           contourCounts [i] = 1;
-          stripCounts [i] = areaPoints.size();
+          stripCounts [i] = areaPoints.length;
           vertexCount += stripCounts [i]; 
         }
         Point3f [] coords = new Point3f [vertexCount];
         int i = 0;
-        for (List<float []> areaPoints : doorOrWindowSurroundingAreasPoints) {
+        for (float [][] areaPoints : doorOrWindowSurroundingAreasPoints) {
           for (float [] point : areaPoints) {
             coords [i] = new Point3f(point [0], point [1], 0);
             frontAreaTransform.transform(coords [i++]);
