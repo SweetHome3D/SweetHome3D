@@ -24,8 +24,6 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -247,9 +245,7 @@ public class Ground3D extends Object3DBranch {
         for (float [][] points : getAreaPoints(undergroundSideAreas.get(level))) {
           addAreaSidesGeometry(groundShape, groundTexture, points, elevation, previousLevelElevation - elevation);
         }
-        for (float [][] points : getAreaPoints(upperLevelAreas.get(level))) {
-          addAreaGeometry(groundShape, groundTexture, points, null, previousLevelElevation);
-        }
+        addAreaGeometry(groundShape, groundTexture, upperLevelAreas.get(level), previousLevelElevation);
       }
       previousLevelElevation = elevation;
     }
@@ -315,76 +311,45 @@ public class Ground3D extends Object3DBranch {
   /**
    * Adds to ground shape the geometry matching the given area.
    */
-  private void addAreaGeometry(Shape3D groundShape, HomeTexture groundTexture, Area area, float elevation) {
-    List<float [][]> levelHolesPoints = new ArrayList<float[][]>();
-    for (float [][] points : getAreaPoints(area)) {
-      if (new Room(points).isClockwise()) {
-        levelHolesPoints.add(points);
-      } else {
-        addAreaGeometry(groundShape, groundTexture, points, levelHolesPoints, elevation);
-        levelHolesPoints.clear();
-      }
-    }
-  }
-
-  /**
-   * Adds to ground shape the geometry matching the area defined by the given points and hole points.
-   */
   private void addAreaGeometry(Shape3D groundShape, 
                                HomeTexture groundTexture, 
-                               float [][] areaPoints,
-                               List<float [][]> holesPoints, 
-                               float elevation) {
-    if (holesPoints == null) {
-      holesPoints = Collections.emptyList();
-    }
-    int pointCount = areaPoints.length;    
-    for (float [][] holePoints : holesPoints) {
-      pointCount += holePoints.length;
-    }
-    Point3f [] geometryCoords = new Point3f [pointCount];
-    int [] stripCounts = new int [1 + holesPoints.size()];
-    int [] contourCounts = new int [stripCounts.length - holesPoints.size()];    
-    TexCoord2f [] geometryTextureCoords = groundTexture != null 
-        ? new TexCoord2f [pointCount]
-        : null;
-    
-    stripCounts [0] = areaPoints.length;
-    Arrays.fill(contourCounts, 1);
-    for (int i = 0; i < holesPoints.size(); i++) {
-      stripCounts [i + 1] = holesPoints.get(i).length;
-      contourCounts [0]++;
-    }
-    int j = 0;
-    for (int i = 0; i < areaPoints.length; i++, j++) {
-      float [] point = areaPoints [i];
-      geometryCoords [j] = new Point3f(point [0], elevation, point [1]);
-      if (groundTexture != null) {
-        geometryTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-            (this.originY - point [1]) / groundTexture.getHeight());
+                               Area area, float elevation) {
+    List<float [][]> areaPoints = getAreaPoints(area, 1, false);
+
+    if (!areaPoints.isEmpty()) {
+      int vertexCount = 0;    
+      int [] stripCounts = new int [areaPoints.size()];
+      for (int i = 0; i < stripCounts.length; i++) {
+        stripCounts [i] = areaPoints.get(i).length;
+        vertexCount += stripCounts [i];
       }
-    }
-    for (float [][] holePoints : holesPoints) {
-      for (int i = 0; i < holePoints.length; i++, j++) {
-        float [] point = holePoints [i];
-        geometryCoords [j] = new Point3f(point [0], elevation, point [1]);
-        if (groundTexture != null) {
-          geometryTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
-              (this.originY - point [1]) / groundTexture.getHeight());
+      Point3f [] geometryCoords = new Point3f [vertexCount];
+      TexCoord2f [] geometryTextureCoords = groundTexture != null 
+          ? new TexCoord2f [vertexCount]
+          : null;
+      
+      int j = 0;
+      for (float [][] areaPartPoints : areaPoints) {
+        for (int i = 0; i < areaPartPoints.length; i++, j++) {
+          float [] point = areaPartPoints [i];
+          geometryCoords [j] = new Point3f(point [0], elevation, point [1]);
+          if (groundTexture != null) {
+            geometryTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / groundTexture.getWidth(), 
+                (this.originY - point [1]) / groundTexture.getHeight());
+          }
         }
       }
+      
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+      geometryInfo.setCoordinates (geometryCoords);
+      if (groundTexture != null) {
+        geometryInfo.setTextureCoordinateParams(1, 2);
+        geometryInfo.setTextureCoordinates(0, geometryTextureCoords);
+      }
+      geometryInfo.setStripCounts(stripCounts);
+      new NormalGenerator(0).generateNormals(geometryInfo);
+      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
     }
-    
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-    geometryInfo.setCoordinates (geometryCoords);
-    if (groundTexture != null) {
-      geometryInfo.setTextureCoordinateParams(1, 2);
-      geometryInfo.setTextureCoordinates(0, geometryTextureCoords);
-    }
-    geometryInfo.setStripCounts(stripCounts);
-    geometryInfo.setContourCounts(contourCounts);
-    new NormalGenerator(0).generateNormals(geometryInfo);
-    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
 
   /**
