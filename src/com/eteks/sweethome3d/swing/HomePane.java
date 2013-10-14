@@ -3092,6 +3092,7 @@ public class HomePane extends JRootPane implements HomeView {
       KeyStroke accelerator = (KeyStroke)action.getValue(Action.ACCELERATOR_KEY);
       if (key != ActionType.CLOSE
           && key != ActionType.DETACH_3D_VIEW 
+          && (key != ActionType.EXIT || !OperatingSystem.isMacOSX()) 
           && accelerator != null) {
         inputMap.put(accelerator, key);
       }
