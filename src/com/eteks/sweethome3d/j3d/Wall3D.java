@@ -924,7 +924,7 @@ public class Wall3D extends Object3DBranch {
         int vertexCount = 0;
         for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size(); i++) {
           float [][] areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
-          stripCounts [i] = areaPoints.length;
+          stripCounts [i] = areaPoints.length + 1;
           vertexCount += stripCounts [i]; 
         }
         float halfWallThickness = wall.getThickness() / 2;
@@ -1012,6 +1012,13 @@ public class Wall3D extends Object3DBranch {
             point = nextPoint;
             textureCoord = nextTextureCoord;
           }
+          
+          // Close the polygon with first point for special cases
+          coords [i] = point;
+          if (texture != null) {
+            textureCoords [i] = textureCoord;
+          }
+          i++;
         }
         
         // Generate surrounding area geometry
