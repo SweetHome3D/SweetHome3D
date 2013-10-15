@@ -226,6 +226,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private TextStyle              nameStyle;
   private float                  nameAngle;
   private String                 description;
+  private String                 information;
   private Content                icon;
   private Content                planIcon;
   private Content                model;
@@ -241,6 +242,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private Float                  shininess;
   private float [][]             modelRotation;
   private String                 staircaseCutOutShape;
+  private String                 creator;
   private boolean                backFaceShown;
   private boolean                resizable;
   private boolean                deformable;
@@ -266,6 +268,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public HomePieceOfFurniture(PieceOfFurniture piece) {
     this.name = piece.getName();
     this.description = piece.getDescription();
+    this.information = piece.getInformation();
     this.icon = piece.getIcon();
     this.planIcon = piece.getPlanIcon();
     this.model = piece.getModel();
@@ -278,6 +281,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.color = piece.getColor();
     this.modelRotation = piece.getModelRotation();
     this.staircaseCutOutShape = piece.getStaircaseCutOutShape();
+    this.creator = piece.getCreator();
     this.backFaceShown = piece.isBackFaceShown();
     this.resizable = piece.isResizable();
     this.deformable = piece.isDeformable();
@@ -484,6 +488,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
   }
    
+  /**
+   * Returns the additional information associated to this piece, or <code>null</code>.
+   * @since 4.2
+   */
+  public String getInformation() {
+    return this.information;
+  }
+  
   /**
    * Returns the depth of this piece of furniture.
    */
@@ -964,6 +976,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public String getStaircaseCutOutShape() {
     return this.staircaseCutOutShape;
+  }
+
+  /**
+   * Returns the creator of this piece.
+   * @since 4.2
+   */
+  public String getCreator() {
+    return this.creator;
   }
 
   /**

@@ -37,6 +37,12 @@ public interface PieceOfFurniture {
   public abstract String getDescription();
   
   /**
+   * Returns the additional information associated to this piece, or <code>null</code>.
+   * @since 4.2
+   */
+  public String getInformation();
+
+  /**
    * Returns the depth of this piece of furniture.
    */
   public abstract float getDepth();
@@ -97,6 +103,12 @@ public interface PieceOfFurniture {
    * @since 3.4
    */
   public String getStaircaseCutOutShape();
+  
+  /**
+   * Returns the creator of this piece or <code>null</code>.
+   * @since 4.2
+   */
+  public String getCreator();
   
   /**
    * Returns <code>true</code> if the back face of the piece of furniture

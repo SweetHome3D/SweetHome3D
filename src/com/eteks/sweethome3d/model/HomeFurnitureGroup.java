@@ -204,6 +204,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Returns <code>null</code>.
+   * @since 4.2
+   */
+  @Override
+  public String getInformation() {
+    return null;
+  }
+  
+  /**
    * Returns <code>true</code> if all furniture of this group are movable.
    */
   @Override
@@ -321,13 +330,22 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public float [][] getModelRotation() {
     return IDENTITY;
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 3.5
    */
   @Override
   public String getStaircaseCutOutShape() {
+    return null;
+  }
+  
+  /**
+   * Returns <code>null</code>.
+   * @since 4.2
+   */
+  @Override
+  public String getCreator() {
     return null;
   }
   
