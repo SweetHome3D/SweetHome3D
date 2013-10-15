@@ -485,11 +485,11 @@ public class Room3D extends Object3DBranch {
     float floorBottomElevation = roomElevation - roomLevel.getFloorThickness();
     // Compute room borders coordinates
     for (float [][] geometryPoints : geometryRooms) {
-      for (int k = 0; k < geometryPoints.length; k++) {
-        coords [i++] = new Point3f(geometryPoints [k][0], roomElevation, geometryPoints [k][1]);
-        coords [i++] = new Point3f(geometryPoints [k][0], floorBottomElevation, geometryPoints [k][1]);
-        int nextPoint = k < geometryPoints.length - 1  
-            ? k + 1
+      for (int j = 0; j < geometryPoints.length; j++) {
+        coords [i++] = new Point3f(geometryPoints [j][0], roomElevation, geometryPoints [j][1]);
+        coords [i++] = new Point3f(geometryPoints [j][0], floorBottomElevation, geometryPoints [j][1]);
+        int nextPoint = j < geometryPoints.length - 1  
+            ? j + 1
             : 0;
         coords [i++] = new Point3f(geometryPoints [nextPoint][0], floorBottomElevation, geometryPoints [nextPoint][1]);
         coords [i++] = new Point3f(geometryPoints [nextPoint][0], roomElevation, geometryPoints [nextPoint][1]);
@@ -497,14 +497,14 @@ public class Room3D extends Object3DBranch {
     }
     // Compute holes borders coordinates
     for (float [][] geometryHole : geometryHoles) {
-      for (int k = 0; k < geometryHole.length; k++) {
-        coords [i++] = new Point3f(geometryHole [k][0], roomElevation, geometryHole [k][1]);
-        int nextPoint = k < geometryHole.length - 1  
-            ? k + 1
+      for (int j = 0; j < geometryHole.length; j++) {
+        coords [i++] = new Point3f(geometryHole [j][0], roomElevation, geometryHole [j][1]);
+        int nextPoint = j < geometryHole.length - 1  
+            ? j + 1
             : 0;
         coords [i++] = new Point3f(geometryHole [nextPoint][0], roomElevation, geometryHole [nextPoint][1]);
         coords [i++] = new Point3f(geometryHole [nextPoint][0], floorBottomElevation, geometryHole [nextPoint][1]);
-        coords [i++] = new Point3f(geometryHole [k][0], floorBottomElevation, geometryHole [k][1]);
+        coords [i++] = new Point3f(geometryHole [j][0], floorBottomElevation, geometryHole [j][1]);
       }
     }
 
