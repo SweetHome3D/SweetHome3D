@@ -871,7 +871,9 @@ public class Wall3D extends Object3DBranch {
           : wallSidePoints [wallSidePoints.length / 2];
       float frontSideToWallDistance = (float)Line2D.ptLineDist(wallFirstPoint [0], wallFirstPoint [1], 
               wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide);
-      float depthTranslation = frontOrBackSide * (0.5f - frontSideToWallDistance / doorOrWindowDepth);
+      float position = (float)Line2D.relativeCCW(wallFirstPoint [0], wallFirstPoint [1], 
+          wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide);
+      float depthTranslation = frontOrBackSide * (0.5f - position * frontSideToWallDistance / doorOrWindowDepth);
       
       // Compute surrounding part transformation matrix
       Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOFFurnitureNormalizedModelTransformation(doorOrWindow);       
