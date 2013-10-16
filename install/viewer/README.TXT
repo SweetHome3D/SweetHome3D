@@ -24,13 +24,15 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
    parameter named "homeURL" instead of "default.sh3d" default file :
      var parameters = {java_arguments:"-Xmx512m",
                        navigationPanel:"true",
-                       homeURL:"default.sh3d"};
+                       homeURL:"default.sh3d",
+                       jnlp_embedded:"PD94bWwgdm..."};
    for example, if the URL of your SH3D file is:
      http://www.mydomain.com/myhome.sh3d
    you should obtain the following line:
      var parameters = {java_arguments:"-Xmx512m", 
                        navigationPanel:"true",
-                       homeURL:"http://www.mydomain.com/myhome.sh3d"};
+                       homeURL:"http://www.mydomain.com/myhome.sh3d",
+                       jnlp_embedded:"PD94bWwgdm..."};
 5. Open the file "SweetHome3DViewer.html" in your web browser to check if
    it works correctly
 6. Copy the content of the applet scripts of "SweetHome3DViewer.html" in
@@ -49,12 +51,17 @@ the parameters list should become:
   var parameters = {java_arguments:"-Xmx512m", 
                     navigationPanel:"true",
                     homeURL:"http://www.mydomain.com/userHome.php",
+                    jnlp_embedded:"PD94bWwgdm...",
                     ignoreCache:"true"};
 
 If you don't want to display navigation arrows, simply remove the line
   navigationPanel:"true",
 from parameters list.
-                     
+                    
+Caution: From version 4.2, a new "jnlp_embedded" parameter followed with a very 
+long text was added to the parameters list. Don't forget to add it to your 
+existing viewer if you want it to be able to run under Java 7u45 and superior.    
+               
                      
 Mentioning the following copyrights on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
