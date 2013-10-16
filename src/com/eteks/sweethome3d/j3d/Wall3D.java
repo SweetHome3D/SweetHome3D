@@ -50,6 +50,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
 
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
@@ -76,7 +77,8 @@ public class Wall3D extends Object3DBranch {
   private static final int WALL_LEFT_SIDE  = 0;
   private static final int WALL_RIGHT_SIDE = 1;
   
-  private static Map<HomePieceOfFurniture, Area> doorOrWindowFrontAreas = new WeakHashMap<HomePieceOfFurniture, Area>();
+  private static Map<HomePieceOfFurniture, ModelRotationTuple> doorOrWindowRotatedModels = new WeakHashMap<HomePieceOfFurniture, ModelRotationTuple>();
+  private static Map<ModelRotationTuple, Area>                 rotatedModelsFrontAreas   = new WeakHashMap<ModelRotationTuple, Area>();
   
   private final Home home;
 
@@ -463,10 +465,10 @@ public class Wall3D extends Object3DBranch {
               || angleDifference > 2 * Math.PI - epsilon
               || Math.abs(angleDifference - Math.PI) < epsilon) {
             final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
-            Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
-            if (frontArea != null 
+            ModelRotationTuple rotatedModel = doorOrWindowRotatedModels.get(doorOrWindow);
+            if (rotatedModel != null 
                 && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
-              createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
+              createGeometriesSurroundingDoorOrWindow(doorOrWindow, rotatedModelsFrontAreas.get(rotatedModel), frontOrBackSide,
                   wall, wallGeometries, wallTopGeometries, 
                   wallSidePoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                   texture, textureReferencePoint, wallSide);
@@ -485,15 +487,24 @@ public class Wall3D extends Object3DBranch {
           modelManager.loadModel(doorOrWindow.getModel(), waitDoorOrWindowModelsLoadingEnd,
               new ModelManager.ModelObserver() {
                 public void modelUpdated(BranchGroup modelRoot) {
-                  // Check again whether front area wasn't recently put in cache
-                  Area frontArea = doorOrWindowFrontAreas.get(doorOrWindow);
-                  if (frontArea == null) {
-                    // Add piece model scene to a normalized transform group
-                    TransformGroup rotation = new TransformGroup(modelManager.getRotationTransformation(doorOrWindow.getModelRotation()));
-                    rotation.addChild(modelRoot);
-                    frontArea = modelManager.getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
-                    // Keep front area in cache for future updates
-                    doorOrWindowFrontAreas.put(doorOrWindow, frontArea);
+                  // Check again whether rotation model key and its front area weren't recently put in cache
+                  ModelRotationTuple rotatedModel = doorOrWindowRotatedModels.get(doorOrWindow);
+                  Area frontArea;
+                  if (rotatedModel == null) {
+                    rotatedModel = new ModelRotationTuple(doorOrWindow.getModel(), doorOrWindow.getModelRotation());
+                    frontArea = rotatedModelsFrontAreas.get(rotatedModel);
+                    if (frontArea == null) {
+                      // Add rotated piece model scene to a normalized transform group
+                      TransformGroup rotation = new TransformGroup(modelManager.getRotationTransformation(doorOrWindow.getModelRotation()));
+                      rotation.addChild(modelRoot);
+                      frontArea = modelManager.getFrontArea(((DoorOrWindow)doorOrWindow).getCutOutShape(), rotation);
+                      // Keep front area for a model with a given rotation in cache to avoid multiple calls to getFrontArea
+                      rotatedModelsFrontAreas.put(rotatedModel, frontArea);
+                    }
+                    // Keep rotated model key in cache for future updates
+                    doorOrWindowRotatedModels.put(doorOrWindow, rotatedModel);
+                  } else {
+                    frontArea = rotatedModelsFrontAreas.get(rotatedModel);
                   }
                   if (waitDoorOrWindowModelsLoadingEnd) {
                     createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
@@ -511,7 +522,11 @@ public class Wall3D extends Object3DBranch {
                 
                 public void modelError(Exception ex) {
                   // In case of problem, ignore door or window geometry by using default full face cut out area
-                  doorOrWindowFrontAreas.put(doorOrWindow, FULL_FACE_CUT_OUT_AREA);
+                  ModelRotationTuple rotatedModel = new ModelRotationTuple(doorOrWindow.getModel(), doorOrWindow.getModelRotation());
+                  doorOrWindowRotatedModels.put(doorOrWindow, rotatedModel);
+                  if (rotatedModelsFrontAreas.get(rotatedModel) == null) {
+                    rotatedModelsFrontAreas.put(rotatedModel, FULL_FACE_CUT_OUT_AREA);
+                  }
                   if (!waitDoorOrWindowModelsLoadingEnd) {
                     missingModels.remove(doorOrWindow);
                   }
@@ -1231,6 +1246,48 @@ public class Wall3D extends Object3DBranch {
     
     public List<HomePieceOfFurniture> getDoorsOrWindows() {
       return this.doorsOrWindows;
+    }
+  }
+
+  /**
+   * A class used to store model and its rotation as a key.
+   * @author Emmanuel Puybaret
+   */
+  private static class ModelRotationTuple {
+    private Content    model;
+    private float [][] rotation;
+
+    public ModelRotationTuple(Content model, float [][] rotation) {
+      this.model = model;
+      this.rotation = rotation;
+    }
+    
+    @Override
+    public int hashCode() {
+      int hashCode = 31 * this.model.hashCode();
+      for (float [] table : this.rotation) {
+        hashCode += Arrays.hashCode(table);
+      }
+      return hashCode;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (obj instanceof ModelRotationTuple) {
+        ModelRotationTuple tuple = (ModelRotationTuple)obj;
+        if (this.model.equals(tuple.model)
+            && this.rotation.length == tuple.rotation.length) {
+          for (int i = 0; i < this.rotation.length; i++) {
+            if (!Arrays.equals(this.rotation [i], tuple.rotation [i])) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
