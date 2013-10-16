@@ -128,8 +128,7 @@ public class SweetHome3DViewer extends JApplet {
       Class sweetHome3DViewerClass = SweetHome3DViewer.class;
       List java3DFiles = new ArrayList();
       if (!System.getProperty("os.name").startsWith("Mac OS X")
-          || System.getProperty("java.version").startsWith("1.5")
-          || System.getProperty("java.version").startsWith("1.6")) {
+          || System.getProperty("java.version").startsWith("1.5")) {
         java3DFiles.addAll(Arrays.asList(new String [] {
             "j3dcore.jar", // Main Java 3D jars
             "vecmath.jar",
@@ -153,7 +152,6 @@ public class SweetHome3DViewer extends JApplet {
             "macosx/java3d-1.6/libnativewindow_macosx.jnilib"}));
         // Disable JOGL library loader
         System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
-        System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
       }
       if ("64".equals(System.getProperty("sun.arch.data.model"))) {
         java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
