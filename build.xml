@@ -129,9 +129,9 @@
           description="Builds build/META-INF/MANIFEST.MF with Trusted-Library attribute set to true">
     <mkdir dir="build/META-INF"/>
     <manifest file="build/META-INF/MANIFEST.MF">
-      <attribute name="Trusted-Library" value="true"/>
-      <attribute name="Permissions"     value="all-permissions"/>
-      <attribute name="Codebase"        value="*"/>
+      <attribute name="Trusted-Library"           value="true"/>
+      <attribute name="Permissions"               value="all-permissions"/>
+      <attribute name="Codebase"                  value="*"/>
     </manifest>
   </target>
 
@@ -208,60 +208,11 @@
     </jar>
   </target>
 
-  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries"
-          description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
-    <!-- Build SweetHome3DJavaWebStart.jar file containing signed JNLP file -->
-    <mkdir dir="build/JNLP-INF"/>
-    <copy file="deploy/SweetHome3D.jnlp" tofile="build/JNLP-INF/APPLICATION.JNLP"/>
+  <target name="java3dAllSystemsLibrary"
+  	      description="Builds applet Java 3D library suitable for all systems in deploy/lib subdirectory">
     <mkdir dir="deploy/lib"/>
-    <zip destfile="deploy/lib/SweetHome3DJavaWebStart.jar">
-      <fileset dir="build" includes="JNLP-INF/APPLICATION.JNLP"/>
-    </zip>
-    <!-- Build SweetHome3D.jar file from the content of built jars -->
-    <zip destfile="deploy/lib/SweetHome3D.jar">
-      <zipfileset src="build/SweetHome3D.jar"/>
-      <zipfileset src="build/Furniture.jar"/>
-      <zipfileset src="build/Textures.jar"/>
-      <zipfileset src="build/Help.jar"/>
-    </zip>
-
-    <!-- Copy other jar files -->
-    <copy todir="deploy/lib">
-      <fileset dir="lib">
-        <include name="*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
-      </fileset>
-    </copy>
-
-    <!-- Clean build directory -->
-    <delete dir="build"/>
-    
-    <input message="Enter Passphrase for keystore:" 
-           addproperty="password"/> 
-    <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.keytool" 
-             alias="SweetHome3D" storepass="${password}">
-      <fileset dir="deploy/lib">
-        <include name="**/*.jar"/>
-      </fileset>
-    </signjar>
-
-    <echo message="deploy dir ready for ftp"/>
-  </target>
-
-  <target name="applet" depends="build,java3dLibraries,manifest"
-          description="Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet">
-    <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
-    <mkdir dir="deploy/lib"/>
-    <jar destfile="deploy/lib/SweetHome3DApplet.jar" manifest="build/META-INF/MANIFEST.MF">
-      <zipfileset src="build/SweetHome3D.jar" 
-                  excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**, com/eteks/sweethome3d/applet/*Viewer*.*"/>
-    </jar>
- 
-    <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux 32/64 bits and Mac OS X 
-         (this library is used when Javascript doesn't succeed to detect user's OS) -->
+    <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
+         (this library is used for Java versions older than Java SE 6 update 10) -->
     <jar destfile="deploy/lib/java3d.jar" manifest="build/META-INF/MANIFEST.MF">
       <fileset dir="lib">
         <include name="j3dcore.jar"/>
@@ -279,17 +230,13 @@
         <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
       </fileset>
     </jar>
-
-    <!-- Copy other jar files adding to their manifest a Trusted-Library attribute set to true 
+  </target>
+	
+  <target name="viewerLibraries" depends="manifest"
+          description="Copies to deploy/lib the base libraries used by Sweet Home 3D Viewer">
+    <mkdir dir="deploy/lib"/>
+    <!-- Copy jar files adding to their manifest a Trusted-Library attribute set to true 
          (this attribute is necessary to be able to call applet methods from JavaScript) -->
-    <jar destfile="deploy/lib/jnlp.jar" filesetmanifest="merge" >
-      <manifest>
-        <attribute name="Trusted-Library" value="true"/> 
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
-      </manifest>
-      <zipfileset src="libtest/jnlp.jar"/>
-    </jar>
     <jar destfile="deploy/lib/Loader3DS1_2u.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Trusted-Library" value="true"/>
@@ -306,6 +253,14 @@
       </manifest>
       <zipfileset src="lib/batik-svgpathparser-1.7.jar"/>
     </jar>
+    <!-- No Print to PDF, Export to SVG, Export to PNG and Create video in viewer -->
+  </target>
+
+  <target name="otherLibraries" depends="viewerLibraries"
+          description="Copies to deploy/lib the libraries used by Sweet Home 3D">
+    <mkdir dir="deploy/lib"/>
+    <!-- Copy jar files adding to their manifest a Trusted-Library attribute set to true 
+         (this attribute is necessary to be able to call applet methods from JavaScript) -->
     <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1b.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Trusted-Library" value="true"/>
@@ -338,7 +293,59 @@
       </manifest>
       <zipfileset src="lib/jmf.jar"/>
     </jar>
+  </target>
 
+  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries,otherLibraries,manifest"
+          description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
+    <!-- Build SweetHome3DJavaWebStart.jar file containing signed JNLP file -->
+    <mkdir dir="build/JNLP-INF"/>
+    <copy file="deploy/SweetHome3D.jnlp" tofile="build/JNLP-INF/APPLICATION.JNLP"/>
+    <mkdir dir="deploy/lib"/>
+    <jar destfile="deploy/lib/SweetHome3DJavaWebStart.jar" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Application-Name" value="Sweet Home 3D"/>
+      </manifest>
+      <fileset dir="build" includes="JNLP-INF/APPLICATION.JNLP"/>
+    </jar>
+    <!-- Build SweetHome3D.jar file from the content of built jars -->
+    <jar destfile="deploy/lib/SweetHome3D.jar" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Application-Name" value="Sweet Home 3D"/>
+      </manifest>
+      <zipfileset src="build/SweetHome3D.jar"/>
+      <zipfileset src="build/Furniture.jar"/>
+      <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Help.jar"/>
+    </jar>
+
+    <!-- Clean build directory -->
+    <delete dir="build"/>
+    
+    <input message="Enter Passphrase for keystore:" 
+           addproperty="password"/> 
+    <!-- Sign jar files in deploy/lib dir -->
+    <signjar keystore="keys.keytool" 
+             alias="SweetHome3D" storepass="${password}">
+      <fileset dir="deploy/lib">
+        <include name="**/*.jar"/>
+      </fileset>
+    </signjar>
+
+    <echo message="deploy dir ready for ftp"/>
+  </target>
+
+  <target name="applet" depends="build,java3dLibraries,java3dAllSystemsLibrary,otherLibraries,manifest"
+          description="Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet">
+    <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
+    <mkdir dir="deploy/lib"/>
+    <jar destfile="deploy/lib/SweetHome3DApplet.jar" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Application-Name" value="Sweet Home 3D Online"/>
+      </manifest>
+      <zipfileset src="build/SweetHome3D.jar" 
+                  excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**, com/eteks/sweethome3d/applet/*Viewer*.*"/>
+    </jar>
+ 
     <!-- Clean build directory -->
     <delete dir="build"/>
 
@@ -355,7 +362,7 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <target name="viewer" depends="java3dLibraries"
+  <target name="viewer" depends="java3dLibraries,java3dAllSystemsLibrary,viewerLibraries,manifest"
           description="Builds deploy/lib/SweetHome3DViewer.jar and signs jars required by Sweet Home 3D viewer">
     <!-- Compile Sweet Home 3D Viewer-->
     <mkdir dir="build/classes"/>
@@ -392,8 +399,11 @@
     
     <!-- Create SweetHome3DViewer.jar containing only classes and resources required by Sweet Home 3D Viewer -->
     <mkdir dir="deploy/lib"/>
-    <zip destfile="deploy/lib/SweetHome3DViewer.jar" 
-         basedir="build/classes">
+    <jar destfile="deploy/lib/SweetHome3DViewer.jar" 
+         basedir="build/classes" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Application-Name" value="Sweet Home 3D Viewer"/>
+      </manifest>
       <include name="com/eteks/sweethome3d/applet/*"/>
       <include name="com/eteks/sweethome3d/io/**"/>
       <include name="com/eteks/sweethome3d/j3d/*"/>
@@ -406,44 +416,8 @@
       <include name="com/eteks/sweethome3d/viewcontroller/HomeController3D*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/Object3DFactory*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/ThreadedTaskController*"/>      
-    </zip>
-    <delete dir="build/classes"/>
+    </jar>
  
-    <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
-         (this library is used for Java versions older than Java SE 6 update 10) -->
-    <zip destfile="deploy/lib/java3d.jar">
-      <fileset dir="lib">
-        <include name="j3dcore.jar"/>
-        <include name="j3dutils.jar"/>
-        <include name="vecmath.jar"/>
-      </fileset>
-      <fileset dir="lib">
-        <include name="windows/**/*.dll"/>
-        <include name="linux/**/*.so"/>
-        <include name="macosx/**/*.jnilib"/>
-        <include name="macosx/**/*.jar"/>
-        <exclude name="macosx/*/jogl-all.jar"/>
-      </fileset>
-      <fileset dir="build">
-        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
-      </fileset>
-    </zip>
-
-    <!-- Copy other jar files -->
-    <copy todir="deploy/lib">
-      <fileset dir="lib">
-        <include name="*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
-        <!-- No Print to PDF, Export to SVG, Export to PNG and Create video in viewer -->
-        <exclude name="iText-2.1.7.jar"/>
-        <exclude name="freehep-vectorgraphics-svg-2.1.1b.jar"/>
-        <exclude name="sunflow-0.07.3h.jar"/>
-        <exclude name="jmf.jar"/>
-      </fileset>
-    </copy>
-
     <!-- Clean build directory -->
     <delete dir="build"/>
 
@@ -1032,7 +1006,7 @@
           description="Builds install/SweetHome3DViewer-version.zip archive">
     <zip destfile="install/SweetHome3DViewer-${version}.zip">
       <zipfileset dir="deploy" 
-                  includes="lib/**, SweetHome3DViewer.*"/>
+                  includes="lib/**, SweetHome3DViewer.html"/>
       <zipfileset dir="install/viewer" 
                   includes="README.TXT"/>
       <zipfileset dir=".">
