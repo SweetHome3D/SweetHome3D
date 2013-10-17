@@ -32,6 +32,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JViewport;
 import javax.swing.border.EtchedBorder;
 
 /**
@@ -41,6 +42,7 @@ import javax.swing.border.EtchedBorder;
 public class ScaledImageComponent extends JComponent {
   private BufferedImage image;
   private boolean       imageEnlargementEnabled;
+  private float         scaleMultiplier = 1f;
   
   /**
    * Creates a component that will display no image.
@@ -77,22 +79,38 @@ public class ScaledImageComponent extends JComponent {
       return super.getPreferredSize();
     } else {
       Insets insets = getInsets();
-      final int defaultPreferredWidth = 300; 
+      final int defaultPreferredWidth  = 300; 
       final int defaultPreferredHeight = 300; 
+      int insetsWidth = insets.left + insets.right;
+      int insetsHeight = insets.top + insets.bottom;
       if (this.image == null) {
-        return new Dimension(defaultPreferredWidth + insets.left + insets.right, 
-            defaultPreferredHeight + insets.top + insets.bottom);
+        return new Dimension(defaultPreferredWidth + insetsWidth, defaultPreferredHeight + insetsHeight);
+      } else if (getParent() instanceof JViewport){
+        Dimension extentSize = ((JViewport)getParent()).getExtentSize();
+        extentSize.width -= insetsWidth;
+        extentSize.height -= insetsHeight;
+        float widthScale = (float)this.image.getWidth() / extentSize.width;
+        float heightScale = (float)this.image.getHeight() / extentSize.height;
+        if (widthScale > heightScale) {
+          return new Dimension((int)(extentSize.width * this.scaleMultiplier) + insetsWidth, 
+              (int)(image.getHeight() / widthScale * this.scaleMultiplier) + insetsHeight);
+        } else {
+          return new Dimension((int)(this.image.getWidth() / heightScale * this.scaleMultiplier) + insetsWidth, 
+              (int)(extentSize.height * this.scaleMultiplier) + insetsHeight);
+        }
       } else {
         // Compute the component preferred size in such a way 
-        // its bigger dimension (width or height) is 300 pixels
-        int maxImagePreferredWith   = defaultPreferredWidth - insets.left - insets.right;
-        int maxImagePreferredHeight = defaultPreferredHeight - insets.top - insets.bottom;
+        // its bigger dimension (width or height) is 300 * scaleMultiplier pixels
+        int maxImagePreferredWith   = defaultPreferredWidth - insetsWidth;
+        int maxImagePreferredHeight = defaultPreferredHeight - insetsHeight;
         float widthScale = (float)this.image.getWidth() / maxImagePreferredWith;
         float heightScale = (float)this.image.getHeight() / maxImagePreferredHeight;
         if (widthScale > heightScale) {
-          return new Dimension(defaultPreferredWidth, (int)(image.getHeight() / widthScale) + insets.top + insets.bottom);
+          return new Dimension((int)(maxImagePreferredWith * this.scaleMultiplier) + insetsWidth, 
+              (int)(image.getHeight() / widthScale * this.scaleMultiplier) + insetsHeight);
         } else {
-          return new Dimension((int)(this.image.getWidth() / heightScale) + insets.left + insets.right, defaultPreferredHeight);
+          return new Dimension((int)(this.image.getWidth() / heightScale * this.scaleMultiplier) + insetsWidth, 
+              (int)(maxImagePreferredHeight * this.scaleMultiplier) + insetsHeight);
         }
       }
     }
@@ -152,20 +170,42 @@ public class ScaledImageComponent extends JComponent {
    * Returns the scale used to draw the image of this component.
    */
   protected float getImageScale() {
+    float imageScale;
     if (this.image != null) {
-      Insets insets = getInsets();
-      float imageScale = Math.min((float)(getWidth() - insets.left - insets.right) / image.getWidth(), 
-          (float)(getHeight() - insets.top - insets.bottom) / image.getHeight());
-      if (this.imageEnlargementEnabled) {
-        return imageScale;
+      Dimension dimension;
+      if (getParent() instanceof JViewport) {
+        dimension = ((JViewport)getParent()).getExtentSize();
       } else {
-        return Math.min(1, imageScale);
+        dimension = getSize();
+      }
+      Insets insets = getInsets();
+      imageScale = Math.min((float)(dimension.width - insets.left - insets.right) / image.getWidth(), 
+          (float)(dimension.height - insets.top - insets.bottom) / image.getHeight());
+      if (!this.imageEnlargementEnabled) {
+        imageScale = Math.min(1, imageScale);
       }
     } else {
-      return 1;
+      imageScale = 1;
     }
+    return imageScale * this.scaleMultiplier;
   }
   
+  /**
+   * Returns the multiplier of the default scale.
+   */
+  public float getScaleMultiplier() {
+    return this.scaleMultiplier;
+  }
+  
+  /**
+   * Sets the multiplier of the default scale.
+   */
+  public void setScaleMultiplier(float scaleMultiplier) {
+    this.scaleMultiplier = scaleMultiplier;
+    revalidate();
+    repaint();
+  }
+
   /**
    * Returns the origin point where the image of this component is drawn.
    */
@@ -183,7 +223,20 @@ public class ScaledImageComponent extends JComponent {
   protected boolean isPointInImage(int x, int y) {
     Point translation = getImageTranslation();
     float scale = getImageScale();
-    return x > translation.x && x < translation.x + Math.round(getImage().getWidth() * scale)
-        && y > translation.y && y < translation.y + Math.round(getImage().getHeight() * scale);
+    return x >= translation.x && x < translation.x + Math.round(getImage().getWidth() * scale)
+        && y >= translation.y && y < translation.y + Math.round(getImage().getHeight() * scale);
+  }
+  
+  
+  /**
+   * Returns a point with (<code>x</code>, <code>y</code>) coordinates constrained 
+   * in the image displayed by this component.
+   */
+  protected Point getPointConstrainedInImage(int x, int y) {
+    Point translation = getImageTranslation();
+    float scale = getImageScale();
+    x = Math.min(Math.max(x, translation.x), translation.x + Math.round(getImage().getWidth() * scale));
+    y = Math.min(Math.max(y, translation.y), translation.y + Math.round(getImage().getHeight() * scale));
+    return new Point(x, y);
   }
 }

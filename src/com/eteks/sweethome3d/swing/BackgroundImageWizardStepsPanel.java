@@ -24,6 +24,7 @@ import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -31,6 +32,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
@@ -56,12 +58,15 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
@@ -114,7 +119,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.imageLoader = Executors.newSingleThreadExecutor();
     createComponents(preferences, controller);
     setMnemonics(preferences);
-    layoutComponents();
+    layoutComponents(preferences);
     updateController(backgroundImage, preferences);
 
     controller.addPropertyChangeListener(BackgroundImageWizardController.Property.STEP, 
@@ -273,7 +278,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   /**
    * Layouts components in 3 panels added to this panel as cards. 
    */
-  private void layoutComponents() {
+  private void layoutComponents(UserPreferences preferences) {
     this.cardLayout = new CardLayout();
     setLayout(this.cardLayout);
     
@@ -290,51 +295,108 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     
     JPanel imageChoicePanel = new JPanel(new ProportionalLayout());
     imageChoicePanel.add(imageChoiceTopPanel, ProportionalLayout.Constraints.TOP);
-    imageChoicePanel.add(this.imageChoicePreviewComponent, 
-        ProportionalLayout.Constraints.BOTTOM);
+    imageChoicePanel.add(this.imageChoicePreviewComponent, ProportionalLayout.Constraints.BOTTOM);
     
-    JPanel scaleTopPanel = new JPanel(new GridBagLayout());
-    scaleTopPanel.add(this.scaleLabel, new GridBagConstraints(
+    JPanel scalePanel = new JPanel(new GridBagLayout());
+    scalePanel.add(this.scaleLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    scaleTopPanel.add(this.scaleDistanceLabel, new GridBagConstraints(
+    scalePanel.add(this.scaleDistanceLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    scaleTopPanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
+    scalePanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    
-    JPanel scalePanel = new JPanel(new ProportionalLayout());
-    scalePanel.add(scaleTopPanel, ProportionalLayout.Constraints.TOP);
-    scalePanel.add(this.scalePreviewComponent, 
-        ProportionalLayout.Constraints.BOTTOM);
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+    scalePanel.add(createScalableImageComponent(this.scalePreviewComponent, preferences), new GridBagConstraints(
+        0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
-
-    JPanel originTopPanel = new JPanel(new GridBagLayout());
-    originTopPanel.add(this.originLabel, new GridBagConstraints(
+    JPanel originPanel = new JPanel(new GridBagLayout());
+    originPanel.add(this.originLabel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    originTopPanel.add(this.xOriginLabel, new GridBagConstraints(
+    originPanel.add(this.xOriginLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    originTopPanel.add(this.xOriginSpinner, new GridBagConstraints(
+    originPanel.add(this.xOriginSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 10), -10, 0));
-    originTopPanel.add(this.yOriginLabel, new GridBagConstraints(
+    originPanel.add(this.yOriginLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    originTopPanel.add(this.yOriginSpinner, new GridBagConstraints(
+    originPanel.add(this.yOriginSpinner, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
+    originPanel.add(createScalableImageComponent(this.originPreviewComponent, preferences), new GridBagConstraints(
+        0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     
-    JPanel originPanel = new JPanel(new ProportionalLayout());
-    originPanel.add(originTopPanel, ProportionalLayout.Constraints.TOP);
-    originPanel.add(this.originPreviewComponent, 
-        ProportionalLayout.Constraints.BOTTOM);
-
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
     add(scalePanel, BackgroundImageWizardController.Step.SCALE.name());
     add(originPanel, BackgroundImageWizardController.Step.ORIGIN.name());
+  }
+  
+  /**
+   * Returns a panel displaying the given component along with zoom in and out buttons.
+   */
+  private JComponent createScalableImageComponent(final ScaledImageComponent imageComponent,
+                                                  UserPreferences preferences) {
+    final JButton zoomInButton = new JButton();
+    final JButton zoomOutButton = new JButton();
+    zoomInButton.setAction(new ResourceAction(preferences, 
+        BackgroundImageWizardStepsPanel.class, "ZOOM_IN", true) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          final Rectangle viewRect = ((JViewport)imageComponent.getParent()).getViewRect();
+          imageComponent.setScaleMultiplier(2 * imageComponent.getScaleMultiplier());
+          zoomOutButton.setEnabled(imageComponent.getScaleMultiplier() > 1f);
+          zoomInButton.setEnabled(imageComponent.getScaleMultiplier() < 32f);
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Keep viewport centered on the same point
+                ((JViewport)imageComponent.getParent()).setViewPosition(
+                    new Point((int)(viewRect.getCenterX() * 2 - viewRect.width / 2), 
+                              (int)(viewRect.getCenterY() * 2 - viewRect.height / 2)));
+              }
+            });
+        }
+      });
+    Dimension preferredSize = zoomInButton.getPreferredSize();
+    int preferredWidthHeight = Math.max(preferredSize.width, preferredSize.height);
+    zoomInButton.setPreferredSize(new Dimension(preferredWidthHeight, preferredWidthHeight));
+    zoomOutButton.setAction(new ResourceAction(preferences, 
+        BackgroundImageWizardStepsPanel.class, "ZOOM_OUT", true) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          final Rectangle viewRect = ((JViewport)imageComponent.getParent()).getViewRect();
+          imageComponent.setScaleMultiplier(.5f * imageComponent.getScaleMultiplier());
+          zoomOutButton.setEnabled(imageComponent.getScaleMultiplier() > 1f);
+          zoomInButton.setEnabled(imageComponent.getScaleMultiplier() < 128f);
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Keep viewport centered on the same point
+                ((JViewport)imageComponent.getParent()).setViewPosition(
+                    new Point(Math.max(0, (int)(viewRect.getCenterX() / 2 - viewRect.width / 2)), 
+                              Math.max(0, (int)(viewRect.getCenterY() / 2 - viewRect.height / 2))));
+              }
+            });
+        }
+      });
+    zoomOutButton.setPreferredSize(new Dimension(preferredWidthHeight, preferredWidthHeight));
+    zoomOutButton.setEnabled(false);
+    
+    JPanel panel = new JPanel(new GridBagLayout());
+    JScrollPane scrollPane = SwingTools.createScrollPane(imageComponent);
+    panel.add(scrollPane, new GridBagConstraints(
+        0, 0, 1, 2, 1, 1, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
+    panel.add(zoomInButton, new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    panel.add(zoomOutButton, new GridBagConstraints(
+        1, 1, 1, 1, 0, 1, GridBagConstraints.NORTH, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    return panel;
   }
   
   /**
@@ -566,11 +628,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    */
   private static class ScaleImagePreviewComponent extends ScaledImageComponent {
     private final BackgroundImageWizardController controller;
-
+    
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
+      super(null, true);
       this.controller = controller;
       addChangeListeners(controller);
       addMouseListeners(controller);
+      setBorder(null);      
     }
     
     /**
@@ -593,8 +657,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
      */
     public void addMouseListeners(final BackgroundImageWizardController controller) {
       MouseInputAdapter mouseListener = new MouseInputAdapter() {
-        private int     lastX;
-        private int     lastY;
+        private int     deltaXMousePressed;
+        private int     deltaYMousePressed;
         private boolean distanceStartPoint;
         private boolean distanceEndPoint;
         
@@ -602,44 +666,54 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         public void mousePressed(MouseEvent ev) {
           if (!ev.isPopupTrigger()) {
             mouseMoved(ev);
+            
             if (this.distanceStartPoint
                 || this.distanceEndPoint) {
-              this.lastX = ev.getX();
-              this.lastY = ev.getY();
-            } 
+              float [][] scaleDistancePoints = controller.getScaleDistancePoints();
+              Point translationorigin = getImageTranslation();
+              float scale = getImageScale();
+              this.deltaXMousePressed = (ev.getX() - translationorigin.x);
+              this.deltaYMousePressed = (ev.getY() - translationorigin.y);
+              if (this.distanceStartPoint) {
+                this.deltaXMousePressed -= scaleDistancePoints [0][0] * scale;
+                this.deltaYMousePressed -= scaleDistancePoints [0][1] * scale;
+              } else {
+                this.deltaXMousePressed -= scaleDistancePoints [1][0] * scale;
+                this.deltaYMousePressed -= scaleDistancePoints [1][1] * scale;
+              }
+            }
           }
         }
 
         @Override
         public void mouseDragged(MouseEvent ev) {
-          if (isPointInImage(ev.getX(), ev.getY())) {
+          if (this.distanceStartPoint
+              || this.distanceEndPoint) {
+            Point point = getPointConstrainedInImage(
+                ev.getX() - this.deltaXMousePressed, ev.getY() - this.deltaYMousePressed);
+            Point translation = getImageTranslation();
             float [][] scaleDistancePoints = controller.getScaleDistancePoints();
             float scale = getImageScale();
             if (this.distanceStartPoint) {
               // Compute start point of distance line
-              scaleDistancePoints [0][0] += (ev.getX() - this.lastX) / scale; 
-              scaleDistancePoints [0][1] += (ev.getY() - this.lastY) / scale;
-            } else if (this.distanceEndPoint) {
+              scaleDistancePoints [0][0] = (float)((point.getX() - translation.x) / scale); 
+              scaleDistancePoints [0][1] = (float)((point.getY() - translation.y) / scale);
+            } else {
               // Compute end point of distance line
-              scaleDistancePoints [1][0] += (ev.getX() - this.lastX) / scale; 
-              scaleDistancePoints [1][1] += (ev.getY() - this.lastY) / scale;
+              scaleDistancePoints [1][0] = (float)((point.getX() - translation.x) / scale); 
+              scaleDistancePoints [1][1] = (float)((point.getY() - translation.y) / scale);
             }
-            
+          
             // Accept new points only if distance is greater that 2 pixels
-            if ((this.distanceStartPoint
-                 || this.distanceEndPoint)
-                && Point2D.distanceSq(scaleDistancePoints [0][0] * scale, 
+            if (Point2D.distanceSq(scaleDistancePoints [0][0] * scale, 
                     scaleDistancePoints [0][1] * scale,
                     scaleDistancePoints [1][0] * scale, 
                     scaleDistancePoints [1][1] * scale) >= 4) {
               controller.setScaleDistancePoints(
-                  scaleDistancePoints [0][0], scaleDistancePoints [0][1],
-                  scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
+                scaleDistancePoints [0][0], scaleDistancePoints [0][1],
+                scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
               repaint();
             }
-
-            this.lastX = ev.getX();
-            this.lastY = ev.getY();
           }
         }
         
@@ -652,11 +726,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             Point translation = getImageTranslation();
             float scale = getImageScale();
             // Check if user clicked on start or end point of distance line
-            if (Math.abs(scaleDistancePoints [0][0] * scale - ev.getX() + translation.x) < 2
-                && Math.abs(scaleDistancePoints [0][1] * scale - ev.getY() + translation.y) < 2) {
+            if (Math.abs(scaleDistancePoints [0][0] * scale - ev.getX() + translation.x) <= 3
+                && Math.abs(scaleDistancePoints [0][1] * scale - ev.getY() + translation.y) <= 3) {
               this.distanceStartPoint = true;
-            } else if (Math.abs(scaleDistancePoints [1][0] * scale - ev.getX() + translation.x) < 2
-                       && Math.abs(scaleDistancePoints [1][1] * scale - ev.getY() + translation.y) < 2) {
+            } else if (Math.abs(scaleDistancePoints [1][0] * scale - ev.getX() + translation.x) <= 3
+                       && Math.abs(scaleDistancePoints [1][1] * scale - ev.getY() + translation.y) <= 3) {
               this.distanceEndPoint = true;
             }
           }
@@ -731,9 +805,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     private final BackgroundImageWizardController controller;
 
     public OriginImagePreviewComponent(BackgroundImageWizardController controller) {
+      super(null, true);
       this.controller = controller;
       addChangeListeners(controller);
       addMouseListener(controller);
+      setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
     }
 
     /**
@@ -761,21 +837,24 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           public void mousePressed(MouseEvent ev) {
             if (!ev.isPopupTrigger()
                 && isPointInImage(ev.getX(), ev.getY())) {
-              Point translation = getImageTranslation();
-              float [][] scaleDistancePoints = controller.getScaleDistancePoints();
-              float rescale = getImageScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
-                  scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
-                  scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
-              float xOrigin = Math.round((ev.getX() - translation.x) / rescale * 10) / 10.f;
-              float yOrigin = Math.round((ev.getY() - translation.y) / rescale * 10) / 10.f;
-              controller.setOrigin(xOrigin, yOrigin);
+              updateOrigin(ev.getPoint());
             }
+          }
+
+          private void updateOrigin(Point point) {
+            Point translation = getImageTranslation();
+            float [][] scaleDistancePoints = controller.getScaleDistancePoints();
+            float rescale = getImageScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
+                scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
+                scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
+            float xOrigin = Math.round((point.getX() - translation.x) / rescale * 10) / 10.f;
+            float yOrigin = Math.round((point.getY() - translation.y) / rescale * 10) / 10.f;
+            controller.setOrigin(xOrigin, yOrigin);
           }
           
           @Override
           public void mouseDragged(MouseEvent ev) {
-            mouseMoved(ev);
-            mousePressed(ev);
+            updateOrigin(getPointConstrainedInImage(ev.getX(), ev.getY()));
           }
           
           @Override
