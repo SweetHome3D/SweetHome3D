@@ -58,7 +58,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -627,6 +630,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Preview component for image scale distance choice. 
    */
   private static class ScaleImagePreviewComponent extends ScaledImageComponent {
+    private enum ActionType {ACTIVATE_ALIGNMENT, DEACTIVATE_ALIGNMENT};
+    
     private final BackgroundImageWizardController controller;
     
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
@@ -635,6 +640,17 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
       addChangeListeners(controller);
       addMouseListeners(controller);
       setBorder(null);      
+      
+      InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+      inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("control shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("meta shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      inputMap.put(KeyStroke.getKeyStroke("meta released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
+      setInputMap(WHEN_IN_FOCUSED_WINDOW, inputMap);
     }
     
     /**
@@ -657,10 +673,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
      */
     public void addMouseListeners(final BackgroundImageWizardController controller) {
       MouseInputAdapter mouseListener = new MouseInputAdapter() {
-        private int     deltaXMousePressed;
-        private int     deltaYMousePressed;
-        private boolean distanceStartPoint;
-        private boolean distanceEndPoint;
+        private int         deltaXMousePressed;
+        private int         deltaYMousePressed;
+        private boolean     distanceStartPoint;
+        private boolean     distanceEndPoint;
+        private Point       lastMouseLocation;
         
         @Override
         public void mousePressed(MouseEvent ev) {
@@ -681,34 +698,77 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                 this.deltaXMousePressed -= scaleDistancePoints [1][0] * scale;
                 this.deltaYMousePressed -= scaleDistancePoints [1][1] * scale;
               }
+              // Set actions used to activate/deactivate alignment
+              ActionMap actionMap = getActionMap();
+              actionMap.put(ActionType.ACTIVATE_ALIGNMENT, new AbstractAction() {
+                  public void actionPerformed(ActionEvent ev) {
+                    mouseDragged(null, true);
+                  }
+                });                  
+              actionMap.put(ActionType.DEACTIVATE_ALIGNMENT, new AbstractAction() {
+                  public void actionPerformed(ActionEvent ev) {
+                    mouseDragged(null, false);
+                  }
+                });   
+              setActionMap(actionMap);
             }
           }
+          this.lastMouseLocation = ev.getPoint();
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          ActionMap actionMap = getActionMap();
+          // Remove actions used to activate/deactivate alignment
+          actionMap.remove(ActionType.ACTIVATE_ALIGNMENT);                  
+          actionMap.remove(ActionType.DEACTIVATE_ALIGNMENT);   
+          setActionMap(actionMap);
         }
 
         @Override
         public void mouseDragged(MouseEvent ev) {
+          mouseDragged(ev.getPoint(), ev.isShiftDown());
+          this.lastMouseLocation = ev.getPoint();
+        }
+        
+        public void mouseDragged(Point mouseLocation, boolean keepHorizontalVertical) {
           if (this.distanceStartPoint
               || this.distanceEndPoint) {
+            if (mouseLocation == null) {
+              mouseLocation = this.lastMouseLocation;
+            }            
             Point point = getPointConstrainedInImage(
-                ev.getX() - this.deltaXMousePressed, ev.getY() - this.deltaYMousePressed);
+                mouseLocation.x - this.deltaXMousePressed, mouseLocation.y - this.deltaYMousePressed);
             Point translation = getImageTranslation();
             float [][] scaleDistancePoints = controller.getScaleDistancePoints();
-            float scale = getImageScale();
+            float [] updatedPoint;
+            float [] fixedPoint;
             if (this.distanceStartPoint) {
-              // Compute start point of distance line
-              scaleDistancePoints [0][0] = (float)((point.getX() - translation.x) / scale); 
-              scaleDistancePoints [0][1] = (float)((point.getY() - translation.y) / scale);
+              updatedPoint = scaleDistancePoints [0];
+              fixedPoint   = scaleDistancePoints [1];
             } else {
-              // Compute end point of distance line
-              scaleDistancePoints [1][0] = (float)((point.getX() - translation.x) / scale); 
-              scaleDistancePoints [1][1] = (float)((point.getY() - translation.y) / scale);
+              updatedPoint = scaleDistancePoints [1];
+              fixedPoint   = scaleDistancePoints [0];
             }
-          
+
+            float scale = getImageScale();
+            // Compute updated point of distance line
+            float newX = (float)((point.getX() - translation.x) / scale);
+            float newY = (float)((point.getY() - translation.y) / scale);
             // Accept new points only if distance is greater that 2 pixels
-            if (Point2D.distanceSq(scaleDistancePoints [0][0] * scale, 
-                    scaleDistancePoints [0][1] * scale,
-                    scaleDistancePoints [1][0] * scale, 
-                    scaleDistancePoints [1][1] * scale) >= 4) {
+            if (Point2D.distanceSq(fixedPoint [0] * scale, fixedPoint [1] * scale, 
+                    newX * scale, newY * scale) >= 4) {
+              // If shift is down constrain keep the line vertical or horizontal
+              if (keepHorizontalVertical) {
+                double angle = Math.abs(Math.atan2(fixedPoint [1] - newY, newX - fixedPoint [0]));
+                if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) {
+                  newX = fixedPoint [0];
+                } else {
+                  newY = fixedPoint [1];
+                }
+              }
+              updatedPoint [0] = newX; 
+              updatedPoint [1] = newY;
               controller.setScaleDistancePoints(
                 scaleDistancePoints [0][0], scaleDistancePoints [0][1],
                 scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
