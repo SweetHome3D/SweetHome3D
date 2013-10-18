@@ -364,11 +364,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             });
         }
       });
-    Dimension preferredSize = zoomInButton.getPreferredSize();
-    int preferredWidthHeight = Math.max(preferredSize.width, preferredSize.height);
-    zoomInButton.setPreferredSize(new Dimension(preferredWidthHeight, preferredWidthHeight));
+    zoomInButton.setPreferredSize(new Dimension(30, 30));
+
     zoomOutButton.setAction(new ResourceAction(preferences, 
-        BackgroundImageWizardStepsPanel.class, "ZOOM_OUT", true) {
+        BackgroundImageWizardStepsPanel.class, "ZOOM_OUT", false) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           final Rectangle viewRect = ((JViewport)imageComponent.getParent()).getViewRect();
@@ -385,8 +384,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             });
         }
       });
-    zoomOutButton.setPreferredSize(new Dimension(preferredWidthHeight, preferredWidthHeight));
-    zoomOutButton.setEnabled(false);
+    zoomOutButton.setPreferredSize(new Dimension(30, 30));
     
     JPanel panel = new JPanel(new GridBagLayout());
     JScrollPane scrollPane = SwingTools.createScrollPane(imageComponent);
