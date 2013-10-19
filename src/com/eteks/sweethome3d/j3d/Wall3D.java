@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.EventQueue;
 import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
@@ -173,9 +174,9 @@ public class Wall3D extends Object3DBranch {
   
   private void updateWallSideGeometry(int wallSide, HomeTexture texture, 
                                       boolean waitDoorOrWindowModelsLoadingEnd) {
-    Group [] wallSideGroups = {(Group)getChild(wallSide * 3),      // Bottom group
-                               (Group)getChild(wallSide * 3 + 1),  // Main group
-                               (Group)getChild(wallSide * 3 + 2)}; // Top group
+    Group [] wallSideGroups = {(Group)getChild(wallSide * 3),      // Bottom group (0 or 3)
+                               (Group)getChild(wallSide * 3 + 1),  // Main group   (1 or 4)
+                               (Group)getChild(wallSide * 3 + 2)}; // Top group    (2 or 5)
     Shape3D [] wallFilledShapes = new Shape3D [wallSideGroups.length];
     Shape3D [] wallOutlineShapes = new Shape3D [wallSideGroups.length];
     int [] currentGeometriesCounts = new int [3];
@@ -514,8 +515,12 @@ public class Wall3D extends Object3DBranch {
                   } else {
                     missingModels.remove(doorOrWindow);
                     if (missingModels.size() == 0) {
-                      // Request a new update only once all missing models are loaded
-                      updateWallSideGeometry(wallSide, texture, waitDoorOrWindowModelsLoadingEnd);
+                      EventQueue.invokeLater(new Runnable() {
+                          public void run() {
+                            // Request a new update only once all missing models are loaded
+                            updateWallSideGeometry(wallSide, texture, waitDoorOrWindowModelsLoadingEnd);
+                          }
+                        });
                     }
                   }
                 }
