@@ -67,6 +67,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1650,6 +1652,7 @@ public class VideoPanel extends JPanel implements DialogView {
     private final javax.media.format.VideoFormat format;
     private int                                  imageIndex;
     private boolean                              stopped;
+    private Object                               mainThreadContext;
 
     public ImageSourceStream(VideoFormat format, 
                              FrameGenerator frameGenerator,
@@ -1659,6 +1662,12 @@ public class VideoPanel extends JPanel implements DialogView {
       this.framesPath = framesPath;
       this.progressModel = progressModel;
       this.format = format;      
+      try {
+        // Retrieve main thread AppContext instance by reflection to
+        this.mainThreadContext = Class.forName("sun.awt.AppContext").getMethod("getAppContext").invoke(null);
+      } catch (Throwable ex) {
+        // Let's consider app context is not necessary for the program
+      }
     }
 
     /**
@@ -1678,10 +1687,11 @@ public class VideoPanel extends JPanel implements DialogView {
       if (endOfStream()) {
         buffer.setEOM(true);
         buffer.setLength(0);
-      } else {  
+      } else {
+        checkAppContext();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         BufferedImage frame = this.frameGenerator.renderImageAt(this.framesPath [this.imageIndex],
-            this.imageIndex == this.framesPath.length - 1);           
+            this.imageIndex == this.framesPath.length - 1);
         ImageIO.write(frame, "JPEG", outputStream);
         byte [] data = outputStream.toByteArray();
         buffer.setData(data);
@@ -1695,6 +1705,31 @@ public class VideoPanel extends JPanel implements DialogView {
               progressModel.setValue(progressionValue);
             }
           });
+      }
+    }
+
+    /**
+     * Checks that app context is correct.
+     */
+    private void checkAppContext() {
+      if (this.mainThreadContext != null) {
+        try {
+          // Check by reflection that sun.awt.AppContext.getAppContext() doesn't return null 
+          // (required by ImageIO.write() and other JMF internal calls) to apply workaround proposed at 
+          // http://stackoverflow.com/questions/17223304/appcontext-is-null-from-rmi-thread-with-java-7-update-25
+          Class<?> appContextClass = Class.forName("sun.awt.AppContext");
+          if (appContextClass.getMethod("getAppContext").invoke(null) == null) {
+            Field field = appContextClass.getDeclaredField("threadGroup2appContext");
+            field.setAccessible(true);
+            Map threadGroup2appContext = (Map)field.get(null);
+            ThreadGroup currentThreadGroup = Thread.currentThread().getThreadGroup();
+            threadGroup2appContext.put(currentThreadGroup, this.mainThreadContext);
+            // Don't need mainThreadContext anymore
+            this.mainThreadContext = null;
+          }
+        } catch (Throwable ex) {
+          // Let's consider app context is not necessary for the program
+        }
       }
     }
 
