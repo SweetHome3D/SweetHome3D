@@ -1663,7 +1663,7 @@ public class VideoPanel extends JPanel implements DialogView {
       this.progressModel = progressModel;
       this.format = format;      
       try {
-        // Retrieve main thread AppContext instance by reflection to
+        // Retrieve main thread AppContext instance by reflection         
         this.mainThreadContext = Class.forName("sun.awt.AppContext").getMethod("getAppContext").invoke(null);
       } catch (Throwable ex) {
         // Let's consider app context is not necessary for the program
