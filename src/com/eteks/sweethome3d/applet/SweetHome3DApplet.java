@@ -299,8 +299,13 @@ public class SweetHome3DApplet extends JApplet {
             "macosx/java3d-1.6/libjogl_desktop.jnilib",
             "macosx/java3d-1.6/libnativewindow_awt.jnilib",
             "macosx/java3d-1.6/libnativewindow_macosx.jnilib"}));
-        // Disable JOGL library loader
-        System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
+        try {
+          // Disable JOGL library loader
+          System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
+          System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
+        } catch (AccessControlException ex) {
+          // Unsigned applet
+        }
       }
       if ("64".equals(System.getProperty("sun.arch.data.model"))) {
         java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
