@@ -1724,12 +1724,12 @@ public class VideoPanel extends JPanel implements DialogView {
             Map threadGroup2appContext = (Map)field.get(null);
             ThreadGroup currentThreadGroup = Thread.currentThread().getThreadGroup();
             threadGroup2appContext.put(currentThreadGroup, this.mainThreadContext);
-            // Don't need mainThreadContext anymore
-            this.mainThreadContext = null;
           }
         } catch (Throwable ex) {
           // Let's consider app context is not necessary for the program
         }
+        // Don't need mainThreadContext anymore
+        this.mainThreadContext = null;
       }
     }
 
