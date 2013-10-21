@@ -155,14 +155,20 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         URL zipUrl = urlContent.getJAREntryURL();
         String entryName = urlContent.getJAREntryName();
         int lastSlashIndex = entryName.lastIndexOf('/');
-        String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
-        // Write in home stream each zipped stream entry that is stored in the same directory  
-        for (String zipEntryName : getZipUrlEntries(zipUrl)) {
-          if (zipEntryName.startsWith(entryDirectory)) {
-            Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
-                + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
-            writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
+        if (lastSlashIndex != -1) {
+          // Consider content is a multi part resource only if it's in a subdirectory
+          String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
+          // Write in home stream each zipped stream entry that is stored in the same directory  
+          for (String zipEntryName : getZipUrlEntries(zipUrl)) {
+            if (zipEntryName.startsWith(entryDirectory)) {
+              Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+                  + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
+              writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
+            }
           }
+        } else {
+          // Consider the content as not a multipart resource
+          writeZipEntry(zipOut, entryNameOrDirectory, urlContent);
         }
       } else {
         // This should be the case only when resource isn't in a JAR file during development
@@ -323,7 +329,11 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
               ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
               if (resourceUrlContent.isMultiPartResource()) {
                 // If content is a resource coming from a JAR file, retrieve its file name
-                subEntryName = entryName.substring(entryName.lastIndexOf('/'));
+                int lastSlashIndex = entryName.lastIndexOf('/');
+                if (lastSlashIndex != -1) {
+                  // Consider content is a multi part resource only if it's in a subdirectory
+                  subEntryName = entryName.substring(lastSlashIndex);
+                }
               }
             } else {
               // Retrieve entry name in zipped stream
