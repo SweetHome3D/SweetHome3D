@@ -243,7 +243,7 @@ public class ModelPreviewComponent extends JComponent {
    */
   private void createComponent3D(GraphicsConfiguration graphicsConfiguration, 
                               boolean pitchAndScaleChangeSupported) {
-    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
+    if (Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
       try {
@@ -649,7 +649,12 @@ public class ModelPreviewComponent extends JComponent {
                 modelTransform.setScale(1.8 / Math.max(Math.max(size.x, size.z), size.y));
                 modelTransformGroup.setTransform(modelTransform);
 
-                modelTransformGroup.addChild(new HomePieceOfFurniture3D(previewedPiece, null, true, true));
+                HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(previewedPiece, null, true, true);
+                if (OperatingSystem.isMacOSX()
+                    && Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
+                  cloneTextures(piece3D, pieceTextures); 
+                }
+                modelTransformGroup.addChild(piece3D);
               } catch (IllegalArgumentException ex) {
                 // Model is empty
               }
@@ -777,31 +782,36 @@ public class ModelPreviewComponent extends JComponent {
       this.previewedPiece.setModelMaterials(materials);
       getModelNode().update();
       // Replace textures by clones because Java 3D doesn't accept all the time to share textures 
-      cloneTexture(getModelNode(), this.pieceTextures);
+      cloneTextures(getModelNode(), this.pieceTextures);
     }
   }
 
   /**
    * Replace the textures set on <code>node</code> shapes by clones. 
    */
-  private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
+  private void cloneTextures(Node node, Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        cloneTexture((Node)enumeration.nextElement(), replacedTextures);
+        cloneTextures((Node)enumeration.nextElement(), replacedTextures);
       }
     } else if (node instanceof Link) {
-      cloneTexture(((Link)node).getSharedGroup(), replacedTextures);
+      cloneTextures(((Link)node).getSharedGroup(), replacedTextures);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          Texture replacedTexture = replacedTextures.get(texture);
-          if (replacedTexture == null) {
+          Texture replacedTexture;
+          if (replacedTextures != null) {
+            replacedTexture = replacedTextures.get(texture);
+            if (replacedTexture == null) {
+              replacedTexture = (Texture)texture.cloneNodeComponent(false);
+              replacedTextures.put(texture, replacedTexture);
+            }
+          } else {
             replacedTexture = (Texture)texture.cloneNodeComponent(false);
-            replacedTextures.put(texture, replacedTexture);
           }
           appearance.setTexture(replacedTexture);
         }
