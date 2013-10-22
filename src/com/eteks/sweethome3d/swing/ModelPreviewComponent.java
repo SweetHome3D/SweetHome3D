@@ -224,7 +224,12 @@ public class ModelPreviewComponent extends JComponent {
         
         public void ancestorRemoved(AncestorEvent ev) {
           if (universe != null) {
-            disposeUniverse();
+            // Dispose universe later to avoid conflicts if canvas is currently being redrawn
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  disposeUniverse();
+                }
+              });
           }
         }
         
