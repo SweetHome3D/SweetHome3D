@@ -51,22 +51,13 @@ public class SweetHome3DBootstrap {
         "batik-svgpathparser-1.7.jar",
         "jnlp.jar"}));
     
+    String operatingSystemName = System.getProperty("os.name");
     String javaVersion = System.getProperty("java.version");
     String java7Prefix = "1.7.0_";
-    if (!System.getProperty("os.name").startsWith("Mac OS X")
-        || javaVersion.startsWith("1.5")) {
-      extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
-          "j3dcore.jar", // Main Java 3D jars
-          "vecmath.jar",
-          "j3dutils.jar",
-          "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
-          "macosx/jogl.jar",
-          "macosx/libgluegen-rt.jnilib",
-          "macosx/libjogl.jnilib",
-          "macosx/libjogl_awt.jnilib",
-          "macosx/libjogl_cg.jnilib"}));
-    } else if (javaVersion.startsWith("1.6")
-               && System.getProperty("com.eteks.sweethome3d.deploymentInformation", "").startsWith("Java Web Start")) {
+    if (operatingSystemName.startsWith("Mac OS X")
+        && javaVersion.startsWith("1.6")
+        && System.getProperty("com.eteks.sweethome3d.deploymentInformation", "").startsWith("Java Web Start")) {
+      // Refuse to let Sweet Home 3D run under Mac OS X with Java Web Start 6
       String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
           ? "Sweet Home 3D ne peut pas fonctionner avec Java\n"
             + "Web Start 6 sous Mac OS X de façon fiable.\n" 
@@ -78,6 +69,19 @@ public class SweetHome3DBootstrap {
             + "http://www.sweethome3d.com/download.jsp";
       JOptionPane.showMessageDialog(null, message);
       System.exit(1);
+    } else if (!operatingSystemName.startsWith("Mac OS X")
+               || javaVersion.startsWith("1.5")
+               || javaVersion.startsWith("1.6")) {
+      extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
+          "j3dcore.jar", // Main Java 3D jars
+          "vecmath.jar",
+          "j3dutils.jar",
+          "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs for Java 5 or 6
+          "macosx/jogl.jar",
+          "macosx/libgluegen-rt.jnilib",
+          "macosx/libjogl.jnilib",
+          "macosx/libjogl_awt.jnilib",
+          "macosx/libjogl_cg.jnilib"}));
     } else if (javaVersion.startsWith(java7Prefix)
                && javaVersion.length() >= java7Prefix.length() + 1
                && Character.isDigit(javaVersion.charAt(java7Prefix.length()))
@@ -86,6 +90,7 @@ public class SweetHome3DBootstrap {
                       && Integer.parseInt(javaVersion.substring(java7Prefix.length(), java7Prefix.length() + 2)) < 40
                    || javaVersion.length() == java7Prefix.length() + 1 // Test whether version is on 1 digit (i.e. < 40)
                    || !Character.isDigit(javaVersion.charAt(java7Prefix.length() + 1)))) {
+      // Refuse to let Sweet Home 3D run under Mac OS X with Java 7 before version 7u40 
       String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
           ? "Sous Mac OS X, Sweet Home 3D ne peut fonctionner avec Java 7\n" 
             + "qu'à partir de la version Java 7u40. Merci de mettre à jour\n" 
@@ -108,6 +113,7 @@ public class SweetHome3DBootstrap {
           "macosx/java3d-1.6/libnativewindow_macosx.jnilib"}));
       // Disable JOGL library loader
       System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
+      System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
     }
     if ("64".equals(System.getProperty("sun.arch.data.model"))) {
       extensionJarsAndDlls.add("linux/x64/libj3dcore-ogl.so"); // Linux 64 bits DLLs
@@ -140,7 +146,7 @@ public class SweetHome3DBootstrap {
         "org.sunflow",
         "org.apache.batik"};
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
-    ClassLoader java3DClassLoader = System.getProperty("os.name").startsWith("Windows")
+    ClassLoader java3DClassLoader = operatingSystemName.startsWith("Windows")
         ? new ExtensionsClassLoader(
             sweetHome3DBootstrapClass.getClassLoader(), 
             sweetHome3DBootstrapClass.getProtectionDomain(),
