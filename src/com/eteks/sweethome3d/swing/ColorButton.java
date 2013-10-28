@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -214,8 +215,32 @@ public class ColorButton extends JButton {
             // might be ignored when the color chooser dialog is created
             List<AbstractColorChooserPanel> chooserPanels = new ArrayList<AbstractColorChooserPanel>(
                 Arrays.asList(getChooserPanels()));
-            if (chooserPanels.get(0).getClass().getName().contains("DefaultSwatchChooserPanel")) {
+            // Remove swatch chooser panel
+            if (chooserPanels.get(0).getClass().getName().equals("javax.swing.colorchooser.DefaultSwatchChooserPanel")) {
               chooserPanels.remove(0);
+            } 
+            // Remove components used to manage transparency and displayed at the fourth or fifth row 
+            // of the first panel of ColorChooserPanel instances
+            for (AbstractColorChooserPanel chooserPanel : chooserPanels) {
+              if (chooserPanel.getClass().getName().equals("javax.swing.colorchooser.ColorChooserPanel")) {
+                Component colorPanel = chooserPanel.getComponent(0);
+                if (colorPanel.getClass().getName().equals("javax.swing.colorchooser.ColorPanel")
+                    && colorPanel instanceof Container) {
+                  Container colorPanelContainer = (Container)colorPanel;
+                  if (colorPanelContainer.getComponentCount() == 15) {
+                    int transparencyComponentsRow;
+                    if (colorPanelContainer.getComponent(4) instanceof JLabel
+                        && ((JLabel)colorPanelContainer.getComponent(4)).getText().length() == 0) {
+                      transparencyComponentsRow = 3;
+                    } else {
+                      transparencyComponentsRow = 4;
+                    }
+                    colorPanelContainer.remove(transparencyComponentsRow + 10);
+                    colorPanelContainer.remove(transparencyComponentsRow + 5);
+                    colorPanelContainer.remove(transparencyComponentsRow);
+                  }
+                }
+              }
             }
             chooserPanels.add(0, palettesPanel);
             setChooserPanels(chooserPanels.toArray(new AbstractColorChooserPanel [chooserPanels.size()]));
