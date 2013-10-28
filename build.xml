@@ -126,12 +126,12 @@
   </target>
 
   <target name="manifest" depends="build"
-          description="Builds build/META-INF/MANIFEST.MF with Trusted-Library attribute set to true">
+          description="Builds build/META-INF/MANIFEST.MF with security attributes">
     <mkdir dir="build/META-INF"/>
     <manifest file="build/META-INF/MANIFEST.MF">
-      <attribute name="Trusted-Library"           value="true"/>
       <attribute name="Permissions"               value="all-permissions"/>
       <attribute name="Codebase"                  value="*"/>
+      <attribute name="Caller-Allowable-Codebase" value="*"/>
     </manifest>
   </target>
 
@@ -235,21 +235,21 @@
   <target name="viewerLibraries" depends="manifest"
           description="Copies to deploy/lib the base libraries used by Sweet Home 3D Viewer">
     <mkdir dir="deploy/lib"/>
-    <!-- Copy jar files adding to their manifest a Trusted-Library attribute set to true 
-         (this attribute is necessary to be able to call applet methods from JavaScript) -->
+    <!-- Copy jar files adding to their manifest security attributes 
+         (these attributes are necessary to be able to call applet methods from JavaScript) -->
     <jar destfile="deploy/lib/Loader3DS1_2u.jar" filesetmanifest="merge">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/Loader3DS1_2u.jar"/>
     </jar>
     <jar destfile="deploy/lib/batik-svgpathparser-1.7.jar">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/batik-svgpathparser-1.7.jar"/>
     </jar>
@@ -263,33 +263,33 @@
          (this attribute is necessary to be able to call applet methods from JavaScript) -->
     <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1b.jar" filesetmanifest="merge">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
     </jar>
     <jar destfile="deploy/lib/sunflow-0.07.3h.jar" filesetmanifest="merge">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/sunflow-0.07.3h.jar"/>
     </jar>
     <jar destfile="deploy/lib/iText-2.1.7.jar" filesetmanifest="merge">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/iText-2.1.7.jar"/>
     </jar>
     <jar destfile="deploy/lib/jmf.jar">
       <manifest>
-        <attribute name="Trusted-Library" value="true"/>
-        <attribute name="Permissions"     value="all-permissions"/>
-        <attribute name="Codebase"        value="*"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
       <zipfileset src="lib/jmf.jar"/>
     </jar>
