@@ -46,7 +46,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -343,18 +342,11 @@ class FurnitureCatalogListPanel extends JPanel implements View {
                                  final FurnitureCatalogController controller) {
     final Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
     MouseInputAdapter mouseListener = new MouseInputAdapter () {
+        // Track first drag and drop under Mac OS X / Java 7 where the selection in the catalog
+        // visually changes the first time the cursor enters in the plan component   
+        private boolean                 firstMouseDrag = OperatingSystem.isMacOSXLionOrSuperior()
+                                                         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");;
         private CatalogPieceOfFurniture firstSelectedPiece;
-        private boolean                 firstMouseDrag;
-        
-        {
-          try {
-            // Track first drag and drop under Mac OS X / Java 7 where the selection in the catalog
-            // visually changes the first time the cursor enters in the plan component   
-            this.firstMouseDrag = OperatingSystem.isMacOSXLionOrSuperior()
-                && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");
-          } catch (AccessControlException ex) {
-          }
-        }
         
         @Override
         public void mouseClicked(MouseEvent ev) {
