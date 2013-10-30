@@ -700,7 +700,6 @@ public class WallController implements Controller {
 
   /**
    * Sets whether the left side is colored, textured or unknown painted.
-   * @return {@link WallPaint#COLORED}, {@link WallPaint#TEXTURED} or <code>null</code>
    */
   public void setLeftSidePaint(WallPaint leftSidePaint) {
     if (leftSidePaint != this.leftSidePaint) {
@@ -712,6 +711,7 @@ public class WallController implements Controller {
   
   /**
    * Returns whether the left side is colored, textured or unknown painted.
+   * @return {@link WallPaint#COLORED}, {@link WallPaint#TEXTURED} or <code>null</code>
    */
   public WallPaint getLeftSidePaint() {
     return this.leftSidePaint;
