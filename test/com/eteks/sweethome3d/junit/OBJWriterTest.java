@@ -153,7 +153,7 @@ public class OBJWriterTest extends TestCase {
     HomeController homeController = new HomeController(home, preferences, viewFactory);
     homeController.getView().exportToOBJ(objFile.toString());
     
-    assertEquals("Not same line count in OBJ file", 475, getLineCount(objFile.toURI().toURL()));
+    assertEquals("Not same line count in OBJ file", 467, getLineCount(objFile.toURI().toURL()));
     assertEquals("Not same line count in MTL file", 43, getLineCount(mtlFile.toURI().toURL()));
     // Read file to check if its content is correct
     new OBJLoader().load(objFile.getAbsolutePath());
