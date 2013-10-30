@@ -937,139 +937,140 @@ public class Wall3D extends Object3DBranch {
       float flatness = 0.5f / (Math.max(doorOrWindow.getWidth(), doorOrWindow.getHeight()));
       if (!doorOrWindowSurroundingArea.isEmpty()) {
         boolean reversed = frontOrBackSide > 0 ^ wallSide == WALL_RIGHT_SIDE ^ doorOrWindow.isModelMirrored();
-        List<float [][]> doorOrWindowSurroundingAreasPoints = getAreaPoints(doorOrWindowSurroundingArea, flatness, reversed);
-      
-        // Generate coordinates for the surrounding area, door or window border and missing top wall part in the wall thickness
-        int [] stripCounts = new int [doorOrWindowSurroundingAreasPoints.size()];
-        int vertexCount = 0;
-        for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size(); i++) {
-          float [][] areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
-          stripCounts [i] = areaPoints.length + 1;
-          vertexCount += stripCounts [i]; 
-        }
-        float halfWallThickness = wall.getThickness() / 2;
-        float deltaXToWallMiddle = (float)(halfWallThickness * sinWallYawAngle);
-        float deltaZToWallMiddle = -(float)(halfWallThickness * cosWallYawAngle);
-        if (wallSide == WALL_LEFT_SIDE) {
-          deltaXToWallMiddle *= -1;
-          deltaZToWallMiddle *= -1;
-        }
-        Point3f [] coords = new Point3f [vertexCount];
-        List<Point3f> borderCoords = new ArrayList<Point3f>(4 * vertexCount);
-        List<Point3f> slopingTopCoords = new ArrayList<Point3f>();        
-        TexCoord2f [] textureCoords;
-        List<TexCoord2f> borderTextureCoords;
-        if (texture != null) {
-          textureCoords = new TexCoord2f [coords.length];
-          borderTextureCoords = new ArrayList<TexCoord2f>(4 * vertexCount);
-        } else {
-          textureCoords = null;
-          borderTextureCoords = null;
-        }
-        int i = 0;
-        for (float [][] areaPoints : doorOrWindowSurroundingAreasPoints) {
-          Point3f point = new Point3f(areaPoints [0][0], areaPoints [0][1], 0);
-          frontAreaTransform.transform(point);
-          TexCoord2f textureCoord = null;
-          if (texture != null) {
-            // Compute texture coordinates of wall side according to textureReferencePoint
-            float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                point.x, point.z) / texture.getWidth();
-            if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
-              horizontalTextureCoords = -horizontalTextureCoords;
-            }
-            textureCoord = new TexCoord2f(horizontalTextureCoords, point.y / texture.getHeight());
+        List<float [][]> doorOrWindowSurroundingAreasPoints = getAreaPoints(doorOrWindowSurroundingArea, flatness, reversed);     
+        if (!doorOrWindowSurroundingAreasPoints.isEmpty()) {
+          // Generate coordinates for the surrounding area, door or window border and missing top wall part in the wall thickness
+          int [] stripCounts = new int [doorOrWindowSurroundingAreasPoints.size()];
+          int vertexCount = 0;
+          for (int i = 0; i < doorOrWindowSurroundingAreasPoints.size(); i++) {
+            float [][] areaPoints = doorOrWindowSurroundingAreasPoints.get(i);
+            stripCounts [i] = areaPoints.length + 1;
+            vertexCount += stripCounts [i]; 
           }
-          double distanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
-              areaPoints [0][0], areaPoints [0][1]);
-          
-          for (int j = 0; j < areaPoints.length; j++, i++) {
-            // Store coordinates of the surrounding area
+          float halfWallThickness = wall.getThickness() / 2;
+          float deltaXToWallMiddle = (float)(halfWallThickness * sinWallYawAngle);
+          float deltaZToWallMiddle = -(float)(halfWallThickness * cosWallYawAngle);
+          if (wallSide == WALL_LEFT_SIDE) {
+            deltaXToWallMiddle *= -1;
+            deltaZToWallMiddle *= -1;
+          }
+          Point3f [] coords = new Point3f [vertexCount];
+          List<Point3f> borderCoords = new ArrayList<Point3f>(4 * vertexCount);
+          List<Point3f> slopingTopCoords = new ArrayList<Point3f>();        
+          TexCoord2f [] textureCoords;
+          List<TexCoord2f> borderTextureCoords;
+          if (texture != null) {
+            textureCoords = new TexCoord2f [coords.length];
+            borderTextureCoords = new ArrayList<TexCoord2f>(4 * vertexCount);
+          } else {
+            textureCoords = null;
+            borderTextureCoords = null;
+          }
+          int i = 0;
+          for (float [][] areaPoints : doorOrWindowSurroundingAreasPoints) {
+            Point3f point = new Point3f(areaPoints [0][0], areaPoints [0][1], 0);
+            frontAreaTransform.transform(point);
+            TexCoord2f textureCoord = null;
+            if (texture != null) {
+              // Compute texture coordinates of wall side according to textureReferencePoint
+              float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                  point.x, point.z) / texture.getWidth();
+              if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
+                horizontalTextureCoords = -horizontalTextureCoords;
+              }
+              textureCoord = new TexCoord2f(horizontalTextureCoords, point.y / texture.getHeight());
+            }
+            double distanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
+                areaPoints [0][0], areaPoints [0][1]);
+            
+            for (int j = 0; j < areaPoints.length; j++, i++) {
+              // Store coordinates of the surrounding area
+              coords [i] = point;
+              if (texture != null) {
+                textureCoords [i] = textureCoord;
+              }
+              
+              // Generate coordinates of the door or window border or missing top wall part
+              int nextPointIndex = j < areaPoints.length - 1  
+                  ? j + 1
+                  : 0;
+              // Select the coordinates list to which the next quadrilateral will be added
+              List<Point3f> coordsList;
+              double nextDistanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
+                  areaPoints [nextPointIndex][0], areaPoints [nextPointIndex][1]);
+              if (distanceToTop < 1E-10 && nextDistanceToTop < 1E-10) {
+                coordsList = slopingTopCoords;
+              } else {
+                coordsList = borderCoords;
+              }
+              
+              Point3f nextPoint = new Point3f(areaPoints [nextPointIndex][0], areaPoints [nextPointIndex][1], 0);
+              frontAreaTransform.transform(nextPoint);            
+              coordsList.add(point);
+              coordsList.add(new Point3f(point.x + deltaXToWallMiddle, point.y, point.z + deltaZToWallMiddle));
+              coordsList.add(new Point3f(nextPoint.x + deltaXToWallMiddle, nextPoint.y, nextPoint.z + deltaZToWallMiddle));
+              coordsList.add(nextPoint);
+              
+              TexCoord2f nextTextureCoord = null;
+              if (texture != null) {
+                float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                    nextPoint.x, nextPoint.z) / texture.getWidth();
+                if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
+                  horizontalTextureCoords = -horizontalTextureCoords;
+                }
+                nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y / texture.getHeight());
+                if (coordsList == borderCoords) {
+                  borderTextureCoords.add(textureCoord);
+                  borderTextureCoords.add(textureCoord);
+                  borderTextureCoords.add(nextTextureCoord);
+                  borderTextureCoords.add(nextTextureCoord);
+                }
+              }
+              
+              // Update values for next loop round
+              distanceToTop = nextDistanceToTop;
+              point = nextPoint;
+              textureCoord = nextTextureCoord;
+            }
+            
+            // Close the polygon with first point for special cases
             coords [i] = point;
             if (texture != null) {
               textureCoords [i] = textureCoord;
             }
-            
-            // Generate coordinates of the door or window border or missing top wall part
-            int nextPointIndex = j < areaPoints.length - 1  
-                ? j + 1
-                : 0;
-            // Select the coordinates list to which the next quadrilateral will be added
-            List<Point3f> coordsList;
-            double nextDistanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
-                areaPoints [nextPointIndex][0], areaPoints [nextPointIndex][1]);
-            if (distanceToTop < 1E-10 && nextDistanceToTop < 1E-10) {
-              coordsList = slopingTopCoords;
-            } else {
-              coordsList = borderCoords;
-            }
-            
-            Point3f nextPoint = new Point3f(areaPoints [nextPointIndex][0], areaPoints [nextPointIndex][1], 0);
-            frontAreaTransform.transform(nextPoint);            
-            coordsList.add(point);
-            coordsList.add(new Point3f(point.x + deltaXToWallMiddle, point.y, point.z + deltaZToWallMiddle));
-            coordsList.add(new Point3f(nextPoint.x + deltaXToWallMiddle, nextPoint.y, nextPoint.z + deltaZToWallMiddle));
-            coordsList.add(nextPoint);
-            
-            TexCoord2f nextTextureCoord = null;
-            if (texture != null) {
-              float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
-                  nextPoint.x, nextPoint.z) / texture.getWidth();
-              if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
-                horizontalTextureCoords = -horizontalTextureCoords;
-              }
-              nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y / texture.getHeight());
-              if (coordsList == borderCoords) {
-                borderTextureCoords.add(textureCoord);
-                borderTextureCoords.add(textureCoord);
-                borderTextureCoords.add(nextTextureCoord);
-                borderTextureCoords.add(nextTextureCoord);
-              }
-            }
-            
-            // Update values for next loop round
-            distanceToTop = nextDistanceToTop;
-            point = nextPoint;
-            textureCoord = nextTextureCoord;
+            i++;
           }
           
-          // Close the polygon with first point for special cases
-          coords [i] = point;
-          if (texture != null) {
-            textureCoords [i] = textureCoord;
-          }
-          i++;
-        }
-        
-        // Generate surrounding area geometry
-        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-        geometryInfo.setStripCounts(stripCounts);
-        geometryInfo.setCoordinates(coords);
-        if (texture != null) {
-          geometryInfo.setTextureCoordinateParams(1, 2);
-          geometryInfo.setTextureCoordinates(0, textureCoords);
-        }
-        new NormalGenerator().generateNormals(geometryInfo);
-        wallGeometries.add(geometryInfo.getIndexedGeometryArray());
-      
-        if (borderCoords.size() > 0) { 
-          // Generate border geometry 
-          geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
-          geometryInfo.setCoordinates(borderCoords.toArray(new Point3f [borderCoords.size()]));          
+          // Generate surrounding area geometry
+          GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+          geometryInfo.setStripCounts(stripCounts);
+          geometryInfo.setCoordinates(coords);
           if (texture != null) {
             geometryInfo.setTextureCoordinateParams(1, 2);
-            geometryInfo.setTextureCoordinates(0, borderTextureCoords.toArray(new TexCoord2f [borderTextureCoords.size()]));
+            geometryInfo.setTextureCoordinates(0, textureCoords);
           }
-          new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
-          wallGeometries.add(geometryInfo.getIndexedGeometryArray());
-        }
-        
-        if (slopingTopCoords.size() > 0) { 
-          // Generate wall top geometry 
-          geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
-          geometryInfo.setCoordinates(slopingTopCoords.toArray(new Point3f [slopingTopCoords.size()]));
           new NormalGenerator().generateNormals(geometryInfo);
-          wallTopGeometries.add(geometryInfo.getIndexedGeometryArray());
+          wallGeometries.add(geometryInfo.getIndexedGeometryArray());
+        
+          if (borderCoords.size() > 0) { 
+            // Generate border geometry 
+            geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
+            geometryInfo.setCoordinates(borderCoords.toArray(new Point3f [borderCoords.size()]));          
+            if (texture != null) {
+              geometryInfo.setTextureCoordinateParams(1, 2);
+              geometryInfo.setTextureCoordinates(0, borderTextureCoords.toArray(new TexCoord2f [borderTextureCoords.size()]));
+            }
+            new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
+            wallGeometries.add(geometryInfo.getIndexedGeometryArray());
+          }
+          
+          if (slopingTopCoords.size() > 0) { 
+            // Generate wall top geometry 
+            geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
+            geometryInfo.setCoordinates(slopingTopCoords.toArray(new Point3f [slopingTopCoords.size()]));
+            new NormalGenerator().generateNormals(geometryInfo);
+            wallTopGeometries.add(geometryInfo.getIndexedGeometryArray());
+          }
         }
       }
     }
