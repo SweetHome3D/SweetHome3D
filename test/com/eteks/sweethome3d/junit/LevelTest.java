@@ -157,13 +157,14 @@ public class LevelTest extends ComponentTestFixture {
     assertHomeItemsAtLevel(home, levels.get(0));
     
     // Check visibility of modified wall and other walls
+    int visibleWallsCount = 0;
     for (Wall wall : walls) {
-      if (wall == firstWall) {
-        assertTrue("High wall not visible", wall.isAtLevel(home.getSelectedLevel()));
-      } else {
-        assertFalse("High wall visible", wall.isAtLevel(home.getSelectedLevel()));
+      if (wall.isAtLevel(home.getSelectedLevel())) {
+        visibleWallsCount++;
       }
     }
+    assertTrue("High wall not visible", firstWall.isAtLevel(home.getSelectedLevel()));
+    assertEquals("Missing visible walls", 3, visibleWallsCount);
 
     // Test undo
     runAction(homeController, HomeView.ActionType.UNDO, tester);
@@ -177,17 +178,13 @@ public class LevelTest extends ComponentTestFixture {
     runAction(homeController, HomeView.ActionType.DELETE_LEVEL, tester);
     assertEquals("Incorrect level count", 1, home.getLevels().size());
     runAction(homeController, HomeView.ActionType.UNDO, tester);
-    // Check visibility of walls
-    for (Wall wall : walls) {
-      assertFalse("High wall visible", wall.isAtLevel(home.getSelectedLevel()));
-    }
+    // Check visibility of first wall
+    assertFalse("High wall still visible", firstWall.isAtLevel(home.getSelectedLevel()));
 
     // Change elevation of second level
     decreaseLevelElevation(home, homeController, preferences, frame, tester);
-    // Check visibility of walls
-    for (Wall wall : walls) {
-      assertTrue("Wall invisible", wall.isAtLevel(home.getSelectedLevel()));
-    }
+    // Check visibility of first wall
+    assertTrue("High wall not visible", firstWall.isAtLevel(home.getSelectedLevel()));
     // Select first level
     JTabbedPane tabbedPane = (JTabbedPane)new BasicFinder().find(planViewComponent, new ClassMatcher (JTabbedPane.class, true));
     JTabbedPaneTester tabbedPaneTester = new JTabbedPaneTester();
