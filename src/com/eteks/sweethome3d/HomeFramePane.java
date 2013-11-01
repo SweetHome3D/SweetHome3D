@@ -308,6 +308,13 @@ public class HomeFramePane extends JRootPane implements View {
           Insets insets = frame.getInsets();
           frame.setSize(screenSize.width + insets.left + insets.right, 
               screenSize.height + insets.bottom);
+        } else if (OperatingSystem.isLinux()) {
+          EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Under Linux, maximize frame once it's displayed
+              frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
+          });
         } else {
           frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
