@@ -1093,6 +1093,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               controller.setHeight(piece.getHeight());
               controller.setMovable(piece.isMovable());
               controller.setDoorOrWindow(piece.isDoorOrWindow());
+              controller.setStaircaseCutOutShape(piece.getStaircaseCutOutShape());
               controller.setElevation(piece.getElevation());
               controller.setColor(piece.getColor());
               controller.setIconYaw(piece.getIconYaw());
@@ -1276,6 +1277,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     controller.setHeight(modelSize.y);
     controller.setMovable(true);
     controller.setDoorOrWindow(false);
+    controller.setStaircaseCutOutShape(null);
     controller.setColor(null);                  
     controller.setIconYaw((float)Math.PI / 8);
     controller.setProportional(true);
