@@ -26,11 +26,8 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -63,12 +60,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.media.j3d.BranchGroup;
-import javax.media.j3d.Canvas3D;
-import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Transform3D;
-import javax.media.j3d.View;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -89,7 +82,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
-import javax.swing.border.EtchedBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
@@ -100,7 +92,6 @@ import javax.vecmath.Matrix3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
-import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -1444,92 +1435,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Preview component for model changes. 
    */
-  private static abstract class AbstractModelPreviewComponent extends ModelPreviewComponent {
-    private BranchGroup modelNode;
-    
+  private static abstract class AbstractModelPreviewComponent extends ModelPreviewComponent {    
     public AbstractModelPreviewComponent(boolean pitchAndScaleChangeSupported) {
       super(pitchAndScaleChangeSupported);
     }
     
-    /**
-     * Adds listeners to <code>controller</code> to update the rotation of the piece model
-     * displayed by this component.
-     */
-    protected void addRotationListener(final ImportedFurnitureWizardController controller) {
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN,  
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              setBackFaceShown(controller.isBackFaceShown());
-            }
-          });
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL,  
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              modelNode = null;
-            }
-          });
-      PropertyChangeListener rotationChangeListener = new PropertyChangeListener () {
-          public void propertyChange(final PropertyChangeEvent ev) {
-            setModelRotation(controller.getModelRotation());
-            
-            if (ev.getOldValue() != null
-                && getModel() != null) {              
-              // Update size when a new rotation is provided
-              if (modelNode == null) {
-                ModelManager.getInstance().loadModel(getModel(), new ModelManager.ModelObserver() {
-                    public void modelUpdated(BranchGroup modelRoot) {
-                      modelNode = modelRoot;
-                      updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
-                    }
-  
-                    public void modelError(Exception ex) {
-                    }
-                  });
-              } else {
-                updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
-              }
-            }
-          }
-          
-          private void updateSize(final ImportedFurnitureWizardController controller,
-                                  float [][] oldModelRotation,
-                                  float [][] newModelRotation) {
-            try {
-              Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, oldModelRotation, 1f);
-              Transform3D scaleTransform = new Transform3D();
-              scaleTransform.setScale(new Vector3d(controller.getWidth(), controller.getHeight(), controller.getDepth()));
-              scaleTransform.mul(normalization);
-              
-              // Compute rotation before old model rotation
-              Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
-                  oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
-                  oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
-              oldModelRotationMatrix.invert();
-              Transform3D backRotationTransform = new Transform3D();
-              backRotationTransform.setRotation(oldModelRotationMatrix);
-              backRotationTransform.mul(scaleTransform);
-              
-              // Compute size after new model rotation
-              Matrix3f newModelRotationMatrix = new Matrix3f(newModelRotation [0][0], newModelRotation [0][1], newModelRotation [0][2],
-                  newModelRotation [1][0], newModelRotation [1][1], newModelRotation [1][2],
-                  newModelRotation [2][0], newModelRotation [2][1], newModelRotation [2][2]);
-              Transform3D transform = new Transform3D();
-              transform.setRotation(newModelRotationMatrix);
-              transform.mul(backRotationTransform);
-              
-              Vector3f newSize = ModelManager.getInstance().getSize(modelNode, transform);
-              controller.setWidth(newSize.x);
-              controller.setHeight(newSize.y);
-              controller.setDepth(newSize.z);
-            } catch (IllegalArgumentException ex) {
-              // Model is empty
-            }
-          }
-        };
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_ROTATION,
-          rotationChangeListener);
-    }
-
     /**
      * Adds listeners to <code>controller</code> to update the rotation and the size of the piece model
      * displayed by this component.
@@ -1590,90 +1500,71 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Preview component for model orientation. 
    */
-  private static class RotationPreviewComponent extends AbstractModelPreviewComponent {
-    private JLabel    frontViewLabel;
-    private JPanel    frontViewPanel;
-    private Component frontViewComponent3D;
-    private JLabel    sideViewLabel;
-    private JPanel    sideViewPanel;
-    private Component sideViewComponent3D;
-    private JLabel    topViewLabel;
-    private JPanel    topViewPanel;
-    private Component topViewComponent3D;
-    private JLabel    perspectiveViewLabel;
+  private static class RotationPreviewComponent extends JPanel {
+    private ModelPreviewComponent perspectiveViewComponent3D;
+    private JLabel                frontViewLabel;
+    private ModelPreviewComponent frontViewComponent3D;
+    private JLabel                sideViewLabel;
+    private ModelPreviewComponent sideViewComponent3D;
+    private JLabel                topViewLabel;
+    private ModelPreviewComponent topViewComponent3D;
+    private JLabel                perspectiveViewLabel;
+    private BranchGroup           modelNode;
 
     public RotationPreviewComponent(UserPreferences preferences, 
                                     final ImportedFurnitureWizardController controller) {
-      super(true);
-      addRotationListener(controller);
-      createComponents(preferences);
+      createComponents(preferences, controller);
       layoutComponents();
-      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      if (graphicsEnvironment.getScreenDevices().length == 1) {
-        // If only one screen device is available, create components 3D immediately, 
-        // otherwise create it once the screen device of the parent is known
-        createOtherViewsComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration());
-      }
+    }
+
+    public void setModel(Content model) {
+      this.perspectiveViewComponent3D.setModel(model);
+      this.frontViewComponent3D.setModel(model);
+      this.sideViewComponent3D.setModel(model);
+      this.topViewComponent3D.setModel(model);
     }
 
     /**
      * Creates components displayed by this panel.
      */
-    private void createComponents(UserPreferences preferences) {
+    private void createComponents(UserPreferences preferences, 
+                                  ImportedFurnitureWizardController controller) {
+      Color backgroundColor = new Color(0xE5E5E5);
+      this.perspectiveViewComponent3D = new ModelPreviewComponent(true);
+      this.perspectiveViewComponent3D.setBackground(backgroundColor);
+      addRotationListener(this.perspectiveViewComponent3D, controller, true);
+      
+      this.frontViewComponent3D = new ModelPreviewComponent(false, false, false);
+      this.frontViewComponent3D.setViewYaw(0);
+      this.frontViewComponent3D.setViewPitch(0);
+      this.frontViewComponent3D.setParallelProjection(true);
+      this.frontViewComponent3D.setBackground(backgroundColor);
+      addRotationListener(this.frontViewComponent3D, controller, false);
+      
+      this.sideViewComponent3D = new ModelPreviewComponent(false, false, false);
+      this.sideViewComponent3D.setViewYaw(Locale.getDefault().equals(Locale.US) 
+          ? -(float)Math.PI / 2 
+          : (float)Math.PI / 2);
+      this.sideViewComponent3D.setViewPitch(0);
+      this.sideViewComponent3D.setParallelProjection(true);
+      this.sideViewComponent3D.setBackground(backgroundColor);
+      addRotationListener(this.sideViewComponent3D, controller, false);
+      
+      this.topViewComponent3D = new ModelPreviewComponent(false, false, false);
+      this.topViewComponent3D.setViewYaw(0);
+      this.topViewComponent3D.setViewPitch(-(float)Math.PI / 2);
+      this.topViewComponent3D.setParallelProjection(true);
+      this.topViewComponent3D.setBackground(backgroundColor);
+      addRotationListener(this.topViewComponent3D, controller, false);
+
       this.frontViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "frontViewLabel.text"));
-      this.frontViewPanel = new JPanel(new GridLayout());
       this.sideViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "sideViewLabel.text"));
-      this.sideViewPanel = new JPanel(new GridLayout());
       this.topViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "topViewLabel.text"));
-      this.topViewPanel = new JPanel(new GridLayout());
       this.perspectiveViewLabel = new JLabel(preferences.getLocalizedString(
           ImportedFurnitureWizardStepsPanel.class, "perspectiveViewLabel.text"));
-      
-      setBorder(null);
-      // Add a hierarchy listener to link canvases to universe once this component is made visible 
-      addAncestorListener();
-    }
-
-    /**
-     * Creates the 3D components for front, side and top view.
-     */
-    private void createOtherViewsComponent3D(GraphicsConfiguration configuration) {
-      frontViewComponent3D = getComponent3D(configuration);
-      Color backgroundColor = new Color(0xE5E5E5);
-      frontViewComponent3D.setBackground(backgroundColor);
-      frontViewPanel.add(frontViewComponent3D);
-      sideViewComponent3D = getComponent3D(configuration);
-      sideViewComponent3D.setBackground(backgroundColor);
-      sideViewPanel.add(sideViewComponent3D);
-      topViewComponent3D = getComponent3D(configuration);
-      topViewComponent3D.setBackground(backgroundColor);
-      topViewPanel.add(topViewComponent3D);
-    }
-    
-    /**
-     * Returns a component 3D depending on offscreen view being required or not.
-     */
-    private Component getComponent3D(GraphicsConfiguration configuration) {
-      if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
-        GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-        gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-        try {
-          // Instantiate JCanvas3D inner class by reflection to be able to run under Java 3D 1.3
-          return (Component)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").
-              getConstructor(GraphicsConfigTemplate3D.class).newInstance(gc);
-        } catch (ClassNotFoundException ex) {
-          throw new UnsupportedOperationException("Java 3D 1.5 required to display an offscreen 3D view");
-        } catch (Exception ex) {
-          UnsupportedOperationException ex2 = new UnsupportedOperationException();
-          ex2.initCause(ex);
-          throw ex2;
-        }
-      } else {
-        return Component3DManager.getInstance().getOnscreenCanvas3D(configuration, null);
-      }
     }
 
     @Override
@@ -1682,78 +1573,93 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     }
 
     /**
-     * Adds an ancestor listener to this component to manage canvases attachment to universe.  
+     * Adds listeners to <code>controller</code> to update the rotation of the piece model
+     * displayed by the 3D components.
      */
-    private void addAncestorListener() {
-      addAncestorListener(new AncestorListener() {
-          public void ancestorAdded(AncestorEvent ev) {
-            if (frontViewComponent3D == null) {
-              createOtherViewsComponent3D(ev.getAncestor().getGraphicsConfiguration());
+    protected void addRotationListener(final ModelPreviewComponent viewComponent3D, 
+                                       final ImportedFurnitureWizardController controller,
+                                       final boolean mainComponent) {
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN,  
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              viewComponent3D.setBackFaceShown(controller.isBackFaceShown());
             }
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Attach the 3 other canvases to super class universe with their own view once main view is attached           
-                  createView(0, 0, 1, View.PARALLEL_PROJECTION).addCanvas3D(getCanvas3D(frontViewComponent3D));
-                  createView(Locale.getDefault().equals(Locale.US) 
-                      ? -(float)Math.PI / 2 
-                          : (float)Math.PI / 2, 
-                          0, 1, View.PARALLEL_PROJECTION).addCanvas3D(getCanvas3D(sideViewComponent3D));
-                  createView(0, -(float)Math.PI / 2, 1, View.PARALLEL_PROJECTION).addCanvas3D(getCanvas3D(topViewComponent3D));
-                  revalidate();
-                  repaint();
-                }
-              });
+          });
+      if (mainComponent) {
+        controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL,  
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                modelNode = null;
+              }
+            });
+      }
+      PropertyChangeListener rotationChangeListener = new PropertyChangeListener () {
+          public void propertyChange(final PropertyChangeEvent ev) {
+            viewComponent3D.setModelRotation(controller.getModelRotation());
+            
+            if (mainComponent
+                && ev.getOldValue() != null
+                && viewComponent3D.getModel() != null) {              
+              // Update size when a new rotation is provided
+              if (modelNode == null) {
+                ModelManager.getInstance().loadModel(viewComponent3D.getModel(), new ModelManager.ModelObserver() {
+                    public void modelUpdated(BranchGroup modelRoot) {
+                      modelNode = modelRoot;
+                      updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
+                    }
+  
+                    public void modelError(Exception ex) {
+                    }
+                  });
+              } else {
+                updateSize(controller, (float [][])ev.getOldValue(), (float [][])ev.getNewValue());
+              }
+            }
           }
           
-          public void ancestorRemoved(AncestorEvent ev) {
-            // Detach the 3 canvases from their view
-            getCanvas3D(frontViewComponent3D).getView().removeCanvas3D(getCanvas3D(frontViewComponent3D));
-            getCanvas3D(sideViewComponent3D).getView().removeCanvas3D(getCanvas3D(sideViewComponent3D));
-            getCanvas3D(topViewComponent3D).getView().removeCanvas3D(getCanvas3D(topViewComponent3D));
-            // Super class did the remaining of clean up
+          private void updateSize(final ImportedFurnitureWizardController controller,
+                                  float [][] oldModelRotation,
+                                  float [][] newModelRotation) {
+            try {
+              Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, oldModelRotation, 1f);
+              Transform3D scaleTransform = new Transform3D();
+              scaleTransform.setScale(new Vector3d(controller.getWidth(), controller.getHeight(), controller.getDepth()));
+              scaleTransform.mul(normalization);
+              
+              // Compute rotation before old model rotation
+              Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
+                  oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
+                  oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
+              oldModelRotationMatrix.invert();
+              Transform3D backRotationTransform = new Transform3D();
+              backRotationTransform.setRotation(oldModelRotationMatrix);
+              backRotationTransform.mul(scaleTransform);
+              
+              // Compute size after new model rotation
+              Matrix3f newModelRotationMatrix = new Matrix3f(newModelRotation [0][0], newModelRotation [0][1], newModelRotation [0][2],
+                  newModelRotation [1][0], newModelRotation [1][1], newModelRotation [1][2],
+                  newModelRotation [2][0], newModelRotation [2][1], newModelRotation [2][2]);
+              Transform3D transform = new Transform3D();
+              transform.setRotation(newModelRotationMatrix);
+              transform.mul(backRotationTransform);
+              
+              Vector3f newSize = ModelManager.getInstance().getSize(modelNode, transform);
+              controller.setWidth(newSize.x);
+              controller.setHeight(newSize.y);
+              controller.setDepth(newSize.z);
+            } catch (IllegalArgumentException ex) {
+              // Model is empty
+            }
           }
-          
-          public void ancestorMoved(AncestorEvent ev) {
-          }        
-        });
-    }
-    
-    /**
-     * Returns the <code>Canvas3D</code> instance associated to the given component.
-     */
-    private Canvas3D getCanvas3D(Component component3D) {
-      if (component3D instanceof Canvas3D) {
-        return (Canvas3D)component3D;
-      } else {
-        try {
-          // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
-          return (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
-        } catch (Exception ex) {
-          UnsupportedOperationException ex2 = new UnsupportedOperationException();
-          ex2.initCause(ex);
-          throw ex2;
-        }
-      }   
-    }
-    
-    /**
-     * Returns a bordered panel that includes <code>component3D</code>.
-     */
-    private JPanel getComponent3DBorderedPanel(Component component3D) {
-      JPanel panel = new JPanel(new GridLayout(1, 1));
-      panel.add(component3D);
-      component3D.setFocusable(false);      
-      panel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));      
-      return panel;
+        };
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_ROTATION,
+          rotationChangeListener);
     }
 
     /**
      * Layouts components. 
      */
     private void layoutComponents() {
-      // Remove default component 3D to put it in another place
-      JComponent defaultComponent3D = getComponent3D(); 
-      remove(defaultComponent3D);
       setLayout(new GridBagLayout());
       
       // Place the 4 3D components differently depending on US or other country
@@ -1762,28 +1668,28 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         add(this.perspectiveViewLabel, new GridBagConstraints(
             0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getComponent3DBorderedPanel(defaultComponent3D), new GridBagConstraints(
+        add(this.perspectiveViewComponent3D, new GridBagConstraints(
             0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 5), 0, 0));
         // Top view at top right
         add(this.topViewLabel, new GridBagConstraints(
             1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getComponent3DBorderedPanel(this.topViewPanel), new GridBagConstraints(
+        add(this.topViewComponent3D, new GridBagConstraints(
             1, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
         // Left view at bottom left
         add(this.sideViewLabel, new GridBagConstraints(
             0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getComponent3DBorderedPanel(this.sideViewPanel), new GridBagConstraints(
+        add(this.sideViewComponent3D, new GridBagConstraints(
             0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
         // Front view at bottom right
         add(this.frontViewLabel, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getComponent3DBorderedPanel(this.frontViewPanel), new GridBagConstraints(
+        add(this.frontViewComponent3D, new GridBagConstraints(
             1, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       } else {
@@ -1791,28 +1697,28 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         add(this.sideViewLabel, new GridBagConstraints(
             0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getComponent3DBorderedPanel(this.sideViewPanel), new GridBagConstraints(
+        add(this.sideViewComponent3D, new GridBagConstraints(
             0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 5), 0, 0));
         // Front view at top right
         add(this.frontViewLabel, new GridBagConstraints(
             1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getComponent3DBorderedPanel(this.frontViewPanel), new GridBagConstraints(
+        add(this.frontViewComponent3D, new GridBagConstraints(
             1, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
         // Default projection view at bottom left
         add(this.perspectiveViewLabel, new GridBagConstraints(
             0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-        add(getComponent3DBorderedPanel(defaultComponent3D), new GridBagConstraints(
+        add(this.perspectiveViewComponent3D, new GridBagConstraints(
             0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
         // Top view at bottom right
         add(this.topViewLabel, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-        add(getComponent3DBorderedPanel(this.topViewPanel), new GridBagConstraints(
+        add(this.topViewComponent3D, new GridBagConstraints(
             1, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       }

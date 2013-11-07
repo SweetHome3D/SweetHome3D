@@ -62,8 +62,6 @@ import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Link;
 import javax.media.j3d.Node;
-import javax.media.j3d.PhysicalBody;
-import javax.media.j3d.PhysicalEnvironment;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
@@ -108,12 +106,13 @@ public class ModelPreviewComponent extends JComponent {
   private float                   viewYaw   = (float) Math.PI / 8;
   private float                   viewPitch = -(float) Math.PI / 16;
   private float                   viewScale = 1;
+  private boolean                 parallelProjection;
   private Object                  iconImageLock;
   private HomePieceOfFurniture    previewedPiece;
   private Map<Texture, Texture>   pieceTextures = new HashMap<Texture, Texture>();
 
   /**
-   * Returns an 3D model preview component.
+   * Returns an 3D model preview component that lets the user change its yaw.
    */
   public ModelPreviewComponent() {
     this(false);
@@ -124,6 +123,16 @@ public class ModelPreviewComponent extends JComponent {
    * if <code>pitchAndScaleChangeSupported</code> is <code>true</code>.
    */
   public ModelPreviewComponent(boolean pitchAndScaleChangeSupported) {
+    this(true, pitchAndScaleChangeSupported, pitchAndScaleChangeSupported);    
+  }
+  
+  /**
+   * Returns an 3D model preview component that lets the user change its yaw, pitch and scale 
+   * according to parameters.
+   */
+  public ModelPreviewComponent(boolean yawChangeSupported, 
+                               boolean pitchChangeSupported,
+                               boolean scaleChangeSupported) {
     setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 
     this.sceneTree = createSceneTree();
@@ -136,12 +145,13 @@ public class ModelPreviewComponent extends JComponent {
     if (graphicsEnvironment.getScreenDevices().length == 1) {
       // If only one screen device is available, create 3D component immediately, 
       // otherwise create it once the screen device of the parent is known
-      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), pitchAndScaleChangeSupported);
+      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
+          yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
     }
 
     // Add an ancestor listener to create 3D component and its universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
-    addAncestorListener(pitchAndScaleChangeSupported);
+    addAncestorListener(yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
   }
 
   /**
@@ -211,11 +221,14 @@ public class ModelPreviewComponent extends JComponent {
    * Adds an ancestor listener to this component to manage the creation of the 3D component and its universe 
    * and clean up the universe.  
    */
-  private void addAncestorListener(final boolean pitchAndScaleChangeSupported) {
+  private void addAncestorListener(final boolean yawChangeSupported, 
+                                   final boolean pitchChangeSupported,
+                                   final boolean scaleChangeSupported) {
     addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
           if (component3D == null) {
-            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), pitchAndScaleChangeSupported);
+            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), 
+                yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
           }
           if (universe == null) {
             createUniverse();
@@ -242,7 +255,9 @@ public class ModelPreviewComponent extends JComponent {
    * Creates the 3D component associated with the given <code>configuration</code> device.
    */
   private void createComponent3D(GraphicsConfiguration graphicsConfiguration, 
-                              boolean pitchAndScaleChangeSupported) {
+                                 boolean yawChangeSupported, 
+                                 boolean pitchChangeSupported,
+                                 boolean scaleChangeSupported) {
     if (Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -278,7 +293,7 @@ public class ModelPreviewComponent extends JComponent {
     this.component3DPanel.setLayout(new GridLayout());
     this.component3DPanel.add(this.component3D);
     this.component3D.setFocusable(false);      
-    addMouseListeners(this.component3D, pitchAndScaleChangeSupported);
+    addMouseListeners(this.component3D, yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
   }
 
   /**
@@ -303,7 +318,9 @@ public class ModelPreviewComponent extends JComponent {
    * Adds an AWT mouse listener to component that will update view platform transform.  
    */
   private void addMouseListeners(final Component component3D, 
-                                 final boolean pitchAndScaleChangeSupported) {
+                                 final boolean yawChangeSupported, 
+                                 final boolean pitchChangeSupported,
+                                 final boolean scaleChangeSupported) {
     final float ANGLE_FACTOR = 0.02f;
     final float ZOOM_FACTOR = 0.02f;
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
@@ -319,20 +336,21 @@ public class ModelPreviewComponent extends JComponent {
         @Override
         public void mouseDragged(MouseEvent ev) {
           if (getModelNode() != null) {
-            // Mouse move along X axis changes yaw 
-            setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));    
+            if (yawChangeSupported) {
+              // Mouse move along X axis changes yaw 
+              setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));
+            }
             this.xLastMouseMove = ev.getX();
             
-            if (pitchAndScaleChangeSupported) {
-              if (ev.isAltDown()) {
-                // Mouse move along Y axis with Alt down changes scale
-                setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((ev.getY() - this.yLastMouseMove) * ZOOM_FACTOR))));
-              } else {
-                // Mouse move along Y axis changes pitch
-                setViewPitch(Math.max(-(float)Math.PI / 4, Math.min(0, getViewPitch() - ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove))));
-              }
-              this.yLastMouseMove = ev.getY();
+
+            if (scaleChangeSupported && ev.isAltDown()) {
+              // Mouse move along Y axis with Alt down changes scale
+              setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((ev.getY() - this.yLastMouseMove) * ZOOM_FACTOR))));
+            } else if (pitchChangeSupported && !ev.isAltDown()) {
+              // Mouse move along Y axis changes pitch
+              setViewPitch(Math.max(-(float)Math.PI / 4, Math.min(0, getViewPitch() - ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove))));
             }
+            this.yLastMouseMove = ev.getY();
           }
         }
       };
@@ -340,7 +358,7 @@ public class ModelPreviewComponent extends JComponent {
     component3D.addMouseListener(mouseListener);
     component3D.addMouseMotionListener(mouseListener);
     
-    if (pitchAndScaleChangeSupported) {
+    if (scaleChangeSupported) {
       component3D.addMouseWheelListener(new MouseWheelListener() {
           public void mouseWheelMoved(MouseWheelEvent ev) {
             // Mouse move along Y axis with Alt down changes scale
@@ -407,6 +425,9 @@ public class ModelPreviewComponent extends JComponent {
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     Viewer viewer = new Viewer(canvas3D);
     this.universe = new SimpleUniverse(viewingPlatform, viewer);
+    this.universe.getViewer().getView().setProjectionPolicy(this.parallelProjection 
+        ? View.PARALLEL_PROJECTION 
+        : View.PERSPECTIVE_PROJECTION);
     // Set viewer location 
     updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
         getViewYaw(), getViewPitch(), getViewScale());
@@ -436,35 +457,6 @@ public class ModelPreviewComponent extends JComponent {
     this.universe.getLocale().removeBranchGraph(this.sceneTree);
     this.universe.cleanup();
     this.universe = null;
-  }
-  
-  /**
-   * Creates a view bound to the universe that views current model from a point of view oriented with 
-   * <code>yaw</code> and <code>pitch</code> angles.
-   */
-  View createView(float yaw, float pitch, float scale, int projectionPolicy) {
-    if (this.universe == null) {
-      createUniverse();
-    }
-    // Reuse same physical body and environment
-    PhysicalBody physicalBody = this.universe.getViewer().getPhysicalBody();
-    PhysicalEnvironment physicalEnvironment = this.universe.getViewer().getPhysicalEnvironment();
-    
-    // Create a view associated with canvas3D
-    View view = new View();
-    view.setPhysicalBody(physicalBody);
-    view.setPhysicalEnvironment(physicalEnvironment);
-    view.setProjectionPolicy(projectionPolicy);
-    // Create a viewing platform and attach it to view and universe locale
-    ViewingPlatform viewingPlatform = new ViewingPlatform();
-    viewingPlatform.setUniverse(this.universe);
-    this.universe.getLocale().addBranchGraph(
-        (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
-    view.attachViewPlatform(viewingPlatform.getViewPlatform());
-
-    // Set user point of view depending on yaw and pitch angles
-    updateViewPlatformTransform(viewingPlatform.getViewPlatformTransform(), yaw, pitch, scale);
-    return view;
   }
   
   /**
@@ -520,7 +512,26 @@ public class ModelPreviewComponent extends JComponent {
           getViewYaw(), getViewPitch(), getViewScale());
     }
   }
+  
+  /**
+   * Sets whether the component 3D should use parallel or perspective projection.
+   */
+  protected void setParallelProjection(boolean parallelProjection) {
+    this.parallelProjection = parallelProjection;
+    if (this.universe != null) {
+      this.universe.getViewer().getView().setProjectionPolicy(parallelProjection 
+          ? View.PARALLEL_PROJECTION 
+          : View.PERSPECTIVE_PROJECTION);
+    }
+  }
 
+  /**
+   * Returns <code>true</code> if the component 3D uses parallel projection.
+   */
+  protected boolean isParallelProjection() {
+    return this.parallelProjection;
+  }
+  
   /**
    * Updates the given view platform transformation from yaw angle, pitch angle and scale. 
    */
@@ -650,8 +661,7 @@ public class ModelPreviewComponent extends JComponent {
                 modelTransformGroup.setTransform(modelTransform);
 
                 HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(previewedPiece, null, true, true);
-                if (OperatingSystem.isMacOSX()
-                    && Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
+                if (OperatingSystem.isMacOSX()) {
                   cloneTextures(piece3D, pieceTextures); 
                 }
                 modelTransformGroup.addChild(piece3D);
