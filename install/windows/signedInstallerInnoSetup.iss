@@ -1,4 +1,4 @@
-; installerInnoSetup.iss
+; signedInstallerInnoSetup.iss
 ;
 ; Sweet Home 3D, Copyright (c) 2007-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
@@ -31,6 +31,8 @@ VersionInfoTextVersion=4.2
 VersionInfoDescription=Sweet Home 3D Setup
 VersionInfoCopyright=Copyright (c) 2007-2013 eTeks
 VersionInfoCompany=eTeks
+; Install in 64 bit mode if possible
+ArchitecturesInstallIn64BitMode=x64
 ; Signing
 ;
 ; Requires keys.pfx in install\windows subdirectory
@@ -38,7 +40,7 @@ VersionInfoCompany=eTeks
 ; <input message="Enter signature password:" 
 ;        addproperty="password"/> 
 ; <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
-;    <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\signtool.exe$$q sign /f $$q${basedir}\install\windows\keys.pfx$$q /p ${password} $p"/>
+;    <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe$$q sign /f $$q${basedir}\install\windows\keys.pfx$$q /p ${password} $p"/>
 ;    <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
 ; </exec>  
 SignTool=SignToolPgm /d $qSweet Home 3D Installer$q /du $qhttp://www.sweethome3d.com/$q $f
@@ -66,7 +68,16 @@ Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "build\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
+Source: "build\SweetHome3D.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
+; Install JRE and DLLs for not 64 bit
+Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "build\jre6\x86\*"; DestDir: "{app}\jre6"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
+; Install JRE and DLLs for 64 bit
+Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "build\jre6\x64\*"; DestDir: "{app}\jre6"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
@@ -74,6 +85,10 @@ Name: "{group}\{cm:UninstallProgram,Sweet Home 3D}"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Tasks: desktopicon; Comment: "{cm:SweetHome3DComment}"
 
 [Run]
+; Unpack largest jars
+Filename: "{app}\jre6\bin\unpack200.exe"; Parameters:"-r -q ""{app}\jre6\lib\rt.pack.gz"" ""{app}\jre6\lib\rt.jar"""; Flags: runhidden; StatusMsg: "{cm:UnpackingMessage,rt.jar}";
+Filename: "{app}\jre6\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHome3D.pack.gz"" ""{app}\lib\SweetHome3D.jar"""; StatusMsg: "{cm:UnpackingMessage,SweetHome3D.jar}"; Flags: runhidden
+; Propose user to launch Sweet Home 3D at installation end
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
@@ -88,6 +103,8 @@ czech.SweetHome3DComment=Sestavte si design interieru vaseho domu
 polish.SweetHome3DComment=Zaprojektuj wnetrze swojego domu
 hungarian.SweetHome3DComment=Keszitse el lakasanak belso kialakitasat!
 chinesesimp.SweetHome3DComment=布置您的温馨小家
+UnpackingMessage=Unpacking %1...
+french.UnpackingMessage=D閏ompression du fichier %1...
 
 [Registry]
 Root: HKCR; Subkey: ".sh3d"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D"; Flags: uninsdeletevalue
