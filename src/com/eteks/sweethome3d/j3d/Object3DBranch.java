@@ -29,14 +29,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.Texture;
 import javax.vecmath.Color3f;
 
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Room;
 
 /**
@@ -55,7 +58,8 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
-  private static final Map<Long, Material> materials = new HashMap<Long, Material>();
+  private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
+  private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
@@ -68,6 +72,30 @@ public abstract class Object3DBranch extends BranchGroup {
    */
   public abstract void update();
 
+  /**
+   * Returns a cloned instance of texture shared per <code>home</code> or 
+   * the texture itself if <code>home</code> is <code>null</code>.
+   * As sharing textures across universes might cause some problems, 
+   * it's safer to handle a copy of textures for a given home. 
+   */
+  protected Texture getHomeTextureClone(Texture texture, Home home) {
+    if (home == null || texture == null) {
+      return texture;
+    } else {
+      Map<Texture, Texture> homeTextures = homesTextures.get(home);
+      if (homeTextures == null) {
+        homeTextures = new WeakHashMap<Texture, Texture>();
+        homesTextures.put(home, homeTextures);
+      }
+      Texture clonedTexture = homeTextures.get(texture);
+      if (clonedTexture == null) {
+        clonedTexture = (Texture)texture.cloneNodeComponent(false);
+        homeTextures.put(texture, clonedTexture);
+      }
+      return clonedTexture;
+    }
+  }
+  
   /**
    * Returns the shape matching the coordinates in <code>points</code> array.
    */

@@ -103,7 +103,7 @@ public class Ground3D extends Object3DBranch {
    * Updates the geometry and attributes of ground and sublevels.
    */
   private void update(boolean waitTextureLoadingEnd) {
-    Home home = (Home)getUserData();
+    final Home home = (Home)getUserData();
     Shape3D groundShape = (Shape3D)getChild(0);
     int currentGeometriesCount = groundShape.numGeometries();
     
@@ -119,7 +119,7 @@ public class Ground3D extends Object3DBranch {
       imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                groundAppearance.setTexture(texture);
+                groundAppearance.setTexture(getHomeTextureClone(texture, home));
               }
             });
     }

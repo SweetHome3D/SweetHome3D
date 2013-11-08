@@ -165,13 +165,37 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             // Add piece model scene to a normalized transform group
             TransformGroup modelTransformGroup = 
                 ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
-
+            
+            cloneHomeTextures(modelRoot);
             updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
           
           public void modelError(Exception ex) {
             // In case of problem use a default red box
             updatePieceOfFurnitureModelNode(getModelBox(Color.RED), new TransformGroup(), ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
+          }
+          
+          /**
+           * Replace the textures set on <code>node</code> shapes by clones. 
+           */
+          private void cloneHomeTextures(Node node) {
+            if (node instanceof Group) {
+              // Enumerate children
+              Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+              while (enumeration.hasMoreElements()) {
+                cloneHomeTextures((Node)enumeration.nextElement());
+              }
+            } else if (node instanceof Link) {
+              cloneHomeTextures(((Link)node).getSharedGroup());
+            } else if (node instanceof Shape3D) {
+              Appearance appearance = ((Shape3D)node).getAppearance();
+              if (appearance != null) {
+                Texture texture = appearance.getTexture();
+                if (texture != null) {
+                  appearance.setTexture(getHomeTextureClone(texture, home));
+                }
+              }
+            } 
           }
         });
   }
@@ -639,7 +663,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
             }
           }
-          appearance.setTexture(texture);
+          appearance.setTexture(getHomeTextureClone(texture, home));
         }
       };
   }
@@ -697,7 +721,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
     appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
     appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-    appearance.setTexture(defaultMaterialAndTexture.getTexture());
+    appearance.setTexture(getHomeTextureClone(defaultMaterialAndTexture.getTexture(), home));
     appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
   }
 
