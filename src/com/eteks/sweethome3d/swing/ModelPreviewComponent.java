@@ -813,15 +813,10 @@ public class ModelPreviewComponent extends JComponent {
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          Texture replacedTexture;
-          if (replacedTextures != null) {
-            replacedTexture = replacedTextures.get(texture);
-            if (replacedTexture == null) {
-              replacedTexture = (Texture)texture.cloneNodeComponent(false);
-              replacedTextures.put(texture, replacedTexture);
-            }
-          } else {
+          Texture replacedTexture = replacedTextures.get(texture);
+          if (replacedTexture == null) {
             replacedTexture = (Texture)texture.cloneNodeComponent(false);
+            replacedTextures.put(texture, replacedTexture);
           }
           appearance.setTexture(replacedTexture);
         }
