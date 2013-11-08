@@ -126,10 +126,9 @@ public abstract class Object3DBranch extends BranchGroup {
                                            float flatness, 
                                            boolean reversed) {
     List<List<float []>> areaPointsLists = new ArrayList<List<float[]>>();
-    Map<Integer, List<List<float []>>> areaHolesMap = new HashMap<Integer, List<List<float []>>>();
+    List<List<float []>> areaHolesLists = new ArrayList<List<float[]>>();
     ArrayList<float []>  currentPathPoints = null;
     float [] previousPoint = null;
-    int index = 0;
     for (PathIterator pathIterator = area.getPathIterator(null, flatness); 
          !pathIterator.isDone(); ) {
       float [] point = new float [2];
@@ -159,15 +158,9 @@ public abstract class Object3DBranch extends BranchGroup {
               boolean pathPointsClockwise = subRoom.isClockwise();
               if (pathPointsClockwise) {
                 // Keep holes points to remove them from the area once all points are retrieved
-                List<List<float []>> holes = areaHolesMap.get(index);
-                if (holes == null) {
-                  holes = new ArrayList<List<float []>>(1);
-                  areaHolesMap.put(index, holes);
-                }
-                holes.add(currentPathPoints);
+                areaHolesLists.add(currentPathPoints);
               } else {
                 areaPointsLists.add(currentPathPoints);
-                index++;
               }
               
               if (areaPoints != null || areaHoles != null) {
@@ -195,40 +188,58 @@ public abstract class Object3DBranch extends BranchGroup {
     }
     
     List<float [][]> areaPointsWithoutHoles = new ArrayList<float[][]>(); 
-    if (areaHolesMap.isEmpty() && areaPoints != null) {
+    if (areaHolesLists.isEmpty() && areaPoints != null) {
       areaPointsWithoutHoles.addAll(areaPoints);
-    } else if (areaPointsLists.isEmpty() && !areaHolesMap.isEmpty()) {
+    } else if (areaPointsLists.isEmpty() && !areaHolesLists.isEmpty()) {
       if (areaHoles != null) {
         areaHoles.clear();
       }
     } else {
-      for (Map.Entry<Integer, List<List<float []>>> areaHolesEntry : areaHolesMap.entrySet()) {
-        for (List<float []> holePoints : areaHolesEntry.getValue()) {
-          // Search the closest points in the area associated to the current hole 
-          float minDistance = Float.MAX_VALUE;
-          int holeClosestPointIndex = 0;
-          int areaClosestPointIndex = 0;
-          List<float []> areaPartPoints = areaPointsLists.get(areaHolesEntry.getKey());
-          for (int j = 0; j < holePoints.size() && minDistance > 0; j++) {
-            for (int k = 0; k < areaPartPoints.size() && minDistance > 0; k++) {
-              float distance = (float)Point2D.distanceSq(holePoints.get(j) [0], holePoints.get(j) [1],
-                  areaPartPoints.get(k) [0], areaPartPoints.get(k) [1]);
-              if (distance < minDistance) {
-                minDistance = distance;
-                holeClosestPointIndex = j;
-                areaClosestPointIndex = k;
-              }
+      List<Area> subAreas = new ArrayList<Area>(areaPointsLists.size());
+      for (List<float []> holePoints : areaHolesLists) {
+        List<float []> enclosingAreaPartPoints = null;
+        if (areaPointsLists.size() == 1) {
+          enclosingAreaPartPoints = areaPointsLists.get(0);
+        } else {
+          // Search the sub area that contains the current hole
+          for (int i = 0; i < areaPointsLists.size() && enclosingAreaPartPoints == null; i++) {
+            Area subArea;
+            if (i >= subAreas.size()) {
+              List<float []> areaPartPoints = areaPointsLists.get(i);
+              subArea = new Area(getShape(areaPartPoints.toArray(new float [areaPartPoints.size()][])));
+              subAreas.add(subArea);
+            } else {
+              subArea = subAreas.get(i);
+            }
+            if (subArea.contains(holePoints.get(0) [0], holePoints.get(0) [1])) {
+              enclosingAreaPartPoints = areaPointsLists.get(i);
             }
           }
-          // Combine the areas at their closest points
-          if (minDistance != 0) {
-            areaPartPoints.add(areaClosestPointIndex, areaPartPoints.get(areaClosestPointIndex));
-            areaPartPoints.add(++areaClosestPointIndex, holePoints.get(holeClosestPointIndex));
-          }
-          List<float []> lastPartPoints = holePoints.subList(holeClosestPointIndex, holePoints.size());
-          areaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
-          areaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, holeClosestPointIndex));
         }
+        
+        // Search the closest points in the enclosing area and the hole part
+        float minDistance = Float.MAX_VALUE;
+        int holeClosestPointIndex = 0;
+        int areaClosestPointIndex = 0;
+        for (int i = 0; i < holePoints.size() && minDistance > 0; i++) {
+          for (int j = 0; j < enclosingAreaPartPoints.size() && minDistance > 0; j++) {
+            float distance = (float)Point2D.distanceSq(holePoints.get(i) [0], holePoints.get(i) [1],
+                enclosingAreaPartPoints.get(j) [0], enclosingAreaPartPoints.get(j) [1]);
+            if (distance < minDistance) {
+              minDistance = distance;
+              holeClosestPointIndex = i;
+              areaClosestPointIndex = j;
+            }
+          }
+        }
+        // Combine the areas at their closest points
+        if (minDistance != 0) {
+          enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPartPoints.get(areaClosestPointIndex));
+          enclosingAreaPartPoints.add(++areaClosestPointIndex, holePoints.get(holeClosestPointIndex));
+        }
+        List<float []> lastPartPoints = holePoints.subList(holeClosestPointIndex, holePoints.size());
+        enclosingAreaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
+        enclosingAreaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, holeClosestPointIndex));
       }
       
       for (List<float []> pathPoints : areaPointsLists) {
