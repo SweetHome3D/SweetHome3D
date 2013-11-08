@@ -1203,7 +1203,7 @@ public class Wall3D extends Object3DBranch {
       textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                wallSideAppearance.setTexture(texture);
+                wallSideAppearance.setTexture(getHomeTextureClone(texture, home));
               }
             });
     }
