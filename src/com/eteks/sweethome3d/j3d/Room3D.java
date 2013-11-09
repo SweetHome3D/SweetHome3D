@@ -706,7 +706,10 @@ public class Room3D extends Object3DBranch {
       textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                roomPartAppearance.setTexture(getHomeTextureClone(texture, home));
+                texture = getHomeTextureClone(texture, home);
+                if (roomPartAppearance.getTexture() != texture) {
+                  roomPartAppearance.setTexture(texture);
+                }
               }
             });
     }
