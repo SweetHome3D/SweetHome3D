@@ -241,6 +241,10 @@ public class ModelPreviewComponent extends JComponent {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   disposeUniverse();
+                  if (GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length == 1) {
+                    component3DPanel.removeAll();
+                    component3D = null;
+                  }
                 }
               });
           }
