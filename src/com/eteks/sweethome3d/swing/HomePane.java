@@ -2651,7 +2651,7 @@ public class HomePane extends JRootPane implements HomeView {
         view3D = SwingTools.createScrollPane(view3D);
       }
     
-      JComponent planView3DPane;
+      final JComponent planView3DPane;
       Boolean detachedView3DProperty = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
       boolean detachedView3D = detachedView3DProperty != null && detachedView3DProperty.booleanValue();        
       if (planView != null) {
@@ -2704,12 +2704,21 @@ public class HomePane extends JRootPane implements HomeView {
         final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
         final Integer dialogWidth = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
         final Integer dialogHeight = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY);
-        if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null
-            && SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
+        if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null) {
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 View view3D = controller.getHomeController3D().getView();
-                detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
+                if (SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
+                  detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
+                } else if (planView3DPane instanceof JSplitPane) {
+                  final JSplitPane splitPane = ((JSplitPane)planView3DPane);
+                  final Float dividerLocation = (Float)home.getVisualProperty(
+                      view3D.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
+                  if (dividerLocation != null 
+                      && dividerLocation != -1f) {
+                    splitPane.setDividerLocation(dividerLocation);
+                  }
+                }
               }
             });
           return planView3DPane;
