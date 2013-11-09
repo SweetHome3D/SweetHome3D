@@ -2699,7 +2699,6 @@ public class HomePane extends JRootPane implements HomeView {
     
       // Detach 3D view if it was detached when saved and its dialog can be viewed in one of the screen devices
       if (detachedView3D) {
-        // Check 3D view can be viewed in one of the available screens      
         final Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
         final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
         final Integer dialogWidth = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
@@ -2708,9 +2707,11 @@ public class HomePane extends JRootPane implements HomeView {
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 View view3D = controller.getHomeController3D().getView();
+                // Check 3D view can be viewed in one of the available screens      
                 if (SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
                   detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
                 } else if (planView3DPane instanceof JSplitPane) {
+                  // Restore the divider location of the split pane displaying the 3D view   
                   final JSplitPane splitPane = ((JSplitPane)planView3DPane);
                   final Float dividerLocation = (Float)home.getVisualProperty(
                       view3D.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
