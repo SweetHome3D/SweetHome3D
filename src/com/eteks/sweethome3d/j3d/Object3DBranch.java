@@ -245,29 +245,32 @@ public abstract class Object3DBranch extends BranchGroup {
           }
         }
         
-        // Search the closest points in the enclosing area and the hole part
-        float minDistance = Float.MAX_VALUE;
-        int holeClosestPointIndex = 0;
-        int areaClosestPointIndex = 0;
-        for (int i = 0; i < holePoints.size() && minDistance > 0; i++) {
-          for (int j = 0; j < enclosingAreaPartPoints.size() && minDistance > 0; j++) {
-            float distance = (float)Point2D.distanceSq(holePoints.get(i) [0], holePoints.get(i) [1],
-                enclosingAreaPartPoints.get(j) [0], enclosingAreaPartPoints.get(j) [1]);
-            if (distance < minDistance) {
-              minDistance = distance;
-              holeClosestPointIndex = i;
-              areaClosestPointIndex = j;
+        // In some very rare cases, ignore very small areas that were wrongly considered as holes
+        if (enclosingAreaPartPoints != null) {
+          // Search the closest points in the enclosing area and the hole part
+          float minDistance = Float.MAX_VALUE;
+          int holeClosestPointIndex = 0;
+          int areaClosestPointIndex = 0;
+          for (int i = 0; i < holePoints.size() && minDistance > 0; i++) {
+            for (int j = 0; j < enclosingAreaPartPoints.size() && minDistance > 0; j++) {
+              float distance = (float)Point2D.distanceSq(holePoints.get(i) [0], holePoints.get(i) [1],
+                  enclosingAreaPartPoints.get(j) [0], enclosingAreaPartPoints.get(j) [1]);
+              if (distance < minDistance) {
+                minDistance = distance;
+                holeClosestPointIndex = i;
+                areaClosestPointIndex = j;
+              }
             }
           }
+          // Combine the areas at their closest points
+          if (minDistance != 0) {
+            enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPartPoints.get(areaClosestPointIndex));
+            enclosingAreaPartPoints.add(++areaClosestPointIndex, holePoints.get(holeClosestPointIndex));
+          }
+          List<float []> lastPartPoints = holePoints.subList(holeClosestPointIndex, holePoints.size());
+          enclosingAreaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
+          enclosingAreaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, holeClosestPointIndex));
         }
-        // Combine the areas at their closest points
-        if (minDistance != 0) {
-          enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPartPoints.get(areaClosestPointIndex));
-          enclosingAreaPartPoints.add(++areaClosestPointIndex, holePoints.get(holeClosestPointIndex));
-        }
-        List<float []> lastPartPoints = holePoints.subList(holeClosestPointIndex, holePoints.size());
-        enclosingAreaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
-        enclosingAreaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), holePoints.subList(0, holeClosestPointIndex));
       }
       
       for (List<float []> pathPoints : areaPointsLists) {
