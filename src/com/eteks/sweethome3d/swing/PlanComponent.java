@@ -276,6 +276,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<Content, BufferedImage>       floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
+  private static ExecutorService            backgroundImageLoader;
+  
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
@@ -2074,12 +2076,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         ? this.home.getBackgroundImage()
         : this.home.getSelectedLevel().getBackgroundImage();
     if (backgroundImage != null && backgroundImage.isVisible()) {
+      // Under Mac OS X, prepare background image with alpha because Java 5/6 doesn't always 
+      // paint images correctly with alpha, and Java 7 blocks for some images
+      final boolean prepareBackgroundImageWithAlphaInMemory = OperatingSystem.isMacOSX();
       if (this.backgroundImageCache == null && paintMode == PaintMode.PAINT) {
         // Load background image in an executor
-        Executors.newSingleThreadExecutor().execute(new Runnable() {
+        if (backgroundImageLoader == null) {
+          backgroundImageLoader = Executors.newSingleThreadExecutor();
+        }
+        backgroundImageLoader.execute(new Runnable() {
             public void run() {
-              backgroundImageCache = readImage(backgroundImage.getImage()); 
-              revalidate();
+              if (backgroundImageCache == null) {
+                backgroundImageCache = readBackgroundImage(backgroundImage.getImage(), prepareBackgroundImageWithAlphaInMemory);
+                revalidate();
+              }
             }
           });
       } else {
@@ -2087,11 +2097,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         AffineTransform previousTransform = g2D.getTransform();
         g2D.translate(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
         g2D.scale(backgroundImage.getScale(), backgroundImage.getScale());
-        Composite oldComposite = setTransparency(g2D, 0.7f);
+        Composite oldComposite = null;
+        if (!prepareBackgroundImageWithAlphaInMemory) {
+          oldComposite = setTransparency(g2D, 0.7f);
+        }
         g2D.drawImage(this.backgroundImageCache != null
             ? this.backgroundImageCache
-            : readImage(backgroundImage.getImage()), 0, 0, this);
-        g2D.setComposite(oldComposite);
+            : readBackgroundImage(backgroundImage.getImage(), prepareBackgroundImageWithAlphaInMemory), 0, 0, this);
+        if (!prepareBackgroundImageWithAlphaInMemory) {
+          g2D.setComposite(oldComposite);
+        }
         g2D.setTransform(previousTransform);
       }
       return true;
@@ -2125,12 +2140,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the image contained in <code>imageContent</code> or an empty image if reading failed.
    */
-  private BufferedImage readImage(Content imageContent) {
+  private BufferedImage readBackgroundImage(Content imageContent, boolean prepareBackgroundImageWithAlpha) {
     InputStream contentStream = null;
     try {
       try {
         contentStream = imageContent.openStream();
-        return ImageIO.read(contentStream);
+        BufferedImage image = ImageIO.read(contentStream);
+        if (prepareBackgroundImageWithAlpha) {
+          BufferedImage backgroundImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+          Graphics2D g2D = (Graphics2D)backgroundImage.getGraphics();
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+          g2D.drawRenderedImage(image, null);
+          g2D.dispose();
+          return backgroundImage;
+        } else {
+          return image;
+        }
       } finally {
         contentStream.close();
       }
