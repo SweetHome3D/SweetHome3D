@@ -353,6 +353,23 @@ class MacOSXConfiguration {
           addWindowMenu(frame, defaultMenuBar, homeApplication, true);
         }
       });
+    homeApplication.addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev) {
+          if (ev.getType() == CollectionEvent.Type.DELETE) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  if (frame.isActive()) {
+                    List<Home> homes = homeApplication.getHomes();
+                    if (homes.size() >= 1) {
+                      // Request focus in a remaining home if the dummy frame is active 
+                      homeApplication.getHomeFrame(homes.get(homes.size() - 1)).requestFocus();
+                    }
+                  }
+                }
+              });
+          }
+        }
+      });
     return frame;
   }
   
