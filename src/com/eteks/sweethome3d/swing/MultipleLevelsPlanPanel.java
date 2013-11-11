@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
@@ -467,6 +468,13 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     this.planComponent.setCursor(cursorType);
   }
 
+  /**
+   * Sets the cursor of this component.
+   */
+  public void setCursor(Cursor cursor) {
+    this.planComponent.setCursor(cursor);
+  }
+  
   /**
    * Sets tool tip text displayed as feedback. 
    */
