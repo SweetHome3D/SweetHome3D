@@ -342,12 +342,6 @@ class FurnitureCatalogListPanel extends JPanel implements View {
                                  final FurnitureCatalogController controller) {
     final Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
     MouseInputAdapter mouseListener = new MouseInputAdapter () {
-        // Track first drag and drop under Mac OS X / Java 7 where the selection in the catalog
-        // visually changes the first time the cursor enters in the plan component   
-        private boolean                 firstMouseDrag = OperatingSystem.isMacOSXLionOrSuperior()
-                                                         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");
-        private CatalogPieceOfFurniture firstSelectedPiece;
-        
         @Override
         public void mouseClicked(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)) {
@@ -378,35 +372,6 @@ class FurnitureCatalogListPanel extends JPanel implements View {
             }
           }
           setCursor(Cursor.getDefaultCursor());
-        }
-        
-        @Override
-        public void mouseDragged(MouseEvent ev) {
-          if (this.firstMouseDrag
-              && this.firstSelectedPiece != null) {
-            List<CatalogPieceOfFurniture> selectedFurniture = controller.getSelectedFurniture();
-            if (!selectedFurniture.isEmpty()
-                && this.firstSelectedPiece != selectedFurniture.get(0)) {
-              controller.setSelectedFurniture(Arrays.asList(this.firstSelectedPiece));
-              this.firstMouseDrag = false;
-              this.firstSelectedPiece = null;
-            }
-          }
-        }
-        
-        @Override
-        public void mousePressed(MouseEvent ev) {
-          if (this.firstMouseDrag) {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  List<CatalogPieceOfFurniture> selectedFurniture = controller.getSelectedFurniture();
-                  if (!selectedFurniture.isEmpty()) {
-                    // Store the selected piece at the first drag and drop
-                    firstSelectedPiece = selectedFurniture.get(0);
-                  }
-                }
-              });
-          }
         }
       };
     catalogFurnitureList.addMouseListener(mouseListener);
