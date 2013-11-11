@@ -345,7 +345,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
         // Track first drag and drop under Mac OS X / Java 7 where the selection in the catalog
         // visually changes the first time the cursor enters in the plan component   
         private boolean                 firstMouseDrag = OperatingSystem.isMacOSXLionOrSuperior()
-                                                         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");;
+                                                         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");
         private CatalogPieceOfFurniture firstSelectedPiece;
         
         @Override
