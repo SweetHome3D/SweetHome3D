@@ -461,7 +461,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   }
 
   /**
-   * Sets the cursor of this component as rotation cursor. 
+   * Sets the cursor of this component. 
    */
   public void setCursor(CursorType cursorType) {
     this.planComponent.setCursor(cursorType);
