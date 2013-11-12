@@ -39,6 +39,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
@@ -135,6 +136,23 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     final CatalogListModel catalogListModel = new CatalogListModel(catalog);
     this.catalogFurnitureList = new JList(catalogListModel) {
         private FurnitureToolTip toolTip = new FurnitureToolTip(false, preferences);
+        private boolean mousePressed;
+        private boolean firstScroll;
+        
+        {
+          addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+              firstScroll = true;
+              mousePressed = true;
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent ev) {
+              mousePressed = false;
+            }
+          });
+        }
         
         @Override
         public JToolTip createToolTip() {
@@ -153,9 +171,21 @@ class FurnitureCatalogListPanel extends JPanel implements View {
             return null;
           }
         }
+        
+        @Override
+        public void scrollRectToVisible(Rectangle rectangle) {
+          if (!this.mousePressed
+              || this.firstScroll) {
+            // During a drag and drop let's adjust viewport only at first request
+            this.firstScroll = false;
+            super.scrollRectToVisible(rectangle);
+          }
+        }
       };
     this.catalogFurnitureList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
     this.catalogFurnitureList.setCellRenderer(new CatalogCellRenderer());
+    this.catalogFurnitureList.setAutoscrolls(false);
+    this.catalogFurnitureList.setTransferHandler(null);
     // Remove Select all action
     this.catalogFurnitureList.getActionMap().getParent().remove("selectAll");
     addDragListener(this.catalogFurnitureList);

@@ -93,6 +93,7 @@ import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -134,6 +135,21 @@ public class FurnitureTable extends JTable implements View, Printable {
     }
     addHomeListener(home);
     addUserPreferencesListener(preferences);
+    
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+      try {
+        // Call Java 6 setDropMode(DropMode.INSERT_ROWS) by reflection to avoid changing selected row during a drag and drop
+        Class<?> dropModeEnum = Class.forName("javax.swing.DropMode");
+        Object insertRowsDropMode = dropModeEnum.getMethod("valueOf", String.class).invoke(null, "INSERT_ROWS");
+        getClass().getMethod("setDropMode", dropModeEnum).invoke(this, insertRowsDropMode);
+        // Remove colors used in INSERT_ROWS mode
+        UIManager.getDefaults().remove("Table.dropLineColor");
+        UIManager.getDefaults().remove("Table.dropLineShortColor");
+      } catch (Exception ex) {
+        // Shouldn't happen
+        ex.printStackTrace();
+      }
+    }
   }
   
   /**
