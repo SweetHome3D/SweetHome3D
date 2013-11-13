@@ -2114,23 +2114,26 @@ public class HomePane extends JRootPane implements HomeView {
         private boolean                 autoscrolls;
         private Cursor                  previousCursor;
         private View                    previousView;
-    
+        private boolean                 escaped; 
+        
         {
           getActionMap().put("EscapeDragFromFurnitureCatalog", new AbstractAction() {
               public void actionPerformed(ActionEvent ev) {
-                if (previousView != null) {
-                  if (previousView == controller.getPlanController().getView()) {
-                    controller.getPlanController().stopDraggedItems();
-                  }
-                  if (previousCursor != null) {
-                    JComponent component = (JComponent)previousView;
-                    component.setCursor(previousCursor);
-                    if (component.getParent() instanceof JViewport) {
-                      component.getParent().setCursor(previousCursor);
+                if (!escaped) {
+                  if (previousView != null) {
+                    if (previousView == controller.getPlanController().getView()) {
+                      controller.getPlanController().stopDraggedItems();
+                    }
+                    if (previousCursor != null) {
+                      JComponent component = (JComponent)previousView;
+                      component.setCursor(previousCursor);
+                      if (component.getParent() instanceof JViewport) {
+                        component.getParent().setCursor(previousCursor);
+                      }
                     }
                   }
+                  escaped = true;
                 }
-                selectedPiece = null;
               }
             });          
         }
@@ -2148,7 +2151,8 @@ public class HomePane extends JRootPane implements HomeView {
               this.selectedPiece = selectedFurniture.get(0);
               this.previousCursor = null;
               this.previousView = null;
-              InputMap inputMap = source.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+              this.escaped = false;
+              InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
               inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "EscapeDragFromFurnitureCatalog");
               setInputMap(WHEN_IN_FOCUSED_WINDOW, inputMap);
             }
@@ -2163,7 +2167,7 @@ public class HomePane extends JRootPane implements HomeView {
             List<CatalogPieceOfFurniture> emptyList = Collections.emptyList();
             controller.getFurnitureCatalogController().setSelectedFurniture(emptyList);
             controller.getFurnitureCatalogController().setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {this.selectedPiece}));
-            
+
             List<Selectable> transferredFurniture = Arrays.asList(
                 new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
             View view;
@@ -2177,10 +2181,15 @@ public class HomePane extends JRootPane implements HomeView {
 
             if (this.previousView != view) {
               if (this.previousView != null) {
-                if (this.previousView == controller.getPlanController().getView()) {
+                if (this.previousView == controller.getPlanController().getView()
+                    && !this.escaped) {
                   controller.getPlanController().stopDraggedItems();
                 }
-                ((JComponent)this.previousView).setCursor(this.previousCursor);
+                JComponent component = (JComponent)this.previousView;
+                component.setCursor(this.previousCursor);
+                if (component.getParent() instanceof JViewport) {
+                  component.setCursor(this.previousCursor);
+                }
                 this.previousCursor = null;
                 this.previousView = null;
               }
@@ -2188,12 +2197,14 @@ public class HomePane extends JRootPane implements HomeView {
                 JComponent component = (JComponent)view;
                 this.previousCursor = component.getCursor();
                 this.previousView = view;
-                component.setCursor(DragSource.DefaultCopyDrop);
-                if (component.getParent() instanceof JViewport) {
-                  ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
-                }
-                if (view == controller.getPlanController().getView()) {
-                  controller.getPlanController().startDraggedItems(transferredFurniture, pointInView [0], pointInView [1]);
+                if (!escaped) {
+                  component.setCursor(DragSource.DefaultCopyDrop);
+                  if (component.getParent() instanceof JViewport) {
+                    ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
+                  }
+                  if (view == controller.getPlanController().getView()) {
+                    controller.getPlanController().startDraggedItems(transferredFurniture, pointInView [0], pointInView [1]);
+                  }
                 }
               }
             } else if (pointInView != null) {
@@ -2240,32 +2251,33 @@ public class HomePane extends JRootPane implements HomeView {
         public void mouseReleased(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)) {
             if (this.selectedPiece != null) {
-              List<Selectable> transferredFurniture = Arrays.asList(
-                      new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
-              View view;
-              float [] pointInView = getPointInPlanView(ev, transferredFurniture);
-              if (pointInView != null) {
-                controller.getPlanController().stopDraggedItems();
-                view = controller.getPlanController().getView();
-              } else {
-                view = controller.getFurnitureController().getView();
-                pointInView = getPointInFurnitureView(ev);
-              }
-              if (pointInView != null) {
-                controller.drop(transferredFurniture, view, pointInView [0], pointInView [1]);
-                JComponent component = (JComponent)this.previousView;
-                component.setCursor(this.previousCursor);
-                if (component.getParent() instanceof JViewport) {
-                  component.getParent().setCursor(this.previousCursor);
+              if (!this.escaped) {
+                List<Selectable> transferredFurniture = Arrays.asList(
+                        new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
+                View view;
+                float [] pointInView = getPointInPlanView(ev, transferredFurniture);
+                if (pointInView != null) {
+                  controller.getPlanController().stopDraggedItems();
+                  view = controller.getPlanController().getView();
+                } else {
+                  view = controller.getFurnitureController().getView();
+                  pointInView = getPointInFurnitureView(ev);
                 }
+                if (pointInView != null) {
+                  controller.drop(transferredFurniture, view, pointInView [0], pointInView [1]);
+                  JComponent component = (JComponent)this.previousView;
+                  component.setCursor(this.previousCursor);
+                  if (component.getParent() instanceof JViewport) {
+                    component.getParent().setCursor(this.previousCursor);
+                  }
+                }
+                this.selectedPiece = null;
               }
-              this.selectedPiece = null;
-            }
-            if (controller.getFurnitureCatalogController().getSelectedFurniture().size() > 0) {
+
               JComponent source = (JComponent)ev.getSource();
               source.setTransferHandler(this.transferHandler);
               source.setAutoscrolls(this.autoscrolls);
-              InputMap inputMap = source.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+              InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
               inputMap.remove(KeyStroke.getKeyStroke("ESCAPE"));
               setInputMap(WHEN_IN_FOCUSED_WINDOW, inputMap);
             }
