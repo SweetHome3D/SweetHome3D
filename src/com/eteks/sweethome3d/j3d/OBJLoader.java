@@ -1480,24 +1480,23 @@ public class OBJLoader extends LoaderBase implements Loader {
       tokenizer.wordChars(' ', ' ');
       int mtllibToken = tokenizer.nextToken();
       String mtllibString = tokenizer.sval.trim();
-      tokenizer.pushBack();
       tokenizer.whitespaceChars(' ', ' ');
-      // First try to parse space separated library files
-      int libCount = 0;
-      do {
-        if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
-          parseMaterial(tokenizer.sval, baseUrl);
-          libCount++;
+      if (mtllibToken == StreamTokenizer.TT_WORD) {
+        // First try to parse space separated library files
+        int validLibCount = 0;
+        String [] libs = mtllibString.split(" ");
+        for (String lib : libs) {
+          if (parseMaterial(lib, baseUrl)) {
+            validLibCount++;
+          }
         }
-      }
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL);        
-      if (libCount == 0) {
+        if (libs.length > 1 && validLibCount == 0) {
+          // Even if not in format specifications, give a chance to file names with spaces
+          parseMaterial(mtllibString, baseUrl);
+        }
+      } else {
         throw new IncorrectFormatException("Expected material library at line " + tokenizer.lineno());
-      } else if (mtllibToken == StreamTokenizer.TT_WORD) {
-        // Even if not in format specifications, give a chance to file names with spaces
-        parseMaterial(mtllibString, baseUrl);
       }
-      tokenizer.pushBack();
     } else {
       // Skip other lines (including comment lines starting by #)
       int token;
@@ -1587,7 +1586,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     InputStream in = null;
     try {
       if (baseUrl != null) {
-        in = openStream(new URL(baseUrl, file), this.useCaches);
+        in = openStream(new URL(baseUrl, file.replace("%", "%25").replace("#", "%23")), this.useCaches);
       } else {
         in = new FileInputStream(file);
       }
@@ -1764,7 +1763,7 @@ public class OBJLoader extends LoaderBase implements Loader {
         InputStream in = null;
         try {
           URL textureImageUrl = baseUrl != null
-              ? new URL(baseUrl, imageFileName)
+              ? new URL(baseUrl, imageFileName.replace("%", "%25").replace("#", "%23"))
               : new File(imageFileName).toURI().toURL();
           in = openStream(textureImageUrl, useCaches);
           BufferedImage textureImage = ImageIO.read(in);          
