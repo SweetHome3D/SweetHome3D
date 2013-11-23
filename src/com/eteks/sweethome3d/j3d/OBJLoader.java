@@ -1479,9 +1479,9 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Read characters following mtllib in case they contain a file name with spaces 
       tokenizer.wordChars(' ', ' ');
       int mtllibToken = tokenizer.nextToken();
-      String mtllibString = tokenizer.sval.trim();
       tokenizer.whitespaceChars(' ', ' ');
       if (mtllibToken == StreamTokenizer.TT_WORD) {
+        String mtllibString = tokenizer.sval.trim();
         // First try to parse space separated library files
         int validLibCount = 0;
         String [] libs = mtllibString.split(" ");
