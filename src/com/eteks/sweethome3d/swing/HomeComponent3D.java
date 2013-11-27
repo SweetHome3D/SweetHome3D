@@ -1884,7 +1884,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds a wall listener to home levels that updates the children of the given 
+   * Adds a level listener to home levels that updates the children of the given 
    * <code>group</code>, each time a level is added, updated or deleted. 
    */
   private void addLevelListener(final Group group) {
