@@ -1469,8 +1469,11 @@ public class OBJLoader extends LoaderBase implements Loader {
         throw new IncorrectFormatException("Expected smoothing group or off at line " + tokenizer.lineno());
       }
     } else if ("usemtl".equals(tokenizer.sval)) {
-      // Read the material name usemtl name
-      if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
+      // Read the material name usemtl name (tolerating space in the name)
+      tokenizer.wordChars(' ', ' ');
+      int usemtlToken = tokenizer.nextToken();
+      tokenizer.whitespaceChars(' ', ' ');
+      if (usemtlToken == StreamTokenizer.TT_WORD) {
         this.currentMaterial = tokenizer.sval;
       } else {
         throw new IncorrectFormatException("Expected material name at line " + tokenizer.lineno());
@@ -1646,8 +1649,11 @@ public class OBJLoader extends LoaderBase implements Loader {
                                               URL baseUrl, 
                                               Boolean useCaches) throws IOException {
     if ("newmtl".equals(tokenizer.sval)) {
-      // Read material name newmtl name
-      if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
+      // Read material name newmtl name (tolerating space in the name)
+      tokenizer.wordChars(' ', ' ');
+      int newmtlToken = tokenizer.nextToken();
+      tokenizer.whitespaceChars(' ', ' ');
+      if (newmtlToken == StreamTokenizer.TT_WORD) {
         currentAppearance = new Appearance();
         appearances.put(tokenizer.sval, currentAppearance);
         try {
