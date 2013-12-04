@@ -226,7 +226,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     updateListSelectedFurniture(catalog, controller);
     addSelectionListeners(catalog, controller);
     
-    this.categoryFilterLabel = new JLabel(preferences.getLocalizedString(
+    this.categoryFilterLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         FurnitureCatalogListPanel.class, "categoryFilterLabel.text"));    
     List<FurnitureCategory> categories = new ArrayList<FurnitureCategory>();
     categories.add(null);
@@ -258,7 +258,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
         }
       });
     
-    this.searchLabel = new JLabel(preferences.getLocalizedString(
+    this.searchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         FurnitureCatalogListPanel.class, "searchLabel.text"));
     this.searchTextField = new JTextField(5);
     this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {  
