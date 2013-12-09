@@ -119,8 +119,8 @@ class MacOSXConfiguration {
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
     JFrame frame = null;
     try {
-      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-        // Application#setDefaultMenuBar does nothing under Java 7
+      if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
+        // Application#setDefaultMenuBar does nothing under Java 7 < 1.7.0_60
         frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
       } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
         macosxApplication.setDefaultMenuBar(defaultMenuBar);
@@ -301,7 +301,7 @@ class MacOSXConfiguration {
           MacOSXConfiguration.addWindowMenu(
               homeFrame, homeFrame.getJMenuBar(), homeApplication, false);
           
-          if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+          if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
             // Help system to understand it should display the main menu of one of the remaining windows when a window is closed
             homeFrame.addWindowListener(new WindowAdapter() {
                 @Override
