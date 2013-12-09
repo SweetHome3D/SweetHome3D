@@ -3458,7 +3458,7 @@ public class HomePane extends JRootPane implements HomeView {
     String dataModel = System.getProperty("sun.arch.data.model");
     if (dataModel != null) {
       try {
-        javaVersion += " - " + Integer.parseInt(dataModel) + " bit";
+        javaVersion += " / " + Integer.parseInt(dataModel) + " bit";
       } catch (NumberFormatException ex) {
         // Don't display data model
       }
