@@ -19,7 +19,7 @@ as an Eclipse project or with Ant.
 
 If you want to compile and test the Java files of this release 
 with Eclipse, please follow the next steps:
-1. install last JDK 5 or 6 available at http://java.sun.com
+1. install last JDK 5, 6 or 7 available at http://java.sun.com
 2. install Eclipse available at http://www.eclipse.org
 3. in Eclipse, select File > Import... menu
 4. In "Select an import source" list of Import dialog box, 
