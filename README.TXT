@@ -41,7 +41,7 @@ or -Djava.ext.dirs=lib/linux/x64:lib
 according to your system and its architecture, except under Java 7 and Mac OS X, 
 where VM arguments should be:
 -Djava.ext.dirs=lib/macosx/java3d-1.6:lib -Djava.library.path=lib/macosx/java3d-1.6
--Djogamp.gluegen.UseTempJarCache=false -Dcom.eteks.sweethome3d.j3d.useOffScreen3DView=true
+-Djogamp.gluegen.UseTempJarCache=false
 
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
 application at http://www.sweethome3d.com/ or as an applet at
