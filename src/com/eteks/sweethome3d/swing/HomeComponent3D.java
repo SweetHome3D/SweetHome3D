@@ -315,6 +315,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 @Override
                 public void componentResized(ComponentEvent ev) {
                   removeComponentListener(this);
+                  // If 3D view is still in component hierarchy, create component children  
                   if (SwingUtilities.getRoot(HomeComponent3D.this) != null) {
                     ancestorAdded(null);
                   }
