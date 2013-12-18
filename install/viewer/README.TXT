@@ -1,5 +1,5 @@
-SWEET HOME 3D VIEWER v 4.2.1
-----------------------------
+SWEET HOME 3D VIEWER v 4.3
+--------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
 applet able to display the 3D view of a Sweet Home 3D file from its URL.
@@ -58,7 +58,7 @@ If you don't want to display navigation arrows, simply remove the line
   navigationPanel:"true",
 from parameters list.
                     
-Caution: From version 4.2.1, a new "jnlp_embedded" parameter followed with a very 
+Caution: From version 4.3, a new "jnlp_embedded" parameter followed with a very 
 long text was added to the parameters list. Don't forget to add it to your 
 existing viewer if you want it to be able to run under Java 7u45 and superior.    
                
