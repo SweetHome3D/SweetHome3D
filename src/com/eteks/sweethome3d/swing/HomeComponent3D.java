@@ -307,15 +307,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
           }
           
-          // Create component 3D only if once it's visible
+          // Create component 3D only once it's visible
           Insets insets = getInsets();
           if (getHeight() <= insets.top + insets.bottom
               || getWidth() <= insets.left + insets.right) {
             addComponentListener(new ComponentAdapter() {
                 @Override
                 public void componentResized(ComponentEvent ev) {
-                  ancestorAdded(null);
                   removeComponentListener(this);
+                  if (SwingUtilities.getRoot(HomeComponent3D.this) != null) {
+                    ancestorAdded(null);
+                  }
                 }
               });
             return;
