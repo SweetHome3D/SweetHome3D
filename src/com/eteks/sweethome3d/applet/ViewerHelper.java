@@ -49,6 +49,7 @@ import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -118,6 +119,11 @@ public final class ViewerHelper {
         @Override
         public boolean isNavigationPanelVisible() {
           return "true".equalsIgnoreCase(applet.getParameter(NAVIGATION_PANEL));
+        }
+        
+        @Override
+        public LengthUnit getLengthUnit() {
+          return LengthUnit.CENTIMETER;
         }
       };
     
