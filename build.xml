@@ -40,10 +40,12 @@
          during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
     <javac srcdir="src" destdir="build/classes"
            includes="com/eteks/sweethome3d/applet/SweetHome3D*.java"
-           encoding="ISO-8859-1" target="1.1" source="1.2"/>      
+           encoding="ISO-8859-1" target="1.1" source="1.2"
+           debug="false" debuglevel="lines,vars,source"/>      
     <!-- Compile other classes -->
     <javac srcdir="src" destdir="build/classes"
-           encoding="ISO-8859-1" target="1.5" source="1.5">
+           encoding="ISO-8859-1" target="1.5" source="1.5"
+           debug="false" debuglevel="lines,vars,source">
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
@@ -209,7 +211,7 @@
   </target>
 
   <target name="java3dAllSystemsLibrary"
-  	      description="Builds applet Java 3D library suitable for all systems in deploy/lib subdirectory">
+          description="Builds applet Java 3D library suitable for all systems in deploy/lib subdirectory">
     <mkdir dir="deploy/lib"/>
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
          (this library is used for Java versions older than Java SE 6 update 10) -->
@@ -231,7 +233,7 @@
       </fileset>
     </jar>
   </target>
-	
+
   <target name="viewerLibraries" depends="manifest"
           description="Copies to deploy/lib the base libraries used by Sweet Home 3D Viewer">
     <mkdir dir="deploy/lib"/>
@@ -370,10 +372,12 @@
          during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
     <javac srcdir="src" destdir="build/classes"
            includes="com/eteks/sweethome3d/applet/SweetHome3DViewer.java"
-           encoding="ISO-8859-1" target="1.1" source="1.2"/>      
+           encoding="ISO-8859-1" target="1.1" source="1.2"
+           debug="false" debuglevel="lines,vars,source"/>      
     <!-- Compile only classes depending on ViewerHelper to reduce Jar size -->
     <javac srcdir="src" destdir="build/classes"
-           encoding="ISO-8859-1" target="1.5">
+           encoding="ISO-8859-1" target="1.5" 
+           debug="false" debuglevel="lines,vars,source">
       <include name="com/eteks/sweethome3d/applet/ViewerHelper.java"/>
       <include name="com/eteks/sweethome3d/io/DefaultPatternTexture.java"/>
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
@@ -572,7 +576,7 @@
       </fileset>
     </copy>
 
-  	<!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned 
+    <!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre6/x64">
       <fileset dir="C:\Program Files\Java\jre6">
@@ -621,26 +625,26 @@
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerLaunch4j.xml"/>
     </exec>
-  	
-  	<!-- Pack largest jars -->
-  	<exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
+
+    <!-- Pack largest jars -->
+    <exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.pack.gz"/>
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
-  	</exec>
+    </exec>
     <delete file="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
-  	
-  	<exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
+
+    <exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre6\x86\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre6\x86\lib\rt.jar"/>
-  	</exec>
+    </exec>
     <delete file="${basedir}\install\windows\build\jre6\x86\lib\rt.jar"/>
-  	
-  	<exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
+
+    <exec executable="C:\Program Files\Java\jre6\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre6\x64\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre6\x64\lib\rt.jar"/>
-  	</exec>
+    </exec>
     <delete file="${basedir}\install\windows\build\jre6\x64\lib\rt.jar"/>
   </target>
 
