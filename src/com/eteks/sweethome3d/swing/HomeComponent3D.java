@@ -330,26 +330,28 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           
           // Create component 3D only once the graphics configuration of its parent is known
           if (component3D == null) {
-            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), preferences, controller);
+            createComponent3D(getGraphicsConfiguration(), preferences, controller);
           }
-          onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
-          Canvas3D canvas3D;
-          if (component3D instanceof Canvas3D) {
-            canvas3D = (Canvas3D)component3D;
-          } else {
-            try {
-              // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
-              canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
-            } catch (Exception ex) {
-              UnsupportedOperationException ex2 = new UnsupportedOperationException();
-              ex2.initCause(ex);
-              throw ex2;
+          if (onscreenUniverse == null) {
+            onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
+            Canvas3D canvas3D;
+            if (component3D instanceof Canvas3D) {
+              canvas3D = (Canvas3D)component3D;
+            } else {
+              try {
+                // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+                canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(component3D);
+              } catch (Exception ex) {
+                UnsupportedOperationException ex2 = new UnsupportedOperationException();
+                ex2.initCause(ex);
+                throw ex2;
+              }
             }
+            // Bind universe to canvas3D
+            onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
+            component3D.setFocusable(false);
+            updateNavigationPanelImage();
           }
-          // Bind universe to canvas3D
-          onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
-          component3D.setFocusable(false);
-          updateNavigationPanelImage();
         }
         
         public void ancestorRemoved(AncestorEvent ev) {
@@ -357,6 +359,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             onscreenUniverse.cleanup();
             removeHomeListeners();
             onscreenUniverse = null;
+          }
+          if (component3D != null) {
             removeAll();
             component3D = null;
           }
