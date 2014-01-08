@@ -357,10 +357,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             onscreenUniverse.cleanup();
             removeHomeListeners();
             onscreenUniverse = null;
-            if (GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length == 1) {
-              removeAll();
-              component3D = null;
-            }
+            removeAll();
+            component3D = null;
           }
         }
         
