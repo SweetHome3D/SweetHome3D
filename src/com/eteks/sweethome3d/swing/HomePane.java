@@ -3163,13 +3163,17 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Attaches the given <code>view</code> to home view.
    */
-  public void attachView(View view) {
+  public void attachView(final View view) {
     this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
 
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
     if (dummyComponent != null) {
+      // First dispose detached view window to avoid possible issues on multiple screens graphics environment
       JComponent component = (JComponent)view;
       Window window = SwingUtilities.getWindowAncestor(component);
+      ((RootPaneContainer)window).getRootPane().setActionMap(null);
+      window.dispose();
+      // Replace dummy component by attached view
       component.setBorder(dummyComponent.getBorder());      
       Container parent = dummyComponent.getParent();
       if (parent instanceof JSplitPane) {
@@ -3188,8 +3192,6 @@ public class HomePane extends JRootPane implements HomeView {
         parent.remove(componentIndex);
         parent.add(component, componentIndex);
       }
-      ((RootPaneContainer)window).getRootPane().setActionMap(null);
-      window.dispose();
     }
   }
   
