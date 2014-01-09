@@ -1725,14 +1725,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (textStyle.isItalic()) {
         fontStyle |= Font.ITALIC;
       }
-      String fontName = null;
-      if (defaultFont != null) {
-        fontName = defaultFont.getName();
-      } else {
-        fontName = null;
+      if (defaultFont == null) {
+        defaultFont = new Font(null, fontStyle, 1);
       }
-      font = new Font(fontName, fontStyle, 1);
-      font = font.deriveFont(textStyle.getFontSize());
+      font = defaultFont.deriveFont(fontStyle, textStyle.getFontSize());
       this.fonts.put(textStyle, font);
     }
     return font;
