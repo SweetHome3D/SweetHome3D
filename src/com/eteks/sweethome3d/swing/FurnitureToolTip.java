@@ -34,6 +34,7 @@ import javax.swing.JToolTip;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -67,23 +68,36 @@ public class FurnitureToolTip extends JToolTip {
    */
   public void setPieceOfFurniture(PieceOfFurniture piece) {
     if (piece != this.piece) {
-      String toolTipText = "<html><center>";
-      if (!this.ignoreCategory 
+      // Use HTML styles in the tip text only from Java 6 because with Java 5, 
+      // HTML tags are not reinterpreted as soon as the tip text is changed 
+      boolean htmlEmbeded = OperatingSystem.isJavaVersionGreaterOrEqual("1.6");
+      String tipText = htmlEmbeded
+          ? "<html><center>"
+          : "";
+      if (htmlEmbeded
+          && !this.ignoreCategory 
           && (piece instanceof CatalogPieceOfFurniture)) {
-        toolTipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+        tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
       }
       
-      toolTipText += "<b>" + piece.getName() + "</b>";
+      tipText += htmlEmbeded
+          ? "<b>" + piece.getName() + "</b>"
+          : piece.getName();
       
       if (this.preferences != null 
           && (piece instanceof CatalogPieceOfFurniture)) {
         String creator = ((CatalogPieceOfFurniture)piece).getCreator();
         if (creator != null) {
-          toolTipText += "<br>" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, "tooltipCreator", creator);
+          String tipTextCreator = this.preferences.getLocalizedString(FurnitureCatalogTree.class, "tooltipCreator", creator);
+          tipText += htmlEmbeded 
+              ? "<br>" + tipTextCreator
+              : " " + tipTextCreator;
         }
       }
-      toolTipText += "</center>";
-      setToolTipText(toolTipText);
+      if (htmlEmbeded) {
+        tipText += "</center>";
+      }
+      setTipText(tipText);
       
       this.pieceIconLabel.setIcon(null);
       if (piece.getIcon() instanceof URLContent) {
