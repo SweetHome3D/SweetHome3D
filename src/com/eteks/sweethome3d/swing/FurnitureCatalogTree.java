@@ -264,7 +264,7 @@ public class FurnitureCatalogTree extends JTree implements View {
         && path != null
         && path.getPathCount() == 3) {
       this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)path.getLastPathComponent());
-      return this.toolTip.getToolTipText();
+      return this.toolTip.getTipText();
     } else {
       return null;
     }

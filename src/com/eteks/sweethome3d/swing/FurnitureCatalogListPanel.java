@@ -166,7 +166,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
           int index = locationToIndex(ev.getPoint());
           if (index != -1) {
             this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)getModel().getElementAt(index));
-            return this.toolTip.getToolTipText();
+            return this.toolTip.getTipText();
           } else {
             return null;
           }
