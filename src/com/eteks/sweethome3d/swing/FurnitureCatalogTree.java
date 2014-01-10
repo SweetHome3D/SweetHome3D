@@ -250,8 +250,13 @@ public class FurnitureCatalogTree extends JTree implements View {
    */
   @Override
   public JToolTip createToolTip() {    
-    this.toolTip.setComponent(this);
-    return this.toolTip;
+    if (this.toolTip.isTipTextComplete()) {
+      // Use toolTip object only for its text returned in getToolTipText
+      return super.createToolTip();
+    } else {
+      this.toolTip.setComponent(this);
+      return this.toolTip;
+    }
   }
 
   /**

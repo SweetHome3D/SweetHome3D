@@ -47,8 +47,7 @@ public class FurnitureToolTip extends JToolTip {
   private final boolean           ignoreCategory;
   private final UserPreferences   preferences;
   private final JLabel            pieceIconLabel;
-  private PieceOfFurniture        piece;
-
+  private PieceOfFurniture        piece;  
   
   public FurnitureToolTip(boolean ignoreCategory, 
                           UserPreferences preferences) {
@@ -68,36 +67,54 @@ public class FurnitureToolTip extends JToolTip {
    */
   public void setPieceOfFurniture(PieceOfFurniture piece) {
     if (piece != this.piece) {
-      // Use HTML styles in the tip text only from Java 6 because with Java 5, 
-      // HTML tags are not reinterpreted as soon as the tip text is changed 
-      boolean htmlEmbeded = OperatingSystem.isJavaVersionGreaterOrEqual("1.6");
-      String tipText = htmlEmbeded
-          ? "<html><center>"
-          : "";
-      if (htmlEmbeded
-          && !this.ignoreCategory 
-          && (piece instanceof CatalogPieceOfFurniture)) {
-        tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
-      }
-      
-      tipText += htmlEmbeded
-          ? "<b>" + piece.getName() + "</b>"
-          : piece.getName();
-      
+      String tipTextCreator = null;
       if (this.preferences != null 
           && (piece instanceof CatalogPieceOfFurniture)) {
         String creator = ((CatalogPieceOfFurniture)piece).getCreator();
         if (creator != null) {
-          String tipTextCreator = this.preferences.getLocalizedString(FurnitureCatalogTree.class, "tooltipCreator", creator);
-          tipText += htmlEmbeded 
-              ? "<br>" + tipTextCreator
-              : " " + tipTextCreator;
+          tipTextCreator = this.preferences.getLocalizedString(FurnitureCatalogTree.class, "tooltipCreator", creator);
         }
       }
-      if (htmlEmbeded) {
+      
+      // Use HTML presentation in the tip text only from Java 6 because with Java 5, 
+      // HTML tags are not reinterpreted as soon as the tip text is changed 
+      String tipText;
+      boolean iconInHtmlImgTag = false;
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+        tipText = "<html><center>";
+        if (!this.ignoreCategory 
+            && (piece instanceof CatalogPieceOfFurniture)) {
+          tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+        }
+        
+        tipText += "<b>" + piece.getName() + "</b>";
+        if (tipTextCreator != null) {
+          tipText += "<br>" + tipTextCreator;
+        }
         tipText += "</center>";
+      } else if (isTipTextComplete()) {
+        // Use an alternate HTML presentation that includes icon in an <img> tag
+        // for the Mac OS X users who still run Sweet Home 3D under Java 5
+        // because jar protocol bug mentioned further doesn't cause issues under this system
+        iconInHtmlImgTag = true;
+        
+        tipText = "<html><table><tr><td align='center'>";
+        if (!this.ignoreCategory 
+            && (piece instanceof CatalogPieceOfFurniture)) {
+          tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+        }
+        tipText += "<b>" + piece.getName() + "</b>";
+        if (tipTextCreator != null) {
+          tipText += "<br>" + tipTextCreator;
+        }
+        tipText += "</td></tr>";
+      } else {
+        // Use plain text presentation
+        tipText = piece.getName();
+        if (tipTextCreator != null) {
+          tipText += " " + tipTextCreator;
+        }
       }
-      setTipText(tipText);
       
       this.pieceIconLabel.setIcon(null);
       if (piece.getIcon() instanceof URLContent) {
@@ -109,10 +126,16 @@ public class FurnitureToolTip extends JToolTip {
           if (image != null) {
             int width = Math.round(ICON_SIZE * Math.min(1f, (float)image.getWidth() / image.getHeight()));
             int height = Math.round((float)width * image.getHeight() / image.getWidth());
-            // Prefer to use a JLabel for the piece icon instead of a HTML <img> tag
-            // to avoid using cache to access files with jar protocol as suggested 
-            // in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
-            this.pieceIconLabel.setIcon(IconManager.getInstance().getIcon(piece.getIcon(), height, this)); 
+            if (iconInHtmlImgTag) {
+              tipText += "<tr><td width='" + ICON_SIZE + "' height='" + ICON_SIZE + "' align='center' valign='middle'><img width='" + width 
+                  + "' height='" + height + "' src='" 
+                  + ((URLContent)piece.getIcon()).getURL() + "'></td></tr>";
+            } else {
+              // Prefer to use a JLabel for the piece icon instead of a HTML <img> tag
+              // to avoid using cache to access files with jar protocol as suggested 
+              // in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+              this.pieceIconLabel.setIcon(IconManager.getInstance().getIcon(piece.getIcon(), height, this));
+            } 
           }
         } catch (IOException ex) {
         } finally {
@@ -124,8 +147,22 @@ public class FurnitureToolTip extends JToolTip {
           }
         }
       }
+
+      if (iconInHtmlImgTag) {
+        tipText += "</table>";
+      }
+      setTipText(tipText);
       this.piece = piece;
     } 
+  }
+    
+  /**
+   * Returns <code>true</code> if this text of this tool tip contains
+   * all the information that the tool tip should display.
+   */
+  boolean isTipTextComplete() {
+    return !OperatingSystem.isJavaVersionGreaterOrEqual("1.6")
+        && OperatingSystem.isMacOSX();
   }
   
   @Override
