@@ -60,7 +60,6 @@ import com.eteks.sweethome3d.swing.ObserverCameraPanel;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.TextureChoiceComponent;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
