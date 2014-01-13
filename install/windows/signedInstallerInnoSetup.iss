@@ -1,6 +1,6 @@
 ; signedInstallerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2007-2014 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
 ; SweetHome3D-4.3-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
@@ -29,7 +29,7 @@ ChangesAssociations=yes
 VersionInfoVersion=4.3.0.0
 VersionInfoTextVersion=4.3
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2013 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2014 eTeks
 VersionInfoCompany=eTeks
 ; Install in 64 bit mode if possible
 ArchitecturesInstallIn64BitMode=x64

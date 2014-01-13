@@ -53,5 +53,5 @@ CAUTION: YOU SHOULD NOT MOVE FILES FOUND IN FOLDERS DIFFERENT FROM THE ONE
 
 Visit http://www.sweethome3d.com to get more information on Sweet Home 3D
    
-Sweet Home 3D, Copyright (c) 2005-2013 Emmanuel PUYBARET / eTeks 
+Sweet Home 3D, Copyright (c) 2005-2014 Emmanuel PUYBARET / eTeks 
 Distributed under GNU General Public License    

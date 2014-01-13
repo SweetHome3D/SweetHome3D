@@ -66,5 +66,5 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-Sweet Home 3D, Copyright (c) 2005-2013 Emmanuel PUYBARET / eTeks. 
+Sweet Home 3D, Copyright (c) 2005-2014 Emmanuel PUYBARET / eTeks. 
 Distributed under GNU General Public License    
