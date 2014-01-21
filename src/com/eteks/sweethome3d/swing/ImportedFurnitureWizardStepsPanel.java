@@ -55,7 +55,7 @@ import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -1178,7 +1178,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                   URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" 
                       + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20").replace("%2F", "/"));
                   final Content entryContent = new TemporaryURLContent(entryUrl);
-                  final AtomicBoolean loaded = new AtomicBoolean();
+                  final AtomicReference<Vector3f> modelSize = new AtomicReference<Vector3f>();
                   final CountDownLatch latch = new CountDownLatch(1);
                   EventQueue.invokeAndWait(new Runnable() {
                       public void run() {
@@ -1186,10 +1186,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                         ModelManager.getInstance().loadModel(entryContent, new ModelManager.ModelObserver() {
                             public void modelUpdated(BranchGroup modelRoot) {
                               try {
-                                final Vector3f modelSize = ModelManager.getInstance().getSize(modelRoot);
-                                setDefaultStateAndInitializeReadModel(entryContent, modelName, defaultCategory, 
-                                    modelSize, preferences, contentManager);
-                                loaded.set(true);
+                                modelSize.set(ModelManager.getInstance().getSize(modelRoot));
                               } catch (IllegalArgumentException ex) {
                                 // Thrown by getSize if model is empty                              
                               }
@@ -1204,8 +1201,26 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                     });
                   
                   latch.await();
-                  if (loaded.get()) {
-                    return;
+                  if (modelSize.get() != null) {
+                    // Check if all remaining entries in the ZIP file can be read, to be able to save edited home with them
+                    do {
+                      try {
+                        entry = zipIn.getNextEntry();
+                      } catch (IllegalArgumentException ex) {
+                        // Exception thrown if entry name can't be read
+                        break;
+                      }
+                    } while (entry != null);
+                    
+                    if (entry == null) {
+                      EventQueue.invokeAndWait(new Runnable() {
+                          public void run() {
+                            setDefaultStateAndInitializeReadModel(entryContent, modelName, defaultCategory, 
+                                modelSize.get(), preferences, contentManager);
+                          }
+                      });
+                      return;
+                    }
                   }
                 }
               }
