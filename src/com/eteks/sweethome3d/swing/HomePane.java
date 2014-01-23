@@ -2764,6 +2764,7 @@ public class HomePane extends JRootPane implements HomeView {
                       && dividerLocation != -1f) {
                     splitPane.setDividerLocation(dividerLocation);
                   }
+                  controller.setVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
                 }
               }
             });
