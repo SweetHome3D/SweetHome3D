@@ -43,11 +43,13 @@ import com.eteks.sweethome3d.tools.URLContent;
  */
 public class DefaultHomeInputStream extends FilterInputStream {
   private final ContentRecording contentRecording;
+  private final boolean          includedDependenciesChecked;
   private File tempFile;
 
   /**
    * Creates a home input stream filter able to read a home and its content
-   * from <code>in</code>.
+   * from <code>in</code>. The dependencies of the read home included in the stream 
+   * will be checked.
    */
   public DefaultHomeInputStream(InputStream in) throws IOException {
     this(in, ContentRecording.INCLUDE_ALL_CONTENT);
@@ -59,8 +61,19 @@ public class DefaultHomeInputStream extends FilterInputStream {
    */
   public DefaultHomeInputStream(InputStream in, 
                                 ContentRecording contentRecording) throws IOException {
+    this(in, contentRecording, true);
+  }
+
+  /**
+   * Creates a home input stream filter able to read a home and its content
+   * from <code>in</code>.
+   */
+  public DefaultHomeInputStream(InputStream in, 
+                                ContentRecording contentRecording,
+                                boolean includedDependenciesChecked) throws IOException {
     super(in);
     this.contentRecording = contentRecording;
+    this.includedDependenciesChecked = includedDependenciesChecked;
   }
 
   /**
@@ -144,11 +157,13 @@ public class DefaultHomeInputStream extends FilterInputStream {
           String entryName = url.substring(url.indexOf('!') + 2);
           URL fileURL = new URL("jar:" + tempFile.toURI() + "!/" + entryName);
           HomeURLContent urlContent = new HomeURLContent(fileURL);
-          try {
-            // Check entry exists
-            urlContent.openStream().close();
-          } catch (IOException ex) {
-            throw new IOException("Missing entry \"" + entryName + "\"");
+          if (includedDependenciesChecked) {
+            try {
+              // Check entry exists
+              urlContent.openStream().close();
+            } catch (IOException ex) {
+              throw new IOException("Missing entry \"" + entryName + "\"");
+            }
           }
           return urlContent;
         } else {
