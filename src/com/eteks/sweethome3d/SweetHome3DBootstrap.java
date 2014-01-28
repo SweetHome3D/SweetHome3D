@@ -120,8 +120,8 @@ public class SweetHome3DBootstrap {
     } else {
       extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
           "linux/i386/libj3dcore-ogl.so", // Linux 32 bits DLLs
-          "linux/i386/libj3dcore-ogl-cg.so", // Windows 32 bits DLLs
-          "windows/i386/j3dcore-d3d.dll",
+          "linux/i386/libj3dcore-ogl-cg.so", 
+          "windows/i386/j3dcore-d3d.dll", // Windows 32 bits DLLs
           "windows/i386/j3dcore-ogl.dll",
           "windows/i386/j3dcore-ogl-cg.dll",
           "windows/i386/j3dcore-ogl-chk.dll"}));
