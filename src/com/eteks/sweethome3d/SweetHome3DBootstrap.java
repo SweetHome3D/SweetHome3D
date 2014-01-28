@@ -154,12 +154,12 @@ public class SweetHome3DBootstrap {
             // be deleted if they are still opened when program exits 
             new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-")  
         : new ExtensionsClassLoader(
-              sweetHome3DBootstrapClass.getClassLoader(), 
-              sweetHome3DBootstrapClass.getProtectionDomain(),
-              extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);      
+            sweetHome3DBootstrapClass.getClassLoader(), 
+            sweetHome3DBootstrapClass.getProtectionDomain(),
+            extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);      
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
     Method applicationClassMain = 
-      applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
+        applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
     // Call application class main method with reflection
     applicationClassMain.invoke(null, new Object [] {args});
   }
