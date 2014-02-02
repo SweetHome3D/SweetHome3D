@@ -262,7 +262,7 @@ public class HelpPane extends JRootPane implements HelpView {
     DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
         new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 204, 51));
     this.helpEditorPane.getHighlighter().removeAllHighlights();
-    if (highlightedText != null) {
+    if (highlightedText != null && highlightedText.length() > 0) {
       String [] highlightedWords = highlightedText.split("\\s");
       for (int i = 0; i < highlightedWords.length; i++) {
         highlightedWords [i] = highlightedWords [i].toLowerCase().trim();
