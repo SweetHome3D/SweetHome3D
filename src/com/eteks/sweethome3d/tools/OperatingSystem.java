@@ -129,7 +129,7 @@ public class OperatingSystem {
    * @since 4.0
    */
   public static boolean isJavaVersionGreaterOrEqual(String javaMinimumVersion) {
-    return compareVersions(javaMinimumVersion, System.getProperty("java.version")) <= 0;
+    return compareVersions(javaMinimumVersion, getComparableJavaVersion()) <= 0;
   }
 
   /**
@@ -138,9 +138,22 @@ public class OperatingSystem {
    * @since 4.2
    */
   public static boolean isJavaVersionBetween(String javaMinimumVersion, String javaMaximumVersion) {
-    String javaVersion = System.getProperty("java.version");
+    String javaVersion = getComparableJavaVersion();
     return compareVersions(javaMinimumVersion, javaVersion) <= 0 
         && compareVersions(javaVersion, javaMaximumVersion) < 0;
+  }
+
+  private static String getComparableJavaVersion() {
+    String javaVersion = System.getProperty("java.version");
+    try {
+      if ("OpenJDK Runtime Environment".equals(System.getProperty("java.runtime.name"))) {
+        // OpenJDK uses a different version system where updates are noted with a -uxx instead of _xx
+        javaVersion = javaVersion.replace("-u", "_");
+      }
+    } catch (AccessControlException ex) {
+      // Unsigned applet
+    }
+    return javaVersion;
   }
 
   /**
