@@ -36,6 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Locale;
 
 import javax.swing.Action;
@@ -262,13 +263,15 @@ public class HelpPane extends JRootPane implements HelpView {
     DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
         new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 204, 51));
     this.helpEditorPane.getHighlighter().removeAllHighlights();
-    if (highlightedText != null && highlightedText.length() > 0) {
-      String [] highlightedWords = highlightedText.split("\\s");
-      for (int i = 0; i < highlightedWords.length; i++) {
-        highlightedWords [i] = highlightedWords [i].toLowerCase().trim();
+    if (highlightedText != null) {
+      ArrayList<String> highlightedWords = new ArrayList<String>();
+      for (String highlightedWord : highlightedText.split("\\s")) {
+        if (highlightedWord.length() > 0) {
+          highlightedWords.add(highlightedWord);
+        }
       }                            
       highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(), 
-          highlightedWords, highlightPainter);
+          highlightedWords.toArray(new String [highlightedWords.size()]), highlightPainter);
     }
   }
 
