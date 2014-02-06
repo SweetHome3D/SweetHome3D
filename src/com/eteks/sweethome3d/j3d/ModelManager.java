@@ -84,6 +84,7 @@ import javax.media.j3d.SharedGroup;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.TextureUnitState;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -620,7 +621,7 @@ public class ModelManager {
       Appearance appearance = shape.getAppearance();
       if (appearance != null) {
         // Duplicate node's appearance except its texture
-        Appearance clonedAppearance = new Appearance();
+        Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(false);
         Material material = appearance.getMaterial();
         if (material != null) {
           clonedAppearance.setMaterial((Material)material.cloneNodeComponent(true));
@@ -658,10 +659,6 @@ public class ModelManager {
           clonedAppearance.setTexCoordGeneration((TexCoordGeneration)texCoordGeneration.cloneNodeComponent(true));
         }
         
-        Texture texture = appearance.getTexture();
-        if (texture != null) {
-          clonedAppearance.setTexture(texture);
-        }
         clonedShape.setAppearance(clonedAppearance);
       }
       return clonedShape;
