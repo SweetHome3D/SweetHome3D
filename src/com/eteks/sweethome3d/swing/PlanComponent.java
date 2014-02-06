@@ -93,6 +93,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -5580,7 +5581,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       modelTransformGroup.addChild(modelNode);
       // Replace model textures by clones because Java 3D doesn't accept all the time 
       // to share textures between offscreen and onscreen environments 
-      cloneTexture(modelNode, new HashMap<Texture, Texture>());
+      cloneTexture(modelNode, new IdentityHashMap<Texture, Texture>());
 
       BranchGroup model = new BranchGroup();
       model.setCapability(BranchGroup.ALLOW_DETACH);
