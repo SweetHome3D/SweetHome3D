@@ -45,6 +45,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,7 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.GeometryStripArray;
@@ -69,13 +71,17 @@ import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
+import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
+import javax.media.j3d.PointAttributes;
+import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.SharedGroup;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
@@ -613,8 +619,45 @@ public class ModelManager {
       Shape3D clonedShape = (Shape3D)shape.cloneNode(false);
       Appearance appearance = shape.getAppearance();
       if (appearance != null) {
-        // Force only duplication of node's appearance except its texture
-        Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);        
+        // Duplicate node's appearance except its texture
+        Appearance clonedAppearance = new Appearance();
+        Material material = appearance.getMaterial();
+        if (material != null) {
+          clonedAppearance.setMaterial((Material)material.cloneNodeComponent(true));
+        }
+        ColoringAttributes coloringAttributes = appearance.getColoringAttributes();
+        if (coloringAttributes != null) {
+          clonedAppearance.setColoringAttributes((ColoringAttributes)coloringAttributes.cloneNodeComponent(true));
+        }
+        TransparencyAttributes transparencyAttributes = appearance.getTransparencyAttributes();
+        if (transparencyAttributes != null) {
+          clonedAppearance.setTransparencyAttributes((TransparencyAttributes)transparencyAttributes.cloneNodeComponent(true));
+        }
+        RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
+        if (renderingAttributes != null) {
+          clonedAppearance.setRenderingAttributes((RenderingAttributes)renderingAttributes.cloneNodeComponent(true));
+        }
+        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+        if (polygonAttributes != null) {
+          clonedAppearance.setPolygonAttributes((PolygonAttributes)polygonAttributes.cloneNodeComponent(true));
+        }
+        LineAttributes lineAttributes = appearance.getLineAttributes();
+        if (lineAttributes != null) {
+          clonedAppearance.setLineAttributes((LineAttributes)lineAttributes.cloneNodeComponent(true));
+        }
+        PointAttributes pointAttributes = appearance.getPointAttributes();
+        if (pointAttributes != null) {
+          clonedAppearance.setPointAttributes((PointAttributes)pointAttributes.cloneNodeComponent(true));
+        }
+        TextureAttributes textureAttributes = appearance.getTextureAttributes();
+        if (textureAttributes != null) {
+          clonedAppearance.setTextureAttributes((TextureAttributes)textureAttributes.cloneNodeComponent(true));
+        }
+        TexCoordGeneration texCoordGeneration = appearance.getTexCoordGeneration();
+        if (texCoordGeneration != null) {
+          clonedAppearance.setTexCoordGeneration((TexCoordGeneration)texCoordGeneration.cloneNodeComponent(true));
+        }
+        
         Texture texture = appearance.getTexture();
         if (texture != null) {
           clonedAppearance.setTexture(texture);
@@ -774,7 +817,7 @@ public class ModelManager {
         // Update transparency of scene window panes shapes
         updateShapeNamesAndWindowPanesTransparency(scene);        
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
-        turnOffLightsShareAndModulateTextures(modelNode);        
+        turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
         checkAppearancesName(modelNode);
         return modelNode;
       } catch (IllegalArgumentException ex) {
@@ -869,15 +912,16 @@ public class ModelManager {
    * Turns off light nodes of <code>node</code> children, 
    * and modulates textures if needed.
    */
-  private void turnOffLightsShareAndModulateTextures(Node node) {
+  private void turnOffLightsShareAndModulateTextures(Node node, 
+                                                     Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        turnOffLightsShareAndModulateTextures((Node)enumeration.nextElement());
+        turnOffLightsShareAndModulateTextures((Node)enumeration.nextElement(), replacedTextures);
       }
     } else if (node instanceof Link) {
-      turnOffLightsShareAndModulateTextures(((Link)node).getSharedGroup());
+      turnOffLightsShareAndModulateTextures(((Link)node).getSharedGroup(), replacedTextures);
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
@@ -885,8 +929,12 @@ public class ModelManager {
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
-          // Share textures data as much as possible
-          Texture sharedTexture = TextureManager.getInstance().shareTexture(texture);
+          // Share textures data as much as possible requesting TextureManager#shareTexture the less often possible
+          Texture sharedTexture = replacedTextures.get(texture);
+          if (sharedTexture == null) {
+            sharedTexture = TextureManager.getInstance().shareTexture(texture);
+            replacedTextures.put(texture, sharedTexture);
+          }
           if (sharedTexture != texture) {
             appearance.setTexture(sharedTexture);
           }
