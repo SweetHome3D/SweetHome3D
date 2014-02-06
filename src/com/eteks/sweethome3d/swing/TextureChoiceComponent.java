@@ -204,6 +204,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       this.availableTexturesLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "availableTexturesLabel.text"));
       this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
+      this.availableTexturesList.setVisibleRowCount(15);
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.availableTexturesList.setCellRenderer(new TextureListCellRenderer());
       this.availableTexturesList.getSelectionModel().addListSelectionListener(
@@ -427,7 +428,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       // Second row
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
           0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 50, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 100, 0));
       SwingTools.installFocusBorder(this.availableTexturesList);
       add(this.texturePreviewLabel, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
