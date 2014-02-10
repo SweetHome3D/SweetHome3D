@@ -46,12 +46,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -68,6 +70,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
+import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -174,13 +177,13 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
    * A panel that displays available textures in a list to let user make choose one. 
    */
   private static class TexturePanel extends JPanel {
-    private static final int PREVIEW_ICON_HEIGHT = 64; 
+    private static final int PREVIEW_ICON_SIZE = 128; 
     
     private TextureChoiceController controller;
     
     private TextureImage            previewTexture;
     private JLabel                  chosenTextureLabel;
-    private JLabel                  texturePreviewLabel;
+    private ScaledImageComponent    texturePreviewComponent;
     private JLabel                  availableTexturesLabel;
     private JList                   availableTexturesList;
     private JButton                 importTextureButton;
@@ -223,40 +226,14 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
       this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
           TextureChoiceComponent.class, "chosenTextureLabel.text"));
-      this.texturePreviewLabel = new JLabel() {
-          private int lastIconWidth;
-
-          @Override
-          protected void paintComponent(Graphics g) {
-            // If icon width changed after its loading  
-            Icon icon = getIcon();
-            if (icon != null
-                && icon.getIconWidth() != this.lastIconWidth) {
-              // Revalidate label to layout again texture panel
-              this.lastIconWidth = icon.getIconWidth(); 
-              revalidate();
-            } else {
-              super.paintComponent(g);
-            }
-          }
-          
-          @Override
-          public void setIcon(Icon icon) {
-            if (icon != null) {
-              this.lastIconWidth = icon.getIconWidth();
-            }
-            super.setIcon(icon);
-          }
-        };
-      // Update edited texture in texture panel
-      setPreviewTexture(controller.getTexture());
+      this.texturePreviewComponent = new ScaledImageComponent(null, true);
 
       try {
         String importTextureButtonText = SwingTools.getLocalizedLabelText(
             preferences, TextureChoiceComponent.class, "importTextureButton.text");
-        this.texturePreviewLabel.setBorder(SwingTools.getDropableComponentBorder());
+        this.texturePreviewComponent.setBorder(SwingTools.getDropableComponentBorder());
         // Add to label a transfer handler to let user drag and drop a file on it 
-        this.texturePreviewLabel.setTransferHandler(new TransferHandler() {
+        this.texturePreviewComponent.setTransferHandler(new TransferHandler() {
             @Override
             public boolean canImport(JComponent comp, DataFlavor [] flavors) {
               return Arrays.asList(flavors).contains(DataFlavor.javaFileListFlavor);
@@ -306,9 +283,16 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         
         preferences.getTexturesCatalog().addTexturesListener(new TexturesCatalogListener(this));
       } catch (IllegalArgumentException ex) {
-        // Do not support import texture if importTextureText isn't defined 
-        this.texturePreviewLabel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+        // Do not support import texture if importTextureButton.text isn't defined 
+        this.texturePreviewComponent.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
       }
+
+      Border border = this.texturePreviewComponent.getBorder();
+      // Update edited texture in texture panel
+      setPreviewTexture(controller.getTexture());
+      Insets insets = border.getBorderInsets(this.texturePreviewComponent);
+      this.texturePreviewComponent.setPreferredSize(
+          new Dimension(PREVIEW_ICON_SIZE + insets.left + insets.right, PREVIEW_ICON_SIZE + insets.top + insets.bottom));
     }
 
     /**
@@ -428,9 +412,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       // Second row
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
           0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 100, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
       SwingTools.installFocusBorder(this.availableTexturesList);
-      add(this.texturePreviewLabel, new GridBagConstraints(
+      add(this.texturePreviewComponent, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       if (this.importTextureButton != null) {
@@ -458,24 +442,24 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     public void setPreviewTexture(TextureImage previewTexture) {
       this.previewTexture = previewTexture;
       if (previewTexture != null) {
-        this.texturePreviewLabel.setIcon(
-            IconManager.getInstance().getIcon(previewTexture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel));
-        this.texturePreviewLabel.setToolTipText(previewTexture.getName());
+        this.texturePreviewComponent.setToolTipText(previewTexture.getName());
+        InputStream iconStream = null;
+        try {
+          // Ensure image will always be viewed in the cell
+          iconStream = previewTexture.getImage().openStream();
+          this.texturePreviewComponent.setImage(ImageIO.read(iconStream));
+        } catch (IOException ex) {
+        } finally {
+          if (iconStream != null) {
+            try {
+              iconStream.close();
+            } catch (IOException ex) {
+            }
+          }
+        }        
       } else {
-        // Preview a dummy empty icon
-        this.texturePreviewLabel.setIcon(new Icon() {
-            public int getIconHeight() {
-              return PREVIEW_ICON_HEIGHT;
-            }
-            
-            public int getIconWidth() {
-              return PREVIEW_ICON_HEIGHT;
-            }
-            
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-            }
-          });
-        this.texturePreviewLabel.setToolTipText(null);
+        this.texturePreviewComponent.setToolTipText(null);
+        this.texturePreviewComponent.setImage(null);
       }
       // Update selection in texture list
       this.availableTexturesList.setSelectedValue(previewTexture, true);
