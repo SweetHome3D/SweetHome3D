@@ -136,7 +136,9 @@ public class FurnitureToolTip extends JToolTip {
               // Prefer to use a JLabel for the piece icon instead of a HTML <img> tag
               // to avoid using cache to access files with jar protocol as suggested 
               // in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
-              this.pieceIconLabel.setIcon(new ImageIcon(image.getScaledInstance(width, height, Image.SCALE_SMOOTH)));
+              this.pieceIconLabel.setIcon(new ImageIcon(image.getHeight() != height
+                  ? image.getScaledInstance(width, height, Image.SCALE_SMOOTH)
+                  : image));
             } 
           }
         } catch (IOException ex) {
