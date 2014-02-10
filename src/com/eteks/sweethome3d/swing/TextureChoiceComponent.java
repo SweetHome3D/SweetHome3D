@@ -445,7 +445,6 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.texturePreviewComponent.setToolTipText(previewTexture.getName());
         InputStream iconStream = null;
         try {
-          // Ensure image will always be viewed in the cell
           iconStream = previewTexture.getImage().openStream();
           this.texturePreviewComponent.setImage(ImageIO.read(iconStream));
         } catch (IOException ex) {
