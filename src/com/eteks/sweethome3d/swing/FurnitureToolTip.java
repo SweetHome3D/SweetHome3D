@@ -22,12 +22,14 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JToolTip;
 
@@ -134,7 +136,7 @@ public class FurnitureToolTip extends JToolTip {
               // Prefer to use a JLabel for the piece icon instead of a HTML <img> tag
               // to avoid using cache to access files with jar protocol as suggested 
               // in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
-              this.pieceIconLabel.setIcon(IconManager.getInstance().getIcon(piece.getIcon(), height, this));
+              this.pieceIconLabel.setIcon(new ImageIcon(image.getScaledInstance(width, height, Image.SCALE_SMOOTH)));
             } 
           }
         } catch (IOException ex) {
