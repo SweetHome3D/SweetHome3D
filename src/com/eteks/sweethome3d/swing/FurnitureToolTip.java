@@ -44,16 +44,49 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FurnitureToolTip extends JToolTip {
+  /**
+   * Type of information displayed by a tool tip.
+   */
+  public enum DisplayedInformation {
+    /**
+     * A tool tip displaying only the icon of a piece of furniture.
+     */
+    ICON, 
+    /**
+     * A tool tip displaying only the icon, the name and the author of a piece of furniture.
+     */
+    ICON_NAME_AUTHOR, 
+    /**
+     * A tool tip displaying only the icon, the name, the author and the category 
+     * of a piece of furniture.
+     */
+    ICON_NAME_AUTHOR_CATEGORY}
+
   private static final int        ICON_SIZE = 128;
   
-  private final boolean           ignoreCategory;
-  private final UserPreferences   preferences;
-  private final JLabel            pieceIconLabel;
-  private PieceOfFurniture        piece;  
-  
+  private final DisplayedInformation displayedInformation;
+  private final UserPreferences      preferences;
+  private final JLabel               pieceIconLabel;
+  private PieceOfFurniture           piece;
+
+  /**
+   * Creates a tool tip that displays the icon of a piece of furniture, its name
+   * and its category if <code>ignoreCategory</code> is <code>true</code>.
+   */
   public FurnitureToolTip(boolean ignoreCategory, 
                           UserPreferences preferences) {
-    this.ignoreCategory = ignoreCategory;
+    this(ignoreCategory 
+           ? DisplayedInformation.ICON_NAME_AUTHOR 
+           : DisplayedInformation.ICON_NAME_AUTHOR_CATEGORY, 
+         preferences);
+  }
+  
+  /**
+   * Creates a tool tip that displays furniture information.
+   */
+  public FurnitureToolTip(DisplayedInformation displayedInformation,
+                          UserPreferences preferences) {
+    this.displayedInformation = displayedInformation;
     this.preferences = preferences;
     this.pieceIconLabel = new JLabel();
     this.pieceIconLabel.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
@@ -83,39 +116,48 @@ public class FurnitureToolTip extends JToolTip {
       String tipText;
       boolean iconInHtmlImgTag = false;
       if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
-        tipText = "<html><center>";
-        if (!this.ignoreCategory 
-            && (piece instanceof CatalogPieceOfFurniture)) {
-          tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
-        }
-        
-        tipText += "<b>" + piece.getName() + "</b>";
-        if (tipTextCreator != null) {
-          tipText += "<br>" + tipTextCreator;
-        }
-        tipText += "</center>";
+        if (this.displayedInformation != DisplayedInformation.ICON) { 
+          tipText = "<html><center>";
+          if (this.displayedInformation == DisplayedInformation.ICON_NAME_AUTHOR_CATEGORY 
+              && (piece instanceof CatalogPieceOfFurniture)) {
+            tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+          }
+          
+          tipText += "<b>" + piece.getName() + "</b>";
+          if (tipTextCreator != null) {
+            tipText += "<br>" + tipTextCreator;
+          }
+          tipText += "</center>";
+        } else {
+          tipText = "";
+        }        
       } else if (isTipTextComplete()) {
         // Use an alternate HTML presentation that includes icon in an <img> tag
         // for the Mac OS X users who still run Sweet Home 3D under Java 5
         // because jar protocol bug mentioned further doesn't cause issues under this system
         iconInHtmlImgTag = true;
         
-        tipText = "<html><table><tr><td align='center'>";
-        if (!this.ignoreCategory 
-            && (piece instanceof CatalogPieceOfFurniture)) {
-          tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+        tipText = "<html><table>";
+        if (this.displayedInformation != DisplayedInformation.ICON) { 
+          tipText += "<tr><td align='center'>";
+          if (this.displayedInformation == DisplayedInformation.ICON_NAME_AUTHOR_CATEGORY
+              && (piece instanceof CatalogPieceOfFurniture)) {
+            tipText += "- <b>" + ((CatalogPieceOfFurniture)piece).getCategory().getName() + "</b> -<br>";
+          }
+          tipText += "<b>" + piece.getName() + "</b>";
+          if (tipTextCreator != null) {
+            tipText += "<br>" + tipTextCreator;
+          }
+          tipText += "</td></tr>";
         }
-        tipText += "<b>" + piece.getName() + "</b>";
-        if (tipTextCreator != null) {
-          tipText += "<br>" + tipTextCreator;
-        }
-        tipText += "</td></tr>";
+      } else if (this.displayedInformation != DisplayedInformation.ICON) {
+          // Use plain text presentation
+          tipText = piece.getName();
+          if (tipTextCreator != null) {
+            tipText += " " + tipTextCreator;
+          }
       } else {
-        // Use plain text presentation
-        tipText = piece.getName();
-        if (tipTextCreator != null) {
-          tipText += " " + tipTextCreator;
-        }
+        tipText = null;
       }
       
       this.pieceIconLabel.setIcon(null);
@@ -161,10 +203,10 @@ public class FurnitureToolTip extends JToolTip {
   }
     
   /**
-   * Returns <code>true</code> if this text of this tool tip contains
+   * Returns <code>true</code> if the text of this tool tip contains
    * all the information that the tool tip should display.
    */
-  boolean isTipTextComplete() {
+  public boolean isTipTextComplete() {
     return !OperatingSystem.isJavaVersionGreaterOrEqual("1.6")
         && OperatingSystem.isMacOSX();
   }
