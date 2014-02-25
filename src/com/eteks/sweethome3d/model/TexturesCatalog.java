@@ -29,7 +29,6 @@ import java.util.List;
  */
 public class TexturesCatalog {
   private List<TexturesCategory>  categories = new ArrayList<TexturesCategory>();
-  private boolean                 sorted;
   private final CollectionChangeSupport<CatalogTexture> texturesChangeSupport = 
                                       new CollectionChangeSupport<CatalogTexture>(this);
 
@@ -38,18 +37,7 @@ public class TexturesCatalog {
    * @return an unmodifiable list of categories.
    */
   public List<TexturesCategory> getCategories() {
-    checkCategoriesSorted();
     return Collections.unmodifiableList(this.categories);
-  }
-
-  /**
-   * Checks categories are sorted.
-   */
-  private void checkCategoriesSorted() {
-    if (!this.sorted) {
-      Collections.sort(this.categories);
-      this.sorted = true;
-    }
   }
 
   /**
@@ -63,7 +51,6 @@ public class TexturesCatalog {
    * Returns the category at a given <code>index</code>.
    */
   public TexturesCategory getCategory(int index) {
-    checkCategoriesSorted();
     return this.categories.get(index);
   }
 
@@ -82,21 +69,6 @@ public class TexturesCatalog {
   }
 
   /**
-   * Adds a category to this catalog.
-   * @param category the textures category to add.
-   * @throws IllegalHomonymException if a category with same name as the one in
-   *           parameter already exists in this catalog.
-   */
-  private void add(TexturesCategory category) {
-    if (this.categories.contains(category)) {
-      throw new IllegalHomonymException(
-          category.getName() + " already exists in catalog");
-    }
-    this.categories.add(category);
-    this.sorted = false;
-  }
-
-  /**
    * Adds <code>texture</code> of a given <code>category</code> to this catalog.
    * Once the <code>texture</code> is added, texture listeners added to this catalog will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged} notification.
@@ -104,11 +76,11 @@ public class TexturesCatalog {
    * @param texture  a texture.
    */
   public void add(TexturesCategory category, CatalogTexture texture) {
-    int index = this.categories.indexOf(category);
+    int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
-    if (index == -1) {
+    if (index < 0) {
       category = new TexturesCategory(category.getName());
-      add(category);
+      this.categories.add(-index - 1, category);
     } else {
       category = this.categories.get(index);
     }    

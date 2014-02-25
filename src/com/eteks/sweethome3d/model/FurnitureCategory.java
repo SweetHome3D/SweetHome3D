@@ -31,7 +31,6 @@ import java.util.List;
 public class FurnitureCategory implements Comparable<FurnitureCategory> {
   private final String                  name;
   private List<CatalogPieceOfFurniture> furniture;
-  private boolean                       sorted;
   
   private static final Collator  COMPARATOR = Collator.getInstance();
 
@@ -56,18 +55,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @return an unmodifiable list of furniture.
    */
   public List<CatalogPieceOfFurniture> getFurniture() {
-    checkFurnitureSorted();
     return Collections.unmodifiableList(this.furniture);
-  }
-
-  /**
-   * Checks furniture is sorted.
-   */
-  private void checkFurnitureSorted() {
-    if (!this.sorted) {
-      Collections.sort(this.furniture);
-      this.sorted = true;
-    }
   }
 
   /**
@@ -81,7 +69,6 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * Returns the piece of furniture at a given <code>index</code>.
    */
   public CatalogPieceOfFurniture getPieceOfFurniture(int index) {
-    checkFurnitureSorted();
     return this.furniture.get(index);
   }
 
@@ -90,7 +77,6 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @since 3.6
    */
   public int getIndexOfPieceOfFurniture(CatalogPieceOfFurniture piece) {
-    checkFurnitureSorted();
     return this.furniture.indexOf(piece);
   }
 
@@ -100,8 +86,11 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    */
   void add(CatalogPieceOfFurniture piece) {
     piece.setCategory(this);
-    this.furniture.add(piece);    
-    this.sorted = false;
+    int index = Collections.binarySearch(this.furniture, piece);
+    if (index < 0) {
+      index = -index - 1;
+    } 
+    this.furniture.add(index, piece);    
   }
 
   /**

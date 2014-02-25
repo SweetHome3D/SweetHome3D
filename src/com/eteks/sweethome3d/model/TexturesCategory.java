@@ -31,7 +31,6 @@ import java.util.List;
 public class TexturesCategory implements Comparable<TexturesCategory> {
   private final String         name;
   private List<CatalogTexture> textures;
-  private boolean              sorted;
   
   private static final Collator  COMPARATOR = Collator.getInstance();
 
@@ -56,18 +55,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    * @return an unmodifiable list of furniture.
    */
   public List<CatalogTexture> getTextures() {
-    checkTexturesSorted();
     return Collections.unmodifiableList(this.textures);
-  }
-
-  /**
-   * Checks textures are sorted.
-   */
-  private void checkTexturesSorted() {
-    if (!this.sorted) {
-      Collections.sort(this.textures);
-      this.sorted = true;
-    }
   }
 
   /**
@@ -81,7 +69,6 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    * Returns the texture at a given <code>index</code>.
    */
   public CatalogTexture getTexture(int index) {
-    checkTexturesSorted();
     return this.textures.get(index);
   }
 
@@ -90,7 +77,6 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    * @since 3.6
    */
   public int getIndexOfTexture(CatalogTexture texture) {
-    checkTexturesSorted();
     return this.textures.indexOf(texture);
   }
 
@@ -100,8 +86,11 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    */
   void add(CatalogTexture texture) {
     texture.setCategory(this);
-    this.textures.add(texture);    
-    this.sorted = false;
+    int index = Collections.binarySearch(this.textures, texture);
+    if (index < 0) {
+      index = -index - 1;
+    } 
+    this.textures.add(index, texture);    
   }
 
   /**

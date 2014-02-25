@@ -29,7 +29,6 @@ import java.util.List;
  */
 public class FurnitureCatalog {
   private List<FurnitureCategory>       categories = new ArrayList<FurnitureCategory>();
-  private boolean                       sorted;
   private final CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
                              new CollectionChangeSupport<CatalogPieceOfFurniture>(this);
 
@@ -38,18 +37,7 @@ public class FurnitureCatalog {
    * @return an unmodifiable list of categories.
    */
   public List<FurnitureCategory> getCategories() {
-    checkCategoriesSorted();
     return Collections.unmodifiableList(this.categories);
-  }
-
-  /**
-   * Checks categories are sorted.
-   */
-  private void checkCategoriesSorted() {
-    if (!this.sorted) {
-      Collections.sort(this.categories);
-      this.sorted = true;
-    }
   }
 
   /**
@@ -63,7 +51,6 @@ public class FurnitureCatalog {
    * Returns the category at a given <code>index</code>.
    */
   public FurnitureCategory getCategory(int index) {
-    checkCategoriesSorted();
     return this.categories.get(index);
   }
 
@@ -82,21 +69,6 @@ public class FurnitureCatalog {
   }
 
   /**
-   * Adds a category.
-   * @param category the category to add.
-   * @throws IllegalHomonymException if a category with same name as the one in
-   *           parameter already exists in this catalog.
-   */
-  private void add(FurnitureCategory category) {
-    if (this.categories.contains(category)) {
-      throw new IllegalHomonymException(
-          category.getName() + " already exists in catalog");
-    }
-    this.categories.add(category);
-    this.sorted = false;
-  }
-
-  /**
    * Adds <code>piece</code> of a given <code>category</code> to this catalog.
    * Once the <code>piece</code> is added, furniture listeners added to this catalog will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
@@ -105,11 +77,11 @@ public class FurnitureCatalog {
    * @param piece    a piece of furniture.
    */
   public void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
-    int index = this.categories.indexOf(category);
+    int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
-    if (index == -1) {
+    if (index < 0) {
       category = new FurnitureCategory(category.getName());
-      add(category);
+      this.categories.add(-index - 1, category);
     } else {
       category = this.categories.get(index);
     }    
