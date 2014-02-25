@@ -324,11 +324,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
         furnitureCatalogPanel.searchLabel.setText(preferences.getLocalizedString(
             FurnitureCatalogListPanel.class, "searchLabel.text"));
         furnitureCatalogPanel.setMnemonics(preferences);
-        // Update categories
-        List<FurnitureCategory> categories = new ArrayList<FurnitureCategory>();
-        categories.add(null);
-        categories.addAll(preferences.getFurnitureCatalog().getCategories());
-        furnitureCatalogPanel.categoryFilterComboBox.setModel(new DefaultComboBoxModel(categories.toArray()));    
+        // Categories listed in combo box are updated through collectionChanged
       }
     }
     
@@ -785,43 +781,56 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     
     public CatalogListModel(FurnitureCatalog catalog) {
       this.catalog = catalog;
-      this.furniture = new ArrayList<CatalogPieceOfFurniture>();
       this.filterText = "";
       catalog.addFurnitureListener(new CatalogFurnitureListener(this));
-      updateFurnitureList();
     }
 
     public void setFilterCategory(FurnitureCategory filterCategory) {
       this.filterCategory = filterCategory;
-      updateFurnitureList();
+      resetFurnitureList();
     }
 
     public void setFilterText(String filterText) {
       this.filterText = filterText;
-      updateFurnitureList();
+      resetFurnitureList();
     }
 
     public Object getElementAt(int index) {
+      checkFurnitureList();
       return this.furniture.get(index);
     }
 
     public int getSize() {
+      checkFurnitureList();
       return this.furniture.size();
     }
     
-    private void updateFurnitureList() {
-      this.furniture.clear();
-      for (FurnitureCategory category : this.catalog.getCategories()) {
-        for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-          if ((this.filterCategory == null
-                || piece.getCategory().equals(this.filterCategory))
-              && piece.matchesFilter(this.filterText)) {
-            furniture.add(piece);
+    private void resetFurnitureList() {
+      if (this.furniture != null) {
+        this.furniture = null;
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              fireContentsChanged(this, -1, -1);
+            }
+          });
+      }
+    }
+
+    private void checkFurnitureList() {
+      if (this.furniture == null) {
+        this.furniture = new ArrayList<CatalogPieceOfFurniture>();
+        this.furniture.clear();
+        for (FurnitureCategory category : this.catalog.getCategories()) {
+          for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+            if ((this.filterCategory == null
+                  || piece.getCategory().equals(this.filterCategory))
+                && piece.matchesFilter(this.filterText)) {
+              furniture.add(piece);
+            }
           }
         }
+        Collections.sort(this.furniture);
       }
-      Collections.sort(this.furniture);
-      fireContentsChanged(this, 0, this.furniture.size() - 1);
     }
     
     /**
@@ -842,7 +851,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
         if (catalogTreeModel == null) {
           catalog.removeFurnitureListener(this);
         } else {
-          catalogTreeModel.updateFurnitureList();
+          catalogTreeModel.resetFurnitureList();
         }
       }
     }
