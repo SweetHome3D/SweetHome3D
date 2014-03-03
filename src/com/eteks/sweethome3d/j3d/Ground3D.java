@@ -34,6 +34,7 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 
@@ -77,6 +78,10 @@ public class Ground3D extends Object3DBranch {
     TextureAttributes textureAttributes = new TextureAttributes();
     textureAttributes.setTextureMode(TextureAttributes.MODULATE);
     groundAppearance.setTextureAttributes(textureAttributes);
+    groundAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
+    TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
+    transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
+    groundAppearance.setTransparencyAttributes(transparencyAttributes);
 
     final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
@@ -113,6 +118,7 @@ public class Ground3D extends Object3DBranch {
       int groundColor = home.getEnvironment().getGroundColor();
       groundAppearance.setMaterial(getMaterial(groundColor, groundColor, 0));
       groundAppearance.setTexture(null);
+      groundAppearance.getTransparencyAttributes().setTransparencyMode(TransparencyAttributes.NONE);      
     } else {
       groundAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
       final TextureManager imageManager = TextureManager.getInstance();
@@ -120,6 +126,11 @@ public class Ground3D extends Object3DBranch {
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 groundAppearance.setTexture(getHomeTextureClone(texture, home));
+                TransparencyAttributes transparencyAttributes = groundAppearance.getTransparencyAttributes();
+                // If texture isn't transparent, turn off transparency  
+                transparencyAttributes.setTransparencyMode(TextureManager.getInstance().isTextureTransparent(texture) 
+                    ? TransparencyAttributes.NICEST
+                    : TransparencyAttributes.NONE);      
               }
             });
     }
