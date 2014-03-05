@@ -99,6 +99,7 @@ public class FileContentManager implements ContentManager {
   private static final String LWS_EXTENSION = ".lws";
   private static final String THREEDS_EXTENSION = ".3ds";
   private static final String DAE_EXTENSION = ".dae";
+  private static final String KMZ_EXTENSION = ".kmz";
   private static final String ZIP_EXTENSION = ".zip";
   private static final FileFilter [] MODEL_FILTERS = {
      OBJ_FILTER [0],
@@ -139,6 +140,19 @@ public class FileContentManager implements ContentManager {
        @Override
        public String getDescription() {
          return "DAE - Collada";
+       }
+     },
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and ZIP files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(KMZ_EXTENSION);
+       }
+   
+       @Override
+       public String getDescription() {
+         return "KMZ";
        }
      },
      new FileFilter() {
@@ -435,7 +449,7 @@ public class FileContentManager implements ContentManager {
     this.fileExtensions.put(ContentType.SVG,               new String [] {SVG_EXTENSION});
     this.fileExtensions.put(ContentType.OBJ,               new String [] {OBJ_EXTENSION});
     this.fileExtensions.put(ContentType.MODEL,             
-        new String [] {OBJ_EXTENSION, LWS_EXTENSION, THREEDS_EXTENSION, DAE_EXTENSION, ZIP_EXTENSION});
+        new String [] {OBJ_EXTENSION, LWS_EXTENSION, THREEDS_EXTENSION, DAE_EXTENSION, ZIP_EXTENSION, KMZ_EXTENSION});
     this.fileExtensions.put(ContentType.IMAGE,             
         new String [] {PNG_EXTENSION, JPEG_EXTENSION, BMP_EXTENSION, WBMP_EXTENSION, GIF_EXTENSION} );
   }
