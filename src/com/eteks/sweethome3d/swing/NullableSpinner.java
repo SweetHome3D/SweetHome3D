@@ -346,5 +346,12 @@ public class NullableSpinner extends AutoCommitSpinner {
       } 
       setValue(length);
     }
+
+    /**
+     * Sets the minimum length in centimeter displayed in this model.
+     */
+    public void setMinimumLength(float minimum) {
+      setMinimum(this.preferences.getLengthUnit().centimeterToUnit(minimum));
+    }
   }
 }

@@ -546,7 +546,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If width changes update width spinner
             widthSpinnerModel.setLength(controller.getWidth());
-            widthSpinnerModel.setMinimum(Math.min(controller.getWidth(), minimumLength));
+            widthSpinnerModel.setMinimumLength(Math.min(controller.getWidth(), minimumLength));
           }
         });
     
@@ -568,7 +568,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If depth changes update depth spinner
             depthSpinnerModel.setLength(controller.getDepth());
-            depthSpinnerModel.setMinimum(Math.min(controller.getDepth(), minimumLength));
+            depthSpinnerModel.setMinimumLength(Math.min(controller.getDepth(), minimumLength));
           }
         });
     
@@ -590,7 +590,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           public void propertyChange(PropertyChangeEvent ev) {
             // If height changes update height spinner
             heightSpinnerModel.setLength(controller.getHeight());
-            heightSpinnerModel.setMinimum(Math.min(controller.getHeight(), minimumLength));
+            heightSpinnerModel.setMinimumLength(Math.min(controller.getHeight(), minimumLength));
           }
         });
     this.keepProportionsCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 

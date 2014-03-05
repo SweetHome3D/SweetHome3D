@@ -394,7 +394,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             widthSpinnerModel.setNullable(width == null);
             widthSpinnerModel.setLength(width);
             if (width != null) {
-              widthSpinnerModel.setMinimum(Math.min(width, minimumLength));
+              widthSpinnerModel.setMinimumLength(Math.min(width, minimumLength));
             }
           }
         };
@@ -422,7 +422,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             depthSpinnerModel.setNullable(depth == null);
             depthSpinnerModel.setLength(depth);
             if (depth != null) {
-              depthSpinnerModel.setMinimum(Math.min(depth, minimumLength));
+              depthSpinnerModel.setMinimumLength(Math.min(depth, minimumLength));
             }
           }
         };
@@ -450,7 +450,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             heightSpinnerModel.setNullable(height == null);
             heightSpinnerModel.setLength(height);
             if (height != null) {
-              heightSpinnerModel.setMinimum(Math.min(height, minimumLength));
+              heightSpinnerModel.setMinimumLength(Math.min(height, minimumLength));
             }
           }
         };
