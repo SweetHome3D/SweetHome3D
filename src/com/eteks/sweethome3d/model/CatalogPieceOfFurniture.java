@@ -49,6 +49,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private final float             height;
   private final boolean           proportional;
   private final float             elevation;
+  private final float             dropOnTopElevation;
   private final boolean           movable;
   private final boolean           doorOrWindow;
   private final float [][]        modelRotation;
@@ -302,7 +303,54 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
-        height, elevation, movable, false, staircaseCutOutShape, null, modelRotation, creator, false, resizable, deformable,
+        height, elevation, 1f, movable, false, staircaseCutOutShape, null, modelRotation, creator, false, resizable, deformable,
+        texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+  }
+  
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param information additional information associated to the new piece
+   * @param tags tags associated to the new piece
+   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param grade grade of the piece of furniture or <code>null</code>
+   * @param icon content of the icon of the new piece
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param dropOnTopElevation  a percentage of the height at which should be placed 
+   *            an object dropped on the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code>
+   * @since 4.4 
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, 
+                                 String information, String [] tags, Long creationDate, Float grade, 
+                                 Content icon, Content planIcon, Content model, 
+                                 float width, float depth, float height, 
+                                 float elevation, float dropOnTopElevation, 
+                                 boolean movable, String staircaseCutOutShape, 
+                                 float [][] modelRotation, String creator, 
+                                 boolean resizable, boolean deformable, boolean texturable, 
+                                 BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
+    this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
+        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, creator, false, resizable, deformable,
         texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
   }
   
@@ -386,7 +434,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  Integer color, float [][] modelRotation, 
                                  boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
-    this(null, name, null, null, new String [0], System.currentTimeMillis(), null, icon, null, model, width, depth, height, elevation, 
+    this(null, name, null, null, new String [0], System.currentTimeMillis(), null, icon, null, model, width, depth, height, elevation, 1f,
         movable, false, staircaseCutOutShape, color, modelRotation, null, backFaceShown, true, true, true, null, null, null, iconYaw, proportional, true);
   }
   
@@ -394,7 +442,8 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                   String information, String [] tags, Long creationDate, Float grade, 
                                   Content icon, Content planIcon, Content model, 
                                   float width, float depth, float height, 
-                                  float elevation, boolean movable, boolean doorOrWindow, String staircaseCutOutShape,
+                                  float elevation, float dropOnTopElevation, 
+                                  boolean movable, boolean doorOrWindow, String staircaseCutOutShape,
                                   Integer color, float [][] modelRotation, String creator,
                                   boolean backFaceShown, boolean resizable, boolean deformable, boolean texturable, 
                                   BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, 
@@ -413,6 +462,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.depth = depth;
     this.height = height;
     this.elevation = elevation;
+    this.dropOnTopElevation = dropOnTopElevation;
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
     this.color = color;
@@ -516,6 +566,16 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public float getElevation() {
     return this.elevation;
+  }
+
+  /**
+   * Returns the elevation at which should be placed an object dropped on this piece.
+   * @return a percentage of the height of this piece. A negative value means that the piece 
+   *         should be ignored when an object is dropped on it. 
+   * @since 4.4 
+   */
+  public float getDropOnTopElevation() {
+    return this.dropOnTopElevation;
   }
 
   /**

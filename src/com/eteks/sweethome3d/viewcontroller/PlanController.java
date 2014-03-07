@@ -2223,7 +2223,8 @@ public class PlanController extends FurnitureController implements Controller {
       for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
         if (homePiece != piece 
             && !homePiece.isDoorOrWindow()
-            && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)) {
+            && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
+            && homePiece.getDropOnTopElevation() >= 0) {
           Shape shape = getPath(homePiece.getPoints());
           boolean surroundingPieceContainsPiece = true;
           for (float [] point : piecePoints) {
@@ -2233,7 +2234,8 @@ public class PlanController extends FurnitureController implements Controller {
             }
           }
           if (surroundingPieceContainsPiece) {
-            float elevation = homePiece.getElevation() + homePiece.getHeight();
+            float elevation = homePiece.getElevation() 
+                + homePiece.getHeight() * homePiece.getDropOnTopElevation();
             if (elevation > highestElevation) {
               highestElevation = elevation;
               highestSurroundingPiece = homePiece;

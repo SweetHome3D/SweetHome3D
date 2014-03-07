@@ -234,6 +234,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float                  depth;
   private float                  height;
   private float                  elevation;
+  private float                  dropOnTopElevation;
   private boolean                movable;
   private boolean                doorOrWindow;
   private HomeMaterial []        modelMaterials;
@@ -260,7 +261,6 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
-
   /**
    * Creates a home piece of furniture from an existing piece.
    * @param piece the piece from which data are copied
@@ -276,6 +276,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.depth = piece.getDepth();
     this.height = piece.getHeight();
     this.elevation = piece.getElevation();
+    this.dropOnTopElevation = piece.getDropOnTopElevation();
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
     this.color = piece.getColor();
@@ -319,6 +320,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * and reads piece from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.dropOnTopElevation = 1f;
     this.modelRotation = IDENTITY;
     this.resizable = true;
     this.deformable = true;
@@ -576,6 +578,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public float getElevation() {
     return this.elevation;
+  }
+
+  /**
+   * Returns the elevation at which should be placed an object dropped on this piece.
+   * @return a percentage of the height of this piece. A negative value means that the piece 
+   *         should be ignored when an object is dropped on it.
+   * @since 4.4 
+   */
+  public float getDropOnTopElevation() {
+    return this.dropOnTopElevation;
   }
 
   /**

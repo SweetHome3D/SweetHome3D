@@ -234,6 +234,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     ELEVATION("elevation"),
     /**
+     * The key for the preferred elevation (from the bottom of a piece) at which should be placed  
+     * an object dropped on a piece (optional). A negative value means that the piece should be ignored
+     * when an object is dropped on it. By default, this elevation is equal to its height. 
+     */
+    DROP_ON_TOP_ELEVATION("dropOnTopElevation"),
+    /**
      * The key for the transformation matrix values applied to a piece of furniture (optional).
      * If the 3D model of a piece of furniture isn't correctly oriented, 
      * the value of this key should give the 9 values of the transformation matrix 
@@ -589,6 +595,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     float depth = Float.parseFloat(resource.getString(PropertyKey.DEPTH.getKey(index)));
     float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
     float elevation = getOptionalFloat(resource, PropertyKey.ELEVATION.getKey(index), 0);
+    float dropOnTopElevation = getOptionalFloat(resource, PropertyKey.DROP_ON_TOP_ELEVATION.getKey(index), height) / height;
     boolean movable = Boolean.parseBoolean(resource.getString(PropertyKey.MOVABLE.getKey(index)));
     boolean doorOrWindow = Boolean.parseBoolean(resource.getString(PropertyKey.DOOR_OR_WINDOW.getKey(index)));
     String staircaseCutOutShape = getOptionalString(resource, PropertyKey.STAIRCASE_CUT_OUT_SHAPE.getKey(index), null);     
@@ -620,19 +627,19 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           resource, PropertyKey.DOOR_OR_WINDOW_WALL_DISTANCE.getKey(index), 0) / depth;
       Sash [] sashes = getDoorOrWindowSashes(resource, index, width, depth);
       return new CatalogDoorOrWindow(id, name, description, information, tags, creationDate, grade, 
-          icon, planIcon, model, width, depth, height, elevation, movable, 
+          icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
           doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, sashes,
           modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, information, tags, creationDate, grade, 
-            icon, planIcon, model, width, depth, height, elevation, movable, 
+            icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
             lightSources, staircaseCutOutShape, modelRotation, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, information, tags, creationDate, grade, 
-            icon, planIcon, model, width, depth, height, elevation, movable, 
+            icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
             staircaseCutOutShape, modelRotation, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       }

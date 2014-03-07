@@ -49,6 +49,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private float                      fixedWidth;
   private float                      fixedDepth;
   private float                      fixedHeight;
+  private float                      dropOnTopElevation; 
   private String                     currency;
   private List<Integer>              furnitureDefaultColors;
   private List<HomeTexture>          furnitureDefaultTextures;
@@ -95,6 +96,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     this.doorOrWindow = true;
     boolean visible = false;
     boolean modelMirrored = true;
+    this.dropOnTopElevation = -1;
     this.currency = firstPiece.getCurrency();
     // Search the lowest level elevation among grouped furniture
     Level minLevel = null;
@@ -120,6 +122,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       }
       piece.setLevel(null);
       height = Math.max(height, piece.getElevation() + piece.getHeight());
+      if (piece.getDropOnTopElevation() >= 0) {
+        this.dropOnTopElevation = Math.max(this.dropOnTopElevation, 
+            piece.getElevation() + piece.getHeight() * piece.getDropOnTopElevation());
+      }
       movable &= piece.isMovable();
       this.resizable &= piece.isResizable();
       this.deformable &= piece.isDeformable();
@@ -145,6 +151,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
       this.fixedHeight = height - elevation;
     }
+    this.dropOnTopElevation = (this.dropOnTopElevation - elevation) / height;
     setName(name);
     setNameVisible(false);
     setNameXOffset(0);
@@ -168,6 +175,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    * and reads piece from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.dropOnTopElevation = -1;
     this.deformable = true;
     this.texturable = true;
     in.defaultReadObject();
@@ -300,6 +308,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     } else {
       return super.getHeight();
     }
+  }
+  
+  /**
+   * Returns the elevation at which should be placed an object dropped on this group.
+   * @since 4.4 
+   */
+  @Override
+  public float getDropOnTopElevation() {
+    return this.dropOnTopElevation;
   }
   
   /**

@@ -63,6 +63,14 @@ public interface PieceOfFurniture {
   public abstract float getElevation();
 
   /**
+   * Returns the elevation at which should be placed an object dropped on this piece.
+   * @return a percentage of the height of this piece. A negative value means that the piece 
+   *         should be ignored when an object is dropped on it. 
+   * @since 4.4 
+   */
+  public abstract float getDropOnTopElevation();
+
+  /**
    * Returns <code>true</code> if this piece of furniture is movable.
    */
   public abstract boolean isMovable();
