@@ -150,10 +150,8 @@ public class ModelMaterialsComponent extends JButton implements View {
       ModelManager.getInstance().loadModel(controller.getModel(), new ModelManager.ModelObserver() {
           public void modelUpdated(BranchGroup modelRoot) {
             final MaterialsListModel materialsListModel = (MaterialsListModel)materialsList.getModel();
-            previewComponent.setModel(controller.getModel());
-            previewComponent.setModelRotationAndSize(controller.getModelRotation(),
+            previewComponent.setModel(controller.getModel(), controller.isBackFaceShown(), controller.getModelRotation(),
                 controller.getModelWidth(), controller.getModelDepth(), controller.getModelHeight());
-            previewComponent.setBackFaceShown(controller.isBackFaceShown());
             previewComponent.setModelMaterials(materialsListModel.getMaterials());
             materialsListModel.addListDataListener(new ListDataListener() {
                 public void contentsChanged(ListDataEvent ev) {

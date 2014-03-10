@@ -109,6 +109,7 @@ public class ModelPreviewComponent extends JComponent {
   private boolean                 parallelProjection;
   private Object                  iconImageLock;
   private HomePieceOfFurniture    previewedPiece;
+  private boolean                 internalRotationAndSize;
   private Map<Texture, Texture>   pieceTextures = new HashMap<Texture, Texture>();
 
   /**
@@ -638,7 +639,15 @@ public class ModelPreviewComponent extends JComponent {
    * Sets the 3D model content displayed by this component. 
    * The model is shown at its default orientation and in a box 1 unit wide.
    */
-  public void setModel(final Content model) {
+  public void setModel(Content model) {
+    setModel(model, false, null, -1, -1, -1);
+  }
+
+  /**
+   * Sets the 3D model content displayed by this component. 
+   */
+  void setModel(final Content model, final boolean backFaceShown, final float [][] modelRotation,
+                final float width, final float depth, final float height) {
     final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
     this.previewedPiece = null;
@@ -650,10 +659,13 @@ public class ModelPreviewComponent extends JComponent {
           public void modelUpdated(BranchGroup modelRoot) {
             if (modelRoot.numChildren() > 0) {
               try {
-                Vector3f size = ModelManager.getInstance().getSize(modelRoot);
+                Vector3f size = width < 0 
+                    ? ModelManager.getInstance().getSize(modelRoot)
+                    : new Vector3f(width, height, depth);
+                internalRotationAndSize = modelRotation != null;
                 previewedPiece = new HomePieceOfFurniture(
                     new CatalogPieceOfFurniture(null, null, model, 
-                        size.x, size.z, size.y, 0, false, null, null, false, 0, false));
+                        size.x, size.z, size.y, 0, false, null, modelRotation, backFaceShown, 0, false));
                 previewedPiece.setX(0);
                 previewedPiece.setY(0);
                 previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
@@ -695,13 +707,19 @@ public class ModelPreviewComponent extends JComponent {
               this.previewedPiece.getWidth(), 
               this.previewedPiece.getDepth(),
               this.previewedPiece.getHeight(),
-              0, false, this.previewedPiece.getColor(), null, backFaceShown, 0, false));
+              0, false, this.previewedPiece.getColor(), 
+              this.previewedPiece.getModelRotation(), backFaceShown, 0, false));
       this.previewedPiece.setX(0);
       this.previewedPiece.setY(0);
       this.previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
     
       TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      modelTransformGroup.addChild(new HomePieceOfFurniture3D(this.previewedPiece, null, true, true));
+      HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(previewedPiece, null, true, true);
+      if (OperatingSystem.isMacOSX()) {
+        this.pieceTextures.clear();
+        cloneTextures(piece3D, this.pieceTextures); 
+      }
+      modelTransformGroup.addChild(piece3D);
       if (modelTransformGroup.numChildren() > 1) {
         modelTransformGroup.removeChild(0);
       }
@@ -727,6 +745,10 @@ public class ModelPreviewComponent extends JComponent {
   protected void setModelRotation(float [][] modelRotation) {
     BranchGroup modelNode = getModelNode();
     if (modelNode != null && modelNode.numChildren() > 0) {
+      // Check rotation isn't set on model node 
+      if (this.internalRotationAndSize) {
+        throw new IllegalStateException("Can't set rotation");
+      }
       // Apply model rotation
       Transform3D rotationTransform = new Transform3D();
       if (modelRotation != null) {
@@ -753,6 +775,10 @@ public class ModelPreviewComponent extends JComponent {
                                          float width, float depth, float height) {
     BranchGroup modelNode = getModelNode();
     if (modelNode != null && modelNode.numChildren() > 0) {
+      // Check rotation isn't set on model node
+      if (this.internalRotationAndSize) {
+        throw new IllegalStateException("Can't set rotation and size");
+      }
       Transform3D normalization = ModelManager.getInstance().getNormalizedTransform(modelNode, modelRotation, 1f);
       // Scale model to its size
       Transform3D scaleTransform = new Transform3D();
