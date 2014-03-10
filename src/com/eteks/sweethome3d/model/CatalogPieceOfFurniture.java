@@ -30,7 +30,7 @@ import java.util.WeakHashMap;
  * A catalog piece of furniture.
  * @author Emmanuel Puybaret
  */
-public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
+public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture, CatalogItem {
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   private static final byte [][]  EMPTY_CRITERIA     = new byte [0][];
 

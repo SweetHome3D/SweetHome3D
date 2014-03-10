@@ -25,7 +25,7 @@ import java.text.Collator;
  * A texture in textures catalog.
  * @author Emmanuel Puybaret
  */
-public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> {
+public class CatalogTexture implements TextureImage, CatalogItem, Comparable<CatalogTexture> {
   private static final long serialVersionUID = 1L;
   
   private final String          id;
@@ -116,6 +116,15 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
    */
   public Content getImage() {
     return this.image;
+  }
+  
+  /**
+   * Returns the icon of this texture.
+   * @return the image of this texture.
+   * @since 4.4
+   */
+  public Content getIcon() {
+    return getImage();
   }
   
   /**
