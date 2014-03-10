@@ -135,7 +135,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
                                 final FurnitureCatalogController controller) {
     final CatalogListModel catalogListModel = new CatalogListModel(catalog);
     this.catalogFurnitureList = new JList(catalogListModel) {
-        private FurnitureToolTip toolTip = new FurnitureToolTip(false, preferences);
+        private CatalogItemToolTip toolTip = new CatalogItemToolTip(false, preferences);
         private boolean mousePressed;
         private boolean firstScroll;
         
@@ -170,7 +170,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
           // Return a tooltip for furniture pieces described in the list.
           int index = locationToIndex(ev.getPoint());
           if (index != -1) {
-            this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)getModel().getElementAt(index));
+            this.toolTip.setCatalogItem((CatalogPieceOfFurniture)getModel().getElementAt(index));
             return this.toolTip.getTipText();
           } else {
             return null;

@@ -66,9 +66,11 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
@@ -189,6 +191,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     private JButton                 importTextureButton;
     private JButton                 modifyTextureButton;
     private JButton                 deleteTextureButton;
+    private CatalogItemToolTip      toolTip;
 
     public TexturePanel(UserPreferences preferences, 
                         TextureChoiceController controller) {
@@ -206,7 +209,30 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                                   final TextureChoiceController controller) {
       this.availableTexturesLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "availableTexturesLabel.text"));
-      this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
+      this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog())) {
+          @Override
+          public JToolTip createToolTip() {    
+            if (toolTip.isTipTextComplete()) {
+              // Use toolTip object only for its text returned in getToolTipText
+              return super.createToolTip();
+            } else {
+              toolTip.setComponent(this);
+              return toolTip;
+            }
+          }
+  
+          @Override
+          public String getToolTipText(MouseEvent ev) {
+            int index = locationToIndex(ev.getPoint());
+            if (index >= 0) {
+              toolTip.setCatalogItem((CatalogTexture)getModel().getElementAt(index));
+              return toolTip.getTipText();
+            } else {
+              return null;
+            }
+          }
+        };
+      this.toolTip = new CatalogItemToolTip(true, preferences);
       this.availableTexturesList.setVisibleRowCount(15);
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.availableTexturesList.setCellRenderer(new TextureListCellRenderer());
@@ -529,8 +555,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             }
           }
         });
+      ToolTipManager.sharedInstance().registerComponent(this.availableTexturesList);
       dialog.setVisible(true);
       dialog.dispose();
+      ToolTipManager.sharedInstance().unregisterComponent(this.availableTexturesList);
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
         TextureImage selectedTexture = getPreviewTexture();
         if (selectedTexture instanceof HomeTexture

@@ -79,7 +79,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class FurnitureCatalogTree extends JTree implements View {
   private final UserPreferences preferences;
   private TreeSelectionListener treeSelectionListener;
-  private FurnitureToolTip      toolTip;
+  private CatalogItemToolTip    toolTip;
 
   /**
    * Creates a tree that displays <code>catalog</code> content.
@@ -105,7 +105,7 @@ public class FurnitureCatalogTree extends JTree implements View {
                               UserPreferences preferences, 
                               FurnitureCatalogController controller) {
     this.preferences = preferences;
-    this.toolTip = new FurnitureToolTip(true, preferences);
+    this.toolTip = new CatalogItemToolTip(true, preferences);
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -268,7 +268,7 @@ public class FurnitureCatalogTree extends JTree implements View {
     if (this.preferences != null
         && path != null
         && path.getPathCount() == 3) {
-      this.toolTip.setPieceOfFurniture((CatalogPieceOfFurniture)path.getLastPathComponent());
+      this.toolTip.setCatalogItem((CatalogPieceOfFurniture)path.getLastPathComponent());
       return this.toolTip.getTipText();
     } else {
       return null;
