@@ -316,7 +316,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Object getNextValue() {
       if (getValue() == null
           || getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
-        return super.getNextValue();
+        return ((Number)super.getNextValue()).intValue();
       } else {
         return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
       }
@@ -326,7 +326,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Object getPreviousValue() {
       if (getValue() == null
           || getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
-        return super.getPreviousValue();
+        return ((Number)super.getPreviousValue()).intValue();
       } else {
         return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
       }

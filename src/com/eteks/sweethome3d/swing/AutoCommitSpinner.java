@@ -123,7 +123,7 @@ public class AutoCommitSpinner extends JSpinner {
     @Override
     public Object getNextValue() {
       if (getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
-        return super.getNextValue();
+        return ((Number)super.getNextValue()).intValue();
       } else {
         return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
       }
@@ -132,7 +132,7 @@ public class AutoCommitSpinner extends JSpinner {
     @Override
     public Object getPreviousValue() {
       if (getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
-        return super.getPreviousValue();
+        return ((Number)super.getPreviousValue()).intValue();
       } else {
         return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
       }
