@@ -327,7 +327,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       angleSpinnerModel.setValue(angle);
       final PropertyChangeListener angleChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            Float newAngle = (Float) ev.getNewValue();
+            Integer newAngle = (Integer)ev.getNewValue();
             angleSpinnerModel.setNullable(newAngle == null);
             angleSpinnerModel.setValue(newAngle);
           }
@@ -337,7 +337,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           public void stateChanged(ChangeEvent ev) {
             controller.removePropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES,
                 angleChangeListener);
-            Number value = (Number) angleSpinnerModel.getValue();
+            Number value = (Number)angleSpinnerModel.getValue();
             if (value == null) {
               controller.setAngleInDegrees(null);
             } else {
