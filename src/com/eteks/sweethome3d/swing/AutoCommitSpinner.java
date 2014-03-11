@@ -26,6 +26,7 @@ import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
@@ -76,25 +77,25 @@ public class AutoCommitSpinner extends JSpinner {
                 return true;
               }
               
-              @SuppressWarnings("unchecked")
+              @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMaximum() {
                 return numberFormatter.getMaximum();
               }
               
-              @SuppressWarnings("unchecked")
+              @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMinimum() {
                 return numberFormatter.getMinimum();
               }
               
-              @SuppressWarnings("unchecked")
+              @SuppressWarnings({"rawtypes"})
               @Override
               public void setMaximum(Comparable maximum) {
                 numberFormatter.setMaximum(maximum);
               }
               
-              @SuppressWarnings("unchecked")
+              @SuppressWarnings({"rawtypes"})
               @Override
               public void setMinimum(Comparable minimum) {
                 numberFormatter.setMinimum(minimum);
@@ -107,6 +108,33 @@ public class AutoCommitSpinner extends JSpinner {
             };
           textField.setFormatterFactory(new DefaultFormatterFactory(editFormatter));
         }
+      }
+    }
+  }
+
+  /**
+   * A spinner number model that will reset to minimum when maximum is reached. 
+   */
+  public static class SpinnerModuloNumberModel extends SpinnerNumberModel {
+    public SpinnerModuloNumberModel(int value, int minimum, int maximum, int stepSize) {
+      super(value, minimum, maximum, stepSize);
+    }
+    
+    @Override
+    public Object getNextValue() {
+      if (getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
+        return super.getNextValue();
+      } else {
+        return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
+      }
+    }
+    
+    @Override
+    public Object getPreviousValue() {
+      if (getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
+        return super.getPreviousValue();
+      } else {
+        return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
       }
     }
   }

@@ -304,25 +304,7 @@ public class CompassPanel extends JPanel implements DialogView {
     
     this.northDirectionLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "northDirectionLabel.text"));
     // Create a spinner model able to choose an angle modulo 360
-    final SpinnerNumberModel northDirectionSpinnerModel = new SpinnerNumberModel(0, 0, 360, 5) {
-        @Override
-        public Object getNextValue() {
-          if (((Number)getValue()).intValue() + ((Number)getStepSize()).intValue() < ((Number)getMaximum()).intValue()) {
-            return super.getNextValue();
-          } else {
-            return ((Number)getValue()).intValue() + ((Number)getStepSize()).intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
-          }
-        }
-        
-        @Override
-        public Object getPreviousValue() {
-          if (((Number)getValue()).intValue() - ((Number)getStepSize()).intValue() >= ((Number)getMinimum()).intValue()) {
-            return super.getPreviousValue();
-          } else {
-            return ((Number)getValue()).intValue() - ((Number)getStepSize()).intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
-          }
-        }
-      };
+    final SpinnerNumberModel northDirectionSpinnerModel = new AutoCommitSpinner.SpinnerModuloNumberModel(0, 0, 360, 5);
     this.northDirectionSpinner = new AutoCommitSpinner(northDirectionSpinnerModel);
     northDirectionSpinnerModel.setValue(new Integer(Math.round(controller.getNorthDirectionInDegrees())));
     this.northDirectionComponent = new JComponent() {

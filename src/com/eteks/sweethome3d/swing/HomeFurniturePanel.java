@@ -319,7 +319,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       // Create angle label and its spinner bound to ANGLE_IN_DEGREES controller property
       this.angleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
           "angleLabel.text"));
-      final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = new NullableSpinner.NullableSpinnerNumberModel(
+      final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
           0, 0, 360, 1);
       this.angleSpinner = new NullableSpinner(angleSpinnerModel);
       Integer angle = controller.getAngleInDegrees();

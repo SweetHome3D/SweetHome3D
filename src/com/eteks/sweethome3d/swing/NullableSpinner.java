@@ -62,6 +62,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
+              @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMaximum() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -71,6 +72,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
+              @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMinimum() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -80,6 +82,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
+              @SuppressWarnings({"rawtypes"})
               @Override
               public void setMaximum(Comparable maximum) {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -89,6 +92,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                 }
               }
               
+              @SuppressWarnings({"rawtypes"})
               @Override
               public void setMinimum(Comparable minimum) {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -301,6 +305,35 @@ public class NullableSpinner extends AutoCommitSpinner {
   }
   
   /**
+   * A nullable spinner number model that will reset to minimum when maximum is reached. 
+   */
+  public static class NullableSpinnerModuloNumberModel extends NullableSpinnerNumberModel {
+    public NullableSpinnerModuloNumberModel(int value, int minimum, int maximum, int stepSize) {
+      super(value, minimum, maximum, stepSize);
+    }
+    
+    @Override
+    public Object getNextValue() {
+      if (getValue() == null
+          || getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
+        return super.getNextValue();
+      } else {
+        return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
+      }
+    }
+    
+    @Override
+    public Object getPreviousValue() {
+      if (getValue() == null
+          || getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
+        return super.getPreviousValue();
+      } else {
+        return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
+      }
+    }
+  }
+  
+  /**
    * Nullable spinner model displaying length values matching preferences unit. 
    */
   public static class NullableSpinnerLengthModel extends NullableSpinnerNumberModel {
@@ -333,7 +366,7 @@ public class NullableSpinner extends AutoCommitSpinner {
       if (getValue() == null) {
         return null;
       } else {
-        return this.preferences.getLengthUnit().unitToCentimeter(((Number)getValue()).floatValue());
+        return this.preferences.getLengthUnit().unitToCentimeter(getNumber().floatValue());
       }
     }
 
