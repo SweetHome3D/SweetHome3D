@@ -655,7 +655,7 @@ public class SwingTools {
   }
   
   /**
-   * Returns a scroll bar adjustment listener bound the given <code>scrollPane</code> view
+   * Returns a scroll bar adjustment listener bound to the given <code>scrollPane</code> view
    * that updates view tool tip when its vertical scroll bar is adjusted.
    */
   public static AdjustmentListener createAdjustmentListenerUpdatingScrollPaneViewToolTip(final JScrollPane scrollPane) {
