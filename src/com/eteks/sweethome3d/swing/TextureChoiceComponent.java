@@ -32,6 +32,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -56,6 +58,7 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -65,7 +68,9 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -74,6 +79,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -188,6 +195,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     private ScaledImageComponent    texturePreviewComponent;
     private JLabel                  availableTexturesLabel;
     private JList                   availableTexturesList;
+    private JLabel                  angleLabel;
+    private JRadioButton            angle0DegreeRadioButton;
+    private JRadioButton            angle45DegreeRadioButton;
+    private JRadioButton            angle90DegreeRadioButton;
     private JButton                 importTextureButton;
     private JButton                 modifyTextureButton;
     private JButton                 deleteTextureButton;
@@ -241,6 +252,11 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             public void valueChanged(ListSelectionEvent ev) {
               CatalogTexture selectedTexture = (CatalogTexture)availableTexturesList.getSelectedValue();
               setPreviewTexture(selectedTexture);
+              // Do not allow to select 45° angle if the texture isn't square
+              angle45DegreeRadioButton.setEnabled(Math.abs(selectedTexture.getWidth() - selectedTexture.getHeight()) < 1E-4);
+              if (angle45DegreeRadioButton.isSelected() && !angle45DegreeRadioButton.isEnabled()) {
+                angle0DegreeRadioButton.setSelected(true);
+              }
               if (modifyTextureButton != null) {
                 modifyTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
               }
@@ -252,7 +268,24 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
       this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
           TextureChoiceComponent.class, "chosenTextureLabel.text"));
-      this.texturePreviewComponent = new ScaledImageComponent(null, true);
+      this.texturePreviewComponent = new ScaledImageComponent(null, true) {
+          protected void paintComponent(Graphics g) {
+            Graphics2D g2D = (Graphics2D)g;
+            Shape oldClip = g2D.getClip();
+            AffineTransform oldTransform = g2D.getTransform();
+            Insets borderInsets = getBorder().getBorderInsets(this);
+            g2D.setClip(new Rectangle(borderInsets.left, borderInsets.top, 
+                getWidth() - borderInsets.right - borderInsets.left, getHeight() - borderInsets.bottom - borderInsets.top));
+            if (angle45DegreeRadioButton.isSelected()) {
+              g2D.rotate(Math.PI / 4, getWidth() / 2, getHeight() / 2);
+            } else if (angle90DegreeRadioButton.isSelected()) {
+              g2D.rotate(Math.PI / 2, getWidth() / 2, getHeight() / 2);
+            } 
+            super.paintComponent(g);
+            g2D.setTransform(oldTransform);
+            g2D.setClip(oldClip);
+          }
+        };
 
       try {
         String importTextureButtonText = SwingTools.getLocalizedLabelText(
@@ -284,6 +317,27 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             }
           });
       
+        this.angleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
+            "angleLabel.text"));
+        this.angle0DegreeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
+            "angle0DegreeRadioButton.text"), true);
+        this.angle45DegreeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
+            "angle45DegreeRadioButton.text"));
+        this.angle90DegreeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
+            "angle90DegreeRadioButton.text"));
+        ChangeListener angleChangeListener = new ChangeListener() {
+            public void stateChanged(ChangeEvent ev) {
+              texturePreviewComponent.repaint();
+            }
+          };
+        this.angle0DegreeRadioButton.addChangeListener(angleChangeListener);
+        this.angle45DegreeRadioButton.addChangeListener(angleChangeListener);
+        this.angle90DegreeRadioButton.addChangeListener(angleChangeListener);
+        ButtonGroup angleGroup = new ButtonGroup();
+        angleGroup.add(this.angle0DegreeRadioButton);
+        angleGroup.add(this.angle45DegreeRadioButton);
+        angleGroup.add(this.angle90DegreeRadioButton);
+        
         this.importTextureButton = new JButton(importTextureButtonText);
         this.importTextureButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ev) {
@@ -315,7 +369,16 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
       Border border = this.texturePreviewComponent.getBorder();
       // Update edited texture in texture panel
-      setPreviewTexture(controller.getTexture());
+      HomeTexture texture = controller.getTexture();
+      setPreviewTexture(texture);
+      if (texture instanceof HomeTexture) {
+        this.angle45DegreeRadioButton.setEnabled(Math.abs(texture.getWidth() - texture.getHeight()) < 1E-4);
+        if (((HomeTexture)texture).getAngle() == (float)(Math.PI / 4)) {
+          this.angle45DegreeRadioButton.setSelected(true);
+        } else if (((HomeTexture)texture).getAngle() == (float)(Math.PI / 2)) {
+          this.angle90DegreeRadioButton.setSelected(true);
+        }
+      }
       Insets insets = border.getBorderInsets(this.texturePreviewComponent);
       this.texturePreviewComponent.setPreferredSize(
           new Dimension(PREVIEW_ICON_SIZE + insets.left + insets.right, PREVIEW_ICON_SIZE + insets.top + insets.bottom));
@@ -413,6 +476,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.availableTexturesLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             TextureChoiceComponent.class, "availableTexturesLabel.mnemonic")).getKeyCode());
         this.availableTexturesLabel.setLabelFor(this.availableTexturesList);
+        this.angle0DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(TextureChoiceComponent.class, "angle0DegreeRadioButton.mnemonic")).getKeyCode());
+        this.angle45DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(TextureChoiceComponent.class, "angle45DegreeRadioButton.mnemonic")).getKeyCode());
+        this.angle90DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(TextureChoiceComponent.class, "angle90DegreeRadioButton.mnemonic")).getKeyCode());
         if (this.importTextureButton != null) {
           this.importTextureButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
               TextureChoiceComponent.class, "importTextureButton.mnemonic")).getKeyCode());
@@ -428,29 +497,51 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
      * Layouts components in panel with their labels. 
      */
     private void layoutComponents() {
+      int labelAlignment = OperatingSystem.isMacOSX() 
+          ? GridBagConstraints.LINE_END
+          : GridBagConstraints.LINE_START;
       // First row
       add(this.availableTexturesLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
       add(this.chosenTextureLabel, new GridBagConstraints(
-          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          1, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       // Second row
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
-          0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
+          0, 1, 1, 4, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
       SwingTools.installFocusBorder(this.availableTexturesList);
       add(this.texturePreviewComponent, new GridBagConstraints(
-          1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+          1, 1, 4, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));      
+      // Third row
+      if (this.controller.isRotationSupported()) {
+        add(this.angleLabel, new GridBagConstraints(
+            1, 2, 1, 1, 0.1, 0, labelAlignment,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
+        add(this.angle0DegreeRadioButton, new GridBagConstraints(
+            2, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
+        add(this.angle45DegreeRadioButton, new GridBagConstraints(
+            3, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
+        add(this.angle90DegreeRadioButton, new GridBagConstraints(
+            4, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        // Fourth row
+        add(new JSeparator(), new GridBagConstraints(
+            1, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+      }
       if (this.importTextureButton != null) {
-        // Third row
+        // Fifth row
         JPanel buttonsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
         buttonsPanel.add(this.importTextureButton);
         buttonsPanel.add(this.modifyTextureButton);
         buttonsPanel.add(this.deleteTextureButton);
         add(buttonsPanel, new GridBagConstraints(
-            1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
+            1, 4, 4, 1, 0, 1, GridBagConstraints.NORTH,
             GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       }
     }
@@ -458,14 +549,14 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     /**
      * Returns the chosen texture.
      */
-    public TextureImage getPreviewTexture() {
+    private TextureImage getPreviewTexture() {
       return this.previewTexture;
     }
 
     /**
      * Sets the chosen texture.
      */
-    public void setPreviewTexture(TextureImage previewTexture) {
+    private void setPreviewTexture(TextureImage previewTexture) {
       this.previewTexture = previewTexture;
       if (previewTexture != null) {
         this.texturePreviewComponent.setToolTipText(previewTexture.getName());
@@ -485,6 +576,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       } else {
         this.texturePreviewComponent.setToolTipText(null);
         this.texturePreviewComponent.setImage(null);
+        this.angle0DegreeRadioButton.setSelected(true);
       }
       // Update selection in texture list
       this.availableTexturesList.setSelectedValue(previewTexture, true);
@@ -560,13 +652,27 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       dialog.dispose();
       ToolTipManager.sharedInstance().unregisterComponent(this.availableTexturesList);
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
-        TextureImage selectedTexture = getPreviewTexture();
-        if (selectedTexture instanceof HomeTexture
-            || selectedTexture == null) {
-          this.controller.setTexture((HomeTexture)selectedTexture);
+        this.controller.setTexture(getSelectedTexture());
+      }
+    }
+
+    /**
+     * Returns the texture selected by the user.
+     */
+    private HomeTexture getSelectedTexture() {
+      TextureImage previewTexture = getPreviewTexture();
+      if (previewTexture == null) {
+        return null;
+      } else {
+        float angleInRadians;
+        if (this.angle45DegreeRadioButton.isSelected()) {
+          angleInRadians = (float)(Math.PI / 4);
+        } else if (this.angle90DegreeRadioButton.isSelected()) {
+          angleInRadians = (float)(Math.PI / 2);
         } else {
-          this.controller.setTexture(new HomeTexture(selectedTexture));
+          angleInRadians = 0;
         }
+        return new HomeTexture(previewTexture, angleInRadians);
       }
     }
   }

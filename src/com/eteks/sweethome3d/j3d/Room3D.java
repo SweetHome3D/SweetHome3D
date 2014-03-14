@@ -444,15 +444,17 @@ public class Room3D extends Object3DBranch {
     geometryInfo.setStripCounts(stripCounts);
     
     if (texture != null) {
+      float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
+      float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
       i = 0;
       // Compute room texture coordinates
       for (float [][] areaPoints : geometryPoints) {
         for (int k = 0; k < areaPoints.length; k++) {
-          textureCoords [i++] = new TexCoord2f(areaPoints [k][0] / texture.getWidth(), 
+          textureCoords [i++] = new TexCoord2f(areaPoints [k][0] / textureWidth, 
               floorPart 
-                  ? -areaPoints [k][1] / texture.getHeight()
-                  : areaPoints [k][1] / texture.getHeight());
+                  ? -areaPoints [k][1] / textureHeight
+                  : areaPoints [k][1] / textureHeight);
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
@@ -512,30 +514,32 @@ public class Room3D extends Object3DBranch {
     geometryInfo.setCoordinates(coords);
     
     if (texture != null) {
+      float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
+      float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
       i = 0;
       // Compute room border texture coordinates
       for (float [][] geometryPoints : geometryRooms) {
         for (int j = 0; j < geometryPoints.length; j++) {
-          textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / texture.getWidth(), -geometryPoints [j][1] / texture.getHeight());
-          textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / texture.getWidth(), -(geometryPoints [j][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / textureWidth, -geometryPoints [j][1] / textureHeight);
+          textureCoords [i++] = new TexCoord2f(geometryPoints [j][0] / textureWidth, -(geometryPoints [j][1] - roomLevel.getFloorThickness()) / textureHeight);
           int nextPoint = j < geometryPoints.length - 1  
               ? j + 1
               : 0;
-          textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -(geometryPoints [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
-          textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / texture.getWidth(), -geometryPoints [nextPoint][1] / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / textureWidth, -(geometryPoints [nextPoint][1] - roomLevel.getFloorThickness()) / textureHeight);
+          textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0] / textureWidth, -geometryPoints [nextPoint][1] / textureHeight);
         }
       }
       // Compute holes borders texture coordinates
       for (float [][] geometryHole : geometryHoles) {
         for (int j = 0; j < geometryHole.length; j++) {
-          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / texture.getWidth(), -geometryHole [j][1] / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / textureWidth, -geometryHole [j][1] / textureHeight);
           int nextPoint = j < geometryHole.length - 1  
               ? j + 1
               : 0;
-          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -geometryHole [nextPoint][1] / texture.getHeight());
-          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / texture.getWidth(), -(geometryHole [nextPoint][1] - roomLevel.getFloorThickness()) / texture.getHeight());
-          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / texture.getWidth(), -(geometryHole [j][1] - roomLevel.getFloorThickness()) / texture.getHeight());
+          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / textureWidth, -geometryHole [nextPoint][1] / textureHeight);
+          textureCoords [i++] = new TexCoord2f(geometryHole [nextPoint][0] / textureWidth, -(geometryHole [nextPoint][1] - roomLevel.getFloorThickness()) / textureHeight);
+          textureCoords [i++] = new TexCoord2f(geometryHole [j][0] / textureWidth, -(geometryHole [j][1] - roomLevel.getFloorThickness()) / textureHeight);
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
@@ -703,7 +707,7 @@ public class Room3D extends Object3DBranch {
       // Update material and texture of room part
       roomPartAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
+      textureManager.loadTexture(roomPartTexture.getImage(), roomPartTexture.getAngle(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 texture = getHomeTextureClone(texture, home);

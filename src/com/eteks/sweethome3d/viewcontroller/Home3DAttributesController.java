@@ -110,6 +110,7 @@ public class Home3DAttributesController implements Controller {
     if (this.skyTextureController == null) {
       this.skyTextureController = new TextureChoiceController(
           this.preferences.getLocalizedString(Home3DAttributesController.class, "skyTextureTitle"), 
+          false,
           this.preferences, this.viewFactory, this.contentManager);
       this.skyTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {

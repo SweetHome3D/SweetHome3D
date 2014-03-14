@@ -23,6 +23,9 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.TexturePaint;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +45,7 @@ import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.utils.image.TextureLoader;
 
@@ -56,20 +60,20 @@ public class TextureManager {
   // Image used while an image content is loaded
   private final Texture                  waitTexture;
   // Map storing loaded texture contents
-  private final Map<Content, TextureKey> contentTextureKeys;
+  private final Map<RotatedContentKey, TextureKey> contentTextureKeys;
   // Map storing loaded textures
   private final Map<TextureKey, Texture> textures;
   // Map storing model nodes being loaded
-  private Map<Content, List<TextureObserver>> loadingTextureObservers;
+  private Map<RotatedContentKey, List<TextureObserver>> loadingTextureObservers;
   // Executor used to load images
   private ExecutorService                texturesLoader;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.contentTextureKeys = new WeakHashMap<Content, TextureKey>();
+    this.contentTextureKeys = new WeakHashMap<RotatedContentKey, TextureKey>();
     this.textures = new WeakHashMap<TextureKey, Texture>();
-    this.loadingTextureObservers = new HashMap<Content, List<TextureObserver>>();
+    this.loadingTextureObservers = new HashMap<RotatedContentKey, List<TextureObserver>>();
   }
 
   /**
@@ -141,10 +145,31 @@ public class TextureManager {
   public void loadTexture(final Content content,
                           boolean synchronous,
                           final TextureObserver textureObserver) {
+    loadTexture(content, 0, synchronous, textureObserver);
+  }
+
+  /**
+   * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>. 
+   * If the texture isn't loaded in cache yet and <code>synchronous</code> is false, a one pixel 
+   * white image texture will be notified immediately to the given <code>textureObserver</code>, 
+   * then a second notification will be given in Event Dispatch Thread once the image texture is loaded. 
+   * If the texture is in cache, it will be notified immediately to the given <code>textureObserver</code>.
+   * @param content an object containing an image
+   * @param angle   the rotation angle applied to the image
+   * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
+   * @param textureObserver the observer that will be notified once the texture is available
+   * @throws IllegalStateException if synchronous is <code>false</code> and the current thread isn't 
+   *    the Event Dispatch Thread.  
+   */
+  public void loadTexture(final Content content,
+                          final float   angle,
+                          boolean synchronous,
+                          final TextureObserver textureObserver) {
     Texture texture;
     TextureKey textureKey;
+    final RotatedContentKey contentKey = new RotatedContentKey(content, angle);
     synchronized (this.textures) { // Use one mutex for both maps
-      textureKey = this.contentTextureKeys.get(content);
+      textureKey = this.contentTextureKeys.get(contentKey);
       if (textureKey != null) {
         texture = this.textures.get(textureKey);
       } else {
@@ -153,7 +178,7 @@ public class TextureManager {
     }
     if (texture == null) {
       if (synchronous) {
-        texture = shareTexture(loadTexture(content), content);
+        texture = shareTexture(loadTexture(content, angle), contentKey);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
       } else if (!EventQueue.isDispatchThread()) {
@@ -165,7 +190,7 @@ public class TextureManager {
           this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
         
-        List<TextureObserver> observers = this.loadingTextureObservers.get(content);
+        List<TextureObserver> observers = this.loadingTextureObservers.get(contentKey);
         if (observers != null) {
           // If observers list exists, content texture is already being loaded
           // register observer for future notification
@@ -174,16 +199,16 @@ public class TextureManager {
           // Create a list of observers that will be notified once content texture is loaded
           observers = new ArrayList<TextureObserver>();
           observers.add(textureObserver);
-          this.loadingTextureObservers.put(content, observers);
+          this.loadingTextureObservers.put(contentKey, observers);
 
           // Load the image in a different thread
           this.texturesLoader.execute(new Runnable () {
               public void run() {
-                final Texture texture = shareTexture(loadTexture(content), content);
+                final Texture texture = shareTexture(loadTexture(content, angle), contentKey);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       // Notify loaded texture to observer
-                      for (TextureObserver observer : loadingTextureObservers.remove(content)) {
+                      for (TextureObserver observer : loadingTextureObservers.remove(contentKey)) {
                         observer.textureUpdated(texture);
                       }
                     }
@@ -202,10 +227,33 @@ public class TextureManager {
    * Returns a texture created from the image from <code>content</code>. 
    */
   public Texture loadTexture(final Content content) {
+    return loadTexture(content, 0);
+  }
+  
+  /**
+   * Returns a texture created from the image from <code>content</code>  
+   * and rotated of a given <code>angle</code> in radians. 
+   */
+  private Texture loadTexture(final Content content, float angle) {
     try {
       // Read the image 
       InputStream contentStream = content.openStream();
       BufferedImage image = ImageIO.read(contentStream);
+      if (angle != 0) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        BufferedImage rotatedImage = new BufferedImage((int)Math.round(Math.abs(image.getWidth() * cos) + Math.abs(image.getHeight() * sin)), 
+            (int)Math.round(Math.abs(image.getWidth() * sin) + Math.abs(image.getHeight() * cos)), image.getType());
+        Graphics2D g2D = (Graphics2D)rotatedImage.getGraphics();
+        g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2D.setPaint(new TexturePaint(image, 
+                        new Rectangle2D.Float(0, 0, image.getWidth(), image.getHeight())));
+        g2D.rotate(angle);
+        float maxDimension = Math.max(rotatedImage.getWidth(), rotatedImage.getHeight());
+        g2D.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
+        g2D.dispose();
+        image = rotatedImage;
+      }
       contentStream.close();
       if (image != null) {
         Texture texture = new TextureLoader(image).getTexture();
@@ -246,7 +294,7 @@ public class TextureManager {
    * same texture as the one in parameter is already shared.
    */
   private Texture shareTexture(final Texture texture,
-                               final Content content) {
+                               final RotatedContentKey contentKey) {
     TextureKey textureKey = new TextureKey(texture);
     Texture sharedTexture;
     synchronized (this.textures) { // Use one mutex for both maps
@@ -264,8 +312,8 @@ public class TextureManager {
           }
         }
       }
-      if (content != null) {
-        this.contentTextureKeys.put(content, textureKey);
+      if (contentKey != null) {
+        this.contentTextureKeys.put(contentKey, textureKey);
       }
     }
     return sharedTexture;
@@ -304,7 +352,33 @@ public class TextureManager {
       return texture.getFormat() == Texture.RGBA;
     }
   }
-  
+
+  /**
+   * Returns the width of the given texture once its rotation angle is applied.
+   */
+  public float getRotatedTextureWidth(HomeTexture texture) {
+    float angle = texture.getAngle();
+    if (angle != 0) {
+      return (float)Math.rint(Math.abs(texture.getWidth() * Math.cos(angle)) 
+          + Math.abs(texture.getHeight() * Math.sin(angle)));
+    } else {
+      return texture.getHeight();
+    }
+  }
+
+  /**
+   * Returns the height of the given texture once its rotation angle is applied.
+   */
+  public float getRotatedTextureHeight(HomeTexture texture) {
+    float angle = texture.getAngle();
+    if (angle != 0) {
+      return (float)Math.rint(Math.abs(texture.getWidth() * Math.sin(angle)) 
+          + Math.abs(texture.getHeight() * Math.cos(angle)));
+    } else {
+      return texture.getHeight();
+    }
+  }
+
   /**
    * An observer that receives texture loading notifications. 
    */
@@ -312,6 +386,37 @@ public class TextureManager {
     public void textureUpdated(Texture texture); 
   }
   
+  /**
+   * Key used to ensure rotated content uniqueness.
+   */
+  private static class RotatedContentKey {
+    private Content content;
+    private float   angle;
+    
+    public RotatedContentKey(Content content, float angle) {
+      this.content = content;
+      this.angle = angle;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (obj instanceof RotatedContentKey) {
+        RotatedContentKey rotatedContentKey = (RotatedContentKey)obj;
+        return this.content.equals(rotatedContentKey.content)
+            && this.angle == rotatedContentKey.angle;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return this.content.hashCode() 
+          + Float.floatToIntBits(this.angle);
+    }    
+  }
+
   /**
    * Key used to ensure texture uniqueness in textures map.
    * Image bits of the texture are stored in a weak reference to avoid grabbing memory uselessly.

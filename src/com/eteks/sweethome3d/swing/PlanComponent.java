@@ -274,7 +274,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Color                             wallsPatternBackgroundCache;
   private Color                             wallsPatternForegroundCache;
   private Map<Collection<Wall>, Area>       wallAreasCache;
-  private Map<Content, BufferedImage>       floorTextureImagesCache;
+  private Map<RotatedTextureKey, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
   private static ExecutorService            backgroundImageLoader;
@@ -2624,18 +2624,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             final HomeTexture floorTexture = room.getFloorTexture();
             if (floorTexture != null) {
               if (this.floorTextureImagesCache == null) {
-                this.floorTextureImagesCache = new WeakHashMap<Content, BufferedImage>();
+                this.floorTextureImagesCache = new WeakHashMap<RotatedTextureKey, BufferedImage>();
               }
-              BufferedImage textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
+              double cos = Math.cos(floorTexture.getAngle());
+              double sin = Math.sin(floorTexture.getAngle());
+              final RotatedTextureKey floorRotatedTextureKey = new RotatedTextureKey(floorTexture);
+              BufferedImage textureImage = this.floorTextureImagesCache.get(floorRotatedTextureKey);
               if (textureImage == null
                   || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
                 if (isTextureManagerAvailable()) {
                   // Prefer to share textures images with texture manager if it's available
-                  TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
+                  TextureManager.getInstance().loadTexture(
+                      floorTexture.getImage(), floorTexture.getAngle(), waitForTexture,
                       new TextureManager.TextureObserver() {
                         public void textureUpdated(Texture texture) {
-                          floorTextureImagesCache.put(floorTexture.getImage(), 
+                          floorTextureImagesCache.put(floorRotatedTextureKey, 
                               ((ImageComponent2D)texture.getImage(0)).getImage());
                           if (!waitForTexture) {
                             repaint();
@@ -2647,23 +2651,44 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(), 
                       waitForTexture ? null : this);
                   if (IconManager.getInstance().isWaitIcon(textureIcon)) {
-                    floorTextureImagesCache.put(floorTexture.getImage(), WAIT_TEXTURE_IMAGE);                    
+                    this.floorTextureImagesCache.put(floorRotatedTextureKey, WAIT_TEXTURE_IMAGE);                    
                   } else if (IconManager.getInstance().isErrorIcon(textureIcon)) {
-                    floorTextureImagesCache.put(floorTexture.getImage(), ERROR_TEXTURE_IMAGE);                    
-                  } else {
+                    this.floorTextureImagesCache.put(floorRotatedTextureKey, ERROR_TEXTURE_IMAGE);                    
+                  } else {                    
                     BufferedImage textureIconImage = new BufferedImage(
                         textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
                     textureIcon.paintIcon(this, g2DIcon, 0, 0);
                     g2DIcon.dispose();
-                    floorTextureImagesCache.put(floorTexture.getImage(), textureIconImage);
+                    if (floorTexture.getAngle() != 0) {
+                      BufferedImage rotatedIconImage = new BufferedImage(
+                          (int)Math.round(Math.abs(textureIconImage.getWidth() * cos) + Math.abs(textureIconImage.getHeight() * sin)), 
+                          (int)Math.round(Math.abs(textureIconImage.getWidth() * sin) + Math.abs(textureIconImage.getHeight() * cos)), 
+                          textureIconImage.getType());
+                      g2DIcon = (Graphics2D)rotatedIconImage.getGraphics();
+                      g2DIcon.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                      g2DIcon.setPaint(new TexturePaint(textureIconImage, 
+                                      new Rectangle2D.Float(0, 0, textureIconImage.getWidth(), textureIconImage.getHeight())));
+                      g2DIcon.rotate(floorTexture.getAngle());
+                      float maxDimension = Math.max(rotatedIconImage.getWidth(), rotatedIconImage.getHeight());
+                      g2DIcon.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
+                      g2DIcon.dispose();
+                      textureIconImage = rotatedIconImage;
+                    }
+
+                    this.floorTextureImagesCache.put(floorRotatedTextureKey, textureIconImage);
                   } 
                 }
-                textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
+                textureImage = this.floorTextureImagesCache.get(floorRotatedTextureKey);
               }
               
-              g2D.setPaint(new TexturePaint(textureImage, 
-                  new Rectangle2D.Float(0, 0, floorTexture.getWidth(), floorTexture.getHeight())));
+              float textureWidth = floorTexture.getWidth();
+              float textureHeight = floorTexture.getHeight();
+              if (floorTexture.getAngle() != 0) {
+                textureWidth = (int)Math.round(Math.abs(floorTexture.getWidth() * cos) + Math.abs(floorTexture.getHeight() * sin)); 
+                textureHeight = (int)Math.round(Math.abs(floorTexture.getWidth() * sin) + Math.abs(floorTexture.getHeight() * cos));
+              }
+              g2D.setPaint(new TexturePaint(textureImage, new Rectangle2D.Float(0, 0, textureWidth, textureHeight)));
             }
           }          
         }
@@ -5328,6 +5353,35 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * Key used to ensure rotated content uniqueness per texture.
+   */
+  private static class RotatedTextureKey {
+    private HomeTexture texture;
+    
+    public RotatedTextureKey(HomeTexture texture) {
+      this.texture = texture;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (obj instanceof RotatedTextureKey) {
+        RotatedTextureKey rotatedTextureKey = (RotatedTextureKey)obj;
+        return this.texture.getImage().equals(rotatedTextureKey.texture.getImage())
+            && this.texture.getAngle() == rotatedTextureKey.texture.getAngle();
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return this.texture.getImage().hashCode() 
+          + Float.floatToIntBits(this.texture.getAngle());
+    }    
+  }
+
+  /**
    * A proxy for the furniture icon seen from top. 
    */
   private abstract static class PieceOfFurnitureTopViewIcon implements Icon {
@@ -5430,20 +5484,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
                 new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {                  
-                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage());
+                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage(), pieceTexture.getAngle());
                   }
                 });
           } else { 
             Icon textureIcon = IconManager.getInstance().getIcon(this.pieceTexture.getImage(), null);
             if (IconManager.getInstance().isErrorIcon(textureIcon)) {
-              setTexturedIcon(c, ERROR_TEXTURE_IMAGE);                    
+              setTexturedIcon(c, ERROR_TEXTURE_IMAGE, 0);                    
             } else {
               BufferedImage textureIconImage = new BufferedImage(
                   textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
               Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
               textureIcon.paintIcon(c, g2DIcon, 0, 0);
               g2DIcon.dispose();
-              setTexturedIcon(c, textureIconImage);
+              setTexturedIcon(c, textureIconImage, this.pieceTexture.getAngle());
             }
           }
   
@@ -5454,16 +5508,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       super.paintIcon(c, g, x, y);
     }
     
-    private void setTexturedIcon(Component c, BufferedImage textureImage) {
+    private void setTexturedIcon(Component c, BufferedImage textureImage, float angle) {
       // Paint plan icon in an image
       BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-      PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);                  
+      imageGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);     
+      
       // Fill the pixels of plan icon with texture image
       imageGraphics.setPaint(new TexturePaint(textureImage, 
-          new Rectangle2D.Float(0, 0, -getIconWidth() / pieceWidth * pieceTexture.getWidth(), 
-              -getIconHeight() / pieceDepth * pieceTexture.getHeight())));
+          new Rectangle2D.Float(0, 0, -getIconWidth() / this.pieceWidth * this.pieceTexture.getWidth(), 
+              -getIconHeight() / this.pieceDepth * this.pieceTexture.getHeight())));      
       imageGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
+      imageGraphics.rotate(angle);
+      float maxDimension = Math.max(image.getWidth(), image.getHeight());
+      imageGraphics.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
       imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());                  
       imageGraphics.dispose();
       

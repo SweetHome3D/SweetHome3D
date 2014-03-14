@@ -34,6 +34,7 @@ public class TextureChoiceController implements Controller {
   public enum Property {TEXTURE}
 
   private final String                title;
+  private final boolean               rotationSupported;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;  
@@ -42,12 +43,20 @@ public class TextureChoiceController implements Controller {
   
   private HomeTexture           texture;
 
-
   public TextureChoiceController(String title, 
                                  UserPreferences preferences,
                                  ViewFactory    viewFactory,
                                  ContentManager contentManager) {
+    this(title, true, preferences, viewFactory, contentManager);
+  }
+
+  public TextureChoiceController(String title, 
+                                 boolean rotationSupported,
+                                 UserPreferences preferences,
+                                 ViewFactory    viewFactory,
+                                 ContentManager contentManager) {
     this.title = title;
+    this.rotationSupported = rotationSupported;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
@@ -83,7 +92,8 @@ public class TextureChoiceController implements Controller {
    * Sets the texture displayed by view and fires a <code>PropertyChangeEvent</code>.
    */
   public void setTexture(HomeTexture texture) {
-    if (this.texture != texture) {
+    if (this.texture != texture
+        && (texture == null || !texture.equals(this.texture))) {
       HomeTexture oldTexture = this.texture;
       this.texture = texture;
       this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
@@ -104,6 +114,13 @@ public class TextureChoiceController implements Controller {
     return this.title;
   }
 
+  /**
+   * Returns <code>true</code> if the rotation of the edited texture is supported.
+   */
+  public boolean isRotationSupported() {
+    return this.rotationSupported;
+  }
+  
   /**
    * Controls texture import.
    */

@@ -32,17 +32,29 @@ public class HomeTexture implements TextureImage, Serializable {
   private final Content image;
   private final float width;
   private final float height;
-  private final boolean leftToRightOriented; 
+  private final float angle;
+  private final boolean leftToRightOriented;
   
   /**
    * Creates a home texture from an existing one.
    * @param texture the texture from which data are copied
    */
   public HomeTexture(TextureImage texture) {
+    this(texture, 0);
+  }
+  
+  /**
+   * Creates a home texture from an existing one with customized angle and offset.
+   * @param texture the texture from which data are copied
+   * @param angle   the rotation angle applied to the texture
+   * @since 4.4 
+   */
+  public HomeTexture(TextureImage texture, float angle) {
     this.name = texture.getName();
     this.image = texture.getImage();
     this.width = texture.getWidth();
     this.height = texture.getHeight();
+    this.angle = angle;
     // Texture is left to right oriented when applied on objects seen from front
     // added to homes with a version 3.4 and higher
     this.leftToRightOriented = true; 
@@ -77,6 +89,14 @@ public class HomeTexture implements TextureImage, Serializable {
   }
 
   /**
+   * Returns the angle of rotation in radians applied to this texture.
+   * @since 4.4
+   */
+  public float getAngle() {
+    return this.angle;
+  }
+  
+  /**
    * Returns <code>true</code> if the objects using this texture should take into account 
    * the orientation of the texture.
    * @since 3.4
@@ -100,7 +120,8 @@ public class HomeTexture implements TextureImage, Serializable {
               || texture.image != null && texture.image.equals(this.image))
           && texture.width == this.width
           && texture.height == this.height
-          && texture.leftToRightOriented == this.leftToRightOriented;
+          && texture.leftToRightOriented == this.leftToRightOriented
+          && texture.angle == this.angle;
     } else {
       return false;
     }
@@ -114,6 +135,7 @@ public class HomeTexture implements TextureImage, Serializable {
     return (this.name != null  ? this.name.hashCode()   : 0)
         + (this.image != null  ? this.image.hashCode()  : 0)
         + Float.floatToIntBits(this.width)
-        + Float.floatToIntBits(this.height);
+        + Float.floatToIntBits(this.height)
+        + Float.floatToIntBits(this.angle);
   }
 }

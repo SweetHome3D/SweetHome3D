@@ -605,7 +605,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
             appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
             appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-            TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd, getTextureObserver(appearance));
+            TextureManager.getInstance().loadTexture(texture.getImage(), texture.getAngle(), 
+                waitTextureLoadingEnd, getTextureObserver(appearance));
           } else if (materials != null && materials.length > 0) {
             boolean materialFound = false;
             // Apply color, texture and shininess of the material named as appearance name
@@ -627,7 +628,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                   }
                   appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
                   appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-                  TextureManager.getInstance().loadTexture(material.getTexture().getImage(), waitTextureLoadingEnd, getTextureObserver(appearance));
+                  HomeTexture materialTexture = material.getTexture();
+                  TextureManager.getInstance().loadTexture(materialTexture.getImage(), materialTexture.getAngle(), 
+                      waitTextureLoadingEnd, getTextureObserver(appearance));
                 } else {
                   restoreDefaultMaterialAndTexture(appearance, material.getShininess());
                 }
@@ -678,12 +681,14 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Point3d upper = new Point3d();
     modelBounds.getUpper(upper);
     float minimumSize = ModelManager.getInstance().getMinimumSize();
-    float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / texture.getWidth();
+    float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
+    float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+    float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / textureWidth;
     float sw = texture.isLeftToRightOriented()  
         ? (float)-lower.x * sx  
         : 0;
-    float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize) / texture.getHeight();
-    float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize) / texture.getHeight();
+    float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize) / textureHeight;
+    float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize) / textureHeight;
     float tw = texture.isLeftToRightOriented()  
         ? (float)(-lower.y * ty + upper.z * tz)
         : 0;
