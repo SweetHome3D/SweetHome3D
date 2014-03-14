@@ -1,5 +1,5 @@
-SWEET HOME 3D v 4.3.1
----------------------
+SWEET HOME 3D v 4.4
+-------------------
 
 The current folder contains the required applications and data to run Sweet Home 3D
 under Windows 32 bits, Windows 64 bits, Mac OS X, Linux 32 bits and Linux 64 bits.
