@@ -31,12 +31,15 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -81,6 +84,7 @@ import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
@@ -648,6 +652,26 @@ public class SwingTools {
     installFocusBorder(component);
     scrollPane.setMinimumSize(new Dimension());
     return scrollPane;
+  }
+  
+  /**
+   * Returns a scroll bar adjustment listener bound the given <code>scrollPane</code> view
+   * that updates view tool tip when its vertical scroll bar is adjusted.
+   */
+  public static AdjustmentListener createAdjustmentListenerUpdatingScrollPaneViewToolTip(final JScrollPane scrollPane) {
+    return new AdjustmentListener() {
+        public void adjustmentValueChanged(AdjustmentEvent ev) {
+          Point screenLocation = MouseInfo.getPointerInfo().getLocation();
+          Point point = new Point(screenLocation); 
+          Component view = scrollPane.getViewport().getView();
+          SwingUtilities.convertPointFromScreen(point, view);
+          if (scrollPane.getViewport().getViewRect().contains(point)) {
+            MouseEvent mouseEvent = new MouseEvent(view, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 
+                0, point.x, point.y, screenLocation.x, screenLocation.y, 0, false, MouseEvent.NOBUTTON);
+            ToolTipManager.sharedInstance().mouseMoved(mouseEvent);
+          }
+        }
+      };
   }
   
   /**

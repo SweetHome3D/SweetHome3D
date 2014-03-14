@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -30,6 +31,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.lang.ref.WeakReference;
@@ -42,10 +44,14 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
+import javax.swing.JScrollPane;
 import javax.swing.JToolTip;
 import javax.swing.JTree;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -117,6 +123,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       addMouseListeners(controller);
     }
     ToolTipManager.sharedInstance().registerComponent(this);
+    addVerticalScrollBarAdjustmentListener();
     // Remove Select all action
     getActionMap().getParent().remove("selectAll");
   }
@@ -243,6 +250,35 @@ public class FurnitureCatalogTree extends JTree implements View {
       };
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
+  }
+
+  /**
+   * Adds adjustment listener to vertical scroll bar if this component is added to a scroll pane.
+   */
+  private void addVerticalScrollBarAdjustmentListener() {
+    addAncestorListener(new AncestorListener() {
+        private AdjustmentListener adjustmentListener;
+
+        public void ancestorAdded(AncestorEvent ev) {
+          Container parent = getParent();
+          if (parent instanceof JViewport) {
+            JScrollPane scrollPane = (JScrollPane)((JViewport)parent).getParent();
+            this.adjustmentListener = SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(scrollPane);
+            scrollPane.getVerticalScrollBar().addAdjustmentListener(this.adjustmentListener);
+          }
+        }
+        
+        public void ancestorRemoved(AncestorEvent event) {
+          if (this.adjustmentListener != null) {
+            ((JScrollPane)((JViewport)getParent()).getParent()).getVerticalScrollBar().
+                removeAdjustmentListener(this.adjustmentListener);
+            this.adjustmentListener = null;
+          }
+        }
+        
+        public void ancestorMoved(AncestorEvent event) {
+        }
+      });
   }
 
   /**

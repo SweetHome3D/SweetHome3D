@@ -459,6 +459,8 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     }
     // Last row
     JScrollPane listScrollPane = new JScrollPane(this.catalogFurnitureList);
+    listScrollPane.getVerticalScrollBar().addAdjustmentListener(
+        SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(listScrollPane));
     listScrollPane.setPreferredSize(new Dimension(250, 250));
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     add(listScrollPane, 
