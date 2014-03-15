@@ -732,6 +732,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           public void componentShown(ComponentEvent ev) {
             // Initialize search field value once displayed to ensure textures list preferred size is set
             searchTextField.setText(searchFilterText);
+            searchTextField.selectAll();
             if (!searchTextField.requestFocusInWindow()) {
               KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(TexturePanel.this);
             }
