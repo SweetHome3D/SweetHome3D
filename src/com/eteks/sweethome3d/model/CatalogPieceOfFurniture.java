@@ -777,7 +777,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   
   /**
    * Returns <code>true</code> if this piece matches the given <code>filter</code> text. 
-   * Each substring of the <code>filter</code> is considered as a search criterion that can math
+   * Each substring of the <code>filter</code> is considered as a search criterion that can match
    * the name, the category name, the creator, the description or the tags of this piece.
    * @since 4.2  
    */
