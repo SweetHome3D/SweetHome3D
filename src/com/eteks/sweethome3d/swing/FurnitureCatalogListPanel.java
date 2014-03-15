@@ -133,7 +133,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
   private void createComponents(FurnitureCatalog catalog,
                                 final UserPreferences preferences, 
                                 final FurnitureCatalogController controller) {
-    final CatalogListModel catalogListModel = new CatalogListModel(catalog);
+    final FurnitureCatalogListModel catalogListModel = new FurnitureCatalogListModel(catalog);
     this.catalogFurnitureList = new JList(catalogListModel) {
         private CatalogItemToolTip toolTip = new CatalogItemToolTip(false, preferences);
         private boolean mousePressed;
@@ -775,16 +775,16 @@ class FurnitureCatalogListPanel extends JPanel implements View {
   /**
    * List model adaptor to CatalogPieceOfFurniture instances of catalog.  
    */
-  private static class CatalogListModel extends AbstractListModel {
+  private static class FurnitureCatalogListModel extends AbstractListModel {
     private FurnitureCatalog                catalog;
     private List<CatalogPieceOfFurniture>   furniture;
     private FurnitureCategory               filterCategory;
     private String                          filterText;
     
-    public CatalogListModel(FurnitureCatalog catalog) {
+    public FurnitureCatalogListModel(FurnitureCatalog catalog) {
       this.catalog = catalog;
       this.filterText = "";
-      catalog.addFurnitureListener(new CatalogFurnitureListener(this));
+      catalog.addFurnitureListener(new FurnitureCatalogListener(this));
     }
 
     public void setFilterCategory(FurnitureCategory filterCategory) {
@@ -836,24 +836,24 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     }
     
     /**
-     * Catalog furniture listener bound to this tree model with a weak reference to avoid
-     * strong link between catalog and this tree.  
+     * Catalog furniture listener bound to this list model with a weak reference to avoid
+     * strong link between catalog and this list.  
      */
-    private static class CatalogFurnitureListener implements CollectionListener<CatalogPieceOfFurniture> {
-      private WeakReference<CatalogListModel>  catalogListModel;
+    private static class FurnitureCatalogListener implements CollectionListener<CatalogPieceOfFurniture> {
+      private WeakReference<FurnitureCatalogListModel>  listModel;
 
-      public CatalogFurnitureListener(CatalogListModel catalogListModel) {
-        this.catalogListModel = new WeakReference<CatalogListModel>(catalogListModel);
+      public FurnitureCatalogListener(FurnitureCatalogListModel catalogListModel) {
+        this.listModel = new WeakReference<FurnitureCatalogListModel>(catalogListModel);
       }
       
       public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
-        // If catalog tree model was garbage collected, remove this listener from catalog
-        CatalogListModel catalogTreeModel = this.catalogListModel.get();
+        // If catalog list model was garbage collected, remove this listener from catalog
+        FurnitureCatalogListModel listModel = this.listModel.get();
         FurnitureCatalog catalog = (FurnitureCatalog)ev.getSource();
-        if (catalogTreeModel == null) {
+        if (listModel == null) {
           catalog.removeFurnitureListener(this);
         } else {
-          catalogTreeModel.resetFurnitureList();
+          listModel.resetFurnitureList();
         }
       }
     }
