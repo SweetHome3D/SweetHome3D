@@ -22,8 +22,10 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -56,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -71,6 +74,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextField;
 import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -81,6 +85,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -187,10 +193,13 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
    */
   private static class TexturePanel extends JPanel {
     private static final int PREVIEW_ICON_SIZE = 128; 
+    private static String searchFilterText = "";
     
     private TextureChoiceController controller;
     
     private TextureImage            previewTexture;
+    private JLabel                  searchLabel;
+    private JTextField              searchTextField;
     private JLabel                  chosenTextureLabel;
     private ScaledImageComponent    texturePreviewComponent;
     private JLabel                  availableTexturesLabel;
@@ -220,7 +229,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                                   final TextureChoiceController controller) {
       this.availableTexturesLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "availableTexturesLabel.text"));
-      this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog())) {
+      final TexturesCatalogListModel texturesListModel = new TexturesCatalogListModel(preferences.getTexturesCatalog());
+      this.availableTexturesList = new JList(texturesListModel) {
           @Override
           public JToolTip createToolTip() {    
             if (toolTip.isTipTextComplete()) {
@@ -251,20 +261,58 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent ev) {
               CatalogTexture selectedTexture = (CatalogTexture)availableTexturesList.getSelectedValue();
-              setPreviewTexture(selectedTexture);
-              // Do not allow to select 45° angle if the texture isn't square
-              angle45DegreeRadioButton.setEnabled(Math.abs(selectedTexture.getWidth() - selectedTexture.getHeight()) < 1E-4);
-              if (angle45DegreeRadioButton.isSelected() && !angle45DegreeRadioButton.isEnabled()) {
-                angle0DegreeRadioButton.setSelected(true);
-              }
-              if (modifyTextureButton != null) {
-                modifyTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
-              }
-              if (deleteTextureButton != null) {
-                deleteTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
+              if (selectedTexture != null) {
+                setPreviewTexture(selectedTexture);
+                // Do not allow to select 45° angle if the texture isn't square
+                angle45DegreeRadioButton.setEnabled(Math.abs(selectedTexture.getWidth() - selectedTexture.getHeight()) < 1E-4);
+                if (angle45DegreeRadioButton.isSelected() && !angle45DegreeRadioButton.isEnabled()) {
+                  angle0DegreeRadioButton.setSelected(true);
+                }
+                if (modifyTextureButton != null) {
+                  modifyTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
+                }
+                if (deleteTextureButton != null) {
+                  deleteTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
+                }
               }
             }
           });
+
+      this.searchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+          TextureChoiceComponent.class, "searchLabel.text"));
+      this.searchTextField = new JTextField(5);
+      this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {  
+          public void changedUpdate(DocumentEvent ev) {
+            Object selectedValue = availableTexturesList.getSelectedValue();
+            texturesListModel.setFilterText(searchTextField.getText());
+            if (selectedValue != null) {
+              availableTexturesList.clearSelection();
+              availableTexturesList.setSelectedValue(selectedValue, true);
+              
+              if (texturesListModel.getSize() == 1) {
+                availableTexturesList.setSelectedIndex(0);
+              }
+            }
+          }
+    
+          public void insertUpdate(DocumentEvent ev) {
+            changedUpdate(ev);
+          }
+    
+          public void removeUpdate(DocumentEvent ev) {
+            changedUpdate(ev);
+          }
+        });
+      this.searchTextField.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "deleteContent");
+      this.searchTextField.getActionMap().put("deleteContent", new AbstractAction() {
+          public void actionPerformed(ActionEvent ev) {
+            searchTextField.setText("");
+          }
+        });
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        this.searchTextField.putClientProperty("JTextField.variant", "search");
+      } 
+      this.searchTextField.getInputMap(JComponent.WHEN_FOCUSED).remove(KeyStroke.getKeyStroke("ESCAPE"));
 
       this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
           TextureChoiceComponent.class, "chosenTextureLabel.text"));
@@ -454,8 +502,6 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         if (texturePanel == null) {
           ((TexturesCatalog)ev.getSource()).removeTexturesListener(this);
         } else {
-          texturePanel.availableTexturesList.setModel(
-              texturePanel.createListModel((TexturesCatalog)ev.getSource()));
           switch (ev.getType()) {
             case ADD:
               texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
@@ -476,6 +522,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.availableTexturesLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             TextureChoiceComponent.class, "availableTexturesLabel.mnemonic")).getKeyCode());
         this.availableTexturesLabel.setLabelFor(this.availableTexturesList);
+        this.searchLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "searchLabel.mnemonic")).getKeyCode());
+        this.searchLabel.setLabelFor(this.searchTextField);
         this.angle0DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(
             preferences.getLocalizedString(TextureChoiceComponent.class, "angle0DegreeRadioButton.mnemonic")).getKeyCode());
         this.angle45DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(
@@ -502,39 +551,51 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           : GridBagConstraints.LINE_START;
       // First row
       add(this.availableTexturesLabel, new GridBagConstraints(
-          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
       add(this.chosenTextureLabel, new GridBagConstraints(
-          1, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START,
+          2, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       // Second row
       JScrollPane scrollPane = new JScrollPane(this.availableTexturesList);
       scrollPane.getVerticalScrollBar().addAdjustmentListener(
           SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(scrollPane));
       add(scrollPane, new GridBagConstraints(
-          0, 1, 1, 4, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
+          0, 1, 2, 4, 1, 1, GridBagConstraints.CENTER,
+          GridBagConstraints.BOTH, new Insets(0, 0, 3, 15), 0, 0));
       SwingTools.installFocusBorder(this.availableTexturesList);
       add(this.texturePreviewComponent, new GridBagConstraints(
-          1, 1, 4, 1, 0, 0, GridBagConstraints.NORTH,
+          2, 1, 4, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));      
       // Third row
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        add(this.searchTextField, new GridBagConstraints(
+            0, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), 0, 0));
+      } else { 
+        add(this.searchLabel, new GridBagConstraints(
+            0, 5, 1, 1, 0, 0, labelAlignment, 
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 3), 0, 0));
+        add(this.searchTextField, new GridBagConstraints(
+            1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), 0, 0));
+      }
       if (this.controller.isRotationSupported()) {
         add(this.angleLabel, new GridBagConstraints(
-            1, 2, 1, 1, 0.1, 0, labelAlignment,
+            2, 2, 1, 1, 0.1, 0, labelAlignment,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
         add(this.angle0DegreeRadioButton, new GridBagConstraints(
-            2, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
-        add(this.angle45DegreeRadioButton, new GridBagConstraints(
             3, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
-        add(this.angle90DegreeRadioButton, new GridBagConstraints(
+        add(this.angle45DegreeRadioButton, new GridBagConstraints(
             4, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
+        add(this.angle90DegreeRadioButton, new GridBagConstraints(
+            5, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
         // Fourth row
         add(new JSeparator(), new GridBagConstraints(
-            1, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START,
+            2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
       }
       if (this.importTextureButton != null) {
@@ -544,9 +605,71 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         buttonsPanel.add(this.modifyTextureButton);
         buttonsPanel.add(this.deleteTextureButton);
         add(buttonsPanel, new GridBagConstraints(
-            1, 4, 4, 1, 0, 1, GridBagConstraints.NORTH,
+            2, 4, 4, 1, 0, 1, GridBagConstraints.NORTH,
             GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       }
+      
+      // Change component tab order to ensure search text field is after the available textures list 
+      final List<JComponent> components = new ArrayList<JComponent>();
+      components.add(this.availableTexturesList);
+      components.add(this.searchTextField);
+      if (this.controller.isRotationSupported()) {
+        components.add(this.angle0DegreeRadioButton);
+        components.add(this.angle45DegreeRadioButton);
+        components.add(this.angle90DegreeRadioButton);
+      }
+      if (this.importTextureButton != null) {
+        components.add(this.importTextureButton);
+        components.add(this.modifyTextureButton);
+        components.add(this.deleteTextureButton);
+      }
+      setFocusTraversalPolicy(new FocusTraversalPolicy() {
+          @Override
+          public Component getComponentAfter(Container container, Component component) {
+            int index = components.indexOf(component);
+            if (index == components.size() - 1) {
+              return null;
+            } else {
+              JComponent nextComponent = components.get(index + 1);
+              if (nextComponent.isEnabled()) {
+                return nextComponent;
+              } else {
+                return getComponentAfter(container, nextComponent);
+              }
+            }
+          }
+          
+          @Override
+          public Component getComponentBefore(Container container, Component component) {
+            int index = components.indexOf(component);
+            if (index == 0) {
+              return null;
+            } else {
+              JComponent previousComponent = components.get(index - 1);
+              if (previousComponent.isEnabled()) {
+                return previousComponent;
+              } else {
+                return getComponentBefore(container, previousComponent);
+              }
+            }
+          }
+
+          @Override
+          public Component getFirstComponent(Container container) {
+            return components.get(0);
+          }
+
+          @Override
+          public Component getLastComponent(Container container) {
+            return components.get(components.size() - 1);
+          }
+
+          @Override
+          public Component getDefaultComponent(Container container) {
+            return getFirstComponent(container);
+          }
+        });
+      setFocusTraversalPolicyProvider(true);
     }
     
     /**
@@ -589,35 +712,6 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       }
     }
 
-    /**
-     * Returns a list model from textures catalog.
-     */
-    private AbstractListModel createListModel(TexturesCatalog texturesCatalog) {
-      final CatalogTexture [] textures = getTextures(texturesCatalog);
-      return new AbstractListModel() {
-          public Object getElementAt(int index) {
-            return textures [index];
-          }
-    
-          public int getSize() {
-            return textures.length;
-          }
-        };
-    }
-
-    /**
-     * Returns the array of textures in catalog.
-     */
-    private CatalogTexture [] getTextures(TexturesCatalog texturesCatalog) {
-      List<CatalogTexture> textures = new ArrayList<CatalogTexture>();
-      for (TexturesCategory category : texturesCatalog.getCategories()) {
-        for (CatalogTexture texture : category.getTextures()) {
-          textures.add(texture);
-        }
-      }
-      return textures.toArray(new CatalogTexture [textures.size()]);
-    }
-    
     public void displayView(View textureChoiceComponent) {
       // Show panel in a resizable modal dialog
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
@@ -636,7 +730,11 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(TexturePanel.this);
+            // Initialize search field value once displayed to ensure textures list preferred size is set
+            searchTextField.setText(searchFilterText);
+            if (!searchTextField.requestFocusInWindow()) {
+              KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(TexturePanel.this);
+            }
             dialog.removeComponentListener(this);
           }
         });
@@ -650,10 +748,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             }
           }
         });
+      
       ToolTipManager.sharedInstance().registerComponent(this.availableTexturesList);
       dialog.setVisible(true);
       dialog.dispose();
       ToolTipManager.sharedInstance().unregisterComponent(this.availableTexturesList);
+      searchFilterText = this.searchTextField.getText();
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
         this.controller.setTexture(getSelectedTexture());
       }
@@ -676,6 +776,84 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           angleInRadians = 0;
         }
         return new HomeTexture(previewTexture, angleInRadians);
+      }
+    }
+    
+    /**
+     * List model adaptor to CatalogTexture instances of catalog.  
+     */
+    private static class TexturesCatalogListModel extends AbstractListModel {
+      private TexturesCatalog        catalog;
+      private List<CatalogTexture>   textures;
+      private String                 filterText;
+      
+      public TexturesCatalogListModel(TexturesCatalog catalog) {
+        this.catalog = catalog;
+        this.filterText = "";
+        catalog.addTexturesListener(new TexturesCatalogListener(this));
+      }
+
+      public void setFilterText(String filterText) {
+        this.filterText = filterText;
+        resetFurnitureList();
+      }
+
+      public Object getElementAt(int index) {
+        checkFurnitureList();
+        return this.textures.get(index);
+      }
+
+      public int getSize() {
+        checkFurnitureList();
+        return this.textures.size();
+      }
+      
+      private void resetFurnitureList() {
+        if (this.textures != null) {
+          this.textures = null;
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                fireContentsChanged(this, -1, -1);
+              }
+            });
+        }
+      }
+
+      private void checkFurnitureList() {
+        if (this.textures == null) {
+          this.textures = new ArrayList<CatalogTexture>();
+          this.textures.clear();
+          for (TexturesCategory category : this.catalog.getCategories()) {
+            for (CatalogTexture texture : category.getTextures()) {
+              if (texture.matchesFilter(this.filterText)) {
+                textures.add(texture);
+              }
+            }
+          }
+        }
+      }
+
+      /**
+       * Catalog textures listener bound to this list model with a weak reference to avoid
+       * strong link between catalog and this list.  
+       */
+      private static class TexturesCatalogListener implements CollectionListener<CatalogTexture> {
+        private WeakReference<TexturesCatalogListModel>  listModel;
+
+        public TexturesCatalogListener(TexturesCatalogListModel catalogListModel) {
+          this.listModel = new WeakReference<TexturesCatalogListModel>(catalogListModel);
+        }
+        
+        public void collectionChanged(CollectionEvent<CatalogTexture> ev) {
+          // If catalog list model was garbage collected, remove this listener from catalog
+          TexturesCatalogListModel listModel = this.listModel.get();
+          TexturesCatalog catalog = (TexturesCatalog)ev.getSource();
+          if (listModel == null) {
+            catalog.removeTexturesListener(this);
+          } else {
+            listModel.resetFurnitureList();
+          }
+        }
       }
     }
   }
