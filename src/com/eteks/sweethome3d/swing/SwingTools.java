@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -81,6 +82,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
+import javax.swing.JToolTip;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -665,15 +667,43 @@ public class SwingTools {
           Point point = new Point(screenLocation); 
           Component view = scrollPane.getViewport().getView();
           SwingUtilities.convertPointFromScreen(point, view);
-          if (scrollPane.getViewport().getViewRect().contains(point)) {
+          if (scrollPane.isShowing()
+              && scrollPane.getViewport().getViewRect().contains(point)) {
             MouseEvent mouseEvent = new MouseEvent(view, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 
                 0, point.x, point.y, screenLocation.x, screenLocation.y, 0, false, MouseEvent.NOBUTTON);
-            ToolTipManager.sharedInstance().mouseMoved(mouseEvent);
+            if (isToolTipShowing()) {
+              ToolTipManager.sharedInstance().mouseMoved(mouseEvent);
+            }
           }
         }
       };
   }
-  
+
+  /**
+   * Returns <code>true</code> if a tool tip is showing.
+   */
+  private static boolean isToolTipShowing() {
+    for (Window window : Window.getWindows()) {
+      if (isToolTipShowing(window)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isToolTipShowing(Container container) {
+    for (int i = 0; i < container.getComponentCount(); i++) {
+      Component child = container.getComponent(i);
+      if (child instanceof JToolTip 
+            && child.isShowing()
+          || child instanceof Container
+            && isToolTipShowing((Container)child)) {
+        return true;
+      }            
+    }
+    return false;
+  }
+
   /**
    * Adds a listener that will update the given popup menu to hide disabled menu items.
    */
@@ -835,7 +865,7 @@ public class SwingTools {
       }            
     }
   }
-
+  
   /**
    * Returns <code>true</code> if the given rectangle is fully visible at screen.
    */
