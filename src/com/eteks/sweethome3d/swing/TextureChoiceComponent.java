@@ -254,7 +254,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           }
         };
       this.toolTip = new CatalogItemToolTip(true, preferences);
-      this.availableTexturesList.setVisibleRowCount(15);
+      this.availableTexturesList.setVisibleRowCount(12);
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.availableTexturesList.setCellRenderer(new TextureListCellRenderer());
       this.availableTexturesList.getSelectionModel().addListSelectionListener(
@@ -549,65 +549,79 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       int labelAlignment = OperatingSystem.isMacOSX() 
           ? GridBagConstraints.LINE_END
           : GridBagConstraints.LINE_START;
+      JPanel leftPanel = new JPanel(new GridBagLayout());
       // First row
-      add(this.availableTexturesLabel, new GridBagConstraints(
+      leftPanel.add(this.availableTexturesLabel, new GridBagConstraints(
           0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
-      add(this.chosenTextureLabel, new GridBagConstraints(
-          2, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       // Second row
       JScrollPane scrollPane = new JScrollPane(this.availableTexturesList);
       scrollPane.getVerticalScrollBar().addAdjustmentListener(
           SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(scrollPane));
-      add(scrollPane, new GridBagConstraints(
-          0, 1, 2, 4, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 3, 15), 0, 0));
+      scrollPane.setPreferredSize(new Dimension(220, scrollPane.getPreferredSize().height));
+      leftPanel.add(scrollPane, new GridBagConstraints(
+          0, 1, 2, 1, 1, 1, GridBagConstraints.CENTER,
+          GridBagConstraints.BOTH, new Insets(0, 0, 3, 0), 0, 0));
       SwingTools.installFocusBorder(this.availableTexturesList);
-      add(this.texturePreviewComponent, new GridBagConstraints(
+      // Third row
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        leftPanel.add(this.searchTextField, new GridBagConstraints(
+            0, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      } else { 
+        leftPanel.add(this.searchLabel, new GridBagConstraints(
+            0, 5, 1, 1, 0, 0, labelAlignment, 
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 3), 0, 0));
+        leftPanel.add(this.searchTextField, new GridBagConstraints(
+            1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      }
+      
+      JPanel rightPanel = new JPanel(new GridBagLayout());
+      // First row
+      rightPanel.add(this.chosenTextureLabel, new GridBagConstraints(
+          2, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      // Second row
+      rightPanel.add(this.texturePreviewComponent, new GridBagConstraints(
           2, 1, 4, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));      
       // Third row
-      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        add(this.searchTextField, new GridBagConstraints(
-            0, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), 0, 0));
-      } else { 
-        add(this.searchLabel, new GridBagConstraints(
-            0, 5, 1, 1, 0, 0, labelAlignment, 
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 3), 0, 0));
-        add(this.searchTextField, new GridBagConstraints(
-            1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), 0, 0));
-      }
       if (this.controller.isRotationSupported()) {
-        add(this.angleLabel, new GridBagConstraints(
+        rightPanel.add(this.angleLabel, new GridBagConstraints(
             2, 2, 1, 1, 0.1, 0, labelAlignment,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
-        add(this.angle0DegreeRadioButton, new GridBagConstraints(
+        rightPanel.add(this.angle0DegreeRadioButton, new GridBagConstraints(
             3, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
-        add(this.angle45DegreeRadioButton, new GridBagConstraints(
+        rightPanel.add(this.angle45DegreeRadioButton, new GridBagConstraints(
             4, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
-        add(this.angle90DegreeRadioButton, new GridBagConstraints(
+        rightPanel.add(this.angle90DegreeRadioButton, new GridBagConstraints(
             5, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
         // Fourth row
-        add(new JSeparator(), new GridBagConstraints(
+        rightPanel.add(new JSeparator(), new GridBagConstraints(
             2, 3, 4, 1, 0, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
       }
+      // Fifth row
       if (this.importTextureButton != null) {
-        // Fifth row
         JPanel buttonsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
         buttonsPanel.add(this.importTextureButton);
         buttonsPanel.add(this.modifyTextureButton);
         buttonsPanel.add(this.deleteTextureButton);
-        add(buttonsPanel, new GridBagConstraints(
+        rightPanel.add(buttonsPanel, new GridBagConstraints(
             2, 4, 4, 1, 0, 1, GridBagConstraints.NORTH,
             GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       }
+      
+      add(leftPanel, new GridBagConstraints(
+          0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
+      add(rightPanel, new GridBagConstraints(
+          1, 0, 1, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       
       // Change component tab order to ensure search text field is after the available textures list 
       final List<JComponent> components = new ArrayList<JComponent>();
@@ -726,16 +740,13 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       // Pack again because resize decorations may have changed dialog preferred size
       dialog.pack();
       dialog.setMinimumSize(getPreferredSize());
+      // Initialize search field value once list preferred size is set      
+      searchTextField.setText(searchFilterText);
       // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            // Initialize search field value once displayed to ensure textures list preferred size is set
-            searchTextField.setText(searchFilterText);
-            searchTextField.selectAll();
-            if (!searchTextField.requestFocusInWindow()) {
-              KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(TexturePanel.this);
-            }
+            SwingTools.requestFocusInWindow(searchTextField);
             dialog.removeComponentListener(this);
           }
         });

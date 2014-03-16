@@ -451,7 +451,7 @@ public class SwingTools {
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            requestFocus(focusedComponent);
+            requestFocusInWindow(focusedComponent);
             dialog.removeComponentListener(this);
           }
         });
@@ -470,7 +470,7 @@ public class SwingTools {
   /**
    * Requests the focus for the given component.
    */
-  private static void requestFocus(final JComponent focusedComponent) {
+  public static void requestFocusInWindow(final JComponent focusedComponent) {
     if (!focusedComponent.requestFocusInWindow()) {
       // Prefer to call requestFocusInWindow in a timer with a small delay   
       // than calling it with EnventQueue#invokeLater to ensure it always works
@@ -502,7 +502,7 @@ public class SwingTools {
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentShown(ComponentEvent ev) {
-            requestFocus(focusedComponent);
+            requestFocusInWindow(focusedComponent);
             dialog.removeComponentListener(this);
           }
         });
