@@ -362,7 +362,7 @@ public class TextureManager {
       return (float)Math.rint(Math.abs(texture.getWidth() * Math.cos(angle)) 
           + Math.abs(texture.getHeight() * Math.sin(angle)));
     } else {
-      return texture.getHeight();
+      return texture.getWidth();
     }
   }
 
