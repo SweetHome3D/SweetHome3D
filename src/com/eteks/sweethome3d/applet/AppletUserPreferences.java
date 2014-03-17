@@ -259,7 +259,6 @@ public class AppletUserPreferences extends UserPreferences {
     setNewFloorThickness(Float.parseFloat(properties.getProperty(NEW_FLOOR_THICKNESS, 
         String.valueOf(defaultPreferences.getNewFloorThickness()))));
     setCurrency(defaultPreferences.getCurrency());    
-    setRecentColors(new ArrayList<Integer>());
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
