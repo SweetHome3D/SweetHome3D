@@ -323,6 +323,7 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, preferences, furnitureController, "alignSelectedFurnitureSideBySide");
     createAction(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, preferences, furnitureController, "distributeSelectedFurnitureHorizontally");
     createAction(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, preferences, furnitureController, "distributeSelectedFurnitureVertically");
+    createAction(ActionType.RESET_FURNITURE_ELEVATION, preferences, furnitureController, "resetFurnitureElevation");
     final HomeController3D homeController3D = controller.getHomeController3D();
     if (homeController3D.getView() != null) {
       createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
@@ -977,6 +978,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.ALIGN_FURNITURE_SIDE_BY_SIDE, furnitureMenu);
     addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_HORIZONTALLY, furnitureMenu);
     addActionToMenu(ActionType.DISTRIBUTE_FURNITURE_VERTICALLY, furnitureMenu);
+    addActionToMenu(ActionType.RESET_FURNITURE_ELEVATION, furnitureMenu);
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
@@ -2441,6 +2443,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, furnitureViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, furnitureViewPopup);
       furnitureViewPopup.add(createAlignOrDistributeMenu(home, preferences, true));
+      addActionToPopupMenu(ActionType.RESET_FURNITURE_ELEVATION, furnitureViewPopup);
       furnitureViewPopup.addSeparator();
       furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
       furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
@@ -2575,6 +2578,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);
       planViewPopup.add(createAlignOrDistributeMenu(home, preferences, true));
+      addActionToPopupMenu(ActionType.RESET_FURNITURE_ELEVATION, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_COMPASS, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);

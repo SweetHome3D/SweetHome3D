@@ -696,6 +696,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsFurniture = false;
     boolean homeSelectionContainsDeletableFurniture = false;
     boolean homeSelectionContainsOneCopiableItemOrMore = false;
+    boolean homeSelectionContainsOneMovablePieceOfFurnitureOrMore = false;
     boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsFurnitureGroup = false;
@@ -730,6 +731,7 @@ public class HomeController implements Controller {
       int movablePiecesOfFurnitureCount = 0;
       for (HomePieceOfFurniture piece : selectedFurniture) {
         if (furnitureController.isPieceOfFurnitureMovable(piece)) {
+          homeSelectionContainsOneMovablePieceOfFurnitureOrMore = true;
           movablePiecesOfFurnitureCount++;
           if (movablePiecesOfFurnitureCount >= 2) {
             homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = true;
@@ -843,6 +845,8 @@ public class HomeController implements Controller {
         homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.DISTRIBUTE_FURNITURE_VERTICALLY,
         homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.RESET_FURNITURE_ELEVATION,
+        homeSelectionContainsOneMovablePieceOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.GROUP_FURNITURE,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,

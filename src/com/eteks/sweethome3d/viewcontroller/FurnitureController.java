@@ -1151,6 +1151,108 @@ public class FurnitureController implements Controller {
   }
 
   /**
+   * Resets the elevation of the selected furniture to its default elevation.
+   */
+  public void resetFurnitureElevation() {
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.size() >= 1) {
+      final List<Selectable> oldSelection = this.home.getSelectedItems();
+      final float [] furnitureOldElevation = new float [selectedFurniture.size()];
+      for (int i = 0; i < selectedFurniture.size(); i++) {
+        furnitureOldElevation [i] = selectedFurniture.get(i).getElevation();
+      }
+      this.home.setSelectedItems(selectedFurniture);
+      doResetFurnitureElevation(selectedFurniture);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            for (int i = 0; i < selectedFurniture.size(); i++) {
+              selectedFurniture.get(i).setElevation(furnitureOldElevation [i]);
+            }
+            home.setSelectedItems(oldSelection);
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doResetFurnitureElevation(selectedFurniture);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(FurnitureController.class, "undoResetElevation");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+  
+  private void doResetFurnitureElevation(List<HomePieceOfFurniture> selectedFurniture) {
+    for (HomePieceOfFurniture piece : selectedFurniture) {
+      HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece, selectedFurniture);
+      if (highestSurroundingPiece != null) {
+        piece.setElevation(highestSurroundingPiece.getElevation() 
+                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation());
+      } else {
+        piece.setElevation(0);
+      }
+    }
+  }
+
+  /**
+   * Returns the highest piece of furniture that includes the given <code>piece</code>.
+   */
+  protected HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece) {
+    List<HomePieceOfFurniture> ignoredFurniture = Collections.emptyList();
+    return getHighestSurroundingPieceOfFurniture(piece, ignoredFurniture);
+  }
+  
+  private HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece,
+                                                                     List<HomePieceOfFurniture> ignoredFurniture) {
+    float [][] piecePoints = piece.getPoints();
+    HomePieceOfFurniture highestSurroundingPiece = null;
+    float highestElevation = Float.MIN_VALUE;
+    for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
+      if (homePiece != piece 
+          && !ignoredFurniture.contains(homePiece)
+          && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
+          && homePiece.getDropOnTopElevation() >= 0) {
+        boolean surroundingPieceContainsPiece = true;
+        for (float [] point : piecePoints) {
+          if (!homePiece.containsPoint(point [0], point [1], 0)) {
+            surroundingPieceContainsPiece = false;
+            break;
+          }
+        }
+        if (surroundingPieceContainsPiece) {
+          float elevation = homePiece.getElevation() 
+              + homePiece.getHeight() * homePiece.getDropOnTopElevation();
+          if (elevation > highestElevation) {
+            highestElevation = elevation;
+            highestSurroundingPiece = homePiece;
+          }
+        }
+      }
+    }
+    return highestSurroundingPiece;
+  }
+  
+  /**
+   * Returns <code>true</code> if the given piece is viewable and 
+   * its height and elevation make it viewable at the selected level in home.
+   */
+  protected boolean isPieceOfFurnitureVisibleAtSelectedLevel(HomePieceOfFurniture piece) {
+    Level selectedLevel = this.home.getSelectedLevel();
+    return piece.isVisible() 
+        && (piece.getLevel() == selectedLevel
+            || piece.isAtLevel(selectedLevel));
+  }
+  
+  /**
    * Stores the current x or y value of an aligned piece of furniture.
    */
   private static class AlignedPieceOfFurniture {

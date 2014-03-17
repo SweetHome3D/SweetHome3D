@@ -1524,17 +1524,6 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns <code>true</code> if the given piece is viewable and 
-   * its height and elevation make it viewable at the selected level in home.
-   */
-  private boolean isPieceOfFurnitureVisibleAtSelectedLevel(HomePieceOfFurniture piece) {
-    Level selectedLevel = this.home.getSelectedLevel();
-    return piece.isVisible() 
-        && (piece.getLevel() == selectedLevel
-            || piece.isAtLevel(selectedLevel));
-  }
-  
-  /**
    * Returns the visible (fully or partially) rooms at the selected level in home.
    */
   private List<Room> getDetectableRoomsAtSelectedLevel() {
@@ -2214,37 +2203,13 @@ public class PlanController extends FurnitureController implements Controller {
    * @see #adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture, float, float)
    */
   private HomePieceOfFurniture adjustPieceOfFurnitureElevation(HomePieceOfFurniture piece) {
-    // Search if another piece at floor level contains the given piece to elevate it at its height
     if (!piece.isDoorOrWindow()
         && piece.getElevation() == 0) {
-      float [][] piecePoints = piece.getPoints();
-      HomePieceOfFurniture highestSurroundingPiece = null;
-      float highestElevation = Float.MIN_VALUE;
-      for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
-        if (homePiece != piece 
-            && !homePiece.isDoorOrWindow()
-            && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
-            && homePiece.getDropOnTopElevation() >= 0) {
-          Shape shape = getPath(homePiece.getPoints());
-          boolean surroundingPieceContainsPiece = true;
-          for (float [] point : piecePoints) {
-            if (!shape.contains(point [0], point [1])) {
-              surroundingPieceContainsPiece = false;
-              break;
-            }
-          }
-          if (surroundingPieceContainsPiece) {
-            float elevation = homePiece.getElevation() 
-                + homePiece.getHeight() * homePiece.getDropOnTopElevation();
-            if (elevation > highestElevation) {
-              highestElevation = elevation;
-              highestSurroundingPiece = homePiece;
-            }
-          }
-        }
-      }
+      // Search if another piece at floor level contains the given piece to elevate it at its height
+      HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece);
       if (highestSurroundingPiece != null) {
-        piece.setElevation(highestElevation);
+        piece.setElevation(highestSurroundingPiece.getElevation() 
+                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation());
         return highestSurroundingPiece;
       }
     }
