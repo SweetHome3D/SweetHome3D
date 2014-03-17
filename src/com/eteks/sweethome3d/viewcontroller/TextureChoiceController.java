@@ -21,9 +21,12 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -32,6 +35,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class TextureChoiceController implements Controller {
   public enum Property {TEXTURE}
+
+  private static final int MAX_RECENT_TEXTURES = 15;
 
   private final String                title;
   private final boolean               rotationSupported;
@@ -152,5 +157,29 @@ public class TextureChoiceController implements Controller {
     if (getView().confirmDeleteSelectedCatalogTexture()) {
       this.preferences.getTexturesCatalog().delete(texture);
     }
+  }
+  
+  /**
+   * Adds the given <code>texture</code> to the recent textures set.
+   */
+  public void addRecentTexture(TextureImage texture) {
+    List<TextureImage> recentTextures = new ArrayList<TextureImage>(this.preferences.getRecentTextures());
+    for (int i = 0; i < recentTextures.size(); i++) {
+      TextureImage recentTexture = recentTextures.get(i);
+      if (recentTexture.getImage().equals(texture.getImage())) {
+        if (i == 0) {
+          return;
+        } else {
+          recentTextures.remove(i);
+          break;
+        }
+      }
+    }
+    recentTextures.add(0, texture);
+    // Remove trailing recent textures
+    while (recentTextures.size() > MAX_RECENT_TEXTURES) {
+      recentTextures.remove(recentTextures.size() - 1);
+    }
+    this.preferences.setRecentTextures(recentTextures);     
   }
 }

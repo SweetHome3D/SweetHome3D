@@ -72,6 +72,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
@@ -211,6 +212,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     private JButton                 importTextureButton;
     private JButton                 modifyTextureButton;
     private JButton                 deleteTextureButton;
+    private JPanel                  recentTexturesPanel;
     private CatalogItemToolTip      toolTip;
 
     public TexturePanel(UserPreferences preferences, 
@@ -414,6 +416,21 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         // Do not support import texture if importTextureButton.text isn't defined 
         this.texturePreviewComponent.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
       }
+      
+      this.recentTexturesPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "recentPanel.title"));
+      // Reduce border to align it on list left border
+      int reducedBorderWidth = OperatingSystem.isMacOSXLeopardOrSuperior() ? -8 : -2;
+      this.recentTexturesPanel.setBorder(BorderFactory.createCompoundBorder(
+          BorderFactory.createEmptyBorder(0, reducedBorderWidth, 0, reducedBorderWidth), this.recentTexturesPanel.getBorder())); 
+      preferences.addPropertyChangeListener(UserPreferences.Property.RECENT_TEXTURES, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              updateRecentTextures(preferences);
+            }
+          });
+      updateRecentTextures(preferences);
+      this.recentTexturesPanel.setOpaque(false);
 
       Border border = this.texturePreviewComponent.getBorder();
       // Update edited texture in texture panel
@@ -455,35 +472,49 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         value = texture.getCategory().getName() + " - " + value;
         Component component = super.getListCellRendererComponent(
             list, value, index, isSelected, cellHasFocus);
-        setIcon(new Icon() {
-            public int getIconWidth() {
-              return 16;
-            }
-      
-            public int getIconHeight() {
-              return 16;
-            }
-      
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-              Icon icon = IconManager.getInstance().getIcon(
-                  texture.getImage(), getIconHeight(), list);
-              if (icon.getIconWidth() != icon.getIconHeight()) {
-                Graphics2D g2D = (Graphics2D)g;
-                AffineTransform previousTransform = g2D.getTransform();
-                g2D.translate(x, y);
-                g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
-                icon.paintIcon(c, g2D, 0, 0);
-                g2D.setTransform(previousTransform);
-              } else {
-                icon.paintIcon(c, g, x, y);
-              }
-            }
-          });
+        setIcon(new TextureIcon(texture, list));
         setFont(texture.isModifiable() ? this.modifiablePieceFont : this.defaultFont);
         return component;
       }
     }
 
+    /**
+     * Icon displaying a texture.
+     */
+    private static class TextureIcon implements Icon {
+      private TextureImage texture;
+      private JComponent   component;
+
+      public TextureIcon(TextureImage texture,
+                         JComponent component) {
+        this.texture = texture;
+        this.component = component;
+      }
+      
+      public int getIconWidth() {
+        return 16;
+      }
+
+      public int getIconHeight() {
+        return 16;
+      }
+
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Icon icon = IconManager.getInstance().getIcon(
+            this.texture.getImage(), getIconHeight(), this.component);
+        if (icon.getIconWidth() != icon.getIconHeight()) {
+          Graphics2D g2D = (Graphics2D)g;
+          AffineTransform previousTransform = g2D.getTransform();
+          g2D.translate(x, y);
+          g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
+          icon.paintIcon(c, g2D, 0, 0);
+          g2D.setTransform(previousTransform);
+        } else {
+          icon.paintIcon(c, g, x, y);
+        }
+      }
+    }
+    
     /**
      * Catalog listener that updates textures list each time a texture
      * is deleted or added in textures catalog. This listener is bound to this component
@@ -514,6 +545,42 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       }
     }
 
+    /**
+     * Updates the displayed list of recent textures.
+     */
+    public void updateRecentTextures(UserPreferences preferences) {
+      this.recentTexturesPanel.removeAll();
+      List<TextureImage> recentTextures = preferences.getRecentTextures();
+      Border labelBorder = BorderFactory.createLineBorder(Color.GRAY);
+      for (int i = 0; i < recentTextures.size(); i++) {
+        final TextureImage recentTexture = recentTextures.get(i);
+        JLabel textureLabel = new JLabel();
+        textureLabel.setIcon(new TextureIcon(recentTexture, textureLabel));
+        textureLabel.setBorder(labelBorder);
+        textureLabel.setToolTipText(recentTexture.getName());
+        textureLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+              setPreviewTexture(recentTexture);
+              if (ev.getClickCount() == 2) {
+                JRootPane rootPane = (JRootPane)SwingUtilities.getAncestorOfClass(JRootPane.class, recentTexturesPanel);
+                if (rootPane != null) {
+                  for (JButton button : SwingTools.findChildren(rootPane, JButton.class)) {
+                    if ("OK".equals(button.getActionCommand())) {
+                      button.doClick();
+                    }
+                  }
+                }
+              }
+            }
+          });
+        this.recentTexturesPanel.add(textureLabel, new GridBagConstraints(
+            i, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
+      }
+      this.recentTexturesPanel.setVisible(!recentTextures.isEmpty());
+    }
+    
     /**
      * Sets components mnemonics and label / component associations.
      */
@@ -571,10 +638,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       } else { 
         leftPanel.add(this.searchLabel, new GridBagConstraints(
             0, 5, 1, 1, 0, 0, labelAlignment, 
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 3), 0, 0));
+            GridBagConstraints.NONE, new Insets(2, 0, 0, 3), 0, 0));
         leftPanel.add(this.searchTextField, new GridBagConstraints(
             1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
       }
       
       JPanel rightPanel = new JPanel(new GridBagLayout());
@@ -613,7 +680,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         buttonsPanel.add(this.deleteTextureButton);
         rightPanel.add(buttonsPanel, new GridBagConstraints(
             2, 4, 4, 1, 0, 1, GridBagConstraints.NORTH,
-            GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       }
       
       add(leftPanel, new GridBagConstraints(
@@ -622,6 +689,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       add(rightPanel, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(this.recentTexturesPanel, new GridBagConstraints(
+          0, 1, 2, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
       
       // Change component tab order to ensure search text field is after the available textures list 
       final List<JComponent> components = new ArrayList<JComponent>();
@@ -767,7 +837,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       ToolTipManager.sharedInstance().unregisterComponent(this.availableTexturesList);
       searchFilterText = this.searchTextField.getText();
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
-        this.controller.setTexture(getSelectedTexture());
+        HomeTexture selectedTexture = getSelectedTexture();
+        this.controller.setTexture(selectedTexture);
+        this.controller.addRecentTexture(selectedTexture);
       }
     }
 

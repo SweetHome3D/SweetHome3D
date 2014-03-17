@@ -53,7 +53,7 @@ public abstract class UserPreferences {
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
                         CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS,
-                        RECENT_COLORS}
+                        RECENT_COLORS, RECENT_TEXTURES}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -114,7 +114,8 @@ public abstract class UserPreferences {
   private Long             updatesMinimumDate;
   private int              autoSaveDelayForRecovery;
   private Map<String, List<String>>  autoCompletionStrings;
-  private List<Integer>    recentColors;
+  private List<Integer>      recentColors;
+  private List<TextureImage> recentTextures;
 
   /**
    * Creates user preferences.</br> 
@@ -125,6 +126,9 @@ public abstract class UserPreferences {
     this.classResourceBundles = new HashMap<Class<?>, ResourceBundle>();
     this.resourceBundles = new HashMap<String, ResourceBundle>();
     this.autoCompletionStrings = new LinkedHashMap<String, List<String>>();
+    this.recentHomes = Collections.emptyList();
+    this.recentColors = Collections.emptyList();
+    this.recentTextures = Collections.emptyList();
 
     this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();    
@@ -966,6 +970,27 @@ public abstract class UserPreferences {
       this.recentColors = new ArrayList<Integer>(recentColors);
       this.propertyChangeSupport.firePropertyChange(Property.RECENT_COLORS.name(), 
           oldRecentColors, getRecentColors());
+    }
+  }
+
+  /**
+   * Returns an unmodifiable list of the recent textures.
+   * @since 4.4
+   */
+  public List<TextureImage> getRecentTextures() {
+    return Collections.unmodifiableList(this.recentTextures);
+  }
+
+  /**
+   * Sets the recent colors list and notifies listeners of this change.
+   * @since 4.4
+   */
+  public void setRecentTextures(List<TextureImage> recentTextures) {
+    if (!recentTextures.equals(this.recentTextures)) {
+      List<TextureImage> oldRecentTextures = this.recentTextures;
+      this.recentTextures = new ArrayList<TextureImage>(recentTextures);
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_TEXTURES.name(), 
+          oldRecentTextures, getRecentTextures());
     }
   }
 
