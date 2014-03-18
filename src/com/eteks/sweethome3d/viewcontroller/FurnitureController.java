@@ -1152,6 +1152,7 @@ public class FurnitureController implements Controller {
 
   /**
    * Resets the elevation of the selected furniture to its default elevation.
+   * @since 4.4
    */
   public void resetFurnitureElevation() {
     final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
@@ -1205,6 +1206,7 @@ public class FurnitureController implements Controller {
 
   /**
    * Returns the highest piece of furniture that includes the given <code>piece</code>.
+   * @since 4.4
    */
   protected HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece) {
     List<HomePieceOfFurniture> ignoredFurniture = Collections.emptyList();
@@ -1244,6 +1246,7 @@ public class FurnitureController implements Controller {
   /**
    * Returns <code>true</code> if the given piece is viewable and 
    * its height and elevation make it viewable at the selected level in home.
+   * @since 4.4
    */
   protected boolean isPieceOfFurnitureVisibleAtSelectedLevel(HomePieceOfFurniture piece) {
     Level selectedLevel = this.home.getSelectedLevel();
