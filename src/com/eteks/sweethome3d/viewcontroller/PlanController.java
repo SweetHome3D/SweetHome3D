@@ -3794,6 +3794,7 @@ public class PlanController extends FurnitureController implements Controller {
         moveWallEndPoint(wall, 
             wall.getXEnd() + dx, wall.getYEnd() + dy,
             !items.contains(wall.getWallAtEnd()));
+        resetAreaCache();
         wall.addPropertyChangeListener(this.wallChangeListener);
       } else {
         item.move(dx, dy);
