@@ -892,6 +892,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postReverseSelectedWallsDirection(final Wall [] walls, 
                                                  List<Selectable> oldSelection) {
+    final boolean allLevelsSelection = home.isAllLevelsSelection();
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
@@ -899,14 +900,14 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
         doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
       }      
 
       @Override
@@ -1378,6 +1379,7 @@ public class PlanController extends FurnitureController implements Controller {
   private void modifyTextStyle(final Selectable [] items, 
                                final TextStyle [] oldStyles,
                                final TextStyle [] styles) {
+    final boolean allLevelsSelection = home.isAllLevelsSelection();
     List<Selectable> oldSelection = this.home.getSelectedItems();
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
@@ -1388,14 +1390,14 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doModifyTextStyle(items, oldStyles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
         doModifyTextStyle(items, styles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
       }      
 
       @Override
