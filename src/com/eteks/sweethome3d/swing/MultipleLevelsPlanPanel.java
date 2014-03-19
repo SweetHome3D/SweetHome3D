@@ -19,27 +19,38 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -156,7 +167,9 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     final PropertyChangeListener levelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.NAME.name().equals(ev.getPropertyName())) {
-            multipleLevelsTabbedPane.setTitleAt(home.getLevels().indexOf(ev.getSource()), (String)ev.getNewValue());
+            int index = home.getLevels().indexOf(ev.getSource());
+            multipleLevelsTabbedPane.setTitleAt(index, (String)ev.getNewValue());
+            updateTabComponent(home, index);
           } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
               || Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
             multipleLevelsTabbedPane.removeChangeListener(changeListener);
@@ -176,6 +189,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
           switch (ev.getType()) {
             case ADD:
               multipleLevelsTabbedPane.insertTab(ev.getItem().getName(), null, new LevelLabel(ev.getItem()), null, ev.getIndex());
+              updateTabComponent(home, ev.getIndex());
               ev.getItem().addPropertyChangeListener(levelChangeListener);
               break;
             case DELETE:
@@ -198,6 +212,14 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     
     this.oneLevelPanel = new JPanel(new BorderLayout());
     
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+      home.addPropertyChangeListener(Home.Property.ALL_LEVELS_SELECTION, new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            multipleLevelsTabbedPane.repaint();
+          }
+        });
+    }
+    
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
         new LanguageChangeListener(this));
   }
@@ -208,6 +230,49 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   protected PlanComponent createPlanComponent(final Home home, final UserPreferences preferences,
                                               final PlanController controller) {
     return new PlanComponent(home, preferences, controller);
+  }
+
+  /**
+   * Updates tab component with a label that will display tab text outlined by selection color 
+   * when all objects are selected at all levels. 
+   */
+  private void updateTabComponent(final Home home, int i) {
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+      JLabel tabLabel = new JLabel(this.multipleLevelsTabbedPane.getTitleAt(i)) {
+          @Override
+          protected void paintComponent(Graphics g) {
+            if (home.isAllLevelsSelection()) {
+              Graphics2D g2D = (Graphics2D)g;
+              // Draw text outline with half transparent selection color when all tabs are selected
+              g2D.setPaint(planComponent.getSelectionColor());
+              Composite oldComposite = g2D.getComposite();
+              g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+              g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+              g2D.setStroke(new BasicStroke(2f));
+              FontRenderContext fontRenderContext = g2D.getFontRenderContext();
+              Font font = getFont();
+              TextLayout textLayout = new TextLayout(getText(), font, fontRenderContext);
+              FontMetrics fontMetrics = getFontMetrics(font);
+              g2D.draw(textLayout.getOutline(AffineTransform.getTranslateInstance(-0.5, 
+                  (getHeight() - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent() - 0.5)));
+              g2D.setComposite(oldComposite);
+            }
+            super.paintComponent(g);
+          }
+        };
+        
+      try {
+        // Invoke dynamically Java 6 setTabComponentAt method 
+        this.multipleLevelsTabbedPane.getClass().getMethod("setTabComponentAt", int.class, Component.class)
+            .invoke(this.multipleLevelsTabbedPane, i, tabLabel);
+      } catch (InvocationTargetException ex) {
+        throw new RuntimeException(ex);
+      } catch (IllegalAccessException ex) {
+        throw new IllegalAccessError(ex.getMessage());
+      } catch (NoSuchMethodException ex) {
+        throw new NoSuchMethodError(ex.getMessage());
+      }
+    }
   }
 
   /**
@@ -239,8 +304,11 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
    * Creates the tabs from <code>home</code> levels.
    */
   private void createTabs(Home home, UserPreferences preferences) {
-    for (Level level : home.getLevels()) {
+    List<Level> levels = home.getLevels();
+    for (int i = 0; i < levels.size(); i++) {
+      Level level = levels.get(i);
       this.multipleLevelsTabbedPane.addTab(level.getName(), new LevelLabel(level));
+      updateTabComponent(home, i);
     }
     String createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.SmallIcon");
     String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.ShortDescription");

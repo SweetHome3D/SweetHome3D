@@ -173,13 +173,14 @@ public class LabelController implements Controller {
       // Apply modification
       List<Selectable> oldSelection = this.home.getSelectedItems();
       boolean basePlanLocked = this.home.isBasePlanLocked();    
+      boolean allLevelsSelection = this.home.isAllLevelsSelection();
       Label label = new Label(text, x, y);
       // Unlock base plan if label is a part of it
       boolean newBasePlanLocked = basePlanLocked && !isLabelPartOfBasePlan(label);
       doAddLabel(this.home, label, newBasePlanLocked); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelCreationUndoableEdit(
-            this.home, this.preferences, oldSelection, basePlanLocked, label, newBasePlanLocked);
+            this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection, label, newBasePlanLocked);
         this.undoSupport.postEdit(undoableEdit);
       }
       this.preferences.addAutoCompletionString("LabelText", text);
@@ -194,7 +195,8 @@ public class LabelController implements Controller {
     private final Home             home;
     private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
-    private final boolean          basePlanLocked;
+    private final boolean          oldBasePlanLocked;
+    private final boolean          oldAllLevelsSelection;
     private final Label            label;
     private final boolean          newBasePlanLocked;
 
@@ -202,12 +204,14 @@ public class LabelController implements Controller {
                                       UserPreferences preferences, 
                                       List<Selectable> oldSelection, 
                                       boolean oldBasePlanLocked, 
+                                      boolean oldAllLevelsSelection,
                                       Label label, 
                                       boolean newBasePlanLocked) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
-      this.basePlanLocked = oldBasePlanLocked;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
       this.label = label;
       this.newBasePlanLocked = newBasePlanLocked;
     }
@@ -215,8 +219,9 @@ public class LabelController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doDeleteLabel(this.home, this.label, this.basePlanLocked);
+      doDeleteLabel(this.home, this.label, this.oldBasePlanLocked);
       this.home.setSelectedItems(this.oldSelection); 
+      this.home.setAllLevelsSelection(this.oldAllLevelsSelection);
     }
 
     @Override
@@ -240,6 +245,7 @@ public class LabelController implements Controller {
     home.addLabel(label);
     home.setBasePlanLocked(basePlanLocked);
     home.setSelectedItems(Arrays.asList(new Selectable [] {label}));
+    home.setAllLevelsSelection(false);
   }
 
   /**

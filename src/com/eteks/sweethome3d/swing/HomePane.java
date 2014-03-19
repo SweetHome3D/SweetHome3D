@@ -413,6 +413,7 @@ public class HomePane extends JRootPane implements HomeView {
     
     PlanController planController = controller.getPlanController();
     if (planController.getView() != null) {
+      createAction(ActionType.SELECT_ALL_AT_ALL_LEVELS, preferences, planController, "selectAllAtAllLevels"); 
       ButtonGroup modeGroup = new ButtonGroup();
       createToggleAction(ActionType.SELECT, planController.getMode() == PlanController.Mode.SELECTION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.SELECTION);
@@ -959,6 +960,7 @@ public class HomePane extends JRootPane implements HomeView {
     editMenu.addSeparator();
     addActionToMenu(ActionType.DELETE, editMenu);
     addActionToMenu(ActionType.SELECT_ALL, editMenu);
+    addActionToMenu(ActionType.SELECT_ALL_AT_ALL_LEVELS, editMenu);
 
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(this.menuActionMap.get(MenuActionType.FURNITURE_MENU));
@@ -2562,6 +2564,7 @@ public class HomePane extends JRootPane implements HomeView {
         selectObjectMenu = null;
       }
       addActionToPopupMenu(ActionType.SELECT_ALL, planViewPopup);
+      addActionToPopupMenu(ActionType.SELECT_ALL_AT_ALL_LEVELS, planViewPopup);
       planViewPopup.addSeparator();
       addToggleActionToPopupMenu(ActionType.SELECT, true, planViewPopup);
       addToggleActionToPopupMenu(ActionType.PAN, true, planViewPopup);

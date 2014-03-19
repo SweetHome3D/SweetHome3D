@@ -594,7 +594,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Adds home items and selection listeners on this component to receive  
    * changes notifications from home. 
    */
-  private void addModelListeners(Home home, final UserPreferences preferences, 
+  private void addModelListeners(final Home home, final UserPreferences preferences, 
                                  final PlanController controller) {
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
@@ -650,6 +650,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Wall.Property.THICKNESS.name().equals(propertyName)
               || Wall.Property.ARC_EXTENT.name().equals(propertyName)
               || Wall.Property.PATTERN.name().equals(propertyName)) {
+            if (home.isAllLevelsSelection()) {
+              otherLevelWallAreaCache = null;
+              otherLevelWallsCache = null;
+            }
             wallAreasCache = null;
             revalidate();
           } else if (Wall.Property.LEVEL.name().equals(propertyName)
@@ -2921,29 +2925,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                    float x, float y, float angle,
                                    Paint indicatorPaint, 
                                    float planScale) {
-    g2D.setPaint(indicatorPaint);
-    g2D.setStroke(INDICATOR_STROKE);
-    AffineTransform previousTransform = g2D.getTransform();
-    float scaleInverse = 1 / planScale;
-    g2D.translate(x, y);
-    g2D.rotate(angle);
-    g2D.scale(scaleInverse, scaleInverse);
-    if (Label.class.isAssignableFrom(selectableClass)) {
-      g2D.draw(LABEL_CENTER_INDICATOR);      
-    } else {
-      g2D.draw(TEXT_LOCATION_INDICATOR);
+    if (this.resizeIndicatorVisible) {
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(INDICATOR_STROKE);
+      AffineTransform previousTransform = g2D.getTransform();
+      float scaleInverse = 1 / planScale;
+      g2D.translate(x, y);
+      g2D.rotate(angle);
+      g2D.scale(scaleInverse, scaleInverse);
+      if (Label.class.isAssignableFrom(selectableClass)) {
+        g2D.draw(LABEL_CENTER_INDICATOR);      
+      } else {
+        g2D.draw(TEXT_LOCATION_INDICATOR);
+      }
+      if (style == null) {
+        style = this.preferences.getDefaultTextStyle(selectableClass);
+      }              
+      FontMetrics fontMetrics = getFontMetrics(g2D.getFont(), style);
+      g2D.setTransform(previousTransform);
+      g2D.translate(x, y);
+      g2D.rotate(angle);
+      g2D.translate(0, -fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.draw(TEXT_ANGLE_INDICATOR);
+      g2D.setTransform(previousTransform);
     }
-    if (style == null) {
-      style = this.preferences.getDefaultTextStyle(selectableClass);
-    }              
-    FontMetrics fontMetrics = getFontMetrics(g2D.getFont(), style);
-    g2D.setTransform(previousTransform);
-    g2D.translate(x, y);
-    g2D.rotate(angle);
-    g2D.translate(0, -fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
-    g2D.scale(scaleInverse, scaleInverse);
-    g2D.draw(TEXT_ANGLE_INDICATOR);
-    g2D.setTransform(previousTransform);
   }
 
   /**
@@ -3075,7 +3081,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Draw walls area
     g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(getStrokeWidth(Wall.class, PaintMode.PAINT) / planScale));
-    for (Area area : getWallAreas(walls).values()) {
+    for (Area area : getWallAreas(getDrawableWallsInSelectedLevel(walls)).values()) {
       g2D.draw(area);
     }
     
@@ -3833,7 +3839,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             g2D.setStroke(selectionOutlineStroke);
             g2D.draw(getShape(getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle)));
             g2D.setPaint(foregroundColor);
-            if (indicatorPaint != null) {
+            if (indicatorPaint != null 
+                && selectedItems.size() == 1 
+                && selectedItems.get(0) == label) {
               paintTextIndicators(g2D, label.getClass(), labelStyle, xLabel, yLabel, labelAngle,
                   indicatorPaint, planScale);
             }

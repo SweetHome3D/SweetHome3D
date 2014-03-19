@@ -127,6 +127,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private PlanView                    planView;
   private SelectionListener           selectionListener;
+  private PropertyChangeListener      wallChangeListener;
   // Possibles states
   private final ControllerState       selectionState;
   private final ControllerState       rectangleSelectionState;
@@ -178,7 +179,6 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath>               roomPathsCache;
   private Map<HomePieceOfFurniture, Area> furnitureSidesCache;
   private List<Selectable>                draggedItems;
-
 
   /**
    * Creates the controller of plan view. 
@@ -738,6 +738,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public void lockBasePlan() {
     if (!this.home.isBasePlanLocked()) {
+      final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       List<Selectable> selection = this.home.getSelectedItems();
       final Selectable [] oldSelectedItems = 
           selection.toArray(new Selectable [selection.size()]);
@@ -747,20 +748,20 @@ public class PlanController extends FurnitureController implements Controller {
         newSelection.toArray(new Selectable [newSelection.size()]);
       
       this.home.setBasePlanLocked(true);
-      selectItems(newSelection);
+      selectItems(newSelection, allLevelsSelection);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
           home.setBasePlanLocked(false);
-          selectAndShowItems(Arrays.asList(oldSelectedItems));
+          selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           home.setBasePlanLocked(true);
-          selectAndShowItems(Arrays.asList(newSelectedItems));
+          selectAndShowItems(Arrays.asList(newSelectedItems), allLevelsSelection);
         }      
     
         @Override
@@ -803,24 +804,26 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public void unlockBasePlan() {
     if (this.home.isBasePlanLocked()) {
+      final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       List<Selectable> selection = this.home.getSelectedItems();
       final Selectable [] selectedItems = 
           selection.toArray(new Selectable [selection.size()]);
       
       this.home.setBasePlanLocked(false);
+      this.home.setAllLevelsSelection(false);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
           home.setBasePlanLocked(true);
-          selectAndShowItems(Arrays.asList(selectedItems));
+          selectAndShowItems(Arrays.asList(selectedItems), allLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           home.setBasePlanLocked(false);
-          selectAndShowItems(Arrays.asList(selectedItems));
+          selectAndShowItems(Arrays.asList(selectedItems), false);
         }      
     
         @Override
@@ -896,14 +899,14 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
         doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
       }      
 
       @Override
@@ -991,6 +994,7 @@ public class PlanController extends FurnitureController implements Controller {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
     if (selectedWalls.size() == 1) {
+      boolean allLevelsSelection = this.home.isAllLevelsSelection();
       boolean basePlanLocked = this.home.isBasePlanLocked();
       Wall splitWall = selectedWalls.get(0);
       JoinedWall splitJoinedWall = new JoinedWall(splitWall);
@@ -1054,10 +1058,10 @@ public class PlanController extends FurnitureController implements Controller {
       
       // Delete split wall
       this.home.deleteWall(splitWall);
-      selectAndShowItems(Arrays.asList(new Wall [] {firstWall}));
+      selectAndShowItems(Arrays.asList(new Wall [] {firstWall}), false);
       
       postSplitSelectedWall(splitJoinedWall, 
-          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems, basePlanLocked);
+          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems, basePlanLocked, allLevelsSelection);
     }
   }
   
@@ -1068,7 +1072,8 @@ public class PlanController extends FurnitureController implements Controller {
                                      final JoinedWall firstJoinedWall, 
                                      final JoinedWall secondJoinedWall,
                                      List<Selectable> oldSelection,
-                                     final boolean oldBasePlanLocked) {
+                                     final boolean oldBasePlanLocked, 
+                                     final boolean oldAllLevelsSelection) {
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
     final boolean newBasePlanLocked = this.home.isBasePlanLocked();
@@ -1078,7 +1083,7 @@ public class PlanController extends FurnitureController implements Controller {
         super.undo();
         doDeleteWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, oldBasePlanLocked);
         doAddWalls(new JoinedWall [] {splitJoinedWall}, oldBasePlanLocked);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+        selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
       }
       
       @Override
@@ -1086,7 +1091,7 @@ public class PlanController extends FurnitureController implements Controller {
         super.redo();
         doDeleteWalls(new JoinedWall [] {splitJoinedWall}, newBasePlanLocked);
         doAddWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, newBasePlanLocked);
-        selectAndShowItems(Arrays.asList(new Wall [] {firstJoinedWall.getWall()}));
+        selectAndShowItems(Arrays.asList(new Wall [] {firstJoinedWall.getWall()}), false);
       }      
 
       @Override
@@ -1383,14 +1388,14 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doModifyTextStyle(items, oldStyles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
         doModifyTextStyle(items, styles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+        selectAndShowItems(Arrays.asList(oldSelectedItems), home.isAllLevelsSelection());
       }      
 
       @Override
@@ -1484,6 +1489,7 @@ public class PlanController extends FurnitureController implements Controller {
     } else {
       this.home.setSelectedItems(all);
     }
+    this.home.setAllLevelsSelection(false);
   }
 
   /**
@@ -1523,6 +1529,30 @@ public class PlanController extends FurnitureController implements Controller {
     return selectableItems;
   }
   
+  /**
+   * Selects all visible items in all levels of home.
+   * @since 4.4
+   */
+  public void selectAllAtAllLevels() {
+    List<Selectable> allItems = new ArrayList<Selectable>(this.home.getWalls());
+    allItems.addAll(this.home.getRooms());
+    allItems.addAll(this.home.getDimensionLines());
+    allItems.addAll(this.home.getLabels());
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        allItems.add(piece);
+      }
+    }
+    if (this.home.getCompass().isVisible()) {
+      allItems.add(this.home.getCompass());
+    }
+    if (this.home.isBasePlanLocked()) {
+      allItems = getItemsNotPartOfBasePlan(allItems);
+    }
+    this.home.setSelectedItems(allItems);
+    this.home.setAllLevelsSelection(true);
+  }
+
   /**
    * Returns the visible (fully or partially) rooms at the selected level in home.
    */
@@ -1615,8 +1645,7 @@ public class PlanController extends FurnitureController implements Controller {
           }
         }
       });
-    // Add listener to update roomPathsCache when walls change
-    final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
+    this.wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
           if (Wall.Property.X_START.name().equals(propertyName)
@@ -1636,14 +1665,14 @@ public class PlanController extends FurnitureController implements Controller {
             if (!wall.isAtLevel(home.getSelectedLevel())) {
               List<Selectable> selectedItems = new ArrayList<Selectable>(home.getSelectedItems());
               if (selectedItems.remove(wall)) {
-                selectItems(selectedItems);
+                selectItems(selectedItems, home.isAllLevelsSelection());
               }
             }
           }
         }
       };
     for (Wall wall : this.home.getWalls()) {
-      wall.addPropertyChangeListener(wallChangeListener);
+      wall.addPropertyChangeListener(this.wallChangeListener);
     }
     this.home.addWallsListener(new CollectionListener<Wall> () {
         public void collectionChanged(CollectionEvent<Wall> ev) {
@@ -2544,6 +2573,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Controls the creation of a new level.
    */
   public void addLevel() {
+    final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     List<Selectable> oldSelection = this.home.getSelectedItems();
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
@@ -2580,7 +2610,7 @@ public class PlanController extends FurnitureController implements Controller {
           moveHomeItemsToLevel(oldSelectedLevel);
           home.deleteLevel(level0);
         }
-        selectAndShowItems(Arrays.asList(oldSelectedItems));        
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
       }
       
       @Override
@@ -2665,7 +2695,7 @@ public class PlanController extends FurnitureController implements Controller {
     addLevelItemsAtSelectedLevel(this.home.getLabels(), levelOtherItems);
     // First post to undo support that walls, rooms and dimension lines are deleted, 
     // otherwise data about joined walls and rooms index can't be stored       
-    postDeleteItems(levelOtherItems, this.home.isBasePlanLocked());
+    postDeleteItems(levelOtherItems, this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
     // Then delete items from plan
     doDeleteItems(levelOtherItems);
 
@@ -3574,16 +3604,26 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     if (!deletedItems.isEmpty()) {
-      // Start a compound edit that deletes walls, furniture and dimension lines from home
       this.undoSupport.beginUpdate();
+      // Remove selectionListener to avoid level selection change 
+      // when selected items are deleted
+      this.home.removeSelectionListener(this.selectionListener);
+      // Start a compound edit that deletes walls, furniture and dimension lines from home
       
+      final boolean allLevelsSelection = home.isAllLevelsSelection();
       final List<Selectable> selectedItems = new ArrayList<Selectable>(items);      
       // Add a undoable edit that will select the undeleted items at undo
       this.undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public void undo() throws CannotRedoException {
             super.undo();
-            selectAndShowItems(selectedItems);
+            selectAndShowItems(selectedItems, allLevelsSelection);
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.removeSelectionListener(selectionListener);
           }
         });
 
@@ -3597,10 +3637,19 @@ public class PlanController extends FurnitureController implements Controller {
       deletedOtherItems.addAll(Home.getLabelsSubList(deletedItems));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls and rooms index can't be stored       
-      postDeleteItems(deletedOtherItems, this.home.isBasePlanLocked());
+      postDeleteItems(deletedOtherItems, this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
       // Then delete items from plan
       doDeleteItems(deletedOtherItems);
+      this.home.addSelectionListener(this.selectionListener);
 
+      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.addSelectionListener(selectionListener);
+          }
+        });
+      
       // End compound edit
       this.undoSupport.endUpdate();
     }          
@@ -3610,7 +3659,8 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable delete items operation about <code>deletedItems</code>.
    */
   private void postDeleteItems(final List<? extends Selectable> deletedItems,
-                               final boolean basePlanLocked) {
+                               final boolean basePlanLocked, 
+                               final boolean allLevelsSelection) {
     // Manage walls
     List<Wall> deletedWalls = Home.getWallsSubList(deletedItems);
     // Get joined walls data for undo operation
@@ -3625,31 +3675,41 @@ public class PlanController extends FurnitureController implements Controller {
       sortedMap.put(homeRooms.indexOf(room), room); 
     }
     final Room [] rooms = sortedMap.values().toArray(new Room [sortedMap.size()]); 
-    final int [] roomsIndex = new int [rooms.length];
+    final int [] roomsIndices = new int [rooms.length];
+    final Level [] roomsLevels = new Level [rooms.length]; 
     int i = 0;
     for (int index : sortedMap.keySet()) {
-      roomsIndex [i++] = index; 
+      roomsIndices [i] = index;
+      roomsLevels [i] = rooms [i].getLevel();
+      i++;
     }
     
     // Manage dimension lines
     List<DimensionLine> deletedDimensionLines = Home.getDimensionLinesSubList(deletedItems);
     final DimensionLine [] dimensionLines = deletedDimensionLines.toArray(
         new DimensionLine [deletedDimensionLines.size()]);
+    final Level [] dimensionLinesLevels = new Level [dimensionLines.length]; 
+    for (i = 0; i < dimensionLines.length; i++) {
+      dimensionLinesLevels [i] = dimensionLines [i].getLevel();
+    }
     
     // Manage labels
     List<Label> deletedLabels = Home.getLabelsSubList(deletedItems);
     final Label [] labels = deletedLabels.toArray(new Label [deletedLabels.size()]);
+    final Level [] labelsLevels = new Level [labels.length]; 
+    for (i = 0; i < labels.length; i++) {
+      labelsLevels [i] = labels [i].getLevel();
+    }
     
-    final Level level = this.home.getSelectedLevel();
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
         doAddWalls(joinedDeletedWalls, basePlanLocked);       
-        doAddRooms(rooms, roomsIndex, level, basePlanLocked);
-        doAddDimensionLines(dimensionLines, level, basePlanLocked);
-        doAddLabels(labels, level, basePlanLocked);
-        selectAndShowItems(deletedItems);
+        doAddRooms(rooms, roomsIndices, roomsLevels, null, basePlanLocked);
+        doAddDimensionLines(dimensionLines, dimensionLinesLevels, null, basePlanLocked);
+        doAddLabels(labels, labelsLevels, null, basePlanLocked);
+        selectAndShowItems(deletedItems, allLevelsSelection);
       }
       
       @Override
@@ -3692,6 +3752,7 @@ public class PlanController extends FurnitureController implements Controller {
       basePlanLocked &= !isItemPartOfBasePlan(item);
     }
     this.home.setBasePlanLocked(basePlanLocked);
+    this.home.setAllLevelsSelection(false);
   }
   
   /**
@@ -3709,7 +3770,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     if (!movedItems.isEmpty()) {
       moveItems(movedItems, dx, dy);
-      selectAndShowItems(movedItems);
+      selectAndShowItems(movedItems, this.home.isAllLevelsSelection());
       if (movedItems.size() != 1
           || !(movedItems.get(0) instanceof Camera)) {
         // Post move undo only for items different from the camera 
@@ -3725,12 +3786,15 @@ public class PlanController extends FurnitureController implements Controller {
     for (Selectable item : items) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
+        // Remove temporarily listener to avoid side effect 
+        wall.removePropertyChangeListener(this.wallChangeListener);
         moveWallStartPoint(wall, 
             wall.getXStart() + dx, wall.getYStart() + dy,
             !items.contains(wall.getWallAtStart()));
         moveWallEndPoint(wall, 
             wall.getXEnd() + dx, wall.getYEnd() + dy,
             !items.contains(wall.getWallAtEnd()));
+        wall.addPropertyChangeListener(this.wallChangeListener);
       } else {
         item.move(dx, dy);
       } 
@@ -3851,7 +3915,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Selects <code>items</code> and make them visible at screen.
    */
   protected void selectAndShowItems(List<? extends Selectable> items) {
-    selectItems(items);
+    selectAndShowItems(items, false);
+  }
+  
+  /**
+   * Selects <code>items</code> and make them visible at screen.
+   */
+  private void selectAndShowItems(List<? extends Selectable> items, boolean allLevelsSelection) {
+    selectItems(items, allLevelsSelection);
     selectLevelFromSelectedItems();
     getView().makeSelectionVisible();
   }
@@ -3860,11 +3931,19 @@ public class PlanController extends FurnitureController implements Controller {
    * Selects <code>items</code>.
    */
   protected void selectItems(List<? extends Selectable> items) {
+    this.selectItems(items, false);
+  }
+  
+  /**
+   * Selects <code>items</code>.
+   */
+  private void selectItems(List<? extends Selectable> items, boolean allLevelsSelection) {
     // Remove selectionListener when selection is done from this controller
     // to control when selection should be made visible
     this.home.removeSelectionListener(this.selectionListener);
     this.home.setSelectedItems(items);
     this.home.addSelectionListener(this.selectionListener);
+    this.home.setAllLevelsSelection(allLevelsSelection);
   }
   
   /**
@@ -3941,7 +4020,8 @@ public class PlanController extends FurnitureController implements Controller {
     for (Wall wall : walls) {
       this.home.addWall(wall);
     }    
-    postCreateWalls(walls, this.home.getSelectedItems(), home.isBasePlanLocked());
+    postCreateWalls(walls, this.home.getSelectedItems(), 
+        home.isBasePlanLocked(), home.isAllLevelsSelection());
   }
   
   /**
@@ -3949,7 +4029,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postCreateWalls(List<Wall> newWalls, 
                                List<Selectable> oldSelection, 
-                               final boolean oldBasePlanLocked) {
+                               final boolean oldBasePlanLocked,
+                               final boolean oldAllLevelsSelection) {
     if (newWalls.size() > 0) {
       boolean basePlanLocked = this.home.isBasePlanLocked();
       if (basePlanLocked) {
@@ -3970,14 +4051,14 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           doDeleteWalls(joinedNewWalls, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems));
+          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           doAddWalls(joinedNewWalls, newBasePlanLocked);       
-          selectAndShowItems(JoinedWall.getWalls(joinedNewWalls));
+          selectAndShowItems(JoinedWall.getWalls(joinedNewWalls), false);
         }      
   
         @Override
@@ -4050,7 +4131,8 @@ public class PlanController extends FurnitureController implements Controller {
       roomsIndex [i] = endIndex++; 
       this.home.addRoom(newRooms [i], roomsIndex [i]);
     }
-    postCreateRooms(newRooms, roomsIndex, this.home.getSelectedItems(), this.home.isBasePlanLocked());
+    postCreateRooms(newRooms, roomsIndex, this.home.getSelectedItems(), 
+        this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
   }
   
   /**
@@ -4059,7 +4141,8 @@ public class PlanController extends FurnitureController implements Controller {
   private void postCreateRooms(final Room [] newRooms,
                                final int [] roomsIndex, 
                                List<Selectable> oldSelection, 
-                               final boolean oldBasePlanLocked) {
+                               final boolean oldBasePlanLocked,
+                               final boolean oldAllLevelsSelection) {
     if (newRooms.length > 0) {
       boolean basePlanLocked = this.home.isBasePlanLocked();
       if (basePlanLocked) {
@@ -4079,14 +4162,14 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           doDeleteRooms(newRooms, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems));
+          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddRooms(newRooms, roomsIndex, roomsLevel,  newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(newRooms));
+          doAddRooms(newRooms, roomsIndex, null, roomsLevel, newBasePlanLocked);       
+          selectAndShowItems(Arrays.asList(newRooms), false);
         }      
   
         @Override
@@ -4104,7 +4187,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postCreateRooms(List<Room> rooms, 
                                List<Selectable> oldSelection,
-                               boolean basePlanLocked) {
+                               boolean basePlanLocked,
+                               boolean allLevelsSelection) {
     // Search the index of rooms in home list of rooms
     Room [] newRooms = rooms.toArray(new Room [rooms.size()]);
     int [] roomsIndex = new int [rooms.size()];
@@ -4112,19 +4196,22 @@ public class PlanController extends FurnitureController implements Controller {
     for (int i = 0; i < roomsIndex.length; i++) {
       roomsIndex [i] = homeRooms.lastIndexOf(newRooms [i]); 
     }
-    postCreateRooms(newRooms, roomsIndex, oldSelection, basePlanLocked);
+    postCreateRooms(newRooms, roomsIndex, oldSelection, basePlanLocked, allLevelsSelection);
   }
 
   /**
    * Adds the <code>rooms</code> to plan component.
    */
   private void doAddRooms(Room [] rooms,
-                          int [] roomsIndex, 
-                          Level roomsLevel, 
+                          int [] roomsIndices, 
+                          Level [] roomsLevels,
+                          Level uniqueRoomsLevel,
                           boolean basePlanLocked) {
-    for (int i = 0; i < roomsIndex.length; i++) {
-      this.home.addRoom (rooms [i], roomsIndex [i]);
-      rooms [i].setLevel(roomsLevel);
+    for (int i = 0; i < roomsIndices.length; i++) {
+      this.home.addRoom (rooms [i], roomsIndices [i]);
+      rooms [i].setLevel(roomsLevels != null 
+          ? roomsLevels [i] 
+          : uniqueRoomsLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -4147,8 +4234,8 @@ public class PlanController extends FurnitureController implements Controller {
     for (DimensionLine dimensionLine : dimensionLines) {
       this.home.addDimensionLine(dimensionLine);
     }
-    postCreateDimensionLines(dimensionLines, 
-        this.home.getSelectedItems(), this.home.isBasePlanLocked());
+    postCreateDimensionLines(dimensionLines, this.home.getSelectedItems(), 
+        this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
   }
   
   /**
@@ -4156,7 +4243,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postCreateDimensionLines(List<DimensionLine> newDimensionLines, 
                                         List<Selectable> oldSelection,
-                                        final boolean oldBasePlanLocked) {
+                                        final boolean oldBasePlanLocked,
+                                        final boolean oldAllLevelsSelection) {
     if (newDimensionLines.size() > 0) {
       boolean basePlanLocked = this.home.isBasePlanLocked();
       if (basePlanLocked) {
@@ -4178,14 +4266,14 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           doDeleteDimensionLines(dimensionLines, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems));
+          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddDimensionLines(dimensionLines, dimensionLinesLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(dimensionLines));
+          doAddDimensionLines(dimensionLines, null, dimensionLinesLevel, newBasePlanLocked);       
+          selectAndShowItems(Arrays.asList(dimensionLines), false);
         }      
   
         @Override
@@ -4202,10 +4290,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Adds the dimension lines in <code>dimensionLines</code> to plan component.
    */
   private void doAddDimensionLines(DimensionLine [] dimensionLines, 
-                                   Level dimensionLinesLevel, boolean basePlanLocked) {
-    for (DimensionLine dimensionLine : dimensionLines) {
+                                   Level [] dimensionLinesLevels,
+                                   Level uniqueDimensionLinesLevel, boolean basePlanLocked) {
+    for (int i = 0; i < dimensionLines.length; i++) {
+      DimensionLine dimensionLine = dimensionLines [i];
       this.home.addDimensionLine(dimensionLine);
-      dimensionLine.setLevel(dimensionLinesLevel);
+      dimensionLine.setLevel(dimensionLinesLevels != null 
+          ? dimensionLinesLevels [i] 
+          : uniqueDimensionLinesLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -4228,7 +4320,8 @@ public class PlanController extends FurnitureController implements Controller {
     for (Label label : labels) {
       this.home.addLabel(label);
     }
-    postCreateLabels(labels, this.home.getSelectedItems(), this.home.isBasePlanLocked());
+    postCreateLabels(labels, this.home.getSelectedItems(), 
+        this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
   }
   
   /**
@@ -4236,7 +4329,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postCreateLabels(List<Label> newLabels, 
                                 List<Selectable> oldSelection, 
-                                final boolean oldBasePlanLocked) {
+                                final boolean oldBasePlanLocked, 
+                                final boolean oldAllLevelsSelection) {
     if (newLabels.size() > 0) {
       boolean basePlanLocked = this.home.isBasePlanLocked();
       if (basePlanLocked) {
@@ -4257,14 +4351,14 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           doDeleteLabels(labels, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems));
+          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddLabels(labels, labelsLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(labels));
+          doAddLabels(labels, null, labelsLevel, newBasePlanLocked);       
+          selectAndShowItems(Arrays.asList(labels), false);
         }      
   
         @Override
@@ -4280,10 +4374,13 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Adds the labels in <code>labels</code> to plan component.
    */
-  private void doAddLabels(Label [] labels, Level labelsLevel, boolean basePlanLocked) {
-    for (Label label : labels) {
+  private void doAddLabels(Label [] labels, Level [] labelsLevels, Level uniqueLabelLevel, boolean basePlanLocked) {
+    for (int i = 0; i < labels.length; i++) {
+      Label label = labels [i];
       this.home.addLabel(label);
-      label.setLevel(labelsLevel);
+      label.setLevel(labelsLevels != null
+          ? labelsLevels [i]
+          : uniqueLabelLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
   }
@@ -4340,19 +4437,20 @@ public class PlanController extends FurnitureController implements Controller {
       // Store the moved items in an array
       final Selectable [] itemsArray = 
           movedItems.toArray(new Selectable [movedItems.size()]);
+      final boolean allLevelsSelection = home.isAllLevelsSelection();
       final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
+          oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doMoveAndShowItems(itemsArray, oldSelectedItems, -dx, -dy);       
+          doMoveAndShowItems(itemsArray, oldSelectedItems, -dx, -dy, allLevelsSelection);       
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doMoveAndShowItems(itemsArray, itemsArray, dx, dy);   
+          doMoveAndShowItems(itemsArray, itemsArray, dx, dy, allLevelsSelection);   
         }      
   
         @Override
@@ -4371,9 +4469,11 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void doMoveAndShowItems(Selectable [] movedItems,
                                   Selectable [] selectedItems,
-                                  float dx, float dy) {
+                                  float dx, float dy, 
+                                  boolean allLevelsSelection) {
+    this.home.setAllLevelsSelection(allLevelsSelection);
     moveItems(Arrays.asList(movedItems), dx, dy);   
-    selectAndShowItems(Arrays.asList(selectedItems));
+    selectAndShowItems(Arrays.asList(selectedItems), allLevelsSelection);
   }
 
   /**
@@ -4437,8 +4537,9 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable operation about duplication <code>items</code>.
    */
   private void postItemsDuplication(final List<Selectable> items,
-                                    final List<Selectable> oldSelectedItems) {
+                                    final List<Selectable> oldSelectedItems) {    
     boolean basePlanLocked = this.home.isBasePlanLocked();
+    final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     // Delete furniture and add it again in a compound edit
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
     for (HomePieceOfFurniture piece : furniture) {
@@ -4452,16 +4553,16 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void undo() throws CannotRedoException {
           super.undo();
-          selectAndShowItems(oldSelectedItems);
+          selectAndShowItems(oldSelectedItems, allLevelsSelection);
         }
       });
 
     addFurniture(furniture);
     List<Selectable> emptyList = Collections.emptyList();
-    postCreateWalls(Home.getWallsSubList(items), emptyList, basePlanLocked);
-    postCreateRooms(Home.getRoomsSubList(items), emptyList, basePlanLocked);
-    postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList, basePlanLocked);
-    postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked);
+    postCreateWalls(Home.getWallsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
+    postCreateRooms(Home.getRoomsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
+    postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList, basePlanLocked, allLevelsSelection);
+    postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
 
     // Add a undoable edit that will select all the items at redo
     this.undoSupport.postEdit(new AbstractUndoableEdit() {      
@@ -6142,7 +6243,7 @@ public class PlanController extends FurnitureController implements Controller {
             && ((HomeDoorOrWindow)this.movedPieceOfFurniture).isBoundToWall();
       }
       this.duplicatedItems = null;
-      this.duplicationActivated = wasDuplicationActivatedLastMousePress();
+      this.duplicationActivated = wasDuplicationActivatedLastMousePress() && !home.isAllLevelsSelection();
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       getView().setCursor(PlanView.CursorType.MOVE);
     }
@@ -6185,7 +6286,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
 
       if (!this.mouseMoved) {
-        selectItems(this.movedItems);
+        selectItems(this.movedItems, home.isAllLevelsSelection());
       }
       getView().makePointVisible(x, y);
       this.xLastMouseMove = x;
@@ -6276,6 +6377,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void setDuplicationActivated(boolean duplicationActivated) {
+      duplicationActivated &= !home.isAllLevelsSelection();
       if (this.mouseMoved) {
         toggleDuplication(duplicationActivated);
       }
@@ -6352,7 +6454,7 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setCursor(PlanView.CursorType.MOVE);
         }
         
-        selectItems(this.movedItems);
+        selectItems(this.movedItems, home.isAllLevelsSelection());
       }
     }
 
@@ -6432,7 +6534,8 @@ public class PlanController extends FurnitureController implements Controller {
               this.selectedItemsMousePressed.add(itemUnderCursor);
             }
           }
-          selectItems(this.selectedItemsMousePressed);
+          selectItems(this.selectedItemsMousePressed, 
+              home.isAllLevelsSelection() && wasShiftDownLastMousePress());
         }
       }      
       // Change state to SelectionState
@@ -6485,7 +6588,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }    
       // Update selection
-      selectItems(selectedItems);
+      selectItems(selectedItems, home.isAllLevelsSelection() && shiftDown);
     }
   }
 
@@ -6828,6 +6931,7 @@ public class PlanController extends FurnitureController implements Controller {
     private Wall             lastWall;
     private List<Selectable> oldSelection;
     private boolean          oldBasePlanLocked;
+    private boolean          oldAllLevelsSelection;
     private List<Wall>       newWalls;
     private boolean          magnetismEnabled;
     private boolean          alignmentActivated;
@@ -6867,6 +6971,7 @@ public class PlanController extends FurnitureController implements Controller {
       super.enter();
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
+      this.oldAllLevelsSelection = home.isAllLevelsSelection();
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       toggleMagnetism(wasMagnetismToggledLastMousePress());
       this.xStart = getXLastMouseMove();
@@ -7116,7 +7221,7 @@ public class PlanController extends FurnitureController implements Controller {
     private void validateDrawnWalls() {
       if (this.newWalls.size() > 0) {
         // Post walls creation to undo support
-        postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
+        postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         selectItems(this.newWalls);
       }
       // Change state to WallCreationState 
@@ -8490,6 +8595,7 @@ public class PlanController extends FurnitureController implements Controller {
     private DimensionLine    newDimensionLine;
     private List<Selectable> oldSelection;
     private boolean          oldBasePlanLocked;
+    private boolean          oldAllLevelsSelection;
     private boolean          magnetismEnabled;
     private boolean          alignmentActivated;
     private boolean          offsetChoice;
@@ -8525,6 +8631,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
+      this.oldAllLevelsSelection = home.isAllLevelsSelection();
       this.xStart = getXLastMouseMove();
       this.yStart = getYLastMouseMove();
       this.editingStartPoint = false;
@@ -8655,7 +8762,7 @@ public class PlanController extends FurnitureController implements Controller {
       selectItem(this.newDimensionLine);
       // Post dimension line creation to undo support
       postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
-          this.oldSelection, this.oldBasePlanLocked);
+          this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
       this.newDimensionLine = null;
       // Change state to DimensionLineCreationState 
       setState(getDimensionLineCreationState());
@@ -9288,6 +9395,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float []               newPoint;
     private List<Selectable>       oldSelection;
     private boolean                oldBasePlanLocked;
+    private boolean                oldAllLevelsSelection;
     private boolean                magnetismEnabled;
     private boolean                alignmentActivated;
     private long                   lastPointCreationTime;
@@ -9324,6 +9432,7 @@ public class PlanController extends FurnitureController implements Controller {
       super.enter();
       this.oldSelection = home.getSelectedItems();
       this.oldBasePlanLocked = home.isBasePlanLocked();
+      this.oldAllLevelsSelection = home.isAllLevelsSelection();
       this.newRoom = null;
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       toggleMagnetism(wasMagnetismToggledLastMousePress());
@@ -9450,7 +9559,7 @@ public class PlanController extends FurnitureController implements Controller {
         } else {
           // Post room creation to undo support
           postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), 
-              this.oldSelection, this.oldBasePlanLocked);
+              this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         }
       }
       // Change state to RoomCreationState 

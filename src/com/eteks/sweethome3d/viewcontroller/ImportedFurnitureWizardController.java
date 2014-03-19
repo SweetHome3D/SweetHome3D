@@ -222,15 +222,22 @@ public class ImportedFurnitureWizardController extends WizardController
    * @param piece the piece of furniture to add.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
+    boolean basePlanLocked = this.home.isBasePlanLocked();
+    boolean allLevelsSelection = this.home.isAllLevelsSelection();
     List<Selectable> oldSelection = this.home.getSelectedItems(); 
     // Get index of the piece added to home
     int pieceIndex = this.home.getFurniture().size();
     
     this.home.addPieceOfFurniture(piece, pieceIndex);
     this.home.setSelectedItems(Arrays.asList(piece)); 
+    if (!piece.isMovable() && basePlanLocked) {
+      this.home.setBasePlanLocked(false);
+    }
+    this.home.setAllLevelsSelection(false);
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new PieceOfFurnitureImportationUndoableEdit(
-          this.home, this.preferences, oldSelection, piece, pieceIndex);
+          this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection,
+          piece, pieceIndex);
       this.undoSupport.postEdit(undoableEdit);
     }
   }
@@ -243,17 +250,23 @@ public class ImportedFurnitureWizardController extends WizardController
     private final Home                 home;
     private final UserPreferences      preferences;
     private final List<Selectable>     oldSelection;
+    private final boolean              oldBasePlanLocked;
+    private final boolean              oldAllLevelsSelection;
     private final HomePieceOfFurniture piece;
     private final int                  pieceIndex;
 
     private PieceOfFurnitureImportationUndoableEdit(Home home,
                                                     UserPreferences preferences, 
                                                     List<Selectable> oldSelection,
-                                                    HomePieceOfFurniture piece,
+                                                    boolean oldBasePlanLocked,
+                                                    boolean oldAllLevelsSelection, 
+                                                    HomePieceOfFurniture piece, 
                                                     int pieceIndex) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
       this.piece = piece;
       this.pieceIndex = pieceIndex;
     }
@@ -262,7 +275,9 @@ public class ImportedFurnitureWizardController extends WizardController
     public void undo() throws CannotUndoException {
       super.undo();
       this.home.deletePieceOfFurniture(this.piece);
-      this.home.setSelectedItems(this.oldSelection); 
+      this.home.setSelectedItems(this.oldSelection);
+      this.home.setAllLevelsSelection(this.oldAllLevelsSelection);
+      this.home.setBasePlanLocked(this.oldBasePlanLocked);
     }
 
     @Override
@@ -270,6 +285,10 @@ public class ImportedFurnitureWizardController extends WizardController
       super.redo();
       this.home.addPieceOfFurniture(this.piece, this.pieceIndex);
       this.home.setSelectedItems(Arrays.asList(this.piece)); 
+      if (!piece.isMovable() && this.oldBasePlanLocked) {
+        this.home.setBasePlanLocked(false);
+      }
+      this.home.setAllLevelsSelection(false);
     }
 
     @Override

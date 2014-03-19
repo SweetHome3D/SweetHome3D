@@ -67,12 +67,13 @@ public class Home implements Serializable, Cloneable {
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED, SELECTED_LEVEL};
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED, SELECTED_LEVEL, ALL_LEVELS_SELECTION};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
   private transient List<Selectable>                  selectedItems;
   private transient List<SelectionListener>           selectionListeners;
+  private transient boolean                           allLevelsSelection;
   private List<Level>                                 levels;
   private Level                                       selectedLevel;
   private transient CollectionChangeSupport<Level>    levelsChangeSupport;
@@ -520,6 +521,7 @@ public class Home implements Serializable, Cloneable {
       if (this.selectedLevel == level) {
         if (this.levels.size() == 1) {
           setSelectedLevel(null);
+          setAllLevelsSelection(false);
         } else {
           setSelectedLevel(this.levels.get(index >= 1 ? index - 1 : index + 1));
         }
@@ -548,6 +550,25 @@ public class Home implements Serializable, Cloneable {
       Level oldSelectedLevel = this.selectedLevel;
       this.selectedLevel = selectedLevel;
       this.propertyChangeSupport.firePropertyChange(Property.SELECTED_LEVEL.name(), oldSelectedLevel, selectedLevel);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the selected items in this home are from all levels.
+   * @since 4.4
+   */
+  public boolean isAllLevelsSelection() {
+    return this.allLevelsSelection;
+  }
+  
+  /**
+   * Sets whether the selected items in this home are from all levels, and notifies listeners of the change.
+   * @since 4.4
+   */
+  public void setAllLevelsSelection(boolean selectionAtAllLevels) {
+    if (selectionAtAllLevels != this.allLevelsSelection) {
+      this.allLevelsSelection = selectionAtAllLevels;
+      this.propertyChangeSupport.firePropertyChange(Property.ALL_LEVELS_SELECTION.name(), !selectionAtAllLevels, selectionAtAllLevels);
     }
   }
   

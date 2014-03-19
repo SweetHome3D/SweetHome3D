@@ -163,6 +163,7 @@ public class FurnitureController implements Controller {
    */
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
     final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
+    final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     final HomePieceOfFurniture [] newFurniture = furniture.
         toArray(new HomePieceOfFurniture [furniture.size()]);
@@ -178,20 +179,20 @@ public class FurnitureController implements Controller {
     final boolean newBasePlanLocked = basePlanLocked;
     final Level furnitureLevel = this.home.getSelectedLevel();
     
-    doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked); 
+    doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteFurniture(newFurniture, oldBasePlanLocked); 
+          doDeleteFurniture(newFurniture, oldBasePlanLocked, allLevelsSelection); 
           home.setSelectedItems(oldSelection); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked); 
+          doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
         }
         
         @Override
@@ -207,13 +208,15 @@ public class FurnitureController implements Controller {
                               int [] furnitureIndex,
                               Level furnitureLevel, 
                               Level [] furnitureLevels, 
-                              boolean basePlanLocked) {
+                              boolean basePlanLocked,
+                              boolean allLevelsSelection) {
     for (int i = 0; i < furnitureIndex.length; i++) {
       this.home.addPieceOfFurniture (furniture [i], furnitureIndex [i]);
       furniture [i].setLevel(furnitureLevels != null ? furnitureLevels [i] : furnitureLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
     this.home.setSelectedItems(Arrays.asList(furniture)); 
+    this.home.setAllLevelsSelection(allLevelsSelection);
   }
   
   /**
@@ -230,6 +233,7 @@ public class FurnitureController implements Controller {
    */
   public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
     final boolean basePlanLocked = this.home.isBasePlanLocked();
+    final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
     // Sort the deletable furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
@@ -249,20 +253,20 @@ public class FurnitureController implements Controller {
       furnitureLevels [i] = furniture [i].getLevel();
       i++;
     }
-    doDeleteFurniture(furniture, basePlanLocked); 
+    doDeleteFurniture(furniture, basePlanLocked, false); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doAddFurniture(furniture, furnitureIndex, null, furnitureLevels, basePlanLocked); 
+          doAddFurniture(furniture, furnitureIndex, null, furnitureLevels, basePlanLocked, allLevelsSelection); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           home.setSelectedItems(Arrays.asList(furniture));
-          doDeleteFurniture(furniture, basePlanLocked); 
+          doDeleteFurniture(furniture, basePlanLocked, false); 
         }
         
         @Override
@@ -275,11 +279,13 @@ public class FurnitureController implements Controller {
   }
   
   private void doDeleteFurniture(HomePieceOfFurniture [] furniture, 
-                                 boolean basePlanLocked) { 
+                                 boolean basePlanLocked,
+                                 boolean allLevelsSelection) { 
     for (HomePieceOfFurniture piece : furniture) {
       this.home.deletePieceOfFurniture(piece);
     }
     this.home.setBasePlanLocked(basePlanLocked);
+    this.home.setAllLevelsSelection(allLevelsSelection);
   }
 
   /**
@@ -290,6 +296,7 @@ public class FurnitureController implements Controller {
       selectedFurniture = getFurnitureNotPartOfBasePlan(selectedFurniture);
     }
     this.home.setSelectedItems(selectedFurniture);
+    this.home.setAllLevelsSelection(false);
   }
 
   /**
@@ -487,6 +494,7 @@ public class FurnitureController implements Controller {
     List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (!selectedFurniture.isEmpty()) {
       final boolean basePlanLocked = this.home.isBasePlanLocked();
+      final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       // Sort the grouped furniture in the ascending order of their index in home
@@ -537,14 +545,14 @@ public class FurnitureController implements Controller {
       final Level groupLevel = minLevel;
       
       doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
-          new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked);
+          new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
             @Override
             public void undo() throws CannotUndoException {
               super.undo();
               doUngroupFurniture(groupPieces, groupPiecesIndex, 
-                  new HomeFurnitureGroup [] {furnitureGroup}, groupPiecesLevel, basePlanLocked);
+                  new HomeFurnitureGroup [] {furnitureGroup}, groupPiecesLevel, basePlanLocked, allLevelsSelection);
               for (int i = 0; i < groupPieces.length; i++) {
                 groupPieces [i].setElevation(groupPiecesElevation [i]);
                 groupPieces [i].setMovable(groupPiecesMovable [i]);
@@ -563,7 +571,7 @@ public class FurnitureController implements Controller {
               furnitureGroup.setMovable(movable);
               furnitureGroup.setVisible(true);
               doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
-                  new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked);
+                  new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
             }
             
             @Override
@@ -603,18 +611,20 @@ public class FurnitureController implements Controller {
                                 HomeFurnitureGroup [] furnitureGroups,
                                 int [] furnitureGroupsIndex,
                                 Level [] groupLevels, 
-                                boolean basePlanLocked) {
-    doDeleteFurniture(groupPieces, basePlanLocked);
-    doAddFurniture(furnitureGroups, furnitureGroupsIndex, null, groupLevels, basePlanLocked);
+                                boolean basePlanLocked,
+                                boolean allLevelsSelection) {
+    doDeleteFurniture(groupPieces, basePlanLocked, allLevelsSelection);
+    doAddFurniture(furnitureGroups, furnitureGroupsIndex, null, groupLevels, basePlanLocked, allLevelsSelection);
   }
 
   private void doUngroupFurniture(HomePieceOfFurniture [] groupPieces,
                                   int [] groupPiecesIndex,
                                   HomeFurnitureGroup [] furnitureGroups,
                                   Level [] groupLevels, 
-                                  boolean basePlanLocked) {
-    doDeleteFurniture(furnitureGroups, basePlanLocked);
-    doAddFurniture(groupPieces, groupPiecesIndex, null, groupLevels, basePlanLocked);
+                                  boolean basePlanLocked,
+                                  boolean allLevelsSelection) {
+    doDeleteFurniture(furnitureGroups, basePlanLocked, allLevelsSelection);
+    doAddFurniture(groupPieces, groupPiecesIndex, null, groupLevels, basePlanLocked, allLevelsSelection);
   }
 
   /**
@@ -632,6 +642,7 @@ public class FurnitureController implements Controller {
     }  
     if (!movableSelectedFurnitureGroups.isEmpty()) {
       final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
+      final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       // Sort the groups in the ascending order of their index in home
@@ -666,20 +677,20 @@ public class FurnitureController implements Controller {
       }  
       final boolean newBasePlanLocked = basePlanLocked;
 
-      doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked);
+      doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked, false);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
             @Override
             public void undo() throws CannotUndoException {
               super.undo();
-              doGroupFurniture(groupPieces, furnitureGroups, furnitureGroupsIndex, groupPiecesLevel, oldBasePlanLocked);
+              doGroupFurniture(groupPieces, furnitureGroups, furnitureGroupsIndex, groupPiecesLevel, oldBasePlanLocked, allLevelsSelection);
               home.setSelectedItems(oldSelection);
             }
             
             @Override
             public void redo() throws CannotRedoException {
               super.redo();
-              doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked);
+              doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked, false);
             }
             
             @Override
@@ -998,7 +1009,7 @@ public class FurnitureController implements Controller {
   }
   
   private List<HomePieceOfFurniture> getMovableSelectedFurniture() {
-    List<HomePieceOfFurniture> movableSelectedFurniture = new ArrayList<HomePieceOfFurniture>(); 
+    List<HomePieceOfFurniture> movableSelectedFurniture = new ArrayList<HomePieceOfFurniture>();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item instanceof HomePieceOfFurniture) {
         HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
