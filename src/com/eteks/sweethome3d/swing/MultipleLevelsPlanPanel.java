@@ -248,13 +248,14 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
               Composite oldComposite = g2D.getComposite();
               g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
               g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-              g2D.setStroke(new BasicStroke(2f));
-              FontRenderContext fontRenderContext = g2D.getFontRenderContext();
               Font font = getFont();
-              TextLayout textLayout = new TextLayout(getText(), font, fontRenderContext);
               FontMetrics fontMetrics = getFontMetrics(font);
-              g2D.draw(textLayout.getOutline(AffineTransform.getTranslateInstance(-0.5, 
-                  (getHeight() - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent() - 0.5)));
+              float strokeWidth = fontMetrics.getHeight() * 0.125f;
+              g2D.setStroke(new BasicStroke(strokeWidth));
+              FontRenderContext fontRenderContext = g2D.getFontRenderContext();
+              TextLayout textLayout = new TextLayout(getText(), font, fontRenderContext);
+              g2D.draw(textLayout.getOutline(AffineTransform.getTranslateInstance(-strokeWidth / 5, 
+                  (getHeight() - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent() - strokeWidth / 5)));
               g2D.setComposite(oldComposite);
             }
             super.paintComponent(g);
