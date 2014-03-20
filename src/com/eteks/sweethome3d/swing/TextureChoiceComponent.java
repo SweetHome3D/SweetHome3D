@@ -248,11 +248,15 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           public String getToolTipText(MouseEvent ev) {
             int index = locationToIndex(ev.getPoint());
             if (index >= 0) {
-              toolTip.setCatalogItem((CatalogTexture)getModel().getElementAt(index));
-              return toolTip.getTipText();
-            } else {
-              return null;
+              CatalogTexture texture = (CatalogTexture)getModel().getElementAt(index);
+              IconManager iconManager = IconManager.getInstance();
+              if (!iconManager.isWaitIcon(iconManager.getIcon(texture.getImage(), TextureIcon.SIZE, this))) {
+                // Set tool tip only if icon image is already loaded 
+                toolTip.setCatalogItem(texture);
+                return toolTip.getTipText();
+              }
             }
+            return null;
           }
         };
       this.toolTip = new CatalogItemToolTip(true, preferences);
@@ -482,6 +486,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
      * Icon displaying a texture.
      */
     private static class TextureIcon implements Icon {
+      static final int SIZE = 16;
+      
       private TextureImage texture;
       private JComponent   component;
 
@@ -492,11 +498,11 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       }
       
       public int getIconWidth() {
-        return 16;
+        return SIZE;
       }
 
       public int getIconHeight() {
-        return 16;
+        return SIZE;
       }
 
       public void paintIcon(Component c, Graphics g, int x, int y) {
