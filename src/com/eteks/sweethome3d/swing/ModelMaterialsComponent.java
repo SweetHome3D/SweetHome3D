@@ -691,43 +691,44 @@ public class ModelMaterialsComponent extends JButton implements View {
       private void toggleBlinkingState() {
         MaterialsListModel listModel = (MaterialsListModel)materialsList.getModel();
         HomeMaterial [] materials = listModel.getMaterials();
-        if (getDelay() == 200) {
-          setDelay(1000);
-          int selectedIndex = materialsList.getSelectedIndex();
-          int size = listModel.getSize();
-          if (selectedIndex != -1 && size > 0) {
-            if (materials == null) {
-              materials = new HomeMaterial [size];
-            } else {
-              materials = materials.clone();
-            }
-            HomeMaterial selectedMaterial = materials [selectedIndex] != null 
-                ? materials [selectedIndex]
-                : listModel.getDefaultMaterialAt(selectedIndex);
-            int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
-            if (selectedMaterial.getTexture() == null) {
-              Integer color = selectedMaterial.getColor();
-              int componentAverage = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
-              if (componentAverage > 0x77) {
-                blinkColor = new Color(color).darker().darker().getRGB();
-              } else if (componentAverage > 0x0F) {
-                blinkColor = new Color(color).brighter().brighter().getRGB();
+        if (listModel.getSize() > 1) {
+          if (getDelay() != 1000) {
+            setDelay(1000);
+            int selectedIndex = materialsList.getSelectedIndex();
+            if (selectedIndex != -1) {
+              if (materials == null) {
+                materials = new HomeMaterial [listModel.getSize()];
+              } else {
+                materials = materials.clone();
               }
+              HomeMaterial selectedMaterial = materials [selectedIndex] != null 
+                  ? materials [selectedIndex]
+                  : listModel.getDefaultMaterialAt(selectedIndex);
+              int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
+              if (selectedMaterial.getTexture() == null) {
+                Integer color = selectedMaterial.getColor();
+                int componentAverage = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
+                if (componentAverage > 0x77) {
+                  blinkColor = new Color(color).darker().darker().getRGB();
+                } else if (componentAverage > 0x0F) {
+                  blinkColor = new Color(color).brighter().brighter().getRGB();
+                }
+              }
+              materials [selectedIndex] = 
+                  new HomeMaterial(selectedMaterial.getName(), blinkColor, null, selectedMaterial.getShininess());
+              previewComponent.setModelMaterials(materials);
             }
-            materials [selectedIndex] = 
-                new HomeMaterial(selectedMaterial.getName(), blinkColor, null, selectedMaterial.getShininess());
+          } else {
+            setDelay(100);
             previewComponent.setModelMaterials(materials);
           }
-        } else {
-          setDelay(200);
-          previewComponent.setModelMaterials(materials);
         }
       }
       
       @Override
       public void restart() {
         setInitialDelay(100);
-        setDelay(200);
+        setDelay(100);
         super.restart();
       }
     }
