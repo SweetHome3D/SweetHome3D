@@ -63,6 +63,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
@@ -573,8 +574,20 @@ public class ModelMaterialsComponent extends JButton implements View {
             dialog.removeComponentListener(this);
           }
         });
+      // Run a timer that will make blink the selected material in preview
+      final MaterialBlinker selectedMaterialBlinker = new MaterialBlinker();
+      selectedMaterialBlinker.start();
+      this.materialsList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+          public void valueChanged(ListSelectionEvent ev) {
+            selectedMaterialBlinker.restart();
+          }
+        });
+
       dialog.setVisible(true);
       dialog.dispose();
+      
+      selectedMaterialBlinker.stop();
+      
       this.controller.getTextureController().removePropertyChangeListener(
           TextureChoiceController.Property.TEXTURE, this.textureChangeListener);
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
@@ -659,6 +672,63 @@ public class ModelMaterialsComponent extends JButton implements View {
        */
       public HomeMaterial [] getMaterials() {
         return this.materials;
+      }
+    }
+    
+    /**
+     * A timer that makes blink the selected material in preview.
+     */
+    private class MaterialBlinker extends Timer {
+      public MaterialBlinker() {
+        super(500, null);
+        addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+              toggleBlinkingState();
+            }
+          });
+      }
+
+      private void toggleBlinkingState() {
+        MaterialsListModel listModel = (MaterialsListModel)materialsList.getModel();
+        HomeMaterial [] materials = listModel.getMaterials();
+        if (getDelay() == 200) {
+          setDelay(1000);
+          int selectedIndex = materialsList.getSelectedIndex();
+          int size = listModel.getSize();
+          if (selectedIndex != -1 && size > 0) {
+            if (materials == null) {
+              materials = new HomeMaterial [size];
+            } else {
+              materials = materials.clone();
+            }
+            HomeMaterial selectedMaterial = materials [selectedIndex] != null 
+                ? materials [selectedIndex]
+                : listModel.getDefaultMaterialAt(selectedIndex);
+            int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
+            if (selectedMaterial.getTexture() == null) {
+              Integer color = selectedMaterial.getColor();
+              int componentAverage = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
+              if (componentAverage > 0x77) {
+                blinkColor = new Color(color).darker().darker().getRGB();
+              } else if (componentAverage > 0x0F) {
+                blinkColor = new Color(color).brighter().brighter().getRGB();
+              }
+            }
+            materials [selectedIndex] = 
+                new HomeMaterial(selectedMaterial.getName(), blinkColor, null, selectedMaterial.getShininess());
+            previewComponent.setModelMaterials(materials);
+          }
+        } else {
+          setDelay(200);
+          previewComponent.setModelMaterials(materials);
+        }
+      }
+      
+      @Override
+      public void restart() {
+        setInitialDelay(100);
+        setDelay(200);
+        super.restart();
       }
     }
   }
