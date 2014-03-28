@@ -701,17 +701,27 @@ public class ModelMaterialsComponent extends JButton implements View {
               } else {
                 materials = materials.clone();
               }
+              HomeMaterial defaultMaterial = listModel.getDefaultMaterialAt(selectedIndex);
               HomeMaterial selectedMaterial = materials [selectedIndex] != null 
                   ? materials [selectedIndex]
-                  : listModel.getDefaultMaterialAt(selectedIndex);
+                  : defaultMaterial;
               int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
-              if (selectedMaterial.getTexture() == null) {
-                Integer color = selectedMaterial.getColor();
-                int componentAverage = (((color >> 16) & 0xFF) + ((color >> 8) & 0xFF) + (color & 0xFF)) / 3;
+              if (materials [selectedIndex] == null 
+                     && defaultMaterial.getTexture() == null
+                  || materials [selectedIndex] != null 
+                     && materials [selectedIndex].getTexture() == null
+                     && materials [selectedIndex].getShininess() != null) {
+                Integer selectedColor = selectedMaterial.getColor();
+                if (selectedColor == null) {
+                  selectedColor = defaultMaterial.getColor();
+                }
+                int componentAverage = (((selectedColor >> 16) & 0xFF) + ((selectedColor >> 8) & 0xFF) + (selectedColor & 0xFF)) / 3;
                 if (componentAverage > 0x77) {
-                  blinkColor = new Color(color).darker().darker().getRGB();
+                  // Display a darker color for a bright color
+                  blinkColor = new Color(selectedColor).darker().darker().getRGB();
                 } else if (componentAverage > 0x0F) {
-                  blinkColor = new Color(color).brighter().brighter().getRGB();
+                  // Display a brighter color for a dark color
+                  blinkColor = new Color(selectedColor).brighter().brighter().getRGB();
                 }
               }
               materials [selectedIndex] = 
