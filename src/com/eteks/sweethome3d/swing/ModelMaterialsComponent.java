@@ -706,11 +706,7 @@ public class ModelMaterialsComponent extends JButton implements View {
                   ? materials [selectedIndex]
                   : defaultMaterial;
               int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
-              if (materials [selectedIndex] == null 
-                     && defaultMaterial.getTexture() == null
-                  || materials [selectedIndex] != null 
-                     && materials [selectedIndex].getTexture() == null
-                     && materials [selectedIndex].getShininess() != null) {
+              if (selectedMaterial.getTexture() == null) {
                 Integer selectedColor = selectedMaterial.getColor();
                 if (selectedColor == null) {
                   selectedColor = defaultMaterial.getColor();
