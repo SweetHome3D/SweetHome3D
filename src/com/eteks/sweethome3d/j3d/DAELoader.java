@@ -636,7 +636,7 @@ public class DAELoader extends LoaderBase implements Loader {
       if ("init_from".equals(name)) {
         InputStream in = null;
         try {
-          URL textureImageUrl = new URL(this.baseUrl, getCharacters().replace("%", "%25").replace("#", "%23"));
+          URL textureImageUrl = new URL(this.baseUrl, getCharacters());
           in = openStream(textureImageUrl);
           BufferedImage textureImage = ImageIO.read(in);
           if (textureImage != null) {
