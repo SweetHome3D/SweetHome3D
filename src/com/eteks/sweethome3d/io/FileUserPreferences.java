@@ -812,8 +812,9 @@ public class FileUserPreferences extends UserPreferences {
       Iterator<String> it = getAutoCompletionStrings(property).iterator();
       for (int j = 0; j < 1000 && it.hasNext(); j++) {
         String autoCompletionString = it.next();
-        // As strings are comma separated, accept only the ones without a comma 
-        if (autoCompletionString.indexOf(',') < 0) {
+        // As strings are comma separated, accept only the ones without a comma
+        if (autoCompletionString.indexOf(',') < 0
+            && autoCompletionStrings.length() + autoCompletionString.length() + 1 <= Preferences.MAX_VALUE_LENGTH) {
           if (autoCompletionStrings.length() > 0) {
             autoCompletionStrings.append(",");
           } 
