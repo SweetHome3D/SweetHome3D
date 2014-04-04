@@ -271,13 +271,13 @@
       </manifest>
       <zipfileset src="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
     </jar>
-    <jar destfile="deploy/lib/sunflow-0.07.3h.jar" filesetmanifest="merge">
+    <jar destfile="deploy/lib/sunflow-0.07.3i.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Permissions"               value="all-permissions"/>
         <attribute name="Codebase"                  value="*"/>
         <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
-      <zipfileset src="lib/sunflow-0.07.3h.jar"/>
+      <zipfileset src="lib/sunflow-0.07.3i.jar"/>
     </jar>
     <jar destfile="deploy/lib/iText-2.1.7.jar" filesetmanifest="merge">
       <manifest>
