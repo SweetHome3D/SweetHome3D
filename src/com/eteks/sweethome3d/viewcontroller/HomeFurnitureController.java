@@ -273,6 +273,29 @@ public class HomeFurnitureController implements Controller {
       }
       setIcon(icon);
       
+      HomeMaterial [] modelMaterials = firstPiece.getModelMaterials();
+      Content model = firstPiece.getModel();
+      if (model != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          HomePieceOfFurniture piece = selectedFurniture.get(i);
+          if (!Arrays.equals(modelMaterials, piece.getModelMaterials())
+              || model != piece.getModel()) {
+            modelMaterials = null;
+            model = null;
+            break;
+          }
+        }
+      }
+      if (modelMaterialsController != null) {
+        // Materials management available since version 4.0 only
+        modelMaterialsController.setMaterials(modelMaterials);
+        modelMaterialsController.setModel(model);
+        // Set a default size from the first piece before checking whether the selected pieces have the same size  
+        modelMaterialsController.setModelSize(firstPiece.getWidth(), firstPiece.getDepth(), firstPiece.getHeight());
+        modelMaterialsController.setModelRotation(firstPiece.getModelRotation());
+        modelMaterialsController.setBackFaceShown(firstPiece.isBackFaceShown());
+      }
+      
       String name = firstPiece.getName();
       if (name != null) {
         for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -419,28 +442,7 @@ public class HomeFurnitureController implements Controller {
         // Texture management available since version 2.3 only
         textureController.setTexture(texture);
       }
-
-      HomeMaterial [] modelMaterials = firstPiece.getModelMaterials();
-      Content model = firstPiece.getModel();
-      if (model != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          HomePieceOfFurniture piece = selectedFurniture.get(i);
-          if (!Arrays.equals(modelMaterials, piece.getModelMaterials())
-              || model != piece.getModel()) {
-            modelMaterials = null;
-            model = null;
-            break;
-          }
-        }
-      }
-      if (modelMaterialsController != null) {
-        // Materials management available since version 4.0 only
-        modelMaterialsController.setMaterials(modelMaterials);
-        modelMaterialsController.setModel(model);
-        modelMaterialsController.setModelRotation(firstPiece.getModelRotation());
-        modelMaterialsController.setBackFaceShown(firstPiece.isBackFaceShown());
-      }
-      
+     
       boolean defaultColorsAndTextures = true;
       for (int i = 0; i < selectedFurniture.size(); i++) {
         HomePieceOfFurniture piece = selectedFurniture.get(i);
