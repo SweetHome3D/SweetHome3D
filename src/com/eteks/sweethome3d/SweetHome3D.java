@@ -748,7 +748,7 @@ public class SweetHome3D extends HomeApplication {
   /**
    * Shows a home frame, either a new one when no home is opened, or the last created home frame.  
    */
-  public void showDefaultHomeFrame() {
+  private void showDefaultHomeFrame() {
     if (getHomes().isEmpty()) {
       if (this.autoRecoveryManager != null) {
         this.autoRecoveryManager.openRecoveredHomes();
