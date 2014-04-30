@@ -286,6 +286,13 @@ public class HomeController3D implements Controller {
   }
 
   /**
+   * Moves home camera sideways of <code>delta</code>.
+   */
+  public void moveCameraSideways(float delta) {
+    this.cameraState.moveCameraSideways(delta);
+  }
+
+  /**
    * Elevates home camera of <code>delta</code>.
    */
   public void elevateCamera(float delta) {
@@ -331,6 +338,8 @@ public class HomeController3D implements Controller {
     }
 
     public void moveCamera(float delta) {
+    }
+    public void moveCameraSideways(float delta) {
     }
 
     public void elevateCamera(float delta) {     
@@ -775,6 +784,14 @@ public class HomeController3D implements Controller {
     public void moveCamera(float delta) {
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
+      // Select observer camera for user feedback
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    }
+    
+    @Override
+    public void moveCameraSideways(float delta) {
+      this.observerCamera.setX(this.observerCamera.getX() - (float)Math.cos(this.observerCamera.getYaw()) * delta);
+      this.observerCamera.setY(this.observerCamera.getY() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
