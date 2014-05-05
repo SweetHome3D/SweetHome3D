@@ -28,13 +28,14 @@ import java.io.Serializable;
 public class HomeTexture implements TextureImage, Serializable {
   private static final long serialVersionUID = 1L;
   
+  private final String catalogId;
   private final String name;
   private final Content image;
   private final float width;
   private final float height;
   private final float angle;
   private final boolean leftToRightOriented;
-  
+
   /**
    * Creates a home texture from an existing one.
    * @param texture the texture from which data are copied
@@ -58,6 +59,20 @@ public class HomeTexture implements TextureImage, Serializable {
     // Texture is left to right oriented when applied on objects seen from front
     // added to homes with a version 3.4 and higher
     this.leftToRightOriented = true; 
+    if (texture instanceof HomeTexture) {
+      this.catalogId = ((HomeTexture)texture).getCatalogId();
+    } else if (texture instanceof CatalogTexture) {
+      this.catalogId = ((CatalogPieceOfFurniture)texture).getId();
+    } else {
+      this.catalogId = null;
+    }
+  }
+  
+  /**
+   * Returns the catalog ID of this texture or <code>null</code> if it doesn't exist.
+   */
+  public String getCatalogId() {
+    return this.catalogId;
   }
   
   /**
