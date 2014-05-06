@@ -62,7 +62,7 @@ public class HomeTexture implements TextureImage, Serializable {
     if (texture instanceof HomeTexture) {
       this.catalogId = ((HomeTexture)texture).getCatalogId();
     } else if (texture instanceof CatalogTexture) {
-      this.catalogId = ((CatalogPieceOfFurniture)texture).getId();
+      this.catalogId = ((CatalogTexture)texture).getId();
     } else {
       this.catalogId = null;
     }
