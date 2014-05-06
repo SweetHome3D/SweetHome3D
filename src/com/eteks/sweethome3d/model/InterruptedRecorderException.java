@@ -20,7 +20,7 @@
 package com.eteks.sweethome3d.model;
 
 /**
- * Exception thrown when an a thread is interrupted during an access to data in IO layer.
+ * Exception thrown when a thread is interrupted during an access to data in IO layer.
  * @author Emmanuel Puybaret
  */
 public class InterruptedRecorderException extends RecorderException {
