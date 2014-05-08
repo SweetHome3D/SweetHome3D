@@ -1524,22 +1524,7 @@ public class HomeController implements Controller {
             if (!(ex instanceof InterruptedRecorderException)) {
               if (ex instanceof DamagedHomeRecorderException) {
                 DamagedHomeRecorderException ex2 = (DamagedHomeRecorderException)ex;
-                Home openedHome = ex2.getDamagedHome();
-                OpenDamagedHomeAnswer answer = getView().confirmOpenDamagedHome(
-                    homeName, openedHome, ex2.getInvalidContent());
-                switch (answer) {
-                  case REMOVE_DAMAGED_ITEMS:
-                    removeDamagedItems(openedHome, ex2.getInvalidContent());
-                    break;
-                  case REPLACE_DAMAGED_ITEMS:
-                    replaceDamagedItems(openedHome, ex2.getInvalidContent());
-                    break;
-                }
-                if (answer != OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME) {
-                  openedHome.setName(homeName);
-                  openedHome.setRepaired(true);
-                  addHomeToApplication(openedHome);
-                }
+                openDamagedHome(homeName, ex2.getDamagedHome(), ex2.getInvalidContent());
               } else if (ex instanceof RecorderException) {
                 String message = preferences.getLocalizedString(HomeController.class, "openError", homeName);
                 getView().showError(message);
@@ -1565,6 +1550,28 @@ public class HomeController implements Controller {
       });
   }
 
+  /**
+   * Prompts the user to choose an option to open the given damaged home,
+   * fixes the damaged home accordingly and shows it.
+   */
+  private void openDamagedHome(final String homeName, Home damagedHome, List<Content> invalidContent) {
+    OpenDamagedHomeAnswer answer = getView().confirmOpenDamagedHome(
+        homeName, damagedHome, invalidContent);
+    switch (answer) {
+      case REMOVE_DAMAGED_ITEMS:
+        removeDamagedItems(damagedHome, invalidContent);
+        break;
+      case REPLACE_DAMAGED_ITEMS:
+        replaceDamagedItems(damagedHome, invalidContent);
+        break;
+    }
+    if (answer != OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME) {
+      damagedHome.setName(homeName);
+      damagedHome.setRepaired(true);
+      addHomeToApplication(damagedHome);
+    }
+  }
+  
   /**
    * Removes from the given <code>home</code> all the objects that reference the invalid content.
    */
