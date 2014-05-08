@@ -251,6 +251,7 @@ public class HomeFramePane extends JRootPane implements View {
     home.addPropertyChangeListener(Home.Property.NAME, frameTitleChangeListener);
     home.addPropertyChangeListener(Home.Property.MODIFIED, frameTitleChangeListener);
     home.addPropertyChangeListener(Home.Property.RECOVERED, frameTitleChangeListener);
+    home.addPropertyChangeListener(Home.Property.REPAIRED, frameTitleChangeListener);
   }
 
   /**
@@ -417,6 +418,9 @@ public class HomeFramePane extends JRootPane implements View {
     
     if (home.isRecovered()) {
       homeDisplayedName += " " + application.getUserPreferences().getLocalizedString(HomeFramePane.class, "recovered");
+    } 
+    if (home.isRepaired()) {
+      homeDisplayedName += " " + application.getUserPreferences().getLocalizedString(HomeFramePane.class, "repaired");
     }
     
     String title = homeDisplayedName;

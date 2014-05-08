@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
+import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
@@ -166,6 +167,8 @@ public class HomeFileRecorder implements HomeRecorder {
       return home;
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Read " + name + " interrupted");
+    } catch (DamagedHomeIOException ex) {
+      throw new DamagedHomeRecorderException(ex.getDamagedHome(), ex.getInvalidContent());
     } catch (IOException ex) {
       throw new RecorderException("Can't read home from " + name, ex);
     } catch (ClassNotFoundException ex) {

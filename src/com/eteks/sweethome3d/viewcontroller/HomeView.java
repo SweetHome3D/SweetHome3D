@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 
@@ -69,6 +71,7 @@ public interface HomeView extends View {
       DISPLAY_ALL_LEVELS, DISPLAY_SELECTED_LEVEL, MODIFY_3D_ATTRIBUTES, CREATE_PHOTO, CREATE_VIDEO, EXPORT_TO_OBJ,
       HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
+  public enum OpenDamagedHomeAnswer {REMOVE_DAMAGED_ITEMS, REPLACE_DAMAGED_ITEMS, DO_NOT_OPEN_HOME}
 
   /**
    * Enables or disables the action matching <code>actionType</code>.
@@ -103,6 +106,14 @@ public interface HomeView extends View {
    * Displays a content chooser open dialog to choose the name of a home.
    */
   public abstract String showOpenDialog();
+
+  /**
+   * Displays a dialog that lets user choose what he wants 
+   * to do with a damaged home he tries to open it. 
+   */
+  public abstract OpenDamagedHomeAnswer confirmOpenDamagedHome(String homeName, 
+                                                               Home damagedHome, 
+                                                               List<Content> invalidContent);
 
   /**
    * Displays a content chooser open dialog to choose a language library.

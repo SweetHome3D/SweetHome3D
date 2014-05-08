@@ -72,6 +72,8 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Compass;
+import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
@@ -80,8 +82,10 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
@@ -91,10 +95,13 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.HomeView.OpenDamagedHomeAnswer;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
@@ -118,6 +125,10 @@ public class HomeController implements Controller {
   private int                         saveUndoLevel;
   private boolean                     notUndoableModifications;
   private View                        focusedView;
+
+  private static final Content REPAIRED_IMAGE_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedImage.png");
+  private static final Content REPAIRED_ICON_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedIcon.png");
+  private static final Content REPAIRED_MODEL_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedModel.obj");
 
   /**
    * Creates the controller of home view.
@@ -1511,9 +1522,26 @@ public class HomeController implements Controller {
         new ThreadedTaskController.ExceptionHandler() {
           public void handleException(Exception ex) {
             if (!(ex instanceof InterruptedRecorderException)) {
-              if (ex instanceof RecorderException) {
-                String message = preferences.getLocalizedString(
-                    HomeController.class, "openError", homeName);
+              if (ex instanceof DamagedHomeRecorderException) {
+                DamagedHomeRecorderException ex2 = (DamagedHomeRecorderException)ex;
+                Home openedHome = ex2.getDamagedHome();
+                OpenDamagedHomeAnswer answer = getView().confirmOpenDamagedHome(
+                    homeName, openedHome, ex2.getInvalidContent());
+                switch (answer) {
+                  case REMOVE_DAMAGED_ITEMS:
+                    removeDamagedItems(openedHome, ex2.getInvalidContent());
+                    break;
+                  case REPLACE_DAMAGED_ITEMS:
+                    replaceDamagedItems(openedHome, ex2.getInvalidContent());
+                    break;
+                }
+                if (answer != OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME) {
+                  openedHome.setName(homeName);
+                  openedHome.setRepaired(true);
+                  addHomeToApplication(openedHome);
+                }
+              } else if (ex instanceof RecorderException) {
+                String message = preferences.getLocalizedString(HomeController.class, "openError", homeName);
                 getView().showError(message);
               } else {
                 ex.printStackTrace();
@@ -1536,7 +1564,211 @@ public class HomeController implements Controller {
         }
       });
   }
+
+  /**
+   * Removes from the given <code>home</code> all the objects that reference the invalid content.
+   */
+  private void removeDamagedItems(Home home, List<Content> invalidContent) {
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      if (referencesInvalidContent(piece, invalidContent)) {
+        home.deletePieceOfFurniture(piece);
+      } else {      
+        removeInvalidTextures(piece, invalidContent);
+      }
+    }
+    for (Wall wall : home.getWalls()) {
+      if (referencesInvalidContent(wall.getLeftSideTexture(), invalidContent)) {
+        wall.setLeftSideTexture(null);
+      }
+      if (referencesInvalidContent(wall.getRightSideTexture(), invalidContent)) {
+        wall.setRightSideTexture(null);
+      }
+    }
+    for (Room room : home.getRooms()) {
+      if (referencesInvalidContent(room.getFloorTexture(), invalidContent)) {
+        room.setFloorTexture(null);
+      }
+      if (referencesInvalidContent(room.getCeilingTexture(), invalidContent)) {
+        room.setCeilingTexture(null);
+      }
+    }
+    HomeEnvironment environment = home.getEnvironment();
+    if (referencesInvalidContent(environment.getGroundTexture(), invalidContent)) {
+      environment.setGroundTexture(null);
+    }
+    if (referencesInvalidContent(environment.getSkyTexture(), invalidContent)) {
+      environment.setSkyTexture(null);
+    }
+    BackgroundImage backgroundImage = home.getBackgroundImage();
+    if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+      home.setBackgroundImage(null);
+    }
+    for (Level level : home.getLevels()) {
+      backgroundImage = level.getBackgroundImage();
+      if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+        level.setBackgroundImage(null);
+      }
+    }
+  }
   
+  /**
+   * Returns <code>true</code> if the model of the given <code>piece</code> and its icons are not valid.
+   */
+  private boolean referencesInvalidContent(HomePieceOfFurniture piece, List<Content> invalidContent) {
+    if (invalidContent.contains(piece.getIcon()) 
+        || invalidContent.contains(piece.getPlanIcon()) 
+        || invalidContent.contains(piece.getModel())) {
+      return true;
+    } else if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        if (referencesInvalidContent(groupPiece, invalidContent)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Sets to <code>null</code> the invalid textures used by the given <code>piece</code>.
+   */
+  private void removeInvalidTextures(HomePieceOfFurniture piece, List<Content> invalidContent) {
+    if (referencesInvalidContent(piece.getTexture(), invalidContent)) {
+      piece.setTexture(null);
+    }
+    HomeMaterial [] materials = piece.getModelMaterials();
+    if (materials != null) {
+      for (int i = 0; i < materials.length; i++) {
+        if (materials [i] != null 
+            && referencesInvalidContent(materials [i].getTexture(), invalidContent)) {
+          materials [i] = null;
+        }
+        piece.setModelMaterials(materials);
+      }
+    }
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        removeInvalidTextures(groupPiece, invalidContent);
+      }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>texture</code> is not valid.
+   */
+  private boolean referencesInvalidContent(TextureImage texture, List<Content> invalidContent) {
+    return texture != null && invalidContent.contains(texture.getImage());
+  }
+  
+  /**
+   * Replaces all the objects that reference an invalid content in the given <code>home</code>.
+   */
+  private void replaceDamagedItems(Home home, List<Content> invalidContent) {
+    List<HomePieceOfFurniture> furniture = home.getFurniture();
+    for (int i = furniture.size() - 1; i >= 0; i--) {
+      HomePieceOfFurniture piece = furniture.get(i);
+      if (referencesInvalidContent(piece, invalidContent)) {
+        HomePieceOfFurniture replacingPiece = new HomePieceOfFurniture(
+            new CatalogPieceOfFurniture(piece.getCatalogId(), piece.getName(), piece.getDescription(), 
+                REPAIRED_ICON_CONTENT, REPAIRED_IMAGE_CONTENT, REPAIRED_MODEL_CONTENT, 
+                piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
+                piece.isMovable(), piece.getStaircaseCutOutShape(), null, piece.getCreator(), 
+                piece.isResizable(), piece.isDeformable(), piece.isTexturable(), 
+                piece.getPrice(), piece.getValueAddedTaxPercentage(), piece.getCurrency()));
+        replacingPiece.setNameVisible(piece.isNameVisible());
+        replacingPiece.setNameXOffset(piece.getNameXOffset());
+        replacingPiece.setNameYOffset(piece.getNameYOffset());
+        replacingPiece.setNameStyle(piece.getNameStyle());
+        replacingPiece.setVisible(piece.isVisible());
+        replacingPiece.setAngle(piece.getAngle());
+        replacingPiece.setX(piece.getX());
+        replacingPiece.setY(piece.getY());
+        home.addPieceOfFurniture(replacingPiece, i);
+        replacingPiece.setLevel(piece.getLevel());
+        home.deletePieceOfFurniture(piece);
+      } else {      
+        replaceInvalidTextures(piece, invalidContent);
+      }
+    }
+    for (Wall wall : home.getWalls()) {
+      if (referencesInvalidContent(wall.getLeftSideTexture(), invalidContent)) {
+        wall.setLeftSideTexture(getErrorTexture(wall.getLeftSideTexture()));
+      }
+      if (referencesInvalidContent(wall.getRightSideTexture(), invalidContent)) {
+        wall.setRightSideTexture(getErrorTexture(wall.getRightSideTexture()));
+      }
+    }
+    for (Room room : home.getRooms()) {
+      if (referencesInvalidContent(room.getFloorTexture(), invalidContent)) {
+        room.setFloorTexture(getErrorTexture(room.getFloorTexture()));
+      }
+      if (referencesInvalidContent(room.getCeilingTexture(), invalidContent)) {
+        room.setCeilingTexture(getErrorTexture(room.getCeilingTexture()));
+      }
+    }
+    HomeEnvironment environment = home.getEnvironment();
+    if (referencesInvalidContent(environment.getGroundTexture(), invalidContent)) {
+      environment.setGroundTexture(getErrorTexture(environment.getGroundTexture()));
+    }
+    if (referencesInvalidContent(environment.getSkyTexture(), invalidContent)) {
+      environment.setSkyTexture(getErrorTexture(environment.getSkyTexture()));
+    }
+    BackgroundImage backgroundImage = home.getBackgroundImage();
+    if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+      home.setBackgroundImage(getErrorBackgroundImage(backgroundImage));
+    }
+    for (Level level : home.getLevels()) {
+      backgroundImage = level.getBackgroundImage();
+      if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+        level.setBackgroundImage(getErrorBackgroundImage(backgroundImage));
+      }
+    }
+  }
+  
+  /**
+   * Replaces the invalid textures used by the given <code>piece</code>.
+   */
+  private void replaceInvalidTextures(HomePieceOfFurniture piece, List<Content> invalidContent) {
+    if (referencesInvalidContent(piece.getTexture(), invalidContent)) {
+      piece.setTexture(getErrorTexture(piece.getTexture()));
+    }
+    HomeMaterial [] materials = piece.getModelMaterials();
+    if (materials != null) {
+      for (int i = 0; i < materials.length; i++) {
+        HomeMaterial material = materials [i];
+        if (material != null 
+            && referencesInvalidContent(material.getTexture(), invalidContent)) {
+          materials [i] = new HomeMaterial(material.getName(), material.getColor(), 
+              getErrorTexture(material.getTexture()), material.getShininess());
+        }
+        piece.setModelMaterials(materials);
+      }
+    }
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        replaceInvalidTextures(groupPiece, invalidContent);
+      }
+    }
+  }
+  
+  /**
+   * Returns a texture referencing a correct image.
+   */
+  private HomeTexture getErrorTexture(HomeTexture texture) {
+    return new HomeTexture(new CatalogTexture(texture.getName(), 
+        REPAIRED_IMAGE_CONTENT, texture.getWidth(), texture.getHeight()));
+  }
+
+  /**
+   * Returns a background image referencing a correct image.
+   */
+  private BackgroundImage getErrorBackgroundImage(BackgroundImage image) {
+    return new BackgroundImage(REPAIRED_IMAGE_CONTENT, 
+        image.getScaleDistance(), image.getScaleDistanceXStart(), image.getScaleDistanceYStart(),
+        image.getScaleDistanceXEnd(), image.getScaleDistanceYEnd(), 
+        image.getXOrigin(), image.getYOrigin(), image.isVisible());
+  }
+
   /**
    * Updates user preferences <code>recentHomes</code> and write preferences. 
    */
@@ -1640,7 +1872,7 @@ public class HomeController implements Controller {
         }
       };
       
-    if (this.home.isModified()  || this.home.isRecovered()) {
+    if (this.home.isModified() || this.home.isRecovered() || this.home.isRepaired()) {
       switch (getView().confirmSave(this.home.getName())) {
         case SAVE   : save(HomeRecorder.Type.DEFAULT, closeTask); // Falls through
         case CANCEL : return;
@@ -1663,6 +1895,8 @@ public class HomeController implements Controller {
    */
   private void save(HomeRecorder.Type recorderType, Runnable postSaveTask) {
     if (this.home.getName() == null) {
+      saveAs(recorderType, postSaveTask);
+    } else if (this.home.isRepaired()) {
       saveAs(recorderType, postSaveTask);
     } else {
       save(this.home.getName(), recorderType, postSaveTask);
@@ -1776,6 +2010,7 @@ public class HomeController implements Controller {
           home.setName(homeName);
           home.setModified(false);
           home.setRecovered(false);
+          home.setRepaired(false);
           // Update recent homes list
           List<String> recentHomes = new ArrayList<String>(preferences.getRecentHomes());
           int homeNameIndex = recentHomes.indexOf(homeName);
@@ -2004,7 +2239,7 @@ public class HomeController implements Controller {
    */
   public void exit() {
     for (Home home : this.application.getHomes()) {
-      if (home.isModified() || home.isRecovered()) {
+      if (home.isModified() || home.isRecovered() || home.isRepaired()) {
         if (getView().confirmExit()) {
           break;
         } else {

@@ -3231,6 +3231,38 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
+   * Displays a dialog that lets user choose what he wants to do with a damaged home he tries to open it.
+   * @return {@link com.eteks.sweethome3d.viewcontroller.HomeView.OpenDamagedHomeAnswer#REMOVE_DAMAGED_ITEMS} 
+   * if the user chose to remove damaged items,
+   * {@link com.eteks.sweethome3d.viewcontroller.HomeView.OpenDamagedHomeAnswer#REPLACE_DAMAGED_ITEMS} 
+   * if he doesn't want to replace damaged items by red images and red boxes,
+   * or {@link com.eteks.sweethome3d.viewcontroller.HomeView.OpenDamagedHomeAnswer#DO_NOT_OPEN_HOME} 
+   * if he doesn't want to open damaged home.
+   */
+  public OpenDamagedHomeAnswer confirmOpenDamagedHome(String homeName, 
+                                                      Home damagedHome, 
+                                                      List<Content> invalidContent) {
+    // Retrieve displayed text in buttons and message
+    String message = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.message", 
+        homeName, Math.max(1, invalidContent.size()));
+    String title = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.title");
+    String removeDamagedItems = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.removeDamagedItems");
+    String replaceDamagedItems = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.replaceDamagedItems");
+    String doNotOpenHome = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.doNotOpenHome");
+
+    switch (JOptionPane.showOptionDialog(this, message, title, 
+        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+        null, new Object [] {removeDamagedItems, replaceDamagedItems, doNotOpenHome}, doNotOpenHome)) {
+      // Convert showOptionDialog answer to SaveAnswer enum constants
+      case JOptionPane.YES_OPTION:
+        return OpenDamagedHomeAnswer.REMOVE_DAMAGED_ITEMS;
+      case JOptionPane.NO_OPTION:
+        return OpenDamagedHomeAnswer.REPLACE_DAMAGED_ITEMS;
+      default : return OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME;
+    }
+  }
+
+  /**
    * Displays a content chooser open dialog to choose a language library.
    */
   public String showImportLanguageLibraryDialog() {
