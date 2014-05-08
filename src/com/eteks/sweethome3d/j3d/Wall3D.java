@@ -700,8 +700,9 @@ public class Wall3D extends Object3DBranch {
       int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null 
-          ? 0.0001f 
+          ? wall.getThickness() / 1E4f 
           : halfThicknessSq / 4;
+      System.out.println(epsilon);
       for (int index = 0; index < points.length; index++) {
         if (usedRectangle [index]) {
           int nextIndex = (index + 1) % points.length;
