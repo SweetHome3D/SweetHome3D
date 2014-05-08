@@ -125,8 +125,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
       // by URLs relative to file 
       HomeObjectInputStream objectStream = new HomeObjectInputStream(zipIn, fileCopy);
       Home home = (Home)objectStream.readObject();
-      if (!validZipFile) {
-        throw new DamagedHomeIOException(home, objectStream.getInvalidContent());
+      List<Content> invalidContent = objectStream.getInvalidContent();
+      if (!validZipFile || invalidContent.size() > 0) {
+        throw new DamagedHomeIOException(home, invalidContent);
       }
       return home;
     } finally {
