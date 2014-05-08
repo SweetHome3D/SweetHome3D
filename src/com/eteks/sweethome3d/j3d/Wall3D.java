@@ -702,7 +702,6 @@ public class Wall3D extends Object3DBranch {
       float epsilon = arcCircleCenter == null 
           ? wall.getThickness() / 1E4f 
           : halfThicknessSq / 4;
-      System.out.println(epsilon);
       for (int index = 0; index < points.length; index++) {
         if (usedRectangle [index]) {
           int nextIndex = (index + 1) % points.length;
