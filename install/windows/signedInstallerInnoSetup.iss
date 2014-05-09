@@ -35,12 +35,12 @@ VersionInfoCompany=eTeks
 ArchitecturesInstallIn64BitMode=x64
 ; Signing
 ;
-; Requires keys.pfx in install\windows subdirectory
+; Requires keys.p12 in current directory
 ; Enter password and define SignToolPgm in Ant with following tasks:
 ; <input message="Enter signature password:" 
 ;        addproperty="password"/> 
 ; <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
-;    <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe$$q sign /f $$q${basedir}\install\windows\keys.pfx$$q /p ${password} $p"/>
+;    <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
 ;    <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
 ; </exec>  
 SignTool=SignToolPgm /d $qSweet Home 3D Installer$q /du $qhttp://www.sweethome3d.com/$q $f

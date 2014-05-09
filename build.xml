@@ -326,8 +326,8 @@
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.keytool" 
-             alias="SweetHome3D" storepass="${password}">
+    <signjar keystore="keys.p12" 
+             alias="sweethome3d" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -354,7 +354,7 @@
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.keytool" 
+    <signjar keystore="keys.p12" 
              alias="SweetHome3D" storepass="${password}">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
@@ -428,7 +428,7 @@
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.keytool" 
+    <signjar keystore="keys.p12" 
              alias="SweetHome3D" storepass="${password}">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
@@ -679,14 +679,14 @@
     <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe" failonerror="yes">
       <arg value="sign"/>
       <arg value="/f"/>
-      <arg value="${basedir}\install\windows\keys.pfx"/>
+      <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D.exe"/>
     </exec>
     <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
-      <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe$$q sign /f $$q${basedir}\install\windows\keys.pfx$$q /p ${password} $p"/>
+      <arg value="/sSignToolPgm=$$qC:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
       <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
     </exec>  
 
@@ -988,7 +988,7 @@
     <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe" failonerror="yes">
       <arg value="sign"/>
       <arg value="/f"/>
-      <arg value="${basedir}\install\windows\keys.pfx"/>
+      <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
       <arg value="${basedir}\install\portable\SweetHome3D-windows-x86.exe"/>

@@ -1,5 +1,5 @@
-SWEET HOME 3D v 4.3.1
----------------------
+SWEET HOME 3D v 4.4
+-------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
 Please read http://www.sweethome3d.com/history.html for more information
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_3_1 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_4 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -55,10 +55,10 @@ in the install subdirectory. Read build.xml Ant file for more information about
 other available targets. 
 Note that the last part of the Ant targets javaWebStart, applet and viewer 
 requires a passphrase for keystore to sign the deployed jars. For security reasons, 
-the required file keys.keytool isn't provided with this source code. You'll have 
+the required file keys.p12 isn't provided with this source code. You'll have 
 first to generate this file and choose a passphrase, with the following command run 
 in the directory where you uncompressed this archive:
-  keytool -genkey -keystore keys.keytool -alias SweetHome3D 
+  keytool -genkey -keystore keys.p12 -alias SweetHome3D -storetype pkcs12
 
 
 
