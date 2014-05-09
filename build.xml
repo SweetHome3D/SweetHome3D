@@ -10,21 +10,21 @@
      - textures    : Builds Textures.jar file in build directory
      - help        : Builds Help.jar file in build directory
 
-     - java3dLibraries                : Builds JNLP Java 3D libraries in deploy/lib subdirectories
-     - javaWebStart                   : Builds Java Web Start signed files in deploy/lib directory
-     - applet                         : Builds applet signed files in deploy/lib directory
-     - viewer                         : Builds viewer signed files in deploy/lib directory
-     - jarExecutable                  : Builds SweetHome3D-version.jar file in install directory
-     - windowsInstaller               : Builds SweetHome3D-version-windows.exe file in install directory     
-     - windowsSignedInstaller         : Builds signed SweetHome3D-version-windows.exe file in install directory     
-     - macosxInstaller                : Builds SweetHome3D-version-macosx.dmg file in install directory
-     - macosxSignedInstaller          : Builds signed SweetHome3D-version-macosx.dmg file in install directory
-     - linux32Installer               : Builds SweetHome3D-version-linux-x86.tgz file in install directory
-     - linux64Installer               : Builds SweetHome3D-version-linux-x64.tgz file in install directory
-     - portableArchive                : Builds SweetHome3D-version-portable files in install/portable directory
-     - viewerInstaller                : Builds SweetHome3DViewer-version.zip file in install directory
-     - sourceArchive                  : Builds SweetHome3D-version-src.zip file in install directory
-     - javadoc                        : Builds SweetHome3D-version-javadoc.zip file install directory 
+     - java3dLibraries        : Builds JNLP Java 3D libraries in deploy/lib subdirectories
+     - javaWebStart           : Builds Java Web Start signed files in deploy/lib directory
+     - applet                 : Builds applet signed files in deploy/lib directory
+     - viewer                 : Builds viewer signed files in deploy/lib directory
+     - jarExecutable          : Builds SweetHome3D-version.jar file in install directory
+     - windowsInstaller       : Builds SweetHome3D-version-windows.exe file in install directory     
+     - windowsSignedInstaller : Builds signed SweetHome3D-version-windows.exe file in install directory     
+     - macosxInstaller        : Builds SweetHome3D-version-macosx.dmg file in install directory
+     - macosxSignedInstaller  : Builds signed SweetHome3D-version-macosx.dmg file in install directory
+     - linux32Installer       : Builds SweetHome3D-version-linux-x86.tgz file in install directory
+     - linux64Installer       : Builds SweetHome3D-version-linux-x64.tgz file in install directory
+     - portableArchive        : Builds SweetHome3D-version-portable files in install/portable directory
+     - viewerInstaller        : Builds SweetHome3DViewer-version.zip file in install directory
+     - sourceArchive          : Builds SweetHome3D-version-src.zip file in install directory
+     - javadoc                : Builds SweetHome3D-version-javadoc.zip file install directory 
      
      - jdepend : Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest 
 -->
@@ -323,8 +323,7 @@
     <!-- Clean build directory -->
     <delete dir="build"/> 
     
-    <input message="Enter Passphrase for keystore:" 
-           addproperty="password"/> 
+    <input message="Enter Passphrase for keystore:" addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
     <signjar keystore="keys.p12" alias="sweethome3d" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
@@ -350,8 +349,7 @@
     <!-- Clean build directory -->
     <delete dir="build"/>
 
-    <input message="Enter Passphrase for keystore:" 
-           addproperty="password"/> 
+    <input message="Enter Passphrase for keystore:" addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
     <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
@@ -423,8 +421,7 @@
     <!-- Clean build directory -->
     <delete dir="build"/>
 
-    <input message="Enter Passphrase for keystore:" 
-           addproperty="password"/> 
+    <input message="Enter Passphrase for keystore:" addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
     <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
@@ -670,8 +667,7 @@
                  installed in their default location -->
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
-    <input message="Enter signature password:" 
-           addproperty="password"/> 
+    <input message="Enter signature password:" addproperty="password"/> 
     <!-- Sign Sweet Home 3D launcher -->
     <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe" failonerror="yes">
       <arg value="sign"/>
