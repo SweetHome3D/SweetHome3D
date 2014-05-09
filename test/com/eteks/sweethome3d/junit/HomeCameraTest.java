@@ -49,6 +49,7 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -71,7 +72,12 @@ public class HomeCameraTest extends ComponentTestFixture {
   public void testHomeCamera() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     Locale.setDefault(Locale.FRANCE);
-    UserPreferences preferences = new DefaultUserPreferences();
+    UserPreferences preferences = new DefaultUserPreferences() {
+        @Override
+        public void write() throws RecorderException {
+          // Ignore writing
+        }
+      };
     Home home = new Home();
     home.getCompass().setVisible(false);
     final HomeController controller = 
