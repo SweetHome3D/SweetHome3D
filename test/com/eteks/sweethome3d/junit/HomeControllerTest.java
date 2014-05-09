@@ -24,8 +24,14 @@ import java.awt.Component;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.swing.Action;
 import javax.swing.JCheckBox;
@@ -38,11 +44,17 @@ import javax.swing.JTable;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -51,9 +63,11 @@ import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
@@ -438,6 +452,83 @@ public class HomeControllerTest extends TestCase {
     assertFalse("Home contains group", pieces.contains(group));
   }
     
+  /**
+   * Test damaged home file management.
+   */
+  public void testDamagedFile() throws URISyntaxException, InterruptedException, BrokenBarrierException, TimeoutException {
+    final String testFile = new File(
+        HomeControllerTest.class.getResource("resources/damagedHome.sh3d").toURI()).getAbsolutePath();
+    final HomeRecorder recorder = new HomeFileRecorder();
+    final HomeApplication application = new HomeApplication() {
+        @Override
+        public UserPreferences getUserPreferences() {
+          return preferences;
+        }
+        
+        @Override
+        public HomeRecorder getHomeRecorder() {
+          return recorder;
+        }
+      };    
+      
+    class OpenDamagedHomeController extends HomeController {
+      public OpenDamagedHomeController(final HomeView.OpenDamagedHomeAnswer answer) {
+        super(new Home(), application, new SwingViewFactory() {
+          @Override
+          public HomeView createHomeView(Home home, UserPreferences preferences, HomeController homeController) {
+            return new HomePane(home, preferences, homeController) {
+                @Override
+                public String showOpenDialog() {
+                  // Return the damaged file that is tested
+                  return testFile;
+                }
+                
+                @Override
+                public OpenDamagedHomeAnswer confirmOpenDamagedHome(String homeName, Home damagedHome,
+                                                                  List<Content> invalidContent) {
+                  assertEquals("Missing damaged content", 5, invalidContent.size());
+                  assertEquals("Incorrect furniture count", 5, damagedHome.getFurniture().size());
+                  return answer;
+                }
+              };
+          }
+        });
+      }
+    }
+       
+    final CyclicBarrier openLatch = new CyclicBarrier(2);
+    application.addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev)  {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            try {
+              openLatch.await();
+            } catch (Exception ex) {
+              fail();
+            }
+          }
+        }
+      });
+    
+    // 1. Try to open home without damaged items
+    new OpenDamagedHomeController(HomeView.OpenDamagedHomeAnswer.REMOVE_DAMAGED_ITEMS).open();
+    openLatch.await(5, TimeUnit.SECONDS);
+    assertFalse("Damaged file wasn't opened", application.getHomes().isEmpty());
+    Home home = application.getHomes().get(0);
+    assertTrue("Home is not tagged as repaired", home.isRepaired());
+    assertEquals("Incorrect furniture count", 4, home.getFurniture().size());
+    application.deleteHome(home);
+    
+    // 2. Try to open home with damaged items replaced by repaired items
+    openLatch.reset();
+    new OpenDamagedHomeController(HomeView.OpenDamagedHomeAnswer.REPLACE_DAMAGED_ITEMS).open();
+    openLatch.await(5, TimeUnit.SECONDS);
+    assertFalse("Damaged file wasn't opened", application.getHomes().isEmpty());
+    home = application.getHomes().get(0);
+    assertTrue("Home is not tagged as repaired", home.isRepaired());
+    assertEquals("Incorrect furniture count", 5, home.getFurniture().size());
+    assertTrue(((URLContent)home.getFurniture().get(4).getModel()).getURL().toString().endsWith("repairedModel.obj"));
+  }
+  
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
