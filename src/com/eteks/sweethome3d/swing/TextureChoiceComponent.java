@@ -274,12 +274,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                 if (angle45DegreeRadioButton.isSelected() && !angle45DegreeRadioButton.isEnabled()) {
                   angle0DegreeRadioButton.setSelected(true);
                 }
-                if (modifyTextureButton != null) {
-                  modifyTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
-                }
-                if (deleteTextureButton != null) {
-                  deleteTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
-                }
+              }
+              if (modifyTextureButton != null) {
+                modifyTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
+              }
+              if (deleteTextureButton != null) {
+                deleteTextureButton.setEnabled(selectedTexture != null && selectedTexture.isModifiable());
               }
             }
           });
