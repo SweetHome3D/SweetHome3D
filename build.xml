@@ -321,13 +321,12 @@
     </jar>
 
     <!-- Clean build directory -->
-    <delete dir="build"/>
+    <delete dir="build"/> 
     
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" 
-             alias="sweethome3d" storepass="${password}" storetype="pkcs12">
+    <signjar keystore="keys.p12" alias="sweethome3d" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -354,8 +353,7 @@
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" 
-             alias="SweetHome3D" storepass="${password}">
+    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -428,8 +426,7 @@
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" 
-             alias="SweetHome3D" storepass="${password}">
+    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
