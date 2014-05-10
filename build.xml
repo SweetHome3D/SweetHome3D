@@ -338,9 +338,15 @@
           description="Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet">
     <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
     <mkdir dir="deploy/lib"/>
-    <jar destfile="deploy/lib/SweetHome3DApplet.jar" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
+    <input message="Enter domain name where applet will be hosted:" addproperty="domain"/> 
+    <jar destfile="deploy/lib/SweetHome3DApplet.jar">
       <manifest>
-        <attribute name="Application-Name" value="Sweet Home 3D Online"/>
+        <attribute name="Application-Name"          value="Sweet Home 3D Online"/>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+      	<!-- From Java 7u55, specifying domain is mandatory to call applet methods from JavaScript 
+      	     without security warning -->
+        <attribute name="Caller-Allowable-Codebase" value="${domain}"/>
       </manifest>
       <zipfileset src="build/SweetHome3D.jar" 
                   excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**, com/eteks/sweethome3d/applet/*Viewer*.*"/>
