@@ -1092,6 +1092,7 @@
         <include name="LICENSE.TXT"/>
         <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
+        <include name="THIRDPARTY-LICENSE-BATIK.TXT"/>
       </zipfileset>
     </zip>
 
