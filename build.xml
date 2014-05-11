@@ -127,7 +127,7 @@
     </zip>
   </target>
 
-  <target name="manifest" depends="build"
+  <target name="manifest"
           description="Builds build/META-INF/MANIFEST.MF with security attributes">
     <mkdir dir="build/META-INF"/>
     <manifest file="build/META-INF/MANIFEST.MF">
@@ -234,7 +234,7 @@
     </jar>
   </target>
 
-  <target name="viewerLibraries" depends="manifest"
+  <target name="viewerLibraries"
           description="Copies to deploy/lib the base libraries used by Sweet Home 3D Viewer">
     <mkdir dir="deploy/lib"/>
     <!-- Copy jar files adding to their manifest security attributes 
@@ -387,6 +387,7 @@
         <pathelement location="lib"/>
       </extdirs>
       <classpath>
+        <pathelement location="libtest/AppleJavaExtensions.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
     </javac>
