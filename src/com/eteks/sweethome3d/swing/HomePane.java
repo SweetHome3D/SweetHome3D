@@ -203,7 +203,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
       OPEN_RECENT_HOME_MENU, ALIGN_OR_DISTRIBUTE_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, 
-      MODIFY_TEXT_STYLE, GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU}
+      MODIFY_TEXT_STYLE, GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU, TOGGLE_SELECTION_MENU}
+  private enum SelectObjectMenuActionType {SWITCH_TO_SELECT_OBJECT_MENU, SWITCH_TO_TOGGLE_SELECTION_MENU}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -578,6 +579,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(preferences, MenuActionType.MODIFY_TEXT_STYLE);
     createMenuAction(preferences, MenuActionType.GO_TO_POINT_OF_VIEW);
     createMenuAction(preferences, MenuActionType.SELECT_OBJECT_MENU);
+    createMenuAction(preferences, MenuActionType.TOGGLE_SELECTION_MENU);
   }
   
   /**
@@ -2556,10 +2558,28 @@ public class HomePane extends JRootPane implements HomeView {
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.DELETE, planViewPopup);
       Action selectObjectAction = this.menuActionMap.get(MenuActionType.SELECT_OBJECT_MENU);
-      JMenu selectObjectMenu;
+      final JMenu selectObjectMenu;
       if (selectObjectAction.getValue(Action.NAME) != null) {
         selectObjectMenu = new JMenu(selectObjectAction);
         planViewPopup.add(selectObjectMenu);
+        Action toggleObjectSelectionAction = this.menuActionMap.get(MenuActionType.TOGGLE_SELECTION_MENU);
+        if (toggleObjectSelectionAction.getValue(Action.NAME) != null) {
+          // Change "Select object" menu to "Toggle object selection" when shift key is pressed 
+          InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);          
+          inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), SelectObjectMenuActionType.SWITCH_TO_TOGGLE_SELECTION_MENU);
+          inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), SelectObjectMenuActionType.SWITCH_TO_SELECT_OBJECT_MENU);
+          ActionMap actionMap = getActionMap();
+          actionMap.put(SelectObjectMenuActionType.SWITCH_TO_TOGGLE_SELECTION_MENU, new AbstractAction() {
+              public void actionPerformed(ActionEvent ev) {
+                selectObjectMenu.setAction(menuActionMap.get(MenuActionType.TOGGLE_SELECTION_MENU));
+              }
+            });
+          actionMap.put(SelectObjectMenuActionType.SWITCH_TO_SELECT_OBJECT_MENU, new AbstractAction() {
+              public void actionPerformed(ActionEvent ev) {
+                selectObjectMenu.setAction(menuActionMap.get(MenuActionType.SELECT_OBJECT_MENU));
+              }
+            });
+        }
       } else {
         selectObjectMenu = null;
       }
@@ -2869,7 +2889,11 @@ public class HomePane extends JRootPane implements HomeView {
               if (format != null) {
                 selectObjectMenu.add(new JMenuItem(new AbstractAction(format) {
                     public void actionPerformed(ActionEvent ev) {
-                      planController.selectItem(item);
+                      if ((ev.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
+                        planController.toggleItemSelection(item);
+                      } else {
+                        planController.selectItem(item);
+                      }
                     }
                   }));
               }

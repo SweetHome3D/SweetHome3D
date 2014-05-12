@@ -3957,6 +3957,20 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Toggles the selection of the given <code>item</code>.
+   * @since 4.4
+   */
+  public void toggleItemSelection(Selectable item) {
+    List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
+    if (selectedItems.contains(item)) {
+      selectedItems.remove(item);
+    } else {
+      selectedItems.add(item);
+    }
+    selectItems(selectedItems, this.home.isAllLevelsSelection());
+  }
+
+  /**
    * Deselects all walls in plan. 
    */
   private void deselectAll() {
