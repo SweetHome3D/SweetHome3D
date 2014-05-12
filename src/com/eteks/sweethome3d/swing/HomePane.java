@@ -35,6 +35,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -204,7 +205,6 @@ public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
       OPEN_RECENT_HOME_MENU, ALIGN_OR_DISTRIBUTE_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, 
       MODIFY_TEXT_STYLE, GO_TO_POINT_OF_VIEW, SELECT_OBJECT_MENU, TOGGLE_SELECTION_MENU}
-  private enum SelectObjectMenuActionType {SWITCH_TO_SELECT_OBJECT_MENU, SWITCH_TO_TOGGLE_SELECTION_MENU}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -2565,18 +2565,23 @@ public class HomePane extends JRootPane implements HomeView {
         Action toggleObjectSelectionAction = this.menuActionMap.get(MenuActionType.TOGGLE_SELECTION_MENU);
         if (toggleObjectSelectionAction.getValue(Action.NAME) != null) {
           // Change "Select object" menu to "Toggle object selection" when shift key is pressed 
-          InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);          
-          inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), SelectObjectMenuActionType.SWITCH_TO_TOGGLE_SELECTION_MENU);
-          inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), SelectObjectMenuActionType.SWITCH_TO_SELECT_OBJECT_MENU);
-          ActionMap actionMap = getActionMap();
-          actionMap.put(SelectObjectMenuActionType.SWITCH_TO_TOGGLE_SELECTION_MENU, new AbstractAction() {
-              public void actionPerformed(ActionEvent ev) {
-                selectObjectMenu.setAction(menuActionMap.get(MenuActionType.TOGGLE_SELECTION_MENU));
+          final KeyEventDispatcher shiftKeyListener = new KeyEventDispatcher() {
+              public boolean dispatchKeyEvent(KeyEvent ev) {
+                selectObjectMenu.setAction(menuActionMap.get(ev.isShiftDown()
+                    ? MenuActionType.TOGGLE_SELECTION_MENU
+                    : MenuActionType.SELECT_OBJECT_MENU));
+                return false;
               }
-            });
-          actionMap.put(SelectObjectMenuActionType.SWITCH_TO_SELECT_OBJECT_MENU, new AbstractAction() {
-              public void actionPerformed(ActionEvent ev) {
-                selectObjectMenu.setAction(menuActionMap.get(MenuActionType.SELECT_OBJECT_MENU));
+            };
+          addAncestorListener(new AncestorListener() {
+              public void ancestorAdded(AncestorEvent event) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(shiftKeyListener);
+              }
+              public void ancestorRemoved(AncestorEvent event) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(shiftKeyListener);
+              }
+              
+              public void ancestorMoved(AncestorEvent event) {
               }
             });
         }
