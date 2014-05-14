@@ -33,6 +33,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.security.AccessControlException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -480,19 +482,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
       this.newWallThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "newWallThicknessLabel.text"));
-      final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
-          0.5f, 0.125f, 5f, 0.005f, controller);
-      this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
-      newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+      final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(0.5f, 0.125f, controller);
+      this.newWallThicknessSpinner = new AutoCommitLengthSpinner(newWallThicknessSpinnerModel, controller);
+      newWallThicknessSpinnerModel.setValue(controller.getNewWallThickness());
       newWallThicknessSpinnerModel.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
-            controller.setNewWallThickness(newWallThicknessSpinnerModel.getLength());
+            controller.setNewWallThickness(((Number)newWallThicknessSpinnerModel.getValue()).floatValue());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_THICKNESS, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+              newWallThicknessSpinnerModel.setValue(controller.getNewWallThickness());
             }
           });
     }
@@ -501,19 +502,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
       this.newWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "newWallHeightLabel.text"));
-      final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
-          10f, 2f, 100f, 0.1f, controller);
-      this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
-      newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+      final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(10f, 2f, controller);
+      this.newWallHeightSpinner = new AutoCommitLengthSpinner(newWallHeightSpinnerModel, controller);
+      newWallHeightSpinnerModel.setValue(controller.getNewWallHeight());
       newWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
-            controller.setNewWallHeight(newWallHeightSpinnerModel.getLength());
+            controller.setNewWallHeight(((Number)newWallHeightSpinnerModel.getValue()).floatValue());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_HEIGHT, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+              newWallHeightSpinnerModel.setValue(controller.getNewWallHeight());
             }
           });
     }
@@ -522,19 +522,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       // Create wall thickness label and spinner bound to controller NEW_FLOOR_THICKNESS property
       this.newFloorThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "newFloorThicknessLabel.text"));
-      final SpinnerLengthModel newFloorThicknessSpinnerModel = new SpinnerLengthModel(
-          0.5f, 0.125f, 5f, 0.005f, controller);
-      this.newFloorThicknessSpinner = new AutoCommitSpinner(newFloorThicknessSpinnerModel);
-      newFloorThicknessSpinnerModel.setLength(controller.getNewFloorThickness());
+      final SpinnerLengthModel newFloorThicknessSpinnerModel = new SpinnerLengthModel(0.5f, 0.125f, controller);
+      this.newFloorThicknessSpinner = new AutoCommitLengthSpinner(newFloorThicknessSpinnerModel, controller);
+      newFloorThicknessSpinnerModel.setValue(controller.getNewFloorThickness());
       newFloorThicknessSpinnerModel.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
-            controller.setNewFloorThickness(newFloorThicknessSpinnerModel.getLength());
+            controller.setNewFloorThickness(((Number)newFloorThicknessSpinnerModel.getValue()).floatValue());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_FLOOR_THICKNESS, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              newFloorThicknessSpinnerModel.setLength(controller.getNewFloorThickness());
+              newFloorThicknessSpinnerModel.setValue(controller.getNewFloorThickness());
             }
           });
     }
@@ -1004,62 +1003,45 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   }
 
   private static class SpinnerLengthModel extends SpinnerNumberModel {
-    private LengthUnit unit = LengthUnit.CENTIMETER;
-
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
-                              final float millimeterStepSize, 
-                              final float meterStepSize, 
                               final UserPreferencesController controller) {
       // Invoke constructor that take objects in parameter to avoid any ambiguity
       super(new Float(1f), new Float(0f), new Float(100000f), new Float(centimeterStepSize));
-      // Add a listener to convert value and step when unit changes 
+      // Add a listener to update step when unit changes 
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateStepsAndLength(centimeterStepSize, inchStepSize, millimeterStepSize, meterStepSize, controller);
+            updateStepsAndLength(centimeterStepSize, inchStepSize, controller);
           }
         });
-      updateStepsAndLength(centimeterStepSize, inchStepSize, millimeterStepSize, meterStepSize, controller);
+      updateStepsAndLength(centimeterStepSize, inchStepSize, controller);
     }
     
     private void updateStepsAndLength(float centimeterStepSize, 
                                       float inchStepSize,
-                                      float millimeterStepSize, 
-                                      float meterStepSize,
                                       UserPreferencesController controller) {
-      float lengthInCentimeter = getLength();
-      unit = controller.getUnit();
-      switch (controller.getUnit()) {
-        case MILLIMETER :
-          setStepSize(millimeterStepSize);
-          break;
-        case CENTIMETER :
-          setStepSize(centimeterStepSize);
-          break;
-        case METER :
-          setStepSize(meterStepSize);
-          break;
-        case INCH :
-        case INCH_DECIMALS :
-          setStepSize(inchStepSize);
-          break;
+      if (controller.getUnit() == LengthUnit.INCH
+          || controller.getUnit() == LengthUnit.INCH_DECIMALS) {
+        setStepSize(LengthUnit.inchToCentimeter(inchStepSize));
+      } else {
+        setStepSize(centimeterStepSize);
       }
-      setLength(lengthInCentimeter);
+      fireStateChanged();
     }
+  }
 
-    /**
-     * Returns the displayed value in centimeter.
-     */
-    public float getLength() {
-      return this.unit.unitToCentimeter(getNumber().floatValue());
-    }
-
-    /**
-     * Sets the length in centimeter displayed in this model.
-     */
-    public void setLength(float length) {
-      setValue(this.unit.centimeterToUnit(length));
+  private static class AutoCommitLengthSpinner extends AutoCommitSpinner {
+    public AutoCommitLengthSpinner(SpinnerModel model,
+                                   final UserPreferencesController controller) {
+      super(model, controller.getUnit().getFormat());
+      // Add a listener to update format when unit changes 
+      controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            setFormat((DecimalFormat)controller.getUnit().getFormat());
+          }
+        });
     }
   }
 }

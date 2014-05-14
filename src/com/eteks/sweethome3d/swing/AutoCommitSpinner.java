@@ -19,11 +19,15 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.text.DecimalFormat;
 import java.text.Format;
+import java.text.ParseException;
 
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
+import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -41,12 +45,19 @@ public class AutoCommitSpinner extends JSpinner {
    * Creates a spinner with a given <code>model</code>.
    */
   public AutoCommitSpinner(SpinnerModel model) {
-    super(model);    
+    this(model, null);
+  }
+  
+  /**
+   * Creates a spinner with a given <code>model</code> and <code>format</code>.
+   */
+  public AutoCommitSpinner(SpinnerModel model, 
+                           Format format) {
+    super(model);
     JComponent editor = getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
       final JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();      
       SwingTools.addAutoSelectionOnFocusGain(textField);
-      
       // Commit text during edition
       if (textField.getFormatterFactory() instanceof DefaultFormatterFactory) {
         DefaultFormatterFactory formatterFactory = (DefaultFormatterFactory)textField.getFormatterFactory();
@@ -56,27 +67,32 @@ public class AutoCommitSpinner extends JSpinner {
         }
         if (defaultFormatter instanceof NumberFormatter) {
           final NumberFormatter numberFormatter = (NumberFormatter)defaultFormatter;
-          final DecimalFormat defaultFormat = (DecimalFormat)numberFormatter.getFormat();
-          final DecimalFormat noGroupingFormat = (DecimalFormat)defaultFormat.clone();
-          noGroupingFormat.setGroupingUsed(false);
           // Create a delegate of default formatter to change value returned by getFormat
           NumberFormatter editFormatter = new NumberFormatter() {
+              private boolean keepFocusedTextUnchanged;
+
+              {
+                textField.addFocusListener(new FocusAdapter() {
+                    public void focusGained(FocusEvent ev) {
+                      keepFocusedTextUnchanged = false;
+                    }
+                  });
+              }
+              
               @Override
               public Format getFormat() {
+                Format format = super.getFormat();
                 // Use a different format depending on whether the text field has focus or not
-                if (textField.hasFocus()) {
+                if (textField.hasFocus() && format instanceof DecimalFormat) {
                   // No grouping when text field has focus 
+                  DecimalFormat noGroupingFormat = (DecimalFormat)format.clone();
+                  noGroupingFormat.setGroupingUsed(false);
                   return noGroupingFormat;
                 } else {
-                  return defaultFormat;
+                  return format;
                 }
               }
             
-              @Override
-              public boolean getCommitsOnValidEdit() {
-                return true;
-              }
-              
               @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMaximum() {
@@ -105,9 +121,38 @@ public class AutoCommitSpinner extends JSpinner {
               public Class<?> getValueClass() {
                 return numberFormatter.getValueClass();
               }
+              
+              @Override
+              public String valueToString(Object value) throws ParseException {
+                if (textField.hasFocus()
+                    && textField.getCaretPosition() > 0
+                    && this.keepFocusedTextUnchanged) {
+                  return textField.getText();
+                } else {
+                  this.keepFocusedTextUnchanged = true;
+                  return super.valueToString(value);
+                }
+              }
             };
+          editFormatter.setCommitsOnValidEdit(true);
           textField.setFormatterFactory(new DefaultFormatterFactory(editFormatter));
         }
+      }
+    }
+    setFormat(format);
+  }
+  
+  /**
+   * Sets the format used to display the value of this spinner.
+   */
+  public void setFormat(Format format) {
+    JComponent editor = getEditor();
+    if (editor instanceof JSpinner.DefaultEditor) {
+      JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();
+      AbstractFormatter formatter = textField.getFormatter();
+      if (formatter instanceof NumberFormatter) {
+        ((NumberFormatter)formatter).setFormat(format);
+        fireStateChanged();
       }
     }
   }

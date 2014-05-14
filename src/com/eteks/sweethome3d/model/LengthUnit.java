@@ -459,17 +459,19 @@ public enum LengthUnit {
     private Locale        formatLocale;
     private String        name;
     private DecimalFormat lengthFormat;
+    private DecimalFormat lengthFormatWithUnit;
     private DecimalFormat areaFormatWithUnit;
 
     @Override
     public Format getFormatWithUnit() {
       checkLocaleChange();
-      return this.lengthFormat;
+      return this.lengthFormatWithUnit;
     }
 
     @Override
     public Format getFormat() {
-      return getFormatWithUnit();
+      checkLocaleChange();
+      return this.lengthFormat;
     }
 
     @Override
@@ -491,51 +493,59 @@ public enum LengthUnit {
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
         
-        // Create format for inches
-        final MessageFormat inchDecimalsFormat = new MessageFormat(resource.getString("inchDecimalsFormat"));
-        final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
-        this.lengthFormat = new DecimalFormat("0.###") {
-            @Override
-            public StringBuffer format(double number, StringBuffer result,
-                                       FieldPosition fieldPosition) {
-              float inches = centimeterToInch((float)number);
-              fieldPosition.setEndIndex(fieldPosition.getEndIndex() + 1);
-              inchDecimalsFormat.format(new Object [] {inches}, result, fieldPosition);
-              return result;
+        // Create formats for inches with decimals
+        class InchDecimalsFormat extends DecimalFormat {
+          private final MessageFormat inchDecimalsFormat;
+          private final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
+
+          private InchDecimalsFormat(MessageFormat inchDecimalsFormat) {
+            super("0.###");
+            this.inchDecimalsFormat = inchDecimalsFormat;
+          }
+
+          @Override
+          public StringBuffer format(double number, StringBuffer result,
+                                     FieldPosition fieldPosition) {
+            float inches = centimeterToInch((float)number);
+            fieldPosition.setEndIndex(fieldPosition.getEndIndex() + 1);
+            this.inchDecimalsFormat.format(new Object [] {inches}, result, fieldPosition);
+            return result;
+          }
+
+          @Override
+          public Number parse(String text, ParsePosition parsePosition) {
+            ParsePosition numberPosition = new ParsePosition(parsePosition.getIndex());
+            skipWhiteSpaces(text, numberPosition);
+            // Parse inches
+            Number inches = this.inchNumberFormat.parse(text, numberPosition);
+            if (inches == null) {
+              parsePosition.setErrorIndex(numberPosition.getErrorIndex());
+              return null;
             }
-            
-            @Override
-            public Number parse(String text, ParsePosition parsePosition) {
-              ParsePosition numberPosition = new ParsePosition(parsePosition.getIndex());
-              skipWhiteSpaces(text, numberPosition);
-              // Parse inches
-              Number inches = inchNumberFormat.parse(text, numberPosition);
-              if (inches == null) {
-                parsePosition.setErrorIndex(numberPosition.getErrorIndex());
-                return null;
-              }
-              double value = inchToCentimeter(inches.floatValue());
-              // Parse "
-              skipWhiteSpaces(text, numberPosition);
-              if (numberPosition.getIndex() < text.length() 
-                  && text.charAt(numberPosition.getIndex()) == '\"') {
-                parsePosition.setIndex(numberPosition.getIndex() + 1);
-              } else {
-                parsePosition.setIndex(numberPosition.getIndex());
-              }
-              return value;
+            double value = inchToCentimeter(inches.floatValue());
+            // Parse "
+            skipWhiteSpaces(text, numberPosition);
+            if (numberPosition.getIndex() < text.length() 
+                && text.charAt(numberPosition.getIndex()) == '\"') {
+              parsePosition.setIndex(numberPosition.getIndex() + 1);
+            } else {
+              parsePosition.setIndex(numberPosition.getIndex());
             }
-            
-            /**
-             * Increases the index of <code>fieldPosition</code> to skip white spaces. 
-             */
-            private void skipWhiteSpaces(String text, ParsePosition fieldPosition) {
-              while (fieldPosition.getIndex() < text.length()
-                  && Character.isWhitespace(text.charAt(fieldPosition.getIndex()))) {
-                fieldPosition.setIndex(fieldPosition.getIndex() + 1);
-              }
+            return value;
+          }
+
+          /**
+           * Increases the index of <code>fieldPosition</code> to skip white spaces. 
+           */
+          private void skipWhiteSpaces(String text, ParsePosition fieldPosition) {
+            while (fieldPosition.getIndex() < text.length()
+                && Character.isWhitespace(text.charAt(fieldPosition.getIndex()))) {
+              fieldPosition.setIndex(fieldPosition.getIndex() + 1);
             }
-          };
+          }
+        }
+        this.lengthFormat = new InchDecimalsFormat(new MessageFormat(resource.getString("inchDecimalsFormat")));
+        this.lengthFormatWithUnit = new InchDecimalsFormat(new MessageFormat(resource.getString("inchDecimalsFormatWithUnit")));
         
         String squareFootUnit = resource.getString("squareFootUnit");
         this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0.## " + squareFootUnit);

@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.text.Format;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -45,14 +46,26 @@ public class NullableSpinner extends AutoCommitSpinner {
    * Creates a nullable spinner from <code>model</code>. 
    */
   public NullableSpinner(NullableSpinnerNumberModel model) {
-    super(model);
+    super(model, 
+          model instanceof NullableSpinnerLengthModel 
+             ? ((NullableSpinnerLengthModel)model).getLengthUnit().getFormat()  
+             : null);
     final JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
     final JFormattedTextField.AbstractFormatter defaultFormatter = textField.getFormatter();
     // Change formatted text field formatter to enable the edition of empty values
     textField.setFormatterFactory(new JFormattedTextField.AbstractFormatterFactory() {
         @Override
-        public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField tf) {
+        public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField textfield) {
           return new NumberFormatter () {
+              @Override
+              public Format getFormat() {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  return ((NumberFormatter)defaultFormatter).getFormat();
+                } else {
+                  return super.getFormat();
+                }
+              }
+              
               @Override
               public boolean getCommitsOnValidEdit() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -350,12 +363,10 @@ public class NullableSpinner extends AutoCommitSpinner {
      * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter. 
      */
     public NullableSpinnerLengthModel(UserPreferences preferences, float value, float minimum, float maximum) {
-      super(preferences.getLengthUnit().centimeterToUnit(value), 
-            preferences.getLengthUnit().centimeterToUnit(minimum), 
-            preferences.getLengthUnit().centimeterToUnit(maximum), 
+      super(value, minimum, maximum, 
             preferences.getLengthUnit() == LengthUnit.INCH
             || preferences.getLengthUnit() == LengthUnit.INCH_DECIMALS
-              ? 0.125f : preferences.getLengthUnit().centimeterToUnit(0.5f));
+              ? 0.125f : 0.5f);
       this.preferences = preferences;
     }
 
@@ -366,7 +377,7 @@ public class NullableSpinner extends AutoCommitSpinner {
       if (getValue() == null) {
         return null;
       } else {
-        return this.preferences.getLengthUnit().unitToCentimeter(getNumber().floatValue());
+        return Float.valueOf(((Number)getValue()).floatValue());
       }
     }
 
@@ -374,9 +385,6 @@ public class NullableSpinner extends AutoCommitSpinner {
      * Sets the length in centimeter displayed in this model.
      */
     public void setLength(Float length) {
-      if (length != null) {
-        length = this.preferences.getLengthUnit().centimeterToUnit(length);
-      } 
       setValue(length);
     }
 
@@ -384,7 +392,14 @@ public class NullableSpinner extends AutoCommitSpinner {
      * Sets the minimum length in centimeter displayed in this model.
      */
     public void setMinimumLength(float minimum) {
-      setMinimum(this.preferences.getLengthUnit().centimeterToUnit(minimum));
+      setMinimum(Float.valueOf(minimum));
+    }
+    
+    /**
+     * Returns the length unit used by this model.
+     */
+    private LengthUnit getLengthUnit() {
+      return this.preferences.getLengthUnit();
     }
   }
 }
