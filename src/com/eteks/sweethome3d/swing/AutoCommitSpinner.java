@@ -21,6 +21,8 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.text.ParseException;
@@ -72,10 +74,21 @@ public class AutoCommitSpinner extends JSpinner {
               private boolean keepFocusedTextUnchanged;
 
               {
+                // Add a listener to spinner text field that keeps track when the user typed a character
+                final KeyAdapter keyListener = new KeyAdapter() {
+                    public void keyTyped(KeyEvent ev) {
+                      // keyTyped isn't called for UP and DOWN keys of text field input map
+                      keepFocusedTextUnchanged = true;
+                    };
+                  };
                 textField.addFocusListener(new FocusAdapter() {
                     public void focusGained(FocusEvent ev) {
-                      keepFocusedTextUnchanged = false;
+                      textField.addKeyListener(keyListener);
                     }
+                    
+                    public void focusLost(FocusEvent ev) {
+                      textField.removeKeyListener(keyListener);
+                    };
                   });
               }
               
@@ -125,11 +138,10 @@ public class AutoCommitSpinner extends JSpinner {
               @Override
               public String valueToString(Object value) throws ParseException {
                 if (textField.hasFocus()
-                    && textField.getCaretPosition() > 0
                     && this.keepFocusedTextUnchanged) {
+                  this.keepFocusedTextUnchanged = false;
                   return textField.getText();
                 } else {
-                  this.keepFocusedTextUnchanged = true;
                   return super.valueToString(value);
                 }
               }
