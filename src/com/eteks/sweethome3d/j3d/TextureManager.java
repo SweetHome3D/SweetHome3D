@@ -258,7 +258,7 @@ public class TextureManager {
       if (image != null) {
         Texture texture = new TextureLoader(image).getTexture();
         // Keep in user data the URL of the texture image
-        if (content instanceof URLContent) {
+        if (content instanceof URLContent && angle == 0) {
           texture.setUserData(((URLContent)content).getURL());
         }
         return texture;
