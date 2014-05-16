@@ -1797,6 +1797,7 @@ public class VideoPanel extends JPanel implements DialogView {
         throw ex;
       } finally {
         if (last) {
+          this.renderer.dispose();
           this.renderer = null;
         }
       }

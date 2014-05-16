@@ -767,6 +767,7 @@ public class PhotoPanel extends JPanel implements DialogView {
             }
           });
           photoRenderer.render(image, camera, this.photoComponent);
+          photoRenderer.dispose();
         }
       } else {
         // Compute 3D view offscreen image

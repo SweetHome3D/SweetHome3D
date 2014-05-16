@@ -224,6 +224,9 @@ public class PhotoRenderer {
       g2D.dispose();
       File imageFile = OperatingSystem.createTemporaryFile("ibl", ".png");
       ImageIO.write(imageBaseLightImage, "png", imageFile);
+      // Add it to images cache with a null key just to delete it 
+      // with the other temporary images in dispose method
+      this.textureImagesCache.put(null, imageFile.getAbsolutePath());
       
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
@@ -502,6 +505,18 @@ public class PhotoRenderer {
     }
   }
 
+  /**
+   * Disposes temporary data that may be required to run this renderer.
+   * Trying to use this renderer after a call to this method may lead to errors.
+   */
+  public void dispose() {
+    // Clean up temporary images 
+    for (String imagePath : this.textureImagesCache.values()) {
+      new File(imagePath).delete();
+    }
+    this.textureImagesCache.clear();
+  }
+  
   /**
    * Returns the value of the given rendering parameter.
    */
