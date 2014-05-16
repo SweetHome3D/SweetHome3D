@@ -1399,18 +1399,10 @@ public class VideoPanel extends JPanel implements DialogView {
       file = null;
     } catch (OutOfMemoryError ex) {
       showError("createVideoError.message", 
-          preferences.getLocalizedString(VideoPanel.class, "outOfMemory.message"));
+          this.preferences.getLocalizedString(VideoPanel.class, "outOfMemory.message"));
       file = null;
     } finally {
-      if (videoCreationExecutor != null) {
-        this.videoFile = file;
-        file.deleteOnExit();
-      } else {
-        this.videoFile = file;
-        if (file != null) {
-          file.delete();
-        }
-      }
+      this.videoFile = file;
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             ActionMap actionMap = getActionMap();
