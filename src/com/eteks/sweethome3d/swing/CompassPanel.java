@@ -118,7 +118,7 @@ public class CompassPanel extends JPanel implements DialogView {
     float maximumLength = preferences.getLengthUnit().getMaximumLength();
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
-    this.xSpinner = new JSpinner(xSpinnerModel);
+    this.xSpinner = new NullableSpinner(xSpinnerModel);
     xSpinnerModel.setLength(controller.getX());
     final PropertyChangeListener xChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -200,7 +200,7 @@ public class CompassPanel extends JPanel implements DialogView {
 
     this.latitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "latitudeLabel.text"));
     final SpinnerNumberModel latitudeSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-90), new Float(90), new Float(5));
-    this.latitudeSpinner = new JSpinner(latitudeSpinnerModel);
+    this.latitudeSpinner = new AutoCommitSpinner(latitudeSpinnerModel);
     // Change positive / negative notation by North / South
     JFormattedTextField textField = ((DefaultEditor)this.latitudeSpinner.getEditor()).getTextField();
     NumberFormatter numberFormatter = (NumberFormatter)((DefaultFormatterFactory)textField.getFormatterFactory()).getDefaultFormatter();
@@ -224,7 +224,7 @@ public class CompassPanel extends JPanel implements DialogView {
     
     this.longitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "longitudeLabel.text"));
     final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-180), new Float(180), new Float(5));
-    this.longitudeSpinner = new JSpinner(longitudeSpinnerModel);
+    this.longitudeSpinner = new AutoCommitSpinner(longitudeSpinnerModel);
     // Change positive / negative notation by East / West
     textField = ((DefaultEditor)this.longitudeSpinner.getEditor()).getTextField();
     numberFormatter = (NumberFormatter)((DefaultFormatterFactory)textField.getFormatterFactory()).getDefaultFormatter();

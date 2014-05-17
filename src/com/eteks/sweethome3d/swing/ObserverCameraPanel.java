@@ -134,8 +134,8 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     float maximumElevation = preferences.getLengthUnit().getMaximumElevation();
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, controller.getMinimumElevation(), maximumElevation);
-    this.elevationSpinner = new AutoCommitSpinner(elevationSpinnerModel);    
-    elevationSpinnerModel.setLength((float)Math.round(controller.getElevation() * 100) / 100);
+    this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);    
+    elevationSpinnerModel.setLength(controller.getElevation());
     elevationSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.setElevation(elevationSpinnerModel.getLength());
@@ -143,7 +143,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
       });
     PropertyChangeListener elevationChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          elevationSpinnerModel.setLength((float)Math.round(controller.getElevation() * 100) / 100);
+          elevationSpinnerModel.setLength(controller.getElevation());
         }
       };
     controller.addPropertyChangeListener(ObserverCameraController.Property.ELEVATION, elevationChangeListener);
