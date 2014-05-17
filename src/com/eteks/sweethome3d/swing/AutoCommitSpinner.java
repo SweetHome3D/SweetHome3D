@@ -151,7 +151,10 @@ public class AutoCommitSpinner extends JSpinner {
         }
       }
     }
-    setFormat(format);
+    
+    if (format != null) {
+      setFormat(format);
+    }
   }
   
   /**
