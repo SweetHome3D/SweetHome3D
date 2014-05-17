@@ -56,7 +56,6 @@
   </security>
 
   <resources>
-    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/SweetHome3DJavaWebStart.jar"/>
     <jar href="lib/SweetHome3D.jar"/>
     <jar href="lib/Loader3DS1_2u.jar"/>
@@ -69,34 +68,47 @@
   </resources>
  
   <resources os="Windows" arch="x86">
+    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/windows/i386/java3d.jar"/>
   </resources>
-  <resources os="Windows" arch="amd64">
+  <resources os="Windows" arch="x86_64 amd64">
+    <j2se version="1.5+" max-heap-size="2250m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/windows/x64/java3d.jar"/>
   </resources>
 
-  <resources os="Mac\ OS\ X">
+  <resources os="Mac\ OS\ X" arch="i386 ppc">
+    <j2se version="1.5+" max-heap-size="640m"/>
+    <jar href="lib/macosx/java3d.jar"/>
+    <property name="apple.laf.useScreenMenuBar" value="true"/>
+    <property name="apple.awt.graphics.UseQuartz" value="true"/>
+    <property name="j3d.rend" value="jogl"/>
+  </resources>
+  <resources os="Mac\ OS\ X" arch="x86_64">
+    <j2se version="1.5+" max-heap-size="2250m"/>
     <jar href="lib/macosx/java3d.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="j3d.rend" value="jogl"/>
   </resources>
 
-  <resources os="Linux" arch="x86 i386">
+  <resources os="Linux" arch="i386">
+    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
-  <resources os="Linux" arch="amd64 x86_64">
+  <resources os="Linux" arch="x86_64 amd64">
+    <j2se version="1.5+" max-heap-size="2250m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/x64/java3d.jar"/>
   </resources>
 
   <resources os="SunOS">
-    <jar href="lib/iText-2.1.7.jar"/>
+    <j2se version="1.5+" max-heap-size="1024m"/>
+    <jar href="lib/iText-2.1.7.jar" name="iText" download="lazy"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
-  
+ 
   <application-desc main-class="com.eteks.sweethome3d.SweetHome3DBootstrap"/>
 </jnlp>
