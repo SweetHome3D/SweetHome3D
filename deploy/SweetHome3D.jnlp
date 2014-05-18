@@ -55,38 +55,37 @@
     <all-permissions/>
   </security>
 
+  <!-- Request 2 GB max memory for 64 bit Windows and Linux -->
+  <resources os="Windows" arch="x86_64 amd64">
+    <j2se version="1.5+" max-heap-size="2250m"/>
+  </resources>
+  <resources os="Linux" arch="x86_64 amd64">
+    <j2se version="1.5+" max-heap-size="2100m"/>
+  </resources>
+
   <resources>
-    <jar href="lib/SweetHome3DJavaWebStart.jar"/>
+    <!-- Request 640 MB max memory for other systems -->
+    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/SweetHome3D.jar"/>
     <jar href="lib/Loader3DS1_2u.jar"/>
     <jar href="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
     <jar href="lib/sunflow-0.07.3i.jar"/>    
     <jar href="lib/batik-svgpathparser-1.7.jar"/>
     <jar href="lib/jmf.jar"/>    
+    <property name="com.eteks.sweethome3d.applicationId" value="SweetHome3D#JavaWebStart"/>
     <property name="com.eteks.sweethome3d.deploymentInformation" value="Java Web Start"/>
-    <property name="com.eteks.sweethome3d.applicationId"         value="SweetHome3D#JavaWebStart"/>
   </resources>
  
   <resources os="Windows" arch="x86">
-    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/windows/i386/java3d.jar"/>
   </resources>
   <resources os="Windows" arch="x86_64 amd64">
-    <j2se version="1.5+" max-heap-size="2250m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/windows/x64/java3d.jar"/>
   </resources>
 
-  <resources os="Mac\ OS\ X" arch="i386 ppc">
-    <j2se version="1.5+" max-heap-size="640m"/>
-    <jar href="lib/macosx/java3d.jar"/>
-    <property name="apple.laf.useScreenMenuBar" value="true"/>
-    <property name="apple.awt.graphics.UseQuartz" value="true"/>
-    <property name="j3d.rend" value="jogl"/>
-  </resources>
-  <resources os="Mac\ OS\ X" arch="x86_64">
-    <j2se version="1.5+" max-heap-size="2250m"/>
+  <resources os="Mac\ OS\ X">
     <jar href="lib/macosx/java3d.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
@@ -94,18 +93,15 @@
   </resources>
 
   <resources os="Linux" arch="i386">
-    <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="x86_64 amd64">
-    <j2se version="1.5+" max-heap-size="2250m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/x64/java3d.jar"/>
   </resources>
 
   <resources os="SunOS">
-    <j2se version="1.5+" max-heap-size="1024m"/>
     <jar href="lib/iText-2.1.7.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
