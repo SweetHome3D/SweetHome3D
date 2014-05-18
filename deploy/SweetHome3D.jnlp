@@ -106,7 +106,7 @@
 
   <resources os="SunOS">
     <j2se version="1.5+" max-heap-size="1024m"/>
-    <jar href="lib/iText-2.1.7.jar" name="iText" download="lazy"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
  
