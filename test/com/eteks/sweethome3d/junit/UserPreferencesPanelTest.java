@@ -214,7 +214,7 @@ public class UserPreferencesPanelTest extends TestCase {
   /**
    * Tests length unit conversions.
    */
-  public void testUnitLength() throws ParseException {
+  public void testLengthUnit() throws ParseException {
     Locale.setDefault(Locale.FRANCE);
     // Test formats without unit
     assertEquals("Wrong conversion", "102", LengthUnit.CENTIMETER.getFormat().format(102));
@@ -244,6 +244,10 @@ public class UserPreferencesPanelTest extends TestCase {
     assertEquals("Wrong parsing", 102f, LengthUnit.CENTIMETER.getFormat().parseObject("102"));
     assertEquals("Wrong parsing", 102f, LengthUnit.METER.getFormat().parseObject("1,02"));
     assertEquals("Wrong parsing", 102f, LengthUnit.MILLIMETER.getFormat().parseObject("1020"));
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(0.125f),
+        ((Number)LengthUnit.INCH_DECIMALS.getFormat().parseObject("0,125")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(0.125f),
+        ((Number)LengthUnit.INCH_DECIMALS.getFormat().parseObject("0,125\"")).floatValue(), 1E-10f);
     TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(11),
         ((Number)LengthUnit.INCH.getFormat().parseObject("0'11\"")).floatValue(), 1E-10f);
     TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(10 + 12),
