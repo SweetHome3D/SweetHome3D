@@ -36,6 +36,7 @@ import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.JComponentTester;
+import abbot.tester.JSpinnerTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
@@ -132,10 +133,24 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     tester.waitForIdle();
     assertTrue("Y field doesn't have focus", ySpinnerTextField.hasFocus());
     tester.actionKeyString("12345");
+    // Check next and previous values are displayed 
+    tester.actionKeyStroke(KeyEvent.VK_UP);
+    assertEquals("Y has wrong value", 12345.5f, ySpinner.getValue());
+    assertEquals("Y text field has wrong value", "12345,5", ySpinnerTextField.getText());
+    tester.actionKeyStroke(KeyEvent.VK_DOWN);
+    assertEquals("Y has wrong value", 12345f, ySpinner.getValue());
+    assertEquals("Caret at unexpected position", 0, ySpinnerTextField.getCaretPosition());
+    tester.actionKeyStroke(KeyEvent.VK_RIGHT);
+    tester.actionKeyStroke(KeyEvent.VK_RIGHT);
+    assertEquals("Caret didn't move", 2, ySpinnerTextField.getCaretPosition());
+    // Test if text isn't changed when text is typed
+    tester.actionKeyString("345 4 ");
+    assertEquals("Y has wrong value", 12345f, ySpinner.getValue());
+    assertEquals("Y text field has wrong value", "12345 4 345", ySpinnerTextField.getText());
     // Test auto commit fields
     doClickOnOkInDialog(furnitureDialog, tester);
-    assertEquals("Wrong Y", new Float(12345), piece1.getY());
-    assertEquals("Wrong Y", new Float(12345), piece2.getY());
+    assertEquals("Wrong Y", new Float(12345f), piece1.getY());
+    assertEquals("Wrong Y", new Float(12345f), piece2.getY());
   }
   
   /**
