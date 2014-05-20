@@ -28,6 +28,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
+import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.undo.UndoableEditSupport;
 
 import junit.framework.TestCase;
@@ -151,16 +152,16 @@ public class UserPreferencesPanelTest extends TestCase {
     gridCheckBox.setSelected(false);
     catalogIconRadioButton.setSelected(true);
     monochromeRadioButton.setSelected(true);
-    newWallThicknessSpinner.setValue(1);
-    newHomeWallHeightSpinner.setValue(100);
+    ((DefaultEditor)newWallThicknessSpinner.getEditor()).getTextField().setText("1\u215C\"");
+    ((DefaultEditor)newHomeWallHeightSpinner.getEditor()).getTextField().setText("8'4,25");
     
     // 4. Retrieve panel values into preferences
     controller.modifyUserPreferences();
     // Check preferences value
     assertPreferencesEqual(LengthUnit.INCH, false, false, false,
         false, false,
-        LengthUnit.inchToCentimeter(1), 
-        LengthUnit.inchToCentimeter(100), 
+        LengthUnit.inchToCentimeter(1.375f), 
+        LengthUnit.inchToCentimeter(100.25f), 
         preferences);
     
     // 5. Save preferences and read them in an other system preferences object
