@@ -20,8 +20,8 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -111,6 +111,7 @@ public class LevelTest extends ComponentTestFixture {
     assertEquals("All walls are not selected", walls.size(), Home.getWallsSubList(home.getSelectedItems()).size());
     assertEquals("All pieces are not selected", furniture.size(), Home.getFurnitureSubList(home.getSelectedItems()).size());
     assertEquals("All rooms are not selected", rooms.size(), Home.getRoomsSubList(home.getSelectedItems()).size());
+    int selectedItemsCount = home.getSelectedItems().size();
     // Select wall at left
     Point p = new Point(planView.convertXModelToScreen(0), planView.convertYModelToScreen(50));
     SwingUtilities.convertPointFromScreen(p, planViewComponent);
@@ -132,9 +133,9 @@ public class LevelTest extends ComponentTestFixture {
     JSpinner heightSpinner = (JSpinner)TestUtilities.getField(wallPanel, "rectangularWallHeightSpinner");
     // Increase its height
     JSpinnerTester spinnerTester = new JSpinnerTester();
-    for (int i = 0; i < 25; i++) {
-      spinnerTester.actionIncrement(heightSpinner);
-    }
+    spinnerTester.actionIncrement(heightSpinner);
+    spinnerTester.actionIncrement(heightSpinner);
+    heightSpinner.setValue(((Number)heightSpinner.getValue()).floatValue() + 21.5f);
     float newHeight = ((Number)heightSpinner.getValue()).floatValue();
     // Click on Ok in dialog box    
     final JOptionPane optionPane = (JOptionPane)TestUtilities.findComponent(
@@ -203,7 +204,7 @@ public class LevelTest extends ComponentTestFixture {
     tester.actionClick(planViewComponent, new ComponentLocation(p));
     p = new Point(planView.convertXModelToScreen(firstWall.getXEnd()) - 1, planView.convertYModelToScreen(firstWall.getYEnd()) + 2);
     SwingUtilities.convertPointFromScreen(p, planViewComponent);
-    tester.actionClick(planViewComponent, new ComponentLocation(p), MouseEvent.BUTTON1, 2);
+    tester.actionClick(planViewComponent, new ComponentLocation(p), InputEvent.BUTTON1_MASK, 2);
     assertEquals("No new wall", walls.size() + 1, home.getWalls().size());
     Wall newWall = (Wall)home.getWalls().toArray() [walls.size()];
     assertTrue("Incorrect X start " + firstWall.getXStart() + " " + newWall.getXStart(), 
@@ -237,6 +238,22 @@ public class LevelTest extends ComponentTestFixture {
       assertTrue("Incorrect Y [" + i + "] " + firstRoomPoints [i][1] + " " + points [i][1], 
           Math.abs(firstRoomPoints [i][1] - points [i][1]) < 1E-4);
     }
+    
+    // Select all at all levels
+    runAction(homeController, HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, tester);
+    assertEquals("Wrong selected items count", selectedItemsCount + 2, home.getSelectedItems().size());
+    assertTrue("All levels selection flag not set", home.isAllLevelsSelection());
+    // Check unselecting one item with shift key pressed doesn't remove flag
+    runAction(homeController, HomeView.ActionType.SELECT, tester);
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionClick(planViewComponent, new ComponentLocation(p));
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    assertEquals("Wrong selected items count", selectedItemsCount + 1, home.getSelectedItems().size());
+    assertTrue("All levels selection flag not set", home.isAllLevelsSelection());
+
+    runAction(homeController, HomeView.ActionType.SELECT_ALL, tester);
+    assertEquals("Wrong selected items count", 7, home.getSelectedItems().size());
+    assertFalse("All levels selection flag still set", home.isAllLevelsSelection());
   }
 
   private void assertHomeItemsAtLevel(Home home, Level level) {
@@ -269,9 +286,8 @@ public class LevelTest extends ComponentTestFixture {
     JSpinner elevationSpinner = (JSpinner)TestUtilities.getField(levelPanel, "elevationSpinner");
     // Reduce its elevation at a level where walls of 1st level will be visible
     spinnerTester = new JSpinnerTester();
-    for (int i = 0; i < 25; i++) {
-      spinnerTester.actionDecrement(elevationSpinner);
-    }
+    spinnerTester.actionDecrement(elevationSpinner);
+    elevationSpinner.setValue(((Number)elevationSpinner.getValue()).floatValue() - 22f);
     float newElevation = ((Number)elevationSpinner.getValue()).floatValue();
     // Click on Ok in dialog box    
     final JOptionPane levelOptionPane = (JOptionPane)TestUtilities.findComponent(
