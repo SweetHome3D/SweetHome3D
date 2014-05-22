@@ -1675,7 +1675,7 @@ public class HomeController implements Controller {
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
       if (referencesInvalidContent(piece, invalidContent)) {
-        HomePieceOfFurniture replacingPiece = new HomePieceOfFurniture(
+        HomePieceOfFurniture replacingPiece = getFurnitureController().createHomePieceOfFurniture(
             new CatalogPieceOfFurniture(piece.getCatalogId(), piece.getName(), piece.getDescription(), 
                 REPAIRED_ICON_CONTENT, REPAIRED_IMAGE_CONTENT, REPAIRED_MODEL_CONTENT, 
                 piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
