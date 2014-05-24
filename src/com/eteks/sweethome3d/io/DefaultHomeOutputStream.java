@@ -29,9 +29,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,10 +47,9 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @see DefaultHomeInputStream
  */
 public class DefaultHomeOutputStream extends FilterOutputStream {
-  private int                    compressionLevel;
-  private ContentRecording       contentRecording;
-  private List<Content>          contents           = new ArrayList<Content>();
-  private Map<URL, List<String>> zipUrlEntriesCache = new HashMap<URL, List<String>>();
+  private int                      compressionLevel;
+  private ContentRecording         contentRecording;
+  private Map<Content, URLContent> savedContents = new LinkedHashMap<Content, URLContent>();
   
   /**
    * Creates a stream that will serialize a home and all the contents it references
@@ -121,9 +118,9 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     objectOut.flush();
     zipOut.closeEntry();
     // Write Content objects in files "0" to "n"
-    for (int i = 0, n = contents.size(); i < n; i++) {
-      Content content = contents.get(i);
-      String entryNameOrDirectory = String.valueOf(i);
+    int i = 0;
+    for (Content content : this.savedContents.keySet()) {
+      String entryNameOrDirectory = String.valueOf(i++);
       if (content instanceof ResourceURLContent) {
         writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
       } else if (content instanceof URLContent
@@ -159,7 +156,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
           // Consider content is a multi part resource only if it's in a subdirectory
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
           // Write in home stream each zipped stream entry that is stored in the same directory  
-          for (String zipEntryName : getZipUrlEntries(zipUrl)) {
+          for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
             if (zipEntryName.startsWith(entryDirectory)) {
               Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
                   + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
@@ -195,30 +192,6 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   }
 
   /**
-   * Returns the list of entries contained in <code>zipUrl</code>.
-   */
-  private List<String> getZipUrlEntries(URL zipUrl) throws IOException {
-    List<String> zipUrlEntries = this.zipUrlEntriesCache.get(zipUrl);
-    if (zipUrlEntries == null) {
-      zipUrlEntries = new ArrayList<String>();
-      this.zipUrlEntriesCache.put(zipUrl, zipUrlEntries);
-      ZipInputStream zipIn = null;
-      try {
-        // Search all entries of zip url
-        zipIn = new ZipInputStream(zipUrl.openStream());
-        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-          zipUrlEntries.add(entry.getName());
-        }
-      } finally {
-        if (zipIn != null) {
-          zipIn.close();
-        }
-      }
-    }
-    return zipUrlEntries;
-  }
-  
-  /**
    * Writes in <code>zipOut</code> stream one or more entries matching the content
    * <code>urlContent</code> coming from a home file.
    */
@@ -232,7 +205,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       URL zipUrl = urlContent.getJAREntryURL();
       String entryDirectory = entryName.substring(0, slashIndex + 1);
       // Write in home stream each zipped stream entry that is stored in the same directory  
-      for (String zipEntryName : getZipUrlEntries(zipUrl)) {
+      for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
         if (zipEntryName.startsWith(entryDirectory)) {
           Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
               + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
@@ -309,9 +282,17 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       if (obj instanceof TemporaryURLContent 
           || obj instanceof HomeURLContent
           || (contentRecording == ContentRecording.INCLUDE_ALL_CONTENT && obj instanceof Content)) {
-        // Add obj to Content objects list
-        contents.add((Content)obj);
-
+        if (obj instanceof URLContent) {
+          // Check if duplicated content can be avoided 
+          ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
+          for (Map.Entry<Content, URLContent> contentEntry : savedContents.entrySet()) {
+            if (contentEntry.getKey() instanceof URLContent
+                && contentDigestManager.equals((URLContent)obj, (URLContent)contentEntry.getKey())) {
+              return contentEntry.getValue();
+            }
+          }
+        }
+        
         String subEntryName = "";
         if (obj instanceof URLContent) {
           URLContent urlContent = (URLContent)obj;
@@ -356,7 +337,10 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         } 
 
         // Return a temporary URL that points to content object 
-        return new URLContent(new URL("jar:file:temp!/" + (contents.size() - 1) + subEntryName));
+        URLContent tmpContent = new URLContent(new URL("jar:file:temp!/" + savedContents.size() + subEntryName));
+        // Add obj to Content objects list
+        savedContents.put((Content)obj, tmpContent);
+        return tmpContent;
       } else {
         return obj;
       }
