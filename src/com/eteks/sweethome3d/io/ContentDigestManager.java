@@ -49,15 +49,15 @@ class ContentDigestManager {
 
   private static ContentDigestManager instance;
   
-  private Map<URLContent, byte []> contentDigestsCache;
-  private Map<URLContent, byte []> contentFirstBytesDigestsCache;
+  private Map<Content, byte []>  contentDigestsCache;
+  private Map<Content, byte []>  contentFirstBytesDigestsCache;
   
-  private Map<URLContent, URL>     zipUrlsCache;
-  private Map<URL, List<String>>   zipUrlEntriesCache;
+  private Map<URLContent, URL>   zipUrlsCache;
+  private Map<URL, List<String>> zipUrlEntriesCache;
 
   private ContentDigestManager() {
-    this.contentDigestsCache = new WeakHashMap<URLContent, byte[]>();
-    this.contentFirstBytesDigestsCache = new WeakHashMap<URLContent, byte[]>();
+    this.contentDigestsCache = new WeakHashMap<Content, byte[]>();
+    this.contentFirstBytesDigestsCache = new WeakHashMap<Content, byte[]>();
     this.zipUrlsCache = new WeakHashMap<URLContent, URL>();
     this.zipUrlEntriesCache = new WeakHashMap<URL, List<String>>();
   }
@@ -79,7 +79,7 @@ class ContentDigestManager {
   /**
    * Returns <code>true</code> if the contents in parameter contains the same data.
    */
-  public synchronized boolean equals(URLContent content1, URLContent content2) {
+  public synchronized boolean equals(Content content1, Content content2) {
     byte [] content1FirstBytesDigest = getContentFirstBytesDigest(content1);
     if (content1FirstBytesDigest == INVALID_CONTENT_DIGEST) {
       return false;
@@ -98,7 +98,7 @@ class ContentDigestManager {
   /**
    * Returns the digest of the max 1024 first bytes of the given <code>content</code>.
    */
-  private byte [] getContentFirstBytesDigest(URLContent content) {
+  private byte [] getContentFirstBytesDigest(Content content) {
     byte [] firstBytesDigest = this.contentFirstBytesDigestsCache.get(content);
     if (firstBytesDigest == null) {
       firstBytesDigest = getContentDigest(content, 512);
@@ -110,7 +110,7 @@ class ContentDigestManager {
   /**
    * Returns the digest of the given <code>content</code>. 
    */
-  private byte [] getContentDigest(URLContent content) {
+  private byte [] getContentDigest(Content content) {
     byte [] digest = this.contentDigestsCache.get(content);
     if (digest == null) {
       try {
@@ -141,7 +141,7 @@ class ContentDigestManager {
   /**
    * Returns the digest of the max <code>bytesCount</code> first bytes of this content content.
    */
-  private byte [] getContentDigest(URLContent content, int bytesCount) {
+  private byte [] getContentDigest(Content content, int bytesCount) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
       InputStream in = null;

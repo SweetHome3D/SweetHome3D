@@ -29,7 +29,9 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -47,9 +49,8 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @see DefaultHomeInputStream
  */
 public class DefaultHomeOutputStream extends FilterOutputStream {
-  private int                      compressionLevel;
-  private ContentRecording         contentRecording;
-  private Map<Content, URLContent> savedContents = new LinkedHashMap<Content, URLContent>();
+  private int              compressionLevel;
+  private ContentRecording contentRecording;
   
   /**
    * Creates a stream that will serialize a home and all the contents it references
@@ -113,13 +114,13 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     // Write home in first entry in a file "Home"
     zipOut.putNextEntry(new ZipEntry("Home"));
     // Use an ObjectOutputStream that keeps track of Content objects
-    ObjectOutputStream objectOut = new HomeObjectOutputStream(zipOut);
+    HomeObjectOutputStream objectOut = new HomeObjectOutputStream(zipOut);
     objectOut.writeObject(home);
     objectOut.flush();
     zipOut.closeEntry();
-    // Write Content objects in files "0" to "n"
+    // Write Content objects in files "0" to "n - 1"
     int i = 0;
-    for (Content content : this.savedContents.keySet()) {
+    for (Content content : objectOut.getSavedContents()) {
       String entryNameOrDirectory = String.valueOf(i++);
       if (content instanceof ResourceURLContent) {
         writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
@@ -270,6 +271,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
    * by temporary <code>URLContent</code> objects and stores them in a list.
    */
   private class HomeObjectOutputStream extends ObjectOutputStream {
+    private Map<Content, URLContent> savedContents = new LinkedHashMap<Content, URLContent>();
+
     public HomeObjectOutputStream(OutputStream out) throws IOException {
       super(out);
       if (contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
@@ -282,20 +285,16 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       if (obj instanceof TemporaryURLContent 
           || obj instanceof HomeURLContent
           || (contentRecording == ContentRecording.INCLUDE_ALL_CONTENT && obj instanceof Content)) {
-        if (obj instanceof URLContent) {
-          // Check if duplicated content can be avoided 
-          ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
-          for (Map.Entry<Content, URLContent> contentEntry : savedContents.entrySet()) {
-            if (contentEntry.getKey() instanceof URLContent
-                && contentDigestManager.equals((URLContent)obj, (URLContent)contentEntry.getKey())) {
-              return contentEntry.getValue();
-            }
-          }
-        }
-        
         String subEntryName = "";
         if (obj instanceof URLContent) {
           URLContent urlContent = (URLContent)obj;
+          // Check if duplicated content can be avoided 
+          ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
+          for (Map.Entry<Content, URLContent> contentEntry : savedContents.entrySet()) {
+            if (contentDigestManager.equals(urlContent, contentEntry.getKey())) {
+              return contentEntry.getValue();
+            }
+          }
           // If content comes from a zipped content  
           if (urlContent.isJAREntry()) {
             String entryName = urlContent.getJAREntryName();
@@ -344,6 +343,13 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       } else {
         return obj;
       }
+    }
+    
+    /**
+     * Returns the contents to be saved.
+     */
+    public List<Content> getSavedContents() {
+      return new ArrayList<Content>(savedContents.keySet());
     }
   }
 }
