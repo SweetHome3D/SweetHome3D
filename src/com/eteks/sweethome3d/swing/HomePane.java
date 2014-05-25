@@ -72,7 +72,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -3536,8 +3535,7 @@ public class HomePane extends JRootPane implements HomeView {
         // Don't display data model
       }
     }
-    float maxMemoryGigaByte = Math.max(0.1f, 
-        ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getMax() / 1073741824f);    
+    float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
     String message = String.format(messageFormat, aboutVersion, javaVersion);
     JComponent messagePane = createEditorPane(message);
