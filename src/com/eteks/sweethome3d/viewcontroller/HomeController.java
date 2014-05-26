@@ -1864,8 +1864,8 @@ public class HomeController implements Controller {
    * Manages home close operation. If the home managed by this controller is modified,
    * this method will {@link HomeView#confirmSave(String) confirm} 
    * in view whether home should be saved. Once home is actually saved,
-   * home is removed from application homes list and postCloseTask is called if
-   * it's not <code>null</code>.
+   * home is removed from application homes list and <code>postCloseTask</code> 
+   * is called if it's not <code>null</code>.
    */
   protected void close(final Runnable postCloseTask) {
     // Create a task that deletes home and run postCloseTask
@@ -1921,8 +1921,10 @@ public class HomeController implements Controller {
 
   /**
    * Saves the home managed by this controller with a different name. 
+   * Once home is actually saved, home is removed from application homes list 
+   * and <code>postCloseTask</code> is called if it's not <code>null</code>.
    */
-  private void saveAs(HomeRecorder.Type recorderType, Runnable postSaveTask) {
+  protected void saveAs(HomeRecorder.Type recorderType, Runnable postSaveTask) {
     String newName = getView().showSaveDialog(this.home.getName());
     if (newName != null) {
       save(newName, recorderType, postSaveTask);
