@@ -110,6 +110,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     ICON("icon"),
     /**
+     * The key for the SHA-1 digest of the icon file of a piece of furniture (optional). 
+     * This property is used to compare faster catalog resources with the ones of a read home,
+     * and should be encoded in Base64.  
+     */
+    ICON_DIGEST("iconDigest"),
+    /**
      * The key for the plan icon file of a piece of furniture (optional).
      * This icon file can be either the path to an image relative to classpath
      * or an absolute URL. It should be encoded in application/x-www-form-urlencoded  
@@ -117,12 +123,24 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     PLAN_ICON("planIcon"),
     /**
+     * The key for the SHA-1 digest of the plan icon file of a piece of furniture (optional). 
+     * This property is used to compare faster catalog resources with the ones of a read home,
+     * and should be encoded in Base64.  
+     */
+    PLAN_ICON_DIGEST("planIconDigest"),
+    /**
      * The key for the 3D model file of a piece of furniture (mandatory).
      * The 3D model file can be either a path relative to classpath
      * or an absolute URL.  It should be encoded in application/x-www-form-urlencoded  
      * format if needed.
      */
     MODEL("model"),
+    /**
+     * The key for the SHA-1 digest of the 3D model file of a piece of furniture (optional). 
+     * This property is used to compare faster catalog resources with the ones of a read home,
+     * and should be encoded in Base64.  
+     */
+    MODEL_DIGEST("modelDigest"),
     /**
      * The key for a piece of furniture with multiple parts (optional).
      * If the value of this key is <code>true</code>, all the files
@@ -584,12 +602,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     if (gradeString != null) {
       grade = Float.valueOf(gradeString);
     }
-    Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), 
+    Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), PropertyKey.ICON_DIGEST.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, false, false);
-    Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), 
+    Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), PropertyKey.PLAN_ICON_DIGEST.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, false, true);
     boolean multiPartModel = getOptionalBoolean(resource, PropertyKey.MULTI_PART_MODEL.getKey(index), false);
-    Content model = getContent(resource, PropertyKey.MODEL.getKey(index), 
+    Content model = getContent(resource, PropertyKey.MODEL.getKey(index), PropertyKey.MODEL_DIGEST.getKey(index), 
         furnitureCatalogUrl, furnitureResourcesUrlBase, multiPartModel, false);
     float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
     float depth = Float.parseFloat(resource.getString(PropertyKey.DEPTH.getKey(index)));
@@ -659,7 +677,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   /**
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle
-   * @param contentKey  the key of a resource content file
+   * @param contentKey        the key of a resource content file
+   * @param contentDigestKey  the key of the digest of a resource content file
    * @param furnitureUrl the URL of the file containing the target resource if it's not <code>null</code> 
    * @param resourceUrlBase the URL used as a base to build the URL to content file  
    *            or <code>null</code> if it's read from current classpath or <code>furnitureCatalogUrl</code>.
@@ -669,16 +688,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    */
   private Content getContent(ResourceBundle resource, 
                              String contentKey, 
+                             String contentDigestKey,
                              URL furnitureUrl,
                              URL resourceUrlBase, 
                              boolean multiPartModel,
                              boolean optional) {
     String contentFile = optional
-       ? getOptionalString(resource, contentKey, null)
-       : resource.getString(contentKey);
+        ? getOptionalString(resource, contentKey, null)
+        : resource.getString(contentKey);
     if (optional && contentFile == null) {
       return null;
     }
+    URLContent content;
     try {
       // Try first to interpret contentFile as an absolute URL 
       // or an URL relative to resourceUrlBase if it's not null
@@ -693,19 +714,29 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           url = new URL("jar:" + url);
         }
       }
-      return new URLContent(url);
+      content = new URLContent(url);
     } catch (MalformedURLException ex) {
       if (furnitureUrl == null) {
         // Otherwise find if it's a resource
-        return new ResourceURLContent(DefaultFurnitureCatalog.class, contentFile, multiPartModel);
+        content = new ResourceURLContent(DefaultFurnitureCatalog.class, contentFile, multiPartModel);
       } else {
         try {
-          return new ResourceURLContent(new URL("jar:" + furnitureUrl + "!" + contentFile), multiPartModel);
+          content = new ResourceURLContent(new URL("jar:" + furnitureUrl + "!" + contentFile), multiPartModel);
         } catch (MalformedURLException ex2) {
           throw new IllegalArgumentException("Invalid URL", ex2);
         }
       }
     }
+    
+    String contentDigest = getOptionalString(resource, contentDigestKey, null);
+    if (contentDigest != null && contentDigest.length() > 0) {
+      try {
+        ContentDigestManager.getInstance().setContentDigest(content, Base64.decode(contentDigest));
+      } catch (IOException ex) {
+        // Ignore wrong digest
+      }
+    }
+    return content;
   }
   
   /**

@@ -41,23 +41,22 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * Manager able to compute and store content digest to compare content data quickly.  
+ * Manager able to store and compute content digest to compare content data faster.  
  * @author Emmanuel Puybaret
  */
-class ContentDigestManager {
+public class ContentDigestManager {
+  private static final String  DIGEST_ALGORITHM = "SHA-1";
   private static final byte [] INVALID_CONTENT_DIGEST = {};
 
   private static ContentDigestManager instance;
   
   private Map<Content, byte []>  contentDigestsCache;
-  private Map<Content, byte []>  contentFirstBytesDigestsCache;
   
   private Map<URLContent, URL>   zipUrlsCache;
   private Map<URL, List<String>> zipUrlEntriesCache;
 
   private ContentDigestManager() {
     this.contentDigestsCache = new WeakHashMap<Content, byte[]>();
-    this.contentFirstBytesDigestsCache = new WeakHashMap<Content, byte[]>();
     this.zipUrlsCache = new WeakHashMap<URLContent, URL>();
     this.zipUrlEntriesCache = new WeakHashMap<URL, List<String>>();
   }
@@ -77,40 +76,32 @@ class ContentDigestManager {
   }
 
   /**
-   * Returns <code>true</code> if the contents in parameter contains the same data.
+   * Returns <code>true</code> if the contents in parameter contains the same data,
+   * comparing their digest. If the digest of the contents was not 
+   * {@linkplain #setContentDigest(Content, byte[]) set} directly, it will be 
+   * computed on the fly.
    */
-  public synchronized boolean equals(Content content1, Content content2) {
-    byte [] content1FirstBytesDigest = getContentFirstBytesDigest(content1);
-    if (content1FirstBytesDigest == INVALID_CONTENT_DIGEST) {
-      return false;
-    } else if (!Arrays.equals(content1FirstBytesDigest, getContentFirstBytesDigest(content2))) {
+  public boolean equals(Content content1, Content content2) {
+    byte [] content1Digest = getContentDigest(content1);
+    if (content1Digest == INVALID_CONTENT_DIGEST) {
       return false;
     } else {
-      byte [] content1Digest = getContentDigest(content1);
-      if (content1Digest == INVALID_CONTENT_DIGEST) {
-        return false;
-      } else {
-        return Arrays.equals(content1Digest, getContentDigest(content2));
-      }
+      return Arrays.equals(content1Digest, getContentDigest(content2));
     }
   }
 
   /**
-   * Returns the digest of the max 1024 first bytes of the given <code>content</code>.
+   * Sets the SHA-1 digest of the given <code>content</code>.
    */
-  private byte [] getContentFirstBytesDigest(Content content) {
-    byte [] firstBytesDigest = this.contentFirstBytesDigestsCache.get(content);
-    if (firstBytesDigest == null) {
-      firstBytesDigest = getContentDigest(content, 512);
-      this.contentFirstBytesDigestsCache.put(content, firstBytesDigest);
-    }
-    return firstBytesDigest;
+  public synchronized void setContentDigest(Content content, byte [] digest) {
+    this.contentDigestsCache.put(content, digest);
   }
   
   /**
-   * Returns the digest of the given <code>content</code>. 
+   * Returns the SHA-1 digest of the given <code>content</code>, computing it 
+   * if it wasn't set.
    */
-  private byte [] getContentDigest(Content content) {
+  public synchronized byte [] getContentDigest(Content content) {
     byte [] digest = this.contentDigestsCache.get(content);
     if (digest == null) {
       try {
@@ -126,46 +117,16 @@ class ContentDigestManager {
             digest = getZipContentDigest(urlContent);
           }
         } else {
-          digest = getContentDigest(content, -1);
+          digest = computeContentDigest(content);
         }
       } catch (NoSuchAlgorithmException ex) {
         throw new InternalError("No SHA-1 message digest is available");
       } catch (IOException ex) {
-        return INVALID_CONTENT_DIGEST;
+        digest = INVALID_CONTENT_DIGEST;
       }
       this.contentDigestsCache.put(content, digest);
     }
     return digest;
-  }
-
-  /**
-   * Returns the digest of the max <code>bytesCount</code> first bytes of this content content.
-   */
-  private byte [] getContentDigest(Content content, int bytesCount) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-      InputStream in = null;
-      try {
-        in = content.openStream();
-        byte [] buffer = new byte [bytesCount != -1 ? Math.min(bytesCount, 8192) : 8192];
-        int size; 
-        while ((size = in.read(buffer)) != -1) {
-          messageDigest.update(buffer, 0, size);
-          if (bytesCount >= size) {
-            break;
-          }
-        }
-        return messageDigest.digest();
-      } finally {
-        if (in != null) {
-          in.close();
-        }
-      }    
-    } catch (NoSuchAlgorithmException ex) {
-      throw new InternalError("No SHA-1 message digest is available");
-    } catch (IOException ex) {
-      return INVALID_CONTENT_DIGEST;
-    }
   }
 
   /**
@@ -179,7 +140,7 @@ class ContentDigestManager {
         int lastSlashIndex = entryName.lastIndexOf('/');
         if (lastSlashIndex != -1) {
           // Consider content is a multi part resource only if it's in a subdirectory
-          MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+          MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
           for (String zipEntryName : getZipURLEntries(urlContent)) {
             if (zipEntryName.startsWith(entryDirectory) 
@@ -193,12 +154,12 @@ class ContentDigestManager {
           return messageDigest.digest();
         } else {
           // Consider the content as not a multipart resource
-          return getContentDigest(urlContent, -1);
+          return computeContentDigest(urlContent);
         }
       } else {
         // This should be the case only when resource isn't in a JAR file during development
         try {
-          MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+          MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
           File contentFile = new File(urlContent.getURL().toURI());
           File parentFile = new File(contentFile.getParent());
           File [] siblingFiles = parentFile.listFiles();
@@ -217,7 +178,7 @@ class ContentDigestManager {
         }
       }
     } else {
-      return getContentDigest(urlContent, -1);
+      return computeContentDigest(urlContent);
     }
   }
 
@@ -233,7 +194,7 @@ class ContentDigestManager {
       String entryDirectory = entryName.substring(0, slashIndex + 1);
       ZipInputStream zipIn = null;
       try {
-        MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+        MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
         zipIn = new ZipInputStream(zipUrl.openStream());
         for (String zipEntryName : getZipURLEntries(urlContent)) {
           if (zipEntryName.startsWith(entryDirectory) 
@@ -251,7 +212,7 @@ class ContentDigestManager {
         }
       }
     } else {
-      return getContentDigest(urlContent, -1);
+      return computeContentDigest(urlContent);
     }
   }
 
@@ -261,7 +222,7 @@ class ContentDigestManager {
   private byte [] getZipContentDigest(URLContent urlContent) throws IOException, NoSuchAlgorithmException {
     ZipInputStream zipIn = null;
     try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+      MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
       // Open zipped stream that contains urlContent
       zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
       for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
@@ -330,6 +291,15 @@ class ContentDigestManager {
         }
       }
     }
+  }
+
+  /**
+   * Returns the digest of the given <code>content</code>.
+   */
+  private byte [] computeContentDigest(Content content) throws IOException, NoSuchAlgorithmException {
+    MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
+    updateMessageDigest(messageDigest, content);
+    return messageDigest.digest();
   }
 
   /**

@@ -79,6 +79,12 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
      */
     IMAGE("image"),
     /**
+     * The key for the SHA-1 digest of the image file of a texture (optional). 
+     * This property is used to compare faster catalog resources with the ones of a read home,
+     * and should be encoded in Base64.  
+     */
+    IMAGE_DIGEST("imageDigest"),
+    /**
      * The key for the width in centimeters of a texture (mandatory).
      */
     WIDTH("width"),
@@ -365,7 +371,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       // Return null if key name# doesn't exist
       return null;
     }
-    Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), 
+    Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), PropertyKey.IMAGE_DIGEST.getKey(index), 
         texturesUrl, texturesResourcesUrlBase);
     float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
     float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
@@ -396,9 +402,11 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   private Content getContent(ResourceBundle resource, 
                              String         contentKey,
+                             String         contentDigestKey,
                              URL            texturesUrl,
                              URL            resourceUrlBase) {
     String contentFile = resource.getString(contentKey);
+    URLContent content;
     try {
       // Try first to interpret contentFile as an absolute URL 
       // or an URL relative to resourceUrlBase if it's not null
@@ -410,19 +418,28 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
             ? new URL(resourceUrlBase + contentFile)
             : new URL(resourceUrlBase, contentFile);
       }
-      return new URLContent(url);
+      content = new URLContent(url);
     } catch (MalformedURLException ex) {
       if (texturesUrl == null) {
         // Otherwise find if it's a resource
-        return new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
+        content = new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
       } else {
         try {
-          return new ResourceURLContent(new URL("jar:" + texturesUrl + "!" + contentFile), false);
+          content = new ResourceURLContent(new URL("jar:" + texturesUrl + "!" + contentFile), false);
         } catch (MalformedURLException ex2) {
           throw new IllegalArgumentException("Invalid URL", ex2);
         }
       }
     }
+    String contentDigest = getOptionalString(resource, contentDigestKey);
+    if (contentDigest != null && contentDigest.length() > 0) {
+      try {
+        ContentDigestManager.getInstance().setContentDigest(content, Base64.decode(contentDigest));
+      } catch (IOException ex) {
+        // Ignore wrong digest
+      }
+    }
+    return content; 
   }
 
   /**
