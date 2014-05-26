@@ -103,7 +103,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     when that service refuses to write a file larger that this maximum.</li> 
  *     
  *     <li><code>readHomeURL</code> specifies the URL of the HTTP service able 
- *     to return the data of a home written with the previous service. The home name
+ *     to return the data of a home written with the write home service. The home name
  *     is specified by the parameter named <code>home</code> of a GET request.
  *     <br>By default, this URL is <code>readHome.php?home=%s</code> (the %s sign will be 
  *     replaced by the requested home name). If it's not an absolute URL it will be 
@@ -117,6 +117,15 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <i>New</i>, <i>Open</i> and <i>Save as...</i> actions will be disabled and their buttons 
  *     won't be displayed. If <code>defaultHome</code> is empty, <i>Save</i> action
  *     will be also disabled</li>
+ *     
+ *     <li><code>deleteHomeURL</code> specifies the URL of the HTTP service able 
+ *     to delete the data of a home written with the write home service. The home name
+ *     is specified by the parameter named <code>home</code> of a GET request and the 
+ *     the %s sign will be replaced by the home name that sould be deleted.
+ *     This service must return 1 if it deleted the given home successfully.
+ *     <br>By default, this service doesn't exist and deletion is not possible from the applet.
+ *     If it's not an absolute URL it will be considered as relative to applet codebase.
+ *     This service is available to the user if <code>listHomesURL</code> is defined.</li>
  *     
  *     <li><code>defaultHome</code> specifies the home that will be opened at applet launch
  *     with <code>readHomeURL</code> service. 

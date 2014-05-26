@@ -47,6 +47,7 @@ public class HomeAppletRecorder implements HomeRecorder {
   private final String           writeHomeURL;
   private final String           readHomeURL;
   private final String           listHomesURL;
+  private final String           deleteHomeURL;
   private final ContentRecording contentRecording;
   private long                   availableHomesCacheTime;
   private String []              availableHomesCache;
@@ -83,9 +84,22 @@ public class HomeAppletRecorder implements HomeRecorder {
                             String readHomeURL,
                             String listHomesURL,
                             ContentRecording contentRecording) {
+    this(writeHomeURL, readHomeURL, listHomesURL, null, contentRecording);
+  }
+  
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read, list and delete homes.
+   * @see SweetHome3DApplet
+   */
+  public HomeAppletRecorder(String writeHomeURL, 
+                            String readHomeURL,
+                            String listHomesURL,
+                            String deleteHomeURL,
+                            ContentRecording contentRecording) {
     this.writeHomeURL = writeHomeURL;
     this.readHomeURL = readHomeURL;
     this.listHomesURL = listHomesURL;
+    this.deleteHomeURL = deleteHomeURL;
     this.contentRecording = contentRecording;
   }
   
@@ -246,6 +260,51 @@ public class HomeAppletRecorder implements HomeRecorder {
     }
   }
   
+  /**
+   * Returns a home instance read from its file <code>name</code>.
+   * @throws RecorderException if a problem occurred while reading home, 
+   *   or if file <code>name</code> doesn't exist.
+   */
+  public void deleteHome(String name) throws RecorderException {
+    if (!isHomeDeletionAvailable()) {
+      throw new RecorderException("Deletion isn't available");
+    }
+    HttpURLConnection connection = null;
+    try {
+      // Replace % sequence by %% except %s before formating readHomeURL with home name 
+      String deletedHomeURL = String.format(this.deleteHomeURL.replaceAll("(%[^s])", "%$1"), 
+          URLEncoder.encode(name, "UTF-8"));
+      // Send request to server
+      connection = (HttpURLConnection)new URL(deletedHomeURL).openConnection();
+      connection.setRequestProperty("Content-Type", "charset=UTF-8");
+      connection.setUseCaches(false);
+      // Read response
+      InputStream in = connection.getInputStream();
+      int read = in.read();
+      in.close();
+      if (read != '1') {
+        throw new RecorderException("Deleting home " + name + " failed");
+      }
+      // Reset availableHomes to force a new request at next getAvailableHomes or exists call
+      this.availableHomesCache = null; 
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Delete " + name + " interrupted");
+    } catch (IOException ex) {
+      throw new RecorderException("Can't delete home " + name, ex);
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if this recorder provides a service able to delete homes.
+   */
+  public boolean isHomeDeletionAvailable() {
+    return this.deleteHomeURL != null;
+  }
+
   /**
    * Returns the length of the home data that will be saved by this recorder.
    */

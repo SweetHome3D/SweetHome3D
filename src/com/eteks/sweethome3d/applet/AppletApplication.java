@@ -59,6 +59,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
+import com.eteks.sweethome3d.io.ContentRecording;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
@@ -94,6 +95,7 @@ public class AppletApplication extends HomeApplication {
   private static final String WRITE_HOME_URL_PARAMETER               = "writeHomeURL";
   private static final String HOME_MAXIMUM_LENGTH                    = "homeMaximumLength";
   private static final String READ_HOME_URL_PARAMETER                = "readHomeURL";
+  private static final String DELETE_HOME_URL_PARAMETER              = "deleteHomeURL";
   private static final String LIST_HOMES_URL_PARAMETER               = "listHomesURL";
   private static final String READ_PREFERENCES_URL_PARAMETER         = "readPreferencesURL";
   private static final String WRITE_PREFERENCES_URL_PARAMETER        = "writePreferencesURL";
@@ -323,10 +325,10 @@ public class AppletApplication extends HomeApplication {
    * Returns a new instance of a home controller after <code>home</code> was created.
    */
   protected HomeController createHomeController(Home home) {
-    final String writeHomeURL = getAppletParameter(applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
-    final String readHomeURL = getAppletParameter(applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
-    final String listHomesURL = getAppletParameter(applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
-    final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
+    final String writeHomeURL = getAppletParameter(this.applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
+    final String readHomeURL = getAppletParameter(this.applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
+    final String listHomesURL = getAppletParameter(this.applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+    final String defaultHome = getAppletParameter(this.applet, DEFAULT_HOME_PARAMETER, "");    
     
     // Create a home controller for new home
     boolean newHomeEnabled = 
@@ -598,9 +600,12 @@ public class AppletApplication extends HomeApplication {
       final String writeHomeURL = getAppletParameter(this.applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
       final String readHomeURL = getAppletParameter(this.applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
       final String listHomesURL = getAppletParameter(this.applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+      final String deleteHomeURL = getAppletParameter(this.applet, DELETE_HOME_URL_PARAMETER, "");
       this.homeRecorder =  new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
           getURLStringWithCodeBase(codeBase, readHomeURL), 
-          getURLStringWithCodeBase(codeBase, listHomesURL));
+          getURLStringWithCodeBase(codeBase, listHomesURL),
+          getURLStringWithCodeBase(codeBase, deleteHomeURL),
+          ContentRecording.INCLUDE_TEMPORARY_CONTENT);
     }
     return this.homeRecorder;
   }
@@ -642,7 +647,7 @@ public class AppletApplication extends HomeApplication {
    */
   protected ContentManager getContentManager() {
     if (this.contentManager == null) {
-      this.contentManager = new AppletContentManager(getHomeRecorder(), getUserPreferences());
+      this.contentManager = new AppletContentManager(getHomeRecorder(), getUserPreferences(), getViewFactory());
     }
     return this.contentManager;
   }
