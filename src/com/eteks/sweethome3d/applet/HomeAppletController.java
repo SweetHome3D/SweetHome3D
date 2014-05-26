@@ -65,6 +65,18 @@ public class HomeAppletController extends HomePluginController {
                               boolean newHomeEnabled, 
                               boolean openEnabled, 
                               boolean saveEnabled, 
+                              boolean saveAsEnabled) {
+    this(home, application, viewFactory, contentManager, pluginManager, newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled, -1);
+  }
+  
+  public HomeAppletController(Home home, 
+                              HomeApplication application, 
+                              ViewFactory     viewFactory,
+                              ContentManager  contentManager,
+                              PluginManager   pluginManager,
+                              boolean newHomeEnabled, 
+                              boolean openEnabled, 
+                              boolean saveEnabled, 
                               boolean saveAsEnabled,
                               long    homeMaximumLength) {
     super(home, application, viewFactory, contentManager, pluginManager);
