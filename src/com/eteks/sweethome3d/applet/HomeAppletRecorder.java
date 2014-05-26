@@ -112,7 +112,7 @@ public class HomeAppletRecorder implements HomeRecorder {
           + name.replace('\"', '\'') + "\"\r\n").getBytes("UTF-8"));
       out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes("UTF-8"));
       out.flush();
-      DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, this.contentRecording);
+      DefaultHomeOutputStream homeOut = createHomeOutputStream(out);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
       homeOut.flush();
@@ -139,6 +139,13 @@ public class HomeAppletRecorder implements HomeRecorder {
         connection.disconnect();
       }
     }
+  }
+
+  /**
+   * Returns the filter output stream used to write a home in the output stream in parameter.
+   */
+  private DefaultHomeOutputStream createHomeOutputStream(OutputStream out) throws IOException {
+    return new DefaultHomeOutputStream(out, 9, this.contentRecording);
   }
 
   /**
@@ -236,6 +243,39 @@ public class HomeAppletRecorder implements HomeRecorder {
       } catch (IOException ex) {
         throw new RecorderException("Can't close connection", ex);
       }
+    }
+  }
+  
+  /**
+   * Returns the length of the home data that will be saved by this recorder.
+   */
+  public long getHomeLength(Home home) throws RecorderException {
+    try {
+      LengthOutputStream out = new LengthOutputStream();
+      DefaultHomeOutputStream homeOut = createHomeOutputStream(out);
+      homeOut.writeHome(home);
+      homeOut.flush();
+      return out.getLength();
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Home length computing interrupted");
+    } catch (IOException ex) {
+      throw new RecorderException("Can't compute home length", ex);
+    }
+  }
+  
+  /**
+   * An output stream used to evaluate the length of written data.
+   */
+  private class LengthOutputStream extends OutputStream {
+    private long length;
+    
+    @Override
+    public void write(int b) throws IOException {
+      this.length++;
+    }
+    
+    public long getLength() {
+      return this.length;
     }
   }
 }

@@ -97,6 +97,11 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <i>New</i>, <i>Save</i> and <i>Save as...</i> actions will be disabled and their buttons 
  *     won't be displayed.</li>
  *     
+ *     <li><code>homeMaximumLength</code> specifies the maximum length in bytes of a home that 
+ *     the HTTP service used to write its data will accept. If not specified, the length of a saved 
+ *     home won't be verified before the writing service is called, leading to a possible error 
+ *     when that service refuses to write a file larger that this maximum.</li> 
+ *     
  *     <li><code>readHomeURL</code> specifies the URL of the HTTP service able 
  *     to return the data of a home written with the previous service. The home name
  *     is specified by the parameter named <code>home</code> of a GET request.
@@ -137,6 +142,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     
  *     <li><code>enableExportToSH3D</code> specifies whether this applet should enable
  *     the action that lets the user export the edited home to a SH3D file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>enableImportFromSH3D</code> specifies whether this applet should enable
+ *     the action that lets the user import a SH3D file to replace the edited home. 
  *     <br>By default, the value of this parameter is <code>false</code>.</li>
  *     
  *     <li><code>enableExportToCSV</code> specifies whether this applet should enable

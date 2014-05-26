@@ -19,13 +19,18 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.plugin.HomePluginController;
@@ -33,6 +38,7 @@ import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
@@ -43,25 +49,31 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletController extends HomePluginController {
-  private final Home home;
+  private final Home            home;
   private final HomeApplication application;
-  private final ViewFactory viewFactory;
-  private final ContentManager contentManager;
+  private final ViewFactory     viewFactory;
+  private final ContentManager  contentManager;
+  private final long            homeMaximumLength;
+  
+  private static List<Home>     importedHomes = new ArrayList<Home>();
 
   public HomeAppletController(Home home, 
                               HomeApplication application, 
-                              ViewFactory viewFactory,
+                              ViewFactory     viewFactory,
                               ContentManager  contentManager,
                               PluginManager   pluginManager,
                               boolean newHomeEnabled, 
                               boolean openEnabled, 
                               boolean saveEnabled, 
-                              boolean saveAsEnabled) {
+                              boolean saveAsEnabled,
+                              long    homeMaximumLength) {
     super(home, application, viewFactory, contentManager, pluginManager);
     this.home = home;
     this.application = application;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
+    this.homeMaximumLength = homeMaximumLength;
+
     
     HomeView view = (HomeView)getView();
     view.setEnabled(HomeView.ActionType.EXIT, false);
@@ -104,6 +116,82 @@ public class HomeAppletController extends HomePluginController {
   }
   
   /**
+   * Forces a save as operation for imported homes.
+   */
+  @Override
+  public void save() {
+    chekHomeLengthAndSave(new Runnable() {
+        public void run() {
+          if (importedHomes.contains(home)) {
+            // Use proposed imported home name
+            HomeAppletController.super.saveAs(HomeRecorder.Type.DEFAULT, 
+                new Runnable () {
+                  public void run() {
+                    importedHomes.remove(home);
+                  }
+                });
+          } else {
+            HomeAppletController.super.save();
+          }
+        }
+      });
+  }
+  
+  /**
+   * Checks the home length then saves if the length is ok.
+   */
+  @Override
+  public void saveAs() {
+    chekHomeLengthAndSave(new Runnable() {
+        public void run() {
+          HomeAppletController.super.saveAs();
+        }
+      });
+  }
+  
+  public void chekHomeLengthAndSave(final Runnable saveTask) {
+    if (this.homeMaximumLength > 0) {
+      // Check home length in a threaded task
+      Callable<Void> exportToObjTask = new Callable<Void>() {
+          public Void call() throws RecorderException {
+            final long homeLength = ((HomeAppletRecorder)application.getHomeRecorder()).getHomeLength(home);
+            getView().invokeLater(new Runnable() {
+                public void run() {
+                  if (homeLength > homeMaximumLength) {
+                    String message = getHomeLengthMessage(homeLength);
+                    getView().showError(message);
+                  } else {
+                    saveTask.run();
+                  }
+                }
+              });
+  
+            return null;
+          }
+        };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = application.getUserPreferences().getLocalizedString(
+                      HomeController.class, "saveError", home.getName());
+                  getView().showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToObjTask, 
+          this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "chekHomeLengthMessage"), exceptionHandler, 
+          this.application.getUserPreferences(), viewFactory).executeTask(getView());
+    } else {
+      saveTask.run();
+    }
+  }
+
+  /**
    * Displays Sweet Home user guide in a navigator window.
    */
   @Override
@@ -126,11 +214,11 @@ public class HomeAppletController extends HomePluginController {
     if (sh3dName != null) {
       // Export home in a threaded task
       Callable<Void> exportToObjTask = new Callable<Void>() {
-            public Void call() throws RecorderException {
-              new HomeFileRecorder(9).writeHome(home, sh3dName);
-              return null;
-            }
-          };
+          public Void call() throws RecorderException {
+            new HomeFileRecorder(9).writeHome(home, sh3dName);
+            return null;
+          }
+        };
       ThreadedTaskController.ExceptionHandler exceptionHandler = 
           new ThreadedTaskController.ExceptionHandler() {
             public void handleException(Exception ex) {
@@ -151,6 +239,76 @@ public class HomeAppletController extends HomePluginController {
     }
   }
   
+  /**
+   * Controls the import of home from a SH3D file.
+   */
+  public void importFromSH3D() {
+    close(new Runnable() {
+      public void run() {
+        final String sh3dName = new FileContentManager(application.getUserPreferences()).showOpenDialog(getView(),
+            application.getUserPreferences().getLocalizedString(HomeAppletController.class, "importFromSH3DDialog.title"), 
+            ContentManager.ContentType.SWEET_HOME_3D);    
+        if (sh3dName != null) {
+          // Export home in a threaded task
+          Callable<Void> exportToObjTask = new Callable<Void>() {
+              public Void call() throws RecorderException {
+                final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences()).readHome(sh3dName);
+                String name = new File(sh3dName).getName();
+                name = name.substring(0, name.lastIndexOf("."));
+                openedHome.setName(name);
+                openedHome.setModified(true);
+                importedHomes.add(openedHome);
+                final long homeLength = homeMaximumLength > 0
+                    ? ((HomeAppletRecorder)application.getHomeRecorder()).getHomeLength(openedHome)
+                    : -1;
+                getView().invokeLater(new Runnable() {
+                    public void run() {
+                      application.addHome(openedHome);
+                      if (homeLength > homeMaximumLength) {
+                        String message = getHomeLengthMessage(homeLength);
+                        getView().showMessage(message);
+                      } 
+                    }
+                  });
+                return null;
+              }
+            };
+          ThreadedTaskController.ExceptionHandler exceptionHandler = 
+              new ThreadedTaskController.ExceptionHandler() {
+                public void handleException(Exception ex) {
+                  if (!(ex instanceof InterruptedRecorderException)) {
+                    if (ex instanceof RecorderException) {
+                      String message = application.getUserPreferences().getLocalizedString(
+                          HomeAppletController.class, "importFromSH3DError", sh3dName);
+                      getView().showError(message);
+                    } else {
+                      ex.printStackTrace();
+                    }
+                  }
+                }
+              };
+          new ThreadedTaskController(exportToObjTask, 
+              application.getUserPreferences().getLocalizedString(HomeAppletController.class, "importFromSH3DMessage"), exceptionHandler, 
+              application.getUserPreferences(), viewFactory).executeTask(getView());
+        }
+      }
+    });
+  }
+  
+  /**
+   * Returns a message stating that the home length is too large.
+   */
+  private String getHomeLengthMessage(long homeLength) {
+    DecimalFormat decimalFormat = new DecimalFormat("#.#");
+    String homeLengthText = decimalFormat.format(Math.max(0.1f, homeLength / 1048576f));
+    String homeMaximumLengthText = decimalFormat.format(Math.max(0.1f, this.homeMaximumLength / 1048576f));
+    return application.getUserPreferences().getLocalizedString(
+        HomeAppletController.class, "homeLengthError", homeLengthText, homeMaximumLengthText);
+  }
+  
+  /**
+   * Edits preferences relevant to applet version.
+   */
   @Override
   public void editPreferences() {
     new UserPreferencesController(this.application.getUserPreferences(), 

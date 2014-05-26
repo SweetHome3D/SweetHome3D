@@ -92,12 +92,14 @@ public class AppletApplication extends HomeApplication {
   private static final String TEXTURES_RESOURCES_URL_BASE_PARAMETER  = "texturesResourcesURLBase";
   private static final String PLUGIN_URLS_PARAMETER                  = "pluginURLs";
   private static final String WRITE_HOME_URL_PARAMETER               = "writeHomeURL";
+  private static final String HOME_MAXIMUM_LENGTH                    = "homeMaximumLength";
   private static final String READ_HOME_URL_PARAMETER                = "readHomeURL";
   private static final String LIST_HOMES_URL_PARAMETER               = "listHomesURL";
   private static final String READ_PREFERENCES_URL_PARAMETER         = "readPreferencesURL";
   private static final String WRITE_PREFERENCES_URL_PARAMETER        = "writePreferencesURL";
   private static final String DEFAULT_HOME_PARAMETER                 = "defaultHome";
   private static final String ENABLE_EXPORT_TO_SH3D                  = "enableExportToSH3D";
+  private static final String ENABLE_IMPORT_FROM_SH3D                = "enableImportFromSH3D";
   private static final String ENABLE_EXPORT_TO_CSV                   = "enableExportToCSV";
   private static final String ENABLE_EXPORT_TO_SVG                   = "enableExportToSVG";
   private static final String ENABLE_EXPORT_TO_OBJ                   = "enableExportToOBJ";
@@ -335,10 +337,11 @@ public class AppletApplication extends HomeApplication {
         && (defaultHome.length() != 0 || listHomesURL.length() != 0);
     boolean saveAsEnabled = 
         writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+    long homeMaximumLength = Long.valueOf(getAppletParameter(applet, HOME_MAXIMUM_LENGTH, "-1"));    
     
     final HomeController controller = new HomeAppletController(
         home, AppletApplication.this, getViewFactory(), getContentManager(), getPluginManager(),
-        newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
+        newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled, homeMaximumLength);
     
     JRootPane homeView = (JRootPane)controller.getView();
     // Remove menu bar
@@ -383,6 +386,17 @@ public class AppletApplication extends HomeApplication {
             AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
         exportToSH3DAction.setEnabled(true);
         addActionToToolBar(new ResourceAction.ToolBarAction(exportToSH3DAction), toolBar);
+      } catch (NoSuchMethodException ex) {
+        ex.printStackTrace();
+      }
+    }
+    if (getAppletBooleanParameter(this.applet, ENABLE_IMPORT_FROM_SH3D)) {
+      try {
+        // Add import from SH3D action
+        Action importFromSH3DAction = new ControllerAction(getUserPreferences(), 
+            AppletApplication.class, "IMPORT_FROM_SH3D", controller, "importFromSH3D");
+        importFromSH3DAction.setEnabled(true);
+        addActionToToolBar(new ResourceAction.ToolBarAction(importFromSH3DAction), toolBar);
       } catch (NoSuchMethodException ex) {
         ex.printStackTrace();
       }
