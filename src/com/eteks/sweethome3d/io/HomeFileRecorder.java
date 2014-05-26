@@ -33,6 +33,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
@@ -41,9 +42,10 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class HomeFileRecorder implements HomeRecorder {
-  private final int     compressionLevel;
-  private final boolean includeOnlyTemporaryContent;
-
+  private final int             compressionLevel;
+  private final boolean         includeOnlyTemporaryContent;
+  private final UserPreferences preferences;
+  
   /**
    * Creates a home recorder able to write and read homes in uncompressed files. 
    */
@@ -72,8 +74,27 @@ public class HomeFileRecorder implements HomeRecorder {
    */
   public HomeFileRecorder(int     compressionLevel, 
                           boolean includeOnlyTemporaryContent) {
+    this(compressionLevel, includeOnlyTemporaryContent, null);    
+  }
+
+  /**
+   * Creates a home recorder able to write and read homes in files compressed 
+   * at a level from 0 to 9. 
+   * @param compressionLevel 0-9
+   * @param includeOnlyTemporaryContent if <code>true</code>, content instances of 
+   *            <code>TemporaryURLContent</code> class referenced by the saved home 
+   *            as well as the content previously saved with it will be written. 
+   *            If <code>false</code>, all the content instances 
+   *            referenced by the saved home will be written in the zip stream. 
+   * @param preferences If not <code>null</code>, the furniture and textures contents 
+   *            it references will replace the one of read homes when they are equal.
+   */
+  public HomeFileRecorder(int             compressionLevel, 
+                          boolean         includeOnlyTemporaryContent,
+                          UserPreferences preferences) {
     this.compressionLevel = compressionLevel;
-    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;    
+    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
+    this.preferences = preferences;
   }
 
   /**
@@ -161,7 +182,7 @@ public class HomeFileRecorder implements HomeRecorder {
     DefaultHomeInputStream in = null;
     try {
       // Open a stream on file
-      in = new DefaultHomeInputStream(new FileInputStream(name));
+      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT, this.preferences);
       // Read home with HomeInputStream
       Home home = in.readHome();
       return home;
