@@ -23,8 +23,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 
 import com.eteks.sweethome3d.io.HomeFileRecorder;
@@ -49,13 +49,13 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletController extends HomePluginController {
-  private final Home            home;
-  private final HomeApplication application;
-  private final ViewFactory     viewFactory;
-  private final ContentManager  contentManager;
-  private final long            homeMaximumLength;
+  private final Home               home;
+  private final HomeApplication    application;
+  private final ViewFactory        viewFactory;
+  private final ContentManager     contentManager;
+  private final long               homeMaximumLength;
   
-  private static List<Home>     importedHomes = new ArrayList<Home>();
+  private static Map<Home, String> importedHomeNames = new WeakHashMap<Home, String>();
 
   public HomeAppletController(Home home, 
                               HomeApplication application, 
@@ -132,35 +132,50 @@ public class HomeAppletController extends HomePluginController {
    */
   @Override
   public void save() {
+    if (this.home.getName() != null) {
+      chekHomeLengthAndSave(new Runnable() {
+          public void run() {
+            HomeAppletController.super.save();
+          }
+        });
+    } else {
+      super.saveAs();
+    }
+  }
+  
+  /**
+   * Prompts the user to choose a name for the edited home, 
+   * suggesting the imported file name after an import.
+   */
+  @Override
+  protected void saveAs(final HomeRecorder.Type recorderType, 
+                        final Runnable postSaveTask) {
     chekHomeLengthAndSave(new Runnable() {
         public void run() {
-          if (importedHomes.contains(home)) {
-            // Use proposed imported home name
-            HomeAppletController.super.saveAs(HomeRecorder.Type.DEFAULT, 
-                new Runnable () {
-                  public void run() {
-                    importedHomes.remove(home);
+          String homeName = importedHomeNames.get(home);
+          if (homeName != null) {
+            // Suggest imported home name
+            home.setName(homeName);
+            HomeAppletController.super.saveAs(recorderType, new Runnable () {
+                public void run() {
+                  if (postSaveTask != null) {
+                    postSaveTask.run();
                   }
-                });
+                  importedHomeNames.remove(home);
+                }
+              });
+            // Reset name to null in case the user gave up
+            home.setName(null);
           } else {
-            HomeAppletController.super.save();
+            HomeAppletController.super.saveAs(recorderType, postSaveTask);
           }
         }
       });
   }
   
   /**
-   * Checks the home length then saves if the length is ok.
+   * Checks the length of data and executes <code>saveTask</code> if length is ok. 
    */
-  @Override
-  public void saveAs() {
-    chekHomeLengthAndSave(new Runnable() {
-        public void run() {
-          HomeAppletController.super.saveAs();
-        }
-      });
-  }
-  
   public void chekHomeLengthAndSave(final Runnable saveTask) {
     if (this.homeMaximumLength > 0) {
       // Check home length in a threaded task
@@ -267,9 +282,9 @@ public class HomeAppletController extends HomePluginController {
                 final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences()).readHome(sh3dName);
                 String name = new File(sh3dName).getName();
                 name = name.substring(0, name.lastIndexOf("."));
-                openedHome.setName(name);
+                importedHomeNames.put(openedHome, name);
+                openedHome.setName(null);
                 openedHome.setModified(true);
-                importedHomes.add(openedHome);
                 final long homeLength = homeMaximumLength > 0
                     ? ((HomeAppletRecorder)application.getHomeRecorder()).getHomeLength(openedHome)
                     : -1;
