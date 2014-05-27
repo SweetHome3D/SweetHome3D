@@ -1901,9 +1901,8 @@ public class HomeController implements Controller {
    * if it's not <code>null</code>.
    */
   private void save(HomeRecorder.Type recorderType, Runnable postSaveTask) {
-    if (this.home.getName() == null) {
-      saveAs(recorderType, postSaveTask);
-    } else if (this.home.isRepaired()) {
+    if (this.home.getName() == null
+        || this.home.isRepaired()) {
       saveAs(recorderType, postSaveTask);
     } else {
       save(this.home.getName(), recorderType, postSaveTask);
