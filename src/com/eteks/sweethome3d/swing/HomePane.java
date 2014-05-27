@@ -2731,7 +2731,8 @@ public class HomePane extends JRootPane implements HomeView {
     
       final JComponent planView3DPane;
       Boolean detachedView3DProperty = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
-      boolean detachedView3D = detachedView3DProperty != null && detachedView3DProperty.booleanValue();        
+      boolean detachedView3D = detachedView3DProperty != null 
+          && detachedView3DProperty.booleanValue();        
       if (planView != null) {
         // Create a split pane that displays both components
         final JSplitPane planView3DSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, view3D);
@@ -2786,7 +2787,8 @@ public class HomePane extends JRootPane implements HomeView {
               public void run() {
                 View view3D = controller.getHomeController3D().getView();
                 // Check 3D view can be viewed in one of the available screens      
-                if (SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
+                if (getActionMap().get(ActionType.DETACH_3D_VIEW).isEnabled() 
+                    && SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
                   detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
                 } else if (planView3DPane instanceof JSplitPane) {
                   // Restore the divider location of the split pane displaying the 3D view   
