@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
@@ -52,12 +53,14 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
+import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.table.TableCellRenderer;
 
 import com.eteks.sweethome3d.io.ContentRecording;
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -67,19 +70,25 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.ControllerAction;
+import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.IconManager;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -657,7 +666,12 @@ public class AppletApplication extends HomeApplication {
    */
   protected ViewFactory getViewFactory() {
     if (this.viewFactory == null) {
-     this.viewFactory = new SwingViewFactory();
+     this.viewFactory = new SwingViewFactory() {
+         @Override
+         public View createFurnitureView(Home home, UserPreferences preferences, FurnitureController furnitureController) {
+           return new AppletFurnitureTable(home, preferences, furnitureController);
+         }
+       };
     }
     return this.viewFactory;
   }
@@ -770,6 +784,49 @@ public class AppletApplication extends HomeApplication {
       ServiceManager.setServiceManagerStub(
           new StandaloneServiceManager(applet.getAppletContext(), codeBase));
       // Caution: setting a new service manager stub won't replace the existing one
+    }
+  }
+
+  /**
+   * A furniture table that renders in italic the name of the imported furniture.
+   */
+  private static final class AppletFurnitureTable extends FurnitureTable {
+    private TableCellRenderer nameRenderer = new TableCellRenderer() {
+        private Font defaultFont;
+        private Font importedPieceFont;
+      
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
+          JComponent rendererComponent = (JComponent)AppletFurnitureTable.super.getCellRenderer(row, column).
+              getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          // Initialize fonts if not done
+          if (this.defaultFont == null) {
+            this.defaultFont = rendererComponent.getFont();
+            this.importedPieceFont = 
+                new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());        
+          }
+          
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)getValueAt(row, column);
+          URLContent model = (URLContent)piece.getModel();
+          // Imported pieces are not stored in URLContent instances
+          boolean importedPiece = model.getClass() != URLContent.class;
+          rendererComponent.setFont(importedPiece  ? this.importedPieceFont  : this.defaultFont);
+          return rendererComponent;
+        }
+      };
+
+    private AppletFurnitureTable(Home home, UserPreferences preferences, FurnitureController controller) {
+      super(home, preferences, controller);
+    }
+
+    @Override
+    public TableCellRenderer getCellRenderer(int row, int column) {
+      if (getColumnModel().getColumn(column).getIdentifier() == HomePieceOfFurniture.SortableProperty.NAME
+          && !(getValueAt(row, column) instanceof HomeFurnitureGroup)) {
+        return this.nameRenderer;
+      } else {
+        return super.getCellRenderer(row, column);
+      }
     }
   }
 
