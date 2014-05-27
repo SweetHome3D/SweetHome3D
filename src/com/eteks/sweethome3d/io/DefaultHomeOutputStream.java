@@ -295,6 +295,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
               return contentEntry.getValue();
             }
           }
+          checkCurrentThreadIsntInterrupted();
           // If content comes from a zipped content  
           if (urlContent.isJAREntry()) {
             String entryName = urlContent.getJAREntryName();

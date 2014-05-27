@@ -385,6 +385,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
                 return content;
               }
             }
+            checkCurrentThreadIsntInterrupted();
             if (preferencesContentsCache != null) {
               // Check if user preferences contains the same content to share it
               for (URLContent content : preferencesContentsCache) {
