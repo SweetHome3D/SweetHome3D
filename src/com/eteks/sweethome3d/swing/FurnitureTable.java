@@ -1406,6 +1406,9 @@ public class FurnitureTable extends JTable implements View, Printable {
     public Component getTableCellRendererComponent(JTable table, 
          Object value, boolean isSelected, boolean hasFocus, 
          int row, int column) {
+      if (this.defaultFont == null) {
+        this.defaultFont = table.getFont();
+      }
       boolean containsGroup = false;
       for (int i = 0; i < table.getRowCount(); i++) {
         if (table.getValueAt(i, 0) instanceof HomeFurnitureGroup) {
@@ -1429,7 +1432,6 @@ public class FurnitureTable extends JTable implements View, Printable {
         // Use default table renderer if the furniture list doesn't contain any group   
         if (this.defaultRenderer == null) {
           this.defaultRenderer = new DefaultTableCellRenderer();
-          this.defaultFont = defaultRenderer.getFont();
         }
         HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
         JLabel label = (JLabel)this.defaultRenderer.getTableCellRendererComponent(
@@ -1442,7 +1444,6 @@ public class FurnitureTable extends JTable implements View, Printable {
         }
         label.setIcon(IconManager.getInstance().getIcon(
             iconContent, table.getRowHeight() - table.getRowMargin(), table));
-        label.setFont(this.defaultFont);
         return label;
       }
     }
@@ -1522,7 +1523,6 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
             }
           };
-        this.defaultFont = this.tree.getFont();
         this.tree.setRowHeight(table.getRowHeight());
         this.tree.setRootVisible(false);
         this.tree.setShowsRootHandles(true);

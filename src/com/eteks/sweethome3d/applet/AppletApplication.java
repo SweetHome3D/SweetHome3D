@@ -801,7 +801,7 @@ public class AppletApplication extends HomeApplication {
               getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           // Initialize fonts if not done
           if (this.defaultFont == null) {
-            this.defaultFont = rendererComponent.getFont();
+            this.defaultFont = table.getFont();
             this.importedPieceFont = 
                 new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());        
           }
