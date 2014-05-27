@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
@@ -304,9 +305,12 @@ public class FurnitureTable extends JTable implements View, Printable {
               isVisibleColumn = visibilityComponent.getBounds().contains(ev.getPoint());
             } else if (columnId == HomePieceOfFurniture.SortableProperty.NAME
                        && getValueAt(row, column) instanceof HomeFurnitureGroup) {
-              Rectangle expandedStateBounds = ((TreeTableNameCellRenderer)getCellRenderer(row, column)).
-                  getExpandedStateBounds(FurnitureTable.this, row, column);
-              isGroupRow = expandedStateBounds.contains(ev.getPoint());
+              TableCellRenderer cellRenderer = getCellRenderer(row, column);
+              if (cellRenderer instanceof TreeTableNameCellRenderer) {
+                Rectangle expandedStateBounds = ((TreeTableNameCellRenderer)cellRenderer).
+                    getExpandedStateBounds(FurnitureTable.this, row, column);
+                isGroupRow = expandedStateBounds.contains(ev.getPoint());
+              }
             }
             if (isVisibleColumn) {
               controller.toggleSelectedFurnitureVisibility();
@@ -1397,6 +1401,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     private DefaultTableCellRenderer defaultRenderer;
     private JTree                    tree;
     private int                      renderedRow;
+    private Font                     defaultFont;
     
     public Component getTableCellRendererComponent(JTable table, 
          Object value, boolean isSelected, boolean hasFocus, 
@@ -1418,11 +1423,13 @@ public class FurnitureTable extends JTable implements View, Printable {
           this.tree.clearSelection();
         }
         this.renderedRow = row;
-        return tree;
+        this.tree.setFont(this.defaultFont);
+        return this.tree;
       } else {
         // Use default table renderer if the furniture list doesn't contain any group   
         if (this.defaultRenderer == null) {
           this.defaultRenderer = new DefaultTableCellRenderer();
+          this.defaultFont = defaultRenderer.getFont();
         }
         HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
         JLabel label = (JLabel)this.defaultRenderer.getTableCellRendererComponent(
@@ -1434,7 +1441,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           iconContent = piece.getIcon();
         }
         label.setIcon(IconManager.getInstance().getIcon(
-            iconContent, table.getRowHeight() - table.getRowMargin(), table)); 
+            iconContent, table.getRowHeight() - table.getRowMargin(), table));
+        label.setFont(this.defaultFont);
         return label;
       }
     }
@@ -1514,6 +1522,7 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
             }
           };
+        this.defaultFont = this.tree.getFont();
         this.tree.setRowHeight(table.getRowHeight());
         this.tree.setRootVisible(false);
         this.tree.setShowsRootHandles(true);
