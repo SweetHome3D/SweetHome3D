@@ -569,9 +569,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
+      boolean useMaterials = color == null && texture == null && materials != null && materials.length > 0;
       // Change material and texture of all shapes that are not window panes 
       if (shapeName == null
-          || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
+          || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)
+          || useMaterials) {
         Appearance appearance = shape.getAppearance();
         if (appearance == null) {
           appearance = createAppearanceWithChangeCapabilities();
@@ -607,7 +609,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
             TextureManager.getInstance().loadTexture(texture.getImage(), texture.getAngle(), 
                 waitTextureLoadingEnd, getTextureObserver(appearance));
-          } else if (materials != null && materials.length > 0) {
+          } else if (useMaterials) {
             boolean materialFound = false;
             // Apply color, texture and shininess of the material named as appearance name
             for (HomeMaterial material : materials) {
