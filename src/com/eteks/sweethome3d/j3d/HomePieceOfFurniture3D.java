@@ -569,31 +569,49 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
-      boolean useMaterials = color == null && texture == null && materials != null && materials.length > 0;
-      // Change material and texture of all shapes that are not window panes 
-      if (shapeName == null
-          || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)
-          || useMaterials) {
-        Appearance appearance = shape.getAppearance();
-        if (appearance == null) {
-          appearance = createAppearanceWithChangeCapabilities();
-          ((Shape3D)node).setAppearance(appearance);
-        }
-        
-        // Check appearance wasn't already changed
-        if (!modifiedAppearances.contains(appearance)) {
-          // Use appearance user data to store shape default material
-          DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+      Appearance appearance = shape.getAppearance();
+      if (appearance == null) {
+        appearance = createAppearanceWithChangeCapabilities();
+        ((Shape3D)node).setAppearance(appearance);
+      }
+      
+      // Check appearance wasn't already changed
+      if (!modifiedAppearances.contains(appearance)) {
+        DefaultMaterialAndTexture defaultMaterialAndTexture = null;
+        boolean colorModified = color != null;
+        boolean textureModified = !colorModified 
+            && texture != null;
+        boolean materialModified = !colorModified
+            && !textureModified
+            && materials != null && materials.length > 0;
+        boolean appearanceModified = colorModified 
+            || textureModified
+            || materialModified;
+        boolean windowPane = shapeName != null
+            && shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX);
+        if (!windowPane && appearanceModified            
+            || windowPane && materialModified) {
+          // Use appearance user data to store shape default material 
+          // (global color or texture change doesn't have effect on window panes)
+          defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
           if (defaultMaterialAndTexture == null) {
             defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
             appearance.setUserData(defaultMaterialAndTexture);
           }
-          float materialShininess = shininess != null
+        }
+        float materialShininess = 0;
+        if (appearanceModified) {
+          materialShininess = shininess != null
               ? shininess.floatValue()
               : (appearance.getMaterial() != null
                   ? appearance.getMaterial().getShininess() / 128f
                   : 0);
-          if (color != null) {
+        }
+        if (colorModified) {
+          // Change color only of shapes that are not window panes
+          if (windowPane) {
+            restoreDefaultMaterialAndTexture(appearance, shininess);
+          } else {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
             appearance.setMaterial(getMaterial(color, color, materialShininess));
@@ -602,53 +620,58 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
             appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
             appearance.setTexture(null);
-          } else if (color == null && texture != null) {            
+          }
+        } else if (textureModified) {            
+          // Change texture only of shapes that are not window panes
+          if (windowPane) {
+            restoreDefaultMaterialAndTexture(appearance, shininess);
+          } else {
             // Change material to white then texture
             appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
             appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
             appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
             TextureManager.getInstance().loadTexture(texture.getImage(), texture.getAngle(), 
                 waitTextureLoadingEnd, getTextureObserver(appearance));
-          } else if (useMaterials) {
-            boolean materialFound = false;
-            // Apply color, texture and shininess of the material named as appearance name
-            for (HomeMaterial material : materials) {
-              if (material != null 
-                  && material.getName().equals(appearance.getName())) {
-                if (material.getShininess() != null) {
-                  materialShininess = material.getShininess();
-                }
-                color = material.getColor();                
-                if (color != null) {
-                  appearance.setMaterial(getMaterial(color, color, materialShininess));
-                  appearance.setTexture(null);
-                  appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-                  appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
-                } else if (color == null && material.getTexture() != null) {
-                  if (!isTexturesCoordinatesDefined(shape)) {
-                    appearance.setTexCoordGeneration(getTextureCoordinates(appearance, material.getTexture(), pieceSize, modelBounds));
-                  }
-                  appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-                  appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-                  HomeTexture materialTexture = material.getTexture();
-                  TextureManager.getInstance().loadTexture(materialTexture.getImage(), materialTexture.getAngle(), 
-                      waitTextureLoadingEnd, getTextureObserver(appearance));
-                } else {
-                  restoreDefaultMaterialAndTexture(appearance, material.getShininess());
-                }
-                materialFound = true;
-                break;
-              }
-            }
-            if (!materialFound) {
-              restoreDefaultMaterialAndTexture(appearance, null);
-            }
-          } else {
-            restoreDefaultMaterialAndTexture(appearance, shininess);
           }
-          // Store modified appearances to avoid changing their values more than once
-          modifiedAppearances.add(appearance);
+        } else if (materialModified) {
+          boolean materialFound = false;
+          // Apply color, texture and shininess of the material named as appearance name
+          for (HomeMaterial material : materials) {
+            if (material != null 
+                && material.getName().equals(appearance.getName())) {
+              if (material.getShininess() != null) {
+                materialShininess = material.getShininess();
+              }
+              color = material.getColor();                
+              if (color != null) {
+                appearance.setMaterial(getMaterial(color, color, materialShininess));
+                appearance.setTexture(null);
+                appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+                appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+              } else if (color == null && material.getTexture() != null) {
+                if (!isTexturesCoordinatesDefined(shape)) {
+                  appearance.setTexCoordGeneration(getTextureCoordinates(appearance, material.getTexture(), pieceSize, modelBounds));
+                }
+                appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
+                appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+                HomeTexture materialTexture = material.getTexture();
+                TextureManager.getInstance().loadTexture(materialTexture.getImage(), materialTexture.getAngle(), 
+                    waitTextureLoadingEnd, getTextureObserver(appearance));
+              } else {
+                restoreDefaultMaterialAndTexture(appearance, material.getShininess());
+              }
+              materialFound = true;
+              break;
+            }
+          }
+          if (!materialFound) {
+            restoreDefaultMaterialAndTexture(appearance, null);
+          }
+        } else {
+          restoreDefaultMaterialAndTexture(appearance, shininess);
         }
+        // Store modified appearances to avoid changing their values more than once
+        modifiedAppearances.add(appearance);
       }
     }
   }
@@ -718,18 +741,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void restoreDefaultMaterialAndTexture(Appearance appearance,
                                                 Float shininess) {
     DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
-    Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
-    if (defaultMaterial != null && shininess != null) {
-      defaultMaterial = (Material)defaultMaterial.cloneNodeComponent(true);
-      defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
-      defaultMaterial.setShininess(shininess * 128);
+    if (defaultMaterialAndTexture != null) {
+      Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
+      if (defaultMaterial != null && shininess != null) {
+        defaultMaterial = (Material)defaultMaterial.cloneNodeComponent(true);
+        defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
+        defaultMaterial.setShininess(shininess * 128);
+      }
+      appearance.setMaterial(defaultMaterial);
+      appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+      appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+      appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+      appearance.setTexture(getHomeTextureClone(defaultMaterialAndTexture.getTexture(), home));
+      appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
     }
-    appearance.setMaterial(defaultMaterial);
-    appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-    appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
-    appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-    appearance.setTexture(getHomeTextureClone(defaultMaterialAndTexture.getTexture(), home));
-    appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
   }
 
   /**
