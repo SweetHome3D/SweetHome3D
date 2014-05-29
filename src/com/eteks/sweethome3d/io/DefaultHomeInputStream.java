@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -114,9 +115,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
       // and check if all entries in the temporary file can be fully read using a zipped input stream
       fileCopy = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
       OutputStream fileCopyOut = new BufferedOutputStream(new FileOutputStream(fileCopy));
+      InputStream copiedIn = new CopiedInputStream(new BufferedInputStream(this.in), fileCopyOut);
       List<ZipEntry> validEntries = new ArrayList<ZipEntry>();
-      validZipFile = isZipFileValidUsingInputStream(new CopyInputStream(this.in, fileCopyOut), validEntries) 
-          && validEntries.size() > 0;
+      validZipFile = isZipFileValidUsingInputStream(copiedIn, validEntries) && validEntries.size() > 0;
       if (!validZipFile) {
         int validEntriesCount = validEntries.size();
         validEntries.clear();
@@ -330,12 +331,12 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * An input stream filter that copies to a given output stream everything it reads.
+   * An input stream filter that copies to a given output stream all read data.
    */
-  private class CopyInputStream extends FilterInputStream {
+  private class CopiedInputStream extends FilterInputStream {
     private OutputStream out;
 
-    protected CopyInputStream(InputStream in, OutputStream out) {
+    protected CopiedInputStream(InputStream in, OutputStream out) {
       super(in);
       this.out = out;
     }
@@ -360,15 +361,18 @@ public class DefaultHomeInputStream extends FilterInputStream {
     
     @Override
     public void close() throws IOException {
-      // Copy remaining bytes
-      byte [] buffer = new byte [8192];
-      int size; 
-      while ((size = this.in.read(buffer)) != -1) {
-        this.out.write(buffer, 0, size);
+      try {
+        // Copy remaining bytes
+        byte [] buffer = new byte [8192];
+        int size; 
+        while ((size = this.in.read(buffer)) != -1) {
+          this.out.write(buffer, 0, size);
+        }
+        this.out.flush();
+      } finally {
+        this.out.close();
+        super.close();
       }
-      this.out.flush();
-      this.out.close();
-      super.close();
     }
   }
   
