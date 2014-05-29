@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -110,10 +111,12 @@ public class DefaultHomeInputStream extends FilterInputStream {
     boolean validZipFile = true;
     if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
       // Copy home stream in a temporary file  
-      fileCopy = copyInputStreamToTemporaryFile(this.in);
-      // Check if all entries in the temporary file can be fully read using a zipped input stream
+      // and check if all entries in the temporary file can be fully read using a zipped input stream
+      fileCopy = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
+      OutputStream fileCopyOut = new BufferedOutputStream(new FileOutputStream(fileCopy));
       List<ZipEntry> validEntries = new ArrayList<ZipEntry>();
-      validZipFile = isZipFileValidUsingInputStream(fileCopy, validEntries) && validEntries.size() > 0;
+      validZipFile = isZipFileValidUsingInputStream(new CopyInputStream(this.in, fileCopyOut), validEntries) 
+          && validEntries.size() > 0;
       if (!validZipFile) {
         int validEntriesCount = validEntries.size();
         validEntries.clear();
@@ -163,27 +166,31 @@ public class DefaultHomeInputStream extends FilterInputStream {
       }
     }
   }
-  
+
   /**
-   * Returns a copy of <code>in</code> content in a temporary file.
+   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.  
+   * <code>validEntries</code> will contain the valid entries.
    */
-  private File copyInputStreamToTemporaryFile(InputStream in) throws IOException {
-    File tempfile = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
-    checkCurrentThreadIsntInterrupted();
-    OutputStream tempOut = null;
+  private boolean isZipFileValidUsingInputStream(InputStream in, List<ZipEntry> validEntries) throws IOException {
+    ZipInputStream zipIn = null;
     try {
-      tempOut = new FileOutputStream(tempfile);
+      zipIn = new ZipInputStream(in);
       byte [] buffer = new byte [8192];
-      int size; 
-      while ((size = in.read(buffer)) != -1) {
-        tempOut.write(buffer, 0, size);
+      for (ZipEntry zipEntry = null; (zipEntry = zipIn.getNextEntry()) != null; ) {
+        // Read the entry to check it's ok
+        while (zipIn.read(buffer) != -1) {
+        }
+        validEntries.add(zipEntry);
+        checkCurrentThreadIsntInterrupted();
       }
+      return true;
+    } catch (IOException ex) {
+      return false;
     } finally {
-      if (tempOut != null) {
-        tempOut.close();
+      if (zipIn != null) {
+        zipIn.close();
       }
     }
-    return tempfile;
   }
   
   /**
@@ -205,6 +212,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
           }
           zipIn.close();
           validEntries.add(zipEntry);
+          checkCurrentThreadIsntInterrupted();
         } catch (IOException ex) {
           validZipFile = false;
         } 
@@ -220,30 +228,33 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.  
-   * <code>validEntries</code> will contain the valid entries.
+   * Returns a temporary file containing the first valid entries count of the given <code>file</code>.
    */
-  private boolean isZipFileValidUsingInputStream(File file, List<ZipEntry> validEntries) throws IOException {
+  private File createTemporaryFileFromValidEntriesCount(File file, int entriesCount) throws IOException {
+    if (entriesCount <= 0) {
+      throw new IOException("No valid entries");
+    }
+    File tempfile = OperatingSystem.createTemporaryFile("part", ".sh3d");
+    ZipOutputStream zipOut = null;
     ZipInputStream zipIn = null;
     try {
       zipIn = new ZipInputStream(new FileInputStream(file));
-      byte [] buffer = new byte [8192];
-      for (ZipEntry zipEntry = null; (zipEntry = zipIn.getNextEntry()) != null; ) {
-        // Read the entry to check it's ok
-        while (zipIn.read(buffer) != -1) {
-        }
-        validEntries.add(zipEntry);
+      zipOut = new ZipOutputStream(new FileOutputStream(tempfile));
+      zipOut.setLevel(0);
+      while (entriesCount-- > 0) {
+        copyEntry(zipIn, zipIn.getNextEntry(), zipOut);
       }
-      return true;
-    } catch (IOException ex) {
-      return false;
+      return tempfile;
     } finally {
+      if (zipOut != null) {
+        zipOut.close();
+      }
       if (zipIn != null) {
         zipIn.close();
       }
     }
   }
-  
+
   /**
    * Returns a temporary file containing the valid entries of the given <code>file</code>.
    */
@@ -275,37 +286,10 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
   
   /**
-   * Returns a temporary file containing the first valid entries count of the given <code>file</code>.
-   */
-  private File createTemporaryFileFromValidEntriesCount(File file, int entriesCount) throws IOException {
-    if (entriesCount <= 0) {
-      throw new IOException("No valid entries");
-    }
-    File tempfile = OperatingSystem.createTemporaryFile("part", ".sh3d");
-    ZipOutputStream zipOut = null;
-    ZipInputStream zipIn = null;
-    try {
-      zipIn = new ZipInputStream(new FileInputStream(file));
-      zipOut = new ZipOutputStream(new FileOutputStream(tempfile));
-      zipOut.setLevel(0);
-      while (entriesCount-- > 0) {
-        copyEntry(zipIn, zipIn.getNextEntry(), zipOut);
-      }
-      return tempfile;
-    } finally {
-      if (zipOut != null) {
-        zipOut.close();
-      }
-      if (zipIn != null) {
-        zipIn.close();
-      }
-    }
-  }
-
-  /**
    * Copies the a zipped entry.
    */
   private void copyEntry(InputStream zipIn, ZipEntry entry, ZipOutputStream zipOut) throws IOException {
+    checkCurrentThreadIsntInterrupted();
     ZipEntry entryCopy = new ZipEntry(entry.getName());
     entryCopy.setComment(entry.getComment());
     entryCopy.setTime(entry.getTime());
@@ -345,6 +329,49 @@ public class DefaultHomeInputStream extends FilterInputStream {
     }
   }
 
+  /**
+   * An input stream filter that copies to a given output stream everything it reads.
+   */
+  private class CopyInputStream extends FilterInputStream {
+    private OutputStream out;
+
+    protected CopyInputStream(InputStream in, OutputStream out) {
+      super(in);
+      this.out = out;
+    }
+    
+    @Override
+    public int read() throws IOException {
+      int b = super.read();
+      if (b != -1) {
+        this.out.write(b);
+      }
+      return b;
+    }
+
+    @Override
+    public int read(byte [] b, int off, int len) throws IOException {
+      int size = super.read(b, off, len);
+      if (size != -1) {
+        this.out.write(b, off, size);
+      }
+      return size;
+    }
+    
+    @Override
+    public void close() throws IOException {
+      // Copy remaining bytes
+      byte [] buffer = new byte [8192];
+      int size; 
+      while ((size = this.in.read(buffer)) != -1) {
+        this.out.write(buffer, 0, size);
+      }
+      this.out.flush();
+      this.out.close();
+      super.close();
+    }
+  }
+  
   /**
    * <code>ObjectInputStream</code> that replaces temporary <code>URLContent</code> 
    * objects by <code>URLContent</code> objects that points to file.
