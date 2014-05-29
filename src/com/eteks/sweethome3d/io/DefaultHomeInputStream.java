@@ -239,7 +239,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
     ZipOutputStream zipOut = null;
     ZipInputStream zipIn = null;
     try {
-      zipIn = new ZipInputStream(new FileInputStream(file));
+      zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
       zipOut = new ZipOutputStream(new FileOutputStream(tempfile));
       zipOut.setLevel(0);
       while (entriesCount-- > 0) {
