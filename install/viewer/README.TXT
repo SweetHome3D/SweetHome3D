@@ -22,7 +22,7 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
    spaces (or replace them by "%20" symbols)
 4. Edit the "SweetHome3DViewer.html" file and paste it as the value of the 
    parameter named "homeURL" instead of "default.sh3d" default file :
-     var parameters = {java_arguments:"-Xmx512m",
+     var parameters = {java_arguments:"-Xmx640m",
                        navigationPanel:"true",
                        homeURL:"default.sh3d",
                        jnlp_embedded:"PD94bWwgdm..."};
@@ -48,7 +48,7 @@ If the cache of the SH3D file returned by the "homeURL" value should never
 be used, add the parameter "ignoreCache" with a value equal to "true".
 For example, if your URL is the PHP request "http://www.mydomain.com/userHome.php"
 the parameters list should become:
-  var parameters = {java_arguments:"-Xmx512m", 
+  var parameters = {java_arguments:"-Xmx640m", 
                     navigationPanel:"true",
                     homeURL:"http://www.mydomain.com/userHome.php",
                     jnlp_embedded:"PD94bWwgdm...",
@@ -57,6 +57,44 @@ the parameters list should become:
 If you don't want to display navigation arrows, simply remove the line
   navigationPanel:"true",
 from parameters list.
+
+If you want to select a given point of view stored in the SH3D file, 
+add a "camera" parameter with a value equal to the name of that point of view.
+You may also propose to the user to select the point of view of his choice 
+in the contextual menu of the 3D view, by adding a "selectableCameras" parameter
+with a value equal to a comma separated list of viewpoint names, as in the 
+following example:
+  var parameters = {java_arguments:"-Xmx640m", 
+                    navigationPanel:"true",
+                    camera:"Kitchen",
+                    selectableCameras:"Living room, Kitchen, Bedroom",                    
+                    homeURL:"http://www.mydomain.com/userHome.php",
+                    jnlp_embedded:"PD94bWwgdm..."};
+
+Similarly, you may select a given level of a multilevel home, with the "level" 
+parameter equal to the name of that level.
+You may also propose to the user to select the level of his choice in the
+contextual menu of the 3D view, by adding a "selectableLevels" parameter with
+a value equal to a comma separated list of existing level names, as in the 
+following example:
+  var parameters = {java_arguments:"-Xmx640m", 
+                    navigationPanel:"true",
+                    level:"1st floor",
+                    selectableCameras:"Basement, 1st floor",                    
+                    homeURL:"http://www.mydomain.com/userHome.php",
+                    jnlp_embedded:"PD94bWwgdm..."};
+
+"camera", "selectableCameras", "level" and "selectableLevels" parameters are 
+optional and can be cited or not. If a requested viewpoint of level name doesn't 
+exist, it will be silently ignored. If "selectableCameras" and "selectableLevels" 
+are cited a separator will be added in the contextual menu to separate both lists.
+Keep in mind that selecting a level may have a different effect according 
+to the "Display all levels / Selected level" options in the displayed home 
+and whether visitor eyes should be adjusted to the selected level or not. 
+Using the default settings ("Display Selected level" and "Adjust eyes 
+elevation according to selected level" options selected) is probably the choice 
+that will be the easiest to understand for the end user.
+
                     
 Caution: From version 4.4, a new "jnlp_embedded" parameter followed with a very 
 long text was added to the parameters list. Don't forget to add it to your 

@@ -29,16 +29,20 @@ import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.ButtonGroup;
 import javax.swing.InputMap;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -47,9 +51,11 @@ import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
+import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -69,9 +75,13 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactoryAdapter;
  * @author Emmanuel Puybaret
  */
 public final class ViewerHelper {
-  private static final String HOME_URL_PARAMETER     = "homeURL";
-  private static final String IGNORE_CACHE_PARAMETER = "ignoreCache";
-  private static final String NAVIGATION_PANEL       = "navigationPanel";
+  private static final String HOME_URL_PARAMETER           = "homeURL";
+  private static final String LEVEL_PARAMETER              = "level";
+  private static final String CAMERA_PARAMETER             = "camera";
+  private static final String SELECTABLE_LEVELS_PARAMETER  = "selectableLevels";
+  private static final String SELECTABLE_CAMERAS_PARAMETER = "selectableCameras";
+  private static final String IGNORE_CACHE_PARAMETER       = "ignoreCache";
+  private static final String NAVIGATION_PANEL             = "navigationPanel";
   
   public ViewerHelper(final JApplet applet) {
     // Create default user preferences with no catalog
@@ -182,6 +192,22 @@ public final class ViewerHelper {
     if (homeUrlParameter == null) {
       homeUrlParameter = "default.sh3d";
     }
+    final String levelParameter = applet.getParameter(LEVEL_PARAMETER);
+    final String cameraParameter = applet.getParameter(CAMERA_PARAMETER);
+    String selectableLevelsParameter = applet.getParameter(SELECTABLE_LEVELS_PARAMETER);
+    final String [] selectableLevels;
+    if (selectableLevelsParameter != null) {
+      selectableLevels = selectableLevelsParameter.split("\\s*,\\s*");
+    } else {
+      selectableLevels = new String [0];
+    }
+    String selectableCamerasParameter = applet.getParameter(SELECTABLE_CAMERAS_PARAMETER);
+    final String [] selectableCameras;
+    if (selectableCamerasParameter != null) {
+      selectableCameras = selectableCamerasParameter.split("\\s*,\\s*");
+    } else {
+      selectableCameras = new String [0];
+    }
     // Retrieve ignoreCache parameter value
     String ignoreCacheParameter = applet.getParameter(IGNORE_CACHE_PARAMETER);
     final boolean ignoreCache = ignoreCacheParameter != null 
@@ -193,7 +219,8 @@ public final class ViewerHelper {
             public Void call() throws RecorderException {
               // Read home with application recorder
               Home openedHome = readHome(homeUrl, ignoreCache);
-              displayHome(applet.getRootPane(), openedHome, preferences, viewFactory);
+              displayHome(applet.getRootPane(), openedHome, levelParameter, cameraParameter, 
+                  selectableLevels, selectableCameras, preferences, viewFactory);
               return null;
             }
           };
@@ -311,16 +338,106 @@ public final class ViewerHelper {
   /**
    * Displays the given <code>home</code> in the main pane of <code>rootPane</code>. 
    */
-  private void displayHome(final JRootPane rootPane, final Home home, 
+  private void displayHome(final JRootPane rootPane, 
+                           final Home home,
+                           final String levelName,
+                           final String cameraName,
+                           final String [] selectableLevels, 
+                           final String [] selectableCameras, 
                            final UserPreferences preferences, 
                            final ViewFactory viewFactory) {
     EventQueue.invokeLater(new Runnable() {
         public void run() {
-          HomeController3D controller = 
+          final HomeController3D controller = 
               new HomeController3D(home, preferences, viewFactory, null, null);
-          rootPane.setContentPane((JComponent)controller.getView());
+          JComponent view3D = (JComponent)controller.getView();
+          
+          // Select default level
+          if (levelName != null) {
+            Level level = getLevel(home, levelName);
+            if (level != null) {
+              home.setSelectedLevel(level);
+            }
+          }
+          // Select default camera
+          if (cameraName != null) {
+            Camera camera = getStoredCamera(home, cameraName);
+            if (camera != null) {
+              controller.goToCamera(camera);
+            }
+          }
+          // Add menu items to 3D view contextual menu
+          List<Level> selectableLevelsList = new ArrayList<Level>();
+          for (String selectableLevel : selectableLevels) {
+            Level level = getLevel(home, selectableLevel);
+            if (level != null) {
+              selectableLevelsList.add(level);
+            }
+          }
+          List<Camera> selectableCamerasList = new ArrayList<Camera>();
+          for (String selectableCamera : selectableCameras) {
+            Camera level = getStoredCamera(home, selectableCamera);
+            if (level != null) {
+              selectableCamerasList.add(level);
+            }
+          }
+          if (!selectableLevelsList.isEmpty()
+              || !selectableCamerasList.isEmpty()) {
+            JPopupMenu popupMenu = new JPopupMenu();
+            popupMenu.setLightWeightPopupEnabled(false);
+            ButtonGroup levelMenuItemsGoup = new ButtonGroup();
+            for (final Level level : selectableLevelsList) {
+              AbstractAction action = new AbstractAction(level.getName()) {
+                  public void actionPerformed(ActionEvent ev) {
+                    home.setSelectedLevel(level);
+                  }
+                };
+              JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(action);
+              menuItem.setSelected(level == home.getSelectedLevel());
+              levelMenuItemsGoup.add(menuItem);
+              popupMenu.add(menuItem);
+            }
+            if (!selectableLevelsList.isEmpty()
+                && !selectableCamerasList.isEmpty()) {
+              popupMenu.addSeparator();
+            }
+            for (final Camera camera : selectableCamerasList) {
+              popupMenu.add(new AbstractAction(camera.getName()) {
+                  public void actionPerformed(ActionEvent ev) {
+                    controller.goToCamera(camera);
+                  }
+                });
+            }
+            view3D.setComponentPopupMenu(popupMenu);
+          }
+
+          rootPane.setContentPane(view3D);
           rootPane.revalidate();
         }
       });
+  }
+
+  /**
+   * Returns a home level from its name.
+   */
+  private Level getLevel(Home home, String levelName) {
+    for (Level level : home.getLevels()) {
+      if (levelName.equals(level.getName())) {
+        return level;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns a home stored camera from its name.
+   */
+  private Camera getStoredCamera(Home home, String cameraName) {
+    for (Camera level : home.getStoredCameras()) {
+      if (cameraName.equals(level.getName())) {
+        return level;
+      }
+    }
+    return null;
   }
 }

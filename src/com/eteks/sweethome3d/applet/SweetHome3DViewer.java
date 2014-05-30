@@ -43,6 +43,23 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     it will be read relative to applet document base. By default, this parameter is 
  *     equal to <code>default.sh3d</code>.</li>
  *     
+ *     <li><code>level</code> specifies the name of the level that should be displayed. 
+ *     Note that selecting a level may have a different effect according to the 
+ *     <i>Display all levels / Selected level</i> options in the displayed home 
+ *     and whether visitor eyes should be adjusted to selected level. 
+ *     By default, the chosen level (if there are some) is one used when home was saved.</li>
+ *     
+ *     <li><code>camera</code> specifies the name of the stored point of view that should be selected. 
+ *     By default, the camera is one used when home was saved.</li>
+ *     
+ *     <li><code>selectableLevels</code> specifies a comma separated list of level names 
+ *     that will be added to the contextual menu of the 3D view, to let the user select a level.</li>
+ *     
+ *     <li><code>selectableCameras</code> specifies a comma separated list of stored viewpoint names 
+ *     that will be added to the contextual menu of the 3D view, to let the user select a point of view.
+ *     If both <code>selectableLevels</code> and <code>selectableCameras</code> are specified, a
+ *     separator will be added in the contextual menu to separate both lists.</li>
+ *     
  *     <li><code>ignoreCache</code> specifies whether home file may be read from Java 
  *     cache or not. 
  *     <br>If its value is <code>true</code>, then each time the applet is launched the
