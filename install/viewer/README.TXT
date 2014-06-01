@@ -80,7 +80,7 @@ following example:
   var parameters = {java_arguments:"-Xmx640m", 
                     navigationPanel:"true",
                     level:"1st floor",
-                    selectableCameras:"Basement, 1st floor",                    
+                    selectableLevels:"Basement, 1st floor",                    
                     homeURL:"http://www.mydomain.com/userHome.php",
                     jnlp_embedded:"PD94bWwgdm..."};
 
