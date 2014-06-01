@@ -537,9 +537,17 @@ public class HomeControllerTest extends TestCase {
   public void testRepairedFile() throws URISyntaxException, RecorderException {
     final String testFile = new File(
         HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath();
-    final HomeRecorder recorder = new HomeFileRecorder(0, false, this.preferences, false);
-    // Check if opened home will be fully repaired
     try {
+      // Check if opened home isn't repaired if preferences content isn't provided
+      HomeRecorder recorder = new HomeFileRecorder(0, false, null, false);
+      recorder.readHome(testFile);
+      fail("Home shouldn't be readable");
+    } catch (DamagedHomeRecorderException ex) {
+      assertEquals("Missing damaged content", 7, ex.getInvalidContent().size());
+    }
+    try {
+      // Check if opened home will be fully repaired with preferences content
+      HomeRecorder recorder = new HomeFileRecorder(0, false, this.preferences, false);
       Home home = recorder.readHome(testFile);
       assertTrue("Home is not flagged as repaired", home.isRepaired());
     } catch (DamagedHomeRecorderException ex) {
