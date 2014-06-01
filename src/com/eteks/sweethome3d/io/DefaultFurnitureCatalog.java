@@ -728,9 +728,13 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
     }
     
+    // Store content digest if it exists
+    // Except in special cases like URL content in applets where it might avoid to download content  
+    // to compute its digest, it's not recommended to store digests in sh3f and imported files. 
+    // Missing digests will be computed on demand, ensuring it will be updated in case content is damaged
     String contentDigest = getOptionalString(resource, contentDigestKey, null);
     if (contentDigest != null && contentDigest.length() > 0) {
-      try {
+      try {        
         ContentDigestManager.getInstance().setContentDigest(content, Base64.decode(contentDigest));
       } catch (IOException ex) {
         // Ignore wrong digest
