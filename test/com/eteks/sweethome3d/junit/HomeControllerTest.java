@@ -49,7 +49,6 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
@@ -57,7 +56,6 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.LengthUnit;
-import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -529,30 +527,6 @@ public class HomeControllerTest extends TestCase {
     assertTrue("Home is not tagged as repaired", home.isRepaired());
     assertEquals("Incorrect furniture count", 5, home.getFurniture().size());
     assertTrue(((URLContent)home.getFurniture().get(4).getModel()).getURL().toString().endsWith("repairedModel.obj"));
-  }
-  
-  /**
-   * Test repaired home file management.
-   */
-  public void testRepairedFile() throws URISyntaxException, RecorderException {
-    final String testFile = new File(
-        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath();
-    try {
-      // Check if opened home isn't repaired if preferences content isn't provided
-      HomeRecorder recorder = new HomeFileRecorder(0, false, null, false);
-      recorder.readHome(testFile);
-      fail("Home shouldn't be readable");
-    } catch (DamagedHomeRecorderException ex) {
-      assertEquals("Missing damaged content", 7, ex.getInvalidContent().size());
-    }
-    try {
-      // Check if opened home will be fully repaired with preferences content
-      HomeRecorder recorder = new HomeFileRecorder(0, false, this.preferences, false);
-      Home home = recorder.readHome(testFile);
-      assertTrue("Home is not flagged as repaired", home.isRepaired());
-    } catch (DamagedHomeRecorderException ex) {
-      fail("Home should be repaired with default catalogs");
-    }
   }
   
   /**

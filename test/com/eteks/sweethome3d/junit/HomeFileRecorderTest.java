@@ -24,12 +24,15 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -79,6 +82,30 @@ public class HomeFileRecorderTest extends TestCase {
     }
   }
   
+  /**
+   * Test repaired home file management.
+   */
+  public void testRepairedFile() throws URISyntaxException, RecorderException {
+    final String testFile = new File(
+        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath();
+    try {
+      // Check if opened home isn't repaired if preferences content isn't provided
+      HomeRecorder recorder = new HomeFileRecorder(0, false, null, false);
+      recorder.readHome(testFile);
+      fail("Home shouldn't be readable");
+    } catch (DamagedHomeRecorderException ex) {
+      assertEquals("Missing damaged content", 7, ex.getInvalidContent().size());
+    }
+    try {
+      // Check if opened home will be fully repaired with preferences content
+      HomeRecorder recorder = new HomeFileRecorder(0, false, new DefaultUserPreferences(), false);
+      Home home = recorder.readHome(testFile);
+      assertTrue("Home is not flagged as repaired", home.isRepaired());
+    } catch (DamagedHomeRecorderException ex) {
+      fail("Home should be repaired with default catalogs");
+    }
+  }
+
   /**
    * Asserts <code>wall1</code> and <code>wall2</code> are different walls 
    * containing the same data. 
