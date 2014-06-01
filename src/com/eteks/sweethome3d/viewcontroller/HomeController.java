@@ -1515,6 +1515,14 @@ public class HomeController implements Controller {
             Home openedHome = application.getHomeRecorder().readHome(homeName);
             openedHome.setName(homeName);
             addHomeToApplication(openedHome);
+            if (openedHome.isRepaired()) {
+              getView().invokeLater(new Runnable() {
+                  public void run() {
+                    String message = preferences.getLocalizedString(HomeController.class, "openRepairedHomeMessage", homeName);
+                    getView().showMessage(message);
+                  }
+                });
+            }
             return null;
           }
         };

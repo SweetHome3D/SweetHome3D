@@ -91,6 +91,19 @@ public class ContentDigestManager {
   }
 
   /**
+   * Returns <code>true</code> if the digest of the given <code>content</code>
+   * is equal to <code>digest</code>.
+   */
+  public boolean isContentDigestEqual(Content content, byte [] digest) {
+    byte [] contentDigest = getContentDigest(content);
+    if (contentDigest == INVALID_CONTENT_DIGEST) {
+      return false;
+    } else {
+      return Arrays.equals(contentDigest, digest);
+    }
+  }
+
+  /**
    * Sets the SHA-1 digest of the given <code>content</code>.
    */
   public synchronized void setContentDigest(Content content, byte [] digest) {

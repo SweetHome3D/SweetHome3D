@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -111,16 +112,30 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     ZipOutputStream zipOut = new ZipOutputStream(this.out);
     zipOut.setLevel(this.compressionLevel);
     checkCurrentThreadIsntInterrupted();
-    // Write home in first entry in a file "Home"
+    // Write home in the first entry named "Home"
     zipOut.putNextEntry(new ZipEntry("Home"));
     // Use an ObjectOutputStream that keeps track of Content objects
     HomeObjectOutputStream objectOut = new HomeObjectOutputStream(zipOut);
     objectOut.writeObject(home);
     objectOut.flush();
     zipOut.closeEntry();
+    List<Content> savedContents = objectOut.getSavedContents();
+    if (savedContents.size() > 0) {
+      // In the second entry named "ContentDigests", write content digests to help repair damaged files     
+      zipOut.putNextEntry(new ZipEntry("ContentDigests"));
+      OutputStreamWriter writer = new OutputStreamWriter(zipOut, "UTF-8");
+      ContentDigestManager digestManager = ContentDigestManager.getInstance();
+      writer.write("ContentDigests-Version: 1.0\n\n");
+      for (Content content : savedContents) {
+        writer.write("Name: " + objectOut.getContentEntry(content) + "\n");
+        writer.write("SHA-1-Digest: " + Base64.encodeBytes(digestManager.getContentDigest(content)) + "\n\n");
+      }
+      writer.flush();
+      zipOut.closeEntry();
+    }
     // Write Content objects in files "0" to "n - 1"
     int i = 0;
-    for (Content content : objectOut.getSavedContents()) {
+    for (Content content : savedContents) {
       String entryNameOrDirectory = String.valueOf(i++);
       if (content instanceof ResourceURLContent) {
         writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
@@ -337,9 +352,9 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         } 
 
         // Return a temporary URL that points to content object 
-        URLContent tmpContent = new URLContent(new URL("jar:file:temp!/" + savedContents.size() + subEntryName));
+        URLContent tmpContent = new URLContent(new URL("jar:file:temp!/" + this.savedContents.size() + subEntryName));
         // Add obj to Content objects list
-        savedContents.put((Content)obj, tmpContent);
+        this.savedContents.put((Content)obj, tmpContent);
         return tmpContent;
       } else {
         return obj;
@@ -350,7 +365,14 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
      * Returns the contents to be saved.
      */
     public List<Content> getSavedContents() {
-      return new ArrayList<Content>(savedContents.keySet());
+      return new ArrayList<Content>(this.savedContents.keySet());
+    }
+
+    /**
+     * Returns the entry of a given <code>content</code>.
+     */
+    public String getContentEntry(Content content) {
+      return this.savedContents.get(content).getJAREntryName();
     }
   }
 }

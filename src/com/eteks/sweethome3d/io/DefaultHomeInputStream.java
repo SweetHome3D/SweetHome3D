@@ -21,20 +21,24 @@ package com.eteks.sweethome3d.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -60,6 +64,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   private final ContentRecording   contentRecording;
   private final UserPreferences    preferences;
   private Set<URLContent>          preferencesContentsCache;
+  private boolean                  preferPreferencesContent;
 
   /**
    * Creates a home input stream filter able to read a home and its content
@@ -76,21 +81,26 @@ public class DefaultHomeInputStream extends FilterInputStream {
    */
   public DefaultHomeInputStream(InputStream in, 
                                 ContentRecording contentRecording) throws IOException {
-    this(in, contentRecording, null);
+    this(in, contentRecording, null, false);
   }
 
   /**
    * Creates a home input stream filter able to read a home and its content
-   * from <code>in</code>. If <code>preferences</code> isn't <code>null</code>, 
+   * from <code>in</code>. If <code>preferences</code> isn't <code>null</code>
+   * and <code>preferPreferencesContent</code> is <code>true</code>, 
    * the furniture and textures contents it references will replace the one of 
-   * the read home when they are equal.
+   * the read home when they are equal. If <code>preferPreferencesContent</code> 
+   * is <code>false</code>, preferences content will be used only 
+   * to replace damaged equal content that might be found in read home files.
    */
   public DefaultHomeInputStream(InputStream in, 
                                 ContentRecording contentRecording, 
-                                UserPreferences preferences) {
+                                UserPreferences preferences,
+                                boolean preferPreferencesContent) {
     super(in);
     this.contentRecording = contentRecording;
     this.preferences = preferences;
+    this.preferPreferencesContent = preferPreferencesContent;
   }
 
   /**
@@ -110,6 +120,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   public Home readHome() throws IOException, ClassNotFoundException {
     File fileCopy = null;
     boolean validZipFile = true;
+    Map<URLContent, byte []> contentDigests = null;
     if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
       // Copy home stream in a temporary file  
       // and check if all entries in the temporary file can be fully read using a zipped input stream
@@ -130,7 +141,8 @@ public class DefaultHomeInputStream extends FilterInputStream {
         } else {
           fileCopy = createTemporaryFileFromValidEntriesCount(fileCopy, validEntriesCount);
         }
-      }
+        contentDigests = readContentDigests(fileCopy);
+      } 
       
       if (this.preferences != null 
           && this.preferencesContentsCache == null) {
@@ -154,11 +166,15 @@ public class DefaultHomeInputStream extends FilterInputStream {
       checkCurrentThreadIsntInterrupted();
       // Use an ObjectInputStream that replaces temporary URLs of Content objects 
       // by URLs relative to file 
-      HomeObjectInputStream objectStream = new HomeObjectInputStream(zipIn, fileCopy);
+      HomeObjectInputStream objectStream = new HomeObjectInputStream(zipIn, fileCopy, contentDigests);
       Home home = (Home)objectStream.readObject();
       List<Content> invalidContent = objectStream.getInvalidContents();
-      if (!validZipFile || invalidContent.size() > 0) {
-        throw new DamagedHomeIOException(home, invalidContent);
+      if (!validZipFile) {
+        if (contentDigests != null && invalidContent.size() == 0) {
+          home.setRepaired(true);
+        } else {
+          throw new DamagedHomeIOException(home, invalidContent);
+        }
       }
       return home;
     } finally {
@@ -331,6 +347,53 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
+   * Returns the digest of content contained in the given file.
+   */
+  private Map<URLContent, byte []> readContentDigests(File zipFile) {
+    Map<URLContent, byte []> contentDigests = new HashMap<URLContent, byte[]>();
+    ZipFile zipIn = null;
+    try {
+      // Read the content of the entry named "ContentDigests" if it exists
+      zipIn = new ZipFile(zipFile);
+      ZipEntry contentDigestsEntry = zipIn.getEntry("ContentDigests");
+      if (contentDigestsEntry != null) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+            zipIn.getInputStream(contentDigestsEntry), "UTF-8"));
+        String line = reader.readLine();
+        if (line != null
+            && "ContentDigests-Version: 1.0".equals(line.trim())) {
+          // Read Name / SHA-1-Digest lines  
+          String entryName = null;
+          while ((line = reader.readLine()) != null) {
+            if (line.startsWith("Name:")) {
+              entryName = line.substring("Name:".length()).trim();
+            } else if (line.startsWith("SHA-1-Digest:")) {
+              byte [] digest = Base64.decode(line.substring("SHA-1-Digest:".length()).trim());
+              if (entryName == null) {
+                throw new IOException("Missing entry name");
+              } else {
+                URL url = new URL("jar:" + zipFile.toURI() + "!/" + entryName);
+                contentDigests.put(new HomeURLContent(url), digest);
+                entryName = null;
+              }
+            }
+          }
+        }
+      }
+    } catch (IOException ex) {
+      // Ignore issues in ContentDigests (this entry exists only from version 4.4)
+    } finally {
+      if (zipIn != null) {
+        try {
+          zipIn.close();
+        } catch (IOException ex) {
+        }
+      }
+    }
+    return contentDigests;
+  }
+
+  /**
    * An input stream filter that copies to a given output stream all read data.
    */
   private class CopiedInputStream extends FilterInputStream {
@@ -381,15 +444,19 @@ public class DefaultHomeInputStream extends FilterInputStream {
    * objects by <code>URLContent</code> objects that points to file.
    */
   private class HomeObjectInputStream extends ObjectInputStream {
-    private File zipFile;
-    private List<Content> invalidContents;
-    private List<URLContent> validContentsNotInPreferences;
+    private File                     zipFile;
+    private Map<URLContent, byte []> contentDigests;
+    private List<Content>            invalidContents;
+    private List<URLContent>         validContentsNotInPreferences;
 
-    public HomeObjectInputStream(InputStream in, File zipFile) throws IOException {
+    public HomeObjectInputStream(InputStream in, 
+                                 File zipFile, 
+                                 Map<URLContent, byte []> contentDigests) throws IOException {
       super(in);
       if (contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
         enableResolveObject(true);
         this.zipFile = zipFile;
+        this.contentDigests = contentDigests;
         this.invalidContents = new ArrayList<Content>();
         this.validContentsNotInPreferences = new ArrayList<URLContent>();
       }
@@ -405,10 +472,18 @@ public class DefaultHomeInputStream extends FilterInputStream {
           String entryName = url.substring(url.indexOf('!') + 2);
           URL fileURL = new URL("jar:" + this.zipFile.toURI() + "!/" + entryName);
           HomeURLContent urlContent = new HomeURLContent(fileURL);
+          ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
+          
           if (!isValid(urlContent)) {
-            this.invalidContents.add(urlContent);
+            // Try to find in user preferences a content with the same digest 
+            // and repair silently damaged entry 
+            URLContent preferencesContent = findUserPreferencesContent(urlContent);
+            if (preferencesContent != null) {
+              return preferencesContent;
+            } else {
+              this.invalidContents.add(urlContent);
+            }
           } else {
-            ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
             // Check if duplicated content can be avoided 
             // (coming from files older than version 4.4)
             for (URLContent content : this.validContentsNotInPreferences) {
@@ -417,15 +492,28 @@ public class DefaultHomeInputStream extends FilterInputStream {
               }
             }
             checkCurrentThreadIsntInterrupted();
-            if (preferencesContentsCache != null) {
-              // Check if user preferences contains the same content to share it
-              for (URLContent content : preferencesContentsCache) {
-                if (contentDigestManager.equals(urlContent, content)) {
-                  return content;
+            // If content digests information is available, check the digest against read content 
+            if (this.contentDigests != null
+                && !contentDigestManager.isContentDigestEqual(urlContent, this.contentDigests.get(urlContent))) {
+              // Try to find in user preferences a content with the same digest  
+              URLContent preferencesContent = findUserPreferencesContent(urlContent);
+              if (preferencesContent != null) {
+                return preferencesContent;
+              } else {
+                this.invalidContents.add(urlContent);
+              }
+            } else {
+              if (preferencesContentsCache != null
+                  && preferPreferencesContent) {
+                // Check if user preferences contains the same content to share it
+                for (URLContent preferencesContent : preferencesContentsCache) {
+                  if (contentDigestManager.equals(urlContent, preferencesContent)) {
+                    return preferencesContent;
+                  }
                 }
               }
+              this.validContentsNotInPreferences.add(urlContent);
             }
-            this.validContentsNotInPreferences.add(urlContent);
           }
           return urlContent;
         } else {
@@ -435,7 +523,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         return obj;
       }
     }
- 
+
     /**
      * Returns <code>true</code> if the given <code>content</code> exists.
      */
@@ -449,11 +537,30 @@ public class DefaultHomeInputStream extends FilterInputStream {
     }
     
     /**
+     * Returns the content in user preferences with the same digest as the
+     * given <code>content</code>, or <code>null</code> if it doesn't exist.
+     */
+    private URLContent findUserPreferencesContent(URLContent content) {
+      if (this.contentDigests != null
+          && preferencesContentsCache != null) {
+        byte [] contentDigest = this.contentDigests.get(content);
+        if (contentDigest != null) {
+          ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
+          for (URLContent preferencesContent : preferencesContentsCache) {
+            if (contentDigestManager.isContentDigestEqual(preferencesContent, contentDigest)) {
+              return preferencesContent;
+            }
+          }
+        }
+      }
+      return null;
+    }
+    
+    /**
      * Returns the list of invalid content found during deserialization.
      */
     public List<Content> getInvalidContents() {
       return this.invalidContents;
     }
-  
   }
 }

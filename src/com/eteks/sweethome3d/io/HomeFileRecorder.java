@@ -45,6 +45,7 @@ public class HomeFileRecorder implements HomeRecorder {
   private final int             compressionLevel;
   private final boolean         includeOnlyTemporaryContent;
   private final UserPreferences preferences;
+  private final boolean         preferPreferencesContent;
   
   /**
    * Creates a home recorder able to write and read homes in uncompressed files. 
@@ -74,7 +75,7 @@ public class HomeFileRecorder implements HomeRecorder {
    */
   public HomeFileRecorder(int     compressionLevel, 
                           boolean includeOnlyTemporaryContent) {
-    this(compressionLevel, includeOnlyTemporaryContent, null);    
+    this(compressionLevel, includeOnlyTemporaryContent, null, false);    
   }
 
   /**
@@ -87,14 +88,21 @@ public class HomeFileRecorder implements HomeRecorder {
    *            If <code>false</code>, all the content instances 
    *            referenced by the saved home will be written in the zip stream. 
    * @param preferences If not <code>null</code>, the furniture and textures contents 
-   *            it references will replace the one of read homes when they are equal.
+   *            it references might be used to replace the one of read homes 
+   *            when they are equal.
+   * @param preferPreferencesContent If <code>true</code>, the furniture and textures contents 
+   *            referenced by <code>preferences</code> will replace the one of read homes 
+   *            as often as possible when they are equal. Otherwise, these contents will be 
+   *            used only to replace damaged content that might be found in read home files.
    */
   public HomeFileRecorder(int             compressionLevel, 
                           boolean         includeOnlyTemporaryContent,
-                          UserPreferences preferences) {
+                          UserPreferences preferences,
+                          boolean         preferPreferencesContent) {
     this.compressionLevel = compressionLevel;
     this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
     this.preferences = preferences;
+    this.preferPreferencesContent = preferPreferencesContent;
   }
 
   /**
@@ -182,7 +190,8 @@ public class HomeFileRecorder implements HomeRecorder {
     DefaultHomeInputStream in = null;
     try {
       // Open a stream on file
-      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT, this.preferences);
+      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT, 
+          this.preferences, this.preferPreferencesContent);
       // Read home with HomeInputStream
       Home home = in.readHome();
       return home;

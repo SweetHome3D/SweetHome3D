@@ -165,7 +165,7 @@ public class SweetHome3D extends HomeApplication {
   public HomeRecorder getHomeRecorder() {
     // Initialize homeRecorder lazily
     if (this.homeRecorder == null) {
-      this.homeRecorder = new HomeFileRecorder();
+      this.homeRecorder = new HomeFileRecorder(0, false, getUserPreferences(), false);
     }
     return this.homeRecorder;
   }
@@ -175,7 +175,7 @@ public class SweetHome3D extends HomeApplication {
     if (type == HomeRecorder.Type.COMPRESSED) {
       // Initialize compressedHomeRecorder lazily
       if (this.compressedHomeRecorder == null) {
-        this.compressedHomeRecorder = new HomeFileRecorder(9);
+        this.compressedHomeRecorder = new HomeFileRecorder(9, false, getUserPreferences(), false);
       }
       return this.compressedHomeRecorder;
     } else {

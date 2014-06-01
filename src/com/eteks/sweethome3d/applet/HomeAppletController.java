@@ -279,7 +279,7 @@ public class HomeAppletController extends HomePluginController {
           // Export home in a threaded task
           Callable<Void> exportToObjTask = new Callable<Void>() {
               public Void call() throws RecorderException {
-                final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences()).readHome(sh3dName);
+                final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences(), true).readHome(sh3dName);
                 String name = new File(sh3dName).getName();
                 name = name.substring(0, name.lastIndexOf("."));
                 importedHomeNames.put(openedHome, name);
