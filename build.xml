@@ -344,8 +344,8 @@
         <attribute name="Application-Name"          value="Sweet Home 3D Online"/>
         <attribute name="Permissions"               value="all-permissions"/>
         <attribute name="Codebase"                  value="*"/>
-      	<!-- From Java 7u55, specifying domain is mandatory to call applet methods from JavaScript 
-      	     without security warning -->
+        <!-- From Java 7u55, specifying domain is mandatory to call applet methods from JavaScript 
+             without security warning -->
         <attribute name="Caller-Allowable-Codebase" value="${domain}"/>
       </manifest>
       <zipfileset src="build/SweetHome3D.jar" 
@@ -406,11 +406,13 @@
     
     <!-- Create SweetHome3DViewer.jar containing only classes and resources required by Sweet Home 3D Viewer -->
     <mkdir dir="deploy/lib"/>
+    <copy file="deploy/SweetHome3DViewer.jnlp" tofile="build/JNLP-INF/APPLICATION.JNLP"/>
     <jar destfile="deploy/lib/SweetHome3DViewer.jar" 
          basedir="build/classes" manifest="build/META-INF/MANIFEST.MF" filesetmanifest="merge">
       <manifest>
         <attribute name="Application-Name" value="Sweet Home 3D Viewer"/>
       </manifest>
+      <fileset dir="build" includes="JNLP-INF/APPLICATION.JNLP"/>
       <include name="com/eteks/sweethome3d/applet/*"/>
       <include name="com/eteks/sweethome3d/io/**"/>
       <include name="com/eteks/sweethome3d/j3d/*"/>
@@ -1089,7 +1091,7 @@
       <zipfileset dir="install/viewer" 
                   includes="README.TXT"/>
       <zipfileset dir=".">
-       <include name="COPYING.TXT"/>
+        <include name="COPYING.TXT"/>
         <include name="LICENSE.TXT"/>
         <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
