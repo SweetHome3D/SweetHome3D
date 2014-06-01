@@ -347,10 +347,10 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Returns the digest of content contained in the given file.
+   * Returns the digest of content contained in the given file, or 
+   * <code>null</code> if this information doesn't exist in the file.
    */
   private Map<URLContent, byte []> readContentDigests(File zipFile) {
-    Map<URLContent, byte []> contentDigests = new HashMap<URLContent, byte[]>();
     ZipFile zipIn = null;
     try {
       // Read the content of the entry named "ContentDigests" if it exists
@@ -362,6 +362,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         String line = reader.readLine();
         if (line != null
             && "ContentDigests-Version: 1.0".equals(line.trim())) {
+          Map<URLContent, byte []> contentDigests = new HashMap<URLContent, byte[]>();
           // Read Name / SHA-1-Digest lines  
           String entryName = null;
           while ((line = reader.readLine()) != null) {
@@ -378,6 +379,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
               }
             }
           }
+          return contentDigests;
         }
       }
     } catch (IOException ex) {
@@ -390,7 +392,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         }
       }
     }
-    return contentDigests;
+    return null;
   }
 
   /**
@@ -493,8 +495,10 @@ public class DefaultHomeInputStream extends FilterInputStream {
             }
             checkCurrentThreadIsntInterrupted();
             // If content digests information is available, check the digest against read content 
+            byte [] contentDigest;
             if (this.contentDigests != null
-                && !contentDigestManager.isContentDigestEqual(urlContent, this.contentDigests.get(urlContent))) {
+                && (contentDigest = this.contentDigests.get(urlContent)) != null
+                && !contentDigestManager.isContentDigestEqual(urlContent, contentDigest)) {
               // Try to find in user preferences a content with the same digest  
               URLContent preferencesContent = findUserPreferencesContent(urlContent);
               if (preferencesContent != null) {
