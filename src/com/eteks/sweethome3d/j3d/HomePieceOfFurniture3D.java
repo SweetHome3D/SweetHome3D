@@ -584,9 +584,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         boolean materialModified = !colorModified
             && !textureModified
             && materials != null && materials.length > 0;
-        boolean appearanceModified = colorModified 
+        boolean appearanceModified = colorModified            
             || textureModified
-            || materialModified;
+            || materialModified
+            || shininess != null;
         boolean windowPane = shapeName != null
             && shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX);
         if (!windowPane && appearanceModified            
@@ -610,7 +611,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         if (colorModified) {
           // Change color only of shapes that are not window panes
           if (windowPane) {
-            restoreDefaultMaterialAndTexture(appearance, shininess);
+            restoreDefaultMaterialAndTexture(appearance, null);
           } else {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
@@ -624,7 +625,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         } else if (textureModified) {            
           // Change texture only of shapes that are not window panes
           if (windowPane) {
-            restoreDefaultMaterialAndTexture(appearance, shininess);
+            restoreDefaultMaterialAndTexture(appearance, null);
           } else {
             // Change material to white then texture
             appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
