@@ -361,7 +361,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
             zipIn.getInputStream(contentDigestsEntry), "UTF-8"));
         String line = reader.readLine();
         if (line != null
-            && "ContentDigests-Version: 1.0".equals(line.trim())) {
+            && line.trim().startsWith("ContentDigests-Version: 1")) {
           Map<URLContent, byte []> contentDigests = new HashMap<URLContent, byte[]>();
           // Read Name / SHA-1-Digest lines  
           String entryName = null;
