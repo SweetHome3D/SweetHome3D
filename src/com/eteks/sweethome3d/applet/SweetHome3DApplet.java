@@ -121,7 +121,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <li><code>deleteHomeURL</code> specifies the URL of the HTTP service able 
  *     to delete the data of a home written with the write home service. The home name
  *     is specified by the parameter named <code>home</code> of a GET request and the 
- *     the %s sign will be replaced by the home name that sould be deleted.
+ *     the %s sign will be replaced by the home name that should be deleted.
  *     This service must return 1 if it deleted the given home successfully.
  *     <br>By default, this service doesn't exist and deletion is not possible from the applet.
  *     If it's not an absolute URL it will be considered as relative to applet codebase.
