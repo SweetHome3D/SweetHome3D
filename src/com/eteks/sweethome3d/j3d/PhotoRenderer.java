@@ -1313,7 +1313,8 @@ public class PhotoRenderer {
             && !ignoreTransparency) {
           if (material instanceof OBJMaterial
               && ((OBJMaterial)material).isOpticalDensitySet()) {
-            this.sunflow.parameter("eta", ((OBJMaterial)material).getOpticalDensity());
+            // Refuse too small values (1.33 is the eta of water) to avoid issues in SunFlow
+            this.sunflow.parameter("eta", Math.max(1.33f, Math.min(((OBJMaterial)material).getOpticalDensity(), 10f)));
           } else {
             // Use glass ETA as default
             this.sunflow.parameter("eta", 1.55f);
