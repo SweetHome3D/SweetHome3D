@@ -692,7 +692,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
             }
           }
-          appearance.setTexture(getHomeTextureClone(texture, home));
+          Texture homeTexture = getHomeTextureClone(texture, home);
+          if (appearance.getTexture() != homeTexture) {
+            appearance.setTexture(homeTexture);
+          }
         }
       };
   }
