@@ -59,20 +59,20 @@ public class TextureManager {
   private final Texture                  errorTexture;
   // Image used while an image content is loaded
   private final Texture                  waitTexture;
-  // Map storing loaded texture contents
-  private final Map<RotatedContentKey, TextureKey> contentTextureKeys;
-  // Map storing loaded textures
-  private final Map<TextureKey, Texture> textures;
-  // Map storing model nodes being loaded
-  private Map<RotatedContentKey, List<TextureObserver>> loadingTextureObservers;
+  // Map storing loaded rotated texture contents
+  private final Map<Content, List<ComparableTexture>>     contentTextures;
+  // Map storing loaded textures used to compare their images
+  private final Map<Texture, ComparableTexture>           textures;
+  // Map storing model textures being loaded
+  private Map<RotatedContentKey, List<TextureObserver>>   loadingTextureObservers;
   // Executor used to load images
-  private ExecutorService                texturesLoader;
+  private ExecutorService               texturesLoader;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.contentTextureKeys = new WeakHashMap<RotatedContentKey, TextureKey>();
-    this.textures = new WeakHashMap<TextureKey, Texture>();
+    this.contentTextures = new WeakHashMap<Content, List<ComparableTexture>>();
+    this.textures = new WeakHashMap<Texture, ComparableTexture>();
     this.loadingTextureObservers = new HashMap<RotatedContentKey, List<TextureObserver>>();
   }
 
@@ -95,7 +95,7 @@ public class TextureManager {
       this.texturesLoader = null;
     }
     synchronized (this.textures) {
-      this.contentTextureKeys.clear();
+      this.contentTextures.clear();
       this.textures.clear();
     }
   }
@@ -165,20 +165,21 @@ public class TextureManager {
                           final float   angle,
                           boolean synchronous,
                           final TextureObserver textureObserver) {
-    Texture texture;
-    TextureKey textureKey;
-    final RotatedContentKey contentKey = new RotatedContentKey(content, angle);
+    Texture texture = null;
     synchronized (this.textures) { // Use one mutex for both maps
-      textureKey = this.contentTextureKeys.get(contentKey);
-      if (textureKey != null) {
-        texture = this.textures.get(textureKey);
-      } else {
-        texture = null;
+      List<ComparableTexture> textureDataList = this.contentTextures.get(content);
+      if (textureDataList != null) {
+        for (ComparableTexture textureData : textureDataList) {
+          if (textureData.getAngle() == angle) {
+            texture = textureData.getTexture();
+            break;
+          }
+        }
       }
     }
     if (texture == null) {
       if (synchronous) {
-        texture = shareTexture(loadTexture(content, angle), contentKey);
+        texture = shareTexture(loadTexture(content, angle), angle, content);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
       } else if (!EventQueue.isDispatchThread()) {
@@ -190,6 +191,7 @@ public class TextureManager {
           this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
         
+        final RotatedContentKey contentKey = new RotatedContentKey(content, angle);
         List<TextureObserver> observers = this.loadingTextureObservers.get(contentKey);
         if (observers != null) {
           // If observers list exists, content texture is already being loaded
@@ -204,7 +206,7 @@ public class TextureManager {
           // Load the image in a different thread
           this.texturesLoader.execute(new Runnable () {
               public void run() {
-                final Texture texture = shareTexture(loadTexture(content, angle), contentKey);
+                final Texture texture = shareTexture(loadTexture(content, angle), angle, content);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       // Notify loaded texture to observer
@@ -263,17 +265,17 @@ public class TextureManager {
         }
         return texture;
       } else {
-        return errorTexture;
+        return this.errorTexture;
       }
     } catch (IOException ex) {
       // Too bad, we'll use errorTexture
-      return errorTexture;
+      return this.errorTexture;
     } catch (RuntimeException ex) {
       // Take into account exceptions of Java 3D 1.5 ImageException class
       // in such a way program can run in Java 3D 1.3.1
       if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
         // Images not supported by TextureLoader
-        return errorTexture;
+        return this.errorTexture;
       } else {
         throw ex;
       }
@@ -285,7 +287,7 @@ public class TextureManager {
    * if the same texture as the one in parameter is already shared.
    */
   public Texture shareTexture(Texture texture) {
-    return shareTexture(texture, null);
+    return shareTexture(texture, 0, null);
   }
   
   /**
@@ -294,26 +296,31 @@ public class TextureManager {
    * same texture as the one in parameter is already shared.
    */
   private Texture shareTexture(final Texture texture,
-                               final RotatedContentKey contentKey) {
-    TextureKey textureKey = new TextureKey(texture);
-    Texture sharedTexture;
+                               final float   angle,
+                               final Content content) {
+    ComparableTexture textureData = new ComparableTexture(texture, angle);
+    Texture sharedTexture = null;
     synchronized (this.textures) { // Use one mutex for both maps
-      sharedTexture = this.textures.get(textureKey);
+      // Search which existing key matches texture key to share unique texture
+      for (Map.Entry<Texture, ComparableTexture> entry : this.textures.entrySet()) {
+        if (textureData.equalsImage(entry.getValue())) {
+          sharedTexture = entry.getKey();
+          textureData = entry.getValue(); 
+          break;
+        }
+      }
       if (sharedTexture == null) {
         sharedTexture = texture;
         setSharedTextureAttributesAndCapabilities(sharedTexture);
-        this.textures.put(textureKey, sharedTexture);
-      } else {
-        // Search which key matches sharedTexture to keep unique keys
-        for (TextureKey key : this.textures.keySet()) {
-          if (key.getTexture() == sharedTexture) {
-            textureKey = key;
-            break;
-          }
-        }
+        this.textures.put(sharedTexture, textureData);
       }
-      if (contentKey != null) {
-        this.contentTextureKeys.put(contentKey, textureKey);
+      if (content != null) {
+        List<ComparableTexture> textureDataList = this.contentTextures.get(content);
+        if (textureDataList == null) {
+          textureDataList = new ArrayList<TextureManager.ComparableTexture>(1);
+          this.contentTextures.put(content, textureDataList);
+        }
+        textureDataList.add(textureData);
       }
     }
     return sharedTexture;
@@ -343,11 +350,9 @@ public class TextureManager {
    */
   public boolean isTextureTransparent(Texture texture) {
     synchronized (this.textures) { // Use one mutex for both maps
-      // Search which key matches texture
-      for (TextureKey key : textures.keySet()) {
-        if (key.getTexture() == texture) {
-          return key.isTransparent();
-        }
+      ComparableTexture textureData = this.textures.get(texture);
+      if (textureData != null) {
+        return textureData.isTransparent();
       }
       return texture.getFormat() == Texture.RGBA;
     }
@@ -418,28 +423,34 @@ public class TextureManager {
   }
 
   /**
-   * Key used to ensure texture uniqueness in textures map.
+   * Texture used to compare textures images and ensure texture uniqueness in textures map.
    * Image bits of the texture are stored in a weak reference to avoid grabbing memory uselessly.
    */
-  private static class TextureKey {
+  private static class ComparableTexture {
     private Texture               texture;
-    private WeakReference<int []> imageBits; 
-    private int                   hashCodeCache;
-    private boolean               hashCodeSet;
-    private boolean               transparent;
+    private float                 angle;
+    private WeakReference<int []> imageBits;
+    private Integer               imageBitsHashCode;
+    private Boolean               transparent;
 
-    public TextureKey(Texture texture) {
+    public ComparableTexture(Texture texture,
+                             float   angle) {
       this.texture = texture;      
+      this.angle = angle;
     }
     
     public Texture getTexture() {
       return this.texture;
     }
     
+    public float getAngle() {
+      return this.angle;
+    }
+    
     /**
      * Returns the pixels of the given <code>image</code>.
      */
-    private int [] getImagePixels() {
+    private int [] getImageBits() {
       int [] imageBits = null;
       if (this.imageBits != null) {
         imageBits = this.imageBits.get();
@@ -467,6 +478,17 @@ public class TextureManager {
     }
 
     /**
+     * Returns an hash code for the image of the texture that allows
+     * a faster comparison and storing images bits in a weak reference.
+     */
+    private int getImageBitsHashCode() {
+      if (this.imageBitsHashCode == null) {
+        this.imageBitsHashCode = Arrays.hashCode(getImageBits());
+      }
+      return this.imageBitsHashCode;
+    }
+    
+    /**
      * Returns <code>true</code> if the image contains at least a transparent pixel. 
      */
     private boolean containsTransparentPixels(int [] imageBits) {
@@ -484,6 +506,9 @@ public class TextureManager {
      * Returns <code>true</code> if the image of the texture contains at least one transparent pixel.
      */
     public boolean isTransparent() {
+      if (this.transparent == null) {
+        getImageBits();
+      }
       return this.transparent;
     }
     
@@ -491,28 +516,15 @@ public class TextureManager {
      * Returns <code>true</code> if the image of this texture and 
      * the image of the object in parameter are the same. 
      */
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
+    public boolean equalsImage(ComparableTexture comparableTexture) {
+      if (this == comparableTexture) {
         return true;
-      } else if (obj instanceof TextureKey) {
-        TextureKey textureKey = (TextureKey)obj;
-        if (this.texture == textureKey.texture) {
-          return true;
-        } else if (hashCode() == textureKey.hashCode()){
-          return Arrays.equals(getImagePixels(), textureKey.getImagePixels());
-        }
+      } else if (this.texture == comparableTexture.texture) {
+        return true;
+      } else if (getImageBitsHashCode() == comparableTexture.getImageBitsHashCode()){
+        return Arrays.equals(getImageBits(), comparableTexture.getImageBits());
       }
       return false;
-    }
-
-    @Override
-    public int hashCode() {
-      if (!this.hashCodeSet) {
-        this.hashCodeCache = Arrays.hashCode(getImagePixels());
-        this.hashCodeSet = true;
-      }
-      return this.hashCodeCache;
     }
   }
 }
