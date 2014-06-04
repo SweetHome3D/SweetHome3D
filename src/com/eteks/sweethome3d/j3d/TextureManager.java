@@ -54,24 +54,24 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author Emmanuel Puybaret
  */
 public class TextureManager {
-  private static TextureManager          instance;
+  private static TextureManager instance;
   // Image used if an image content couldn't be loaded
-  private final Texture                  errorTexture;
+  private final Texture         errorTexture;
   // Image used while an image content is loaded
-  private final Texture                  waitTexture;
+  private final Texture         waitTexture;
   // Map storing loaded rotated texture contents
-  private final Map<Content, List<ComparableTexture>>     contentTextures;
+  private final Map<Content, List<ComparableTextureAngleTuple>> contentTextures;
   // Map storing loaded textures used to compare their images
-  private final Map<Texture, ComparableTexture>           textures;
+  private final Map<Texture, ComparableTexture>                 textures;
   // Map storing model textures being loaded
-  private Map<RotatedContentKey, List<TextureObserver>>   loadingTextureObservers;
+  private Map<RotatedContentKey, List<TextureObserver>>         loadingTextureObservers;
   // Executor used to load images
-  private ExecutorService               texturesLoader;
+  private ExecutorService       texturesLoader;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.contentTextures = new WeakHashMap<Content, List<ComparableTexture>>();
+    this.contentTextures = new WeakHashMap<Content, List<ComparableTextureAngleTuple>>();
     this.textures = new WeakHashMap<Texture, ComparableTexture>();
     this.loadingTextureObservers = new HashMap<RotatedContentKey, List<TextureObserver>>();
   }
@@ -167,12 +167,11 @@ public class TextureManager {
                           final TextureObserver textureObserver) {
     Texture texture = null;
     synchronized (this.textures) { // Use one mutex for both maps
-      List<ComparableTexture> textureDataList = this.contentTextures.get(content);
-      if (textureDataList != null) {
-        for (ComparableTexture textureData : textureDataList) {
-          if (textureData.getAngle() == angle) {
-            texture = textureData.getTexture();
-            break;
+      List<ComparableTextureAngleTuple> contentTexturesList = this.contentTextures.get(content);
+      if (contentTexturesList != null) {
+        for (ComparableTextureAngleTuple textureAngleTuple : contentTexturesList) {
+          if (textureAngleTuple.getAngle() == angle) {
+            texture = textureAngleTuple.getTexture(); 
           }
         }
       }
@@ -298,7 +297,7 @@ public class TextureManager {
   private Texture shareTexture(final Texture texture,
                                final float   angle,
                                final Content content) {
-    ComparableTexture textureData = new ComparableTexture(texture, angle);
+    ComparableTexture textureData = new ComparableTexture(texture);
     Texture sharedTexture = null;
     synchronized (this.textures) { // Use one mutex for both maps
       // Search which existing key matches texture key to share unique texture
@@ -315,12 +314,12 @@ public class TextureManager {
         this.textures.put(sharedTexture, textureData);
       }
       if (content != null) {
-        List<ComparableTexture> textureDataList = this.contentTextures.get(content);
-        if (textureDataList == null) {
-          textureDataList = new ArrayList<TextureManager.ComparableTexture>(1);
-          this.contentTextures.put(content, textureDataList);
+        List<ComparableTextureAngleTuple> contentTexturesList = this.contentTextures.get(content);
+        if (contentTexturesList == null) {
+          contentTexturesList = new ArrayList<ComparableTextureAngleTuple>(1);
+          this.contentTextures.put(content, contentTexturesList);
         }
-        textureDataList.add(textureData);
+        contentTexturesList.add(new ComparableTextureAngleTuple(textureData, angle));
       }
     }
     return sharedTexture;
@@ -428,23 +427,16 @@ public class TextureManager {
    */
   private static class ComparableTexture {
     private Texture               texture;
-    private float                 angle;
     private WeakReference<int []> imageBits;
     private Integer               imageBitsHashCode;
     private Boolean               transparent;
 
-    public ComparableTexture(Texture texture,
-                             float   angle) {
+    public ComparableTexture(Texture texture) {
       this.texture = texture;      
-      this.angle = angle;
     }
     
     public Texture getTexture() {
       return this.texture;
-    }
-    
-    public float getAngle() {
-      return this.angle;
     }
     
     /**
@@ -525,6 +517,27 @@ public class TextureManager {
         return Arrays.equals(getImageBits(), comparableTexture.getImageBits());
       }
       return false;
+    }
+  }
+
+  /** 
+   * A tuple that associates a texture and one of its possible rotation angle.
+   */
+  private static class ComparableTextureAngleTuple {
+    private ComparableTexture texture;
+    private float             angle;
+
+    public ComparableTextureAngleTuple(ComparableTexture texture, float angle) {
+      this.texture = texture;
+      this.angle = angle;
+    }
+
+    public Texture getTexture() {
+      return this.texture.getTexture();
+    }
+    
+    public float getAngle() {
+      return this.angle;
     }
   }
 }
