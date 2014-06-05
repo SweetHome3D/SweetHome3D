@@ -32,6 +32,7 @@ import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.NotEnoughSpaceRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -139,6 +140,26 @@ public class HomeFileRecorder implements HomeRecorder {
       }
     }
 
+    try {
+      // Check disk space under Java 1.6
+      long usableSpace = (Long)File.class.getMethod("getUsableSpace").invoke(homeFile.getParentFile());
+      long requiredSpace = tempFile.length();
+      if (homeFile.exists()) {
+        requiredSpace -= homeFile.length();
+      }
+      if (usableSpace != 0
+          && usableSpace < requiredSpace) {
+        throw new NotEnoughSpaceRecorderException("Not enough disk space to save file " + name, requiredSpace - usableSpace);
+      }
+    } catch (NoSuchMethodException ex) {
+      // This method doesn't exist under Java 5
+    } catch (RecorderException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      // Too bad let's not check and take the risk 
+      ex.printStackTrace();
+    }    
+    
     // Open destination file
     OutputStream out;
     try {

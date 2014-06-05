@@ -90,6 +90,7 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Library;
+import com.eteks.sweethome3d.model.NotEnoughSpaceRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -1993,7 +1994,11 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 String cause = ex.toString();
-                if (ex instanceof RecorderException) {
+                if (ex instanceof NotEnoughSpaceRecorderException) {
+                  long missingSpace = ((NotEnoughSpaceRecorderException)ex).getMissingSpace();
+                  float missingSpaceMegaByte = Math.max(0.1f, missingSpace / 1048576f);    
+                  cause = "Missing " + new DecimalFormat("#.#").format(missingSpaceMegaByte) + " MB to save home";
+                } else if (ex instanceof RecorderException) {
                   cause = "RecorderException";
                   String message = ex.getMessage();
                   if (message != null) {
