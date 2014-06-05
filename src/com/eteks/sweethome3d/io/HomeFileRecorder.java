@@ -153,7 +153,10 @@ public class HomeFileRecorder implements HomeRecorder {
       }
     } catch (NoSuchMethodException ex) {
       // This method doesn't exist under Java 5
-    } catch (RecorderException ex) {
+    } catch (NotEnoughSpaceRecorderException ex) {
+      if (tempFile != null) {
+        tempFile.delete();
+      }
       throw ex;
     } catch (Exception ex) {
       // Too bad let's not check and take the risk 
