@@ -1025,7 +1025,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           backClipDistance = (highestPoint * intermediateGrowFactor) * 25000 
               + (frontClipDistance - highestPoint * intermediateGrowFactor) * 4000;
         }
-        System.out.println(camera.getZ() + " " + highestPoint + " "+ frontClipDistance + " " + backClipDistance);
       }
     }
     
