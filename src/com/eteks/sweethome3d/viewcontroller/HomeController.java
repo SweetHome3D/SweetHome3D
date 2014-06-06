@@ -1931,6 +1931,7 @@ public class HomeController implements Controller {
    * Saves the home managed by this controller with a different name. 
    * Once home is actually saved, home is removed from application homes list 
    * and <code>postCloseTask</code> is called if it's not <code>null</code>.
+   * @since 4.4 
    */
   protected void saveAs(HomeRecorder.Type recorderType, Runnable postSaveTask) {
     String newName = getView().showSaveDialog(this.home.getName());

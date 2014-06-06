@@ -287,6 +287,7 @@ public class HomeController3D implements Controller {
 
   /**
    * Moves home camera sideways of <code>delta</code>.
+   * @since 4.4 
    */
   public void moveCameraSideways(float delta) {
     this.cameraState.moveCameraSideways(delta);

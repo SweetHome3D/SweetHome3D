@@ -110,6 +110,7 @@ public interface HomeView extends View {
   /**
    * Displays a dialog that lets user choose what he wants 
    * to do with a damaged home he tries to open it. 
+   * @since 4.4 
    */
   public abstract OpenDamagedHomeAnswer confirmOpenDamagedHome(String homeName, 
                                                                Home damagedHome, 

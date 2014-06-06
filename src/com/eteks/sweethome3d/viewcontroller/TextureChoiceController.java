@@ -121,6 +121,7 @@ public class TextureChoiceController implements Controller {
 
   /**
    * Returns <code>true</code> if the rotation of the edited texture is supported.
+   * @since 4.4 
    */
   public boolean isRotationSupported() {
     return this.rotationSupported;
@@ -161,6 +162,7 @@ public class TextureChoiceController implements Controller {
   
   /**
    * Adds the given <code>texture</code> to the recent textures set.
+   * @since 4.4 
    */
   public void addRecentTexture(TextureImage texture) {
     List<TextureImage> recentTextures = new ArrayList<TextureImage>(this.preferences.getRecentTextures());
