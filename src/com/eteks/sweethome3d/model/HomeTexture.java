@@ -70,6 +70,7 @@ public class HomeTexture implements TextureImage, Serializable {
   
   /**
    * Returns the catalog ID of this texture or <code>null</code> if it doesn't exist.
+   * @since 4.4 
    */
   public String getCatalogId() {
     return this.catalogId;

@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.model;
 /**
  * Exception thrown when there's not enough space to save a home.
  * @author Emmanuel Puybaret
+ * @since 4.4 
  */
 public class NotEnoughSpaceRecorderException extends RecorderException {
   private long missingSpace;
@@ -32,7 +33,7 @@ public class NotEnoughSpaceRecorderException extends RecorderException {
   }
 
   /**
-   * Returns the missing space to save a home.
+   * Returns the length of the missing space to save a home.
    */
   public long getMissingSpace() {
     return this.missingSpace;

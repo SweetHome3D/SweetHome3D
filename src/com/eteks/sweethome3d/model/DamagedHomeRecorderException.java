@@ -24,6 +24,7 @@ import java.util.List;
 /**
  * Exception thrown when a home data read in IO layer is damaged with with possible invalid content in dependencies.
  * @author Emmanuel Puybaret
+ * @since 4.4 
  */
 public class DamagedHomeRecorderException extends RecorderException {
   private static final long serialVersionUID = 1L;
