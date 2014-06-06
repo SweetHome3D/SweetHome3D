@@ -1673,7 +1673,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
             new TextureManager.TextureObserver() {
                 public void textureUpdated(Texture texture) {
-                  backgroundAppearance.setTexture(texture);
+                  // Use a copy of the texture in case it's used in an other universe
+                  backgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
                 }
               });
       }
