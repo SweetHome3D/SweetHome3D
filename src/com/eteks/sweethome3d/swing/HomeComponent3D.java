@@ -977,6 +977,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     view.setFieldOfView(fieldOfView);
     double frontClipDistance;
+    double backClipDistance;
     if (topCamera) {
       BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
       if (approximateHomeBounds == null) {
@@ -991,19 +992,46 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             + Math.pow((lower.y + upper.y) / 2 - camera.getY(), 2) 
             + Math.pow((lower.z + upper.z) / 2 - camera.getZ(), 2)) / 100;
       }
+      // It's recommended to keep ratio between back and front clip distances under 3000
+      backClipDistance = frontClipDistance * 3000;
     } else {
-      // Use a variable front clip distance for observer camera 
-      // depending on the elevation (at an elevation higher than 3 m
-      // back clip distance must be greater than 6000 or a white zone appears 
-      // at the horizon in off screen images)
+      // Use a variable front clip distance for observer camera depending on the elevation 
+      // Caution: check that a white zone doesn't appear at the horizon in off screen images
+      // when camera is at an intermediate elevation
+      
+      // Under 200 cm keep a front clip distance equal to 2.5 cm 
+      // mainly for backward compatibility
       frontClipDistance = 2.5;
-      if (camera.getZ() > 200) {
-        frontClipDistance += (camera.getZ() - 200) / 50;
+      backClipDistance = frontClipDistance * 4000;
+      final float minElevation = 250;
+      if (camera.getZ() > minElevation) {
+        final float intermediateGrowFactor = 1 / 250f;
+        BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
+        float highestPoint = 0; 
+        if (approximateHomeBounds != null) {
+          Point3d upper = new Point3d();
+          approximateHomeBounds.getUpper(upper);
+          highestPoint = (float)upper.z;
+        }
+        if (camera.getZ() < highestPoint + minElevation) {
+          // Between 200 cm and the highest point, make front clip distance grow slowly and increase front/back ratio  
+          frontClipDistance = 2.5 + (camera.getZ() - minElevation) * intermediateGrowFactor;
+          backClipDistance = 2.5 * 4000 + (frontClipDistance - 2.5) * 25000;
+        } else {
+          // Above, make front clip distance grow faster
+          frontClipDistance = 2.5 
+              + (highestPoint - minElevation) * intermediateGrowFactor 
+              + (camera.getZ() - highestPoint - minElevation) / 50;
+          backClipDistance = (highestPoint * intermediateGrowFactor) * 25000 
+              + (frontClipDistance - highestPoint * intermediateGrowFactor) * 4000;
+        }
+        System.out.println(camera.getZ() + " " + highestPoint + " "+ frontClipDistance + " " + backClipDistance);
       }
     }
-    // Update front and back clip distance to ensure their ratio is less than 3000
+    
+    // Update front and back clip distance 
     view.setFrontClipDistance(frontClipDistance);
-    view.setBackClipDistance(frontClipDistance * 3000);
+    view.setBackClipDistance(backClipDistance);
     clearPrintedImageCache();
   }
 
@@ -1576,7 +1604,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         double beta = 2 * j * Math.PI / divisionCount;
         float cosBeta = (float)Math.cos(beta);
         float sinBeta = (float)Math.sin(beta);
-        // Correct the bottom of the hemisphere to avoid seeing a black line at the horizon
+        // Correct the bottom of the hemisphere to avoid seeing a bottom hemisphere at the horizon
         float y = j != 0 ? (top ? sinBeta : -sinBeta) : -0.01f;
         double nextBeta = 2 * (j + 1) * Math.PI / divisionCount;
         if (!top) {
