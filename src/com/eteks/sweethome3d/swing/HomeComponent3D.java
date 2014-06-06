@@ -1011,7 +1011,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         if (approximateHomeBounds != null) {
           Point3d upper = new Point3d();
           approximateHomeBounds.getUpper(upper);
-          highestPoint = (float)upper.z;
+          highestPoint = Math.min((float)upper.z, 10000f);
         }
         if (camera.getZ() < highestPoint + minElevation) {
           // Between 200 cm and the highest point, make front clip distance grow slowly and increase front/back ratio  
