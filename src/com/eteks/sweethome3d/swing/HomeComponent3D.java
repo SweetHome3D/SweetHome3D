@@ -999,11 +999,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Caution: check that a white zone doesn't appear at the horizon in off screen images
       // when camera is at an intermediate elevation
       
-      // Under 200 cm keep a front clip distance equal to 2.5 cm 
-      // mainly for backward compatibility
+      // Under 125 cm keep a front clip distance equal to 2.5 cm 
       frontClipDistance = 2.5;
-      backClipDistance = frontClipDistance * 4000;
-      final float minElevation = 250;
+      backClipDistance = frontClipDistance * 5000;
+      final float minElevation = 125;
       if (camera.getZ() > minElevation) {
         final float intermediateGrowFactor = 1 / 250f;
         BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
@@ -1015,15 +1014,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         if (camera.getZ() < highestPoint + minElevation) {
           // Between 200 cm and the highest point, make front clip distance grow slowly and increase front/back ratio  
-          frontClipDistance = 2.5 + (camera.getZ() - minElevation) * intermediateGrowFactor;
-          backClipDistance = 2.5 * 4000 + (frontClipDistance - 2.5) * 25000;
+          frontClipDistance += (camera.getZ() - minElevation) * intermediateGrowFactor;
+          backClipDistance  += (frontClipDistance - 2.5) * 25000;
         } else {
           // Above, make front clip distance grow faster
-          frontClipDistance = 2.5 
-              + (highestPoint - minElevation) * intermediateGrowFactor 
-              + (camera.getZ() - highestPoint - minElevation) / 50;
-          backClipDistance = (highestPoint * intermediateGrowFactor) * 25000 
-              + (frontClipDistance - highestPoint * intermediateGrowFactor) * 4000;
+          frontClipDistance += 
+              highestPoint * intermediateGrowFactor 
+            + (camera.getZ() - highestPoint - minElevation) / 50;
+          backClipDistance  += 
+              + (highestPoint * intermediateGrowFactor) * 25000
+              + (frontClipDistance - highestPoint * intermediateGrowFactor - 2.5) * 5000;
         }
       }
     }
