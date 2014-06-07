@@ -546,8 +546,8 @@ public class ModelMaterialsComponent extends JButton implements View {
           2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(15, 0, 5, 0), 0, 0));
       add(this.shininessSlider, new GridBagConstraints(
-          2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -20, 0));
+          2, 5, 2, 1, 0, 0, GridBagConstraints.NORTH, 
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
     }
     
     public void displayView(View parent) {
