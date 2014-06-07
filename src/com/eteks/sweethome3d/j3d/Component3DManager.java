@@ -23,6 +23,10 @@ import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +40,9 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.media.j3d.View;
 import javax.media.j3d.VirtualUniverse;
+import javax.swing.Timer;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
 import com.sun.j3d.utils.universe.ViewingPlatform;
@@ -190,12 +196,36 @@ public class Component3DManager {
     try {
       // Ensure unused canvases are freed
       System.gc();
+      
       // Create a Java 3D canvas  
+      final Canvas3D canvas3D;
       if (renderingObserver != null) {
-        return new ObservedCanvas3D(configuration, offscreen, renderingObserver);
+        canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
       } else {
-        return new Canvas3D(configuration, offscreen);
+        canvas3D = new Canvas3D(configuration, offscreen);
       }
+      
+      // Under Windows with Java 7 and above, request to repaint the canvas 3D 
+      // after a delay when it's resized to avoid it to get grayed
+      if (OperatingSystem.isWindows() 
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+        canvas3D.addComponentListener(new ComponentAdapter() {
+            private Timer timer = new Timer(200, new ActionListener() {
+                public void actionPerformed(ActionEvent ev) {
+                  timer.stop();
+                  canvas3D.repaint();
+                }
+              });
+            
+            @Override
+            public void componentResized(ComponentEvent ev) {
+              if (canvas3D.isShowing()) {
+                this.timer.restart();
+              }
+            }
+          });
+      }
+      return canvas3D;
     } catch (IllegalArgumentException ex) {
       IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
       ex2.initCause(ex);
