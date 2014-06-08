@@ -143,8 +143,10 @@ public class ModelPreviewComponent extends JComponent {
     add(this.component3DPanel);
 
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    if (graphicsEnvironment.getScreenDevices().length == 1) {
-      // If only one screen device is available, create 3D component immediately, 
+    if (graphicsEnvironment.getScreenDevices().length == 1
+        && (!OperatingSystem.isWindows() 
+            || !OperatingSystem.isJavaVersionGreaterOrEqual("1.7"))) {
+      // If only one screen device is available and not under Java 7 / Windows, create 3D component immediately, 
       // otherwise create it once the screen device of the parent is known
       createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
           yawChangeSupported, pitchChangeSupported, scaleChangeSupported);

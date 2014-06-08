@@ -23,10 +23,14 @@ import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +44,7 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.media.j3d.View;
 import javax.media.j3d.VirtualUniverse;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -205,25 +210,13 @@ public class Component3DManager {
         canvas3D = new Canvas3D(configuration, offscreen);
       }
       
-      // Under Windows with Java 7 and above, request to repaint the canvas 3D 
-      // after a delay when it's resized to avoid it to get grayed
+      // Under Windows with Java 7 and above, delay the rendering of the canvas 3D 
+      // when it's resized or moved to avoid it to get grayed
       if (OperatingSystem.isWindows() 
           && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-        canvas3D.addComponentListener(new ComponentAdapter() {
-            private Timer timer = new Timer(200, new ActionListener() {
-                public void actionPerformed(ActionEvent ev) {
-                  timer.stop();
-                  canvas3D.repaint();
-                }
-              });
-            
-            @Override
-            public void componentResized(ComponentEvent ev) {
-              if (canvas3D.isShowing()) {
-                this.timer.restart();
-              }
-            }
-          });
+        Canvas3DLocationAndSizeChangeListener canvas3DChangeListener = new Canvas3DLocationAndSizeChangeListener(canvas3D);
+        canvas3D.addHierarchyBoundsListener(canvas3DChangeListener);
+        canvas3D.addComponentListener(canvas3DChangeListener);
       }
       return canvas3D;
     } catch (IllegalArgumentException ex) {
@@ -233,6 +226,62 @@ public class Component3DManager {
     }
   }
 
+  /**
+   * A listener that delays the rendering of a canvas 3D when its location and size is updated.
+   */
+  private static class Canvas3DLocationAndSizeChangeListener extends ComponentAdapter 
+                                                          implements HierarchyBoundsListener {
+    private Canvas3D  canvas3D;
+    private Timer     timer;
+
+    public Canvas3DLocationAndSizeChangeListener(final Canvas3D canvas3D) {
+      this.canvas3D = canvas3D;
+      this.timer = new Timer(150, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            canvas3D.startRenderer();
+          }
+        });
+      this.timer.setRepeats(false);      
+    }
+    
+    @Override
+    public void componentResized(ComponentEvent ev) {
+      delayRenderer();
+    }
+    
+    public void delayRenderer() {
+      if (this.canvas3D.isShowing()) {
+        this.canvas3D.stopRenderer();
+        this.timer.restart();
+      }
+    }
+    
+    public void ancestorMoved(HierarchyEvent ev) {
+      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (graphicsEnvironment.getScreenDevices().length == 1) {
+        // Request to delay rendering when the canvas 3D intersects the border of the screen
+        Rectangle canvas3DBounds = this.canvas3D.getBounds();
+        Point canvas3DOrigin = canvas3DBounds.getLocation();
+        SwingUtilities.convertPointToScreen(canvas3DOrigin, this.canvas3D);
+        canvas3DBounds.setLocation(canvas3DOrigin);
+        Rectangle screenBounds = this.canvas3D.getGraphicsConfiguration().getBounds();
+        // Reduce screen size in case the canvas 3D just became fully visible
+        screenBounds.grow(-20, -20);
+        Rectangle intersectionWithScreenBounds = screenBounds.intersection(canvas3DBounds);
+        if (!canvas3DBounds.equals(intersectionWithScreenBounds)) {
+          delayRenderer();
+        }        
+      } else {
+        // Don't try to optimize in multiple screen environment
+        delayRenderer();
+      }
+    }
+
+    public void ancestorResized(HierarchyEvent ev) {
+      delayRenderer();
+    }
+  }
+  
   /**
    * Returns a new on screen <code>canva3D</code> instance. The returned canvas 3D will be associated 
    * with the graphics configuration of the default screen device. 

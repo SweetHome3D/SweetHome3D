@@ -284,8 +284,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
 
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    if (graphicsEnvironment.getScreenDevices().length == 1) {
-      // If only one screen device is available, create canvas 3D immediately, 
+    if (graphicsEnvironment.getScreenDevices().length == 1
+        && (!OperatingSystem.isWindows() 
+            || !OperatingSystem.isJavaVersionGreaterOrEqual("1.7"))) {
+      // If only one screen device is available and not under Java 7 / Windows, create canvas 3D immediately, 
       // otherwise create it once the screen device of the parent is known
       createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), preferences, controller);
     }
