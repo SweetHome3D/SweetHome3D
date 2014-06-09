@@ -68,10 +68,12 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     
  *     <li><code>navigationPanel</code> specifies whether navigation arrows should be 
  *     displayed or not. By default, its value is <code>false</code>. 
- *     Use <code>true</code> to display navigation panel.</li></ul>
+ *     Use <code>true</code> to display navigation panel.</li>
+ *
+ *     <li><code>activateCameraSwitchKey</code> specifies whether the space bar should be used
+ *     or not to switch between aerial view and virtual visitor view. 
+ *     By default, its value is <code>true</code>.</li></ul>
  *     
- * <p>Use space bar to switch between aerial view and virtual visitor view.</p>
- * 
  * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.
  *     

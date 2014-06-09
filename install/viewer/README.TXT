@@ -8,7 +8,8 @@ The size of the library files downloaded by this applet varies from 2.2 MB
 to 4 MB depending on the system and the Java version of the user.
 
 Applet users may press the space bar to switch between aerial view 
-and virtual visitor view, once they clicked in the applet.
+and virtual visitor view, once they clicked in the applet, unless the
+the value of the parameter "activateCameraSwitchKey" isn't equal to "true".
 
 
 HOW TO INSTALL SWEET HOME 3D VIEWER
@@ -54,9 +55,13 @@ the parameters list should become:
                     jnlp_embedded:"PD94bWwgdm...",
                     ignoreCache:"true"};
 
-If you don't want to display navigation arrows, simply remove the line
+If you don't want to display navigation arrows, simply remove the following line
+from parameters list:
   navigationPanel:"true",
-from parameters list.
+
+If you don't want the user to be able to switch between aerial view and virtual 
+visitor view with the space bar, add the following line to parameters list:
+  activateCameraSwitchKey:"false",
 
 If you want to select a given point of view stored in the SH3D file, 
 add a "camera" parameter with a value equal to the name of that point of view.
@@ -67,7 +72,8 @@ following example:
   var parameters = {java_arguments:"-Xmx640m", 
                     navigationPanel:"true",
                     camera:"Kitchen",
-                    selectableCameras:"Living room, Kitchen, Bedroom",                    
+                    selectableCameras:"Living room, Kitchen, Bedroom",
+                    activateCameraSwitchKey:"false",                    
                     homeURL:"http://www.mydomain.com/userHome.php",
                     jnlp_embedded:"PD94bWwgdm..."};
 

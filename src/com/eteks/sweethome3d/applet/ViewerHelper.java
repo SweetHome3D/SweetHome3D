@@ -75,13 +75,14 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactoryAdapter;
  * @author Emmanuel Puybaret
  */
 public final class ViewerHelper {
-  private static final String HOME_URL_PARAMETER           = "homeURL";
-  private static final String LEVEL_PARAMETER              = "level";
-  private static final String CAMERA_PARAMETER             = "camera";
-  private static final String SELECTABLE_LEVELS_PARAMETER  = "selectableLevels";
-  private static final String SELECTABLE_CAMERAS_PARAMETER = "selectableCameras";
-  private static final String IGNORE_CACHE_PARAMETER       = "ignoreCache";
-  private static final String NAVIGATION_PANEL             = "navigationPanel";
+  private static final String HOME_URL_PARAMETER                   = "homeURL";
+  private static final String LEVEL_PARAMETER                      = "level";
+  private static final String CAMERA_PARAMETER                     = "camera";
+  private static final String SELECTABLE_LEVELS_PARAMETER          = "selectableLevels";
+  private static final String SELECTABLE_CAMERAS_PARAMETER         = "selectableCameras";
+  private static final String IGNORE_CACHE_PARAMETER               = "ignoreCache";
+  private static final String NAVIGATION_PANEL                     = "navigationPanel";
+  private static final String ACTIVATE_CAMERA_SWITCH_KEY_PARAMETER = "activateCameraSwitchKey";
   
   public ViewerHelper(final JApplet applet) {
     // Create default user preferences with no catalog
@@ -159,19 +160,23 @@ public final class ViewerHelper {
 
         public View createView3D(final Home home, UserPreferences preferences, final HomeController3D controller) {
           HomeComponent3D homeComponent3D = new HomeComponent3D(home, preferences, controller);
-          // Add tab key to input map to change camera
-          InputMap inputMap = homeComponent3D.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-          inputMap.put(KeyStroke.getKeyStroke("SPACE"), "changeCamera");
-          ActionMap actionMap = homeComponent3D.getActionMap();
-          actionMap.put("changeCamera", new AbstractAction() {
-              public void actionPerformed(ActionEvent ev) {
-                if (home.getCamera() == home.getTopCamera()) {
-                  controller.viewFromObserver();
-                } else {
-                  controller.viewFromTop();
+          String activateCameraSwitchKeyParameter = applet.getParameter(ACTIVATE_CAMERA_SWITCH_KEY_PARAMETER);
+          if (activateCameraSwitchKeyParameter == null
+              || "true".equalsIgnoreCase(activateCameraSwitchKeyParameter)) {
+            // Add tab key to input map to change camera
+            InputMap inputMap = homeComponent3D.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+            inputMap.put(KeyStroke.getKeyStroke("SPACE"), "changeCamera");
+            ActionMap actionMap = homeComponent3D.getActionMap();
+            actionMap.put("changeCamera", new AbstractAction() {
+                public void actionPerformed(ActionEvent ev) {
+                  if (home.getCamera() == home.getTopCamera()) {
+                    controller.viewFromObserver();
+                  } else {
+                    controller.viewFromTop();
+                  }
                 }
-              }
-            });
+              });
+          }
           return homeComponent3D;
         }
       };
