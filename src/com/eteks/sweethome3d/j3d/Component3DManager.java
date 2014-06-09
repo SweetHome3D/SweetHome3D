@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.Graphics;
 import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -210,14 +211,6 @@ public class Component3DManager {
         canvas3D = new Canvas3D(configuration, offscreen);
       }
       
-      // Under Windows with Java 7 and above, delay the rendering of the canvas 3D 
-      // when it's resized or moved to avoid it to get grayed
-      if (OperatingSystem.isWindows() 
-          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-        Canvas3DLocationAndSizeChangeListener canvas3DChangeListener = new Canvas3DLocationAndSizeChangeListener(canvas3D);
-        canvas3D.addHierarchyBoundsListener(canvas3DChangeListener);
-        canvas3D.addComponentListener(canvas3DChangeListener);
-      }
       return canvas3D;
     } catch (IllegalArgumentException ex) {
       IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
@@ -226,62 +219,6 @@ public class Component3DManager {
     }
   }
 
-  /**
-   * A listener that delays the rendering of a canvas 3D when its location and size is updated.
-   */
-  private static class Canvas3DLocationAndSizeChangeListener extends ComponentAdapter 
-                                                          implements HierarchyBoundsListener {
-    private Canvas3D  canvas3D;
-    private Timer     timer;
-
-    public Canvas3DLocationAndSizeChangeListener(final Canvas3D canvas3D) {
-      this.canvas3D = canvas3D;
-      this.timer = new Timer(150, new ActionListener() {
-          public void actionPerformed(ActionEvent ev) {
-            canvas3D.startRenderer();
-          }
-        });
-      this.timer.setRepeats(false);      
-    }
-    
-    @Override
-    public void componentResized(ComponentEvent ev) {
-      delayRenderer();
-    }
-    
-    public void delayRenderer() {
-      if (this.canvas3D.isShowing()) {
-        this.canvas3D.stopRenderer();
-        this.timer.restart();
-      }
-    }
-    
-    public void ancestorMoved(HierarchyEvent ev) {
-      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      if (graphicsEnvironment.getScreenDevices().length == 1) {
-        // Request to delay rendering when the canvas 3D intersects the border of the screen
-        Rectangle canvas3DBounds = this.canvas3D.getBounds();
-        Point canvas3DOrigin = canvas3DBounds.getLocation();
-        SwingUtilities.convertPointToScreen(canvas3DOrigin, this.canvas3D);
-        canvas3DBounds.setLocation(canvas3DOrigin);
-        Rectangle screenBounds = this.canvas3D.getGraphicsConfiguration().getBounds();
-        // Reduce screen size in case the canvas 3D just became fully visible
-        screenBounds.grow(-20, -20);
-        Rectangle intersectionWithScreenBounds = screenBounds.intersection(canvas3DBounds);
-        if (!canvas3DBounds.equals(intersectionWithScreenBounds)) {
-          delayRenderer();
-        }        
-      } else {
-        // Don't try to optimize in multiple screen environment
-        delayRenderer();
-      }
-    }
-
-    public void ancestorResized(HierarchyEvent ev) {
-      delayRenderer();
-    }
-  }
-  
   /**
    * Returns a new on screen <code>canva3D</code> instance. The returned canvas 3D will be associated 
    * with the graphics configuration of the default screen device. 
@@ -442,12 +379,18 @@ public class Component3DManager {
    */
   private static class ObservedCanvas3D extends Canvas3D {
     private final RenderingObserver renderingObserver;
+    private final boolean           paintDelayed;
+    private Timer timer;
 
     private ObservedCanvas3D(GraphicsConfiguration graphicsConfiguration, 
                              boolean offScreen,
                              RenderingObserver renderingObserver) {
       super(graphicsConfiguration, offScreen);
       this.renderingObserver = renderingObserver;
+      // Under Windows with Java 7 and above, delay the rendering of the canvas 3D when 
+      // it's repainted (i.e. it's resized, moved or partially hidden) to avoid it to get grayed
+      this.paintDelayed = OperatingSystem.isWindows() 
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");
     }
 
     @Override
@@ -463,6 +406,24 @@ public class Component3DManager {
     @Override
     public void postSwap() {
       this.renderingObserver.canvas3DSwapped(this);
+    }
+    
+    @Override
+    public void paint(Graphics g) {
+      if (this.paintDelayed) {
+        if (this.timer == null) {
+          this.timer = new Timer(100, new ActionListener() {
+              public void actionPerformed(ActionEvent ev) {
+                // Graphics parameter isn't actually used by Canvas3D class
+                ObservedCanvas3D.super.paint(null);
+              }
+            });
+          this.timer.setRepeats(false);            
+        }
+        this.timer.restart();
+      } else {
+        super.paint(g);
+      }
     }
   }
 }
