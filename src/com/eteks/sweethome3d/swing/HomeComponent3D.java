@@ -364,6 +364,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (component3D != null) {
             removeAll();
             component3D = null;
+            navigationPanel = null;
           }
         }
         
