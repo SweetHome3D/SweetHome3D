@@ -189,7 +189,8 @@ public class AppletContentManager extends FileContentManager {
           answer = JOptionPane.showConfirmDialog(parent, panel, fileDialogTitle, 
               JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
         }
-        if (answer.equals(JOptionPane.OK_OPTION)) {
+        if (answer != null
+            && answer.equals(JOptionPane.OK_OPTION)) {
           Object selectedValue = availableHomesList.getSelectedValue();
           if (selectedValue != null) {
             return (String)selectedValue;
