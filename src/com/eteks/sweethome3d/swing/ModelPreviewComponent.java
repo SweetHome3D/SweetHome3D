@@ -875,6 +875,10 @@ public class ModelPreviewComponent extends JComponent {
           setBackground(Color.WHITE);
           try {
             this.iconImageLock.wait(maxWaitingDelay / 2);
+            if (OperatingSystem.isMacOSX()) {
+              // Under Mac OS X, sleep an additional time to ensure the screen got refreshed
+              Thread.sleep(15);
+            }
           } catch (InterruptedException ex) {
             ex.printStackTrace();
           }
@@ -889,6 +893,10 @@ public class ModelPreviewComponent extends JComponent {
           setBackground(Color.BLACK);
           try {
             this.iconImageLock.wait(maxWaitingDelay / 2);
+            if (OperatingSystem.isMacOSX()) {
+              // Under Mac OS X, sleep an additional time to ensure the screen got refreshed
+              Thread.sleep(15);
+            }
           } catch (InterruptedException ex) {
             ex.printStackTrace();
           }
