@@ -670,7 +670,7 @@ public class SwingTools {
           if (scrollPane.isShowing()
               && scrollPane.getViewport().getViewRect().contains(point)) {
             MouseEvent mouseEvent = new MouseEvent(view, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 
-                0, point.x, point.y, screenLocation.x, screenLocation.y, 0, false, MouseEvent.NOBUTTON);
+                0, point.x, point.y, 0, false, MouseEvent.NOBUTTON);
             if (isToolTipShowing()) {
               ToolTipManager.sharedInstance().mouseMoved(mouseEvent);
             }
@@ -683,9 +683,11 @@ public class SwingTools {
    * Returns <code>true</code> if a tool tip is showing.
    */
   private static boolean isToolTipShowing() {
-    for (Window window : Window.getWindows()) {
-      if (isToolTipShowing(window)) {
-        return true;
+    for (Frame frame : Frame.getFrames()) {
+      for (Window window : frame.getOwnedWindows()) {
+        if (isToolTipShowing(window)) {
+          return true;
+        }
       }
     }
     return false;
