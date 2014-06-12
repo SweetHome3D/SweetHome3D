@@ -684,16 +684,21 @@ public class SwingTools {
    */
   private static boolean isToolTipShowing() {
     for (Frame frame : Frame.getFrames()) {
-      for (Window window : frame.getOwnedWindows()) {
-        if (isToolTipShowing(window)) {
-          return true;
-        }
+      if (isToolTipShowing(frame)) {
+        return true;
       }
     }
     return false;
   }
 
   private static boolean isToolTipShowing(Container container) {
+    if (container instanceof Window) {
+      for (Window window : ((Window)container).getOwnedWindows()) {
+        if (isToolTipShowing(window)) {
+          return true;
+        }
+      }
+    }
     for (int i = 0; i < container.getComponentCount(); i++) {
       Component child = container.getComponent(i);
       if (child instanceof JToolTip 
