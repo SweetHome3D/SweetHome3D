@@ -92,6 +92,10 @@ Filename: "{app}\jre6\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHom
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
+; Delete unpacked jars
+Type: files; Name: "{app}\lib\rt.jar"
+Type: files; Name: "{app}\lib\SweetHome3D.jar"
+; Delete files created by Launch4j
 Type: filesandordirs; Name: "{app}\jre6\launch4j-tmp"
 
 [CustomMessages]
