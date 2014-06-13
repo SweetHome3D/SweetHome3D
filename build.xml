@@ -210,7 +210,7 @@
     </jar>
   </target>
 
-  <target name="java3dAllSystemsLibrary"
+  <target name="java3dAllSystemsLibrary" depends="jogl-java3d"
           description="Builds applet Java 3D library suitable for all systems in deploy/lib subdirectory">
     <mkdir dir="deploy/lib"/>
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
