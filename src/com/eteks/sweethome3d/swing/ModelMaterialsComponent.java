@@ -711,11 +711,13 @@ public class ModelMaterialsComponent extends JButton implements View {
                 if (selectedColor == null) {
                   selectedColor = defaultMaterial.getColor();
                 }
-                int componentAverage = (((selectedColor >> 16) & 0xFF) + ((selectedColor >> 8) & 0xFF) + (selectedColor & 0xFF)) / 3;
-                if (componentAverage > 0x77) {
+                int red   = (selectedColor >> 16) & 0xFF;
+                int green = (selectedColor >> 8) & 0xFF;
+                int blue  = selectedColor & 0xFF;
+                if (Math.max(red, Math.max(green, blue)) > 0x77) {
                   // Display a darker color for a bright color
                   blinkColor = new Color(selectedColor).darker().darker().getRGB();
-                } else if (componentAverage > 0x0F) {
+                } else if ((red + green + blue) / 3 > 0x0F) {
                   // Display a brighter color for a dark color
                   blinkColor = new Color(selectedColor).brighter().brighter().getRGB();
                 }
