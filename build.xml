@@ -261,8 +261,8 @@
   <target name="otherLibraries" depends="viewerLibraries"
           description="Copies to deploy/lib the libraries used by Sweet Home 3D">
     <mkdir dir="deploy/lib"/>
-    <!-- Copy jar files adding to their manifest a Trusted-Library attribute set to true 
-         (this attribute is necessary to be able to call applet methods from JavaScript) -->
+    <!-- Copy jar files adding to their manifest attributes necessary 
+         to be able to call applet methods from JavaScript -->
     <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1b.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Permissions"               value="all-permissions"/>
