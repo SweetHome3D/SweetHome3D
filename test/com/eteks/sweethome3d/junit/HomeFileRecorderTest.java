@@ -85,22 +85,33 @@ public class HomeFileRecorderTest extends TestCase {
   /**
    * Test repaired home file management.
    */
-  public void testRepairedFile() throws URISyntaxException, RecorderException {
-    final String testFile = new File(
-        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath();
+  public void testRepairedFile() throws URISyntaxException, RecorderException, IOException {
+    // Test repair on corrupted file 
+    checkDamagedFileIsRepaired(new File(
+        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath(), 7);
+    // Test repair on valid zip file but with missing entries 
+    checkDamagedFileIsRepaired(new File(
+        HomeControllerTest.class.getResource("resources/damagedHomeInValidZipWithContentDigestsAndNoContent.sh3d").toURI()).getAbsolutePath(), 9);
+  }
+
+  public void checkDamagedFileIsRepaired(String testFile, int damagedContentCount) throws RecorderException, IOException {
     try {
       // Check if opened home isn't repaired if preferences content isn't provided
       HomeRecorder recorder = new HomeFileRecorder(0, false, null, false);
       recorder.readHome(testFile);
       fail("Home shouldn't be readable");
     } catch (DamagedHomeRecorderException ex) {
-      assertEquals("Missing damaged content", 7, ex.getInvalidContent().size());
+      assertEquals("Missing damaged content", damagedContentCount, ex.getInvalidContent().size());
     }
     try {
       // Check if opened home will be fully repaired with preferences content
       HomeRecorder recorder = new HomeFileRecorder(0, false, new DefaultUserPreferences(), false);
       Home home = recorder.readHome(testFile);
       assertTrue("Home is not flagged as repaired", home.isRepaired());
+      // Check repaired home can be saved
+      File savedFile = File.createTempFile("repaired", "sh3d");
+      recorder.writeHome(home, savedFile.getAbsolutePath());
+      savedFile.delete();
     } catch (DamagedHomeRecorderException ex) {
       fail("Home should be repaired with default catalogs");
     }

@@ -34,6 +34,7 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -141,8 +142,8 @@ public class DefaultHomeInputStream extends FilterInputStream {
         } else {
           fileCopy = createTemporaryFileFromValidEntriesCount(fileCopy, validEntriesCount);
         }
-        contentDigests = readContentDigests(fileCopy);
       } 
+      contentDigests = readContentDigests(fileCopy);
       
       if (this.preferences != null 
           && this.preferencesContentsCache == null) {
@@ -168,9 +169,10 @@ public class DefaultHomeInputStream extends FilterInputStream {
       // by URLs relative to file 
       HomeObjectInputStream objectStream = new HomeObjectInputStream(zipIn, fileCopy, contentDigests);
       Home home = (Home)objectStream.readObject();
-      List<Content> invalidContent = objectStream.getInvalidContents();
-      if (!validZipFile) {
-        if (contentDigests != null && invalidContent.size() == 0) {
+      // Check all content is valid
+      if (!validZipFile || objectStream.containsInvalidContents()) {
+        List<Content> invalidContent = objectStream.getInvalidContents();
+        if (contentDigests != null && invalidContent.size() == 0) { 
           home.setRepaired(true);
         } else {
           throw new DamagedHomeIOException(home, invalidContent);
@@ -448,6 +450,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   private class HomeObjectInputStream extends ObjectInputStream {
     private File                     zipFile;
     private Map<URLContent, byte []> contentDigests;
+    private boolean                  containsInvalidContents;
     private List<Content>            invalidContents;
     private List<URLContent>         validContentsNotInPreferences;
 
@@ -477,6 +480,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
           ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
           
           if (!isValid(urlContent)) {
+            this.containsInvalidContents = true;
             // Try to find in user preferences a content with the same digest 
             // and repair silently damaged entry 
             URLContent preferencesContent = findUserPreferencesContent(urlContent);
@@ -499,6 +503,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
             if (this.contentDigests != null
                 && (contentDigest = this.contentDigests.get(urlContent)) != null
                 && !contentDigestManager.isContentDigestEqual(urlContent, contentDigest)) {
+              this.containsInvalidContents = true;
               // Try to find in user preferences a content with the same digest  
               URLContent preferencesContent = findUserPreferencesContent(urlContent);
               if (preferencesContent != null) {
@@ -529,15 +534,27 @@ public class DefaultHomeInputStream extends FilterInputStream {
     }
 
     /**
+     * Returns <code>true</code> if the stream contains some invalid content 
+     * whether it could be replaced or not.
+     */
+    public boolean containsInvalidContents() {
+      return this.containsInvalidContents;
+    }
+    
+    /**
      * Returns <code>true</code> if the given <code>content</code> exists.
      */
     private boolean isValid(Content content) {
       try {
-        content.openStream().close();
-        return true;
+        InputStream in = content.openStream();
+        try {
+          in.close();
+          return true;
+        } catch (NullPointerException e) {
+        }
       } catch (IOException e) {
-        return false;
       }
+      return false;
     }
     
     /**
@@ -564,7 +581,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
      * Returns the list of invalid content found during deserialization.
      */
     public List<Content> getInvalidContents() {
-      return this.invalidContents;
+      return Collections.unmodifiableList(this.invalidContents);
     }
   }
 }
