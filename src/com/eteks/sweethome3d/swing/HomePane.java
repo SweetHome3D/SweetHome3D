@@ -4339,7 +4339,8 @@ public class HomePane extends JRootPane implements HomeView {
     camerasPanel.add(new JLabel(message), BorderLayout.NORTH);
     camerasPanel.add(SwingTools.createScrollPane(camerasList), BorderLayout.CENTER);
 
-    if (SwingTools.showConfirmDialog(this, camerasPanel, title, camerasList) == JOptionPane.OK_OPTION) {
+    if (SwingTools.showConfirmDialog(this, camerasPanel, title, camerasList) == JOptionPane.OK_OPTION
+        && selectedCameras.size() > 0) {
       String confirmMessage = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.message");
       String delete = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.delete");
       String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.cancel");      
