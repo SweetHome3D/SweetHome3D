@@ -1168,7 +1168,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             // Open zipped stream
             zipIn = new ZipInputStream(urlContent.openStream());
             // Parse entries to see if one is readable
-            for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+            while (true) {
+              ZipEntry entry;
+              try {
+                if ((entry = zipIn.getNextEntry()) == null) {
+                  // No more entry
+                  break;
+                }
+              } catch (IllegalArgumentException ex) {
+                // Exception thrown if entry name can't be read
+                break;
+              }
+
               String entryName = entry.getName();
               // Ignore directory entries and entries starting by a dot
               if (!entryName.endsWith("/")) {
