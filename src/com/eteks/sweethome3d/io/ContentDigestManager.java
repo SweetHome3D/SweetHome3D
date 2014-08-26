@@ -205,25 +205,17 @@ public class ContentDigestManager {
     if (slashIndex > 0) {
       URL zipUrl = urlContent.getJAREntryURL();
       String entryDirectory = entryName.substring(0, slashIndex + 1);
-      ZipInputStream zipIn = null;
-      try {
-        MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
-        zipIn = new ZipInputStream(zipUrl.openStream());
-        for (String zipEntryName : getZipURLEntries(urlContent)) {
-          if (zipEntryName.startsWith(entryDirectory) 
-              && !zipEntryName.equals(entryDirectory)
-              && isSignificant(zipEntryName)) {
-            Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
-                + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
-            updateMessageDigest(messageDigest, siblingContent);    
-          }
-        }
-        return messageDigest.digest();
-      } finally {
-        if (zipIn != null) {
-          zipIn.close();
+      MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
+      for (String zipEntryName : getZipURLEntries(urlContent)) {
+        if (zipEntryName.startsWith(entryDirectory) 
+            && !zipEntryName.equals(entryDirectory)
+            && isSignificant(zipEntryName)) {
+          Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+              + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
+          updateMessageDigest(messageDigest, siblingContent);    
         }
       }
+      return messageDigest.digest();
     } else {
       return computeContentDigest(urlContent);
     }
@@ -233,25 +225,16 @@ public class ContentDigestManager {
    * Returns the digest of the given zip content.
    */
   private byte [] getZipContentDigest(URLContent urlContent) throws IOException, NoSuchAlgorithmException {
-    ZipInputStream zipIn = null;
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
-      // Open zipped stream that contains urlContent
-      zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
-      for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-        String zipEntryName = entry.getName();
-        if (isSignificant(zipEntryName)) {
-          Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
-              + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
-          updateMessageDigest(messageDigest, siblingContent);
-        }
-      }
-      return messageDigest.digest();
-    } finally {
-      if (zipIn != null) {
-        zipIn.close();
+    MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
+    // Open zipped stream that contains urlContent
+    for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+      if (isSignificant(zipEntryName)) {
+        Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
+            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
+        updateMessageDigest(messageDigest, siblingContent);
       }
     }
+    return messageDigest.digest();
   }
   
   /**

@@ -35,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.eteks.sweethome3d.model.Content;
@@ -240,21 +239,11 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   private void writeZipEntries(ZipOutputStream zipOut, 
                                String directory,
                                URLContent urlContent) throws IOException {
-    ZipInputStream zipIn = null;
-    try {
-      // Open zipped stream that contains urlContent
-      zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
-      // Write each zipped stream entry in home stream 
-      for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-        String zipEntryName = entry.getName();
-        Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
-            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
-        writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);
-      }
-    } finally {
-      if (zipIn != null) {
-        zipIn.close();
-      }
+    // Write in alphabetic order each zipped stream entry in home stream
+    for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+      Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
+          + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
+      writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);
     }
   }
 
