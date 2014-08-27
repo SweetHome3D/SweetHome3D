@@ -27,11 +27,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -84,7 +80,6 @@ import javax.media.j3d.SharedGroup;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
-import javax.media.j3d.TextureUnitState;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -111,7 +106,6 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
-import com.microcrowd.loader.java3d.max3ds.Loader3DS;
 import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.Loader;
 import com.sun.j3d.loaders.ParsingErrorException;
@@ -702,46 +696,9 @@ public class ModelManager {
     } else {
       urlContent = TemporaryURLContent.copyToTemporaryURLContent(content);
     }
-    
-    Loader3DS loader3DSWithNoStackTraces = new Loader3DS() {
-      @Override
-      public Scene load(URL url) throws FileNotFoundException, IncorrectFormatException {
-        try {
-          // Check magic number 0x4D4D
-          InputStream in = url.openStream();
-          int b1 = in.read();
-          int b2 = in.read();
-          if (b1 != 0x4D || b2 != 0x4D) {
-            throw new IncorrectFormatException("Bad magic number");
-          }
-          in.close();
-        } catch (FileNotFoundException ex) {
-          throw ex;
-        } catch (IOException ex) {
-          throw new ParsingErrorException("Can't read url " + url);
-        }
-        
-        PrintStream defaultSystemErrorStream = System.err;
-        try {
-          // Ignore stack traces on System.err during 3DS file loading
-          System.setErr(new PrintStream (new OutputStream() {
-              @Override
-              public void write(int b) throws IOException {
-                // Do nothing
-              }
-            }));
-          // Default load
-          return super.load(url);
-        } finally {
-          // Reset default err print stream
-          System.setErr(defaultSystemErrorStream);
-        }
-      }
-    };
-
     Loader []  defaultLoaders = new Loader [] {new OBJLoader(),
                                                new DAELoader(),
-                                               loader3DSWithNoStackTraces,
+                                               new Max3DSLoader(),
                                                new Lw3dLoader()};
     Loader [] loaders = new Loader [defaultLoaders.length + this.additionalLoaderClasses.length];
     System.arraycopy(defaultLoaders, 0, loaders, 0, defaultLoaders.length);

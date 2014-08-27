@@ -40,7 +40,6 @@
     <j2se version="1.5+" max-heap-size="640m"/>
     <jar href="lib/SweetHome3DApplet.jar" main="true"/>
     <jar href="lib/batik-svgpathparser-1.7.jar"/>
-    <jar href="lib/Loader3DS1_2u.jar"/>
     <property name="com.eteks.sweethome3d.deploymentInformation" value="Online"/>
     <property name="jnlp.packEnabled" value="false"/>
   </resources>

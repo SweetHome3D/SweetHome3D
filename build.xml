@@ -239,14 +239,6 @@
     <mkdir dir="deploy/lib"/>
     <!-- Copy jar files adding to their manifest security attributes 
          (these attributes are necessary to be able to call applet methods from JavaScript) -->
-    <jar destfile="deploy/lib/Loader3DS1_2u.jar" filesetmanifest="merge">
-      <manifest>
-        <attribute name="Permissions"               value="all-permissions"/>
-        <attribute name="Codebase"                  value="*"/>
-        <attribute name="Caller-Allowable-Codebase" value="*"/>
-      </manifest>
-      <zipfileset src="lib/Loader3DS1_2u.jar"/>
-    </jar>
     <jar destfile="deploy/lib/batik-svgpathparser-1.7.jar">
       <manifest>
         <attribute name="Permissions"               value="all-permissions"/>
