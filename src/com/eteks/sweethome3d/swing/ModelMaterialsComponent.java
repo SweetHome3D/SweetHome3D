@@ -611,7 +611,8 @@ public class ModelMaterialsComponent extends JButton implements View {
               defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot);
               // If read materials list is larger, ignore previous materials change
               // (this could be the case if loader interprets differently a 3D model file)
-              if (materials.length < defaultMaterials.length) {
+              if (materials != null
+                  && materials.length < defaultMaterials.length) {
                 materials = null;
               }
               fireContentsChanged(MaterialsListModel.this, 0, defaultMaterials.length);
