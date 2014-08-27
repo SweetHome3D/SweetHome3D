@@ -609,6 +609,11 @@ public class ModelMaterialsComponent extends JButton implements View {
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelRoot) {
               defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot);
+              // If read materials list is larger, ignore previous materials change
+              // (this could be the case if loader interprets differently a 3D model file)
+              if (materials.length < defaultMaterials.length) {
+                materials = null;
+              }
               fireContentsChanged(MaterialsListModel.this, 0, defaultMaterials.length);
             }
 
@@ -620,7 +625,9 @@ public class ModelMaterialsComponent extends JButton implements View {
 
       public Object getElementAt(int index) {
         if (this.materials != null
-            && this.materials [index] != null) {
+            && this.materials [index] != null
+            && this.materials [index].getName() != null
+            && this.materials [index].getName().equals(this.defaultMaterials [index].getName())) {
           return this.materials [index];
         } else {
           return new HomeMaterial(this.defaultMaterials [index].getName(), null, null, null); 
