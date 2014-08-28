@@ -247,10 +247,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     INSTANCE_NAME(0xB011),
     MORPH_SMOOTH(0xB015),
     BOUNDBOX(0xB014),
-    POS_TRACK_TAG(0xB020),
+    POSITION_TRACK_TAG(0xB020),
     COL_TRACK_TAG(0xB025),
-    ROT_TRACK_TAG(0xB021),
-    SCL_TRACK_TAG(0xB022),
+    ROTATION_TRACK_TAG(0xB021),
+    SCALE_TRACK_TAG(0xB022),
     MORPH_TRACK_TAG(0xB026),
     FOV_TRACK_TAG(0xB023),
     ROLL_TRACK_TAG(0xB024),
@@ -329,10 +329,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         128.0f));
   }
   
-  private Boolean                  useCaches;
-  private float                    masterScale;
-  private List<Mesh3DS>            meshes;
-  private Map<String, Material3DS> materials;
+  private Boolean                   useCaches;
+  private float                     masterScale;
+  private List<Mesh3DS>             meshes;
+  private Map<String, Material3DS>  materials;
 
   /**
    * Sets whether this loader should try or avoid accessing to URLs with cache.
@@ -430,7 +430,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       case MLIBMAGIC :
       case CMAGIC :
         magicNumberRead = true; 
-        do {
+        while (!in.isChunckEndReached()) {
           switch (in.readChunkHeader().getID()) {
             case M3D_VERSION :
               in.readLittleEndianUnsignedInt();
@@ -444,7 +444,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               break;
           }
           in.releaseChunk();
-        } while (in.isChunckEndReached());
+        } 
         break;
       case EDITOR_DATA :
         parseEditorData(in);
@@ -559,10 +559,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         // and in the few cases they are incorrect, the provided transformation isn't correct
         Transform3D transform = mesh.getTransform();
         if (transform != null) {
-          transformGroup = new TransformGroup();
-          transformGroup.setTransform(transform);
-          mainTransformGroup.addChild(transformGroup);
-        }
+          int type = transform.getBestType();
+          if (type != Transform3D.ZERO
+              && type != Transform3D.IDENTITY) {
+            transformGroup = new TransformGroup();
+            transformGroup.setTransform(transform);
+            mainTransformGroup.addChild(transformGroup);
+          }
         */
         
         int i = 0;
@@ -640,7 +643,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    * Parses 3DS data in the current chunk.
    */
   private void parseEditorData(ChunksInputStream in) throws IOException {
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MESH_VERSION : 
           in.readLittleEndianInt();
@@ -683,7 +686,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
+    } 
   }
 
   /**
@@ -691,7 +694,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    */
   private void parseNamedObject(ChunksInputStream in) throws IOException {
     String name = in.readString(64);
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case TRIANGLE_MESH_OBJECT : 
           this.meshes.add(parseMeshData(in, name));
@@ -710,7 +713,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
+    } 
   }
 
   /**
@@ -722,7 +725,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     Transform3D transform = null;
     Short  color = null;
     Face3DS [] faces = null; 
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MESH_MATRIX :
           transform = new Transform3D(parseMatrix(in));
@@ -739,7 +742,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
         case FACE_ARRAY : 
           faces = parseFacesData(in);
-          do {
+          while (!in.isChunckEndReached()) {
             switch (in.readChunkHeader().getID()) {
               case MESH_MATERIAL_GROUP : 
                 String materialName = in.readString(64);
@@ -765,7 +768,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                 break;
             }
             in.releaseChunk();
-          } while (in.isChunckEndReached());
+          } 
           break;
         case TEXTURE_COORDINATES : 
           textureCoordinates = new TexCoord2f [in.readLittleEndianUnsignedShort()];
@@ -781,7 +784,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
+    } 
     return new Mesh3DS(name, vertices, textureCoordinates, faces, color, transform);
   }
 
@@ -837,7 +840,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     Float transparency = null;
     boolean twoSided = false;
     Texture texture = null;
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MATERIAL_NAME : 
           name = in.readString(64);
@@ -900,7 +903,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
+    } 
     return new Material3DS(name, ambientColor, diffuseColor, specularColor, 
         shininess, transparency, texture, twoSided);
   }
@@ -911,7 +914,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private Color3f parseColor(ChunksInputStream in) throws IOException {
     boolean linearColor = false;
     Color3f color = null;
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case LINEAR_COLOR_24 :
           linearColor = true;
@@ -942,8 +945,12 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
-    return color;
+    } 
+    if (color != null) {
+      return color;
+    } else {
+      throw new IncorrectFormatException("Expected color value");
+    }
   }
 
   /**
@@ -951,7 +958,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    */
   private Float parsePercentage(ChunksInputStream in) throws IOException {
     Float percentage = null;
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case PERCENTAGE_INT :
           percentage = in.readLittleEndianShort() / 100.f;
@@ -961,8 +968,12 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
-    return percentage;
+    } 
+    if (percentage != null) {
+      return percentage;
+    } else {
+      throw new IncorrectFormatException("Expected percentage value");
+    }
   }
 
   /**
@@ -970,7 +981,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    */
   private Texture parseTextureMap(ChunksInputStream in) throws IOException {
     String mapName = null;
-    do {
+    while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MATERIAL_MAPNAME :
           mapName = in.readString(64);
@@ -993,7 +1004,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } while (in.isChunckEndReached());
+    } 
     
     if (mapName != null) {
       Texture texture = readTexture(in, mapName);
@@ -1147,7 +1158,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     }
     
     /**
-     * Checks if the chunk at the top of stack was entirely read. 
+     * Pops the chunk at the top of stack and checks it was entirely read. 
      */
     public void releaseChunk() {      
       Chunk3DS chunk = this.stack.pop();
@@ -1165,7 +1176,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
      */
     public boolean isChunckEndReached() {
       Chunk3DS chunk = this.stack.peek();
-      return chunk.getLength() != chunk.getReadLength();
+      return chunk.getLength() == chunk.getReadLength();
     }
     
     /**
