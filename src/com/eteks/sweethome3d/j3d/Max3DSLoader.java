@@ -563,22 +563,28 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               Material3DS material1 = face1.getMaterial();
               Material3DS material2 = face2.getMaterial();
               if (material1 == null) {
-                return -1;
+                if (material2 == null) {
+                  return face1.hashCode() - face2.hashCode();
+                } else {
+                  return -1;
+                }
               } else if (material2 == null) {
                 return 1;
               } else if (material1 != material2) {
                 return material1.hashCode() - material2.hashCode();
               } else {
                 Long smoothingGroup1 = face1.getSmoothingGroup();
+                Long smoothingGroup2 = face2.getSmoothingGroup();
                 if (smoothingGroup1 == null) {
-                  return -1;
-                } else {
-                  Long smoothingGroup2 = face2.getSmoothingGroup();
                   if (smoothingGroup2 == null) {
-                    return 1;
+                    return face1.hashCode() - face2.hashCode();
                   } else {
-                    return smoothingGroup1.compareTo(smoothingGroup2);
+                    return -1;
                   }
+                } else if (smoothingGroup2 == null) {
+                  return 1;
+                } else {
+                  return smoothingGroup1.compareTo(smoothingGroup2);
                 }
               }
             }
