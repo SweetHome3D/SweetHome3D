@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -46,16 +47,23 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Group;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.SharedGroup;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
+import javax.vecmath.Quat4d;
+import javax.vecmath.SingularMatrixException;
 import javax.vecmath.TexCoord2f;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.Loader;
@@ -242,11 +250,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     L_TARGET_NODE_TAG(0xB006),
     SPOTLIGHT_NODE_TAG(0xB007),
     NODE_ID(0xB030),
-    NODE_HDR(0xB010),
+    NODE_HIERARCHY(0xB010),
     PIVOT(0xB013),
     INSTANCE_NAME(0xB011),
     MORPH_SMOOTH(0xB015),
-    BOUNDBOX(0xB014),
+    BOUNDING_BOX(0xB014),
     POSITION_TRACK_TAG(0xB020),
     COL_TRACK_TAG(0xB025),
     ROTATION_TRACK_TAG(0xB021),
@@ -318,6 +326,12 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     }
   };
 
+  private final static int TRACK_KEY_USE_TENS      = 0x01;
+  private final static int TRACK_KEY_USE_CONT      = 0x02;
+  private final static int TRACK_KEY_USE_BIAS      = 0x04;
+  private final static int TRACK_KEY_USE_EASE_TO   = 0x08;
+  private final static int TRACK_KEY_USE_EASE_FROM = 0x10;
+
   private final static Appearance DEFAULT_APPEARANCE;
   
   static {
@@ -329,10 +343,12 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         128.0f));
   }
   
-  private Boolean                   useCaches;
-  private float                     masterScale;
-  private List<Mesh3DS>             meshes;
-  private Map<String, Material3DS>  materials;
+  private Boolean                           useCaches;
+  private float                             masterScale;
+  private List<Mesh3DS>                     meshes;
+  private Map<String, Material3DS>          materials;
+  private Group                             root;
+  private Map<String, List<TransformGroup>> meshesGroups;
 
   /**
    * Sets whether this loader should try or avoid accessing to URLs with cache.
@@ -422,7 +438,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private Scene parseStream(ChunksInputStream in) throws IOException {
     this.masterScale = 1;
     this.meshes = new ArrayList<Mesh3DS>(); 
-    this.materials = new HashMap<String, Material3DS>();
+    this.materials = new LinkedHashMap<String, Material3DS>();
+    this.meshesGroups = new HashMap<String, List<TransformGroup>>();
     
     boolean magicNumberRead = false; 
     switch (in.readChunkHeader().getID()) {
@@ -439,6 +456,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               parseEditorData(in);
               break;
             case KEY_FRAMER_DATA :
+              parseKeyFramerData(in);
+              break;
             default :
               in.readUntilChunkEnd();
               break;
@@ -463,6 +482,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     } finally {
       this.meshes = null;
       this.materials = null;
+      this.meshesGroups = null;
+      this.root = null;
     }
   }
   
@@ -479,8 +500,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     Transform3D scale = new Transform3D();
     scale.setScale(this.masterScale);
     rotation.mul(scale);
-    TransformGroup mainTransformGroup = new TransformGroup(rotation);
-    sceneRoot.addChild(mainTransformGroup);
+    Group mainGroup = new TransformGroup(rotation);
+    sceneRoot.addChild(mainGroup);
+    // If key framer data contained a hierarchy, add it to main group
+    if (this.root != null) {
+      mainGroup.addChild(this.root);
+      mainGroup = this.root;
+    }
     
     // Create appearances from 3DS materials
     Map<Material3DS, Appearance> appearances = new HashMap<Max3DSLoader.Material3DS, Appearance>();
@@ -501,13 +527,20 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       if (diffuseColor != null) {
         appearanceMaterial.setDiffuseColor(diffuseColor);
       }
-      Color3f specularColor = material.getSpecularColor();
-      if (specularColor != null) {
-        appearanceMaterial.setSpecularColor(specularColor);
-      }
       Float shininess = material.getShininess();
       if (shininess != null) {
-        appearanceMaterial.setShininess(shininess * 128);
+        appearanceMaterial.setShininess(shininess * 128 * 0.6f);
+      }
+      Color3f specularColor = material.getSpecularColor();
+      if (specularColor != null) {
+        if (shininess != null) {
+          // Reduce specular color shininess effect
+          Color3f modifiedSpecularColor = new Color3f(specularColor);
+          modifiedSpecularColor.scale(shininess);
+          appearanceMaterial.setSpecularColor(modifiedSpecularColor);
+        } else {
+          appearanceMaterial.setSpecularColor(specularColor);
+        }
       }
       
       Float transparency = material.getTransparency();
@@ -553,21 +586,34 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         
         Point3f [] vertices = mesh.getVertices();
         TexCoord2f [] textureCoordinates = mesh.getTextureCoordinates();
-        TransformGroup transformGroup = mainTransformGroup;
-        /* 
-        // Do not use transformations: Coordinates are always already transformed in 3DS streams
-        // and in the few cases they are incorrect, the provided transformation isn't correct
+        // Seek the parent of this mesh
+        Group parentGroup;
+        List<TransformGroup> meshGroups = this.meshesGroups.get(mesh.getName());
+        if (meshGroups == null) {
+          parentGroup = mainGroup;
+        } else if (meshGroups.size() == 1) {
+          parentGroup = meshGroups.get(0);
+        } else {
+          SharedGroup sharedGroup = new SharedGroup();
+          for (TransformGroup meshGroup : meshGroups) {
+            meshGroup.addChild(new Link(sharedGroup));
+          }
+          parentGroup = sharedGroup;
+        }
+        
+        // Apply mesh transform
         Transform3D transform = mesh.getTransform();
         if (transform != null) {
           int type = transform.getBestType();
           if (type != Transform3D.ZERO
               && type != Transform3D.IDENTITY) {
-            transformGroup = new TransformGroup();
+            TransformGroup transformGroup = new TransformGroup();
             transformGroup.setTransform(transform);
-            mainTransformGroup.addChild(transformGroup);
+            parentGroup.addChild(transformGroup);
+            parentGroup = transformGroup;
           }
-        */
-        
+        }
+
         int i = 0;
         Shape3D shape = null;
         Material3DS material = null;
@@ -627,7 +673,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                   PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0));
             }
             shape = new Shape3D(geometryArray, appearance);   
-            transformGroup.addChild(shape);
+            parentGroup.addChild(shape);
             scene.addNamedObject(mesh.getName() + (i == 0 ? "" : String.valueOf(i)), shape);
           } else {
             shape.addGeometry(geometryArray);
@@ -728,7 +774,12 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MESH_MATRIX :
-          transform = new Transform3D(parseMatrix(in));
+          try { 
+            transform = new Transform3D(parseMatrix(in));
+            transform.invert();
+          } catch (SingularMatrixException ex) {
+            transform = null;
+          }
           break;
         case MESH_COLOR : 
           color = in.readUnsignedByte();
@@ -789,28 +840,147 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the matrix read from the current chunk.  
+   * Parses key framer data.
    */
-  private Transform3D parseMatrix(ChunksInputStream in) throws IOException {
-    float [] matrix = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1};
-    matrix [0] = in.readLittleEndianFloat();
-    matrix [4] = in.readLittleEndianFloat();
-    matrix [8] = in.readLittleEndianFloat();
-    matrix [1] = in.readLittleEndianFloat();
-    matrix [5] = in.readLittleEndianFloat();
-    matrix [9] = in.readLittleEndianFloat();
-    matrix [2] = in.readLittleEndianFloat();
-    matrix [6] = in.readLittleEndianFloat();
-    matrix [10] = in.readLittleEndianFloat();
-  
-    matrix [3] = in.readLittleEndianFloat();
-    matrix [7] = in.readLittleEndianFloat();
-    matrix [11] = in.readLittleEndianFloat();
-    return new Transform3D(matrix);
+  private void parseKeyFramerData(ChunksInputStream in) throws IOException {
+    List<TransformGroup> transformGroups = new ArrayList<TransformGroup>();
+    TransformGroup currentTransformGroup = null;
+    while (!in.isChunckEndReached()) {
+      switch (in.readChunkHeader().getID()) {
+        case OBJECT_NODE_TAG :
+          boolean meshGroup = true;
+          Vector3f pivot = null;
+          Vector3f position = null;
+          float rotationAngle = 0f;
+          Vector3f rotationAxis = null;
+          Vector3f scale = null;
+          while (!in.isChunckEndReached()) {
+            switch (in.readChunkHeader().getID()) {
+              case NODE_HIERARCHY :
+                String meshName = in.readString(64);
+                meshGroup = !"$$$DUMMY".equals(meshName);
+                in.readLittleEndianUnsignedShort(); 
+                in.readLittleEndianUnsignedShort();
+                short parentId = in.readLittleEndianShort();
+                TransformGroup transformGroup = new TransformGroup();
+                if (this.root == null) {
+                  this.root = new TransformGroup();
+                }
+                if (parentId == -1) {
+                  this.root.addChild(transformGroup);
+                } else {
+                  if (parentId > transformGroups.size() - 1) {
+                    throw new IncorrectFormatException("Inconsistent nodes hierarchy " );
+                  }
+                  transformGroups.get(parentId).addChild(transformGroup);                  
+                }
+                transformGroups.add(transformGroup);
+                if (meshGroup) {
+                  // Store group parent of mesh 
+                  List<TransformGroup> meshGroups = this.meshesGroups.get(meshName);
+                  if (meshGroups == null) {
+                    meshGroups = new ArrayList<TransformGroup>();
+                    this.meshesGroups.put(meshName, meshGroups);
+                  }
+                  meshGroups.add(transformGroup);
+                }
+                currentTransformGroup = transformGroup;
+                break;
+              case PIVOT :
+                pivot = parseVector(in);
+                break;
+              case POSITION_TRACK_TAG :
+                parseKeyFramerTrackStart(in);
+                position = parseVector(in);
+                // Ignore next frames
+                in.readUntilChunkEnd();
+                break;
+              case ROTATION_TRACK_TAG :
+                parseKeyFramerTrackStart(in);
+                rotationAngle = in.readLittleEndianFloat();
+                rotationAxis = parseVector(in);
+                // Ignore next frames
+                in.readUntilChunkEnd();
+                break;
+              case SCALE_TRACK_TAG :
+                parseKeyFramerTrackStart(in);
+                scale = parseVector(in);
+                // Ignore next frames
+                in.readUntilChunkEnd();
+                break;
+              default:
+                in.readUntilChunkEnd();
+                break;
+            }
+            in.releaseChunk();
+          }
+          
+          // Prepare transformations
+          Transform3D transform = new Transform3D();
+          if (position != null) {
+            Transform3D positionTransform = new Transform3D();
+            positionTransform.setTranslation(position);
+            transform.mul(positionTransform);
+          } 
+          if (rotationAxis != null
+              && rotationAngle != 0) {
+            double length = rotationAxis.length();
+            if (length > 0) {
+              float halfAngle = -rotationAngle / 2;
+              double sin = Math.sin(halfAngle) / length;
+              double cos = Math.cos(halfAngle);
+              Transform3D rotationTransform = new Transform3D();
+              rotationTransform.set(new Quat4d(rotationAxis.x * sin, rotationAxis.y * sin, rotationAxis.z * sin, cos));
+              transform.mul(rotationTransform);
+            }
+          } 
+          if (scale != null) {
+            Transform3D scaleTransform = new Transform3D();
+            scaleTransform.setScale(new Vector3d(scale));
+            transform.mul(scaleTransform);
+          }
+          if (pivot != null 
+              && meshGroup) {
+            Transform3D pivotTransform = new Transform3D();
+            pivot.negate();
+            pivotTransform.setTranslation(pivot);
+            transform.mul(pivotTransform);
+          }
+          currentTransformGroup.setTransform(transform);
+          break;
+        default:
+          in.readUntilChunkEnd();
+          break;
+      }
+      in.releaseChunk();
+    } 
+  }
+
+  /**
+   * Parses the start of a key framer track.
+   */
+  private void parseKeyFramerTrackStart(ChunksInputStream in) throws IOException {
+    in.readLittleEndianUnsignedShort(); // Flags
+    in.readLittleEndianUnsignedInt();
+    in.readLittleEndianUnsignedInt();
+    in.readLittleEndianInt();           // Key frames count
+    in.readLittleEndianInt();           // Key frame index
+    int flags = in.readLittleEndianUnsignedShort(); 
+    if ((flags & TRACK_KEY_USE_TENS) != 0) {
+      in.readLittleEndianFloat();
+    }
+    if ((flags & TRACK_KEY_USE_CONT) != 0) {
+      in.readLittleEndianFloat();
+    }
+    if ((flags & TRACK_KEY_USE_BIAS) != 0) {
+      in.readLittleEndianFloat();
+    }
+    if ((flags & TRACK_KEY_USE_EASE_TO) != 0) {
+      in.readLittleEndianFloat();
+    }
+    if ((flags & TRACK_KEY_USE_EASE_FROM) != 0) {
+      in.readLittleEndianFloat();
+    }
   }
 
   /**
@@ -1083,6 +1253,39 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the matrix read from the current chunk.  
+   */
+  private Transform3D parseMatrix(ChunksInputStream in) throws IOException {
+    float [] matrix = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1};
+    matrix [0] = in.readLittleEndianFloat();
+    matrix [4] = in.readLittleEndianFloat();
+    matrix [8] = in.readLittleEndianFloat();
+    matrix [1] = in.readLittleEndianFloat();
+    matrix [5] = in.readLittleEndianFloat();
+    matrix [9] = in.readLittleEndianFloat();
+    matrix [2] = in.readLittleEndianFloat();
+    matrix [6] = in.readLittleEndianFloat();
+    matrix [10] = in.readLittleEndianFloat();
+  
+    matrix [3] = in.readLittleEndianFloat();
+    matrix [7] = in.readLittleEndianFloat();
+    matrix [11] = in.readLittleEndianFloat();
+    return new Transform3D(matrix);
+  }
+
+  /**
+   * Returns the vector read from the current chunk.  
+   */
+  private Vector3f parseVector(ChunksInputStream in) throws IOException {
+    return new Vector3f(in.readLittleEndianFloat(), 
+        in.readLittleEndianFloat(), in.readLittleEndianFloat());
   }
 
   /**
