@@ -1255,13 +1255,19 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         URL baseUrl = in.getBaseURL();
         if (baseUrl != null) {
           if ("file".equals(baseUrl.getProtocol())) {
-            String [] list = new File(baseUrl.getFile()).getParentFile().list();
-            if (list != null) {
-              for (String file : list) {
-                if (file.equalsIgnoreCase(mapName)) {
-                  return readTexture(in, file);
+            try {
+              String [] list = new File(baseUrl.toURI()).getParentFile().list();
+              if (list != null) {
+                for (String file : list) {
+                  if (file.equalsIgnoreCase(mapName)) {
+                    return readTexture(in, file);
+                  }
                 }
               }
+            } catch (URISyntaxException ex) {
+              IOException ex2 = new IOException("Can't access file");
+              ex2.initCause(ex);
+              throw ex2;
             }
           } else if ("jar".equals(baseUrl.getProtocol())) {
             String file = baseUrl.getFile();
