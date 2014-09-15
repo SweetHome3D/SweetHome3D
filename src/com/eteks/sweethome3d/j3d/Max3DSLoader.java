@@ -30,17 +30,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
@@ -725,7 +728,6 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             geometryInfo.setTextureCoordinates(0, textureCoordinates);
             geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
-          geometryInfo.recomputeIndices();
           GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
           
           if (shape == null || material != firstMaterial) {
@@ -1265,25 +1267,56 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             String file = baseUrl.getFile();
             int entryIndex = file.indexOf('!') + 2;
             URL zipUrl = new URL(file.substring(0, entryIndex - 2)); 
-            // Seek map name in same sub folder as base URL
+            // Seek map name in the same sub folder as base URL
             String mapNamePath = file.substring(entryIndex, file.lastIndexOf('/') + 1) + mapName;
-            ZipInputStream zipIn = null;
-            try {
-              // Search an entry of zip url equal to mapNamePath ignoring case
-              zipIn = new ZipInputStream(zipUrl.openStream());
-              for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-                String entryName = entry.getName();
-                if (entryName.equalsIgnoreCase(mapNamePath)) {
-                  return readTexture (in, entryName.substring(entryName.lastIndexOf('/') + 1));
-                }
-              }
-              return null;
-            } finally {
-              if (zipIn != null) {
-                zipIn.close();
-              }
-            } 
+            String entryName = getEntryNameIgnoreCase(zipUrl, mapNamePath);
+            if (entryName != null) {
+              return readTexture (in, entryName.substring(entryName.lastIndexOf('/') + 1));
+            }
           }
+        }
+      }
+    }
+    return null;
+  }
+  
+  /**
+   * Returns the entry in a zip file equal to the given name ignoring case.
+   */
+  private String getEntryNameIgnoreCase(URL zipUrl, String searchedEntryName) throws IOException {
+    if ("file".equals(zipUrl.getProtocol())) {
+      // If file protocol, access entries directly faster
+      ZipFile zipFile = null;
+      try {
+        zipFile = new ZipFile(new File(zipUrl.toURI()));
+        for (Enumeration<? extends ZipEntry> enumEntry = zipFile.entries(); enumEntry.hasMoreElements(); ) {
+          String entryName = enumEntry.nextElement().getName();
+          if (entryName.equalsIgnoreCase(searchedEntryName)) {
+            return entryName;
+          }
+        }
+      } catch (URISyntaxException ex) {
+        IOException ex2 = new IOException("Can't access file");
+        ex2.initCause(ex);
+        throw ex2;
+      } finally {
+        if (zipFile != null) {
+          zipFile.close();
+        }
+      }
+    } else {
+      ZipInputStream zipIn = null;
+      try {
+        zipIn = new ZipInputStream(zipUrl.openStream());
+        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+          String entryName = entry.getName();
+          if (entryName.equalsIgnoreCase(searchedEntryName)) {
+            return entryName;
+          }
+        }
+      } finally {
+        if (zipIn != null) {
+          zipIn.close();
         }
       }
     }
