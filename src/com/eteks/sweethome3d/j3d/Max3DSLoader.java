@@ -76,7 +76,7 @@ import com.sun.j3d.utils.image.TextureLoader;
 
 /**
  * A loader for 3DS streams.<br> 
- * Mainly an adaptation in Java of the GNU LGPL C library available at www.lib3ds.org.
+ * Mainly an adaptation in Java 3D of the GNU LGPL C library available at www.lib3ds.org.
  * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret
  */
@@ -695,8 +695,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           // Search how many faces share the same characteristics
           int max = i;
           while (++max < faces.length) {
-            Face3DS face = faces [max];
-            if (firstMaterial != face.getMaterial()) {
+            if (firstMaterial != faces [max].getMaterial()) {
               break;
             }
           }
@@ -715,6 +714,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             }
           }
           
+          // Generate geometry 
           GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
           geometryInfo.setCoordinates(vertices);
           geometryInfo.setCoordinateIndices(coordinateIndices);
@@ -726,7 +726,6 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
           geometryInfo.recomputeIndices();
-
           GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
           
           if (shape == null || material != firstMaterial) {
