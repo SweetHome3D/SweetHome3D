@@ -1263,14 +1263,18 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             }
           } else if ("jar".equals(baseUrl.getProtocol())) {
             String file = baseUrl.getFile();
-            URL zipUrl = new URL(file.substring(0, file.indexOf('!'))); 
+            int entryIndex = file.indexOf('!') + 2;
+            URL zipUrl = new URL(file.substring(0, entryIndex - 2)); 
+            // Seek map name in same sub folder as base URL
+            String mapNamePath = file.substring(entryIndex, file.lastIndexOf('/') + 1) + mapName;
             ZipInputStream zipIn = null;
             try {
-              // Search an entry of zip url equal to mapName ignoring case
+              // Search an entry of zip url equal to mapNamePath ignoring case
               zipIn = new ZipInputStream(zipUrl.openStream());
               for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-                if (entry.getName().equalsIgnoreCase(mapName)) {
-                  return readTexture (in, entry.getName());
+                String entryName = entry.getName();
+                if (entryName.equalsIgnoreCase(mapNamePath)) {
+                  return readTexture (in, entryName.substring(entryName.lastIndexOf('/') + 1));
                 }
               }
               return null;
