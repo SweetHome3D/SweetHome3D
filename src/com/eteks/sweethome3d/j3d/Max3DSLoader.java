@@ -72,7 +72,6 @@ import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.SceneBase;
 import com.sun.j3d.utils.geometry.GeometryInfo;
-import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
@@ -557,41 +556,106 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     for (Mesh3DS mesh : this.meshes) {
       Face3DS [] faces = mesh.getFaces();
       if (faces != null && faces.length > 0) {
-        // Sort faces to ensure they are cited smoothing group by smoothing group
+        Point3f [] vertices = mesh.getVertices();
+        // Compute default normals
+        Mesh3DSSharedVertex [] sharedVertices = new Mesh3DSSharedVertex [vertices.length];
+        Vector3f [] defaultNormals = new Vector3f [3 * faces.length];
+        Vector3f vector1 = new Vector3f();
+        Vector3f vector2 = new Vector3f();
+        for (int i = 0, k = 0; i < faces.length; i++) {
+          Face3DS face = faces [i];
+          int [] vertexIndices = face.getVertexIndices();
+          for (int j = 0; j < 3; j++, k++) {
+            int vertexIndex = vertexIndices [j];
+            vector1.sub(vertices [vertexIndices [j < 2 ? j + 1 : 0]], vertices [vertexIndex]);
+            vector2.sub(vertices [vertexIndices [j > 0 ? j - 1 : 2]], vertices [vertexIndex]);
+            Vector3f normal = new Vector3f();
+            normal.cross(vector1, vector2);
+            float length = normal.length();
+            if (length > 0) {
+              float weight = (float)Math.atan2(length, vector1.dot(vector2));
+              normal.scale(weight / length);
+            }
+            
+            // Add vertex index to the list of shared vertices 
+            Mesh3DSSharedVertex sharedVertice = new Mesh3DSSharedVertex(i, normal);
+            sharedVertice.setNextVertex(sharedVertices [vertexIndex]);
+            sharedVertices [vertexIndex] = sharedVertice;
+            defaultNormals [k] = normal;
+          }
+        }
+        
+        // Adjust the normals of shared vertices belonging to no smoothing group 
+        // or to the same smoothing group
+        Vector3f [] normals = new Vector3f [3 * faces.length];
+        for (int i = 0, k = 0; i < faces.length; i++) {
+          Face3DS face = faces [i];
+          int [] vertexIndices = face.getVertexIndices();
+          int [] normalIndices = new int [3];
+          for (int j = 0; j < 3; j++, k++) {
+            int vertexIndex = vertexIndices [j];
+            Vector3f normal = new Vector3f();
+            if (face.getSmoothingGroup() == null) {
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
+                   sharedVertex != null; 
+                   sharedVertex = sharedVertex.getNextVertex()) {
+                // Take into account only normals of shared vertex with a crease angle  
+                // smaller than PI / 2 (i.e. dot product > 0) 
+                if (faces [sharedVertex.getFaceIndex()].getSmoothingGroup() == null
+                    && (sharedVertex.getNormal() == defaultNormals [k]
+                        || sharedVertex.getNormal().dot(defaultNormals [k]) > 0)) {
+                  normal.add(sharedVertex.getNormal());
+                }
+              }
+            } else {
+              long smoothingGroup = face.getSmoothingGroup();
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
+                   sharedVertex != null; 
+                   sharedVertex = sharedVertex.getNextVertex()) {
+                Face3DS sharedIndexFace = faces [sharedVertex.getFaceIndex()];
+                if (sharedIndexFace.getSmoothingGroup() != null
+                    && (face.getSmoothingGroup() & sharedIndexFace.getSmoothingGroup()) != 0) {
+                  smoothingGroup |= sharedIndexFace.getSmoothingGroup();
+                }
+              }
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
+                  sharedVertex != null; 
+                  sharedVertex = sharedVertex.getNextVertex()) {
+                Face3DS sharedIndexFace = faces [sharedVertex.getFaceIndex()];
+                if (sharedIndexFace.getSmoothingGroup() != null
+                    && (smoothingGroup & sharedIndexFace.getSmoothingGroup()) != 0) {
+                  normal.add(sharedVertex.getNormal());
+                }
+              }
+            }
+            
+            normal.normalize();
+            normals [k] = normal;
+            normalIndices [j] = k;
+          }
+          
+          face.setNormalIndices(normalIndices);
+        }
+        
+        // Sort faces to ensure they are cited material group by material group
         Arrays.sort(faces, new Comparator<Face3DS>() {
             public int compare(Face3DS face1, Face3DS face2) {
               Material3DS material1 = face1.getMaterial();
               Material3DS material2 = face2.getMaterial();
               if (material1 == null) {
                 if (material2 == null) {
-                  return face1.hashCode() - face2.hashCode();
+                  return face1.getIndex() - face2.getIndex();
                 } else {
                   return -1;
                 }
               } else if (material2 == null) {
                 return 1;
-              } else if (material1 != material2) {
-                return material1.hashCode() - material2.hashCode();
               } else {
-                Long smoothingGroup1 = face1.getSmoothingGroup();
-                Long smoothingGroup2 = face2.getSmoothingGroup();
-                if (smoothingGroup1 == null) {
-                  if (smoothingGroup2 == null) {
-                    return face1.hashCode() - face2.hashCode();
-                  } else {
-                    return -1;
-                  }
-                } else if (smoothingGroup2 == null) {
-                  return 1;
-                } else {
-                  return smoothingGroup1.compareTo(smoothingGroup2);
-                }
+                return material1.hashCode() - material2.hashCode();
               }
             }
           });
         
-        Point3f [] vertices = mesh.getVertices();
-        TexCoord2f [] textureCoordinates = mesh.getTextureCoordinates();
         // Seek the parent of this mesh
         Group parentGroup;
         List<TransformGroup> meshGroups = this.meshesGroups.get(mesh.getName());
@@ -620,51 +684,49 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           }
         }
 
+        TexCoord2f [] textureCoordinates = mesh.getTextureCoordinates();
         int i = 0;
         Shape3D shape = null;
         Material3DS material = null;
         while (i < faces.length) {
           Face3DS firstFace = faces [i];
           Material3DS firstMaterial = firstFace.getMaterial();
-          Long firstSmoothingGroup = firstFace.getSmoothingGroup();
           
           // Search how many faces share the same characteristics
           int max = i;
           while (++max < faces.length) {
             Face3DS face = faces [max];
-            if (firstMaterial != face.getMaterial()
-                || (firstSmoothingGroup != face.getSmoothingGroup()
-                    && (firstSmoothingGroup == null 
-                        || !firstSmoothingGroup.equals(face.getSmoothingGroup())))) {
+            if (firstMaterial != face.getMaterial()) {
               break;
             }
           }
           
           // Create indices arrays for the faces with an index between i and max
           int faceCount = max - i;
-          int [] coordinatesIndices = new int [faceCount * 3];
+          int [] coordinateIndices = new int [faceCount * 3];
+          int [] normalIndices     = new int [faceCount * 3];
           for (int j = 0, k = 0; j < faceCount; j++) {
             Face3DS face = faces [i + j];
-            coordinatesIndices [k++] = face.getVertexAIndex();
-            coordinatesIndices [k++] = face.getVertexBIndex();
-            coordinatesIndices [k++] = face.getVertexCIndex();
+            int [] vertexIndices = face.getVertexIndices();
+            int [] faceNormalIndices = face.getNormalIndices();
+            for (int l = 0; l < 3; l++, k++) {
+              coordinateIndices [k] = vertexIndices [l];
+              normalIndices [k]     = faceNormalIndices [l];
+            }
           }
           
           GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
           geometryInfo.setCoordinates(vertices);
-          geometryInfo.setCoordinateIndices(coordinatesIndices);
+          geometryInfo.setCoordinateIndices(coordinateIndices);
+          geometryInfo.setNormals(normals);
+          geometryInfo.setNormalIndices(normalIndices);
           if (textureCoordinates != null) {
             geometryInfo.setTextureCoordinateParams(1, 2);
             geometryInfo.setTextureCoordinates(0, textureCoordinates);
-            geometryInfo.setTextureCoordinateIndices(0, coordinatesIndices);
+            geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
           geometryInfo.recomputeIndices();
-          
-          NormalGenerator normalGenerator = new NormalGenerator(Math.PI / 2);
-          if (firstSmoothingGroup == null) {
-            normalGenerator.setCreaseAngle(Math.PI);
-          }
-          normalGenerator.generateNormals(geometryInfo);
+
           GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
           
           if (shape == null || material != firstMaterial) {
@@ -876,7 +938,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                   this.root.addChild(transformGroup);
                 } else {
                   if (parentId > transformGroups.size() - 1) {
-                    throw new IncorrectFormatException("Inconsistent nodes hierarchy " );
+                    throw new IncorrectFormatException("Inconsistent nodes hierarchy");
                   }
                   transformGroups.get(parentId).addChild(transformGroup);                  
                 }
@@ -996,8 +1058,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     Face3DS [] faces = new Face3DS [in.readLittleEndianUnsignedShort()];
     for (int i = 0; i < faces.length; i++) {
       faces [i] = new Face3DS(
+        i, 
         in.readLittleEndianUnsignedShort(), 
-        in.readLittleEndianUnsignedShort(), 
+        in.readLittleEndianUnsignedShort(),
         in.readLittleEndianUnsignedShort(),
         in.readLittleEndianUnsignedShort());
     }
@@ -1550,31 +1613,35 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    * 3DS face.
    */
   private static class Face3DS {
-    private int         vertexAIndex;
-    private int         vertexBIndex;
-    private int         vertexCIndex;
+    private int         index;
+    private int []      vertexIndices;
+    private int []      normalIndices;
     private Material3DS material;
     private Long        smoothingGroup;
 
-    public Face3DS(int vertexAIndex,
+    public Face3DS(int index,
+                   int vertexAIndex,
                    int vertexBIndex,
-                   int vertexCIndex,
+                   int vertexCIndex, 
                    int flags) {
-      this.vertexAIndex = vertexAIndex;
-      this.vertexBIndex = vertexBIndex;
-      this.vertexCIndex = vertexCIndex;
+      this.index = index;
+      this.vertexIndices = new int [] {vertexAIndex, vertexBIndex, vertexCIndex};
     }
     
-    public int getVertexAIndex() {
-      return this.vertexAIndex;
+    public int getIndex() {
+      return this.index;
+    }
+    
+    public int [] getVertexIndices() {
+      return this.vertexIndices;
     }
 
-    public int getVertexBIndex() {
-      return this.vertexBIndex;
+    public void setNormalIndices(int [] normalIndices) {
+      this.normalIndices = normalIndices;
     }
-
-    public int getVertexCIndex() {
-      return this.vertexCIndex;
+    
+    public int [] getNormalIndices() {
+      return this.normalIndices;
     }
 
     public void setMaterial(Material3DS material) {
@@ -1649,6 +1716,36 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     
     public Texture getTexture() {
       return this.texture;
+    }
+  }
+  
+  /**
+   * Vertex shared between faces in a mesh.
+   */
+  private static class Mesh3DSSharedVertex {
+    private int                 faceIndex;
+    private Vector3f            normal;
+    private Mesh3DSSharedVertex nextVertex;
+    
+    public Mesh3DSSharedVertex(int faceIndex, Vector3f normal) {
+      this.faceIndex = faceIndex;
+      this.normal = normal;
+    }
+    
+    public int getFaceIndex() {
+      return this.faceIndex;
+    }
+    
+    public Vector3f getNormal() {
+      return this.normal;
+    }
+    
+    public void setNextVertex(Mesh3DSSharedVertex nextVertex) {
+      this.nextVertex = nextVertex;
+    }
+    
+    public Mesh3DSSharedVertex getNextVertex() {
+      return this.nextVertex;
     }
   }
 }
