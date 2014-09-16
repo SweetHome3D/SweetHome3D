@@ -632,7 +632,15 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               }
             }
             
-            normal.normalize();
+            if (normal.lengthSquared() != 0) {
+              normal.normalize();
+            } else {
+              // If smoothing leads to a null normal, use default normal
+              normal.set(defaultNormals [k]);
+              if (normal.lengthSquared() != 0) {
+                normal.normalize();
+              }
+            }
             normals [k] = normal;
             normalIndices [j] = k;
           }
