@@ -176,7 +176,7 @@ public class HomeAppletController extends HomePluginController {
   /**
    * Checks the length of data and executes <code>saveTask</code> if length is ok. 
    */
-  public void chekHomeLengthAndSave(final Runnable saveTask) {
+  private void chekHomeLengthAndSave(final Runnable saveTask) {
     if (this.homeMaximumLength > 0) {
       // Check home length in a threaded task
       Callable<Void> exportToObjTask = new Callable<Void>() {
