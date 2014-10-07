@@ -194,7 +194,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
    */
   private static class TexturePanel extends JPanel {
     private static final int PREVIEW_ICON_SIZE = 128; 
-    private static String searchFilterText = "";
+    private static String    searchFilterText = "";
+    private static Dimension dialogPreferredSize; 
     
     private TextureChoiceController controller;
     
@@ -821,7 +822,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       dialog.setResizable(true);
       // Pack again because resize decorations may have changed dialog preferred size
       dialog.pack();
-      dialog.setMinimumSize(getPreferredSize());
+      dialog.setMinimumSize(dialog.getPreferredSize());
+      if (dialogPreferredSize != null
+          && dialogPreferredSize.width >= dialog.getWidth()
+          && dialogPreferredSize.height >= dialog.getHeight()) {
+        dialog.setSize(dialogPreferredSize);
+      }
       // Initialize search field value once list preferred size is set      
       searchTextField.setText(searchFilterText);
       // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
@@ -847,11 +853,14 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       dialog.setVisible(true);
       dialog.dispose();
       ToolTipManager.sharedInstance().unregisterComponent(this.availableTexturesList);
+      dialogPreferredSize = dialog.getSize();
       searchFilterText = this.searchTextField.getText();
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
         HomeTexture selectedTexture = getSelectedTexture();
         this.controller.setTexture(selectedTexture);
-        this.controller.addRecentTexture(selectedTexture);
+        if (selectedTexture != null) {
+          this.controller.addRecentTexture(selectedTexture);
+        }
       }
     }
 
