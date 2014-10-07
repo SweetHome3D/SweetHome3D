@@ -937,7 +937,11 @@ public class FurnitureController implements Controller {
     double rotatedBoundingBoxWidth = getPieceBoundingRectangleWidth(piece, -leadPiece.getAngle());
     if (centerLine != null) {
       // Search the distance required to align piece on the side of the previous piece
-      distance = sideDistance + centerLine.relativeCCW(piece.getX(), piece.getY()) 
+      int location = centerLine.relativeCCW(piece.getX(), piece.getY());
+      if (location == 0) {
+        location = frontLine ? 1 : -1;
+      }
+      distance = sideDistance + location 
           * (centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
       deltaX += (float)(distance * cosLeadPieceAngle);
       deltaY += (float)(distance * sinLeadPieceAngle);
