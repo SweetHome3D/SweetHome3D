@@ -533,7 +533,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.texturePanel = new WeakReference<TexturePanel>(texturePanel);
       }
       
-      public void collectionChanged(CollectionEvent<CatalogTexture> ev) {
+      public void collectionChanged(final CollectionEvent<CatalogTexture> ev) {
         // If controller was garbage collected, remove this listener from catalog
         final TexturePanel texturePanel = this.texturePanel.get();
         if (texturePanel == null) {
@@ -541,7 +541,13 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         } else {
           switch (ev.getType()) {
             case ADD:
-              texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
+              texturePanel.searchTextField.setText("");
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    // Select value later to ensure scrolling works
+                    texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
+                  }
+                });
               break;
             case DELETE:
               texturePanel.availableTexturesList.clearSelection();
@@ -631,7 +637,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       JScrollPane scrollPane = new JScrollPane(this.availableTexturesList);
       scrollPane.getVerticalScrollBar().addAdjustmentListener(
           SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(scrollPane));
-      scrollPane.setPreferredSize(new Dimension(220, scrollPane.getPreferredSize().height));
+      scrollPane.setPreferredSize(new Dimension(250, scrollPane.getPreferredSize().height));
       leftPanel.add(scrollPane, new GridBagConstraints(
           0, 1, 2, 1, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 3, 0), 0, 0));
