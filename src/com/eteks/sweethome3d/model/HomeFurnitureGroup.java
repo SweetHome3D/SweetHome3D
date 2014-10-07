@@ -61,12 +61,24 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             String name) {
+    this(furniture, furniture.get(0), name);
+  }
+  
+  /**
+   * Creates a group from the given <code>furniture</code> list. 
+   * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
+   * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
+   * The angle of the group is the one of the leading piece.
+   * @since 4.5
+   */
+  public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
+                            HomePieceOfFurniture leadingPiece,
+                            String name) {
     super(furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture); 
     
     // Search the size of the furniture group
-    HomePieceOfFurniture firstPiece = furniture.get(0);
-    AffineTransform rotation = AffineTransform.getRotateInstance(-firstPiece.getAngle());
+    AffineTransform rotation = AffineTransform.getRotateInstance(-leadingPiece.getAngle());
     Rectangle2D unrotatedBoundingRectangle = null;
     for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(furniture)) {
       GeneralPath pieceShape = new GeneralPath();
@@ -84,7 +96,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     // Search center of the group
     Point2D center = new Point2D.Float((float)unrotatedBoundingRectangle.getCenterX(), (float)unrotatedBoundingRectangle.getCenterY());
-    rotation.setToRotation(firstPiece.getAngle());
+    rotation.setToRotation(leadingPiece.getAngle());
     rotation.transform(center, center);
     
     float elevation = Float.MAX_VALUE;
@@ -97,7 +109,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     boolean visible = false;
     boolean modelMirrored = true;
     this.dropOnTopElevation = -1;
-    this.currency = firstPiece.getCurrency();
+    this.currency = furniture.get(0).getCurrency();
     // Search the lowest level elevation among grouped furniture
     Level minLevel = null;
     for (HomePieceOfFurniture piece : furniture) {
@@ -166,7 +178,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     super.setX((float)center.getX());
     super.setY((float)center.getY());
-    super.setAngle(firstPiece.getAngle());
+    super.setAngle(leadingPiece.getAngle());
     super.setElevation(elevation);
   }
 

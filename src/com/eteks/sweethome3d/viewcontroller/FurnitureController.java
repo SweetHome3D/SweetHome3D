@@ -498,7 +498,7 @@ public class FurnitureController implements Controller {
       final List<Selectable> oldSelection = this.home.getSelectedItems();
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       // Sort the grouped furniture in the ascending order of their index in home
-      Map<Integer, HomePieceOfFurniture> sortedMap = 
+      TreeMap<Integer, HomePieceOfFurniture> sortedMap = 
           new TreeMap<Integer, HomePieceOfFurniture>(); 
       for (HomePieceOfFurniture piece : selectedFurniture) {
         sortedMap.put(homeFurniture.indexOf(piece), piece);
@@ -528,19 +528,18 @@ public class FurnitureController implements Controller {
         i++;
       }
 
-      // Ensure that the lead piece is first to force the angle of the group on this piece
-      int leadPieceIndex = selectedFurniture.indexOf(this.leadSelectedPieceOfFurniture);
-      if (leadPieceIndex > 0) {
-        selectedFurniture.remove(this.leadSelectedPieceOfFurniture);
-        selectedFurniture.add(0, this.leadSelectedPieceOfFurniture);
+      final HomeFurnitureGroup furnitureGroup;
+      if (selectedFurniture.indexOf(this.leadSelectedPieceOfFurniture) > 0) {
+        furnitureGroup = createHomeFurnitureGroup(Arrays.asList(groupPieces), this.leadSelectedPieceOfFurniture);
+      } else {
+        furnitureGroup = createHomeFurnitureGroup(Arrays.asList(groupPieces));
       }
-      final HomeFurnitureGroup furnitureGroup = createHomeFurnitureGroup(selectedFurniture);
       final float [] groupPiecesNewElevation = new float [groupPieces.length];
       i = 0;
       for (HomePieceOfFurniture piece : sortedMap.values()) {
         groupPiecesNewElevation [i++] = piece.getElevation();
       }
-      final int furnitureGroupIndex = homeFurniture.size() - groupPieces.length;
+      final int furnitureGroupIndex = sortedMap.lastEntry().getKey() + 1 - groupPieces.length;
       final boolean movable = furnitureGroup.isMovable();
       final Level groupLevel = minLevel;
       
@@ -588,9 +587,17 @@ public class FurnitureController implements Controller {
    * Returns a new furniture group for the given furniture list.
    */
   protected HomeFurnitureGroup createHomeFurnitureGroup(List<HomePieceOfFurniture> furniture) {
+    return createHomeFurnitureGroup(furniture, furniture.get(0));
+  }
+
+  /**
+   * Returns a new furniture group for the given furniture list.
+   * @since 4.5
+   */
+  protected HomeFurnitureGroup createHomeFurnitureGroup(List<HomePieceOfFurniture> furniture, HomePieceOfFurniture leadingPiece) {
     String furnitureGroupName = this.preferences.getLocalizedString(
         FurnitureController.class, "groupName", getFurnitureGroupCount(this.home.getFurniture()) + 1);
-    final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(furniture, furnitureGroupName);
+    final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(furniture, leadingPiece, furnitureGroupName);
     return furnitureGroup;
   }
 
@@ -646,10 +653,10 @@ public class FurnitureController implements Controller {
       final List<Selectable> oldSelection = this.home.getSelectedItems();
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       // Sort the groups in the ascending order of their index in home
-      Map<Integer, HomeFurnitureGroup> sortedMap = 
+      TreeMap<Integer, HomeFurnitureGroup> sortedMap = 
           new TreeMap<Integer, HomeFurnitureGroup>(); 
       for (HomeFurnitureGroup group : movableSelectedFurnitureGroups) {
-          sortedMap.put(homeFurniture.indexOf(group), group);
+        sortedMap.put(homeFurniture.indexOf(group), group);
       }
       final HomeFurnitureGroup [] furnitureGroups = sortedMap.values().
           toArray(new HomeFurnitureGroup [sortedMap.size()]); 
@@ -667,7 +674,7 @@ public class FurnitureController implements Controller {
           groupPiecesList.toArray(new HomePieceOfFurniture [groupPiecesList.size()]);      
       final int [] groupPiecesIndex = new int [groupPieces.length];
       final Level [] groupPiecesLevel = new Level [groupPieces.length];
-      int endIndex = homeFurniture.size() - furnitureGroups.length;
+      int endIndex = sortedMap.lastEntry().getKey() + 1 - furnitureGroups.length;
       boolean basePlanLocked = oldBasePlanLocked;
       for (i = 0; i < groupPieces.length; i++) {
         groupPiecesIndex [i] = endIndex++; 
