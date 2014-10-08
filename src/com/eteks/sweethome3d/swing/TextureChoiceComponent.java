@@ -543,12 +543,18 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           switch (ev.getType()) {
             case ADD:
               texturePanel.searchTextField.setText("");
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    // Select value later to ensure scrolling works
-                    texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
-                  }
-                });
+              // Select added texture only when the list is showing on screen to reduce the delay 
+              // spent on fully reloading the textures list after a language change
+              if (texturePanel.availableTexturesList.isShowing()) {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      // Select value later to ensure scrolling works
+                      texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
+                    }
+                  });
+              } else {
+                texturePanel.availableTexturesList.clearSelection();
+              }
               break;
             case DELETE:
               texturePanel.availableTexturesList.clearSelection();
