@@ -855,6 +855,14 @@ public abstract class UserPreferences {
   }
 
   /**
+   * Returns the maximum count of stored cameras in homes that should be proposed to the user.
+   * @since 4.5
+   */
+  public int getStoredCamerasMaxCount() {
+    return 50;
+  }
+
+  /**
    * Sets which action tip should be ignored.
    * <br>This method should be overridden to store the ignore information.
    * By default it just notifies listeners of this change. 
