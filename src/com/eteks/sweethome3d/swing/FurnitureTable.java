@@ -39,6 +39,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,6 +88,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
@@ -104,6 +106,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable implements View, Printable {
+  private UserPreferences        preferences;
   private ListSelectionListener  tableSelectionListener;
   private boolean                selectionByUser;
 
@@ -122,6 +125,7 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   public FurnitureTable(Home home, UserPreferences preferences, 
                        FurnitureController controller) {
+    this.preferences = preferences;
     setModel(new FurnitureTreeTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
     updateTableColumnsWidth();
@@ -644,6 +648,14 @@ public class FurnitureTable extends JTable implements View, Printable {
       throws IOException {
     TableModel model = getModel();
     HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)model.getValueAt(rowIndex, 0);
+    // Force format for sizes to always display decimals  
+    Format sizeFormat;
+    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+      sizeFormat = LengthUnit.INCH_DECIMALS.getFormat();
+    } else {
+      sizeFormat = this.preferences.getLengthUnit().getFormat();
+    }
+    
     for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       if (columnIndex > 0) {
         writer.write(fieldSeparator);
@@ -677,12 +689,25 @@ public class FurnitureTable extends JTable implements View, Printable {
             if (copiedPiece.getTexture() != null) {
               writer.write(copiedPiece.getTexture().getName());
             }
+            break;
           case WIDTH :
+            writer.write(sizeFormat.format(copiedPiece.getWidth()));
+            break;
           case DEPTH :
+            writer.write(sizeFormat.format(copiedPiece.getDepth()));
+            break;
           case HEIGHT : 
+            writer.write(sizeFormat.format(copiedPiece.getHeight()));
+            break;
           case X : 
+            writer.write(sizeFormat.format(copiedPiece.getX()));
+            break;
           case Y :
+            writer.write(sizeFormat.format(copiedPiece.getY()));
+            break;
           case ELEVATION : 
+            writer.write(sizeFormat.format(copiedPiece.getElevation()));
+            break;
           case ANGLE :
           case PRICE : 
           case VALUE_ADDED_TAX_PERCENTAGE : 
