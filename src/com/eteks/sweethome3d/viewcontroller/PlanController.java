@@ -2216,8 +2216,8 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         boolean sameSignum = Math.signum(alpha1) == Math.signum(alpha2);
-        if ((sameSignum && (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.0001)
-            || (!sameSignum && Math.abs(alpha1 - alpha2) > 1E-5)) {
+        if (Math.abs(alpha1 - alpha2) > 1E-5
+            && (!sameSignum || (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.004)) {
           float beta1  = yPoint2 - alpha1 * xPoint2;
           float beta2  = yPoint4 - alpha2 * xPoint4;
           x = (beta2 - beta1) / (alpha1 - alpha2);

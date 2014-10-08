@@ -940,8 +940,8 @@ public class Wall implements Serializable, Selectable, Elevatable {
         }
       } else {
         boolean sameSignum = Math.signum(alpha1) == Math.signum(alpha2);
-        if ((sameSignum && (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.004)
-            || (!sameSignum && Math.abs(alpha1 - alpha2) > 1E-5)) {
+        if (Math.abs(alpha1 - alpha2) > 1E-5
+            && (!sameSignum || (Math.abs(alpha1) > Math.abs(alpha2)   ? alpha1 / alpha2   : alpha2 / alpha1) > 1.004)) {
           float beta1 = point2 [1] - alpha1 * point2 [0];
           float beta2 = point4 [1] - alpha2 * point4 [0];
           x = (beta2 - beta1) / (alpha1 - alpha2);
