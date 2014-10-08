@@ -650,7 +650,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                 appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
                 appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
               } else if (color == null && material.getTexture() != null) {
-                if (!isTexturesCoordinatesDefined(shape)) {
+                if (isTexturesCoordinatesDefined(shape)) {
+                  restoreDefaultTextureCoordinatesGeneration(appearance);
+                } else {
                   appearance.setTexCoordGeneration(getTextureCoordinates(appearance, material.getTexture(), pieceSize, modelBounds));
                 }
                 appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
@@ -761,6 +763,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     }
   }
 
+  /**
+   * Restores default texture coordinates generation of the given <code>appearance</code>.
+   */
+  private void restoreDefaultTextureCoordinatesGeneration(Appearance appearance) {
+    DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+    if (defaultMaterialAndTexture != null) {
+      appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+    }
+  }
+  
   /**
    * Sets the visible attribute of the <code>Shape3D</code> children nodes of <code>node</code>.
    */
