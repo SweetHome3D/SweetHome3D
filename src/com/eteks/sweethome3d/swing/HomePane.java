@@ -3102,27 +3102,39 @@ public class HomePane extends JRootPane implements HomeView {
       parent = component.getParent();
     }
     
-    // Replace component by a dummy label to find easily where to attach back the component
-    JPanel dummyLabel = new JPanel();
-    dummyLabel.setMaximumSize(new Dimension());
-    dummyLabel.setMinimumSize(new Dimension());
-    dummyLabel.setName(view.getClass().getName());
-    dummyLabel.setBorder(component.getBorder());
+    // Replace component by a dummy panel to find easily where to attach back the component
+    final JPanel dummyPanel = new JPanel();
+    dummyPanel.setMaximumSize(new Dimension());
+    dummyPanel.setMinimumSize(new Dimension());
+    dummyPanel.setName(view.getClass().getName());
+    dummyPanel.setBorder(component.getBorder());   
     
     if (parent instanceof JSplitPane) {
-      JSplitPane splitPane = (JSplitPane)parent;
+      final JSplitPane splitPane = (JSplitPane)parent;
       splitPane.setDividerSize(0);
+      final float dividerLocation;
       if (splitPane.getLeftComponent() == component) {
-        splitPane.setLeftComponent(dummyLabel);
-        splitPane.setDividerLocation(0f);
+        splitPane.setLeftComponent(dummyPanel);
+        dividerLocation = 0f;
       } else {
-        splitPane.setRightComponent(dummyLabel);
-        splitPane.setDividerLocation(1f);
+        splitPane.setRightComponent(dummyPanel);
+        dividerLocation = 1f;
       }
+      splitPane.setDividerLocation(dividerLocation);
+      dummyPanel.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent ev) {
+            // Force divider location even if maximum size is set to zero
+            // to ensure the dummy panel won't appear
+            dummyPanel.removeComponentListener(this);
+            splitPane.setDividerLocation(dividerLocation);
+            dummyPanel.addComponentListener(this);
+          }
+        });
     } else {
       int componentIndex = parent.getComponentZOrder(component);
       parent.remove(componentIndex);
-      parent.add(dummyLabel, componentIndex);
+      parent.add(dummyPanel, componentIndex);
     }
     
     // Display view in a separate non modal dialog
