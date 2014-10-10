@@ -1227,7 +1227,8 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns the highest piece of furniture that includes the given <code>piece</code>.
+   * Returns the highest piece of furniture that includes the given <code>piece</code> 
+   * with a margin error of 5% of the smallest side length.
    * @since 4.4
    */
   protected HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece) {
@@ -1238,6 +1239,7 @@ public class FurnitureController implements Controller {
   private HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece,
                                                                      List<HomePieceOfFurniture> ignoredFurniture) {
     float [][] piecePoints = piece.getPoints();
+    float margin = Math.min(piece.getWidth(), piece.getDepth()) * 0.05f;
     HomePieceOfFurniture highestSurroundingPiece = null;
     float highestElevation = Float.MIN_VALUE;
     for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
@@ -1247,7 +1249,7 @@ public class FurnitureController implements Controller {
           && homePiece.getDropOnTopElevation() >= 0) {
         boolean surroundingPieceContainsPiece = true;
         for (float [] point : piecePoints) {
-          if (!homePiece.containsPoint(point [0], point [1], 0)) {
+          if (!homePiece.containsPoint(point [0], point [1], margin)) {
             surroundingPieceContainsPiece = false;
             break;
           }
