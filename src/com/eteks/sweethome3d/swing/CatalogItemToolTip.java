@@ -90,6 +90,8 @@ public class CatalogItemToolTip extends JToolTip {
     this.preferences = preferences;
     this.itemIconLabel = new JLabel();
     this.itemIconLabel.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+    // Force minimum size to ensure icon label won't be displayed at bottom of the tool tip 
+    this.itemIconLabel.setMinimumSize(this.itemIconLabel.getPreferredSize());
     this.itemIconLabel.setHorizontalAlignment(JLabel.CENTER);
     this.itemIconLabel.setVerticalAlignment(JLabel.CENTER);
     setLayout(new GridBagLayout());
