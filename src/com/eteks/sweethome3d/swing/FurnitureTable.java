@@ -88,9 +88,8 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.LengthUnit;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -128,7 +127,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     this.preferences = preferences;
     setModel(new FurnitureTreeTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
-    updateTableColumnsWidth();
+    updateTableColumnsWidth(0);
     updateTableSelectedFurniture(home);
     // Add listeners to model
     if (controller != null) {
@@ -258,8 +257,8 @@ public class FurnitureTable extends JTable implements View, Printable {
   /**
    * Updates table columns width from the content of its cells.
    */
-  private void updateTableColumnsWidth() {
-    int intercellWidth = getIntercellSpacing().width;
+  private void updateTableColumnsWidth(int additionalSpacing) {
+    int intercellWidth = getIntercellSpacing().width + additionalSpacing;
     TableColumnModel columnModel = getColumnModel();
     TableModel tableModel = getModel();
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
@@ -579,7 +578,12 @@ public class FurnitureTable extends JTable implements View, Printable {
       TableColumnModel oldColumnModel = getColumnModel();
       Color oldGridColor = getGridColor();
       setColumnModel(printableColumnModel);   
-      updateTableColumnsWidth();
+      if (OperatingSystem.isWindows()) {
+        // Add 3 pixels to columns to get a correct rendering
+        updateTableColumnsWidth(3);
+      } else {
+        updateTableColumnsWidth(0);
+      }
       setGridColor(gridColor);
       Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
       int pageExists = printable.print(g, pageFormat, pageIndex);
@@ -938,7 +942,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     /**
      * Returns the default preferred width of a column.
      */
-    private int getColumnPreferredWidth(SortableProperty property) {
+    private int getColumnPreferredWidth(HomePieceOfFurniture.SortableProperty property) {
       switch (property) {
         case CATALOG_ID :
         case NAME :
