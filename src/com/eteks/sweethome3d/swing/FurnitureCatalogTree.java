@@ -129,22 +129,31 @@ public class FurnitureCatalogTree extends JTree implements View {
   }
 
   /**
-   * Adds a mouse motion listener that will initiate a drag operation 
+   * Adds mouse listeners that will initiate a drag operation 
    * when the user drags a piece of furniture.
    */
   private void addDragListener() {
-    addMouseMotionListener(new MouseMotionAdapter() {
-      public void mouseDragged(MouseEvent ev) {
-        if (SwingUtilities.isLeftMouseButton(ev)) {
-          TreePath clickedPath = getPathForLocation(ev.getX(), ev.getY());
-          if (clickedPath != null
-              && clickedPath.getLastPathComponent() instanceof CatalogPieceOfFurniture
+    MouseInputAdapter mouseListener = new MouseInputAdapter() {
+        private boolean canExport;
+
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          this.canExport = SwingUtilities.isLeftMouseButton(ev)
+              && getPathForLocation(ev.getX(), ev.getY()) != null;
+        }
+        
+        public void mouseDragged(MouseEvent ev) {
+          if (this.canExport 
               && getTransferHandler() != null) {
             getTransferHandler().exportAsDrag(FurnitureCatalogTree.this, ev, DnDConstants.ACTION_COPY);
           }
+          // Don't call exportAsDrag again until mouse is pressed again
+          this.canExport = false;
         }
-      }
-    });
+      };
+      
+    addMouseListener(mouseListener);
+    addMouseMotionListener(mouseListener);
   }
   
   /** 

@@ -104,12 +104,16 @@ public class FurnitureCatalogTransferHandler extends VisualTransferHandler {
   @Override
   protected Transferable createTransferable(JComponent source) {
     List<CatalogPieceOfFurniture> selectedCatalogFurniture = this.catalogController.getSelectedFurniture();
-    List<HomePieceOfFurniture> transferedFurniture = 
-        new ArrayList<HomePieceOfFurniture>(selectedCatalogFurniture.size());
-    for (CatalogPieceOfFurniture catalogPiece : selectedCatalogFurniture) {
-      transferedFurniture.add(this.furnitureController.createHomePieceOfFurniture(catalogPiece));
+    if (!selectedCatalogFurniture.isEmpty()) {
+      List<HomePieceOfFurniture> transferedFurniture = 
+          new ArrayList<HomePieceOfFurniture>(selectedCatalogFurniture.size());
+      for (CatalogPieceOfFurniture catalogPiece : selectedCatalogFurniture) {
+        transferedFurniture.add(this.furnitureController.createHomePieceOfFurniture(catalogPiece));
+      }
+      return new HomeTransferableList(transferedFurniture);
+    } else {
+      return null;
     }
-    return new HomeTransferableList(transferedFurniture);
   }
 
   /**

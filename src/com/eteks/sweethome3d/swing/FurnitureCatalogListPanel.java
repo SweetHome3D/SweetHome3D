@@ -190,6 +190,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     this.catalogFurnitureList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
     this.catalogFurnitureList.setCellRenderer(new CatalogCellRenderer());
     this.catalogFurnitureList.setAutoscrolls(false);
+    this.catalogFurnitureList.setDragEnabled(true);
     this.catalogFurnitureList.setTransferHandler(null);
     // Remove Select all action
     this.catalogFurnitureList.getActionMap().getParent().remove("selectAll");
@@ -350,19 +351,39 @@ class FurnitureCatalogListPanel extends JPanel implements View {
   }
 
   /**
-   * Adds a mouse motion listener that will initiate a drag operation 
-   * when the user drags a piece of furniture from the furniture list.
+   * Adds mouse listeners that will select only the piece under mouse cursor in the furniture list 
+   * before the start of a drag operation, ensuring only one piece can be dragged at a time.
    */
   private void addDragListener(final JList catalogFurnitureList) {
-    catalogFurnitureList.addMouseMotionListener(new MouseMotionAdapter() {
-        public void mouseDragged(MouseEvent ev) {
+    MouseInputAdapter mouseListener = new MouseInputAdapter() {
+        private CatalogPieceOfFurniture exportedPiece;
+  
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          this.exportedPiece = null;
           if (SwingUtilities.isLeftMouseButton(ev)
               && catalogFurnitureList.getSelectedValue() != null
               && catalogFurnitureList.getTransferHandler() != null) {
-            catalogFurnitureList.getTransferHandler().exportAsDrag(catalogFurnitureList, ev, DnDConstants.ACTION_COPY);
-          } 
+            int index = catalogFurnitureList.locationToIndex(ev.getPoint());
+            if (index != -1) {
+              this.exportedPiece = (CatalogPieceOfFurniture)catalogFurnitureList.getModel().getElementAt(index);
+            }
+          }
         }
-      });
+        
+        public void mouseDragged(MouseEvent ev) {
+          if (this.exportedPiece != null) {
+            if (catalogFurnitureList.getSelectedIndices().length > 1) {
+              catalogFurnitureList.clearSelection();
+              catalogFurnitureList.setSelectedValue(this.exportedPiece, false);
+            }
+            this.exportedPiece = null;
+          }
+        }
+      };
+      
+    catalogFurnitureList.addMouseListener(mouseListener);
+    catalogFurnitureList.addMouseMotionListener(mouseListener);
   }
 
   /**
