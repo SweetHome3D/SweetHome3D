@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=utf-8">
-<title>Dodawanie mebli</title>
+<title>Dodawanie drzwi, okien i mebli</title>
 <link href="../help.css" rel="stylesheet" media="all">
 </head>
 <body bgcolor="#ffffff">
@@ -16,7 +16,7 @@
       <td height="32" width="3">&nbsp;</td>
       <td height="32" width="32"><img src="../images/applicationIcon32.png" alt="Sweet Home 3D Icon" height="32" width="32"></td>
       <td height="32" width="8">&nbsp;&nbsp;</td>
-      <td height="32" valign="bottom"><font id="topic">Dodawanie mebli</font></td>
+      <td height="32" valign="bottom"><font id="topic">Dodawanie drzwi, okien i mebli</font></td>
     </tr>
     <tr height="10"> 
       <td colspan="4" height="10">&nbsp;</td>
@@ -24,24 +24,24 @@
   </table>
   <table border="0" cellpadding="3" cellspacing="0" width="100%">
     <tr> 
-      <td> <p>Aby dodać meble do swojego domu, przeciągnij i upuść jeden lub więcej 
-          mebli z katalogu na plan domu lub listę mebli.</p>
+      <td> <p>Aby dodać drzwi, okna lub meble do swojego domu, przeciągnij i upuść je jeden po drugim 
+          z katalogu na plan domu lub listę mebli.</p>
         <p align="center"><img src="images/addingFurniture.png" alt="Adding furniture" height="179" width="435"></p>
-        <p align="left">Możesz również wybrać w katalogu kilka mebli, a następnie 
-          skorzystać z <i>Meble &gt; Dodaj do domu</i> lub klinkąc na <i>Dodaj 
+        <p align="left">Możesz również wybrać jeden lub więcej elementów w katalogu, a następnie 
+          skorzystać z <i>Meble &gt; Dodaj do domu</i> lub klinkąć na <i>Dodaj 
           zaznaczony w katalogu przedmiot do domu</i>.</p>
         <blockquote> 
           <p align="left"><img src="../images/addToHomeTool.png" alt="Add to home tool" align="absmiddle" height="24" width="24">&nbsp;<i>Dodaj 
             zaznaczony w katalogu przedmiot do domu</i></p>
         </blockquote>
-        <p align="left">Gdy upuścisz element na plan, położenie jego lewego górnego 
-          rogu znajdzie się w miejscu, w którym puściłeś klawisz myszy.<br>
-          Gdy elemeny są upuszczone na liście mebli lub dodane poprzez <i>Meble 
-          &gt; Dodaj do domu</i> położenie ich lewego górnego rogu znajduje się 
-          w punkcie 0,0. </p>
+        <p align="left">  Gdy elemeny zostały upuszczone na liście mebli lub dodane poprzez <i>Meble &gt; Dodaj do domu</i> położenie ich lewego górnego rogu znajduje się 
+          w punkcie (0,0). </p>
+		  
+		       <p align="left">Gdy element został upuszczony na plan,  jego położenie i orientacja zależą od najbliżej położonej ściany względem niego.  Jeśli upuszonym elementem są drzwi lub okno, zostanie on automtatycznie obrócony i dopasowany względem jej grubości i przecięcia. Inny rodzaj elementów zostanie obrócony tak, aby ich tył przylegał do najbliższej ściany, z którą może się stykać.<br>
+		  
         <p align="left">Elementy dodawane do domu są rysowane jednocześnie na 
           liście mebli, planie i podglądzie 3D. Jeśli czas ładowania elementu 
-          jest dość duży w widoku 3D przez chwilę może on być widoczny jako biała 
+          jest dość długi w widoku 3D przez chwilę może on być widoczny jako biała 
           skrzynka.</p></td>
     </tr>
   </table>
@@ -61,20 +61,32 @@
               <td> <p>&#149;</p></td>
               <td> <p>Elementy takie jak okna i drzwi automatycznie wymuszaj&#261; 
                   na Sweet Home 3D utworzenie w ich miejscach otwor&oacute;w w 
-                  &#347;cianach w miejscu ich umieszczenia. Dla pozosta&#322;ych 
+                  &#347;cianach w miejscu ich umieszczenia. Podobnie działa wstawianie schodów między kondygnacjami. Dla pozosta&#322;ych 
                   rodzaj&oacute;w mebli taka operacja jest niemo&#380;liwa.</p></td>
             </tr>
             <tr valign="top"> 
               <td> <p>&#149;</p></td>
-              <td> <p>Kiedy element zostanie dodany do domu, mo&#380;esz&nbsp;&nbsp;<a href="editingFurniture.html">zmieni&#263;</a> 
-                  jego nazw&#281;, k&#261;t obrotu, po&#322;o&#380;enie, rozmiar 
-                  i kolor.</p></td>
-            </tr>
+              <td> <p> Kiedy element meblowy został zrzucony na inny element, wówczas zostanie on umieszczony na wierzchu ostatniego, jeśli wyborem jest prostokąt i zawiera się w jednym z ostatnich elementów jego wysokość będzie równa zero (np na poziomie podłogi). Jeśli granica zrzuconego elementu przecina się z granicą innego elementu, element zrzucony będzie zorientowany pod tym samym kątem i umieszczony obok sąsiedniego elementu.			  </p></td>
+			  </tr>
+			  
+			  <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+			  <td> <p>Kąt, głębokość i umieszczenie dodanego elementu przy pomocy myszy są obliczane automatycznie tylko i wyłącznie gdy opcja przyciągania jest włączona w <a href="editingPreferences.html">panelu ustawień</a>.
+			  </td></p>
+			  </tr>
+			  
+			  <tr valign="top"> 
+              <td> <p>&#149;</p></td>
+			  <td> <p>W raz dodanym do domu elemencie możesz <a href="editingFurniture.html">zmienić</a> jego nazwę, kąt, położenie, rozmiar, kolor i teksturę. Możesz również pogrupować inne elementy mebli poprzez  zaznaczenie ich i wybór opcji <i>Meble > Grupuj </i>.
+			  </td></p>
+			  </tr>
+			 
             <tr valign="top"> 
               <td> <p>&#149;</p></td>
               <td> <p>Wybierz <i>Plan &gt; Powi&#281;kszenie</i> lub <i>Plan &gt; 
-                  Pomniejszenie</i> aby zmieni&#263; skal&#281;. </p></td>
+                  Pomniejszenie</i> aby zmieni&#263; skal&#281;. Możesz też użyć kółka myszy poruszając nim do przodu lub do tyłu przy jednoczesnym przytrzymaniu klawisza <i>ctrl</i> (lub w przypadku Mac OS X klawisza <i> cmd</i>). </p></td>
             </tr>
+			
             <tr valign="top"> 
               <td width="16"> <p>&#149;</p></td>
               <td> <p>Narz&#281;dzie <i><a href="drawingWalls.html">Zaznacz obiekty 

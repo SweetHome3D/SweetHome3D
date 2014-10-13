@@ -30,9 +30,12 @@
           w innych systemach.</p>
         <p align="center"><img src="images/editingPreferences.png"></p>
         <p>W panelu ustawie&#324; mo&#380;esz dokona&#263; zmiany <i>j&#281;zyka</i>, 
-          w kt&oacute;rym komunikujesz si&#281; z programem oraz <i>jednostki</i> 
-          u&#380;ywanej w trakcie rysowania planu domu, prowadnic, siatki czy 
-          te&#380; wy&#347;wietlania d&#322;ugo&#347;ci.<br>
+          w kt&oacute;rym komunikujesz si&#281; z programem możesz zrzucić listę języków, których chcesz używać do nawigacji programu. Możesz to zrobic poprzez zaimportowanie dodatkowych języków z biblioteki plików z rozszerzeniem <i>*.SH3L</I>. <br>
+		  <i>Jednostki</i> u&#380;ywane są w trakcie rysowania planu domu, prowadnice, siatki czy 
+          te&#380; wy&#347;wietlanie d&#322;ugo&#347;ci.<br>
+		  Jednostki <i>centymetra</i> i <i>milimetra</i> sa dostępne w systemie metrycznym i są one jednymi z dwóch jednostek dostępnych w programie : <i>cale/dziesiętne </i> wyświetlane w proporcji przybliżonej do <b> 250.122"</b>, oraz <i>stopa/cal/frakcja</i> jako jednostka  opisującą długości wyrażone w stopach lub calach w proporcjach <b>20'10⅛"</b>. Ostatni typ jednostek przedstawia frakcje z dziesiętną i calową wartością większą lub równa 12, która jest automatycznie konvertowana (np twoj wybór 15.75 program zrozumie jako 1'3¾', jeśli wpiszesz 2'15, program zinterpretuje to jako 3'3"). W przypadku jednostek <i>stopa/cal/frakcja</i> program zawsze wyświetli najbliższą wartość przeliczoną na <i>cale/dziesiętne</i> jeśli to jest konieczne.<br>
+		  <p> <i>Katalog folderów</i> i <i> lista wyszukiwania</i> pozwalaja na sposób wyświetlania listy elementow w <a href="ui.html">oknie programu</a>. <br>
+		<p> <i>Strzałki nawigacji 3D</i> pozwalają na wspomaganie nawigowania programem podczas <a href="editing3DView.html">wikodu 3D</a> 		  <br>
           Pole wyboru <i>Przyci&#261;ganie</i> w&#322;&#261;cza b&#261;d&#378; 
           wy&#322;&#261;cza przyci&#261;ganie wykorzystywane w trakcie&nbsp;<a href="drawingWalls.html">rysowania 
           &#347;cian</a> i&nbsp;<a href="editingFurniture.html">ustawiania mebli</a>.<br>
@@ -55,6 +58,12 @@
           Podobnie warto&#347;&#263; <i>Wysoko&#347;&#263; nowych &#347;cian</i> 
           pozwala okre&#347;li&#263; jak&#261; wysoko&#347;&#263; b&#281;d&#261; 
           mia&#322;y wszyskie nowotworzone &#347;ciany na planie. </p>
+		  
+		  <p>Po wyborze <i>Sprawdź aktualizacje po starcie programu</i> program będzie sprawdzał czy pojawiły się nowe aktualizacje dostępne dla Sweet Home 3D i będzie informował o tym w okienku dialogowym. Ta opcja sprawdza również dostępność innych aktualizacji jak np biblioteke dostępnych mebli (<i>rozszerzenie *.SH3F</I>), tekstur (<i>rozszerzenie *.SH3T</I>), plików językowych (<i>rozszerzenie *.SH3L</I>) i innych dodatków(<i>rozszerzenie *.SH3P</I>), które będziesz mógł zainstalować i skonfigurować po swojemu. <br>
+		  <p> Domyślną wartością opcji <i> Zapisz pliki do odtworzenia </i> jest zapisywanie pracy minutę później po każdych dwóch operacjach wykonanych podczas pracy w programie. Pliki te są automatycznie zapisywane w twoich prywatnych plikach i będą użyte do odtworzenia ostatniego wyniku twojej pracy jeżeli program przestanie działąć lub w przypadku błędu, który spowoduje wyłączenie sie programu.
+		  <br>
+		  <i>Wyczyść wartość</i> usuwa wszelkie wartości jakie wpisane zostały podczas pracy z programem i spowoduje pojawienie się komunikatu <i>Nie pokazuj tego okna ponownie</i>. Ta operacja spowoduje, że wszystkie okienka dialogowe, które wybierane były do tej pory pojawią się ponownie aby wpisać im parametry.
+		  <br>
         <table border="0" align="center" cellpadding="0" cellspacing="5">
           <tr align="center"> 
             <td><img src="../images/defaultRendering.png" width="332" height="296"></td>
@@ -84,6 +93,14 @@
                   dokument&oacute;w Sweet Home 3D. W zwi&#261;zku z tym zmiana 
                   tych ustawie&#324; wp&#322;ywa na wszystkie okna programu.</p></td>
             </tr>
+			 <tr valign="top"> 
+              <td width="16"> <p>&#149;</p></td>
+              <td> <p>Jeżeli wybrano dużo elementów jednocześnie w katalogu mebli okno dialogowe mebli zostanie wyświetlone jako wyszukiwarka. Ten sposób pozwoli na wyszukanie elementu w szybszym czasie i dodanie szukanego elementu do twojego domu.</p></td>
+            </tr>
+			 <tr valign="top"> 
+              <td width="16"> <p>&#149;</p></td>
+              <td> <p>Nawigacja 3D poprzez użycie strzałek programu jest niedostępna w systemie Mac OS 10.4 i może nie być poprawnie wykonywana w niektórych dystrybucjach Linuxa. Jeśli raz przyzwyczaisz się do używania <a href="editing3DView.html">nawigacji przy pomocy myszy lub klawiatury</a> możesz skopojnie schować okienko strzałek nawigacyjnych programu w górnym lewym rogu widoku 3D.</p></td>
+            </tr>
             <tr valign="top"> 
               <td width="16"> <p>&#149;</p></td>
               <td> <p>Widok ikon mebli z góry na planie może być niedostępny z 
@@ -95,13 +112,17 @@
               <td width="16"> <p>&#149;</p></td>
               <td> <p>Je&#347;li potrzebujesz wy&#322;&#261;czy&#263; przyci&#261;ganie 
                   tylko tymczasowo mo&#380;esz w trakcie rysowania przytrzyma&#263; 
-              klawisz <i>Alt</i>.</p></td>
+              klawisz <i>Alt</i> (klawisz <i>cmd</i> w przypadku Mac Os lub <i>alf+shift</i> w przypadku Linuxa) .</p></td>
             </tr>
             <tr valign="top"> 
               <td width="16"> <p>&#149;</p></td>
               <td> <p>Kiedy &#347;ciana jest ju&#380; utworzona mo&#380;esz&nbsp;<a href="editingWalls.html">zmieni&#263;</a> 
                   jej grubo&#347;&#263; i wysoko&#347;&#263; wbrew temu co ustawi&#322;e&#347; 
                   w oknie ustawie&#324;.</p></td>
+            </tr>
+			 <tr valign="top"> 
+              <td width="16"> <p>&#149;</p></td>
+              <td> <p>Okienko informujące o dostępnych aktualizacjach będzie wyświetlane tylko jeżeli twoj komputer ma dostęp do internetu. W innym możesz ręcznie sprawdzić dostępne aktualizacje poprzez wybór opcji <i>sprawdź aktualizacje</i>. Wówczas w okienku dialogowym zostanie wyświetlona informacja o dostępnych aktualizachach lub informację o ich braku. Może się także pojawic informacja o błędzie w odczytaniu aktualizacji </p></td>
             </tr>
           </table></td>
       </tr>
