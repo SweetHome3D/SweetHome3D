@@ -19,14 +19,20 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -57,12 +63,22 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JToolTip;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableColumnModelEvent;
@@ -77,6 +93,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
@@ -108,6 +125,9 @@ public class FurnitureTable extends JTable implements View, Printable {
   private UserPreferences        preferences;
   private ListSelectionListener  tableSelectionListener;
   private boolean                selectionByUser;
+  private int                    furnitureInformationRow;
+  private Popup                  furnitureInformationPopup;
+  private AWTEventListener       informationPopupRemovalListener;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -234,6 +254,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     
     if (getSelectedRowCount() != selectedFurnitureCount
         || !Arrays.equals(getSelectedRows(), furnitureIndices)) {
+      deleteInformationPopup();
       // Update table selection if it differs from selected furniture 
       clearSelection();
       for (int min = 0; min < furnitureIndices.length; ) {
@@ -287,12 +308,15 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void addMouseListener(final Home home, final FurnitureController controller) {
     addMouseListener(new MouseAdapter () {
+        private Timer waitDoubleClickThresoldTimer;
+
         @Override
         public void mouseClicked(MouseEvent ev) {
-          int column = columnAtPoint(ev.getPoint());
-          int row = rowAtPoint(ev.getPoint());
+          final int column = columnAtPoint(ev.getPoint());
+          final int row = rowAtPoint(ev.getPoint());
           boolean isVisibleColumn = false;
-          boolean isGroupRow = false;
+          boolean isGroupExpandIcon = false;
+          boolean isInformationIcon = false;
           if (column >= 0
               && row >= 0) {
             Object columnId = getColumnModel().getColumn(column).getIdentifier();
@@ -306,28 +330,136 @@ public class FurnitureTable extends JTable implements View, Printable {
                       cellRect.y + (cellRect.height - visibilityComponent.getHeight()) / 2);
               // Check if mouse point is exactly on the visibility component
               isVisibleColumn = visibilityComponent.getBounds().contains(ev.getPoint());
-            } else if (columnId == HomePieceOfFurniture.SortableProperty.NAME
-                       && getValueAt(row, column) instanceof HomeFurnitureGroup) {
+            } else if (columnId == HomePieceOfFurniture.SortableProperty.NAME) {
               TableCellRenderer cellRenderer = getCellRenderer(row, column);
               if (cellRenderer instanceof TreeTableNameCellRenderer) {
-                Rectangle expandedStateBounds = ((TreeTableNameCellRenderer)cellRenderer).
-                    getExpandedStateBounds(FurnitureTable.this, row, column);
-                isGroupRow = expandedStateBounds.contains(ev.getPoint());
+                Rectangle informationIconBounds = ((TreeTableNameCellRenderer)cellRenderer).
+                    getInformationIconBounds(FurnitureTable.this, row, column);
+                isInformationIcon = ev.getClickCount() == 1
+                    && informationIconBounds != null
+                    && informationIconBounds.contains(ev.getPoint());
+                if (!isInformationIcon 
+                    && getValueAt(row, column) instanceof HomeFurnitureGroup) {
+                  Rectangle expandedStateBounds = ((TreeTableNameCellRenderer)cellRenderer).
+                      getExpandedStateBounds(FurnitureTable.this, row, column);
+                  isGroupExpandIcon = expandedStateBounds.contains(ev.getPoint());
+                }
               }
             }
             if (isVisibleColumn) {
               controller.toggleSelectedFurnitureVisibility();
-            } else if (isGroupRow) {
+            } else if (isInformationIcon) {
+              FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+              String information = ((HomePieceOfFurniture)tableModel.getValueAt(row, 0)).getInformation();
+              if (furnitureInformationPopup != null
+                  && furnitureInformationRow == row) {
+                // Remove information when the user clicks again
+                deleteInformationPopup();
+              } else {
+                showInformationPopup(information, column, row);
+              }
+            } else if (isGroupExpandIcon) {
               FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
               tableModel.toggleRowExpandedState(row);
               controller.setSelectedFurniture(Arrays.asList(new HomePieceOfFurniture [] {
                   getParent(home.getFurniture(), (HomePieceOfFurniture)tableModel.getValueAt(row, 0))}));
             } else if (ev.getClickCount() == 2) {
+              deleteInformationPopup();
               controller.modifySelectedFurniture();
             }
           }
+          
+          if (!isInformationIcon) {
+            deleteInformationPopup();
+          }
         }
       });
+  }
+
+  /**
+   * Shows in a popup the information of the cell at the given coordinates.
+   */
+  private void showInformationPopup(String information, int column, int row) {
+    if (this.furnitureInformationPopup == null
+        || this.furnitureInformationRow != row) {
+      deleteInformationPopup();
+      
+      final JEditorPane informationPane = new JEditorPane("text/html", information);
+      informationPane.setEditable(false);
+      Font font = getFont();
+      String bodyRule = "body { font-family: " + font.getFamily() + "; " 
+          + "font-size: " + font.getSize() + "pt; " 
+          + "text-align: center; }";
+      ((HTMLDocument)informationPane.getDocument()).getStyleSheet().addRule(bodyRule);
+      informationPane.addHyperlinkListener(new HyperlinkListener() {
+          public void hyperlinkUpdate(HyperlinkEvent ev) {
+            if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              deleteInformationPopup();
+              SwingTools.showDocumentInBrowser(ev.getURL()); 
+            }
+          }
+        });
+      
+      // Reuse tool tip look
+      Border border = UIManager.getBorder("ToolTip.border");
+      if (!OperatingSystem.isMacOSX()
+          || OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(0, 3, 0, 2));
+      }
+      informationPane.setBorder(border);
+      // Copy colors from tool tip instance (on Linux, colors aren't set in UIManager)
+      JToolTip toolTip = new JToolTip();
+      toolTip.setComponent(this);
+      informationPane.setBackground(toolTip.getBackground().getRGB() != 0
+          ? toolTip.getBackground()
+          : Color.WHITE);
+      informationPane.setForeground(toolTip.getForeground());
+      informationPane.setSize(informationPane.getPreferredSize());
+
+      // Show information in a popup
+      Rectangle cellRectangle = getCellRect(row, column, true);
+      Point p = new Point(cellRectangle.x + cellRectangle.width, cellRectangle.y);
+      SwingUtilities.convertPointToScreen(p, this);
+      try {
+        this.informationPopupRemovalListener = new AWTEventListener() {
+            public void eventDispatched(AWTEvent ev) {
+              if (ev instanceof KeyEvent) {
+                if (((KeyEvent)ev).getKeyCode() == KeyEvent.VK_ESCAPE) {
+                  deleteInformationPopup();
+                  ((KeyEvent)ev).consume();
+                }
+              } else if (ev.getID() != WindowEvent.WINDOW_OPENED // Fired at first popup instantiation
+                         && (!(ev instanceof MouseEvent)
+                             || (ev.getSource() != FurnitureTable.this
+                                 && ev.getSource() != informationPane))) {
+                deleteInformationPopup();                
+              }
+            }
+          };
+        // Add a listener that will delete information popup for events outside of table        
+        getToolkit().addAWTEventListener(this.informationPopupRemovalListener, 
+            AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK 
+            | AWTEvent.KEY_EVENT_MASK | AWTEvent.FOCUS_EVENT_MASK 
+            | AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_FOCUS_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK);
+        this.furnitureInformationPopup = 
+            PopupFactory.getSharedInstance().getPopup(this, informationPane,  p.x, p.y);
+        this.furnitureInformationPopup.show();
+        this.furnitureInformationRow = row;
+      } catch (SecurityException ex) {
+        // Ignore information popup if it's not possible to delete it by clicking anywhere
+      }
+    }
+  }
+
+  /**
+   * Deletes information popup from screen. 
+   */
+  public void deleteInformationPopup() {
+    if (this.furnitureInformationPopup != null) {
+      getToolkit().removeAWTEventListener(informationPopupRemovalListener);
+      this.furnitureInformationPopup.hide();
+      this.furnitureInformationPopup = null;
+    }
   }
 
   /**
@@ -1427,9 +1559,11 @@ public class FurnitureTable extends JTable implements View, Printable {
   private static class TreeTableNameCellRenderer implements TableCellRenderer {
     private static final ResourceURLContent GROUP_ICON_CONTENT = 
         new ResourceURLContent(FurnitureTable.class, "resources/groupIcon.png");
-    private DefaultTableCellRenderer defaultRenderer;
-    private JTree                    tree;
+    private PanelWithInformationIcon groupRendererComponent;
+    private JTree                    nameRendererTree;
     private int                      renderedRow;
+    private PanelWithInformationIcon noGroupRendererComponent;
+    private DefaultTableCellRenderer nameRendererLabel;
     private Font                     defaultFont;
     
     public Component getTableCellRendererComponent(JTable table, 
@@ -1438,6 +1572,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       if (this.defaultFont == null) {
         this.defaultFont = table.getFont();
       }
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
       boolean containsGroup = false;
       for (int i = 0; i < table.getRowCount(); i++) {
         if (table.getValueAt(i, 0) instanceof HomeFurnitureGroup) {
@@ -1447,23 +1582,32 @@ public class FurnitureTable extends JTable implements View, Printable {
       }
       if (containsGroup) {
         prepareTree(table);   
+        if (this.groupRendererComponent == null) {
+          this.groupRendererComponent = new PanelWithInformationIcon();
+          this.groupRendererComponent.add(this.nameRendererTree, BorderLayout.CENTER);
+        }
+        
+        this.groupRendererComponent.setInformationIconVisible(piece.getInformation() != null);
+        this.groupRendererComponent.setFont(this.defaultFont);
         if (isSelected) {
-          this.tree.setBackground(table.getSelectionBackground());
-          this.tree.setSelectionRow(row);
+          this.nameRendererTree.setSelectionRow(row);
+          this.groupRendererComponent.setBackground(table.getSelectionBackground());
         } else {
-          this.tree.setBackground(table.getBackground());
-          this.tree.clearSelection();
+          this.nameRendererTree.clearSelection();
+          this.groupRendererComponent.setBackground(table.getBackground());
         }
         this.renderedRow = row;
-        this.tree.setFont(this.defaultFont);
-        return this.tree;
+        
+        return this.groupRendererComponent;
       } else {
-        // Use default table renderer if the furniture list doesn't contain any group   
-        if (this.defaultRenderer == null) {
-          this.defaultRenderer = new DefaultTableCellRenderer();
+        if (this.noGroupRendererComponent == null) {
+          // Use default renderer if the furniture list doesn't contain any group   
+          this.nameRendererLabel = new DefaultTableCellRenderer();
+          this.noGroupRendererComponent = new PanelWithInformationIcon();
+          this.noGroupRendererComponent.add(this.nameRendererLabel, BorderLayout.CENTER);
         }
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
-        JLabel label = (JLabel)this.defaultRenderer.getTableCellRendererComponent(
+
+        this.nameRendererLabel.getTableCellRendererComponent(
               table, piece.getName(), isSelected, hasFocus, row, column); 
         Content iconContent;
         if (piece instanceof HomeFurnitureGroup) {
@@ -1471,9 +1615,12 @@ public class FurnitureTable extends JTable implements View, Printable {
         } else {
           iconContent = piece.getIcon();
         }
-        label.setIcon(IconManager.getInstance().getIcon(
+        this.nameRendererLabel.setIcon(IconManager.getInstance().getIcon(
             iconContent, table.getRowHeight() - table.getRowMargin(), table));
-        return label;
+
+        this.noGroupRendererComponent.setInformationIconVisible(piece.getInformation() != null);
+        this.noGroupRendererComponent.setBackground(this.nameRendererLabel.getBackground());
+        return this.noGroupRendererComponent;
       }
     }
 
@@ -1481,7 +1628,7 @@ public class FurnitureTable extends JTable implements View, Printable {
      * Prepares the tree used to render furniture groups and their children.
      */
     private void prepareTree(final JTable table) {
-      if (this.tree == null) {
+      if (this.nameRendererTree == null) {
         // Instantiate on the fly the tree, its renderer and its editor
         UIManager.put("Tree.rendererFillBackground", Boolean.TRUE);
         final DefaultTreeCellRenderer treeCellRenderer = new DefaultTreeCellRenderer() {
@@ -1510,16 +1657,16 @@ public class FurnitureTable extends JTable implements View, Printable {
             public void setBounds(int x, int y, int width, int height) {
               // Avoid renderer component to be wider than the tree 
               // to ensure ellipsis is displayed if piece name is too long
-              super.setBounds(x, y, tree.getWidth() - x, height); 
+              super.setBounds(x, y, nameRendererTree.getWidth() - x, height); 
             }
           };
-
+          
         final FurnitureTreeTableModel tableTreeModel = (FurnitureTreeTableModel)table.getModel();
-        this.tree = new JTree(tableTreeModel) {
+        this.nameRendererTree = new JTree(tableTreeModel) {
             boolean drawing = false;
             
             public void setBounds(int x, int y, int width, int height) {
-              // Force tree height to be equal to table height... 
+              // Force tree height to be equal to table height 
               super.setBounds(x, 0, width, table.getHeight());
             }
 
@@ -1552,22 +1699,23 @@ public class FurnitureTable extends JTable implements View, Printable {
               }
             }
           };
-        this.tree.setRowHeight(table.getRowHeight());
-        this.tree.setRootVisible(false);
-        this.tree.setShowsRootHandles(true);
+        this.nameRendererTree.setOpaque(false);
+        this.nameRendererTree.setRowHeight(table.getRowHeight());
+        this.nameRendererTree.setRootVisible(false);
+        this.nameRendererTree.setShowsRootHandles(true);
         tableTreeModel.addTreeModelListener(new TreeModelListener() {
             public void treeStructureChanged(TreeModelEvent ev) {
               for (int row = 0; row < tableTreeModel.getRowCount(); row++) {
                 if (tableTreeModel.getValueAt(row, 0) instanceof HomeFurnitureGroup) {
                   if (tableTreeModel.isRowExpanded(row)) {
-                    TreePath pathForRow = tree.getPathForRow(row);
-                    if (tree.isCollapsed(pathForRow)) {
-                      tree.expandPath(pathForRow); 
+                    TreePath pathForRow = nameRendererTree.getPathForRow(row);
+                    if (nameRendererTree.isCollapsed(pathForRow)) {
+                      nameRendererTree.expandPath(pathForRow); 
                     }
                   } else {
-                    TreePath pathForRow = tree.getPathForRow(row);
-                    if (tree.isExpanded(pathForRow)) {
-                      tree.collapsePath(pathForRow);
+                    TreePath pathForRow = nameRendererTree.getPathForRow(row);
+                    if (nameRendererTree.isExpanded(pathForRow)) {
+                      nameRendererTree.collapsePath(pathForRow);
                     }
                   }
                 }
@@ -1592,9 +1740,78 @@ public class FurnitureTable extends JTable implements View, Printable {
     public Rectangle getExpandedStateBounds(JTable table, int row, int column) {
       prepareTree(table);
       Rectangle cellBounds = table.getCellRect(row, column, true);
-      Rectangle pathBounds = this.tree.getPathBounds(this.tree.getPathForRow(row));
+      Rectangle pathBounds = this.nameRendererTree.getPathBounds(this.nameRendererTree.getPathForRow(row));
       cellBounds.width = pathBounds.x;
       return cellBounds;
+    }
+    
+    /**
+     * Returns the bounds of the information icon at the end of the name column.
+     */
+    public Rectangle getInformationIconBounds(JTable table, int row, int column) {
+      Component component = getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+      if (component instanceof PanelWithInformationIcon) {
+        Rectangle informationIconBounds = ((PanelWithInformationIcon)component).getInformationIconBounds();
+        if (informationIconBounds != null) {
+          Rectangle rectangle = table.getCellRect(row, column, false);
+          informationIconBounds.translate(rectangle.x, rectangle.y);
+          return informationIconBounds;
+        }
+      }
+      return null;
+    }
+    
+    /**
+     * A panel with paint methods overridden for performance reasons in rendering environment.
+     */
+    private static class PanelWithInformationIcon extends JPanel {
+      private static final ImageIcon INFORMATION_ICON = 
+          new ImageIcon(FurnitureTable.class.getResource("resources/furnitureInformation.png"));
+      private JLabel informationLabel;
+      
+      public PanelWithInformationIcon() {
+        super(new BorderLayout());
+        this.informationLabel = new JLabel(INFORMATION_ICON) {
+          @Override
+          public void print(Graphics g) {
+            // Icon is not printable
+          }
+        };
+        this.informationLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 1));
+        add(this.informationLabel, BorderLayout.LINE_END);
+      }
+      
+      @Override
+      public void revalidate() {      
+      }
+      
+      @Override
+      public void repaint(long tm, int x, int y, int width, int height) {
+      }
+      
+      @Override
+      public void repaint() {      
+      }
+      
+      public void setInformationIconVisible(boolean visible) {
+        this.informationLabel.setVisible(visible);
+      }
+      
+      public Rectangle getInformationIconBounds() {
+        if (this.informationLabel.isVisible()) {
+          return this.informationLabel.getBounds();
+        } else {
+          return null;
+        }
+      }
+      
+      @Override
+      public void setFont(Font font) {
+        super.setFont(font);
+        for (int i = 0, n = getComponentCount(); i < n; i++) {
+          getComponent(i).setFont(font);
+        }
+      }
     }
   }
   
