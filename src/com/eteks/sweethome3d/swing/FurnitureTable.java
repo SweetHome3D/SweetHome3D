@@ -456,7 +456,7 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   public void deleteInformationPopup() {
     if (this.furnitureInformationPopup != null) {
-      getToolkit().removeAWTEventListener(informationPopupRemovalListener);
+      getToolkit().removeAWTEventListener(this.informationPopupRemovalListener);
       this.furnitureInformationPopup.hide();
       this.furnitureInformationPopup = null;
     }
