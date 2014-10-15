@@ -4804,7 +4804,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     final JPanel toolTipPropertiesPanel = new JPanel(new GridBagLayout());
     // Reuse tool tip look
     Border border = UIManager.getBorder("ToolTip.border");
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSX()
+        || OperatingSystem.isMacOSXLeopardOrSuperior()) {
       border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(0, 3, 0, 2));
     }
     toolTipPropertiesPanel.setBorder(border);
