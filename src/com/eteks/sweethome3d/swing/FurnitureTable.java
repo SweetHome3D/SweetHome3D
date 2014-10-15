@@ -386,6 +386,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       
       final JEditorPane informationPane = new JEditorPane("text/html", information);
       informationPane.setEditable(false);
+      informationPane.setFocusable(false);
       Font font = getFont();
       String bodyRule = "body { font-family: " + font.getFamily() + "; " 
           + "font-size: " + font.getSize() + "pt; " 
@@ -410,9 +411,9 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Copy colors from tool tip instance (on Linux, colors aren't set in UIManager)
       JToolTip toolTip = new JToolTip();
       toolTip.setComponent(this);
-      informationPane.setBackground(toolTip.getBackground().getRGB() != 0
-          ? toolTip.getBackground()
-          : Color.WHITE);
+      informationPane.setBackground(toolTip.getBackground().getRGB() == 0 && getBackground().getRGB() != 0
+          ? Color.WHITE
+          : toolTip.getBackground());
       informationPane.setForeground(toolTip.getForeground());
       informationPane.setSize(informationPane.getPreferredSize());
 
@@ -428,7 +429,7 @@ public class FurnitureTable extends JTable implements View, Printable {
                   deleteInformationPopup();
                   ((KeyEvent)ev).consume();
                 }
-              } else if (ev.getID() != WindowEvent.WINDOW_OPENED // Fired at first popup instantiation
+              } else if (ev.getID() != WindowEvent.WINDOW_OPENED  // Fired at first popup instantiation
                          && (!(ev instanceof MouseEvent)
                              || (ev.getSource() != FurnitureTable.this
                                  && ev.getSource() != informationPane))) {
@@ -1620,6 +1621,8 @@ public class FurnitureTable extends JTable implements View, Printable {
 
         this.noGroupRendererComponent.setInformationIconVisible(piece.getInformation() != null);
         this.noGroupRendererComponent.setBackground(this.nameRendererLabel.getBackground());
+        this.noGroupRendererComponent.setBorder(this.nameRendererLabel.getBorder());
+        this.nameRendererLabel.setBorder(null);
         return this.noGroupRendererComponent;
       }
     }
@@ -1777,7 +1780,6 @@ public class FurnitureTable extends JTable implements View, Printable {
             // Icon is not printable
           }
         };
-        this.informationLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 1));
         add(this.informationLabel, BorderLayout.LINE_END);
       }
       
