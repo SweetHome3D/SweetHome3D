@@ -21,6 +21,8 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -816,7 +818,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    * Parses named objects like mesh in the current chunk.
    */
   private void parseNamedObject(ChunksInputStream in) throws IOException {
-    String name = in.readString(64);
+    String name = in.readString();
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case TRIANGLE_MESH_OBJECT : 
@@ -873,7 +875,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           while (!in.isChunckEndReached()) {
             switch (in.readChunkHeader().getID()) {
               case MESH_MATERIAL_GROUP : 
-                String materialName = in.readString(64);
+                String materialName = in.readString();
                 Material3DS material = null;
                 if (this.materials != null) {
                   material = this.materials.get(materialName);
@@ -934,7 +936,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           while (!in.isChunckEndReached()) {
             switch (in.readChunkHeader().getID()) {
               case NODE_HIERARCHY :
-                String meshName = in.readString(64);
+                String meshName = in.readString();
                 meshGroup = !"$$$DUMMY".equals(meshName);
                 in.readLittleEndianUnsignedShort(); 
                 in.readLittleEndianUnsignedShort();
@@ -1091,7 +1093,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MATERIAL_NAME : 
-          name = in.readString(64);
+          name = in.readString();
           break;
         case MATERIAL_AMBIENT : 
           ambientColor = parseColor(in); 
@@ -1232,7 +1234,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MATERIAL_MAPNAME :
-          mapName = in.readString(64);
+          mapName = in.readString();
           break;
         case PERCENTAGE_INT :
         case MATERIAL_MAP_TILING :
@@ -1601,22 +1603,18 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     /**
      * Returns the string read from this stream.
      */
-    public String readString(int max) throws IOException {
-      byte [] stringBytes = new byte [max];
+    public String readString() throws IOException {
+      ByteArrayOutputStream stringBytes = new ByteArrayOutputStream(256);
       int b;
-      int i = 0; 
-      // Read max characters until terminal 0
-      while ((b = this.in.read()) != -1 && b != 0 && i < max) {
-        stringBytes [i++] = (byte)b;
+      // Read characters until terminal 0
+      while ((b = this.in.read()) != -1 && b != 0) {
+        stringBytes.write((byte)b);
       }
       if (b == -1) {
         throw new IncorrectFormatException("Unexpected end of file");
       }
-      if (i >= max) {
-        throw new IncorrectFormatException("Invalid string");
-      }
-      this.stack.peek().incrementReadLength(i + 1);
-      return new String(stringBytes, 0, i, "ISO-8859-1");
+      this.stack.peek().incrementReadLength(stringBytes.size() + 1);
+      return stringBytes.toString("ISO-8859-1");
     }
   }
   
