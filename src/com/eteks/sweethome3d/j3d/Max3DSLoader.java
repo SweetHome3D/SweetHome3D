@@ -1412,10 +1412,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    */
   private static class Chunk3DS {
     private final ChunkID id;
-    private final int     length;
-    private int           readLength;
+    private final long    length;
+    private long          readLength;
 
-    public Chunk3DS(short id, int length) throws IOException {
+    public Chunk3DS(short id, long length) throws IOException {
       if (length < 6) {
         throw new IncorrectFormatException("Invalid chunk " + id + " length " + length);
       }
@@ -1428,15 +1428,15 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       return this.id;
     }
     
-    public int getLength() {
+    public long getLength() {
       return this.length;
     }
     
-    public void incrementReadLength(int readBytes) {
+    public void incrementReadLength(long readBytes) {
       this.readLength += readBytes;
     }
     
-    public int getReadLength() {
+    public long getReadLength() {
       return this.readLength;
     }
     
@@ -1474,7 +1474,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       } catch (EOFException ex) {
         return null;
       }
-      Chunk3DS chunk = new Chunk3DS(chunkId, readLittleEndianInt(false));
+      Chunk3DS chunk = new Chunk3DS(chunkId, readLittleEndianUnsignedInt(false));
       this.stack.push(chunk);
       return chunk;
     }
@@ -1506,8 +1506,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
      */
     public void readUntilChunkEnd() throws IOException {
       Chunk3DS chunk = this.stack.peek();
-      int remainingLength = chunk.getLength() - chunk.getReadLength();
-      for (int length = remainingLength; length > 0; length--) {
+      long remainingLength = chunk.getLength() - chunk.getReadLength();
+      for (long length = remainingLength; length > 0; length--) {
         if (this.in.read() < 0) {
           throw new IncorrectFormatException("Chunk " + chunk.getID() + " too short");
         }
@@ -1568,7 +1568,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
      * Returns the unsigned integer read from this stream.
      */
     public long readLittleEndianUnsignedInt() throws IOException {
-      return (long)readLittleEndianInt(true) & 0xFFFFFFFFL;
+      return readLittleEndianUnsignedInt(true);
+    }
+    
+    private long readLittleEndianUnsignedInt(boolean incrementReadLength) throws IOException {
+      return (long)readLittleEndianInt(incrementReadLength) & 0xFFFFFFFFL;
     }
     
     /**
