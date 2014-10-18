@@ -471,8 +471,12 @@ class MacOSXConfiguration {
       final JToolBar toolBar = toolBars.get(0);
       toolBar.setFloatable(false);
       toolBar.setBorder(new AbstractBorder() {
-          private final Color TOP_GRADIENT_COLOR_ACTIVATED_FRAME = new Color(222, 222, 222);
-          private final Color BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME = new Color(178, 178, 178);
+          private final Color TOP_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior() 
+              ? new Color(212, 212, 212)
+              : new Color(222, 222, 222);
+          private final Color BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior() 
+              ? new Color(209, 209, 209)
+              : new Color(178, 178, 178);
           private final Color TOP_GRADIENT_COLOR_DEACTIVATED_FRAME  = new Color(244, 244, 244);
           private final Color BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME = TOP_GRADIENT_COLOR_ACTIVATED_FRAME;
 
