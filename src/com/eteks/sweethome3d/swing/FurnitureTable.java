@@ -73,7 +73,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
@@ -308,8 +307,6 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void addMouseListener(final Home home, final FurnitureController controller) {
     addMouseListener(new MouseAdapter () {
-        private Timer waitDoubleClickThresoldTimer;
-
         @Override
         public void mouseClicked(MouseEvent ev) {
           final int column = columnAtPoint(ev.getPoint());
@@ -322,7 +319,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             Object columnId = getColumnModel().getColumn(column).getIdentifier();
             if (columnId == HomePieceOfFurniture.SortableProperty.VISIBLE) {
               Component visibilityComponent = getCellRenderer(row, column).
-                      getTableCellRendererComponent(FurnitureTable.this, getValueAt(row, column), false, false, row, column);
+                  getTableCellRendererComponent(FurnitureTable.this, getValueAt(row, column), false, false, row, column);
               Rectangle cellRect = getCellRect(row, column, false);
               // Center visibilityComponent in cell rect
               visibilityComponent.setSize(visibilityComponent.getPreferredSize());
@@ -851,8 +848,11 @@ public class FurnitureTable extends JTable implements View, Printable {
           case VALUE_ADDED_TAX :
           case PRICE_VALUE_ADDED_TAX_INCLUDED : 
             // Copy numbers as they are displayed by their renderer
-            writer.write(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
-                this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
+            String text = ((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                this, copiedPiece, false, false, rowIndex, columnIndex)).getText();
+            if (text != null) {
+              writer.write(text);
+            }
             break;
           case MOVABLE :
             // Copy boolean as true or false
@@ -869,7 +869,10 @@ public class FurnitureTable extends JTable implements View, Printable {
         Component rendererComponent = column.getCellRenderer().getTableCellRendererComponent(
             this, copiedPiece, false, false, rowIndex, columnIndex);
         if (rendererComponent instanceof JLabel) {
-          writer.write(((JLabel)rendererComponent).getText());              
+          String text = ((JLabel)rendererComponent).getText();
+          if (text != null) {
+            writer.write(text);
+          }
         } else {
           writer.write(String.valueOf(model.getValueAt(rowIndex, columnIndex)));
         }
@@ -1166,9 +1169,9 @@ public class FurnitureTable extends JTable implements View, Printable {
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
-          return super.getTableCellRendererComponent(
-              table, piece.getCatalogId(), isSelected, hasFocus, row, column); 
+          return super.getTableCellRendererComponent(table, 
+              value != null  ? ((HomePieceOfFurniture)value).getCatalogId()  : null, 
+              isSelected, hasFocus, row, column); 
         }
       };
     }
@@ -1183,9 +1186,11 @@ public class FurnitureTable extends JTable implements View, Printable {
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
-          Level level = piece.getLevel();
+          Level level = value != null 
+              ? piece.getLevel()
+              : null;
           return super.getTableCellRendererComponent(
-              table, level != null  ? level.getName()  : "", isSelected, hasFocus, row, column); 
+              table, level != null  ? level.getName()  : null, isSelected, hasFocus, row, column); 
         }
       };
     }
@@ -1208,7 +1213,9 @@ public class FurnitureTable extends JTable implements View, Printable {
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          value = preferences.getLengthUnit().getFormat().format((Float)value);
+          if (value != null) {
+            value = preferences.getLengthUnit().getFormat().format((Float)value);
+          }
           setHorizontalAlignment(JLabel.RIGHT);
           return super.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);
@@ -1222,7 +1229,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getWidth(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getWidth()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case DEPTH :
@@ -1231,7 +1239,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getDepth(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getDepth()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case HEIGHT :
@@ -1240,7 +1249,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getHeight(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getHeight()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case X :
@@ -1249,7 +1259,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getX(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getX()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case Y :
@@ -1258,7 +1269,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getY(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getY()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case ELEVATION :
@@ -1267,7 +1279,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).getElevation(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).getElevation()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         default :
@@ -1293,7 +1306,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             currencyFormat.setCurrency(Currency.getInstance(currency != null ? currency : defaultCurrency));
             value = currencyFormat.format(price);
           } else {
-            value = "";
+            value = null;
           }
           setHorizontalAlignment(JLabel.RIGHT);
           return super.getTableCellRendererComponent(
@@ -1308,8 +1321,17 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+                BigDecimal price;
+                String currency;
+                if (value != null) {
+                  price = piece.getPrice();
+                  currency = piece.getCurrency();
+                } else {
+                  price = null;
+                  currency = null;
+                }
                 return super.getTableCellRendererComponent(table, 
-                    piece.getPrice(), piece.getCurrency(), isSelected, hasFocus, row, column);
+                    price, currency, isSelected, hasFocus, row, column);
               }
             };
         case VALUE_ADDED_TAX :
@@ -1318,8 +1340,17 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+                BigDecimal valueAddedTax;
+                String currency;
+                if (value != null) {
+                  valueAddedTax = piece.getValueAddedTax();
+                  currency = piece.getCurrency();
+                } else {
+                  valueAddedTax = null;
+                  currency = null;
+                }
                 return super.getTableCellRendererComponent(table, 
-                    piece.getValueAddedTax(), piece.getCurrency(), isSelected, hasFocus, row, column);
+                    valueAddedTax, currency, isSelected, hasFocus, row, column);
               }
             };
         case PRICE_VALUE_ADDED_TAX_INCLUDED :
@@ -1328,8 +1359,17 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+                BigDecimal priceValueAddedTaxIncluded;
+                String currency;
+                if (value != null) {
+                  priceValueAddedTaxIncluded = piece.getPriceValueAddedTaxIncluded();
+                  currency = piece.getCurrency();
+                } else {
+                  priceValueAddedTaxIncluded = null;
+                  currency = null;
+                }
                 return super.getTableCellRendererComponent(table, 
-                    piece.getPriceValueAddedTaxIncluded(), piece.getCurrency(), isSelected, hasFocus, row, column);
+                    priceValueAddedTaxIncluded, currency, isSelected, hasFocus, row, column);
               }
             };
         default :
@@ -1351,8 +1391,10 @@ public class FurnitureTable extends JTable implements View, Printable {
           if (this.integerRenderer == null) {
             this.integerRenderer = table.getDefaultRenderer(Integer.class);
           }
-          int angle = (int)(Math.round(Math.toDegrees(((HomePieceOfFurniture)value).getAngle()) + 360) % 360);
-          return integerRenderer.getTableCellRendererComponent(
+          Integer angle = value != null  
+              ? (int)(Math.round(Math.toDegrees(((HomePieceOfFurniture)value).getAngle()) + 360) % 360)
+              : null;
+          return this.integerRenderer.getTableCellRendererComponent(
               table, angle, isSelected, hasFocus, row, column); 
         }
       };
@@ -1367,13 +1409,15 @@ public class FurnitureTable extends JTable implements View, Printable {
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          BigDecimal valueAddedTaxPercentage = ((HomePieceOfFurniture)value).getValueAddedTaxPercentage();
+          BigDecimal valueAddedTaxPercentage = value != null  
+              ? ((HomePieceOfFurniture)value).getValueAddedTaxPercentage()
+              : null;
           if (valueAddedTaxPercentage != null) {
             NumberFormat percentInstance = DecimalFormat.getPercentInstance();
             percentInstance.setMinimumFractionDigits(valueAddedTaxPercentage.scale() - 2);
             value = percentInstance.format(valueAddedTaxPercentage);
           } else {
-            value = "";
+            value = null;
           }
           setHorizontalAlignment(JLabel.RIGHT);
           return super.getTableCellRendererComponent(
@@ -1412,7 +1456,9 @@ public class FurnitureTable extends JTable implements View, Printable {
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          Integer color = ((HomePieceOfFurniture)value).getColor();
+          Integer color = value != null  
+              ? ((HomePieceOfFurniture)value).getColor()
+              : null;
           JLabel label = (JLabel)super.getTableCellRendererComponent(
               table, color, isSelected, hasFocus, row, column);
           if (color != null) {
@@ -1420,7 +1466,9 @@ public class FurnitureTable extends JTable implements View, Printable {
             label.setIcon(squareIcon);
             label.setForeground(new Color(color));
           } else {
-            label.setText("-");
+            if (value != null) {
+              label.setText("-");
+            }
             label.setIcon(null);
             label.setForeground(table.getForeground());
           }
@@ -1445,8 +1493,10 @@ public class FurnitureTable extends JTable implements View, Printable {
              int row, int column) {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
           JLabel label = (JLabel)super.getTableCellRendererComponent(
-            table, null, isSelected, hasFocus, row, column); 
-          HomeTexture texture = piece.getTexture();
+              table, null, isSelected, hasFocus, row, column); 
+          HomeTexture texture = piece != null  
+              ? piece.getTexture()
+              : null;
           if (texture != null) {
             Content textureContent = texture.getImage();
             label.setIcon(IconManager.getInstance().getIcon(
@@ -1492,7 +1542,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).isMovable(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).isMovable()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case DOOR_OR_WINDOW :
@@ -1501,7 +1552,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).isDoorOrWindow(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).isDoorOrWindow()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         case VISIBLE :
@@ -1510,7 +1562,8 @@ public class FurnitureTable extends JTable implements View, Printable {
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 return super.getTableCellRendererComponent(table, 
-                    ((HomePieceOfFurniture)value).isVisible(), isSelected, hasFocus, row, column);
+                    value != null  ? ((HomePieceOfFurniture)value).isVisible()  : null, 
+                    isSelected, hasFocus, row, column);
               }
             };
         default :
@@ -1575,10 +1628,12 @@ public class FurnitureTable extends JTable implements View, Printable {
       }
       HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
       boolean containsGroup = false;
-      for (int i = 0; i < table.getRowCount(); i++) {
-        if (table.getValueAt(i, 0) instanceof HomeFurnitureGroup) {
-          containsGroup = true;
-          break;
+      if (piece != null) {
+        for (int i = 0; i < table.getRowCount(); i++) {
+          if (table.getValueAt(i, 0) instanceof HomeFurnitureGroup) {
+            containsGroup = true;
+            break;
+          }
         }
       }
       if (containsGroup) {
@@ -1608,18 +1663,24 @@ public class FurnitureTable extends JTable implements View, Printable {
           this.noGroupRendererComponent.add(this.nameRendererLabel, BorderLayout.CENTER);
         }
 
-        this.nameRendererLabel.getTableCellRendererComponent(
-              table, piece.getName(), isSelected, hasFocus, row, column); 
-        Content iconContent;
-        if (piece instanceof HomeFurnitureGroup) {
-          iconContent = GROUP_ICON_CONTENT;
+        this.nameRendererLabel.getTableCellRendererComponent(table,
+              piece != null  ? piece.getName()  : null, 
+              isSelected, hasFocus, row, column);
+        if (piece != null) {
+          Content iconContent;
+          if (piece instanceof HomeFurnitureGroup) {
+            iconContent = GROUP_ICON_CONTENT;
+          } else {
+            iconContent = piece.getIcon();
+          }
+          this.nameRendererLabel.setIcon(IconManager.getInstance().getIcon(
+              iconContent, table.getRowHeight() - table.getRowMargin(), table));
+  
+          this.noGroupRendererComponent.setInformationIconVisible(piece.getInformation() != null);
         } else {
-          iconContent = piece.getIcon();
+          this.nameRendererLabel.setIcon(null);
+          this.noGroupRendererComponent.setInformationIconVisible(false);
         }
-        this.nameRendererLabel.setIcon(IconManager.getInstance().getIcon(
-            iconContent, table.getRowHeight() - table.getRowMargin(), table));
-
-        this.noGroupRendererComponent.setInformationIconVisible(piece.getInformation() != null);
         this.noGroupRendererComponent.setBackground(this.nameRendererLabel.getBackground());
         this.noGroupRendererComponent.setBorder(this.nameRendererLabel.getBorder());
         this.nameRendererLabel.setBorder(null);
