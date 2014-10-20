@@ -82,7 +82,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
   private static final PolygonAttributes      DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
-      new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0);
+      new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, false);
+  private static final PolygonAttributes      NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
+      new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, true);
   private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   private static final Bounds                 DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), 1E7);
 
@@ -90,6 +92,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
+    DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
+    NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
   }
   
   /**
@@ -210,10 +214,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
     } else {
       updatePieceOfFurnitureTransform();
+      updatePieceOfFurnitureModelMirrored();
       updatePieceOfFurnitureColorAndTexture(false);      
       updateLight();
       updatePieceOfFurnitureVisibility();      
-      updatePieceOfFurnitureModelMirrored();
     }
   }
 
@@ -379,14 +383,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void updatePieceOfFurnitureModelMirrored() {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     // Cull front or back model faces whether its model is mirrored or not
-    setCullFace(getFilledModelNode(), 
-        piece.isModelMirrored() ^ piece.isBackFaceShown() 
-            ? PolygonAttributes.CULL_FRONT 
-            : PolygonAttributes.CULL_BACK);
-    // Flip normals if back faces of model are shown
-    if (piece.isBackFaceShown()) {
-      setBackFaceNormalFlip(getFilledModelNode(), true);
-    }
+    setCullFace(getFilledModelNode(), piece.isModelMirrored(), piece.isBackFaceShown());
   }
 
   /**
@@ -430,12 +427,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       addChild(lightBranch);
     }
 
+    // Flip normals if back faces of model are shown
+    if (piece.isBackFaceShown()) {
+      setBackFaceNormalFlip(getFilledModelNode(), true);
+    }
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
+    updatePieceOfFurnitureModelMirrored();
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
     updateLight();
     updatePieceOfFurnitureVisibility();
-    updatePieceOfFurnitureModelMirrored();
 
     // Manage light sources visibility 
     if (this.home != null 
@@ -687,7 +688,14 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         public void textureUpdated(Texture texture) {
           if (TextureManager.getInstance().isTextureTransparent(texture)) {
             appearance.setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
-            appearance.setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
+            DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+            if (defaultMaterialAndTexture != null
+                && defaultMaterialAndTexture.getPolygonAttributes() != null
+                && defaultMaterialAndTexture.getPolygonAttributes().getBackFaceNormalFlip()) {
+              appearance.setPolygonAttributes(NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
+            } else {
+              appearance.setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
+            }
           } else {
             DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
             if (defaultMaterialAndTexture != null) {
@@ -833,15 +841,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * Sets the cull face of all <code>Shape3D</code> children nodes of <code>node</code>.
    * @param cullFace <code>PolygonAttributes.CULL_FRONT</code> or <code>PolygonAttributes.CULL_BACK</code>
    */
-  private void setCullFace(Node node, int cullFace) {
+  private void setCullFace(Node node, boolean mirrored, boolean backFaceShown) {
     if (node instanceof Group) {
       // Set cull face of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setCullFace((Node)enumeration.nextElement(), cullFace);
+        setCullFace((Node)enumeration.nextElement(), mirrored, backFaceShown);
       }
     } else if (node instanceof Link) {
-      setCullFace(((Link)node).getSharedGroup(), cullFace);
+      setCullFace(((Link)node).getSharedGroup(), mirrored, backFaceShown);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance == null) {
@@ -853,11 +861,18 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         polygonAttributes = createPolygonAttributesWithChangeCapabilities();
         appearance.setPolygonAttributes(polygonAttributes);
       }
-      
+
       // Change cull face 
       try {
-        if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
-          polygonAttributes.setCullFace(cullFace);
+        int cullFace = polygonAttributes.getCullFace();
+        if (cullFace != PolygonAttributes.CULL_NONE) {
+          Integer defaultCullFace = (Integer)polygonAttributes.getUserData();
+          if (defaultCullFace == null) {
+            polygonAttributes.setUserData(defaultCullFace = cullFace);
+          }
+          polygonAttributes.setCullFace((mirrored ^ backFaceShown ^ defaultCullFace == PolygonAttributes.CULL_FRONT)
+              ? PolygonAttributes.CULL_FRONT 
+              : PolygonAttributes.CULL_BACK);
         }
       } catch (CapabilityNotSetException ex) {
         // Shouldn't happen since capability is set but happens though with Java 3D 1.3
@@ -869,6 +884,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   /**
    * Sets whether all <code>Shape3D</code> children nodes of <code>node</code> should have 
    * their normal flipped or not.
+   * Caution !!! Should be executed only once per instance 
    * @param backFaceNormalFlip <code>true</code> if normals should be flipped.
    */
   private void setBackFaceNormalFlip(Node node, boolean backFaceNormalFlip) {
@@ -893,7 +909,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       
       // Change back face normal flip
-      polygonAttributes.setBackFaceNormalFlip(backFaceNormalFlip);
+      polygonAttributes.setBackFaceNormalFlip(
+          backFaceNormalFlip ^ polygonAttributes.getCullFace() == PolygonAttributes.CULL_FRONT);
     }
   }
 
@@ -901,6 +918,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     PolygonAttributes polygonAttributes = new PolygonAttributes();
     polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
     polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+    polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
     polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
     return polygonAttributes;
   }
@@ -935,6 +953,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     if (polygonAttributes != null) {
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
     }
   }
