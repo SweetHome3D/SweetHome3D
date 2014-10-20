@@ -541,7 +541,19 @@ public class SweetHome3D extends HomeApplication {
             if (ev.getItem().getName() != null 
                 && home.getName() == null
                 && !home.isRecovered()) {
-              controller.close();
+              if (OperatingSystem.isMacOSXLionOrSuperior()
+                  && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
+                  && MacOSXConfiguration.isWindowFullScreen(getHomeFrame(home))) {
+                // Delay home disposal to avoid Java 3D fatal error
+                new Timer(3000, new ActionListener() {
+                    public void actionPerformed(ActionEvent ev) {
+                      ((Timer)ev.getSource()).stop();
+                      controller.close();
+                    }
+                  }).start();
+              } else {
+                controller.close();
+              }
             }
             removeHomesListener(this);
           } else if (ev.getItem() == home && ev.getType() == CollectionEvent.Type.DELETE) {

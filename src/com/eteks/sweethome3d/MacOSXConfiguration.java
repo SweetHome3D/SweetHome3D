@@ -91,6 +91,8 @@ import com.sun.j3d.exp.swing.JCanvas3D;
  * @author Emmanuel Puybaret
  */
 class MacOSXConfiguration {
+  private static boolean fullScreen;
+
   private MacOSXConfiguration() {    
   }
   
@@ -547,11 +549,13 @@ class MacOSXConfiguration {
               Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
               this.fullScreenListener = new FullScreenAdapter() {
                   public void windowEnteredFullScreen(FullScreenEvent ev) {
+                    fullScreen = true;
                     toolBar.removeMouseListener(mouseListener);
                     toolBar.removeMouseMotionListener(mouseListener);
                   }
                   
                   public void windowExitedFullScreen(FullScreenEvent ev) {
+                    fullScreen = false;
                     toolBar.addMouseListener(mouseListener);
                     toolBar.addMouseMotionListener(mouseListener);
                   }
@@ -606,5 +610,12 @@ class MacOSXConfiguration {
         }
       }
     }
+  }
+
+  /**
+   * Returns <code>true</code> if the given window is displayed in full screen mode.
+   */
+  public static boolean isWindowFullScreen(final JFrame frame) {
+    return fullScreen;
   }
 }
