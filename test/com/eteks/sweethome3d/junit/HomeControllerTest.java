@@ -641,7 +641,7 @@ public class HomeControllerTest extends TestCase {
             ((JCheckBox)cellRendererComponent).isSelected());
       } else {
         assertEquals("Wrong value at column " + column, values [column], 
-            ((JLabel)cellRendererComponent).getText());
+            ((JLabel)((JComponent)cellRendererComponent).getComponent(1)).getText());
       }
     }    
   }
