@@ -539,7 +539,7 @@ public class FurnitureController implements Controller {
       for (HomePieceOfFurniture piece : sortedMap.values()) {
         groupPiecesNewElevation [i++] = piece.getElevation();
       }
-      final int furnitureGroupIndex = sortedMap.lastEntry().getKey() + 1 - groupPieces.length;
+      final int furnitureGroupIndex = sortedMap.lastKey() + 1 - groupPieces.length;
       final boolean movable = furnitureGroup.isMovable();
       final Level groupLevel = minLevel;
       
@@ -674,7 +674,7 @@ public class FurnitureController implements Controller {
           groupPiecesList.toArray(new HomePieceOfFurniture [groupPiecesList.size()]);      
       final int [] groupPiecesIndex = new int [groupPieces.length];
       final Level [] groupPiecesLevel = new Level [groupPieces.length];
-      int endIndex = sortedMap.lastEntry().getKey() + 1 - furnitureGroups.length;
+      int endIndex = sortedMap.lastKey() + 1 - furnitureGroups.length;
       boolean basePlanLocked = oldBasePlanLocked;
       for (i = 0; i < groupPieces.length; i++) {
         groupPiecesIndex [i] = endIndex++; 
