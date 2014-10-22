@@ -1,5 +1,5 @@
-SWEET HOME 3D v 4.4.1
----------------------
+SWEET HOME 3D v 4.5
+-------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
 Please read http://www.sweethome3d.com/history.html for more information
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_4_1 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_5 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -19,7 +19,7 @@ as an Eclipse project or with Ant.
 
 If you want to compile and test the Java files of this release 
 with Eclipse, please follow the next steps:
-1. install last JDK 5, 6 or 7 available at http://java.sun.com
+1. install last JDK 5 or greater available at http://java.sun.com
 2. install Eclipse available at http://www.eclipse.org
 3. in Eclipse, select File > Import... menu
 4. In "Select an import source" list of Import dialog box, 
@@ -47,7 +47,7 @@ The last release of Sweet Home 3D can be tested directly as a Java Web Start
 application at http://www.sweethome3d.com/ or as an applet at
 http://www.sweethome3d.com/SweetHome3DOnLine.html
 
-If you want to build Sweet Home 3D with Ant, please install last JDK 5 or 6 and 
+If you want to build Sweet Home 3D with Ant, please install last JDK 5 or greater and 
 Ant available at http://ant.apache.org/, and run ant command in the directory where
 you uncompressed this archive.
 The default target provided by build.xml Ant file builds the Jar executable version
