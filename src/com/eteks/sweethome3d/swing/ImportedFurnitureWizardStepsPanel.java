@@ -615,9 +615,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
     elevationSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          widthSpinnerModel.removeChangeListener(this);
+          elevationSpinnerModel.removeChangeListener(this);
           controller.setElevation(elevationSpinnerModel.getLength());
-          widthSpinnerModel.addChangeListener(this);
+          elevationSpinnerModel.addChangeListener(this);
         }
       });
     controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.ELEVATION,
