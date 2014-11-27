@@ -316,7 +316,7 @@ public class ImportedFurnitureWizardController extends WizardController
   /**
    * Returns the furniture choice step state.
    */
-  protected ImportedFurnitureWizardStepState getFurnitureModelStepStatee() {
+  protected ImportedFurnitureWizardStepState getFurnitureModelStepState() {
     return this.furnitureModelStepState;
   }
 
@@ -789,7 +789,7 @@ public class ImportedFurnitureWizardController extends WizardController
     
     @Override
     public void goBackToPreviousStep() {
-      setStepState(getFurnitureModelStepStatee());
+      setStepState(getFurnitureModelStepState());
     }
     
     @Override
