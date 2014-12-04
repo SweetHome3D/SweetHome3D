@@ -2239,8 +2239,15 @@ public class PlanController extends FurnitureController implements Controller {
       // Search if another piece at floor level contains the given piece to elevate it at its height
       HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece);
       if (highestSurroundingPiece != null) {
-        piece.setElevation(highestSurroundingPiece.getElevation() 
-                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation());
+        float elevation = highestSurroundingPiece.getElevation() 
+                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation();
+        if (highestSurroundingPiece.getLevel() != null) {
+          elevation += highestSurroundingPiece.getLevel().getElevation() 
+              - (piece.getLevel() != null 
+                    ? piece.getLevel().getElevation()
+                    : this.home.getSelectedLevel().getElevation());
+        }
+        piece.setElevation(Math.max(0, elevation));
         return highestSurroundingPiece;
       }
     }

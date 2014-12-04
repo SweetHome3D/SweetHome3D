@@ -1218,8 +1218,12 @@ public class FurnitureController implements Controller {
     for (HomePieceOfFurniture piece : selectedFurniture) {
       HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece, selectedFurniture);
       if (highestSurroundingPiece != null) {
-        piece.setElevation(highestSurroundingPiece.getElevation() 
-                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation());
+        float elevation = highestSurroundingPiece.getElevation() 
+            + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation();
+        if (highestSurroundingPiece.getLevel() != null) {
+          elevation += highestSurroundingPiece.getLevel().getElevation() - piece.getLevel().getElevation();
+        }
+        piece.setElevation(Math.max(0, elevation));
       } else {
         piece.setElevation(0);
       }
