@@ -356,7 +356,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     Node outlineModelNode = getOutlineModelNode();
     HomeEnvironment.DrawingMode drawingMode;
-    if (outlineModelNode != null) {
+    if (this.home != null && outlineModelNode != null) {
       drawingMode = this.home.getEnvironment().getDrawingMode(); 
     } else {
       drawingMode = null; 
