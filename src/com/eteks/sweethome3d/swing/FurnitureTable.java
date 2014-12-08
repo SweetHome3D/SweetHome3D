@@ -1581,8 +1581,8 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Return a table renderer that displays the icon matching current sort
       return new TableCellRenderer() {
           private TableCellRenderer headerRenderer;        
-          private ImageIcon ascendingSortIcon = new ImageIcon(getClass().getResource("resources/ascending.png"));
-          private ImageIcon descendingSortIcon = new ImageIcon(getClass().getResource("resources/descending.png"));
+          private ImageIcon ascendingSortIcon = new ImageIcon(FurnitureTable.class.getResource("resources/ascending.png"));
+          private ImageIcon descendingSortIcon = new ImageIcon(FurnitureTable.class.getResource("resources/descending.png"));
           
           public Component getTableCellRendererComponent(JTable table, 
                Object value, boolean isSelected, boolean hasFocus, int row, int column) {
