@@ -769,11 +769,12 @@ public class FurnitureTable extends JTable implements View, Printable {
   }
   
   private void exportHeaderToCSV(Writer writer, char fieldSeparator) throws IOException {
-    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+    TableColumnModel columnModel = getColumnModel();
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       if (columnIndex > 0) {
         writer.write(fieldSeparator);
       }
-      writer.write(String.valueOf(this.columnModel.getColumn(columnIndex).getHeaderValue()));
+      writer.write(String.valueOf(columnModel.getColumn(columnIndex).getHeaderValue()));
     }
     writer.write(System.getProperty("line.separator"));
   }
@@ -790,11 +791,12 @@ public class FurnitureTable extends JTable implements View, Printable {
       sizeFormat = this.preferences.getLengthUnit().getFormat();
     }
     
-    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+    TableColumnModel columnModel = getColumnModel();
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       if (columnIndex > 0) {
         writer.write(fieldSeparator);
       }
-      TableColumn column = this.columnModel.getColumn(columnIndex);
+      TableColumn column = columnModel.getColumn(columnIndex);
       Object columnIdentifier = column.getIdentifier();
       if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
         switch ((HomePieceOfFurniture.SortableProperty)columnIdentifier) {
@@ -1663,9 +1665,9 @@ public class FurnitureTable extends JTable implements View, Printable {
           this.noGroupRendererComponent.add(this.nameRendererLabel, BorderLayout.CENTER);
         }
 
+        String pieceName = piece != null  ? piece.getName()  : null;
         this.nameRendererLabel.getTableCellRendererComponent(table,
-              piece != null  ? piece.getName()  : null, 
-              isSelected, hasFocus, row, column);
+              pieceName, isSelected, hasFocus, row, column);
         if (piece != null) {
           Content iconContent;
           if (piece instanceof HomeFurnitureGroup) {
@@ -2012,7 +2014,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     }
 
     /**
-     * Returns the index of <code>piece</code> in furniture table, or -1 if it is included by filter. 
+     * Returns the index of <code>piece</code> in furniture table, or -1 if it is excluded by filter. 
      */
     public int getPieceOfFurnitureIndex(HomePieceOfFurniture piece) {
       return this.filteredAndSortedFurniture.indexOf(piece);
