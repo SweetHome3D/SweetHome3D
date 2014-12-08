@@ -393,16 +393,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                                                TransformGroup normalization,
                                                boolean ignoreDrawingMode,
                                                boolean waitTextureLoadingEnd) {    
-    BranchGroup modelBranch = new BranchGroup();
     normalization.addChild(modelNode);
-    normalization.setCapability(ALLOW_CHILDREN_READ);
+    setModelCapabilities(normalization);
     // Add model node to branch group
+    BranchGroup modelBranch = new BranchGroup();
+    modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     modelBranch.addChild(normalization);
     if (!ignoreDrawingMode) {
-      // Add outline model node 
+      // Add outline model node
       modelBranch.addChild(createOutlineModelNode(normalization));
     }
-    setModelCapabilities(modelBranch);
 
     TransformGroup transformGroup = (TransformGroup)getChild(0);
     // Remove previous nodes    
