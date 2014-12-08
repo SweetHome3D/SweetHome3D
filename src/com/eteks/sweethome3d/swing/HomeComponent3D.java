@@ -2328,7 +2328,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             Object3DBranch objectBranch = homeObjects.get(object);
             // Check object wasn't deleted since updateObjects call
             if (objectBranch != null) { 
-              homeObjects.get(object).update();
+              objectBranch.update();
             }
           }
           homeObjectsToUpdate = null;
