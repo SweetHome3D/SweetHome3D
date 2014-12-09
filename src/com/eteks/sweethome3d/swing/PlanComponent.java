@@ -4663,7 +4663,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Sets the cursor of this component as rotation cursor. 
+   * Sets the cursor of this component. 
    */
   public void setCursor(CursorType cursorType) {
     switch (cursorType) {
