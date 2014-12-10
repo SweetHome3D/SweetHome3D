@@ -8100,7 +8100,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void moveMouse(float x, float y) {
-      // Compute the new height of the piece 
+      // Compute the new power of the light 
       PlanView planView = getView();
       float [] bottomLeftPoint = this.selectedLight.getPoints() [3];
       float deltaX = x - this.deltaXToModificationPoint - bottomLeftPoint [0];
