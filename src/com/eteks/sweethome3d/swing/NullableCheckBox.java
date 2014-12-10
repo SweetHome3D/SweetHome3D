@@ -50,7 +50,6 @@ public class NullableCheckBox extends JComponent {
   private JCheckBox    checkBox;
   private Boolean      value = Boolean.FALSE;
   private boolean      nullable;
-  private ItemListener checkBoxListener;
   private List<ChangeListener> changeListeners = new ArrayList<ChangeListener>(1);
   
   /**
@@ -70,8 +69,9 @@ public class NullableCheckBox extends JComponent {
       }
     };
     // Add an item listener to change default checking logic 
-    this.checkBoxListener = new ItemListener() {
+    ItemListener checkBoxListener = new ItemListener() {
       public void itemStateChanged(ItemEvent ev) {
+        ev.getItemSelectable().removeItemListener(this);
         // If this check box is nullable
         if (nullable) {
           // Checking sequence will be null, true, false
@@ -85,9 +85,10 @@ public class NullableCheckBox extends JComponent {
         } else {
           setValue(checkBox.isSelected());
         }
+        ev.getItemSelectable().addItemListener(this);
       }
     };
-    this.checkBox.addItemListener(this.checkBoxListener);
+    this.checkBox.addItemListener(checkBoxListener);
     
     // Add the check box and its label to this component
     setLayout(new GridLayout());
@@ -107,21 +108,16 @@ public class NullableCheckBox extends JComponent {
    */
   public void setValue(Boolean value) {
     this.value = value;
-    this.checkBox.removeItemListener(this.checkBoxListener);
-    try {
-      if (value != null) {
-        this.checkBox.setSelected(value);
-      } else if (isNullable()) {
-        // Unselect check box to display a dash in its middle
-        this.checkBox.setSelected(false);
-        this.checkBox.repaint();
-      } else {
-        throw new IllegalArgumentException("Check box isn't nullable");
-      }
-      fireStateChanged();
-    } finally {
-      this.checkBox.addItemListener(this.checkBoxListener);
-    }      
+    if (value != null) {
+      this.checkBox.setSelected(value);
+    } else if (isNullable()) {
+      // Unselect check box to display a dash in its middle
+      this.checkBox.setSelected(false);
+      this.checkBox.repaint();
+    } else {
+      throw new IllegalArgumentException("Check box isn't nullable");
+    }
+    fireStateChanged();
   }
   
   /**
