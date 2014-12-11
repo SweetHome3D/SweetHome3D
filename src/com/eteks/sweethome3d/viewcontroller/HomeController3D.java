@@ -362,8 +362,8 @@ public class HomeController3D implements Controller {
    * Top camera controller state. 
    */
   private class TopCameraState extends CameraControllerState {
-    private final float MIN_WIDTH  = 1000;
-    private final float MIN_DEPTH  = 1000;
+    private final float MIN_WIDTH  = 100;
+    private final float MIN_DEPTH  = 100;
     private final float MIN_HEIGHT = 20;
     
     private Camera      topCamera;
