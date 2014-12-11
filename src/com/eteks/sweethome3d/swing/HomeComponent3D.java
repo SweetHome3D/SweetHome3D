@@ -761,6 +761,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     SimpleUniverse universe = new SimpleUniverse(viewingPlatform, viewer);
     
     View view = viewer.getView();
+    view.setTransparencySortingPolicy(View.TRANSPARENCY_SORT_GEOMETRY);
+    
     // Update field of view from current camera
     updateView(view, this.home.getCamera(), this.home.getTopCamera() == this.home.getCamera());
     
