@@ -537,9 +537,9 @@ public class FileUserPreferences extends UserPreferences {
             });
           
           // Read default furniture catalog
-          final DefaultFurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(
-              FileUserPreferences.this, getFurnitureLibrariesPluginFolders());
-          for (final FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
+          final FurnitureCatalog resourceFurnitureCatalog = 
+              readFurnitureCatalogFromResource(getFurnitureLibrariesPluginFolders());
+          for (final FurnitureCategory category : resourceFurnitureCatalog.getCategories()) {
             for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
               updater.execute(new Runnable() {
                   public void run() {
@@ -548,14 +548,25 @@ public class FileUserPreferences extends UserPreferences {
                 });
             }
           }
-          updater.execute(new Runnable() {
-              public void run() {
-                removeLibraries(FURNITURE_LIBRARY_TYPE);
-                libraries.addAll(defaultFurnitureCatalog.getLibraries());
-              }
-            });
+          if (resourceFurnitureCatalog instanceof DefaultFurnitureCatalog) {
+            updater.execute(new Runnable() {
+                public void run() {
+                  removeLibraries(FURNITURE_LIBRARY_TYPE);
+                  libraries.addAll(((DefaultFurnitureCatalog)resourceFurnitureCatalog).getLibraries());
+                }
+              });
+          }
         }
       });
+  }
+
+  /**
+   * Returns the furniture catalog contained in resources of the application and in the given plug-in folders.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   */
+  protected FurnitureCatalog readFurnitureCatalogFromResource(File [] furniturePluginFolders) {
+    return new DefaultFurnitureCatalog(this, furniturePluginFolders);
   }
 
   /**
@@ -592,9 +603,9 @@ public class FileUserPreferences extends UserPreferences {
             });
             
           // Read default textures catalog
-          final DefaultTexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(
-              FileUserPreferences.this, getTexturesLibrariesPluginFolders());
-          for (final TexturesCategory category : defaultTexturesCatalog.getCategories()) {
+          final TexturesCatalog resourceTexturesCatalog = 
+              readTexturesCatalogFromResource(getTexturesLibrariesPluginFolders());
+          for (final TexturesCategory category : resourceTexturesCatalog.getCategories()) {
             for (final CatalogTexture texture : category.getTextures()) {
               updater.execute(new Runnable() {
                   public void run() {
@@ -603,14 +614,25 @@ public class FileUserPreferences extends UserPreferences {
                 });
             }
           }
-          updater.execute(new Runnable() {
-              public void run() {
-                removeLibraries(TEXTURES_LIBRARY_TYPE);
-                libraries.addAll(defaultTexturesCatalog.getLibraries());
-              }
-            });
+          if (resourceTexturesCatalog instanceof DefaultTexturesCatalog) {
+            updater.execute(new Runnable() {
+                public void run() {
+                  removeLibraries(TEXTURES_LIBRARY_TYPE);
+                  libraries.addAll(((DefaultTexturesCatalog)resourceTexturesCatalog).getLibraries());
+                }
+              });
+          }
         }
       });
+  }
+
+  /**
+   * Returns the textures catalog contained in resources of the application and in the given plug-in folders.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   */
+  protected TexturesCatalog readTexturesCatalogFromResource(File [] texturesPluginFolders) {
+    return new DefaultTexturesCatalog(this, texturesPluginFolders);
   }
 
   /**
@@ -629,44 +651,77 @@ public class FileUserPreferences extends UserPreferences {
    * Read modifiable furniture catalog from preferences.
    */
   private void readModifiableFurnitureCatalog(Preferences preferences) {
-    for (int i = 1; ; i++) {
-      String name = preferences.get(FURNITURE_NAME + i, null);
-      if (name == null) {
-        // Stop the loop when a key furnitureName# doesn't exist
-        break;
-      }
-      String category = preferences.get(FURNITURE_CATEGORY + i, "");
-      Content icon  = getContent(preferences, FURNITURE_ICON + i);
-      Content model = getContent(preferences, FURNITURE_MODEL + i);
-      float width = preferences.getFloat(FURNITURE_WIDTH + i, 0.1f);
-      float depth = preferences.getFloat(FURNITURE_DEPTH + i, 0.1f);
-      float height = preferences.getFloat(FURNITURE_HEIGHT + i, 0.1f);
-      boolean movable = preferences.getBoolean(FURNITURE_MOVABLE + i, false);
-      boolean doorOrWindow = preferences.getBoolean(FURNITURE_DOOR_OR_WINDOW + i, false);
-      float elevation = preferences.getFloat(FURNITURE_ELEVATION + i, 0);
-      String colorString = preferences.get(FURNITURE_COLOR + i, null);
-      Integer color = colorString != null 
-          ? Integer.valueOf(colorString) : null; 
-      float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + i);
-      String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, null);
-      boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + i, false);
-      float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
-      boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
-
-      final FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      final CatalogPieceOfFurniture piece;
-      if (doorOrWindow) {
-        piece = new CatalogDoorOrWindow(name, icon, model,
-            width, depth, height, elevation, movable, 1, 0, new Sash [0],
-            color, modelRotation, backFaceShown, iconYaw, proportional);
-      } else {
-        piece = new CatalogPieceOfFurniture(name, icon, model,
-            width, depth, height, elevation, movable, 
-            staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
-      }
+    File preferencesFolder;
+    try {
+      preferencesFolder = getPreferencesFolder();
+    } catch (IOException ex) {
+      ex.printStackTrace();
+      return;
+    }
+    CatalogPieceOfFurniture piece;
+    for (int i = 1; (piece = readModifiablePieceOfFurniture(preferences, i, preferencesFolder)) != null; i++) {
+      FurnitureCategory pieceCategory = readModifiableFurnitureCategory(preferences, i);
       getFurnitureCatalog().add(pieceCategory, piece);
     }
   }  
+
+  /**
+   * Returns the modifiable piece of furniture read from <code>preferences</code> at the given <code>index</code>.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   * @param preferences        the preferences from which piece of furniture data can be read
+   * @param index              the index of the read piece
+   * @param preferencesFolder  the folder where piece resources can be stored
+   * @return the read piece of furniture or <code>null</code> if the piece at the given index doesn't exist.
+   */
+  protected CatalogPieceOfFurniture readModifiablePieceOfFurniture(Preferences preferences, 
+                                                                   int index, 
+                                                                   File preferencesFolder) {
+    String name = preferences.get(FURNITURE_NAME + index, null);
+    if (name == null) {
+      // Return null if key furnitureName# doesn't exist
+      return null;
+    }
+    Content icon  = getContent(preferences, FURNITURE_ICON + index, preferencesFolder);
+    Content model = getContent(preferences, FURNITURE_MODEL + index, preferencesFolder);
+    float width = preferences.getFloat(FURNITURE_WIDTH + index, 0.1f);
+    float depth = preferences.getFloat(FURNITURE_DEPTH + index, 0.1f);
+    float height = preferences.getFloat(FURNITURE_HEIGHT + index, 0.1f);
+    boolean movable = preferences.getBoolean(FURNITURE_MOVABLE + index, false);
+    boolean doorOrWindow = preferences.getBoolean(FURNITURE_DOOR_OR_WINDOW + index, false);
+    float elevation = preferences.getFloat(FURNITURE_ELEVATION + index, 0);
+    String colorString = preferences.get(FURNITURE_COLOR + index, null);
+    Integer color = colorString != null 
+        ? Integer.valueOf(colorString) : null; 
+    float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + index);
+    String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + index, null);
+    boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + index, false);
+    float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + index, 0);
+    boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + index, true);
+
+    if (doorOrWindow) {
+      return new CatalogDoorOrWindow(name, icon, model,
+          width, depth, height, elevation, movable, 1, 0, new Sash [0],
+          color, modelRotation, backFaceShown, iconYaw, proportional);
+    } else {
+      return new CatalogPieceOfFurniture(name, icon, model,
+          width, depth, height, elevation, movable, 
+          staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
+    }
+  }
+
+  /**
+   * Returns the furniture category of a piece at the given <code>index</code> 
+   * read from <code>preferences</code>. 
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   * @param preferences        the preferences from which piece of furniture data can be read
+   * @param index              the index of the read piece
+   */
+  protected FurnitureCategory readModifiableFurnitureCategory(Preferences preferences, int index) {
+    String category = preferences.get(FURNITURE_CATEGORY + index, "");
+    return new FurnitureCategory(category);
+  }
 
   /**
    * Returns model rotation parsed from key value.
@@ -700,11 +755,12 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns a content instance from the resource file value of key.
    */
-  private Content getContent(Preferences preferences, String key) {
+  private Content getContent(Preferences preferences, String key, 
+                             File preferencesFolder) {
     String content = preferences.get(key, null);
     if (content != null) {
       try {
-        String preferencesFolderUrl = getPreferencesFolder().toURI().toURL().toString();
+        String preferencesFolderUrl = preferencesFolder.toURI().toURL().toString();
         if (content.startsWith(preferencesFolderUrl)
             || content.startsWith("jar:" + preferencesFolderUrl)) {
           return new URLContent(new URL(content));
@@ -722,22 +778,54 @@ public class FileUserPreferences extends UserPreferences {
    * Read modifiable textures catalog from preferences.
    */
   private void readModifiableTexturesCatalog(Preferences preferences) {
-    for (int i = 1; ; i++) {
-      String name = preferences.get(TEXTURE_NAME + i, null);
-      if (name == null) {
-        // Stop the loop when a key textureName# doesn't exist
-        break;
-      }
-      String category = preferences.get(TEXTURE_CATEGORY + i, "");
-      Content image = getContent(preferences, TEXTURE_IMAGE + i);
-      float width = preferences.getFloat(TEXTURE_WIDTH + i, 0.1f);
-      float height = preferences.getFloat(TEXTURE_HEIGHT + i, 0.1f);
-
-      final TexturesCategory textureCategory = new TexturesCategory(category);
-      final CatalogTexture texture = new CatalogTexture(name, image, width, height, true);
+    File preferencesFolder;
+    try {
+      preferencesFolder = getPreferencesFolder();
+    } catch (IOException ex) {
+      ex.printStackTrace();
+      return;
+    }
+    CatalogTexture texture;
+    for (int i = 1; (texture = readModifiableTexture(preferences, i, preferencesFolder)) != null; i++) {
+      TexturesCategory textureCategory = readModifiableTextureCategory(preferences, i);
       getTexturesCatalog().add(textureCategory, texture);
     }
   }  
+
+  /**
+   * Returns the modifiable texture read from <code>preferences</code> at the given <code>index</code>.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   * @param preferences        the preferences from which texture data can be read
+   * @param index              the index of the read texture
+   * @param preferencesFolder  the folder where textures resources can be stored
+   * @return the read texture or <code>null</code> if the texture at the given index doesn't exist.
+   */
+  protected CatalogTexture readModifiableTexture(Preferences preferences, 
+                                                 int index, File preferencesFolder) {
+    String name = preferences.get(TEXTURE_NAME + index, null);
+    if (name == null) {
+      // Return null if key textureName# doesn't exist
+      return null;
+    }
+    Content image = getContent(preferences, TEXTURE_IMAGE + index, preferencesFolder);
+    float width = preferences.getFloat(TEXTURE_WIDTH + index, 0.1f);
+    float height = preferences.getFloat(TEXTURE_HEIGHT + index, 0.1f);
+    return new CatalogTexture(name, image, width, height, true);
+  }
+
+  /**
+   * Returns the category of a texture at the given <code>index</code> 
+   * read from <code>preferences</code>. 
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
+   * @param preferences        the preferences from which texture data can be read
+   * @param index              the index of the read piece
+   */
+  protected TexturesCategory readModifiableTextureCategory(Preferences preferences, int index) {
+    String category = preferences.get(TEXTURE_CATEGORY + index, "");
+    return new TexturesCategory(category);
+  }
 
   /**
    * Writes user preferences in current user preferences in system.
