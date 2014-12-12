@@ -671,9 +671,17 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   /**
    * Updates the <code>image</code> displayed by preview components.  
    */
-  private void updatePreviewComponentsImage(BufferedImage image) {
-    this.imageChoicePreviewComponent.setImage(image);
-    this.attributesPreviewComponent.setImage(image);
+  private void updatePreviewComponentsImage(final BufferedImage image) {
+    if (EventQueue.isDispatchThread()) {
+      this.imageChoicePreviewComponent.setImage(image);
+      this.attributesPreviewComponent.setImage(image);
+    } else {
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            updatePreviewComponentsImage(image);
+          }
+        });
+    }
   }
 
   /**
