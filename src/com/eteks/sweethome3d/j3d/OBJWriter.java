@@ -897,8 +897,26 @@ public class OBJWriter extends FilterWriter {
       vertexIndex3 = tmp;
     }
     
-    if (textureCoordinatesGenerated
-        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+    if (textureCoordinatesGenerated) {
+      if (normalsDefined) {
+        this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) + "\n");
+      } else {
+        this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+      }
+    } else if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if (normalsDefined) {
         this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
             + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
@@ -962,8 +980,31 @@ public class OBJWriter extends FilterWriter {
       vertexIndex4 = tmp;
     }
     
-    if (textureCoordinatesGenerated
-        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+    if (textureCoordinatesGenerated) {
+      if (normalsDefined) {
+        this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "/" + (normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex4)]) + "\n");
+      } else {
+        this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) + "\n");
+      }
+    } else if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if (normalsDefined) {
         this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
             + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
