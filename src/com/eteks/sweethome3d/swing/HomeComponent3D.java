@@ -249,7 +249,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
    * @param home the home to display in this component
    * @param preferences user preferences
-   * @param object3DFactory a factory able to create 3D objects from <code>home</code> items.
+   * @param object3dFactory a factory able to create 3D objects from <code>home</code> items.
    *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
    *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
    * @param controller the controller that manages modifications in <code>home</code>.           
@@ -257,23 +257,25 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
-                         Object3DFactory  object3DFactory,
+                         Object3DFactory  object3dFactory,
                          HomeController3D controller) {
-    this(home, preferences, object3DFactory, false, controller);    
+    this(home, preferences, object3dFactory, false, controller);    
   }
 
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
    * @throws IllegalStateException  if the 3D component couldn't be created.
    */
-  private HomeComponent3D(Home home,
-                          UserPreferences  preferences,
-                          Object3DFactory  object3DFactory,
-                          boolean displayShadowOnFloor,
-                          HomeController3D controller) {
+  public HomeComponent3D(Home home,
+                         UserPreferences  preferences,
+                         Object3DFactory  object3dFactory,
+                         boolean displayShadowOnFloor,
+                         HomeController3D controller) {
     this.home = home;
     this.displayShadowOnFloor = displayShadowOnFloor;
-    this.object3dFactory = object3DFactory;
+    this.object3dFactory = object3dFactory != null 
+        ? object3dFactory
+        : new Object3DBranchFactory();
 
     if (controller != null) {
       createActions(controller);

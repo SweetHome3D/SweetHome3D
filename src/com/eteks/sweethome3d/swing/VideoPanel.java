@@ -136,6 +136,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.VideoController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -169,6 +170,7 @@ public class VideoPanel extends JPanel implements DialogView {
 
   private final Home            home;
   private final UserPreferences preferences;
+  private final Object3DFactory object3dFactory;
   private final VideoController controller;
   private PlanComponent         planComponent; 
   private JToolBar              videoToolBar;
@@ -203,14 +205,22 @@ public class VideoPanel extends JPanel implements DialogView {
   private static VideoPanel     currentVideoPanel; // Support only one video panel opened at a time
 
   /**
-   * Creates a video panel.
+   * Creates a video panel with default object 3D factory.
    */
   public VideoPanel(Home home, 
                     UserPreferences preferences, 
                     VideoController controller) {
+    this(home, preferences, null, controller);
+  }
+  
+  public VideoPanel(Home home, 
+                    UserPreferences preferences, 
+                    Object3DFactory object3dFactory,
+                    VideoController controller) {
     super(new GridBagLayout());
     this.home = home;
     this.preferences = preferences;
+    this.object3dFactory = object3dFactory;
     this.controller = controller;
     createActions(preferences);
     createComponents(home, preferences, controller);
@@ -1378,11 +1388,12 @@ public class VideoPanel extends JPanel implements DialogView {
     try {
       file = OperatingSystem.createTemporaryFile("video", ".mov"); 
       if (quality >= 2) {
-        frameGenerator = new PhotoImageGenerator(home, width, height, quality == 2 
+        frameGenerator = new PhotoImageGenerator(home, width, height, this.object3dFactory, 
+            quality == 2 
               ? PhotoRenderer.Quality.LOW
               : PhotoRenderer.Quality.HIGH);        
       } else {
-        frameGenerator = new Image3DGenerator(home, width, height, quality == 1); 
+        frameGenerator = new Image3DGenerator(home, width, height, this.object3dFactory, quality == 1); 
       }
       if (!Thread.currentThread().isInterrupted()) {
         ImageDataSource sourceStream = new ImageDataSource((VideoFormat)this.videoFormatComboBox.getSelectedItem(), 
@@ -1780,9 +1791,10 @@ public class VideoPanel extends JPanel implements DialogView {
     private PhotoRenderer renderer;
     private BufferedImage image;
     
-    public PhotoImageGenerator(Home home, int width, int height, 
+    public PhotoImageGenerator(Home home, int width, int height,
+                               Object3DFactory object3dFactory,
                                PhotoRenderer.Quality quality) throws IOException {
-      this.renderer = new PhotoRenderer(home, quality); 
+      this.renderer = new PhotoRenderer(home, object3dFactory, quality); 
       this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
@@ -1812,10 +1824,11 @@ public class VideoPanel extends JPanel implements DialogView {
     private HomeComponent3D homeComponent3D;
     private BufferedImage   image;
 
-    public Image3DGenerator(Home home, int width, int height, 
+    public Image3DGenerator(Home home, int width, int height,
+                            Object3DFactory object3dFactory, 
                             boolean displayShadowOnFloor) {
       this.home = home;
-      this.homeComponent3D = new HomeComponent3D(home, null, displayShadowOnFloor);
+      this.homeComponent3D = new HomeComponent3D(home, null, object3dFactory, displayShadowOnFloor, null);
       this.homeComponent3D.startOffscreenImagesCreation();
       this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }

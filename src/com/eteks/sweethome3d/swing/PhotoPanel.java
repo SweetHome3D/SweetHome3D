@@ -96,6 +96,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.AbstractPhotoController;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -116,6 +117,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   
   private final Home               home;
   private final UserPreferences    preferences;
+  private final Object3DFactory    object3dFactory;
   private final PhotoController    controller;
   private ScaledImageComponent     photoComponent; 
   private JLabel                   animatedWaitLabel;
@@ -143,9 +145,17 @@ public class PhotoPanel extends JPanel implements DialogView {
   public PhotoPanel(Home home, 
                     UserPreferences preferences, 
                     PhotoController controller) {
+    this(home, preferences, null, controller);
+  }
+  
+  public PhotoPanel(Home home, 
+                    UserPreferences preferences,
+                    Object3DFactory object3dFactory, 
+                    PhotoController controller) {
     super(new GridBagLayout());
     this.home = home;
     this.preferences = preferences;
+    this.object3dFactory = object3dFactory;
     this.controller = controller;
     createActions(preferences);
     createComponents(home, preferences, controller);
@@ -744,7 +754,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
-        PhotoRenderer photoRenderer = new PhotoRenderer(home, 
+        PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory, 
             quality == 2 
                 ? PhotoRenderer.Quality.LOW 
                 : PhotoRenderer.Quality.HIGH);
@@ -771,7 +781,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         }
       } else {
         // Compute 3D view offscreen image
-        HomeComponent3D homeComponent3D = new HomeComponent3D(home, this.preferences, quality == 1);
+        HomeComponent3D homeComponent3D = new HomeComponent3D(
+            home, this.preferences, this.object3dFactory, quality == 1, null);
         image = homeComponent3D.getOffScreenImage(imageWidth, imageHeight);
       }
     } catch (OutOfMemoryError ex) {

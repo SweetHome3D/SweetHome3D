@@ -146,29 +146,19 @@ public class PhotoRenderer {
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
-    this(home, 
-        new Object3DBranchFactory() {
-          public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
-            if (item instanceof Room) {
-              // Never display ceiling with top camera
-              return new Room3D((Room)item, home, !(home.getCamera() instanceof ObserverCamera), true, waitForLoading);
-            } else {
-              return super.createObject3D(home, item, waitForLoading);
-            }  
-          }
-        }, quality);
+    this(home, new PhotoObject3DFactory(), quality);
   }
   
   /**
    * Creates an instance ready to render the scene matching the given <code>home</code>.
    * @param home the home to render
-   * @param object3DFactory a factory able to create 3D objects from <code>home</code> items.
+   * @param object3dFactory a factory able to create 3D objects from <code>home</code> items.
    *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
    *            this factory is expected to return an instance of {@link Node} in current implementation.
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home,
-                       Object3DFactory object3DFactory,
+                       Object3DFactory object3dFactory,
                        Quality quality) throws IOException {
     this.compass = home.getCompass();
     this.quality = quality;
@@ -185,19 +175,22 @@ public class PhotoRenderer {
       silk = true;
     }  
     
+    if (object3dFactory == null) {
+      object3dFactory = new PhotoObject3DFactory();
+    }
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
     HomeEnvironment homeEnvironment = home.getEnvironment();
     float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
     // Dividing walls and rooms surface in subparts is useless
     homeEnvironment.setSubpartSizeUnderLight(0); 
     for (Wall wall : home.getWalls()) {
-      exportNode((Node)object3DFactory.createObject3D(home, wall, true), true, silk);
+      exportNode((Node)object3dFactory.createObject3D(home, wall, true), true, silk);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      exportNode((Node)object3DFactory.createObject3D(home, piece, true), false, silk);
+      exportNode((Node)object3dFactory.createObject3D(home, piece, true), false, silk);
     }
     for (Room room : home.getRooms()) {
-      exportNode((Node)object3DFactory.createObject3D(home, room, true), true, silk);
+      exportNode((Node)object3dFactory.createObject3D(home, room, true), true, silk);
     } 
     // Create a 3D ground large enough to join the sky at the horizon  
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
@@ -1363,6 +1356,20 @@ public class PhotoRenderer {
           this.sunflow.shader(appearanceName, "constant");
         }
       }
+    }
+  }
+
+  /**
+   * Default factory for photo creation with no ceiling for rooms when top camera is used.
+   */
+  private static class PhotoObject3DFactory extends Object3DBranchFactory {
+    public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
+      if (item instanceof Room) {
+        // Never display ceiling with top camera
+        return new Room3D((Room)item, home, !(home.getCamera() instanceof ObserverCamera), true, waitForLoading);
+      } else {
+        return super.createObject3D(home, item, waitForLoading);
+      }  
     }
   }
 
