@@ -92,6 +92,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.media.j3d.Node;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -154,10 +155,8 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.j3d.Ground3D;
-import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.OBJWriter;
-import com.eteks.sweethome3d.j3d.Room3D;
-import com.eteks.sweethome3d.j3d.Wall3D;
+import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -193,6 +192,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -4058,13 +4058,22 @@ public class HomePane extends JRootPane implements HomeView {
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToOBJ(String objFile) throws RecorderException {
+    exportToOBJ(objFile, new Object3DBranchFactory());
+  }
+
+  /**
+   * Exports to an OBJ file the objects of the 3D view created with the given factory.
+   * Caution !!! This method may be called from an other thread than EDT.  
+   */
+  protected void exportToOBJ(String objFile, Object3DFactory object3dFactory) throws RecorderException {
     String header = this.preferences != null
         ? this.preferences.getLocalizedString(HomePane.class, 
                                               "exportToOBJ.header", new Date())
         : "";
         
     // Use a clone of home to ignore selection and for thread safety
-    OBJExporter.exportHomeToFile(cloneHomeInEventDispatchThread(this.home), objFile, header, this.exportAllToOBJ);
+    OBJExporter.exportHomeToFile(cloneHomeInEventDispatchThread(this.home), 
+        objFile, header, this.exportAllToOBJ, object3dFactory);
   }
 
   /**
@@ -4094,7 +4103,8 @@ public class HomePane extends JRootPane implements HomeView {
    * Export to OBJ in a separate class to be able to run HomePane without Java 3D classes.
    */
   private static class OBJExporter {
-    public static void exportHomeToFile(Home home, String objFile, String header, boolean exportAllToOBJ) throws RecorderException {
+    public static void exportHomeToFile(Home home, String objFile, String header, 
+                                        boolean exportAllToOBJ, Object3DFactory object3dFactory) throws RecorderException {
       OBJWriter writer = null;
       boolean exportInterrupted = false;
       try {
@@ -4131,7 +4141,7 @@ public class HomePane extends JRootPane implements HomeView {
         int i = 0;
         for (Wall wall : exportedWalls) {
           // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
-          Wall3D wallNode = new Wall3D(wall, home, true, true);
+          Node wallNode = (Node)object3dFactory.createObject3D(home, wall, true);
           writer.writeNode(wallNode, "wall_" + ++i);
         }
         // Write 3D furniture 
@@ -4139,7 +4149,7 @@ public class HomePane extends JRootPane implements HomeView {
         for (HomePieceOfFurniture piece : exportedFurniture) {
           if (piece.isVisible()) {
             // Create a not alive new piece to be able to explore its coordinates without setting capabilities
-            HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, home, true, true);
+            Node pieceNode = (Node)object3dFactory.createObject3D(home, piece, true);
             writer.writeNode(pieceNode);
           }
         }
@@ -4147,7 +4157,7 @@ public class HomePane extends JRootPane implements HomeView {
         i = 0;
         for (Room room : exportedRooms) {
           // Create a not alive new room to be able to explore its coordinates without setting capabilities 
-          Room3D roomNode = new Room3D(room, home, false, true, true);
+          Node roomNode = (Node)object3dFactory.createObject3D(home, room, true);
           writer.writeNode(roomNode, "room_" + ++i);
         }
       } catch (InterruptedIOException ex) {
