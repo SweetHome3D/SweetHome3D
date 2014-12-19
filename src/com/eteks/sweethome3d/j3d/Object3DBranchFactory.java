@@ -40,7 +40,7 @@ public class Object3DBranchFactory implements Object3DFactory {
     } else if (item instanceof Wall) {
       return new Wall3D((Wall)item, home, true, waitForLoading);
     } else if (item instanceof Room) {
-      return new Room3D((Room)item, home, false, false, waitForLoading);
+      return new Room3D((Room)item, home, false, waitForLoading);
     } else {
       throw new IllegalArgumentException("Can't create 3D object for an item of class " + item.getClass());
     }  

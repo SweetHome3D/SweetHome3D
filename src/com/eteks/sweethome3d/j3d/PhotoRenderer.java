@@ -1366,7 +1366,7 @@ public class PhotoRenderer {
     public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
       if (item instanceof Room) {
         // Never display ceiling with top camera
-        return new Room3D((Room)item, home, !(home.getCamera() instanceof ObserverCamera), true, waitForLoading);
+        return new Room3D((Room)item, home, !(home.getCamera() instanceof ObserverCamera), waitForLoading);
       } else {
         return super.createObject3D(home, item, waitForLoading);
       }  

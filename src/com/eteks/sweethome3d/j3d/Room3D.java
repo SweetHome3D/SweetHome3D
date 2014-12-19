@@ -68,15 +68,14 @@ public class Room3D extends Object3DBranch {
    * Creates the 3D room matching the given home <code>room</code>.
    */
   public Room3D(Room room, Home home) {
-    this(room, home, false, false, false);
+    this(room, home, false, false);
   }
 
   /**
    * Creates the 3D room matching the given home <code>room</code>.
    */
   public Room3D(Room room, Home home,
-                boolean ignoreCeilingPart, 
-                boolean ignoreInvisiblePart,
+                boolean ignoreCeilingPart,
                 boolean waitTextureLoadingEnd) {
     setUserData(room);
     this.home = home;
@@ -93,14 +92,8 @@ public class Room3D extends Object3DBranch {
     updateRoomGeometry();
     updateRoomAppearance(waitTextureLoadingEnd);
     
-    if (ignoreCeilingPart
-        || (ignoreInvisiblePart
-            && !room.isCeilingVisible())) {
+    if (ignoreCeilingPart) {
       removeChild(CEILING_PART);
-    }
-    if (ignoreInvisiblePart
-        && !room.isFloorVisible()) {
-      removeChild(FLOOR_PART);
     }
   }
 
