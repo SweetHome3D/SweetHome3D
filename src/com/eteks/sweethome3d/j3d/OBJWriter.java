@@ -376,7 +376,7 @@ public class OBJWriter extends FilterWriter {
               try {
                 appearanceName = appearance.getName();
               } catch (NoSuchMethodError ex) {
-                // Don't reuse appearance name with Java 3D < 1.4 where getName was added              }
+                // Don't reuse appearance name with Java 3D < 1.4 where getName was added
               }
               if (appearanceName == null || !accept(appearanceName)) {
                 appearanceName = objectName;
