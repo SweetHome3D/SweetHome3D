@@ -2735,8 +2735,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           x < shapeBounds.getMaxX(); x += anchorRect.getWidth()) {
         for (double y = firstY; y < shapeBounds.getMaxY(); y += anchorRect.getHeight()) {
           AffineTransform transform = AffineTransform.getTranslateInstance(x, y);
-          transform.concatenate(AffineTransform.getScaleInstance(anchorRect.getWidth() / image.getWidth(), anchorRect.getHeight() / image.getHeight()));
-          g2D.drawImage(image, transform, null);
+          transform.concatenate(AffineTransform.getScaleInstance(
+              anchorRect.getWidth() / image.getWidth(), anchorRect.getHeight() / image.getHeight()));
+          g2D.drawRenderedImage(image, transform);
         }
       }
       g2D.setClip(clip);
