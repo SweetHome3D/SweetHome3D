@@ -2300,7 +2300,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       paintGridLines(g2D, gridScale, xMin, xMax, yMin, yMax, gridSize, mainGridSize);          
     }
   }
-
+  
   /**
    * Paints background grid lines from <code>xMin</code> to <code>xMax</code> 
    * and <code>yMin</code> to <code>yMax</code>.
@@ -2700,12 +2700,48 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         
         Composite oldComposite = setTransparency(g2D, 0.75f);
-        g2D.fill(getShape(room.getPoints()));
+        fillShape(g2D, getShape(room.getPoints()), paintMode);
         g2D.setComposite(oldComposite);
 
         g2D.setPaint(foregroundColor);
         g2D.draw(getShape(room.getPoints()));
       }
+    }
+  }
+
+  /**
+   * Fills the given <code>shape</code>.
+   */
+  private void fillShape(Graphics2D g2D, Shape shape, PaintMode paintMode) {
+    if (paintMode == PaintMode.PRINT
+        && g2D.getPaint() instanceof TexturePaint
+        && OperatingSystem.isMacOSX()
+        && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      Shape clip = g2D.getClip();
+      g2D.setClip(shape);
+      TexturePaint paint = (TexturePaint)g2D.getPaint();
+      BufferedImage image = paint.getImage();
+      Rectangle2D anchorRect = paint.getAnchorRect();
+      Rectangle2D shapeBounds = shape.getBounds2D();
+      double firstX = anchorRect.getX() + Math.round(shapeBounds.getX() / anchorRect.getWidth()) * anchorRect.getWidth();
+      if (firstX > shapeBounds.getX()) {
+        firstX -= anchorRect.getWidth();
+      }
+      double firstY = anchorRect.getY() + Math.round(shapeBounds.getY() / anchorRect.getHeight()) * anchorRect.getHeight();    
+      if (firstY > shapeBounds.getY()) {
+        firstY -= anchorRect.getHeight();
+      }
+      for (double x = firstX;
+          x < shapeBounds.getMaxX(); x += anchorRect.getWidth()) {
+        for (double y = firstY; y < shapeBounds.getMaxY(); y += anchorRect.getHeight()) {
+          AffineTransform transform = AffineTransform.getTranslateInstance(x, y);
+          transform.concatenate(AffineTransform.getScaleInstance(anchorRect.getWidth() / image.getWidth(), anchorRect.getHeight() / image.getHeight()));
+          g2D.drawImage(image, transform, null);
+        }
+      }
+      g2D.setClip(clip);
+    } else {
+      g2D.fill(shape);
     }
   }
 
@@ -2986,7 +3022,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                     Paint drawPaint, PaintMode paintMode) {
     // Fill walls area
     g2D.setPaint(fillPaint);
-    g2D.fill(area);
+    fillShape(g2D, area, paintMode);
     // Draw walls area
     g2D.setPaint(drawPaint);
     g2D.setStroke(new BasicStroke(getStrokeWidth(Wall.class, paintMode) / planScale));
