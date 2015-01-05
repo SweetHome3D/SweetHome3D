@@ -32,6 +32,7 @@ import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -108,6 +109,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -3144,70 +3146,98 @@ public class HomePane extends JRootPane implements HomeView {
     }
     Frame defaultFrame = (Frame)window;
     // Create a dialog with the same title as home frame 
-    final JDialog separateDialog = new JDialog(defaultFrame, defaultFrame.getTitle(), false);
-    separateDialog.setResizable(true);
+    final Window separateWindow;
+    if (OperatingSystem.isMacOSX()
+        && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
+        && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+      // Under Mac OS X, handle separate window with a JFrame in multiple screens environment
+      // because a separate JDialog instance displaying a 3D view jumps back to the screen 
+      // where the main window is displayed when a modification dialog is opened  
+      final JFrame separateFrame = new JFrame(defaultFrame.getTitle(), defaultFrame.getGraphicsConfiguration());
+      separateFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      if (defaultFrame instanceof JFrame) {
+        separateFrame.setJMenuBar(createMenuBar(this.home, this.preferences, this.controller));
+      }
+      try {
+        // Call Java 1.6 setIconImages by reflection to ensure the iconnable frame will have a good icon   
+        JFrame.class.getMethod("setIconImages", List.class).invoke(separateFrame,           
+            JFrame.class.getMethod("getIconImages").invoke(defaultFrame));
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      separateWindow = separateFrame;      
+    } else {
+      JDialog separateDialog = new JDialog(defaultFrame, defaultFrame.getTitle(), false);
+      separateDialog.setResizable(true);
+      separateDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+      // Copy action map and input map to enable shortcuts in the window
+      ActionMap actionMap = getActionMap();
+      separateDialog.getRootPane().setActionMap(actionMap);
+      InputMap inputMap = separateDialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+      for (Object key : actionMap.allKeys()) {
+        Action action = actionMap.get(key);
+        KeyStroke accelerator = (KeyStroke)action.getValue(Action.ACCELERATOR_KEY);
+        if (key != ActionType.CLOSE
+            && key != ActionType.DETACH_3D_VIEW 
+            && (key != ActionType.EXIT || !OperatingSystem.isMacOSX()) 
+            && accelerator != null) {
+          inputMap.put(accelerator, key);
+        }
+      }
+      separateWindow = separateDialog;
+    }
+    
     defaultFrame.addPropertyChangeListener("title", new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          separateDialog.setTitle((String)ev.getNewValue());
+          if (separateWindow instanceof JFrame) {
+            ((JFrame)separateWindow).setTitle((String)ev.getNewValue());
+          } else {
+            ((JDialog)separateWindow).setTitle((String)ev.getNewValue());
+          }
         }
       });
+    final JRootPane separateRootPane = ((RootPaneContainer)separateWindow).getRootPane();
     if (defaultFrame instanceof RootPaneContainer) {
       // Use same document modified indicator
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         ((RootPaneContainer)defaultFrame).getRootPane().addPropertyChangeListener("Window.documentModified", new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            separateDialog.getRootPane().putClientProperty("Window.documentModified", ev.getNewValue());
+            separateRootPane.putClientProperty("Window.documentModified", ev.getNewValue());
           }
         });      
       } else if (OperatingSystem.isMacOSX()) {
         ((RootPaneContainer)defaultFrame).getRootPane().addPropertyChangeListener("windowModified", new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              separateDialog.getRootPane().putClientProperty("windowModified", ev.getNewValue());
+              separateRootPane.putClientProperty("windowModified", ev.getNewValue());
             }
           });      
       }
     }
     
-    separateDialog.setContentPane(component);
-    separateDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-    separateDialog.addWindowListener(new WindowAdapter() {
+    separateRootPane.setContentPane(component);
+    separateWindow.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(WindowEvent ev) {
           controller.attachView(view);
         }
       });
-    separateDialog.addComponentListener(new ComponentAdapter() {
+    separateWindow.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, separateDialog.getWidth());
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, separateDialog.getHeight());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, separateWindow.getWidth());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, separateWindow.getHeight());
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, separateDialog.getX());
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, separateDialog.getY());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, separateWindow.getX());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, separateWindow.getY());
         }
       });
-    
-    // Copy action map and input map to enable shortcuts in the window
-    ActionMap actionMap = getActionMap();
-    separateDialog.getRootPane().setActionMap(actionMap);
-    InputMap inputMap = separateDialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-    for (Object key : actionMap.allKeys()) {
-      Action action = actionMap.get(key);
-      KeyStroke accelerator = (KeyStroke)action.getValue(Action.ACCELERATOR_KEY);
-      if (key != ActionType.CLOSE
-          && key != ActionType.DETACH_3D_VIEW 
-          && (key != ActionType.EXIT || !OperatingSystem.isMacOSX()) 
-          && accelerator != null) {
-        inputMap.put(accelerator, key);
-      }
-    }
 
-    separateDialog.setBounds(x, y, width, height);
-    separateDialog.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateDialog.getBounds()));
-    separateDialog.setVisible(true);
+    separateWindow.setBounds(x, y, width, height);
+    separateWindow.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateWindow.getBounds()));
+    separateWindow.setVisible(true);
     
     this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, true);
   }
