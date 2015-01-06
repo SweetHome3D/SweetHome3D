@@ -105,20 +105,9 @@ class MacOSXConfiguration {
     final HomeController defaultController = 
         homeApplication.createHomeFrameController(homeApplication.createHome()).getHomeController();
     final HomePane defaultHomeView = (HomePane)defaultController.getView();
-    for (HomePane.ActionType action : HomePane.ActionType.values()) {
-      switch (action) {
-        case ABOUT :
-        case NEW_HOME :
-        case OPEN :
-        case DELETE_RECENT_HOMES :
-        case HELP :
-          break;
-        default :
-          defaultHomeView.setEnabled(action, false);
-      }
-    }
-
+    setDefaultActionsEnabled(defaultHomeView, true);
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
+    
     JFrame frame = null;
     try {
       if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
@@ -318,6 +307,12 @@ class MacOSXConfiguration {
                 }
               });
           }
+          // Don't enable actions in default menu bar (the menu bar might be displayed when file dialogs are displayed)
+          setDefaultActionsEnabled(defaultHomeView, false);
+        } else if (ev.getType() == CollectionEvent.Type.DELETE
+                    && homeApplication.getHomes().size() == 0) {
+          // Enable default actions
+          setDefaultActionsEnabled(defaultHomeView, true);
         }
       };
     });
@@ -331,6 +326,25 @@ class MacOSXConfiguration {
       } catch (NoSuchMethodError ex) {
         // Ignore icon change if setDockIconImage isn't available
       } catch (IOException ex) {
+      }
+    }
+  }
+
+  /**
+   * Enables / disables default actions in the given view.
+   */
+  private static void setDefaultActionsEnabled(HomePane homeView, boolean enabled) {
+    for (HomePane.ActionType action : HomePane.ActionType.values()) {
+      switch (action) {
+        case ABOUT :
+        case NEW_HOME :
+        case OPEN :
+        case DELETE_RECENT_HOMES :
+        case HELP :
+          homeView.setEnabled(action, enabled);
+          break;
+        default :
+          homeView.setEnabled(action, false);
       }
     }
   }
