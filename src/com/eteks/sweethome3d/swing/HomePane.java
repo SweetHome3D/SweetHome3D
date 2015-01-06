@@ -857,7 +857,8 @@ public class HomePane extends JRootPane implements HomeView {
         int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
         for (Action specialKeyAction : specialKeyActions) {
           KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
-          if (ev.getKeyChar() == actionKeyStroke.getKeyChar()
+          if (actionKeyStroke != null
+              && ev.getKeyChar() == actionKeyStroke.getKeyChar()
               && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
               && specialKeyAction.isEnabled()) {
             specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
@@ -2991,30 +2992,40 @@ public class HomePane extends JRootPane implements HomeView {
     class MouseAndFocusListener extends MouseAdapter implements FocusListener {      
       @Override
       public void mousePressed(MouseEvent ev) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
-                setMenuItemsEnabled(menuBar.getMenu(i), false);
-              }
-            }
-          });
+        setMenusEnabled(menuBar, false);
       }
       
       @Override
       public void mouseReleased(MouseEvent ev) {
-        enableMenuItems(menuBar);
+        setMenusEnabled(menuBar, true);
       }
 
-      private void enableMenuItems(final JMenuBar menuBar) {
+      // Need to take into account focus events because a mouse released event 
+      // isn't dispatched when the component loses focus  
+      public void focusGained(FocusEvent ev) {
+        setMenusEnabled(menuBar, true);
+      }
+
+      public void focusLost(FocusEvent ev) {
+        setMenusEnabled(menuBar, true);
+      }
+
+      /**
+       * Enables or disables the menu items of the given menu bar.
+       */
+      private void setMenusEnabled(final JMenuBar menuBar, final boolean enabled) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
-                setMenuItemsEnabled(menuBar.getMenu(i), true);
+                setMenuItemsEnabled(menuBar.getMenu(i), enabled);
               }
             }
           });
       }
 
+      /**
+       * Enables or disables the menu items of the given <code>menu</code>.
+       */
       private void setMenuItemsEnabled(JMenu menu, boolean enabled) {
         for (int i = 0, n = menu.getItemCount(); i < n; i++) {
           JMenuItem item = menu.getItem(i);
@@ -3027,16 +3038,6 @@ public class HomePane extends JRootPane implements HomeView {
           }
         }
       }
-
-      // Need to take into account focus events because a mouse released event 
-      // isn't dispatched when the component loses focus  
-      public void focusGained(FocusEvent ev) {
-        enableMenuItems(menuBar);
-      }
-
-      public void focusLost(FocusEvent ev) {
-        enableMenuItems(menuBar);
-      }
     };
     
     MouseAndFocusListener listener = new MouseAndFocusListener();
@@ -3045,7 +3046,6 @@ public class HomePane extends JRootPane implements HomeView {
       ((JComponent)view).addFocusListener(listener);
     }
   }
-  
 
   /**
    * Detaches the given <code>view</code> from home view.
