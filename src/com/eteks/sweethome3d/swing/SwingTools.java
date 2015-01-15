@@ -342,7 +342,8 @@ public class SwingTools {
     if (OperatingSystem.isMacOSX()
         && (language.equals(Locale.CHINESE.getLanguage())
             || language.equals(Locale.JAPANESE.getLanguage())
-            || language.equals(Locale.KOREAN.getLanguage()))) {
+            || language.equals(Locale.KOREAN.getLanguage())
+            || language.equals("uk"))) {  // Ukrainian
       int openingBracketIndex = localizedString.indexOf('(');
       if (openingBracketIndex != -1) {
         int closingBracketIndex = localizedString.indexOf(')');
