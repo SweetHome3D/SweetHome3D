@@ -47,6 +47,8 @@ import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
+import sun.misc.OSEnvironment;
+
 import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
@@ -184,7 +186,8 @@ public final class ViewerHelper {
     // Force offscreen in 3D view under Plugin 2 / Java 6 / Mac OS X
     if (OperatingSystem.isMacOSX()            
         && applet.getAppletContext() != null
-        && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")) {
+        && applet.getAppletContext().getClass().getName().startsWith("sun.plugin2.applet.Plugin2Manager")
+        && OperatingSystem.isJavaVersionBetween("1.6", "1.7")) {
       System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
     }
 
