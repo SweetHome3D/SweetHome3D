@@ -1262,8 +1262,9 @@ public class VideoPanel extends JPanel implements DialogView {
    */
   private Camera [] getVideoFramesPath(int frameRate) {
     List<Camera> videoFramesPath = new ArrayList<Camera>();
-    final float moveDistancePerFrame = 240000f / 3600 / frameRate;  // 3 cm/frame = 1800 m / 3600 s / 25 frame/s = 2.4 km/h
-    final float moveAnglePerFrame = (float)(Math.PI / 180 * 30 / frameRate);
+    final float speed = 2400f / 3600; // 2.4 km/h
+    final float moveDistancePerFrame = speed * 100f / frameRate;  // speed is in m/s
+    final float moveAnglePerFrame = (float)(Math.PI / 120 * 30 * speed / frameRate);
     final float elapsedTimePerFrame = 345600 / frameRate * 25; // 250 frame/day at 25 frame/second
     
     List<Camera> cameraPath = this.controller.getCameraPath();
