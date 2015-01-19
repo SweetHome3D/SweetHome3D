@@ -855,7 +855,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Once off screen images are generated with {@link #getOffScreenImage(int, int) getOffScreenImage}, 
    * call {@link #endOffscreenImagesCreation() endOffscreenImagesCreation} method to free resources.
    */
-  void startOffscreenImagesCreation() {
+  public void startOffscreenImagesCreation() {
     if (this.offscreenUniverse == null) {
       if (this.onscreenUniverse != null) {
         throw new IllegalStateException("Can't listen to home changes offscreen and onscreen at the same time");
@@ -935,7 +935,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Frees unnecessary resources after the creation of a sequence of multiple offscreen images.
    */
-  void endOffscreenImagesCreation() {
+  public void endOffscreenImagesCreation() {
     if (this.offscreenUniverse != null) {
       this.offscreenUniverse.cleanup();
       removeHomeListeners();
