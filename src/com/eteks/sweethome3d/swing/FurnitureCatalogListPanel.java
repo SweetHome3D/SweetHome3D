@@ -41,7 +41,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -190,7 +189,9 @@ class FurnitureCatalogListPanel extends JPanel implements View {
     this.catalogFurnitureList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
     this.catalogFurnitureList.setCellRenderer(new CatalogCellRenderer());
     this.catalogFurnitureList.setAutoscrolls(false);
-    this.catalogFurnitureList.setDragEnabled(true);
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+      this.catalogFurnitureList.setDragEnabled(true);
+    }
     this.catalogFurnitureList.setTransferHandler(null);
     // Remove Select all action
     this.catalogFurnitureList.getActionMap().getParent().remove("selectAll");
@@ -377,11 +378,14 @@ class FurnitureCatalogListPanel extends JPanel implements View {
               catalogFurnitureList.clearSelection();
               catalogFurnitureList.setSelectedValue(this.exportedPiece, false);
             }
+            if (!OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+              catalogFurnitureList.getTransferHandler().exportAsDrag(catalogFurnitureList, ev, DnDConstants.ACTION_COPY);
+            }
             this.exportedPiece = null;
           }
         }
       };
-      
+    
     catalogFurnitureList.addMouseListener(mouseListener);
     catalogFurnitureList.addMouseMotionListener(mouseListener);
   }
