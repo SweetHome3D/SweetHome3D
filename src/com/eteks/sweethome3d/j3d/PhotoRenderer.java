@@ -121,6 +121,8 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 public class PhotoRenderer {
   public enum Quality {LOW, HIGH}
   
+  private final Home home;
+  private final Object3DFactory object3dFactory;
   private final Quality quality;
   private final Compass compass;
   private final int homeLightColor;
@@ -128,8 +130,9 @@ public class PhotoRenderer {
   private final SunflowAPI sunflow;
   private boolean useSunSky;
   private boolean useSunskyLight;
-  private String sunSkyLightName;
-  private String sunLightName;
+  private String  sunSkyLightName;
+  private String  sunLightName;
+  private final Map<Selectable, String []>         homeItemsNames     = new HashMap<Selectable, String []>();
   private final Map<TransparentTextureKey, String> textureImagesCache = new HashMap<TransparentTextureKey, String>();
   private Thread renderingThread;
 
@@ -160,37 +163,35 @@ public class PhotoRenderer {
   public PhotoRenderer(Home home,
                        Object3DFactory object3dFactory,
                        Quality quality) throws IOException {
+    this.home = home;
     this.compass = home.getCompass();
     this.quality = quality;
     this.sunflow = new SunflowAPI();
     
     this.useSunskyLight = !(home.getCamera() instanceof ObserverCamera);
-    // SunFlow produce too much white spots when silk shader is used with sun sky light
-    // so use this shader only when observer is used 
-    boolean silk = !this.useSunskyLight && quality == Quality.HIGH;
-    String shininessShader = getRenderingParameterValue("shininessShader");
-    if ("glossy".equals(shininessShader)) {
-      silk = false;
-    } else if ("silk".equals(shininessShader)) {
-      silk = true;
-    }  
+    boolean silk = isSilkShaderUsed(quality);  
     
     if (object3dFactory == null) {
       object3dFactory = new PhotoObject3DFactory();
     }
+    this.object3dFactory = object3dFactory;
+    
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
     HomeEnvironment homeEnvironment = home.getEnvironment();
     float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
     // Dividing walls and rooms surface in subparts is useless
     homeEnvironment.setSubpartSizeUnderLight(0); 
     for (Wall wall : home.getWalls()) {
-      exportNode((Node)object3dFactory.createObject3D(home, wall, true), true, silk);
+      String [] wallNames = exportNode((Node)object3dFactory.createObject3D(home, wall, true), true, silk);
+      this.homeItemsNames.put(wall, wallNames);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      exportNode((Node)object3dFactory.createObject3D(home, piece, true), false, silk);
+      String [] pieceNames = exportNode((Node)object3dFactory.createObject3D(home, piece, true), false, silk);
+      this.homeItemsNames.put(piece, pieceNames);
     }
     for (Room room : home.getRooms()) {
-      exportNode((Node)object3dFactory.createObject3D(home, room, true), true, silk);
+      String [] roomNames = exportNode((Node)object3dFactory.createObject3D(home, room, true), true, silk);
+      this.homeItemsNames.put(room, roomNames);
     } 
     // Create a 3D ground large enough to join the sky at the horizon  
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
@@ -345,14 +346,51 @@ public class PhotoRenderer {
 
   /**
    * Renders home in <code>image</code> at the given <code>camera</code> location and image size.
-   * The rendered objects of the home are the ones given in constructor, meaning any change made in 
-   * home since the instantiation of this renderer won't be updated. 
+   * The rendered objects of the home are the same ones since last call to render or construction. 
    */
   public void render(final BufferedImage image, 
                      Camera camera, 
                      final ImageObserver observer) {
+    try {
+      render(image, camera, null, observer);
+    } catch (IOException ex) {
+      // Exception can't happen, since there's no updated item
+    }
+  }
+  
+  /**
+   * Renders home in <code>image</code> at the given <code>camera</code> location and image size.
+   * The home objects listed in <code>updatedItems</code> will be updated in the renderer, 
+   * allowing animations or modifications of their appearance. 
+   */
+  public void render(final BufferedImage image, 
+                     Camera camera,
+                     List<? extends Selectable> updatedItems, 
+                     final ImageObserver observer) throws IOException {
     this.renderingThread = Thread.currentThread();
 
+    if (updatedItems != null) {
+      boolean silk = isSilkShaderUsed(this.quality);  
+      for (Selectable item : updatedItems) {
+        // Remove from SunFlow updated objects
+        String [] itemNames = this.homeItemsNames.get(item);
+        if (itemNames != null) {
+          for (String name : itemNames) {
+            this.sunflow.remove(name);
+          }
+        }
+        
+        Node node = (Node)this.object3dFactory.createObject3D(home, item, true);
+        if (item instanceof Wall 
+            || item instanceof Room) {
+          itemNames = exportNode(node, true, silk);
+        } else {
+          itemNames = exportNode(node, false, silk);
+        }
+        this.homeItemsNames.put(item, itemNames);
+      }
+    }
+    
     if (this.sunSkyLightName != null) {
       this.sunflow.remove(this.sunSkyLightName);
     }
@@ -558,10 +596,29 @@ public class PhotoRenderer {
   }
 
   /**
-   * Exports the given Java 3D <code>node</code> and its children with SunFlow API.  
+   * Returns <code>true</code> if silk shader should be used.
    */
-  private void exportNode(Node node, boolean ignoreTransparency, boolean silk) throws IOException {
-    exportNode(node, ignoreTransparency, silk, new Transform3D());
+  private boolean isSilkShaderUsed(Quality quality) {
+    // SunFlow produce too much white spots when silk shader is used with sun sky light
+    // so use this shader only when observer is used 
+    boolean silk = !this.useSunskyLight && quality == Quality.HIGH;
+    String shininessShader = getRenderingParameterValue("shininessShader");
+    if ("glossy".equals(shininessShader)) {
+      silk = false;
+    } else if ("silk".equals(shininessShader)) {
+      silk = true;
+    }
+    return silk;
+  }
+
+  /**
+   * Exports the given Java 3D <code>node</code> and its children with SunFlow API,
+   * then returns the SunFlow names that match this node.   
+   */
+  private String [] exportNode(Node node, boolean ignoreTransparency, boolean silk) throws IOException {
+    List<String> nodeNames = new ArrayList<String>();
+    exportNode(node, ignoreTransparency, silk, nodeNames, new Transform3D());
+    return nodeNames.toArray(new String [nodeNames.size()]);
   }
 
   /**
@@ -570,6 +627,7 @@ public class PhotoRenderer {
   private void exportNode(Node node, 
                           boolean ignoreTransparency,
                           boolean silk,
+                          List<String> nodeNames,
                           Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
       if (node instanceof TransformGroup) {
@@ -581,10 +639,10 @@ public class PhotoRenderer {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode((Node)enumeration.nextElement(), ignoreTransparency, silk, parentTransformations);
+        exportNode((Node)enumeration.nextElement(), ignoreTransparency, silk, nodeNames, parentTransformations);
       }
     } else if (node instanceof Link) {
-      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, silk, parentTransformations);
+      exportNode(((Link)node).getSharedGroup(), ignoreTransparency, silk, nodeNames, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -616,6 +674,7 @@ public class PhotoRenderer {
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
           exportAppearance(appearance, appearanceName, mirror, ignoreTransparency, silk);
+          nodeNames.add(appearanceName);
         }
 
         // Export object geometries
@@ -629,7 +688,10 @@ public class PhotoRenderer {
               if (appearanceName != null) {
                 this.sunflow.parameter("shaders", new String [] {appearanceName});
               }
-              this.sunflow.instance(objectName + ".instance", objectName);
+              String instanceName = objectName + ".instance";
+              this.sunflow.instance(instanceName, objectName);
+              nodeNames.add(instanceName);
+              nodeNames.add(objectName);
             }
           }
         }
