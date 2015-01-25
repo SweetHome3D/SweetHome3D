@@ -87,6 +87,10 @@ public class Component3DManager {
     GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
     // Try to get antialiasing
     template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+    if (OperatingSystem.isMacOSX() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      // Request depth size equal to 24 with Java 3D 1.6
+      template.setDepthSize(24);
+    }
     
     // From http://www.java.net/node/683852
     // Check if the user has set the Java 3D stereo option.
