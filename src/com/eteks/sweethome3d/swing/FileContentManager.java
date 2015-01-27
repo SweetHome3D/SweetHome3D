@@ -638,7 +638,7 @@ public class FileContentManager implements ContentManager {
         }
       });
 
-      // Update directory
+    // Update directory
     File directory = getLastDirectory(contentType);
     if (directory != null && directory.exists()) {
       if (isDirectory(contentType)) {
