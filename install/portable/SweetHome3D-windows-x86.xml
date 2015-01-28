@@ -1,12 +1,12 @@
 <!-- SweetHome3D-windows-x86.xml
 
-     Sweet Home 3D, Copyright (c) 2012-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
+     Sweet Home 3D, Copyright (c) 2012-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>
 
      SweetHome3D-windows-x86.exe creator for Launch4j 
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D-windows-x86.exe in the current directory running with
-     JRE 6 Update 43 stored in jre/windows/i586/jre6 subdirectory 
+     JRE 6 Update 45 stored in jre/windows/i586/jre6 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
@@ -50,12 +50,12 @@
     <opt>-Djava.library.path=lib/ext/windows/i386 -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</opt>
   </jre>
   <versionInfo>
-    <fileVersion>4.5.0.0</fileVersion>
-    <txtFileVersion>4.5</txtFileVersion>
+    <fileVersion>4.6.0.0</fileVersion>
+    <txtFileVersion>4.6</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
-    <copyright>Copyright (c) 2007-2013 eTeks</copyright>
-    <productVersion>4.5.0.0</productVersion>
-    <txtProductVersion>4.5</txtProductVersion>
+    <copyright>Copyright (c) 2007-2015 eTeks</copyright>
+    <productVersion>4.6.0.0</productVersion>
+    <txtProductVersion>4.6</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
