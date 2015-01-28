@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- build.xml
 
-     Sweet Home 3D, Copyright (c) 2007-2014 Emmanuel PUYBARET / eTeks <info@eteks.com>. 
+     Sweet Home 3D, Copyright (c) 2007-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>. 
      
      Ant build file. Available targets :
      - build       : Builds SweetHome3D.jar file in build directory
@@ -30,7 +30,7 @@
 -->
 <project basedir="." default="jarExecutable" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="4.5"/>
+  <property name="version" value="4.6"/>
 
   <target name="build" 
           description="Builds build/SweetHome3D.jar with all its classes">
@@ -616,9 +616,12 @@
       </fileset>
     </copy>
 
-    <!-- Create SweetHome3D.exe with launch4j -->
+    <!-- Create SweetHome3D-x86.exe and SweetHome3D-x64.exe with launch4j -->
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
-      <arg value="${basedir}\install\windows\installerLaunch4j.xml"/>
+      <arg value="${basedir}\install\windows\installerLaunch4j-x86.xml"/>
+    </exec>
+    <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
+      <arg value="${basedir}\install\windows\installerLaunch4j-x64.xml"/>
     </exec>
 
     <!-- Pack largest jars -->
@@ -669,14 +672,15 @@
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
     <input message="Enter signature password:" addproperty="password"/> 
-    <!-- Sign Sweet Home 3D launcher -->
+    <!-- Sign Sweet Home 3D launchers -->
     <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe" failonerror="yes">
       <arg value="sign"/>
       <arg value="/f"/>
       <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
-      <arg value="${basedir}\install\windows\build\SweetHome3D.exe"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D-x86.exe"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D-x64.exe"/>
     </exec>
     <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">

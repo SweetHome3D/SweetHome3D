@@ -1,8 +1,8 @@
 ; signedInstallerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2014 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2007-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
-; SweetHome3D-4.5-windows.exe setup program creator
+; SweetHome3D-4.6-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -13,7 +13,7 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVerName=Sweet Home 3D version 4.5
+AppVerName=Sweet Home 3D version 4.6
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -22,14 +22,14 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-4.5-windows
+OutputBaseFilename=..\SweetHome3D-4.6-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=4.5.0.0
-VersionInfoTextVersion=4.5
+VersionInfoVersion=4.6.0.0
+VersionInfoTextVersion=4.6
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2014 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2015 eTeks
 VersionInfoCompany=eTeks
 ; Install in 64 bit mode if possible
 ArchitecturesInstallIn64BitMode=x64
@@ -69,13 +69,14 @@ Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm
 
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "build\SweetHome3D.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
 ; Install JRE and DLLs for not 64 bit
+Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\jre6\x86\*"; DestDir: "{app}\jre6"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
 ; Install JRE and DLLs for 64 bit
+Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\jre6\x64\*"; DestDir: "{app}\jre6"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 

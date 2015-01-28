@@ -1,19 +1,19 @@
-<!-- installerLaunch4j.xml
+<!-- installerLaunch4j-x86.xml
 
-     Sweet Home 3D, Copyright (c) 2007-2013 Emmanuel PUYBARET / eTeks <info@eteks.com>
+     Sweet Home 3D, Copyright (c) 2007-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>
 
      SweetHome3D.exe creator 
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D.exe in build directory running with
-     JRE 6 Update 43 stored in jre6 subdirectory 
+     JRE 6 Update 45 stored in jre6 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
   <dontWrapJar>true</dontWrapJar>
   <headerType>gui</headerType>
   <jar></jar>
-  <outfile>build\SweetHome3D.exe</outfile>
+  <outfile>build\SweetHome3D-x86.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -46,16 +46,15 @@
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
     <maxHeapSize>640</maxHeapSize>
-    <maxHeapPercent>25</maxHeapPercent>
     <opt>-Djava.library.path=lib -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
   </jre>
   <versionInfo>
-    <fileVersion>4.5.0.0</fileVersion>
-    <txtFileVersion>4.5</txtFileVersion>
+    <fileVersion>4.6.0.0</fileVersion>
+    <txtFileVersion>4.6</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
-    <copyright>Copyright (c) 2007-2014 eTeks</copyright>
-    <productVersion>4.5.0.0</productVersion>
-    <txtProductVersion>4.5</txtProductVersion>
+    <copyright>Copyright (c) 2007-2015 eTeks</copyright>
+    <productVersion>4.6.0.0</productVersion>
+    <txtProductVersion>4.6</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
