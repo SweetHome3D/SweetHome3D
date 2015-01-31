@@ -877,7 +877,7 @@ public class ModelPreviewComponent extends JComponent {
             this.iconImageLock.wait(maxWaitingDelay / 2);
             if (OperatingSystem.isMacOSX()) {
               // Under Mac OS X, sleep an additional time to ensure the screen got refreshed
-              Thread.sleep(25);
+              Thread.sleep(30);
             }
           } catch (InterruptedException ex) {
             ex.printStackTrace();
@@ -895,7 +895,7 @@ public class ModelPreviewComponent extends JComponent {
             this.iconImageLock.wait(maxWaitingDelay / 2);
             if (OperatingSystem.isMacOSX()) {
               // Under Mac OS X, sleep an additional time to ensure the screen got refreshed
-              Thread.sleep(25);
+              Thread.sleep(30);
             }
           } catch (InterruptedException ex) {
             ex.printStackTrace();
