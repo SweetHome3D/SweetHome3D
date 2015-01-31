@@ -363,7 +363,7 @@ public class HomeController3D implements Controller {
    */
   private class TopCameraState extends CameraControllerState {
     private final float MIN_WIDTH  = 100;
-    private final float MIN_DEPTH  = 100;
+    private final float MIN_DEPTH  = MIN_WIDTH;
     private final float MIN_HEIGHT = 20;
     
     private Camera      topCamera;
@@ -582,7 +582,7 @@ public class HomeController3D implements Controller {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
         this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
       } else if (containsVisibleWalls && selectionEmpty) {
-        // If home contains walls, ensure bounds are always minimum 10 meters wide centered in middle of 3D view
+        // If home contains walls, ensure bounds are always minimum 1 meter wide centered in middle of 3D view
         if (MIN_WIDTH > this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0]) {
           this.aerialViewBoundsLowerPoint [0] = (this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - MIN_WIDTH / 2;
           this.aerialViewBoundsUpperPoint [0] = this.aerialViewBoundsLowerPoint [0] + MIN_WIDTH;
