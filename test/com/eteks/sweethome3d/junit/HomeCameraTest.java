@@ -107,7 +107,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertSame("Default camera isn't top camera", 
         home.getTopCamera(), home.getCamera());
     // Check default camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(500, 1500, 1010, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(50, 1050, 1010, 
         (float)Math.PI, (float)Math.PI / 4, home.getCamera());
     
     // 2. Create one wall between points (50, 50) and (150, 50) at a bigger scale
