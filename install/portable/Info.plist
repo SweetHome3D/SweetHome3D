@@ -26,6 +26,8 @@
 	<string>SH3D</string>
 	<key>CFBundleAllowMixedLocalizations</key>
 	<string>true</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 
 	<key>UTExportedTypeDeclarations</key>
 	<array>
