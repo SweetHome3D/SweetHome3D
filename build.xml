@@ -1112,10 +1112,11 @@
              deploy and install directories -->
         <include name="deploy/SweetHome3D*.*"/>
         <include name="deploy/*.php"/>
+        <include name="install/linux/*"/>
         <include name="install/macosx/**"/>
-        <include name="install/windows/**"/>
-        <include name="install/linux/**"/>
-        <include name="install/jar/**"/>
+        <include name="install/portable/*"/>
+        <include name="install/viewer/*"/>
+        <include name="install/windows/*"/>
         <!-- Eclipse project files -->
         <include name=".settings/**"/>
         <include name=".classpath"/>
