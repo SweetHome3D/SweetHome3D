@@ -36,6 +36,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -554,7 +555,7 @@ public class PhotoRenderer {
   private String getRenderingParameterValue(String parameterName) {
     // Try to retrieve overridden parameter value from System property
     // (for example: System property com.eteks.sweethome3d.j3d.PhotoRenderer.lowQuality.antiAliasing.min)
-    String prefixedParameter = this.quality.name().toLowerCase() + "Quality." + parameterName;
+    String prefixedParameter = this.quality.name().toLowerCase(Locale.ENGLISH) + "Quality." + parameterName;
     String baseName = PhotoRenderer.class.getName();
     String value = System.getProperty(baseName + '.' + prefixedParameter);
     if (value != null) {
