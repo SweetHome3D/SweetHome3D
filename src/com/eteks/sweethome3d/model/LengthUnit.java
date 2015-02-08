@@ -293,9 +293,12 @@ public enum LengthUnit {
         this.name = resource.getString("inchUnit");
         
         // Create format for feet and inches
-        final MessageFormat footFormat = new MessageFormat(resource.getString("footFormat"));
-        final MessageFormat footInchFormat = new MessageFormat(resource.getString("footInchFormat"));
-        final MessageFormat footInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
+        final MessageFormat positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
+        final MessageFormat positiveFootInchFormat = new MessageFormat(resource.getString("footInchFormat"));
+        final MessageFormat positiveFootInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
+        final MessageFormat negativeFootFormat = new MessageFormat("-" + resource.getString("footFormat"));
+        final MessageFormat negativeFootInchFormat = new MessageFormat("-" + resource.getString("footInchFormat"));
+        final MessageFormat negativeFootInchEighthFormat = new MessageFormat("-" + resource.getString("footInchEighthFormat"));
         final String        footInchSeparator = resource.getString("footInchSeparator");
         final NumberFormat  footNumberFormat = NumberFormat.getIntegerInstance();
         final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
@@ -310,8 +313,9 @@ public enum LengthUnit {
             @Override
             public StringBuffer format(double number, StringBuffer result,
                                        FieldPosition fieldPosition) {
-              double feet = Math.floor(centimeterToFoot((float)number));              
-              float remainingInches = centimeterToInch((float)number - footToCentimeter((float)feet));
+              float absoluteValue = Math.abs((float)number);
+              double feet = Math.floor(centimeterToFoot(absoluteValue));              
+              float remainingInches = centimeterToInch((float)absoluteValue - footToCentimeter((float)feet));
               if (remainingInches >= 11.9375f) {
                 feet++;
                 remainingInches -= 12;
@@ -324,12 +328,15 @@ public enum LengthUnit {
                 float fractionPart = remainingInches - integerPart;
                 int eighth = Math.round(fractionPart * 8); 
                 if (eighth == 0 || eighth == 8) {
-                  footInchFormat.format(new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
+                  (number >= 0 ? positiveFootInchFormat : negativeFootInchFormat).format(
+                      new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
                 } else { 
-                  footInchEighthFormat.format(new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
+                  (number >= 0 ? positiveFootInchEighthFormat : negativeFootInchEighthFormat).format(
+                      new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
                 }
               } else {
-                footFormat.format(new Object [] {feet}, result, fieldPosition);
+                (number >= 0 ? positiveFootFormat : negativeFootFormat).format(
+                    new Object [] {feet}, result, fieldPosition);
               }
               return result;
             }
@@ -341,6 +348,8 @@ public enum LengthUnit {
               skipWhiteSpaces(text, numberPosition);
               // Parse feet
               int quoteIndex = text.indexOf('\'', parsePosition.getIndex());
+              boolean negative = numberPosition.getIndex() < text.length()  
+                  && text.charAt(numberPosition.getIndex()) == this.getDecimalFormatSymbols().getMinusSign();
               if (quoteIndex != -1) {
                 Number feet = footNumberFormat.parse(text, numberPosition);
                 if (feet == null) {
@@ -372,7 +381,15 @@ public enum LengthUnit {
                 parsePosition.setErrorIndex(numberPosition.getErrorIndex());
                 return null;
               }
-              value += inchToCentimeter(inches.floatValue());
+              if (negative) {
+                if (quoteIndex == -1) {
+                  value = inchToCentimeter(inches.floatValue());
+                } else {
+                  value -= inchToCentimeter(inches.floatValue());
+                }
+              } else {
+                value += inchToCentimeter(inches.floatValue());
+              }
               // Parse fraction
               skipWhiteSpaces(text, numberPosition);
               if (numberPosition.getIndex() == text.length()) {
@@ -393,7 +410,11 @@ public enum LengthUnit {
                   if (lastDecimalSeparatorIndex > quoteIndex) {
                     return null;
                   } else {
-                    value += inchToCentimeter((i + 1) / 8f);
+                    if (negative) {
+                      value -= inchToCentimeter((i + 1) / 8f);
+                    } else {
+                      value += inchToCentimeter((i + 1) / 8f);
+                    }
                     parsePosition.setIndex(numberPosition.getIndex() + 1);
                     skipWhiteSpaces(text, parsePosition);
                     if (parsePosition.getIndex() < text.length() 

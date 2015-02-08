@@ -228,6 +228,14 @@ public class UserPreferencesPanelTest extends TestCase {
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12)));
     assertEquals("Wrong conversion", "1'11\u215b\"", 
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12 + 0.125f)));
+    assertEquals("Wrong conversion", "-1'11\u215b\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-(11 + 12 + 0.125f))));
+    assertEquals("Wrong conversion", "-0'11\u215b\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-(11 + 0.125f))));
+    assertEquals("Wrong conversion", "-0'0\u215b\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-0.125f)));
+    assertEquals("Wrong conversion", "-1'", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-12)));
     
     // Test formats with unit
     assertEquals("Wrong conversion", "102 cm", LengthUnit.CENTIMETER.getFormatWithUnit().format(102));
@@ -265,6 +273,24 @@ public class UserPreferencesPanelTest extends TestCase {
         ((Number)LengthUnit.INCH.getFormat().parseObject("1'11\u215c\"")).floatValue(), 1E-10f);
     TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(12 + 11 + 3 * 0.125f),
         ((Number)LengthUnit.INCH.getFormat().parseObject("1' 11 \u215c")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(12 + 11 + 3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-1' 11 \u215c")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(12 + 11 + 3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-1'11\u215c")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(12 + 3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-1'0\u215c")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(11 + 3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0'11\u215c")).floatValue(), 1E-4f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0'0\u215c")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-(3 * 0.125f)),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0' 0 \u215c\"")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-0.125f),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0'0,125")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(-0.125f),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0,125")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  0,
+        ((Number)LengthUnit.INCH.getFormat().parseObject("-0'0")).floatValue(), 1E-10f);
     try {
       LengthUnit.INCH.getFormat().parseObject("'");
       fail("' not a number");
