@@ -1,4 +1,4 @@
-SWEET HOME 3D v 4.6.1
+SWEET HOME 3D v 4.6.2
 ---------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_6_1 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_4_6_2 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -38,7 +38,7 @@ text field the option:
 -Djava.ext.dirs=lib/macosx:lib, 
 -Djava.ext.dirs=lib/linux/i386:lib 
 or -Djava.ext.dirs=lib/linux/x64:lib
-according to your system and its architecture, except under Java 7 and Mac OS X, 
+according to your system and its architecture, except under Java 7 / 8 and Mac OS X, 
 where VM arguments should be:
 -Djava.ext.dirs=lib/macosx/java3d-1.6:lib -Djava.library.path=lib/macosx/java3d-1.6
 -Djogamp.gluegen.UseTempJarCache=false
