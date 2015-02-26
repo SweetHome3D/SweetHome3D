@@ -3969,7 +3969,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Exports furniture list to a given SVG file.
+   * Exports furniture list to a given CSV file.
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToCSV(String csvFile) throws RecorderException {
@@ -3990,7 +3990,7 @@ public class HomePane extends JRootPane implements HomeView {
       exportInterrupted = true;
       throw new InterruptedRecorderException("Export to " + csvFile + " interrupted");
     } catch (IOException ex) {
-      throw new RecorderException("Couldn't export to SVG in " + csvFile, ex);
+      throw new RecorderException("Couldn't export to CSV in " + csvFile, ex);
     } finally {
       if (writer != null) {
         try {
@@ -4000,7 +4000,7 @@ public class HomePane extends JRootPane implements HomeView {
             new File(csvFile).delete();
           }
         } catch (IOException ex) {
-          throw new RecorderException("Couldn't export to SVG in " + csvFile, ex);
+          throw new RecorderException("Couldn't export to CSV in " + csvFile, ex);
         }
       }
     }
