@@ -736,7 +736,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         EventQueue.invokeAndWait(new Runnable() {
             public void run() {
               try {
-                 context.pageExists = print(g, pageFormat, pageIndex, printableColumnModel, gridColor);
+                context.pageExists = print(g, pageFormat, pageIndex, printableColumnModel, gridColor);
               } catch (PrinterException ex) {
                 context.exception = ex;
               }
