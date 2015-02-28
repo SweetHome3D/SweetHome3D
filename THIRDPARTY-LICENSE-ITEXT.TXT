@@ -1,4 +1,4 @@
-The following additional provisions apply to iText-2.1.2u.jar third party software
+The following additional provisions apply to iText-2.1.7.jar third party software
 included as part of this product.
 
 iText library is useful to create PDF files in Sweet Home 3D.
