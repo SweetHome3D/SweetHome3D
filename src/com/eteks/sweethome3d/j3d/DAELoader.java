@@ -838,9 +838,11 @@ public class DAELoader extends LoaderBase implements Loader {
         } else {
           geometry = getFacesGeometry(name);
         }
-        this.geometries.get(this.geometryId).add(geometry);
-        if (this.geometryAppearance != null) {
-          this.geometryAppearances.put(geometry, this.geometryAppearance);
+        if (geometry != null) {
+          this.geometries.get(this.geometryId).add(geometry);
+          if (this.geometryAppearance != null) {
+            this.geometryAppearances.put(geometry, this.geometryAppearance);
+          }
         }
         this.geometryAppearance = null;
         this.geometryVertices = null;
@@ -947,28 +949,33 @@ public class DAELoader extends LoaderBase implements Loader {
       }
       
       int [] coordinatesIndices = getIndices(this.geometryVertexOffset);
-      IndexedGeometryArray geometry;
-      if ("lines".equals(name)) {
-        geometry = new IndexedLineArray(this.geometryVertices.length / 3, format, coordinatesIndices.length);
-      } else { // linestrips
-        int [] stripCounts = new int [this.facesAndLinesPrimitives.size()];
-        for (int i = 0; i < stripCounts.length; i++) {
-          stripCounts [i] = this.facesAndLinesPrimitives.get(i).length / this.inputCount;
+      if (coordinatesIndices.length != 0) {
+        IndexedGeometryArray geometry;
+        if ("lines".equals(name)) {
+          geometry = new IndexedLineArray(this.geometryVertices.length / 3, format, coordinatesIndices.length);
+        } else { // linestrips
+          int [] stripCounts = new int [this.facesAndLinesPrimitives.size()];
+          for (int i = 0; i < stripCounts.length; i++) {
+            stripCounts [i] = this.facesAndLinesPrimitives.get(i).length / this.inputCount;
+          }
+          geometry = new IndexedLineStripArray(this.geometryVertices.length / 3, format, coordinatesIndices.length, stripCounts);
         }
-        geometry = new IndexedLineStripArray(this.geometryVertices.length / 3, format, coordinatesIndices.length, stripCounts);
+        
+        geometry.setCoordinates(0, this.geometryVertices);
+        geometry.setCoordinateIndices(0, coordinatesIndices);
+        if (this.geometryNormals != null) {
+          geometry.setNormals(0, this.geometryNormals);
+          geometry.setNormalIndices(0, getIndices(this.geometryNormalOffset));
+        }
+        if (this.geometryTextureCoordinates != null) {
+          geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinates);
+          geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffset));
+        }
+        return geometry;
+      } else {
+        // Ignore lines with an empty index set
+        return null;
       }
-      
-      geometry.setCoordinates(0, this.geometryVertices);
-      geometry.setCoordinateIndices(0, coordinatesIndices);
-      if (this.geometryNormals != null) {
-        geometry.setNormals(0, this.geometryNormals);
-        geometry.setNormalIndices(0, getIndices(this.geometryNormalOffset));
-      }
-      if (this.geometryTextureCoordinates != null) {
-        geometry.setTextureCoordinates(0, 0, this.geometryTextureCoordinates);
-        geometry.setTextureCoordinateIndices(0, 0, getIndices(this.geometryTextureCoordinatesOffset));
-      }
-      return geometry;
     }
 
     /**
