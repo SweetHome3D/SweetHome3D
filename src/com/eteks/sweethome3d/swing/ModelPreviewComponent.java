@@ -632,7 +632,9 @@ public class ModelPreviewComponent extends JComponent {
    * Returns the 3D model content displayed by this component.
    */
   public Content getModel() {
-    return this.previewedPiece.getModel();
+    return this.previewedPiece != null
+        ? this.previewedPiece.getModel()
+        : null;
   }
 
   /**
