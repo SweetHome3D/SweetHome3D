@@ -53,7 +53,12 @@ public class HomeAppletController extends HomePluginController {
   private final HomeApplication    application;
   private final ViewFactory        viewFactory;
   private final ContentManager     contentManager;
+  private final boolean            newHomeEnabledByDefault;
+  private final boolean            openEnabledByDefault;
+  private final boolean            saveEnabledByDefault;
+  private final boolean            saveAsEnabledByDefault;
   private final long               homeMaximumLength;
+  private HomeView                 homeView;
   
   private static Map<Home, String> importedHomeNames = new WeakHashMap<Home, String>();
 
@@ -84,25 +89,38 @@ public class HomeAppletController extends HomePluginController {
     this.application = application;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
+    this.newHomeEnabledByDefault = newHomeEnabled;
+    this.openEnabledByDefault = openEnabled;
+    this.saveEnabledByDefault = saveEnabled;
+    this.saveAsEnabledByDefault = saveAsEnabled;
     this.homeMaximumLength = homeMaximumLength;
-
-    
-    HomeView view = (HomeView)getView();
-    view.setEnabled(HomeView.ActionType.EXIT, false);
-    view.setEnabled(HomeView.ActionType.NEW_HOME, newHomeEnabled);
-    view.setEnabled(HomeView.ActionType.OPEN, openEnabled);
-    view.setEnabled(HomeView.ActionType.SAVE, saveEnabled);
-    view.setEnabled(HomeView.ActionType.SAVE_AS, saveAsEnabled);
-    
-    // By default disabled Print to PDF, Export to SVG, Export to OBJ and Create photo actions 
-    view.setEnabled(HomeView.ActionType.PRINT_TO_PDF, false);
-    view.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, false);
-    view.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, false);
-    view.setEnabled(HomeView.ActionType.CREATE_PHOTO, false);
-    
-    view.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, false);
   }
   
+  /**
+   * Returns the view associated with this controller.
+   */
+  public HomeView getView() {
+    if (this.homeView == null) {
+      this.homeView = super.getView();
+      
+      // Update home view actions only once HomeAppletController instance is initialized in case it's subclassed
+      this.homeView.setEnabled(HomeView.ActionType.EXIT, false);
+      this.homeView.setEnabled(HomeView.ActionType.NEW_HOME, this.newHomeEnabledByDefault);
+      this.homeView.setEnabled(HomeView.ActionType.OPEN, this.openEnabledByDefault);
+      this.homeView.setEnabled(HomeView.ActionType.SAVE, this.saveEnabledByDefault);
+      this.homeView.setEnabled(HomeView.ActionType.SAVE_AS, this.saveAsEnabledByDefault);
+      
+      // By default disabled Print to PDF, Export to SVG, Export to OBJ and Create photo actions 
+      this.homeView.setEnabled(HomeView.ActionType.PRINT_TO_PDF, false);
+      this.homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, false);
+      this.homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, false);
+      this.homeView.setEnabled(HomeView.ActionType.CREATE_PHOTO, false);
+      
+      this.homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, false);
+    }
+    return this.homeView;
+  }
+
   /**
    * Creates a new home after saving and deleting the current home.
    */
