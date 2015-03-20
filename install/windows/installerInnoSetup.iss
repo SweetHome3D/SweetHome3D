@@ -13,6 +13,8 @@
 
 [Setup]
 AppName=Sweet Home 3D
+AppVersion=4.6.2
+AppCopyright=Copyright (c) 2007-2015 eTeks
 AppVerName=Sweet Home 3D version 4.6.2
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
