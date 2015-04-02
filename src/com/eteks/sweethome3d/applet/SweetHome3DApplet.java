@@ -320,6 +320,7 @@ public class SweetHome3DApplet extends JApplet {
         try {
           // Disable JOGL library loader
           System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
+          System.setProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "true");
         } catch (AccessControlException ex) {
           // Unsigned applet
         }
