@@ -825,13 +825,15 @@ public class DAELoader extends LoaderBase implements Loader {
             this.polygonsHoles.get(this.polygonsPrimitives.size() - 1).add(integers);
           } 
         }
-      } else if ("triangles".equals(name)
-                 || "trifans".equals(name)
-                 || "tristrips".equals(name)
-                 || "polylist".equals(name)
-                 || "polygons".equals(name)
-                 || "lines".equals(name)
-                 || "linestrips".equals(name)) {
+      } else if (("triangles".equals(name)
+                  || "trifans".equals(name)
+                  || "tristrips".equals(name)
+                  || "polylist".equals(name)
+                  || "polygons".equals(name)
+                  || "lines".equals(name)
+                  || "linestrips".equals(name))
+                 // Ignore geometries with missing vertices
+                 && this.geometryVertices != null) {
         Geometry geometry;
         if ("lines".equals(name)
             || "linestrips".equals(name)) {
