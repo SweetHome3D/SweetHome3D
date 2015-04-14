@@ -46,7 +46,10 @@ public class TemporaryURLContent extends URLContent {
   public static TemporaryURLContent copyToTemporaryURLContent(Content content) throws IOException {
     String extension = ".tmp";
     if (content instanceof URLContent) {
-      String file = ((URLContent)content).getURL().getFile();
+      URLContent urlContent = (URLContent)content;
+      String file = urlContent.isJAREntry() 
+          ? urlContent.getJAREntryName()
+          : urlContent.getURL().getFile();
       int lastIndex = file.lastIndexOf('.');
       if (lastIndex > 0) {
         extension = file.substring(lastIndex);
