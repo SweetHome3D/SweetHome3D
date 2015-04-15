@@ -48,7 +48,7 @@ public abstract class UserPreferences {
    * The properties of user preferences that may change. <code>PropertyChangeListener</code>s added 
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
+  public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
@@ -102,6 +102,7 @@ public abstract class UserPreferences {
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
+  private String           defaultFontName;
   private boolean          furnitureViewedFromTop;
   private boolean          roomFloorColoredOrTextured;
   private TextureImage     wallPattern;
@@ -605,6 +606,28 @@ public abstract class UserPreferences {
       this.gridVisible = gridVisible;
       this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.name(), 
           !gridVisible, gridVisible);
+    }
+  }
+  
+  /**
+   * Returns the name of the font that should be used by default or <code>null</code> 
+   * if the default font should be the default one in the application.
+   * @since 5.0
+   */
+  public String getDefaultFontName() {
+    return this.defaultFontName;
+  }
+
+  /**
+   * Sets the name of the font that should be used by default.
+   * @since 5.0
+   */
+  public void setDefaultFontName(String defaultFontName) {
+    if (defaultFontName != this.defaultFontName
+        && (defaultFontName == null || !defaultFontName.equals(this.defaultFontName))) {
+      String oldName = this.defaultFontName;
+      this.defaultFontName = defaultFontName;
+      this.propertyChangeSupport.firePropertyChange(Property.DEFAULT_FONT_NAME.name(), oldName, defaultFontName);
     }
   }
 

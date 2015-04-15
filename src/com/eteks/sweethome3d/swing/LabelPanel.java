@@ -22,15 +22,22 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -49,6 +56,16 @@ public class LabelPanel extends JPanel implements DialogView {
   private final LabelController controller;
   private JLabel                textLabel;
   private JTextField            textTextField;
+  private JLabel                fontNameLabel;
+  private FontNameComboBox      fontNameComboBox;
+  private JLabel                colorLabel;
+  private ColorButton           colorButton;
+  private NullableCheckBox      visibleIn3DViewCheckBox;
+  private JLabel                pitchLabel;
+  private JRadioButton          pitch0DegreeRadioButton;
+  private JRadioButton          pitch90DegreeRadioButton;
+  private JLabel                elevationLabel;
+  private JSpinner              elevationSpinner;
   private String                dialogTitle;
 
   /**
@@ -65,7 +82,7 @@ public class LabelPanel extends JPanel implements DialogView {
     this.controller = controller;
     createComponents(modification, preferences, controller);
     setMnemonics(preferences);
-    layoutComponents(controller);
+    layoutComponents(controller, preferences);
   }
 
   /**
@@ -107,13 +124,153 @@ public class LabelPanel extends JPanel implements DialogView {
           changedUpdate(ev);
         }
       });
+    
+    // Create font name label and combo box bound to controller FONT_NAME property
+    this.fontNameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "fontNameLabel.text"));
+    this.fontNameComboBox = new FontNameComboBox(preferences);
+    this.fontNameComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          String selectedItem = (String)fontNameComboBox.getSelectedItem();
+          controller.setFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME 
+              ? null : selectedItem);
+        }
+      });
+    PropertyChangeListener fontNameChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (controller.isFontNameSet()) {
+            String fontName = controller.getFontName();
+            fontNameComboBox.setSelectedItem(fontName == null 
+                ? FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME : fontName);
+          } else {
+            fontNameComboBox.setSelectedItem(null);
+          }
+        }
+      };
+    controller.addPropertyChangeListener(LabelController.Property.FONT_NAME, fontNameChangeListener);
+    fontNameChangeListener.propertyChange(null);
 
+    // Create color label and button bound to controller COLOR property
+    this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "colorLabel.text"));
+    
+    this.colorButton = new ColorButton(preferences);
+    if (OperatingSystem.isMacOSX()) {
+      this.colorButton.putClientProperty("JButton.buttonType", "segmented");
+      this.colorButton.putClientProperty("JButton.segmentPosition", "only");
+    }
+    this.colorButton.setColorDialogTitle(preferences
+        .getLocalizedString(LabelPanel.class, "colorDialog.title"));
+    this.colorButton.setColor(controller.getColor());
+    this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          controller.setColor(colorButton.getColor());
+        }
+      });
+    controller.addPropertyChangeListener(LabelController.Property.COLOR, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          colorButton.setColor(controller.getColor());
+        }
+      });
+
+    // Create pitch components bound to PITCH controller property
+    final PropertyChangeListener pitchChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          update3DViewComponents(controller);
+        }
+      };
+    controller.addPropertyChangeListener(LabelController.Property.PITCH, pitchChangeListener);
+    this.visibleIn3DViewCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "visibleIn3DViewCheckBox.text"));
+    if (controller.isPitchEnabled() != null) {
+      this.visibleIn3DViewCheckBox.setValue(controller.isPitchEnabled());
+    } else {
+      this.visibleIn3DViewCheckBox.setNullable(true);
+      this.visibleIn3DViewCheckBox.setValue(null);
+    }
+    this.visibleIn3DViewCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(LabelController.Property.PITCH, pitchChangeListener);
+          if (visibleIn3DViewCheckBox.isNullable()) {
+            visibleIn3DViewCheckBox.setNullable(false);
+          }
+          if (Boolean.FALSE.equals(visibleIn3DViewCheckBox.getValue())) {
+            controller.setPitch(null);
+          } else if (pitch90DegreeRadioButton.isSelected()) {
+            controller.setPitch((float)(Math.PI / 2));
+          } else {
+            controller.setPitch(0f);
+          }
+          update3DViewComponents(controller);
+          controller.addPropertyChangeListener(LabelController.Property.PITCH, pitchChangeListener);
+        }
+      });
+    this.pitchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "pitchLabel.text"));
+    this.pitch0DegreeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "pitch0DegreeRadioButton.text"));
+    ItemListener pitchRadioButtonsItemListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          if (pitch0DegreeRadioButton.isSelected()) {
+            controller.setPitch(0f);
+          } else if (pitch90DegreeRadioButton.isSelected()) {
+            controller.setPitch((float)(Math.PI / 2));
+          } 
+        }
+      };
+    this.pitch0DegreeRadioButton.addItemListener(pitchRadioButtonsItemListener);
+    this.pitch90DegreeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "pitch90DegreeRadioButton.text"));
+    this.pitch90DegreeRadioButton.addItemListener(pitchRadioButtonsItemListener);
+    ButtonGroup pitchGroup = new ButtonGroup();
+    pitchGroup.add(this.pitch0DegreeRadioButton);
+    pitchGroup.add(this.pitch90DegreeRadioButton);
+    
+    // Create elevation label and its spinner bound to ELEVATION controller property
+    this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        LabelPanel.class, "elevationLabel.text", preferences.getLengthUnit().getName()));
+    final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = new NullableSpinner.NullableSpinnerLengthModel(
+        preferences, 0f, preferences.getLengthUnit().getMaximumElevation());
+    this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
+    elevationSpinnerModel.setNullable(controller.getElevation() == null);
+    elevationSpinnerModel.setLength(controller.getElevation());
+    final PropertyChangeListener elevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          elevationSpinnerModel.setNullable(ev.getNewValue() == null);
+          elevationSpinnerModel.setLength((Float)ev.getNewValue());
+        }
+      };
+    controller.addPropertyChangeListener(LabelController.Property.ELEVATION, elevationChangeListener);
+    elevationSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(LabelController.Property.ELEVATION, elevationChangeListener);
+          controller.setElevation(elevationSpinnerModel.getLength());
+          controller.addPropertyChangeListener(LabelController.Property.ELEVATION, elevationChangeListener);
+        }
+      });
+
+    update3DViewComponents(controller);
+    
     this.dialogTitle = preferences.getLocalizedString(LabelPanel.class, 
         modification 
             ? "labelModification.title"
             : "labelCreation.title");
   }
 
+  private void update3DViewComponents(LabelController controller) {
+    boolean visibleIn3D = Boolean.TRUE.equals(controller.isPitchEnabled());
+    this.pitch0DegreeRadioButton.setEnabled(visibleIn3D);
+    this.pitch90DegreeRadioButton.setEnabled(visibleIn3D);
+    this.elevationSpinner.setEnabled(visibleIn3D);
+    if (controller.getPitch() != null) {
+      if (controller.getPitch() == 0) {
+        this.pitch0DegreeRadioButton.setSelected(true);
+      } else if (controller.getPitch() == (float)(Math.PI / 2)) {
+        this.pitch90DegreeRadioButton.setSelected(true);
+      }
+    }
+  }
+  
   /**
    * Sets components mnemonics and label / component associations.
    */
@@ -122,21 +279,76 @@ public class LabelPanel extends JPanel implements DialogView {
       this.textLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           LabelPanel.class, "textLabel.mnemonic")).getKeyCode());
       this.textLabel.setLabelFor(this.textTextField);
+      this.fontNameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          LabelPanel.class, "fontNameLabel.mnemonic")).getKeyCode());
+      this.fontNameLabel.setLabelFor(this.fontNameComboBox);
+      this.visibleIn3DViewCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+          LabelPanel.class, "visibleIn3DViewCheckBox.mnemonic")).getKeyCode());
+      this.pitch0DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+          LabelPanel.class, "pitch0DegreeRadioButton.mnemonic")).getKeyCode());
+      this.pitch90DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+          LabelPanel.class, "pitch90DegreeRadioButton.mnemonic")).getKeyCode());
+      this.elevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          LabelPanel.class, "elevationLabel.mnemonic")).getKeyCode());
+      this.elevationLabel.setLabelFor(this.elevationSpinner);
     }
   }
   
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents(final LabelController controller) {
+  private void layoutComponents(final LabelController controller, UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-    add(this.textLabel, new GridBagConstraints(
+    
+    JPanel nameAndStylePanel = SwingTools.createTitledPanel(
+        preferences.getLocalizedString(LabelPanel.class, "textAndStylePanel.title"));
+    nameAndStylePanel.add(this.textLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    nameAndStylePanel.add(this.textTextField, new GridBagConstraints(
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
-    add(this.textTextField, new GridBagConstraints(
+    nameAndStylePanel.add(this.fontNameLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    nameAndStylePanel.add(this.fontNameComboBox, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    nameAndStylePanel.add(this.colorLabel, new GridBagConstraints(
+        0, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    nameAndStylePanel.add(this.colorButton, new GridBagConstraints(
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
+    add(nameAndStylePanel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
+
+    JPanel rendering3DPanel = SwingTools.createTitledPanel(
+        preferences.getLocalizedString(LabelPanel.class, "rendering3DPanel.title"));
+    rendering3DPanel.add(this.visibleIn3DViewCheckBox, new GridBagConstraints(
+        0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, OperatingSystem.isMacOSX() ? -8 : 0, 5, 0), 0, 0));
+    rendering3DPanel.add(this.pitchLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    rendering3DPanel.add(this.pitch0DegreeRadioButton, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    rendering3DPanel.add(this.pitch90DegreeRadioButton, new GridBagConstraints(
+        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    rendering3DPanel.add(this.elevationLabel, new GridBagConstraints(
+        0, 3, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    rendering3DPanel.add(this.elevationSpinner, new GridBagConstraints(
+        1, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(rendering3DPanel, new GridBagConstraints(
+        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 

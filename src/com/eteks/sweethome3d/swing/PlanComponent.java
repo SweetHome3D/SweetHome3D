@@ -282,8 +282,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
-  private static final GeneralPath FURNITURE_ELEVATION_INDICATOR;
-  private static final Shape       FURNITURE_ELEVATION_POINT_INDICATOR;
+  private static final GeneralPath ELEVATION_INDICATOR;
+  private static final Shape       ELEVATION_POINT_INDICATOR;
   private static final GeneralPath FURNITURE_HEIGHT_INDICATOR;
   private static final Shape       FURNITURE_HEIGHT_POINT_INDICATOR;
   private static final GeneralPath LIGHT_POWER_INDICATOR;
@@ -326,18 +326,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(4f, -8.3f);
     
-    FURNITURE_ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
+    ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
     
     // Create a path that draws a line with one arrow as an elevation indicator
     // at top right of a piece of furniture
-    FURNITURE_ELEVATION_INDICATOR = new GeneralPath();
-    FURNITURE_ELEVATION_INDICATOR.moveTo(0, -5); // Vertical line
-    FURNITURE_ELEVATION_INDICATOR.lineTo(0, 5);
-    FURNITURE_ELEVATION_INDICATOR.moveTo(-2.5f, 5);    // Bottom line
-    FURNITURE_ELEVATION_INDICATOR.lineTo(2.5f, 5);
-    FURNITURE_ELEVATION_INDICATOR.moveTo(-1.2f, 1.5f); // Bottom arrow
-    FURNITURE_ELEVATION_INDICATOR.lineTo(0, 4.5f);
-    FURNITURE_ELEVATION_INDICATOR.lineTo(1.2f, 1.5f);
+    ELEVATION_INDICATOR = new GeneralPath();
+    ELEVATION_INDICATOR.moveTo(0, -5); // Vertical line
+    ELEVATION_INDICATOR.lineTo(0, 5);
+    ELEVATION_INDICATOR.moveTo(-2.5f, 5);    // Bottom line
+    ELEVATION_INDICATOR.lineTo(2.5f, 5);
+    ELEVATION_INDICATOR.moveTo(-1.2f, 1.5f); // Bottom arrow
+    ELEVATION_INDICATOR.lineTo(0, 4.5f);
+    ELEVATION_INDICATOR.lineTo(1.2f, 1.5f);
     
     FURNITURE_HEIGHT_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
     
@@ -862,6 +862,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
         new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.DEFAULT_FONT_NAME, 
+        new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
@@ -919,6 +921,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (planComponent.verticalRuler != null) {
               planComponent.verticalRuler.repaint();
             }
+            break;
+          case DEFAULT_FONT_NAME :
+            planComponent.fonts = null;
+            planComponent.fontsMetrics = null;
+            planComponent.revalidate();
             break;
           case WALL_PATTERN :
             planComponent.wallAreasCache = null;
@@ -1732,8 +1739,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (textStyle.isItalic()) {
         fontStyle |= Font.ITALIC;
       }
-      if (defaultFont == null) {
-        defaultFont = new Font(null, fontStyle, 1);
+      if (defaultFont == null
+          || this.preferences.getDefaultFontName() != null
+          || textStyle.getFontName() != null) {
+        String fontName = textStyle.getFontName();
+        if (fontName == null) {
+          fontName = this.preferences.getDefaultFontName();
+        }
+        defaultFont = new Font(fontName, fontStyle, 1);
       }
       font = defaultFont.deriveFont(fontStyle, textStyle.getFontSize());
       this.fonts.put(textStyle, font);
@@ -2816,7 +2829,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }              
     FontMetrics fontMetrics = getFontMetrics(defaultFont, style);
     Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-    // Draw room name
+    // Draw text
     g2D.setFont(getFont(defaultFont, style));
     g2D.translate(x, y);
     g2D.rotate(angle);
@@ -3645,11 +3658,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(piecePoints [1][0], piecePoints [1][1]);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(pieceAngle);
-      g2D.draw(FURNITURE_ELEVATION_POINT_INDICATOR);
+      g2D.draw(ELEVATION_POINT_INDICATOR);
       // Place elevation indicator farther but don't rotate it
       g2D.translate(6.5f, -6.5f);
       g2D.rotate(-pieceAngle); 
-      g2D.draw(FURNITURE_ELEVATION_INDICATOR);
+      g2D.draw(ELEVATION_INDICATOR);
       g2D.setTransform(previousTransform);
       
       if (piece.isResizable()) {
@@ -3867,8 +3880,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           TextStyle labelStyle = label.getStyle();
           if (labelStyle == null) {
             labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
-          }          
-          g2D.setPaint(foregroundColor);
+          }
+          if (labelStyle.getFontName() == null) {
+            labelStyle = labelStyle.deriveStyle(getFont().getFontName());
+          }
+          Integer color = label.getColor();
+          g2D.setPaint(color != null ?  new Color(color) : foregroundColor);
           paintText(g2D, label.getClass(), labelText, labelStyle, 
               xLabel, yLabel, labelAngle, previousFont);
 
@@ -3876,13 +3893,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             // Draw selection border
             g2D.setPaint(selectionOutlinePaint);
             g2D.setStroke(selectionOutlineStroke);
-            g2D.draw(getShape(getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle)));
+            float [][] textBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle);
+            g2D.draw(getShape(textBounds));
             g2D.setPaint(foregroundColor);
             if (indicatorPaint != null 
                 && selectedItems.size() == 1 
                 && selectedItems.get(0) == label) {
               paintTextIndicators(g2D, label.getClass(), labelStyle, xLabel, yLabel, labelAngle,
                   indicatorPaint, planScale);
+              
+              if (this.resizeIndicatorVisible 
+                  && label.getPitch() != null) {
+                AffineTransform previousTransform = g2D.getTransform();
+                // Draw elevation indicator at middle of label bottom line 
+                g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
+                float scaleInverse = 1 / planScale;
+                g2D.scale(scaleInverse, scaleInverse);
+                g2D.rotate(label.getAngle());
+                g2D.draw(ELEVATION_POINT_INDICATOR);
+                // Place elevation indicator farther but don't rotate it
+                g2D.translate(0, 10f);
+                g2D.rotate(-label.getAngle()); 
+                g2D.draw(ELEVATION_INDICATOR);
+                g2D.setTransform(previousTransform);
+              }
             }
           }
         }

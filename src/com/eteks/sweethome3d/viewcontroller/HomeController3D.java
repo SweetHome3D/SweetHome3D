@@ -37,6 +37,7 @@ import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
@@ -420,6 +421,16 @@ public class HomeController3D implements Controller {
           updateCameraFromHomeBounds(false);
         }
       };
+    private CollectionListener<Label> labelsListener = new CollectionListener<Label>() {
+        public void collectionChanged(CollectionEvent<Label> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
+          } 
+          updateCameraFromHomeBounds(false);
+        }
+      };
     private SelectionListener selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
           updateCameraFromHomeBounds(false);
@@ -452,6 +463,10 @@ public class HomeController3D implements Controller {
         room.addPropertyChangeListener(this.objectChangeListener);
       }
       home.addRoomsListener(this.roomsListener);
+      for (Label label : home.getLabels()) {
+        label.addPropertyChangeListener(this.objectChangeListener);
+      }
+      home.addLabelsListener(this.labelsListener);
       home.addSelectionListener(this.selectionListener);
     }
     
@@ -499,7 +514,9 @@ public class HomeController3D implements Controller {
           if (item instanceof Elevatable 
               && isItemAtVisibleLevel((Elevatable)item)
               && (!(item instanceof HomePieceOfFurniture)
-                  || ((HomePieceOfFurniture)item).isVisible())) {
+                  || ((HomePieceOfFurniture)item).isVisible())
+              && (!(item instanceof Label)
+                  || ((Label)item).getPitch() != null)) {
             selectedItems.add(item);
           }
         }
@@ -573,6 +590,25 @@ public class HomeController3D implements Controller {
             }
           }
           for (float [] point : room.getPoints()) {
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          }
+        }
+      }
+      
+      for (Label label : selectionEmpty
+                             ? home.getLabels()
+                             : Home.getLabelsSubList(selectedItems)) {
+        if (label.getPitch() != null && isItemAtVisibleLevel(label)) {
+          float minZ;
+          float maxZ;
+          if (selectionEmpty) {
+            minZ = Math.max(0, label.getGroundElevation());
+            maxZ = Math.max(MIN_HEIGHT, label.getGroundElevation());
+          } else {
+            minZ = 
+            maxZ = label.getGroundElevation();
+          }
+          for (float [] point : label.getPoints()) {
             updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }
         }
@@ -716,6 +752,10 @@ public class HomeController3D implements Controller {
         room.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeRoomsListener(this.roomsListener);
+      for (Label label : home.getLabels()) {
+        label.removePropertyChangeListener(this.objectChangeListener);
+      }
+      home.removeLabelsListener(this.labelsListener);
       for (Level level : home.getLevels()) {
         level.removePropertyChangeListener(this.objectChangeListener);
       }

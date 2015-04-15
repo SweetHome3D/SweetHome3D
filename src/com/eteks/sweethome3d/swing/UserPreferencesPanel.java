@@ -75,47 +75,49 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class UserPreferencesPanel extends JPanel implements DialogView {
   private final UserPreferencesController controller;
-  private JLabel         languageLabel;
-  private JComboBox      languageComboBox;
-  private JButton        languageLibraryImportButton;
-  private JLabel         unitLabel;
-  private JComboBox      unitComboBox;
-  private JLabel         furnitureCatalogViewLabel;
-  private JRadioButton   treeRadioButton;
-  private JRadioButton   listRadioButton;
-  private JLabel         navigationPanelLabel;
-  private JCheckBox      navigationPanelCheckBox;
-  private JLabel         aerialViewCenteredOnSelectionLabel;
-  private JCheckBox      aerialViewCenteredOnSelectionCheckBox;
-  private JLabel         magnetismLabel;
-  private JCheckBox      magnetismCheckBox;
-  private JLabel         rulersLabel;
-  private JCheckBox      rulersCheckBox;
-  private JLabel         gridLabel;
-  private JCheckBox      gridCheckBox;
-  private JLabel         furnitureIconLabel;
-  private JRadioButton   catalogIconRadioButton;
-  private JRadioButton   topViewRadioButton;
-  private JLabel         roomRenderingLabel;
-  private JRadioButton   monochromeRadioButton;
-  private JRadioButton   floorColorOrTextureRadioButton;
-  private JLabel         wallPatternLabel;
-  private JComboBox      wallPatternComboBox;
-  private JLabel         newWallPatternLabel;
-  private JComboBox      newWallPatternComboBox;
-  private JLabel         newWallThicknessLabel;
-  private JSpinner       newWallThicknessSpinner;
-  private JLabel         newWallHeightLabel;
-  private JSpinner       newWallHeightSpinner;
-  private JLabel         newFloorThicknessLabel;
-  private JSpinner       newFloorThicknessSpinner;
-  private JCheckBox      checkUpdatesCheckBox;
-  private JButton        checkUpdatesNowButton;
-  private JCheckBox      autoSaveDelayForRecoveryCheckBox;
-  private JSpinner       autoSaveDelayForRecoverySpinner;
-  private JLabel         autoSaveDelayForRecoveryUnitLabel;
-  private JButton        resetDisplayedActionTipsButton;
-  private String         dialogTitle;
+  private JLabel           languageLabel;
+  private JComboBox        languageComboBox;
+  private JButton          languageLibraryImportButton;
+  private JLabel           unitLabel;
+  private JComboBox        unitComboBox;
+  private JLabel           furnitureCatalogViewLabel;
+  private JRadioButton     treeRadioButton;
+  private JRadioButton     listRadioButton;
+  private JLabel           navigationPanelLabel;
+  private JCheckBox        navigationPanelCheckBox;
+  private JLabel           aerialViewCenteredOnSelectionLabel;
+  private JCheckBox        aerialViewCenteredOnSelectionCheckBox;
+  private JLabel           magnetismLabel;
+  private JCheckBox        magnetismCheckBox;
+  private JLabel           rulersLabel;
+  private JCheckBox        rulersCheckBox;
+  private JLabel           gridLabel;
+  private JCheckBox        gridCheckBox;
+  private JLabel           defaultFontNameLabel;
+  private FontNameComboBox defaultFontNameComboBox;
+  private JLabel           furnitureIconLabel;
+  private JRadioButton     catalogIconRadioButton;
+  private JRadioButton     topViewRadioButton;
+  private JLabel           roomRenderingLabel;
+  private JRadioButton     monochromeRadioButton;
+  private JRadioButton     floorColorOrTextureRadioButton;
+  private JLabel           wallPatternLabel;
+  private JComboBox        wallPatternComboBox;
+  private JLabel           newWallPatternLabel;
+  private JComboBox        newWallPatternComboBox;
+  private JLabel           newWallThicknessLabel;
+  private JSpinner         newWallThicknessSpinner;
+  private JLabel           newWallHeightLabel;
+  private JSpinner         newWallHeightSpinner;
+  private JLabel           newFloorThicknessLabel;
+  private JSpinner         newFloorThicknessSpinner;
+  private JCheckBox        checkUpdatesCheckBox;
+  private JButton          checkUpdatesNowButton;
+  private JCheckBox        autoSaveDelayForRecoveryCheckBox;
+  private JSpinner         autoSaveDelayForRecoverySpinner;
+  private JLabel           autoSaveDelayForRecoveryUnitLabel;
+  private JButton          resetDisplayedActionTipsButton;
+  private String           dialogTitle;
   
   /**
    * Creates a preferences panel that layouts the editable properties
@@ -366,6 +368,29 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               gridCheckBox.setSelected(controller.isGridVisible());
             }
           });
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.DEFAULT_FONT_NAME)) {
+      // Create font name label and combo box bound to controller DEFAULT_FONT_NAME property
+      this.defaultFontNameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+          UserPreferencesPanel.class, "defaultFontNameLabel.text"));
+      this.defaultFontNameComboBox = new FontNameComboBox(preferences);
+      this.defaultFontNameComboBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            String selectedItem = (String)defaultFontNameComboBox.getSelectedItem();
+            controller.setDefaultFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME 
+                ? null : selectedItem);
+          }
+        });
+      PropertyChangeListener fontNameChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            String defaultFontName = controller.getDefaultFontName();
+            defaultFontNameComboBox.setSelectedItem(defaultFontName == null 
+                ? FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME : defaultFontName);
+          }
+        };
+      controller.addPropertyChangeListener(UserPreferencesController.Property.DEFAULT_FONT_NAME, fontNameChangeListener);
+      fontNameChangeListener.propertyChange(null);
     }
     
     if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP)) {
@@ -741,6 +766,11 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.gridCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "gridCheckBox.mnemonic")).getKeyCode());
       }
+      if (this.defaultFontNameLabel != null) {
+        this.defaultFontNameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "defaultFontNameLabel.mnemonic")).getKeyCode());
+        this.defaultFontNameLabel.setLabelFor(this.defaultFontNameComboBox);
+      }
       if (this.furnitureIconLabel != null) {
         this.catalogIconRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
@@ -880,78 +910,86 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
-    if (this.furnitureIconLabel != null) {
+    if (this.defaultFontNameLabel != null) {
       // Tenth row
-      add(this.furnitureIconLabel, new GridBagConstraints(
+      add(this.defaultFontNameLabel, new GridBagConstraints(
           0, 9, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.catalogIconRadioButton, new GridBagConstraints(
-          1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.topViewRadioButton, new GridBagConstraints(
-          2, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+      add(this.defaultFontNameComboBox, new GridBagConstraints(
+          1, 9, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
-    if (this.roomRenderingLabel != null) {
+    if (this.furnitureIconLabel != null) {
       // Eleventh row
-      add(this.roomRenderingLabel, new GridBagConstraints(
+      add(this.furnitureIconLabel, new GridBagConstraints(
           0, 10, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.monochromeRadioButton, new GridBagConstraints(
+      add(this.catalogIconRadioButton, new GridBagConstraints(
           1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+      add(this.topViewRadioButton, new GridBagConstraints(
           2, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     }
-    if (this.newWallPatternLabel != null) {
+    if (this.roomRenderingLabel != null) {
       // Twelfth row
-      add(this.newWallPatternLabel, new GridBagConstraints(
+      add(this.roomRenderingLabel, new GridBagConstraints(
           0, 11, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.monochromeRadioButton, new GridBagConstraints(
+          1, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+          2, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    }
+    if (this.newWallPatternLabel != null) {
+      // Thirteenth row
+      add(this.newWallPatternLabel, new GridBagConstraints(
+          0, 12, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.newWallPatternComboBox, new GridBagConstraints(
-          1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     } else if (this.wallPatternLabel != null) {
-      // Twelfth row
       add(this.wallPatternLabel, new GridBagConstraints(
-          0, 11, 1, 1, 0, 0, labelAlignment, 
+          0, 12, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.wallPatternComboBox, new GridBagConstraints(
-          1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     } 
     if (this.newWallThicknessLabel != null) {
-      // Thirteenth row
-      add(this.newWallThicknessLabel, new GridBagConstraints(
-          0, 12, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newWallThicknessSpinner, new GridBagConstraints(
-          1, 12, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    }
-    if (this.newWallHeightLabel != null) {
       // Fourteenth row
-      add(this.newWallHeightLabel, new GridBagConstraints(
+      add(this.newWallThicknessLabel, new GridBagConstraints(
           0, 13, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newWallHeightSpinner, new GridBagConstraints(
+      add(this.newWallThicknessSpinner, new GridBagConstraints(
           1, 13, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
-    if (this.newFloorThicknessLabel != null) {
+    if (this.newWallHeightLabel != null) {
       // Fifteenth row
-      add(this.newFloorThicknessLabel, new GridBagConstraints(
+      add(this.newWallHeightLabel, new GridBagConstraints(
           0, 14, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newFloorThicknessSpinner, new GridBagConstraints(
+      add(this.newWallHeightSpinner, new GridBagConstraints(
           1, 14, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
+    if (this.newFloorThicknessLabel != null) {
+      // Sixteenth row
+      add(this.newFloorThicknessLabel, new GridBagConstraints(
+          0, 15, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newFloorThicknessSpinner, new GridBagConstraints(
+          1, 15, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.checkUpdatesCheckBox != null
         || this.autoSaveDelayForRecoveryCheckBox != null) {
+      // Seventeenth row
       JPanel updatesAndAutoSaveDelayForRecoveryPanel = new JPanel(new GridBagLayout());
-      // Sixteenth row
       if (this.checkUpdatesCheckBox != null) {
         updatesAndAutoSaveDelayForRecoveryPanel.add(this.checkUpdatesCheckBox,
             new GridBagConstraints(
@@ -962,7 +1000,6 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                 1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
                 GridBagConstraints.NONE, rightComponentInsets, 0, 0));
       }
-      // Seventeenth row
       if (this.autoSaveDelayForRecoveryCheckBox != null) {
         updatesAndAutoSaveDelayForRecoveryPanel.add(this.autoSaveDelayForRecoveryCheckBox,
             new GridBagConstraints(
@@ -978,7 +1015,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                 GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       }
       add(updatesAndAutoSaveDelayForRecoveryPanel, new GridBagConstraints(
-          0, 15, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+          0, 16, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     // Last row
@@ -986,7 +1023,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 16, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 17, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }

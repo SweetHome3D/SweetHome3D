@@ -34,7 +34,7 @@ public class UserPreferencesController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
+  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
       NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
       NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
@@ -54,6 +54,7 @@ public class UserPreferencesController implements Controller {
   private boolean                       magnetismEnabled;
   private boolean                       rulersVisible;
   private boolean                       gridVisible;
+  private String                        defaultFontName;
   private boolean                       furnitureViewedFromTop;
   private boolean                       roomFloorColoredOrTextured;
   private TextureImage                  wallPattern;
@@ -131,8 +132,9 @@ public class UserPreferencesController implements Controller {
     setNavigationPanelVisible(this.preferences.isNavigationPanelVisible());
     setAerialViewCenteredOnSelectionEnabled(this.preferences.isAerialViewCenteredOnSelectionEnabled());
     setMagnetismEnabled(this.preferences.isMagnetismEnabled());
-    setGridVisible(this.preferences.isGridVisible());
     setRulersVisible(this.preferences.isRulersVisible());
+    setGridVisible(this.preferences.isGridVisible());
+    setDefaultFontName(this.preferences.getDefaultFontName());
     setFurnitureViewedFromTop(this.preferences.isFurnitureViewedFromTop());
     setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
     setWallPattern(this.preferences.getWallPattern());
@@ -303,6 +305,28 @@ public class UserPreferencesController implements Controller {
    */
   public boolean isGridVisible() {
     return this.gridVisible;
+  }
+
+  /**
+   * Sets the name of the font that should be used by default.
+   * @since 5.0
+   */
+  public void setDefaultFontName(String defaultFontName) {
+    if (defaultFontName != this.defaultFontName
+        && (defaultFontName == null || !defaultFontName.equals(this.defaultFontName))) {
+      String oldName = this.defaultFontName;
+      this.defaultFontName = defaultFontName;
+      this.propertyChangeSupport.firePropertyChange(Property.DEFAULT_FONT_NAME.name(), oldName, defaultFontName);
+    }
+  }
+
+  /**
+   * Returns the name of the font that should be used by default or <code>null</code> 
+   * if the default font should be the default one in the application.
+   * @since 5.0
+   */
+  public String getDefaultFontName() {
+    return this.defaultFontName;
   }
 
   /**
@@ -539,6 +563,7 @@ public class UserPreferencesController implements Controller {
     this.preferences.setMagnetismEnabled(isMagnetismEnabled());
     this.preferences.setRulersVisible(isRulersVisible());
     this.preferences.setGridVisible(isGridVisible());
+    this.preferences.setDefaultFontName(getDefaultFontName());
     this.preferences.setFurnitureViewedFromTop(isFurnitureViewedFromTop());
     this.preferences.setFloorColoredOrTextured(isRoomFloorColoredOrTextured());
     this.preferences.setWallPattern(getWallPattern());

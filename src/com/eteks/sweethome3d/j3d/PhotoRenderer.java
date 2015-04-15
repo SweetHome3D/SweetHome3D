@@ -105,6 +105,7 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -193,6 +194,10 @@ public class PhotoRenderer {
     for (Room room : home.getRooms()) {
       String [] roomNames = exportNode((Node)object3dFactory.createObject3D(home, room, true), true, silk);
       this.homeItemsNames.put(room, roomNames);
+    } 
+    for (Label label : home.getLabels()) {
+      String [] labelNames = exportNode((Node)object3dFactory.createObject3D(home, label, true), true, silk);
+      this.homeItemsNames.put(label, labelNames);
     } 
     // Create a 3D ground large enough to join the sky at the horizon  
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);

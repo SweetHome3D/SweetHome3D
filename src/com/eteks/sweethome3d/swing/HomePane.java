@@ -4143,15 +4143,18 @@ public class HomePane extends JRootPane implements HomeView {
         List<HomePieceOfFurniture> exportedFurniture;
         List<Room> exportedRooms;
         Collection<Wall> exportedWalls;
+        Collection<Label> exportedLabels;
         if (exportAllToOBJ) {
           exportedFurniture = home.getFurniture();
           exportedRooms = home.getRooms();
           exportedWalls = home.getWalls();
+          exportedLabels = home.getLabels();
         } else {
           List<Selectable> selectedItems = home.getSelectedItems();
           exportedFurniture = Home.getFurnitureSubList(selectedItems);
           exportedRooms = Home.getRoomsSubList(selectedItems);
           exportedWalls = Home.getWallsSubList(selectedItems);
+          exportedLabels = Home.getLabelsSubList(selectedItems);
         }
         
         List<Selectable> emptySelection = Collections.emptyList();
@@ -4189,6 +4192,13 @@ public class HomePane extends JRootPane implements HomeView {
           // Create a not alive new room to be able to explore its coordinates without setting capabilities 
           Node roomNode = (Node)object3dFactory.createObject3D(home, room, true);
           writer.writeNode(roomNode, "room_" + ++i);
+        }
+        // Write 3D labels 
+        i = 0;
+        for (Label label : exportedLabels) {
+          // Create a not alive new label to be able to explore its coordinates without setting capabilities 
+          Node labelNode = (Node)object3dFactory.createObject3D(home, label, true);
+          writer.writeNode(labelNode, "label_" + ++i);
         }
       } catch (InterruptedIOException ex) {
         exportInterrupted = true;

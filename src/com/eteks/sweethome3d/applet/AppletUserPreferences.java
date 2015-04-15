@@ -70,6 +70,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
   private static final String RULERS_VISIBLE                            = "rulersVisible";
   private static final String GRID_VISIBLE                              = "gridVisible";
+  private static final String DEFAULT_FONT_NAME                         = "defaultFontName";
   private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
@@ -233,6 +234,7 @@ public class AppletUserPreferences extends UserPreferences {
         String.valueOf(defaultPreferences.isMagnetismEnabled()))));
     setGridVisible(Boolean.parseBoolean(properties.getProperty(GRID_VISIBLE, 
         String.valueOf(defaultPreferences.isGridVisible()))));
+    setDefaultFontName(properties.getProperty(DEFAULT_FONT_NAME, defaultPreferences.getDefaultFontName()));
     setFurnitureViewedFromTop(Boolean.parseBoolean(properties.getProperty(FURNITURE_VIEWED_FROM_TOP, 
         String.valueOf(defaultPreferences.isFurnitureViewedFromTop()))));
     setFloorColoredOrTextured(Boolean.parseBoolean(properties.getProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, 
@@ -299,6 +301,7 @@ public class AppletUserPreferences extends UserPreferences {
         Property.MAGNETISM_ENABLED,
         Property.RULERS_VISIBLE,
         Property.GRID_VISIBLE,
+        Property.DEFAULT_FONT_NAME,
         Property.FURNITURE_VIEWED_FROM_TOP,
         Property.ROOM_FLOOR_COLORED_OR_TEXTURED,
         Property.WALL_PATTERN,
@@ -390,6 +393,7 @@ public class AppletUserPreferences extends UserPreferences {
       properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
       properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
       properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));
+      properties.setProperty(DEFAULT_FONT_NAME, getDefaultFontName());
       properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
       properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
       properties.setProperty(WALL_PATTERN, getWallPattern().getName());

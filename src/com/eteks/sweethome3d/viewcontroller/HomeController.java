@@ -716,7 +716,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
-    boolean homeSelectionContainsOneLabel = false;
+    boolean homeSelectionContainsLabels = false;
     boolean homeSelectionContainsItemsWithText = false;
     boolean homeSelectionContainsCompass = false;
     FurnitureController furnitureController = getFurnitureController();
@@ -760,10 +760,8 @@ public class HomeController implements Controller {
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
       homeSelectionContainsRooms = !Home.getRoomsSubList(selectedItems).isEmpty();
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
-      final List<Label> selectedLabels = Home.getLabelsSubList(selectedItems);
-      boolean homeSelectionContainsLabels = !selectedLabels.isEmpty();
+      homeSelectionContainsLabels = !Home.getLabelsSubList(selectedItems).isEmpty();
       homeSelectionContainsCompass = selectedItems.contains(this.home.getCompass());
-      homeSelectionContainsOneLabel = selectedLabels.size() == 1;
       homeSelectionContainsOneCopiableItemOrMore = 
           homeSelectionContainsFurniture || homeSelectionContainsWalls 
           || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
@@ -827,7 +825,7 @@ public class HomeController implements Controller {
     view.setEnabled(HomeView.ActionType.MODIFY_ROOM,
         homeSelectionContainsRooms);
     view.setEnabled(HomeView.ActionType.MODIFY_LABEL,
-        homeSelectionContainsOneLabel);
+        homeSelectionContainsLabels);
     view.setEnabled(HomeView.ActionType.TOGGLE_BOLD_STYLE, 
         homeSelectionContainsItemsWithText);
     view.setEnabled(HomeView.ActionType.TOGGLE_ITALIC_STYLE, 

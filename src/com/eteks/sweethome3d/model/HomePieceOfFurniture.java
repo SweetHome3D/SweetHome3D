@@ -925,14 +925,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
 
   /**
-   * Returns the angle in radians of this piece of furniture. 
+   * Returns the angle in radians of this piece of furniture around vertical axis. 
    */
   public float getAngle() {
     return this.angle;
   }
 
   /**
-   * Sets the angle of this piece. Once this piece is updated, 
+   * Sets the angle of this piece around vertical axis. Once this piece is updated, 
    * listeners added to this piece will receive a change notification.
    */
   public void setAngle(float angle) {

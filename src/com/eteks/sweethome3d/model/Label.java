@@ -39,13 +39,16 @@ public class Label implements Selectable, Serializable, Elevatable {
    * The properties of a label that may change. <code>PropertyChangeListener</code>s added 
    * to a label will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {TEXT, X, Y, STYLE, ANGLE, LEVEL};
+  public enum Property {TEXT, X, Y, ELEVATION, STYLE, COLOR, ANGLE, PITCH, LEVEL};
   
   private String    text;
   private float     x;
   private float     y;
   private TextStyle style;
+  private Integer   color;
   private float     angle;
+  private Float     pitch;
+  private float     elevation;
   private Level     level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -138,6 +141,41 @@ public class Label implements Selectable, Serializable, Elevatable {
   }
 
   /**
+   * Returns the elevation of this label 
+   * from the ground according to the elevation of its level.
+   * @since 5.0
+   */
+  public float getGroundElevation() {
+    if (this.level != null) {
+      return this.elevation + this.level.getElevation();
+    } else {
+      return this.elevation;
+    }
+  }
+
+  /**
+   * Returns the elevation of this label on its level.
+   * @see #getPitch() 
+   * @since 5.0 
+   */
+  public float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Sets the elevation of this label on its level. Once this label is updated, 
+   * listeners added to this label will receive a change notification.
+   * @since 5.0 
+   */
+  public void setElevation(float elevation) {
+    if (elevation != this.elevation) {
+      float oldElevation = this.elevation;
+      this.elevation = elevation;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+  }
+
+  /**
    * Returns the style used to display the text of this label.
    */
   public TextStyle getStyle() {
@@ -157,7 +195,28 @@ public class Label implements Selectable, Serializable, Elevatable {
   }
 
   /**
-   * Returns the angle in radians used to display this label.
+   * Returns the color used to display the text of this label.
+   * @since 5.0
+   */
+  public Integer getColor() {
+    return this.color;  
+  }
+
+  /**
+   * Sets the color used to display the text of this label.
+   * Once this label is updated, listeners added to this label will receive a change notification.
+   * @since 5.0
+   */
+  public void setColor(Integer color) {
+    if (color != this.color) {
+      Integer oldColor = this.color;
+      this.color = color;
+      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+    }
+  }
+
+  /**
+   * Returns the angle in radians around vertical axis used to display this label.
    * @since 3.6 
    */
   public float getAngle() {
@@ -165,8 +224,8 @@ public class Label implements Selectable, Serializable, Elevatable {
   }
 
   /**
-   * Sets the angle in radians used to display this label. Once this piece is updated, 
-   * listeners added to this piece will receive a change notification.
+   * Sets the angle in radians around vertical axis used to display this label. Once this label is updated, 
+   * listeners added to this label will receive a change notification.
    * @since 3.6 
    */
   public void setAngle(float angle) {
@@ -176,6 +235,34 @@ public class Label implements Selectable, Serializable, Elevatable {
       float oldAngle = this.angle;
       this.angle = angle;
       this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
+    }
+  }
+  
+  /**
+   * Returns the pitch angle in radians used to rotate this label around horizontal axis in 3D.
+   * @return an angle in radians or <code>null</code> if the label shouldn't be displayed in 3D.
+   *         A pitch angle equal to 0 should make this label fully visible when seen from top. 
+   * @since 5.0 
+   */
+  public Float getPitch() {
+    return this.pitch;
+  }
+
+  /**
+   * Sets the angle in radians used to rotate this label around horizontal axis in 3D. Once this label is updated, 
+   * listeners added to this label will receive a change notification.
+   * @since 5.0 
+   */
+  public void setPitch(Float pitch) {
+    if (pitch != null) {
+      // Ensure pitch is always positive and between 0 and 2 PI
+      pitch = (float)((pitch % TWICE_PI + TWICE_PI) % TWICE_PI);
+    }
+    if (pitch != this.pitch
+        && (pitch == null || !pitch.equals(this.pitch))) {
+      Float oldPitch = this.pitch;
+      this.pitch = pitch;
+      this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
     }
   }
   

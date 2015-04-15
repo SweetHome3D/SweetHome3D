@@ -91,6 +91,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
   private static final String RULERS_VISIBLE                            = "rulersVisible";
   private static final String GRID_VISIBLE                              = "gridVisible";
+  private static final String DEFAULT_FONT_NAME                         = "defaultFontName";
   private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
@@ -272,10 +273,9 @@ public class FileUserPreferences extends UserPreferences {
     setAerialViewCenteredOnSelectionEnabled(preferences.getBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
         defaultPreferences.isAerialViewCenteredOnSelectionEnabled()));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
-    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
-        defaultPreferences.isRulersVisible()));
-    setGridVisible(preferences.getBoolean(GRID_VISIBLE, 
-        defaultPreferences.isGridVisible()));
+    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, defaultPreferences.isRulersVisible()));
+    setGridVisible(preferences.getBoolean(GRID_VISIBLE, defaultPreferences.isGridVisible()));
+    setDefaultFontName(preferences.get(DEFAULT_FONT_NAME,  defaultPreferences.getDefaultFontName()));
     setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
         defaultPreferences.isFurnitureViewedFromTop()));
     setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
@@ -845,6 +845,12 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, isAerialViewCenteredOnSelectionEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
+    String defaultFontName = getDefaultFontName();
+    if (defaultFontName == null) {
+      preferences.remove(DEFAULT_FONT_NAME);
+    } else {
+      preferences.put(DEFAULT_FONT_NAME, defaultFontName);
+    }
     preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
     preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
     preferences.put(WALL_PATTERN, getWallPattern().getName());

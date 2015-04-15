@@ -143,6 +143,7 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -195,6 +196,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   furnitureChangeListener;
   private CollectionListener<Room>                 roomListener;
   private PropertyChangeListener                   roomChangeListener;
+  private CollectionListener<Label>                labelListener;
+  private PropertyChangeListener                   labelChangeListener;
   // Offscreen printed image cache
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
@@ -814,6 +817,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     for (Room room : this.home.getRooms()) {
       room.removePropertyChangeListener(this.roomChangeListener);
     }
+    this.home.removeLabelsListener(this.labelListener);
+    for (Label label : this.home.getLabels()) {
+      label.removePropertyChangeListener(this.labelChangeListener);
+    }
   }
 
   /**
@@ -1073,6 +1080,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           approximateHomeBounds = new BoundingBox(center, center);
         } else {
           approximateHomeBounds.combine(center);
+        }
+      }
+      for (Label label : this.home.getLabels()) {
+        if (label.getPitch() != null) {
+          Point3d center = new Point3d(label.getX(), label.getY(), label.getGroundElevation());
+          if (approximateHomeBounds == null) {
+            approximateHomeBounds = new BoundingBox(center, center);
+          } else {
+            approximateHomeBounds.combine(center);
+          }
         }
       }
       this.approximateHomeBoundsCache = approximateHomeBounds;
@@ -1906,7 +1923,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                               boolean listenToHomeUpdates, 
                               boolean waitForLoading) {
     Group homeRoot = createHomeRoot();
-    // Add walls, pieces and rooms already available 
+    // Add walls, pieces, rooms and labels already available 
+    for (Label label : this.home.getLabels()) {
+      addObject(homeRoot, label, listenToHomeUpdates, waitForLoading);
+    }
     for (Room room : this.home.getRooms()) {
       addObject(homeRoot, room, listenToHomeUpdates, waitForLoading);
     }    
@@ -1928,6 +1948,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addWallListener(homeRoot);
       addFurnitureListener(homeRoot);
       addRoomListener(homeRoot);
+      addLabelListener(homeRoot);
       // Add environment listeners
       addEnvironmentListeners();
       // Should update shadow on floor too but in the facts 
@@ -1957,6 +1978,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
               || Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
+            updateObjects(home.getLabels());          
             updateObjects(home.getWalls());          
             updateObjects(home.getRooms());
             updateObjects(home.getFurniture());
@@ -2248,6 +2270,40 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     return path;
   }
   
+  /**
+   * Adds a label listener to home labels that updates the children of the given 
+   * <code>group</code>, each time a label is added, updated or deleted. 
+   */
+  private void addLabelListener(final Group group) {
+    this.labelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Label label = (Label)ev.getSource();
+          updateObjects(Arrays.asList(new Label [] {label}));
+        }
+      };
+    for (Label label : this.home.getLabels()) {
+      label.addPropertyChangeListener(this.labelChangeListener);
+    }      
+    this.labelListener = new CollectionListener<Label>() {
+        public void collectionChanged(CollectionEvent<Label> ev) {
+          Label label = ev.getItem();
+          switch (ev.getType()) {
+            case ADD :
+              // Add label to its group at the index indicated by the event 
+              // to ensure the 3D labels are drawn in the same order as in the plan  
+              addObject(group, label, ev.getIndex(), true, false);
+              label.addPropertyChangeListener(labelChangeListener);
+              break;
+            case DELETE :
+              deleteObject(label);
+              label.removePropertyChangeListener(labelChangeListener);
+              break;
+          }
+        }
+      };
+    this.home.addLabelsListener(this.labelListener);
+  }
+
   /**
    * Adds a walls alpha change listener and drawing mode change listener to home 
    * environment that updates the home scene objects appearance. 

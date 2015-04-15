@@ -160,6 +160,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       roomNameRotationState;
   private final ControllerState       labelCreationState;
   private final ControllerState       labelRotationState;
+  private final ControllerState       labelElevationState;
   private final ControllerState       compassRotationState;
   private final ControllerState       compassResizeState;
   // Current state
@@ -233,6 +234,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.roomNameRotationState = new RoomNameRotationState();
     this.labelCreationState = new LabelCreationState();
     this.labelRotationState = new LabelRotationState();
+    this.labelElevationState = new LabelElevationState();
     this.compassRotationState = new CompassRotationState();
     this.compassResizeState = new CompassResizeState();
     // Set default state to selectionState
@@ -652,6 +654,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the label elevation state.
+   * @since 5.0
+   */
+  protected ControllerState getLabelElevationState() {
+    return this.labelElevationState;
+  }
+
+  /**
    * Returns the compass rotation state.
    */
   protected ControllerState getCompassRotationState() {
@@ -874,7 +884,7 @@ public class PlanController extends FurnitureController implements Controller {
       return !(item instanceof Compass || item instanceof Camera);
     }
   }
-
+  
   /**
    * Controls the direction reverse of selected walls.
    */
@@ -3453,7 +3463,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at the point (<code>xText</code>, <code>yText</code>) is equal to the point (<code>x</code>, <code>y</code>).
    */
   private boolean isTextAnglePointAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, float textAngle, 
-                               float x, float y, float margin) {
+                                     float x, float y, float margin) {
     if (textStyle == null) {
       textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
     }          
@@ -3478,6 +3488,30 @@ public class PlanController extends FurnitureController implements Controller {
         return label;
       }
     } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected label with its elevation point at (<code>x</code>, <code>y</code>).
+   */
+  private Label getElevatedLabelAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Label) {
+      Label label = (Label)selectedItems.get(0);
+      if (label.getPitch() != null
+          && isItemMovable(label)) {
+        float margin = INDICATOR_PIXEL_MARGIN / getScale();
+        if (label.isAtLevel(this.home.getSelectedLevel())) {
+          float [][] textBounds = getView().getTextBounds(label.getText(), getItemTextStyle(label, label.getStyle()), 
+              label.getX(), label.getY(), label.getAngle());
+          if (Math.abs(x - (textBounds [2][0] + textBounds [3][0]) / 2) <= margin 
+              && Math.abs(y - (textBounds [2][1] + textBounds [3][1]) / 2) <= margin) {
+            return label;
+          }
+        }
+      } 
+    }
     return null;
   }
   
@@ -4444,6 +4478,39 @@ public class PlanController extends FurnitureController implements Controller {
         public String getPresentationName() {
           return preferences.getLocalizedString(
               PlanController.class, "undoLabelRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Post to undo support an elevation change on <code>label</code>. 
+   */
+  private void postLabelElevation(final Label label, final float oldElevation) {
+    final float newElevation = label.getElevation();
+    if (newElevation != oldElevation) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          label.setElevation(oldElevation);
+          selectAndShowItems(Arrays.asList(new Label [] {label}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          label.setElevation(newElevation);
+          selectAndShowItems(Arrays.asList(new Label [] {label}));
+        }      
+  
+        @Override
+        public String getPresentationName() {          
+          return preferences.getLocalizedString(PlanController.class, 
+              oldElevation < newElevation 
+                  ? "undoLabelRaiseName"
+                  : "undoLabelLowerName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -6068,7 +6135,8 @@ public class PlanController extends FurnitureController implements Controller {
           || getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
-      } else if (getElevatedCameraAt(x, y) != null) {
+      } else if (getElevatedLabelAt(x, y) != null
+          || getElevatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ELEVATION);
       } else if (getRoomNameAt(x, y) != null
           || getRoomAreaAt(x, y) != null) {
@@ -6120,6 +6188,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getCameraYawRotationState());
         } else if (getPitchRotatedCameraAt(x, y) != null) {
           setState(getCameraPitchRotationState());
+        } else if (getElevatedLabelAt(x, y) != null) {
+          setState(getLabelElevationState());
         } else if (getElevatedCameraAt(x, y) != null) {
           setState(getCameraElevationState());
         } else if (getRoomNameAt(x, y) != null) {
@@ -10449,6 +10519,101 @@ public class PlanController extends FurnitureController implements Controller {
     }  
   }
   
+  /**
+   * Label elevation state. This states manages the elevation change of a label.
+   */
+  private class LabelElevationState extends ControllerState {
+    private boolean magnetismEnabled;
+    private float   deltaYToElevationPoint;
+    private Label   selectedLabel;
+    private float   oldElevation;
+    private String  elevationToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.elevationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "elevationToolTipFeedback");
+      this.selectedLabel = (Label)home.getSelectedItems().get(0);
+      TextStyle textStyle = getItemTextStyle(this.selectedLabel, this.selectedLabel.getStyle());
+      float [][] textBounds = getView().getTextBounds(this.selectedLabel.getText(), textStyle, 
+          this.selectedLabel.getX(), this.selectedLabel.getY(), this.selectedLabel.getAngle());
+      this.deltaYToElevationPoint = getYLastMousePress() - (textBounds [2][1] + textBounds [3][1]) / 2;
+      this.oldElevation = this.selectedLabel.getElevation();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ wasMagnetismToggledLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldElevation), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new elevation of the piece 
+      PlanView planView = getView();
+      TextStyle textStyle = getItemTextStyle(this.selectedLabel, this.selectedLabel.getStyle());
+      float [][] textBounds = getView().getTextBounds(this.selectedLabel.getText(), textStyle, 
+          this.selectedLabel.getX(), this.selectedLabel.getY(), this.selectedLabel.getAngle());
+      float deltaY = y - this.deltaYToElevationPoint - (textBounds [2][1] + textBounds [3][1]) / 2;
+      float newElevation = this.oldElevation - deltaY;
+      newElevation = Math.min(Math.max(newElevation, 0f), preferences.getLengthUnit().getMaximumElevation());
+      if (this.magnetismEnabled) {
+        newElevation = preferences.getLengthUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
+      }
+
+      // Update piece new dimension
+      this.selectedLabel.setElevation(newElevation);
+
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newElevation), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postLabelElevation(this.selectedLabel, this.oldElevation);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedLabel.setElevation(this.oldElevation);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedLabel = null;
+    }  
+    
+    private String getToolTipFeedbackText(float height) {
+      return String.format(this.elevationToolTipFeedback,  
+          preferences.getLengthUnit().getFormatWithUnit().format(height));
+    }
+  }
+
   /**
    * Compass rotation state. This states manages the rotation of the compass.
    */

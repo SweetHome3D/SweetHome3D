@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * The different attributes that defines a text style. 
@@ -32,17 +33,27 @@ import java.util.Map;
 public class TextStyle implements Serializable {
   private static final long serialVersionUID = 1L;
     
+  private final String  fontName;
   private final float   fontSize;
   private final boolean bold;
   private final boolean italic;
   
-  private static final Map<TextStyle,TextStyle> textStylesCache = new HashMap<TextStyle,TextStyle>(); 
+  private static final Map<TextStyle,TextStyle> textStylesCache = new WeakHashMap<TextStyle,TextStyle>(); 
   
   public TextStyle(float fontSize) {
     this(fontSize, false, false);    
   }
-  
+
   public TextStyle(float fontSize, boolean bold, boolean italic) {
+    this(null, fontSize, bold, italic);
+  }
+  
+  /**
+   * Creates a text style from its font's name, its size and style.
+   * @since 5.0
+   */
+  public TextStyle(String fontName, float fontSize, boolean bold, boolean italic) {
+    this.fontName = fontName;
     this.fontSize = fontSize;
     this.bold = bold;
     this.italic = italic;
@@ -57,6 +68,13 @@ public class TextStyle implements Serializable {
     in.defaultReadObject();
     
     textStylesCache.put(this, this);
+  }
+  
+  /**
+   * Returns the font name of this text style.  
+   */
+  public String getFontName() {
+    return this.fontName;
   }
   
   /**
@@ -81,13 +99,26 @@ public class TextStyle implements Serializable {
   }
 
   /**
+   * Returns a derived style of this text style with a given font name.
+   * @since 5.0
+   */
+  public TextStyle deriveStyle(String fontName) {
+    if (getFontName() == fontName
+        || (fontName != null && fontName.equals(getFontName()))) {
+      return this;
+    } else {
+      return getCachedTextStyle(new TextStyle(fontName, getFontSize(), isBold(), isItalic()));
+    }
+  }
+
+  /**
    * Returns a derived style of this text style with a given font size.
    */
   public TextStyle deriveStyle(float fontSize) {
     if (getFontSize() == fontSize) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(fontSize, isBold(), isItalic()));
+      return getCachedTextStyle(new TextStyle(getFontName(), fontSize, isBold(), isItalic()));
     }
   }
 
@@ -98,7 +129,7 @@ public class TextStyle implements Serializable {
     if (isBold() == bold) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(getFontSize(), bold, isItalic()));
+      return getCachedTextStyle(new TextStyle(getFontName(), getFontSize(), bold, isItalic()));
     }
   }
 
@@ -109,7 +140,7 @@ public class TextStyle implements Serializable {
     if (isItalic() == italic) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(getFontSize(), isBold(), italic));
+      return getCachedTextStyle(new TextStyle(getFontName(), getFontSize(), isBold(), italic));
     }
   }
 
@@ -134,7 +165,9 @@ public class TextStyle implements Serializable {
   public boolean equals(Object object) {
     if (object instanceof TextStyle) {
       TextStyle textStyle = (TextStyle)object;
-      return textStyle.fontSize == this.fontSize
+      return (textStyle.fontName == this.fontName
+              || (textStyle.fontName != null && textStyle.fontName.equals(this.fontName)))
+          && textStyle.fontSize == this.fontSize
           && textStyle.bold == this.bold
           && textStyle.italic == this.italic;
     }
@@ -147,6 +180,9 @@ public class TextStyle implements Serializable {
   @Override
   public int hashCode() {
     int hashCode = Float.floatToIntBits(this.fontSize);
+    if (this.fontName != null) {
+      hashCode += this.fontName.hashCode();
+    }
     if (this.bold) {
       hashCode++;
     }
