@@ -46,7 +46,7 @@ public class Home implements Serializable, Cloneable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 4400;
+  public static final long CURRENT_VERSION = 5000;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
 
@@ -225,7 +225,8 @@ public class Home implements Serializable, Cloneable {
       if (this.version <= 3400) {
         // Automatically adjust ground color to a darker color
         int groundColor = this.environment.getGroundColor();
-        this.environment.setGroundColor(  ((((groundColor >> 16) & 0xFF) * 3 / 4) << 16)
+        this.environment.setGroundColor(  
+              ((((groundColor >> 16) & 0xFF) * 3 / 4) << 16)
             | ((((groundColor >> 8) & 0xFF) * 3 / 4) << 8)
             | ((groundColor & 0xFF) * 3 / 4));
       }
