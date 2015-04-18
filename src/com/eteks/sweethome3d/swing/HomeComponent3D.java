@@ -812,6 +812,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home.removeFurnitureListener(this.furnitureListener);
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       piece.removePropertyChangeListener(this.furnitureChangeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.removePropertyChangeListener(this.furnitureChangeListener);
+        }
+      }
     }
     this.home.removeRoomsListener(this.roomListener);
     for (Room room : this.home.getRooms()) {
@@ -2072,7 +2077,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group group) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
+          HomePieceOfFurniture updatedPiece = getHomePieceOfFurniture((HomePieceOfFurniture)ev.getSource());
           String propertyName = ev.getPropertyName();
           if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
               || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
@@ -2097,6 +2102,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
 
+        private HomePieceOfFurniture getHomePieceOfFurniture(HomePieceOfFurniture piece) {
+          List<HomePieceOfFurniture> furniture = home.getFurniture();
+          if (!furniture.contains(piece)) {
+            for (HomePieceOfFurniture homePiece : furniture) {
+              if (homePiece instanceof HomeFurnitureGroup
+                  && ((HomeFurnitureGroup)homePiece).getAllFurniture().contains(piece)) {
+                return homePiece;
+              }
+            }
+          }
+          return piece;
+        }
+
         private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece) {
           updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
           // If piece is or contains a door or a window, update walls that intersect with piece
@@ -2112,6 +2130,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       };
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       piece.addPropertyChangeListener(this.furnitureChangeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.addPropertyChangeListener(this.furnitureChangeListener);
+        }
+      }
     }      
     this.furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
@@ -2120,10 +2143,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             case ADD :
               addObject(group, piece, true, false);
               piece.addPropertyChangeListener(furnitureChangeListener);
+              if (piece instanceof HomeFurnitureGroup) {
+                for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                  childPiece.addPropertyChangeListener(furnitureChangeListener);
+                }
+              }
               break;
             case DELETE :
               deleteObject(piece);
               piece.removePropertyChangeListener(furnitureChangeListener);
+              if (piece instanceof HomeFurnitureGroup) {
+                for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                  childPiece.removePropertyChangeListener(furnitureChangeListener);
+                }
+              }
               break;
           }
           // If piece is or contains a door or a window, update walls that intersect with piece

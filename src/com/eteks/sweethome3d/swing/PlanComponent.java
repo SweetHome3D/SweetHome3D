@@ -94,6 +94,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -624,13 +625,29 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       piece.addPropertyChangeListener(furnitureChangeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.addPropertyChangeListener(furnitureChangeListener);
+        }
+      }
     }
     home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+            piece.addPropertyChangeListener(furnitureChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.addPropertyChangeListener(furnitureChangeListener);
+              }
+            }
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+            piece.removePropertyChangeListener(furnitureChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.removePropertyChangeListener(furnitureChangeListener);
+              }
+            }
           }
           sortedLevelFurniture = null;
           revalidate();
@@ -935,6 +952,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 && !preferences.isFurnitureViewedFromTop()) {
               planComponent.furnitureTopViewIconsCache = null;
             }
+            break;
+          default:
             break;
         }
         planComponent.repaint();
@@ -3506,31 +3525,92 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale);
     BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale, 
         BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-    for (HomePieceOfFurniture piece : Home.getFurnitureSubList(items)) {
+    
+    List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
+    Area furnitureGroupsArea = null;
+    BasicStroke furnitureGroupsStroke = new BasicStroke(15 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND);
+    HomePieceOfFurniture lastGroup = null;
+    Area furnitureInGroupsArea = null;
+    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+    for (Iterator<HomePieceOfFurniture> it = furniture.iterator(); it.hasNext();) {
+      HomePieceOfFurniture piece = it.next();
       if (piece.isVisible() 
           && isViewableAtSelectedLevel(piece)) {
-        float [][] points = piece.getPoints();
-        Shape pieceShape = getShape(points);
-        
-        // Draw selection border
-        g2D.setPaint(selectionOutlinePaint);
-        g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(pieceShape);
+        HomePieceOfFurniture homePieceOfFurniture = getPieceOfFurnitureInHomeFurniture(piece, homeFurniture);
+        if (homePieceOfFurniture != piece) {
+          Area groupArea = null;
+          if (lastGroup != homePieceOfFurniture) {
+            Shape groupShape = getShape(homePieceOfFurniture.getPoints());          
+            groupArea = new Area(groupShape);
+            // Enlarge group area
+            groupArea.add(new Area(furnitureGroupsStroke.createStrokedShape(groupShape)));
+          }
+          Area pieceArea = new Area(getShape(piece.getPoints()));
+          if (furnitureGroupsArea == null) {
+            furnitureGroupsArea = groupArea;
+            furnitureInGroupsArea = pieceArea;
+          } else {
+            if (lastGroup != homePieceOfFurniture) {
+              furnitureGroupsArea.add(groupArea);
+            }
+            furnitureInGroupsArea.add(pieceArea);
+          }
+          // Store last group to avoid useless multiple computation 
+          lastGroup = homePieceOfFurniture;
+        }
+      } else {
+        it.remove();
+      } 
+    }
+    if (furnitureGroupsArea != null) {
+      // Fill the area of furniture groups around items with light outine color
+      furnitureGroupsArea.subtract(furnitureInGroupsArea);
+      Composite oldComposite = setTransparency(g2D, 0.6f);
+      g2D.setPaint(selectionOutlinePaint);
+      g2D.fill(furnitureGroupsArea);
+      g2D.setComposite(oldComposite);
+    }
+    
+    for (HomePieceOfFurniture piece : furniture) {
+      float [][] points = piece.getPoints();
+      Shape pieceShape = getShape(points);
+      
+      // Draw selection border
+      g2D.setPaint(selectionOutlinePaint);
+      g2D.setStroke(selectionOutlineStroke);
+      g2D.draw(pieceShape);
 
-        // Draw its border
-        g2D.setPaint(foregroundColor);
-        g2D.setStroke(pieceBorderStroke);
-        g2D.draw(pieceShape);
-        
-        // Draw its front face with a thicker line
-        g2D.setStroke(pieceFrontBorderStroke);
-        g2D.draw(new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]));
-        
-        if (items.size() == 1 && indicatorPaint != null) {
-          paintPieceOFFurnitureIndicators(g2D, piece, indicatorPaint, planScale);
+      // Draw its border
+      g2D.setPaint(foregroundColor);
+      g2D.setStroke(pieceBorderStroke);
+      g2D.draw(pieceShape);
+      
+      // Draw its front face with a thicker line
+      g2D.setStroke(pieceFrontBorderStroke);
+      g2D.draw(new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]));
+      
+      if (items.size() == 1 && indicatorPaint != null) {
+        paintPieceOFFurnitureIndicators(g2D, piece, indicatorPaint, planScale);
+      }
+    }
+  }
+
+  /**
+   * Returns <code>piece</code> if it belongs to home furniture or the group to which <code>piece</code> belongs.
+   */
+  private HomePieceOfFurniture getPieceOfFurnitureInHomeFurniture(HomePieceOfFurniture piece, 
+                                                                  List<HomePieceOfFurniture> homeFurniture) {
+    // Prefer iterate twice the furniture list rather than calling getAllFurniture uselessly
+    // because subselecting won't happen often
+    if (!homeFurniture.contains(piece)) { 
+      for (HomePieceOfFurniture homePiece : homeFurniture) {
+        if (homePiece instanceof HomeFurnitureGroup
+            && ((HomeFurnitureGroup)homePiece).getAllFurniture().contains(piece)) {
+          return homePiece;
         }
       }
     }
+    return piece;
   }
 
   /**

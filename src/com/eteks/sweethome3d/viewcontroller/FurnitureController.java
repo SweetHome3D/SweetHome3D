@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1246,24 +1247,27 @@ public class FurnitureController implements Controller {
     float margin = Math.min(piece.getWidth(), piece.getDepth()) * 0.05f;
     HomePieceOfFurniture highestSurroundingPiece = null;
     float highestElevation = Float.MIN_VALUE;
-    for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
-      if (homePiece != piece 
-          && !ignoredFurniture.contains(homePiece)
-          && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
-          && homePiece.getDropOnTopElevation() >= 0) {
-        boolean surroundingPieceContainsPiece = true;
-        for (float [] point : piecePoints) {
-          if (!homePiece.containsPoint(point [0], point [1], margin)) {
-            surroundingPieceContainsPiece = false;
-            break;
+    List<HomePieceOfFurniture> furnitureInSameGroup = getFurnitureInSameGroup(piece);
+    if (furnitureInSameGroup != null) {
+      for (HomePieceOfFurniture homePiece : furnitureInSameGroup) {
+        if (homePiece != piece 
+            && !ignoredFurniture.contains(homePiece)
+            && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
+            && homePiece.getDropOnTopElevation() >= 0) {
+          boolean surroundingPieceContainsPiece = true;
+          for (float [] point : piecePoints) {
+            if (!homePiece.containsPoint(point [0], point [1], margin)) {
+              surroundingPieceContainsPiece = false;
+              break;
+            }
           }
-        }
-        if (surroundingPieceContainsPiece) {
-          float elevation = homePiece.getElevation() 
-              + homePiece.getHeight() * homePiece.getDropOnTopElevation();
-          if (elevation > highestElevation) {
-            highestElevation = elevation;
-            highestSurroundingPiece = homePiece;
+          if (surroundingPieceContainsPiece) {
+            float elevation = homePiece.getElevation() 
+                + homePiece.getHeight() * homePiece.getDropOnTopElevation();
+            if (elevation > highestElevation) {
+              highestElevation = elevation;
+              highestSurroundingPiece = homePiece;
+            }
           }
         }
       }
@@ -1271,6 +1275,28 @@ public class FurnitureController implements Controller {
     return highestSurroundingPiece;
   }
   
+  /**
+   * Returns the furniture list of the given <code>piece</code> which belongs to same group.
+   * @since 5.0
+   */
+  protected List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece) {
+    return getFurnitureInSameGroup(piece, this.home.getFurniture());
+  }
+  
+  private List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece, List<HomePieceOfFurniture> furniture) {
+    for (HomePieceOfFurniture piece2 : furniture) {
+      if (piece2 == piece) {
+        return furniture;
+      } else if (piece2 instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> siblingFurniture = getFurnitureInSameGroup(piece, ((HomeFurnitureGroup)piece2).getFurniture());
+        if (siblingFurniture != null) {
+          return siblingFurniture;
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * Returns <code>true</code> if the given piece is viewable and 
    * its height and elevation make it viewable at the selected level in home.

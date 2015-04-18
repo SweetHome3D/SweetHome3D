@@ -23,8 +23,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +57,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private List<Integer>              furnitureDefaultColors;
   private List<HomeTexture>          furnitureDefaultTextures;
 
+  private transient PropertyChangeListener furnitureListener;
+
   /**
    * Creates a group from the given <code>furniture</code> list. 
    * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
@@ -77,8 +82,105 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super(furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture); 
     
+    boolean movable = true;
+    this.resizable = true;
+    this.deformable = true;
+    this.texturable = true;
+    this.doorOrWindow = true;
+    boolean visible = false;
+    this.currency = furniture.get(0).getCurrency();
+    for (HomePieceOfFurniture piece : furniture) {
+      movable &= piece.isMovable();
+      this.resizable &= piece.isResizable();
+      this.deformable &= piece.isDeformable();
+      this.texturable &= piece.isTexturable();
+      this.doorOrWindow &= piece.isDoorOrWindow();
+      visible |= piece.isVisible();
+      if (this.currency != null) {
+        if (piece.getCurrency() == null
+            || !piece.getCurrency().equals(this.currency)) {
+          this.currency = null; 
+        }
+      }
+    }
+    
+    setName(name);
+    setNameVisible(false);
+    setNameXOffset(0);
+    setNameYOffset(0);
+    setNameStyle(null);
+    setDescription(null);
+    setMovable(movable);
+    setVisible(visible);
+    if (this.texturable) {
+      super.setColor(null);
+      super.setTexture(null);
+    }
+    
+    updateLocationAndSize(furniture, leadingPiece.getAngle(), true);
+    super.setAngle(leadingPiece.getAngle());
+
+    addFurnitureListener();
+  }
+
+  /**
+   * Initializes new piece fields to their default values 
+   * and reads piece from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.dropOnTopElevation = -1;
+    this.deformable = true;
+    this.texturable = true;
+    in.defaultReadObject();
+    addFurnitureListener();
+  }
+
+  /**
+   * Updates the location and size of this group from the furniture it contains.
+   */
+  private void updateLocationAndSize(List<HomePieceOfFurniture> furniture,
+                                     float angle,
+                                     boolean init) {
+    float elevation = Float.MAX_VALUE;
+    if (init) {
+      // Search the lowest level elevation among grouped furniture
+      Level minLevel = null;
+      for (HomePieceOfFurniture piece : furniture) {
+        Level level = piece.getLevel();
+        if (level != null 
+            && (minLevel == null
+                || level.getElevation() < minLevel.getElevation())) {
+          minLevel = level;
+        }
+      }
+      for (HomePieceOfFurniture piece : furniture) {
+        if (piece.getLevel() != null) {
+          elevation = Math.min(elevation, piece.getGroundElevation() - minLevel.getElevation());
+          // Reset piece level and elevation
+          piece.setElevation(piece.getGroundElevation() - minLevel.getElevation());
+          piece.setLevel(null);
+        } else {
+          elevation = Math.min(elevation, piece.getElevation());
+        }
+      }
+    } else {
+      for (HomePieceOfFurniture piece : furniture) {
+        elevation = Math.min(elevation, piece.getElevation());
+      }
+    }
+
+    float height = 0;
+    float dropOnTopElevation = -1;
+    for (HomePieceOfFurniture piece : furniture) {
+      height = Math.max(height, piece.getElevation() + piece.getHeight());
+      if (piece.getDropOnTopElevation() >= 0) {
+        dropOnTopElevation = Math.max(dropOnTopElevation, 
+            piece.getElevation() + piece.getHeight() * piece.getDropOnTopElevation());
+      }
+    }
+
     // Search the size of the furniture group
-    AffineTransform rotation = AffineTransform.getRotateInstance(-leadingPiece.getAngle());
+    AffineTransform rotation = AffineTransform.getRotateInstance(-angle);
     Rectangle2D unrotatedBoundingRectangle = null;
     for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(furniture)) {
       GeneralPath pieceShape = new GeneralPath();
@@ -96,101 +198,62 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     // Search center of the group
     Point2D center = new Point2D.Float((float)unrotatedBoundingRectangle.getCenterX(), (float)unrotatedBoundingRectangle.getCenterY());
-    rotation.setToRotation(leadingPiece.getAngle());
+    rotation.setToRotation(angle);
     rotation.transform(center, center);
-    
-    float elevation = Float.MAX_VALUE;
-    float height    = 0;
-    boolean movable = true;
-    this.resizable = true;
-    this.deformable = true;
-    this.texturable = true;
-    this.doorOrWindow = true;
-    boolean visible = false;
-    boolean modelMirrored = true;
-    this.dropOnTopElevation = -1;
-    this.currency = furniture.get(0).getCurrency();
-    // Search the lowest level elevation among grouped furniture
-    Level minLevel = null;
-    for (HomePieceOfFurniture piece : furniture) {
-      Level level = piece.getLevel();
-      if (level != null 
-          && (minLevel == null
-              || level.getElevation() < minLevel.getElevation())) {
-        minLevel = level;
-      }
-    }
-    for (HomePieceOfFurniture piece : furniture) {
-      Level level = piece.getLevel();
-      if (level != null) {
-        elevation = Math.min(elevation, piece.getGroundElevation() - minLevel.getElevation());
-      } else {
-        elevation = Math.min(elevation, piece.getElevation());
-      }
-    }
-    for (HomePieceOfFurniture piece : furniture) {
-      if (piece.getLevel() != null) {
-        piece.setElevation(piece.getGroundElevation() - minLevel.getElevation());
-      }
-      piece.setLevel(null);
-      height = Math.max(height, piece.getElevation() + piece.getHeight());
-      if (piece.getDropOnTopElevation() >= 0) {
-        this.dropOnTopElevation = Math.max(this.dropOnTopElevation, 
-            piece.getElevation() + piece.getHeight() * piece.getDropOnTopElevation());
-      }
-      movable &= piece.isMovable();
-      this.resizable &= piece.isResizable();
-      this.deformable &= piece.isDeformable();
-      this.texturable &= piece.isTexturable();
-      this.doorOrWindow &= piece.isDoorOrWindow();
-      visible |= piece.isVisible();
-      modelMirrored &= piece.isModelMirrored();
 
-      if (this.currency != null) {
-        if (piece.getCurrency() == null
-            || !piece.getCurrency().equals(this.currency)) {
-          this.currency = null; 
-        }
-      }
-    }
     if (this.resizable) {
       super.setWidth((float)unrotatedBoundingRectangle.getWidth());
       super.setDepth((float)unrotatedBoundingRectangle.getHeight());
       super.setHeight(height - elevation);
-      super.setModelMirrored(modelMirrored);
     } else {
       this.fixedWidth = (float)unrotatedBoundingRectangle.getWidth();
       this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
       this.fixedHeight = height - elevation;
     }
-    this.dropOnTopElevation = (this.dropOnTopElevation - elevation) / height;
-    setName(name);
-    setNameVisible(false);
-    setNameXOffset(0);
-    setNameYOffset(0);
-    setNameStyle(null);
-    setDescription(null);
-    setMovable(movable);
-    setVisible(visible);
-    if (this.texturable) {
-      super.setColor(null);
-      super.setTexture(null);
-    }
+    this.dropOnTopElevation = (dropOnTopElevation - elevation) / height;
     super.setX((float)center.getX());
     super.setY((float)center.getY());
-    super.setAngle(leadingPiece.getAngle());
     super.setElevation(elevation);
+  }
+  
+  /**
+   * Adds a listener to the furniture of this group that will update the size and location 
+   * of the group when its furniture is moved or resized. 
+   */
+  private void addFurnitureListener() {
+    this.furnitureListener = new LocationAndSizeChangeListener(this);
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.addPropertyChangeListener(this.furnitureListener);
+    }    
   }
 
   /**
-   * Initializes new piece fields to their default values 
-   * and reads piece from <code>in</code> stream with default reading method.
+   * Properties listener that updates the size and location of this group. 
+   * This listener is bound to this controller with a weak reference to avoid a strong link 
+   * of this group towards the furniture it contains.  
    */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.dropOnTopElevation = -1;
-    this.deformable = true;
-    this.texturable = true;
-    in.defaultReadObject();
+  private static class LocationAndSizeChangeListener implements PropertyChangeListener { 
+    private WeakReference<HomeFurnitureGroup> group;
+    
+    public LocationAndSizeChangeListener(HomeFurnitureGroup group) {
+      this.group = new WeakReference<HomeFurnitureGroup>(group);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If the group was garbage collected, remove this listener from furniture
+      final HomeFurnitureGroup group = this.group.get();
+      if (group == null) {
+        ((HomePieceOfFurniture)ev.getSource()).removePropertyChangeListener(this);
+      } else if (HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+        group.updateLocationAndSize(group.getFurniture(), group.getAngle(), false);
+      }
+    }
   }
 
   /**
@@ -209,10 +272,23 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns the furniture of this group and of all its subgroups.  
+   */
+  public List<HomePieceOfFurniture> getAllFurniture() {
+    List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>(this.furniture);
+    for (HomePieceOfFurniture piece : getFurniture()) {
+      if (piece instanceof HomeFurnitureGroup) {
+        pieces.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
+      } 
+    }
+    return pieces;
+  }
+  
+  /**
    * Returns an unmodifiable list of the furniture of this group.
    */
   public List<HomePieceOfFurniture> getFurniture() {
-    return this.furniture;
+    return Collections.unmodifiableList(this.furniture);
   }
   
   /**
@@ -563,16 +639,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setAngle(float angle) {
     if (angle != getAngle()) {
       float angleDelta = angle - getAngle();
-      super.setAngle(angle);
       double cosAngleDelta = Math.cos(angleDelta);
       double sinAngleDelta = Math.sin(angleDelta);
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         piece.setAngle(piece.getAngle() + angleDelta);     
         float newX = getX() + (float)((piece.getX() - getX()) * cosAngleDelta - (piece.getY() - getY()) * sinAngleDelta);
         float newY = getY() + (float)((piece.getX() - getX()) * sinAngleDelta + (piece.getY() - getY()) * cosAngleDelta);
         piece.setX(newX);
         piece.setY(newY);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setAngle(angle);
     }
   }
   
@@ -583,10 +661,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setX(float x) {
     if (x != getX()) {
       float dx = x - getX();
-      super.setX(x);
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         piece.setX(piece.getX() + dx);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setX(x);
     }
   }
 
@@ -597,10 +677,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setY(float y) {
     if (y != getY()) {
       float dy = y - getY();
-      super.setY(y);
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.addPropertyChangeListener(this.furnitureListener);
         piece.setY(piece.getY() + dy);
+        piece.removePropertyChangeListener(this.furnitureListener);
       }
+      super.setY(y);
     }
   }
 
@@ -611,9 +693,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setWidth(float width) {
     if (width != getWidth()) {
       float widthFactor = width / getWidth();
-      super.setWidth(width);
       float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         float angleDelta = piece.getAngle() - angle;
         float pieceWidth = piece.getWidth();
         float pieceDepth = piece.getDepth();
@@ -629,7 +711,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         // Rotate piece back to its angle
         piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
         piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setWidth(width);
     }
   }
 
@@ -640,9 +724,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setDepth(float depth) {
     if (depth != getDepth()) {
       float depthFactor = depth / getDepth();
-      super.setDepth(depth);
       float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         float angleDelta = piece.getAngle() - angle;
         float pieceWidth = piece.getWidth();
         float pieceDepth = piece.getDepth();
@@ -658,7 +742,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         // Rotate piece back to its angle
         piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
         piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setDepth(depth);
     }
   }
 
@@ -669,12 +755,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setHeight(float height) {
     if (height != getHeight()) {
       float heightFactor = height / getHeight();
-      super.setHeight(height);
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         piece.setHeight(piece.getHeight() * heightFactor);
         piece.setElevation(getElevation() 
             + (piece.getElevation() - getElevation()) * heightFactor);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setHeight(height);
     }
   }
 
@@ -685,10 +773,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setElevation(float elevation) {
     if (elevation != getElevation()) {
       float elevationDelta = elevation - getElevation();
-      super.setElevation(elevation);
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         piece.setElevation(piece.getElevation() + elevationDelta);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setElevation(elevation);
     }
   }
   
@@ -698,9 +788,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   @Override
   public void setModelMirrored(boolean modelMirrored) {
     if (modelMirrored != isModelMirrored()) {
-      super.setModelMirrored(modelMirrored);
       float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
+        piece.removePropertyChangeListener(this.furnitureListener);
         piece.setModelMirrored(!piece.isModelMirrored());
         // Rotate piece to angle 0
         double cosAngle = Math.cos(angle);
@@ -712,7 +802,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         // Rotate piece back to its angle
         piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
         piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
+      super.setModelMirrored(modelMirrored);
     }
   }
   
@@ -721,10 +813,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public void setVisible(boolean visible) {
-    super.setVisible(visible);
     for (HomePieceOfFurniture piece : this.furniture) {
       piece.setVisible(visible);
     }
+    super.setVisible(visible);
   }
 
   /**
@@ -732,10 +824,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public void setLevel(Level level) {
-    super.setLevel(level);
     for (HomePieceOfFurniture piece : this.furniture) {
       piece.setLevel(level);
     }
+    super.setLevel(level);
   }
   
   /**

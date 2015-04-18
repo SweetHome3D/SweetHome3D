@@ -190,12 +190,18 @@ public class FurnitureTable extends JTable implements View, Printable {
           selectionByUser = true;
           int [] selectedRows = getSelectedRows();
           // Build the list of selected furniture
-          Set<HomePieceOfFurniture> selectedFurniture = new HashSet<HomePieceOfFurniture>(selectedRows.length);
-          List<HomePieceOfFurniture> furniture = home.getFurniture();
+          List<HomePieceOfFurniture> selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+          List<HomePieceOfFurniture> ignoredGroupsFurniture = new ArrayList<HomePieceOfFurniture>();
           TableModel tableModel = getModel();
           for (int index : selectedRows) {
-            // Add to selectedFurniture table model value that stores piece
-            selectedFurniture.add(getParent(furniture, (HomePieceOfFurniture)tableModel.getValueAt(index, 0)));
+            HomePieceOfFurniture piece = (HomePieceOfFurniture)tableModel.getValueAt(index, 0);
+            if (!ignoredGroupsFurniture.contains(piece)) {
+              // Add to selectedFurniture table model value that stores piece
+              selectedFurniture.add(piece);
+              if (piece instanceof HomeFurnitureGroup) {
+                ignoredGroupsFurniture.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
+              }
+            }
           }
           // Set the new selection in home with controller
           controller.setSelectedFurniture(new ArrayList<HomePieceOfFurniture>(selectedFurniture));
@@ -210,11 +216,16 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Updates selected furniture in table from selected items in <code>home</code>. 
    */
   private void updateTableSelectedFurniture(Home home) {
-    List<HomePieceOfFurniture> furniture = home.getFurniture();
     ListSelectionModel selectionModel = getSelectionModel();
     selectionModel.removeListSelectionListener(this.tableSelectionListener);
 
     FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+    for (Selectable item : home.getSelectedItems()) {
+      if (item instanceof HomePieceOfFurniture) {
+        tableModel.expandPathToPieceOfFurniture((HomePieceOfFurniture)item);
+      }
+    }
+    
     int minIndex = Integer.MAX_VALUE;
     int maxIndex = Integer.MIN_VALUE;
     int [] furnitureIndices = new int [tableModel.getRowCount()];
@@ -230,9 +241,10 @@ public class FurnitureTable extends JTable implements View, Printable {
           maxIndex = Math.max(maxIndex, rowIndex);
           if (item instanceof HomeFurnitureGroup
               && tableModel.isRowExpanded(rowIndex)) {
+            List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)item).getAllFurniture();
             for (rowIndex++; 
                  rowIndex < tableModel.getRowCount() 
-                 && getParent(furniture, (HomePieceOfFurniture)tableModel.getValueAt(rowIndex, 0)) == item; 
+                 && groupFurniture.contains((HomePieceOfFurniture)tableModel.getValueAt(rowIndex, 0)); 
                  rowIndex++) {
               furnitureIndices [selectedFurnitureCount++] = rowIndex;
               minIndex = Math.min(minIndex, rowIndex);
@@ -359,7 +371,7 @@ public class FurnitureTable extends JTable implements View, Printable {
               FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
               tableModel.toggleRowExpandedState(row);
               controller.setSelectedFurniture(Arrays.asList(new HomePieceOfFurniture [] {
-                  getParent(home.getFurniture(), (HomePieceOfFurniture)tableModel.getValueAt(row, 0))}));
+                  (HomePieceOfFurniture)tableModel.getValueAt(row, 0)}));
             } else if (ev.getClickCount() == 2) {
               deleteInformationPopup();
               controller.modifySelectedFurniture();
@@ -458,20 +470,6 @@ public class FurnitureTable extends JTable implements View, Printable {
       this.furnitureInformationPopup.hide();
       this.furnitureInformationPopup = null;
     }
-  }
-
-  /**
-   * Returns the parent of the given <code>piece</code> among <code>furniture</code>.
-   */
-  private HomePieceOfFurniture getParent(List<HomePieceOfFurniture> furniture, HomePieceOfFurniture piece) {
-    for (HomePieceOfFurniture object : furniture) {
-      if (object == piece
-          || (object instanceof HomeFurnitureGroup 
-              && getParent(((HomeFurnitureGroup)object).getFurniture(), piece) != null)) {
-        return object;
-      }
-    }
-    return null;
   }
 
   /**
@@ -2188,6 +2186,41 @@ public class FurnitureTable extends JTable implements View, Printable {
         }
         filterAndSortFurniture();
       }
+    }
+
+    /**
+     * Ensures the path to the given piece is expanded.
+     */
+    public void expandPathToPieceOfFurniture(HomePieceOfFurniture piece) {
+      List<HomePieceOfFurniture> furniture = this.home.getFurniture();
+      if (furniture.contains(piece)) {
+        return;
+      }
+      for (HomeFurnitureGroup group : this.expandedGroups) {
+        if (group.getFurniture().contains(piece)) {
+          return;
+        }
+      }
+      for (HomePieceOfFurniture homePiece : furniture) {
+        if (homePiece instanceof HomeFurnitureGroup
+            && expandPathToPieceOfFurniture(piece, (HomeFurnitureGroup)homePiece)) {
+          filterAndSortFurniture();
+          return;
+        }
+      }
+    }
+
+    private boolean expandPathToPieceOfFurniture(HomePieceOfFurniture piece, 
+                                                 HomeFurnitureGroup group) {
+      for (HomePieceOfFurniture groupPiece : group.getFurniture()) {
+        if (groupPiece == piece
+            || (groupPiece instanceof HomeFurnitureGroup
+                && expandPathToPieceOfFurniture(piece, (HomeFurnitureGroup)groupPiece))) {
+          this.expandedGroups.add(group);
+          return true;
+        } 
+      }
+      return false;
     }
   }
   

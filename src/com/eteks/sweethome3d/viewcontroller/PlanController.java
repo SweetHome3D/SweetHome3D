@@ -3092,7 +3092,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selectable item at (<code>x</code>, <code>y</code>) point.
    */
   public Selectable getSelectableItemAt(float x, float y) {
-    List<Selectable> selectableItems = getSelectableItemsAt(x, y, true);
+    return getSelectableItemAt(x, y, true);
+  }
+  
+  /**
+   * Returns the selectable item at (<code>x</code>, <code>y</code>) point.
+   */
+  private Selectable getSelectableItemAt(float x, float y, boolean ignoreGroupsFurniture) {
+    List<Selectable> selectableItems = getSelectableItemsAt(x, y, true, ignoreGroupsFurniture);
     if (selectableItems.size() != 0) {
       return selectableItems.get(0);
     } else {
@@ -3104,14 +3111,15 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selectable items at (<code>x</code>, <code>y</code>) point.
    */
   public List<Selectable> getSelectableItemsAt(float x, float y) {
-    return getSelectableItemsAt(x, y, false);
+    return getSelectableItemsAt(x, y, false, true);
   }
   
   /**
    * Returns the selectable items at (<code>x</code>, <code>y</code>) point.
    */
   private List<Selectable> getSelectableItemsAt(float x, float y, 
-                                                boolean stopAtFirstItem) {
+                                                boolean stopAtFirstItem,
+                                                boolean ignoreGroupsFurniture) {
     List<Selectable> items = new ArrayList<Selectable>();
     float margin = PIXEL_MARGIN / getScale();
     float textMargin = PIXEL_MARGIN / 2 / getScale();
@@ -3187,6 +3195,41 @@ public class PlanController extends FurnitureController implements Controller {
     }
     if (foundPiece != null
         && stopAtFirstItem) {
+      if (!ignoreGroupsFurniture 
+          && (foundPiece instanceof HomeFurnitureGroup)) {
+        List<Selectable> selectedItems = this.home.getSelectedItems();
+        if (selectedItems.size() >= 1) {
+          // If selected items are in the same group 
+          if ((selectedItems.size() == 1 && selectedItems.get(0) == foundPiece)
+              || ((HomeFurnitureGroup)foundPiece).getAllFurniture().containsAll(selectedItems)) {
+            for (Selectable selectedItem : selectedItems) {
+              if (selectedItem instanceof HomeFurnitureGroup) {
+                // Search the piece at point among the furniture of the selected group 
+                List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)selectedItem).getFurniture();
+                for (int i = groupFurniture.size() - 1; i >= 0; i--) {
+                  HomePieceOfFurniture piece = groupFurniture.get(i);
+                  if (!selectedItems.contains(piece) 
+                      && piece.containsPoint(x, y, margin)) {
+                    return Arrays.asList(new Selectable [] {piece});
+                  }
+                }
+              }
+            }
+            // Search the piece at point among the groups of selected furniture
+            for (Selectable selectedItem : selectedItems) {
+              if (selectedItem instanceof HomePieceOfFurniture) {
+                List<HomePieceOfFurniture> groupFurniture = getFurnitureInSameGroup((HomePieceOfFurniture)selectedItem);
+                for (int i = groupFurniture.size() - 1; i >= 0; i--) {
+                  HomePieceOfFurniture piece = groupFurniture.get(i);
+                  if (piece.containsPoint(x, y, margin)) {
+                    return Arrays.asList(new Selectable [] {piece});
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       return Arrays.asList(new Selectable [] {foundPiece});
     } else {
       Collections.sort(foundFurniture, new Comparator<HomePieceOfFurniture>() {
@@ -5458,7 +5501,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
           && ((HomeDoorOrWindow)piece).isBoundToWall();
       if (piece instanceof HomeFurnitureGroup) {
-        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)piece);
+        List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getAllFurniture();
         this.groupFurnitureX = new float [groupFurniture.size()];
         this.groupFurnitureY = new float [groupFurniture.size()];
         this.groupFurnitureWidth = new float [groupFurniture.size()];
@@ -5511,7 +5554,7 @@ public class PlanController extends FurnitureController implements Controller {
         ((HomeDoorOrWindow)this.piece).setBoundToWall(this.doorOrWindowBoundToWall);
       }
       if (this.piece instanceof HomeFurnitureGroup) {
-        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)this.piece);
+        List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)this.piece).getAllFurniture();
         for (int i = 0; i < groupFurniture.size(); i++) {
           HomePieceOfFurniture groupPiece = groupFurniture.get(i);
           if (this.piece.isResizable()) {
@@ -5524,20 +5567,6 @@ public class PlanController extends FurnitureController implements Controller {
           }
         }
       }
-    }
-    
-    /**
-     * Returns all the children of the given <code>furnitureGroup</code>.  
-     */
-    private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
-      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
-      for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
-        pieces.add(piece);
-        if (piece instanceof HomeFurnitureGroup) {
-          pieces.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
-        } 
-      }
-      return pieces;
     }
   }
 
@@ -6309,12 +6338,17 @@ public class PlanController extends FurnitureController implements Controller {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
-      List<Selectable> selectableItemsUnderCursor = 
-          getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
+      List<Selectable> selectableItemsUnderCursor = getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
       this.oldSelection = home.getSelectedItems();
       toggleMagnetism(wasMagnetismToggledLastMousePress());
+      List<Selectable> oldSelectionAndGroupsFurniture = new ArrayList<Selectable>(selectableItemsUnderCursor);
+      for (Selectable item : selectableItemsUnderCursor) {
+        if (item instanceof HomeFurnitureGroup) {
+          oldSelectionAndGroupsFurniture.addAll(((HomeFurnitureGroup)item).getAllFurniture());
+        } 
+      }
       // If no selectable item under the cursor belongs to selection
-      if (Collections.disjoint(selectableItemsUnderCursor, this.oldSelection)) {
+      if (Collections.disjoint(oldSelectionAndGroupsFurniture, this.oldSelection)) {
         // Select only the item with highest priority under cursor position
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress()));
       }       
@@ -6412,7 +6446,8 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        Selectable itemUnderCursor = getSelectableItemAt(x, y);
+        boolean selectionChanged = Collections.disjoint(home.getSelectedItems(), this.oldSelection);
+        Selectable itemUnderCursor = getSelectableItemAt(x, y, selectionChanged);
         if (itemUnderCursor != null) {
           // Select only the item under cursor position
           selectItem(itemUnderCursor);
@@ -6568,6 +6603,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class RectangleSelectionState extends ControllerState {
     private List<Selectable> selectedItemsMousePressed;  
+    private boolean          ignoreRectangleSelection;
     private boolean          mouseMoved;
   
     @Override
@@ -6582,44 +6618,60 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      Selectable itemUnderCursor = 
-          getSelectableItemAt(getXLastMousePress(), getYLastMousePress());
+      Selectable itemUnderCursor = getSelectableItemAt(getXLastMousePress(), getYLastMousePress());
       // If no item under cursor and shift wasn't down, deselect all
       if (itemUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
       } 
       // Store current selection
-      this.selectedItemsMousePressed = 
-        new ArrayList<Selectable>(home.getSelectedItems());
+      this.selectedItemsMousePressed = new ArrayList<Selectable>(home.getSelectedItems());
+      List<HomePieceOfFurniture> furniture = home.getFurniture();
+      this.ignoreRectangleSelection = false;
+      for (Selectable item : this.selectedItemsMousePressed) {
+        if ((item instanceof HomePieceOfFurniture)
+            && !furniture.contains(item)) {
+          this.ignoreRectangleSelection = true;
+          break;
+        }
+      }
       this.mouseMoved = false;
     }
 
     @Override
     public void moveMouse(float x, float y) {
       this.mouseMoved = true;
-      updateSelectedItems(getXLastMousePress(), getYLastMousePress(), 
-          x, y, this.selectedItemsMousePressed);
-      // Update rectangle feedback
-      PlanView planView = getView();
-      planView.setRectangleFeedback(
-          getXLastMousePress(), getYLastMousePress(), x, y);
-      planView.makePointVisible(x, y);
+      if (!this.ignoreRectangleSelection) {
+        updateSelectedItems(getXLastMousePress(), getYLastMousePress(), 
+            x, y, this.selectedItemsMousePressed);
+        // Update rectangle feedback
+        PlanView planView = getView();
+        planView.setRectangleFeedback(
+            getXLastMousePress(), getYLastMousePress(), x, y);
+        planView.makePointVisible(x, y);
+      }
     }
 
     @Override
     public void releaseMouse(float x, float y) {
       // If cursor didn't move
       if (!this.mouseMoved) {
-        Selectable itemUnderCursor = getSelectableItemAt(x, y);
+        Selectable itemUnderCursor = getSelectableItemAt(x, y, false);
         // Toggle selection of the item under cursor 
         if (itemUnderCursor != null) {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
             this.selectedItemsMousePressed.remove(itemUnderCursor);
           } else {
-            // Remove any camera from current selection 
-            for (Iterator<Selectable> iter = this.selectedItemsMousePressed.iterator(); iter.hasNext();) {
-              if (iter.next() instanceof Camera) {
-                iter.remove();
+            for (Iterator<Selectable> it = this.selectedItemsMousePressed.iterator(); it.hasNext();) {
+              // Remove any camera of group of a selected piece from current selection 
+              Selectable item = it.next();
+              if (item instanceof Camera
+                  || (itemUnderCursor instanceof HomePieceOfFurniture
+                      && item instanceof HomeFurnitureGroup
+                      && ((HomeFurnitureGroup)item).getAllFurniture().contains(itemUnderCursor))
+                  || (itemUnderCursor instanceof HomeFurnitureGroup
+                      && item instanceof HomePieceOfFurniture
+                      && ((HomeFurnitureGroup)itemUnderCursor).getAllFurniture().contains(item))) {
+                it.remove();
               }
             }
             // Let the camera belong to selection only if no item are selected
