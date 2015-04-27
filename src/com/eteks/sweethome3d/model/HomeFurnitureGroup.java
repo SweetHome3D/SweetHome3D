@@ -886,6 +886,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (this.furnitureDefaultTextures != null) {
       clone.furnitureDefaultTextures = new ArrayList<HomeTexture>(this.furnitureDefaultTextures);
     }
+    clone.addFurnitureListener();
     return clone;
   }
 }
