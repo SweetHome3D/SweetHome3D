@@ -1380,7 +1380,7 @@ public class Home implements Serializable, Cloneable {
       clone.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
           this.furnitureVisibleProperties);
       clone.visualProperties = new HashMap<String, Object>(this.visualProperties);
-     // Create new listeners support
+      // Create new listeners support
       clone.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(clone);
       clone.selectionListeners = new ArrayList<SelectionListener>();
       clone.wallsChangeSupport = new CollectionChangeSupport<Wall>(clone);
@@ -1388,6 +1388,7 @@ public class Home implements Serializable, Cloneable {
       clone.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(clone);
       clone.labelsChangeSupport = new CollectionChangeSupport<Label>(clone);
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      clone.addModelListeners();
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 
