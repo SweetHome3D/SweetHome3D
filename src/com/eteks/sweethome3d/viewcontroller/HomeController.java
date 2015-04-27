@@ -721,8 +721,12 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsCompass = false;
     FurnitureController furnitureController = getFurnitureController();
     if (!modificationState) {
+      List<HomePieceOfFurniture> furniture = this.home.getFurniture();
       for (Selectable item : selectedItems) {
-        if (getPlanController().isItemDeletable(item)) {
+        // Check item is deletable and doesn't belong to a group if it's a piece of furniture
+        if (getPlanController().isItemDeletable(item)
+            && (!(item instanceof HomePieceOfFurniture)
+                || furniture.contains(item))) {
           homeSelectionContainsDeletableItems = true;
           break;
         }
@@ -730,7 +734,9 @@ public class HomeController implements Controller {
       List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(selectedItems);
       homeSelectionContainsFurniture = !selectedFurniture.isEmpty();
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        if (furnitureController.isPieceOfFurnitureDeletable(piece)) {
+        // Check piece is deletable and doesn't belong to a group
+        if (furnitureController.isPieceOfFurnitureDeletable(piece)
+            && furniture.contains(piece)) {
           homeSelectionContainsDeletableFurniture = true;
           break;
         }

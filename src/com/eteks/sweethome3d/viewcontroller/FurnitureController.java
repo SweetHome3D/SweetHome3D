@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -240,8 +239,12 @@ public class FurnitureController implements Controller {
     Map<Integer, HomePieceOfFurniture> sortedMap = 
         new TreeMap<Integer, HomePieceOfFurniture>(); 
     for (HomePieceOfFurniture piece : deletedFurniture) {
+      // Check piece is deletable and doesn't belong to a group
       if (isPieceOfFurnitureDeletable(piece)) {
-        sortedMap.put(homeFurniture.indexOf(piece), piece);
+        int index = homeFurniture.indexOf(piece);
+        if (index != -1) {
+          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        }
       }
     }
     final HomePieceOfFurniture [] furniture = sortedMap.values().
