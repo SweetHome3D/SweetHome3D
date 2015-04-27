@@ -294,11 +294,16 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Updates expanded rows from matching visual property in <code>home</code>.
    */
   private void updateExpandedRows(Home home) {
-    String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
-    if (expandedRows != null) {
-      FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
-      for (String row : expandedRows.split(",")) {
-        tableModel.toggleRowExpandedState(Integer.parseInt(row));
+    if (home.getVersion() >= 5000) {
+      String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
+      if (expandedRows != null) {
+        FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+        for (String row : expandedRows.split(",")) {
+          int rowIndex = Integer.parseInt(row);
+          if (!tableModel.isRowExpanded(rowIndex)) {
+            tableModel.toggleRowExpandedState(rowIndex);
+          }
+        }
       }
     }
   }
