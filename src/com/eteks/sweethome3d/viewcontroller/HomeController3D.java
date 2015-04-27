@@ -869,9 +869,9 @@ public class HomeController3D implements Controller {
     @Override
     public void rotateCameraPitch(float delta) {
       float newPitch = this.observerCamera.getPitch() + delta; 
-      // Check new angle is between -60° and 75°  
-      newPitch = Math.max(newPitch, -(float)Math.PI / 3);
-      newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
+      // Check new angle is between -90° and 90°  
+      newPitch = Math.max(newPitch, -(float)Math.PI / 2);
+      newPitch = Math.min(newPitch, (float)Math.PI / 2);
       this.observerCamera.setPitch(newPitch); 
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));

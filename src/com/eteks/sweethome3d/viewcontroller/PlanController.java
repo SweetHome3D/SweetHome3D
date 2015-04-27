@@ -8558,9 +8558,9 @@ public class PlanController extends FurnitureController implements Controller {
       float newPitch = (float)(this.oldPitch 
           + (y - getYLastMousePress()) * Math.cos(this.selectedCamera.getYaw()) * Math.PI / 360
           - (x - getXLastMousePress()) * Math.sin(this.selectedCamera.getYaw()) * Math.PI / 360);
-      // Check new angle is between -60° and 90°  
-      newPitch = Math.max(newPitch, -(float)Math.PI / 3);
-      newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
+      // Check new angle is between -90° and 90°  
+      newPitch = Math.max(newPitch, -(float)Math.PI / 2);
+      newPitch = Math.min(newPitch, (float)Math.PI / 2);
       
       // Update camera pitch angle
       this.selectedCamera.setPitch(newPitch);

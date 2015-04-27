@@ -169,7 +169,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     // Create pitch label and spinner bound to SPIN_IN_DEGREES controller property
     this.pitchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "pitchLabel.text"));
-    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(0, -60, 90, 5);
+    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(0, -90, 90, 5);
     this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel);
     pitchSpinnerModel.setValue(controller.getPitchInDegrees());
     pitchSpinnerModel.addChangeListener(new ChangeListener() {

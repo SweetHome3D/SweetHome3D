@@ -115,8 +115,7 @@ public class ObserverCameraController implements Controller {
         : 10 + levels.get(0).getElevation());
     setElevation(observerCamera.getZ());
     setYawInDegrees((int)(Math.round(Math.toDegrees(observerCamera.getYaw()))));
-    setPitchInDegrees((int)(Math.round(Math.toDegrees(
-        observerCamera.getPitch())) + 360) % 360);
+    setPitchInDegrees((int)(Math.round(Math.toDegrees(observerCamera.getPitch()))));
     setFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(
         observerCamera.getFieldOfView())) + 360) % 360);
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
