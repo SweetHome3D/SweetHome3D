@@ -121,6 +121,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable implements View, Printable {
+  private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
+
   private UserPreferences        preferences;
   private ListSelectionListener  tableSelectionListener;
   private boolean                selectionByUser;
@@ -147,6 +149,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     setModel(new FurnitureTreeTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
     updateTableColumnsWidth(0);
+    updateExpandedRows(home);
     updateTableSelectedFurniture(home);
     // Add listeners to model
     if (controller != null) {
@@ -156,7 +159,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       addTableColumnModelListener(controller);
       addMouseListener(home, controller);
     }
-    addHomeListener(home);
+    addHomeListener(home, controller);
     addUserPreferencesListener(preferences);
     
     if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
@@ -182,7 +185,8 @@ public class FurnitureTable extends JTable implements View, Printable {
                                      final FurnitureController controller) {   
     final SelectionListener homeSelectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          updateTableSelectedFurniture(home);        
+          updateTableSelectedFurniture(home);     
+          storeExpandedRows(home, controller);
         }
       };
     this.tableSelectionListener = new ListSelectionListener () {
@@ -284,6 +288,39 @@ public class FurnitureTable extends JTable implements View, Printable {
       makeRowsVisible(minIndex, maxIndex);
     }
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);
+  }
+
+  /**
+   * Updates expanded rows from matching visual property in <code>home</code>.
+   */
+  private void updateExpandedRows(Home home) {
+    String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
+    if (expandedRows != null) {
+      FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+      for (String row : expandedRows.split(",")) {
+        tableModel.toggleRowExpandedState(Integer.parseInt(row));
+      }
+    }
+  }
+
+  /**
+   * Stores expanded rows in home.
+   */
+  private void storeExpandedRows(Home home, FurnitureController controller) {
+    FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+    StringBuilder rows = new StringBuilder();
+    for (int row = 0, n = tableModel.getRowCount(); row < n; row++) {
+      if (tableModel.isRowExpanded(row)) {
+        if (rows.length() != 0) {
+          rows.append(',');
+        }
+        rows.append(row);
+      }
+    }
+    if (home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY) != null
+        || rows.length() > 0) {
+      controller.setVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY, rows.toString());
+    }
   }
 
   /**
@@ -512,13 +549,15 @@ public class FurnitureTable extends JTable implements View, Printable {
    * to home to update furniture sort in table when <code>furnitureSortedProperty</code>, 
    * <code>furnitureAscendingSorted</code> or furniture in <code>home</code> changes.
    */
-  private void addHomeListener(final Home home) {
+  private void addHomeListener(final Home home, 
+                               final FurnitureController controller) {
     PropertyChangeListener sortListener = 
       new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
           ((FurnitureTreeTableModel)getModel()).filterAndSortFurniture();
           // Update selected rows
           updateTableSelectedFurniture(home);
+          storeExpandedRows(home, controller);
           getTableHeader().repaint();
         }
       };
@@ -532,6 +571,7 @@ public class FurnitureTable extends JTable implements View, Printable {
           ((FurnitureTreeTableModel)getModel()).filterAndSortFurniture();
           // Update selected rows
           updateTableSelectedFurniture(home);
+          storeExpandedRows(home, controller);
         }
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {

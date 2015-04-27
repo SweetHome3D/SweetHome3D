@@ -1313,6 +1313,15 @@ public class FurnitureController implements Controller {
   }
   
   /**
+   * Controls the change of value of a visual property in home.
+   * @since 5.0
+   */
+  public void setVisualProperty(String propertyName,
+                                Object propertyValue) {
+    this.home.setVisualProperty(propertyName, propertyValue);
+  }
+
+  /**
    * Stores the current x or y value of an aligned piece of furniture.
    */
   private static class AlignedPieceOfFurniture {
