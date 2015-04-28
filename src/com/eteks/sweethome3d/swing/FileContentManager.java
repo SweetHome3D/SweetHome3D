@@ -473,6 +473,10 @@ public class FileContentManager implements ContentManager {
                                     ContentType contentType) {
     switch (contentType) {
       case SWEET_HOME_3D :
+      case FURNITURE_LIBRARY :
+      case TEXTURES_LIBRARY :
+      case LANGUAGE_LIBRARY :
+      case PLUGIN :
         return new File(contentPath).getName();
       default :
         String fileName = new File(contentPath).getName();

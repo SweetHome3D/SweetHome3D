@@ -3352,7 +3352,7 @@ public class HomePane extends JRootPane implements HomeView {
   public boolean confirmReplaceLanguageLibrary(String languageLibraryName) {
     // Retrieve displayed text in buttons and message
     String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.message", 
-        new File(languageLibraryName).getName());
+        this.controller.getContentManager().getPresentationName(languageLibraryName, ContentManager.ContentType.LANGUAGE_LIBRARY));
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.title");
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.doNotReplace");
@@ -3378,7 +3378,7 @@ public class HomePane extends JRootPane implements HomeView {
   public boolean confirmReplaceFurnitureLibrary(String furnitureLibraryName) {
     // Retrieve displayed text in buttons and message
     String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.message", 
-        new File(furnitureLibraryName).getName());
+        this.controller.getContentManager().getPresentationName(furnitureLibraryName, ContentManager.ContentType.FURNITURE_LIBRARY));
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.title");
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.doNotReplace");
@@ -3404,7 +3404,7 @@ public class HomePane extends JRootPane implements HomeView {
   public boolean confirmReplaceTexturesLibrary(String texturesLibraryName) {
     // Retrieve displayed text in buttons and message
     String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.message", 
-        new File(texturesLibraryName).getName());
+        this.controller.getContentManager().getPresentationName(texturesLibraryName, ContentManager.ContentType.TEXTURES_LIBRARY));
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.title");
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.doNotReplace");
@@ -3421,7 +3421,7 @@ public class HomePane extends JRootPane implements HomeView {
   public boolean confirmReplacePlugin(String pluginName) {
     // Retrieve displayed text in buttons and message
     String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.message", 
-        new File(pluginName).getName());
+        this.controller.getContentManager().getPresentationName(pluginName, ContentManager.ContentType.PLUGIN));
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.title");
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.doNotReplace");
