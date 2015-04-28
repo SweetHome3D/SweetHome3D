@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -131,8 +132,10 @@ public class Label3D extends Object3DBranch {
         }
   
         // Draw text in an image
-        BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
         g2D = (Graphics2D)textureImage.getGraphics();
+        g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         g2D.setFont(font);
         g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
         g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
