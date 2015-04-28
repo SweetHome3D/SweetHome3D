@@ -1185,6 +1185,8 @@ public class HomeController implements Controller {
       if (!this.preferences.furnitureLibraryExists(furnitureLibraryName) 
           || getView().confirmReplaceFurnitureLibrary(furnitureLibraryName)) {
         this.preferences.addFurnitureLibrary(furnitureLibraryName);
+        getView().showMessage(this.preferences.getLocalizedString(HomeController.class, "importedFurnitureLibraryMessage", 
+            this.contentManager.getPresentationName(furnitureLibraryName, ContentManager.ContentType.FURNITURE_LIBRARY)));
       }
     } catch (RecorderException ex) {
       String message = this.preferences.getLocalizedString(HomeController.class, 
@@ -1224,6 +1226,8 @@ public class HomeController implements Controller {
       if (!this.preferences.texturesLibraryExists(texturesLibraryName) 
           || getView().confirmReplaceTexturesLibrary(texturesLibraryName)) {
         this.preferences.addTexturesLibrary(texturesLibraryName);
+        getView().showMessage(this.preferences.getLocalizedString(HomeController.class, "importedTexturesLibraryMessage", 
+            this.contentManager.getPresentationName(texturesLibraryName, ContentManager.ContentType.TEXTURES_LIBRARY)));
       }
     } catch (RecorderException ex) {
       String message = this.preferences.getLocalizedString(HomeController.class, 
