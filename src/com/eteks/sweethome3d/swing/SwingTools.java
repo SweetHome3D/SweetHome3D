@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,6 +67,8 @@ import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
@@ -94,6 +97,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
 
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -921,6 +925,32 @@ public class SwingTools {
             cursorName);
       } catch (IOException ex) {
         throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
+      }
+    }
+  }
+
+  /**
+   * Returns <code>image</code> size in pixels.
+   * @return the size or <code>null</code> if the information isn't given in the meta data of the image
+   */
+  public static Dimension getImageSizeInPixels(Content image) throws IOException {
+    InputStream in = null;
+    try {
+      in = image.openStream();
+      ImageInputStream iis = ImageIO.createImageInputStream(in);
+      Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+      if (it.hasNext()) {
+        ImageReader reader = (ImageReader)it.next();
+        reader.setInput(iis);
+        int imageWidth = reader.getWidth(reader.getMinIndex());
+        int imageHeight = reader.getHeight(reader.getMinIndex());
+        reader.dispose();
+        return new Dimension(imageWidth, imageHeight);
+      }
+      return null;
+    } finally {
+      if (in != null) {
+        in.close();
       }
     }
   }

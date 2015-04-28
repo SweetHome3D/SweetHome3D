@@ -52,10 +52,12 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -93,6 +95,9 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class BackgroundImageWizardStepsPanel extends JPanel implements View {
+  private static final int LARGE_IMAGE_PIXEL_COUNT_THRESHOLD = 10000000;
+  private static final int LARGE_IMAGE_MAX_PIXEL_COUNT = 8000000;
+  
   private final BackgroundImageWizardController controller;
   private final Executor                        imageLoader;
   private CardLayout                            cardLayout;
@@ -493,6 +498,14 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
 
           BufferedImage image = null;
           try {
+            // Check image is less than 10 million pixels
+            Dimension size = SwingTools.getImageSizeInPixels(imageContent);
+            if (size.width * (long)size.height > LARGE_IMAGE_PIXEL_COUNT_THRESHOLD) {
+              imageContent = readAndReduceImage(imageContent, size, preferences);
+              if (imageContent == null) {
+                return;
+              }
+            }
             image = readImage(imageContent, preferences);
           } catch (IOException ex) {
             // image is null
@@ -529,18 +542,71 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   }
 
   /**
+   * Informs the user that the image size is large and returns a reduced size image if he confirms 
+   * that the size should be reduced.
+   * Caution : this method must be thread safe because it's called from image loader executor. 
+   */
+  private Content readAndReduceImage(Content imageContent, 
+                                     final Dimension imageSize, 
+                                     final UserPreferences preferences) throws IOException {
+    try {
+      float factor = (float)Math.sqrt((float)LARGE_IMAGE_MAX_PIXEL_COUNT / (imageSize.width * (long)imageSize.height));
+      final int reducedWidth =  Math.round(imageSize.width * factor);
+      final int reducedHeight =  Math.round(imageSize.height * factor);
+      final AtomicInteger result = new AtomicInteger(JOptionPane.CANCEL_OPTION);
+      EventQueue.invokeAndWait(new Runnable() {
+          public void run() {
+            String title = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.title");
+            String confirmMessage = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, 
+                "reduceImageSize.message", imageSize.width, imageSize.height, reducedWidth, reducedHeight);
+            String reduceSize = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.reduceSize");
+            String keepUnchanged = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.keepUnchanged");      
+            String cancel = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.cancel");      
+            result.set(JOptionPane.showOptionDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
+                  confirmMessage, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+                  null, new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
+          }
+        });
+      if (result.get() == JOptionPane.CANCEL_OPTION) {
+        return null;
+      } else if (result.get() == JOptionPane.YES_OPTION) {
+        updatePreviewComponentsWithWaitImage(preferences);
+        
+        InputStream contentStream = imageContent.openStream();
+        BufferedImage image = ImageIO.read(contentStream);
+        contentStream.close();
+        if (image != null) {
+          BufferedImage reducedImage = new BufferedImage(reducedWidth, reducedHeight, image.getType());
+          Graphics2D g2D = (Graphics2D)reducedImage.getGraphics();
+          g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+          g2D.drawImage(image, AffineTransform.getScaleInstance(factor, factor), null);
+          g2D.dispose();
+          
+          File file = OperatingSystem.createTemporaryFile("background", ".tmp");
+          ImageIO.write(reducedImage, image.getTransparency() == BufferedImage.OPAQUE ? "JPEG" : "PNG", file);
+          return new TemporaryURLContent(file.toURI().toURL());
+        }
+      }
+      return imageContent;
+    } catch (InterruptedException ex) {
+      return imageContent;
+    } catch (InvocationTargetException ex) {
+      ex.printStackTrace();
+      return imageContent;
+    } catch (IOException ex) {
+      updatePreviewComponentsImage(null);
+      throw ex;
+    } 
+  }
+
+  /**
    * Reads image from <code>imageContent</code>. 
    * Caution : this method must be thread safe because it's called from image loader executor. 
    */
   private BufferedImage readImage(Content imageContent, 
                                   UserPreferences preferences) throws IOException {
     try {
-      // Display a waiting image while loading
-      if (waitImage == null) {
-        waitImage = ImageIO.read(BackgroundImageWizardStepsPanel.class.
-            getResource(preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "waitIcon")));
-      }
-      updatePreviewComponentsImage(waitImage);
+      updatePreviewComponentsWithWaitImage(preferences);
       
       // Read the image content
       InputStream contentStream = imageContent.openStream();
@@ -557,6 +623,15 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
       updatePreviewComponentsImage(null);
       throw ex;
     } 
+  }
+
+  private void updatePreviewComponentsWithWaitImage(UserPreferences preferences) throws IOException {
+    // Display a waiting image while loading
+    if (waitImage == null) {
+      waitImage = ImageIO.read(BackgroundImageWizardStepsPanel.class.
+          getResource(preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "waitIcon")));
+    }
+    updatePreviewComponentsImage(waitImage);
   }
   
   /**

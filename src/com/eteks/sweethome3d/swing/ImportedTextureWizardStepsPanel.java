@@ -28,6 +28,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.TexturePaint;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -36,6 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -43,6 +45,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -50,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.ComboBoxEditor;
@@ -89,6 +93,10 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class ImportedTextureWizardStepsPanel extends JPanel implements View {
+  private static final int LARGE_IMAGE_PIXEL_COUNT_THRESHOLD = 640 * 640;
+  private static final int IMAGE_PREFERRED_MAX_SIZE = 512;
+  private static final int LARGE_IMAGE_MAX_PIXEL_COUNT = IMAGE_PREFERRED_MAX_SIZE * IMAGE_PREFERRED_MAX_SIZE;
+  
   private final ImportedTextureWizardController controller;
   private CardLayout                      cardLayout;
   private JLabel                          imageChoiceOrChangeLabel;
@@ -527,7 +535,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           public void run() {
             BufferedImage image = null;
             try {
-              image = readImage(preferences, catalogTexture.getImage());
+              image = readImage(catalogTexture.getImage(), preferences);
             } catch (IOException ex) {
               // image is null
             }
@@ -589,7 +597,15 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
 
           BufferedImage image = null;
           try {
-            image = readImage(preferences, imageContent);
+            // Check image is less than 10 million pixels
+            Dimension size = SwingTools.getImageSizeInPixels(imageContent);
+            if (size.width * (long)size.height > LARGE_IMAGE_PIXEL_COUNT_THRESHOLD) {
+              imageContent = readAndReduceImage(imageContent, size, preferences);
+              if (imageContent == null) {
+                return;
+              }
+            }
+            image = readImage(imageContent, preferences);
           } catch (IOException ex) {
             // image is null
           }
@@ -638,18 +654,79 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   }
 
   /**
+   * Informs the user that the image size is larger and returns a reduced size image if he confirms 
+   * that the size should be reduced.
+   * Caution : this method must be thread safe because it's called from image loader executor. 
+   */
+  private Content readAndReduceImage(Content imageContent, 
+                                     final Dimension imageSize, 
+                                     final UserPreferences preferences) throws IOException {
+    try {
+      float factor;
+      float ratio = (float)imageSize.width / imageSize.height;
+      if (ratio < .5f || ratio > 2.) {
+        factor = (float)Math.sqrt((float)LARGE_IMAGE_MAX_PIXEL_COUNT / (imageSize.width * (long)imageSize.height));
+      } else if (ratio < 1f) {
+        factor = (float)IMAGE_PREFERRED_MAX_SIZE / imageSize.height;
+      } else {
+        factor = (float)IMAGE_PREFERRED_MAX_SIZE / imageSize.width;
+      }
+      final int reducedWidth = Math.round(imageSize.width * factor);
+      final int reducedHeight = Math.round(imageSize.height * factor);
+      final AtomicInteger result = new AtomicInteger(JOptionPane.CANCEL_OPTION);
+      EventQueue.invokeAndWait(new Runnable() {
+          public void run() {
+            String title = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.title");
+            String confirmMessage = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, 
+                "reduceImageSize.message", imageSize.width, imageSize.height, reducedWidth, reducedHeight);
+            String reduceSize = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.reduceSize");
+            String keepUnchanged = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.keepUnchanged");      
+            String cancel = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.cancel");      
+            result.set(JOptionPane.showOptionDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
+                  confirmMessage, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+                  null, new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
+          }
+        });
+      if (result.get() == JOptionPane.CANCEL_OPTION) {
+        return null;
+      } else if (result.get() == JOptionPane.YES_OPTION) {
+        updatePreviewComponentsWithWaitImage(preferences);
+        
+        InputStream contentStream = imageContent.openStream();
+        BufferedImage image = ImageIO.read(contentStream);
+        contentStream.close();
+        if (image != null) {
+          BufferedImage reducedImage = new BufferedImage(reducedWidth, reducedHeight, image.getType());
+          Graphics2D g2D = (Graphics2D)reducedImage.getGraphics();
+          g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+          g2D.drawImage(image, AffineTransform.getScaleInstance(factor, factor), null);
+          g2D.dispose();
+          
+          File file = OperatingSystem.createTemporaryFile("texture", ".tmp");
+          ImageIO.write(reducedImage, image.getTransparency() == BufferedImage.OPAQUE ? "JPEG" : "PNG", file);
+          return new TemporaryURLContent(file.toURI().toURL());
+        }
+      }
+      return imageContent;
+    } catch (InterruptedException ex) {
+      return imageContent;
+    } catch (InvocationTargetException ex) {
+      ex.printStackTrace();
+      return imageContent;
+    } catch (IOException ex) {
+      updatePreviewComponentsImage(null);
+      throw ex;
+    } 
+  }
+
+  /**
    * Reads image from <code>imageContent</code>. 
    * Caution : this method must be thread safe because it's called from image loader executor. 
    */
-  private BufferedImage readImage(UserPreferences preferences,
-                                  Content imageContent) throws IOException {
+  private BufferedImage readImage(Content imageContent,
+                                  UserPreferences preferences) throws IOException {
     try {
-      // Display a waiting image while loading
-      if (waitImage == null) {
-        waitImage = ImageIO.read(ImportedTextureWizardStepsPanel.class.getResource(
-            preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "waitIcon")));
-      }
-      updatePreviewComponentsImage(waitImage);
+      updatePreviewComponentsWithWaitImage(preferences);
       
       // Read the image content
       InputStream contentStream = imageContent.openStream();
@@ -666,6 +743,15 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
       updatePreviewComponentsImage(null);
       throw ex;
     } 
+  }
+  
+  private void updatePreviewComponentsWithWaitImage(UserPreferences preferences) throws IOException {
+    // Display a waiting image while loading
+    if (waitImage == null) {
+      waitImage = ImageIO.read(ImportedTextureWizardStepsPanel.class.getResource(
+          preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "waitIcon")));
+    }
+    updatePreviewComponentsImage(waitImage);
   }
   
   /**
