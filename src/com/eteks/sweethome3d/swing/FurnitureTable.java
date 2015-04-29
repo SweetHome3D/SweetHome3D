@@ -224,7 +224,8 @@ public class FurnitureTable extends JTable implements View, Printable {
     selectionModel.removeListSelectionListener(this.tableSelectionListener);
 
     FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
-    for (Selectable item : home.getSelectedItems()) {
+    List<Selectable> selectedItems = home.getSelectedItems();
+    for (Selectable item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
         tableModel.expandPathToPieceOfFurniture((HomePieceOfFurniture)item);
       }
@@ -234,7 +235,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     int maxIndex = Integer.MIN_VALUE;
     int [] furnitureIndices = new int [tableModel.getRowCount()];
     int selectedFurnitureCount = 0;
-    for (Selectable item : home.getSelectedItems()) {
+    for (Selectable item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
         // Search index of piece in sorted table model
         int rowIndex = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
@@ -1990,16 +1991,17 @@ public class FurnitureTable extends JTable implements View, Printable {
             } else if (!furnitureFilter.include(home, piece)) {
               return -1;
             } else if (home.getFurnitureSortedProperty() == null) {
-              // Find the index of the previous piece included in filteredAndSortedFurniture
-              List<HomePieceOfFurniture> homeFurniture = home.getFurniture();
-              int previousIncludedPieceIndex = homePieceIndex - 1;
-              while (previousIncludedPieceIndex > 0 
-                    && !furnitureFilter.include(home, homeFurniture.get(previousIncludedPieceIndex))) {
-                previousIncludedPieceIndex--;
-              }
-              if (filteredAndSortedFurniture.size() == 0) {
+              if (homePieceIndex == 0
+                  || filteredAndSortedFurniture.size() == 0) {
                 return 0;
               } else {
+                // Find the index of the previous piece included in filteredAndSortedFurniture
+                List<HomePieceOfFurniture> homeFurniture = home.getFurniture();
+                int previousIncludedPieceIndex = homePieceIndex - 1;
+                while (previousIncludedPieceIndex > 0 
+                       && !furnitureFilter.include(home, homeFurniture.get(previousIncludedPieceIndex))) {
+                  previousIncludedPieceIndex--;
+                }
                 return getPieceOfFurnitureIndex(homeFurniture.get(previousIncludedPieceIndex)) + 1;
               }
             }
