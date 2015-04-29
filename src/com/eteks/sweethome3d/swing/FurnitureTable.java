@@ -2020,10 +2020,9 @@ public class FurnitureTable extends JTable implements View, Printable {
            * of <code>homePieceIndex</code> if <code>home</code> furniture isn't sorted.
            */
           private int getPieceOfFurnitureDeletionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
-            if (furnitureFilter == null) {
-              if (home.getFurnitureSortedProperty() == null) {
-                return homePieceIndex;
-              } 
+            if (furnitureFilter == null
+                && home.getFurnitureSortedProperty() == null) {
+              return homePieceIndex;
             } 
             return getPieceOfFurnitureIndex(piece);              
           }
