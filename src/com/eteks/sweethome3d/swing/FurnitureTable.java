@@ -1965,6 +1965,9 @@ public class FurnitureTable extends JTable implements View, Printable {
               case DELETE :
                 int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
                 if (deletionIndex != -1) {
+                  if (piece instanceof HomeFurnitureGroup) {
+                    expandedGroups.remove(piece);
+                  }
                   if (expandedGroups.contains(piece)) { 
                     filterAndSortFurniture();
                   } else {
