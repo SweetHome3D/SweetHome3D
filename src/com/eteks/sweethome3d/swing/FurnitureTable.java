@@ -600,13 +600,29 @@ public class FurnitureTable extends JTable implements View, Printable {
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       piece.addPropertyChangeListener(changeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.addPropertyChangeListener(changeListener);
+        }
+      }
     }
     home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
       public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(changeListener);
+            piece.addPropertyChangeListener(changeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.addPropertyChangeListener(changeListener);
+              }
+            }
           } else {
-            ev.getItem().removePropertyChangeListener(changeListener);
+            piece.removePropertyChangeListener(changeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.removePropertyChangeListener(changeListener);
+              }
+            }
           }
         }
       });
