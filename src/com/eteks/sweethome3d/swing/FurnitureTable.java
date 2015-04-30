@@ -75,6 +75,8 @@ import javax.swing.PopupFactory;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -282,7 +284,9 @@ public class FurnitureTable extends JTable implements View, Printable {
             && furnitureIndices [max] + 1 == furnitureIndices [max + 1]) {
           max++;
         }
-        addRowSelectionInterval(furnitureIndices [min], furnitureIndices [max]);
+        // To avoid cycling in a group when up arrow is pressed, add selection interval with max index 
+        // first to ensure the leading index is the min index (i.e. the one of the group is necessary)
+        addRowSelectionInterval(furnitureIndices [max], furnitureIndices [min]);
         min = max + 1;
       }
     }
@@ -298,15 +302,27 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void updateExpandedRows(Home home) {
     if (home.getVersion() >= 5000) {
-      String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
-      if (expandedRows != null) {
-        FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
-        for (String row : expandedRows.split(",")) {
-          int rowIndex = Integer.parseInt(row);
-          if (!tableModel.isRowExpanded(rowIndex)) {
-            tableModel.toggleRowExpandedState(rowIndex);
-          }
-        }
+      final String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
+      if (expandedRows != null && expandedRows.length() > 0) {        
+        addAncestorListener(new AncestorListener() {
+            public void ancestorAdded(AncestorEvent event) {
+              // Update expanded rows later in case rows are filtered in a subclass
+              FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
+              for (String row : expandedRows.split(",")) {
+                int rowIndex = Integer.parseInt(row);
+                if (rowIndex < tableModel.getRowCount() && !tableModel.isRowExpanded(rowIndex)) {
+                  tableModel.toggleRowExpandedState(rowIndex);
+                }
+              }
+              removeAncestorListener(this);
+            }
+  
+            public void ancestorRemoved(AncestorEvent event) {
+            }
+  
+            public void ancestorMoved(AncestorEvent event) {
+            }
+          });
       }
     }
   }
