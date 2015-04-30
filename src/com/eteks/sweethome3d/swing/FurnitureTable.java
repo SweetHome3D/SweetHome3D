@@ -237,16 +237,18 @@ public class FurnitureTable extends JTable implements View, Printable {
     int selectedFurnitureCount = 0;
     for (Selectable item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
         // Search index of piece in sorted table model
-        int rowIndex = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
-        // If the piece was found (during the addition of a piece to home, the model may not be updated yet) 
-        if (rowIndex != -1) {          
+        int rowIndex = tableModel.getPieceOfFurnitureIndex(piece);
+        // If the piece was found (when filtered or when the model isn't updated yet, 
+        // during the addition of a piece to home) 
+        if (rowIndex != -1) {         
           furnitureIndices [selectedFurnitureCount++] = rowIndex;
           minIndex = Math.min(minIndex, rowIndex);
           maxIndex = Math.max(maxIndex, rowIndex);
-          if (item instanceof HomeFurnitureGroup
-              && tableModel.isRowExpanded(rowIndex)) {
-            List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)item).getAllFurniture();
+          if (piece instanceof HomeFurnitureGroup
+             && tableModel.isRowExpanded(rowIndex)) {
+            List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getAllFurniture();
             for (rowIndex++; 
                  rowIndex < tableModel.getRowCount() 
                  && groupFurniture.contains((HomePieceOfFurniture)tableModel.getValueAt(rowIndex, 0)); 
@@ -1963,17 +1965,21 @@ public class FurnitureTable extends JTable implements View, Printable {
                 }
                 break;
               case DELETE :
-                int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
-                if (deletionIndex != -1) {
-                  if (piece instanceof HomeFurnitureGroup) {
-                    expandedGroups.remove(piece);
-                  }
-                  if (expandedGroups.contains(piece)) { 
-                    filterAndSortFurniture();
-                  } else {
-                    filteredAndSortedFurniture.remove(deletionIndex);
-                    fireTableRowsDeleted(deletionIndex, deletionIndex);
-                    fireTreeModelChanged();
+                if (piece instanceof HomeFurnitureGroup) {
+                  expandedGroups.remove(piece);
+                }
+                if (furnitureFilter != null) {
+                  filterAndSortFurniture();
+                } else {
+                  int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
+                  if (deletionIndex != -1) {
+                    if (expandedGroups.contains(piece)) { 
+                      filterAndSortFurniture();
+                    } else {
+                      filteredAndSortedFurniture.remove(deletionIndex);
+                      fireTableRowsDeleted(deletionIndex, deletionIndex);
+                      fireTreeModelChanged();
+                    }
                   }
                 }
                 break;
@@ -2002,7 +2008,7 @@ public class FurnitureTable extends JTable implements View, Printable {
                 List<HomePieceOfFurniture> homeFurniture = home.getFurniture();
                 int previousIncludedPieceIndex = homePieceIndex - 1;
                 while (previousIncludedPieceIndex > 0 
-                       && !furnitureFilter.include(home, homeFurniture.get(previousIncludedPieceIndex))) {
+                    && !furnitureFilter.include(home, homeFurniture.get(previousIncludedPieceIndex))) {
                   previousIncludedPieceIndex--;
                 }
                 return getPieceOfFurnitureIndex(homeFurniture.get(previousIncludedPieceIndex)) + 1;
