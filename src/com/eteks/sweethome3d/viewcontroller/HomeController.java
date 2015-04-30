@@ -711,6 +711,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsOneCopiableItemOrMore = false;
     boolean homeSelectionContainsOneMovablePieceOfFurnitureOrMore = false;
     boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
@@ -742,7 +743,8 @@ public class HomeController implements Controller {
         }
       }
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        if (piece instanceof HomeFurnitureGroup) {
+        if (piece instanceof HomeFurnitureGroup
+            && furniture.contains(piece)) {
           homeSelectionContainsFurnitureGroup = true;
           break;
         }
@@ -757,6 +759,17 @@ public class HomeController implements Controller {
           } 
           if (movablePiecesOfFurnitureCount >= 3) {
             homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = true;
+            break;
+          }
+        }
+      }
+      if (homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore) {
+        homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = true;
+        // Allow to group only furniture that are not in subgroups
+        for (HomePieceOfFurniture piece : selectedFurniture) {
+          if (furnitureController.isPieceOfFurnitureMovable(piece)
+              && !furniture.contains(piece)) {
+            homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = false;
             break;
           }
         }
@@ -865,7 +878,7 @@ public class HomeController implements Controller {
     view.setEnabled(HomeView.ActionType.RESET_FURNITURE_ELEVATION,
         homeSelectionContainsOneMovablePieceOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.GROUP_FURNITURE,
-        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,
         homeSelectionContainsFurnitureGroup);
   }

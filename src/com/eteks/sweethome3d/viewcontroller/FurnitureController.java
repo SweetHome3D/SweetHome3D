@@ -643,10 +643,12 @@ public class FurnitureController implements Controller {
    */
   public void ungroupSelectedFurniture() {
     List<HomeFurnitureGroup> movableSelectedFurnitureGroups = new ArrayList<HomeFurnitureGroup>(); 
+    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item instanceof HomeFurnitureGroup) {
         HomeFurnitureGroup group = (HomeFurnitureGroup)item;
-        if (isPieceOfFurnitureMovable(group)) {
+        if (isPieceOfFurnitureMovable(group)
+            && homeFurniture.contains(group)) {
           movableSelectedFurnitureGroups.add(group);
         }
       }
@@ -655,7 +657,6 @@ public class FurnitureController implements Controller {
       final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
       final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
-      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       // Sort the groups in the ascending order of their index in home
       TreeMap<Integer, HomeFurnitureGroup> sortedMap = 
           new TreeMap<Integer, HomeFurnitureGroup>(); 
