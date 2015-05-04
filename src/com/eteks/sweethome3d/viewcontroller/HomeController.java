@@ -717,6 +717,8 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
+    boolean homeSelectionContainsOnlyOneRoom = false;
+    boolean homeSelectionContainsOnlyOneRoomWithFourPointsOrMore = false;
     boolean homeSelectionContainsLabels = false;
     boolean homeSelectionContainsItemsWithText = false;
     boolean homeSelectionContainsCompass = false;
@@ -777,7 +779,12 @@ public class HomeController implements Controller {
       List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
       homeSelectionContainsWalls = !selectedWalls.isEmpty();
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
-      homeSelectionContainsRooms = !Home.getRoomsSubList(selectedItems).isEmpty();
+      List<Room> selectedRooms = Home.getRoomsSubList(selectedItems);
+      homeSelectionContainsRooms = !selectedRooms.isEmpty();
+      homeSelectionContainsOnlyOneRoom = selectedItems.size() == 1 
+          && selectedRooms.size() == 1;
+      homeSelectionContainsOnlyOneRoomWithFourPointsOrMore = homeSelectionContainsOnlyOneRoom 
+          && selectedRooms.get(0).getPointCount() >= 4;
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
       homeSelectionContainsLabels = !Home.getLabelsSubList(selectedItems).isEmpty();
       homeSelectionContainsCompass = selectedItems.contains(this.home.getCompass());
@@ -881,6 +888,13 @@ public class HomeController implements Controller {
         homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,
         homeSelectionContainsFurnitureGroup);
+    boolean selectionMode = getPlanController() != null 
+        && getPlanController().getMode() == PlanController.Mode.SELECTION;
+    view.setEnabled(HomeView.ActionType.ADD_ROOM_POINT, homeSelectionContainsOnlyOneRoom && selectionMode);
+    // Check minimum requirement for DELETE_ROOM_POINT action 
+    // and let home view check the coordinates of the deleted point    
+    view.setEnabled(HomeView.ActionType.DELETE_ROOM_POINT, 
+        homeSelectionContainsOnlyOneRoomWithFourPointsOrMore && selectionMode);
   }
 
   /**
@@ -1081,6 +1095,12 @@ public class HomeController implements Controller {
               view.setEnabled(HomeView.ActionType.UNDO, undoManager.canUndo());
               view.setEnabled(HomeView.ActionType.REDO, undoManager.canRedo());
             }
+          }
+        });
+    getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            enableActionsBoundToSelection();
           }
         });
     getPlanController().addPropertyChangeListener(PlanController.Property.SCALE, 

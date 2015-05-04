@@ -3006,6 +3006,110 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Adds a point to the selected room at the given coordinates and posts an undoable operation.
+   * @since 5.0
+   */
+  public void addPointToSelectedRoom(final float x, final float y) {
+    final List<Selectable> oldSelectedItems = this.home.getSelectedItems();
+    if (oldSelectedItems.size() == 1
+        && oldSelectedItems.get(0) instanceof Room
+        && isItemResizable(oldSelectedItems.get(0))) {
+      final Room room = (Room)oldSelectedItems.get(0);
+      final float [][] points = room.getPoints();
+      // Search the segment closest to (x, y)
+      int closestSegmentIndex = -1;
+      double smallestDistance = Double.MAX_VALUE;
+      for (int i = 0; i < points.length; i++) {
+        float [] point = points [i];
+        float [] nextPoint = points [(i + 1) % points.length];
+        double distanceToSegment = Line2D.ptSegDistSq(point [0], point [1], nextPoint [0], nextPoint [1], x, y);
+        if (smallestDistance > distanceToSegment) {
+          smallestDistance = distanceToSegment;
+          closestSegmentIndex = i;
+        }
+      }    
+      final int index = closestSegmentIndex + 1;
+      room.addPoint(x, y, index);
+      this.home.setSelectedItems(Arrays.asList(new Room [] {room}));
+      // Upright an undoable edit
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            room.removePoint(index);
+            selectAndShowItems(oldSelectedItems);
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            room.addPoint(x, y, index);
+            selectAndShowItems(Arrays.asList(new Room [] {room}));
+          }      
+    
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(PlanController.class, "undoAddRoomPointName");
+          }      
+        };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given point can be removed from the <code>room</code>.
+   */
+  public boolean isRoomPointDeletableAt(Room room, float x, float y) {
+    return isItemResizable(room) 
+        && room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale()) >= 0;
+  }
+  
+  /**
+   * Deletes the point of the selected room at the given coordinates and posts an undoable operation.
+   * @since 5.0
+   */
+  public void deletePointFromSelectedRoom(float x, float y) {
+    final List<Selectable> oldSelectedItems = this.home.getSelectedItems();
+    if (oldSelectedItems.size() == 1
+        && oldSelectedItems.get(0) instanceof Room
+        && isItemResizable(oldSelectedItems.get(0))) {
+      final Room room = (Room)oldSelectedItems.get(0);
+      final int index = room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale());
+      if (index >= 0) {
+        float [][] points = room.getPoints();
+        float [] point = points [index];
+        final float xPoint = point [0];
+        final float yPoint = point [1];
+        
+        room.removePoint(index);
+        this.home.setSelectedItems(Arrays.asList(new Room [] {room}));
+        // Upright an undoable edit
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+            @Override
+            public void undo() throws CannotUndoException {
+              super.undo();
+              room.addPoint(xPoint, yPoint, index);
+              selectAndShowItems(oldSelectedItems);
+            }
+            
+            @Override
+            public void redo() throws CannotRedoException {
+              super.redo();
+              room.removePoint(index);
+              selectAndShowItems(Arrays.asList(new Room [] {room}));
+            }      
+      
+            @Override
+            public String getPresentationName() {
+              return preferences.getLocalizedString(PlanController.class, "undoDeleteRoomPointName");
+            }      
+          };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  /**
    * Returns a new dimension instance joining (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
    * The new dimension line is added to home.

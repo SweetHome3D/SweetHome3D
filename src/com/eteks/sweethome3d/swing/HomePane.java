@@ -437,6 +437,9 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.MODIFY_COMPASS, preferences, planController, "modifyCompass");
       createAction(ActionType.MODIFY_WALL, preferences, planController, "modifySelectedWalls");
       createAction(ActionType.MODIFY_ROOM, preferences, planController, "modifySelectedRooms");
+      // ADD_ROOM_POINT and DELETE_ROOM_POINT actions are actually defined later in updateRoomActions  
+      createAction(ActionType.ADD_ROOM_POINT, preferences);
+      createAction(ActionType.DELETE_ROOM_POINT, preferences);
       createAction(ActionType.MODIFY_LABEL, preferences, planController, "modifySelectedLabels");
       createAction(ActionType.INCREASE_TEXT_SIZE, preferences, planController, "increaseTextSize");
       createAction(ActionType.DECREASE_TEXT_SIZE, preferences, planController, "decreaseTextSize");
@@ -519,6 +522,21 @@ public class HomePane extends JRootPane implements HomeView {
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
+  }
+  
+  /**
+   * Returns a new <code>ResourceAction</code> object that does nothing. 
+   * This action is added to the action map of this component.
+   */
+  private Action createAction(ActionType actionType,
+                              UserPreferences preferences) {
+    ResourceAction action = new ResourceAction(preferences, HomePane.class, actionType.name()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+        }
+      };
+    getActionMap().put(actionType, action);
+    return action;
   }
   
   /**
@@ -1185,11 +1203,13 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Adds the given action to <code>menu</code>.
    */
-  private void addActionToPopupMenu(ActionType actionType, JPopupMenu menu) {
+  private JMenuItem addActionToPopupMenu(ActionType actionType, JPopupMenu menu) {
     Action action = getActionMap().get(actionType);
     if (action != null && action.getValue(Action.NAME) != null) {
       menu.add(new ResourceAction.PopupMenuItemAction(action));
+      return (JMenuItem)menu.getComponent(menu.getComponentCount() - 1);
     }
+    return null;
   }
 
   /**
@@ -2616,6 +2636,8 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
       addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_ROOM, planViewPopup);
+      JMenuItem addRoomPointMenuItem = addActionToPopupMenu(ActionType.ADD_ROOM_POINT, planViewPopup);
+      JMenuItem deleteRoomPointMenuItem = addActionToPopupMenu(ActionType.DELETE_ROOM_POINT, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_LABEL, planViewPopup);
       planViewPopup.add(createTextStyleMenu(home, preferences, true));
       planViewPopup.addSeparator();
@@ -2639,8 +2661,12 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.EXPORT_TO_SVG, planViewPopup);
       SwingTools.hideDisabledMenuItems(planViewPopup);
       if (selectObjectMenu != null) {
-        // Add a second popup listener to manage Select object sub menu before the menu is hidden when empty
+        // Add a popup listener to manage Select object sub menu before the menu is hidden when empty
         addSelectObjectMenuItems(selectObjectMenu, controller.getPlanController(), preferences);
+      }
+      if (addRoomPointMenuItem != null || deleteRoomPointMenuItem != null) {
+        // Add a popup listener to manage ADD_ROOM_POINT and DELETE_ROOM_POINT actions according to selection
+        updateRoomActions(addRoomPointMenuItem, deleteRoomPointMenuItem, controller.getPlanController(), preferences);
       }
       planView.setComponentPopupMenu(planViewPopup);
       
@@ -2818,119 +2844,188 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Adds to the menu a listener that will update the menu items able to select 
-   * the selectable items in plan at the location where the menu will be triggered.
+   * Adds to the menu a listener that updates the actions that allow to 
+   * add or delete points in the selected room.
    */
-  private void addSelectObjectMenuItems(final JMenu            selectObjectMenu, 
-                                         final PlanController  planController, 
-                                         final UserPreferences preferences) {
-    JComponent planView = (JComponent)planController.getView();
-    final Point lastMouseMoveLocation = new Point(-1, -1);
-    ((JPopupMenu)selectObjectMenu.getParent()).addPopupMenuListener(new PopupMenuListener() {
-        @SuppressWarnings({"rawtypes", "unchecked"})
+  private void updateRoomActions(final JMenuItem       addRoomPointMenuItem, 
+                                 final JMenuItem       deleteRoomPointMenuItem, 
+                                 final PlanController  planController, 
+                                 final UserPreferences preferences) {
+    JPopupMenu popupMenu = (JPopupMenu)(addRoomPointMenuItem != null
+        ? addRoomPointMenuItem
+        : deleteRoomPointMenuItem).getParent();
+    popupMenu.addPopupMenuListener(new PopupMenuListenerWithMouseLocation((JComponent)planController.getView()) {
+        {
+          // Replace ADD_ROOM_POINT and DELETE_ROOM_POINT actions by ones 
+          // that will use the mouse location when the popup is displayed 
+          ActionMap actionMap = getActionMap();
+          if (addRoomPointMenuItem != null) {
+            ResourceAction addRoomPointAction = 
+                new ResourceAction(preferences, HomePane.class, ActionType.ADD_ROOM_POINT.name()) {
+                  @Override
+                  public void actionPerformed(ActionEvent ev) {
+                    PlanView planView = planController.getView();
+                    planController.addPointToSelectedRoom(
+                        planView.convertXPixelToModel(getMouseLocation().x), 
+                        planView.convertYPixelToModel(getMouseLocation().y));
+                  }
+                };
+            actionMap.put(ActionType.ADD_ROOM_POINT, addRoomPointAction);
+            addRoomPointMenuItem.setAction(new ResourceAction.PopupMenuItemAction(addRoomPointAction));
+          }
+          if (deleteRoomPointMenuItem != null) {
+            ResourceAction deleteRoomPointAction = 
+                new ResourceAction(preferences, HomePane.class, ActionType.DELETE_ROOM_POINT.name()) {
+                  @Override
+                  public void actionPerformed(ActionEvent ev) {
+                    PlanView planView = planController.getView();
+                    planController.deletePointFromSelectedRoom(
+                        planView.convertXPixelToModel(getMouseLocation().x), 
+                        planView.convertYPixelToModel(getMouseLocation().y));
+                  }
+                };
+            actionMap.put(ActionType.DELETE_ROOM_POINT, deleteRoomPointAction);
+            deleteRoomPointMenuItem.setAction(new ResourceAction.PopupMenuItemAction(deleteRoomPointAction));
+          }
+        }
+        
+        private boolean deleteRoomPointActionEnabled;
+        
         public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
-          if (lastMouseMoveLocation.getX() >= 0
-              && !planController.isModificationState()) {
-            final List<Selectable> items = planController.getSelectableItemsAt(
-                planController.getView().convertXPixelToModel(lastMouseMoveLocation.x),
-                planController.getView().convertYPixelToModel(lastMouseMoveLocation.y));
-            // Prepare localized formatters
-            Map<Class<? extends Selectable>, SelectableFormat> formatters = 
-                new HashMap<Class<? extends Selectable>, SelectableFormat>();            
-            formatters.put(Compass.class, new SelectableFormat<Compass>() {
-                public String format(Compass compass) {
-                  return preferences.getLocalizedString(HomePane.class, "selectObject.compass");
-                }
-              });
-            formatters.put(HomePieceOfFurniture.class, new SelectableFormat<HomePieceOfFurniture>() {
-                public String format(HomePieceOfFurniture piece) {
-                  if (piece.getName().length() > 0) {
-                    return piece.getName();
-                  } else {
-                    return preferences.getLocalizedString(HomePane.class, "selectObject.furniture");
-                  }
-                }
-              });
-            formatters.put(Wall.class, new SelectableFormat<Wall>() {
-                public String format(Wall wall) {
-                  return preferences.getLocalizedString(HomePane.class, "selectObject.wall", 
-                      preferences.getLengthUnit().getFormatWithUnit().format(wall.getLength()));
-                }
-              });
-            formatters.put(Room.class, new SelectableFormat<Room>() {
-                public String format(Room room) {
-                  String roomInfo = room.getName() != null && room.getName().length() > 0
-                      ? room.getName()
-                      : (room.isAreaVisible() 
-                            ? preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea())
-                            : "");
-                  if (room.isFloorVisible() && !room.isCeilingVisible()) {
-                    return preferences.getLocalizedString(HomePane.class, "selectObject.floor", roomInfo);
-                  } else if (!room.isFloorVisible() && room.isCeilingVisible()) {
-                    return preferences.getLocalizedString(HomePane.class, "selectObject.ceiling", roomInfo);
-                  } else {
-                    return preferences.getLocalizedString(HomePane.class, "selectObject.room", roomInfo);
-                  }
-                }
-              });
-            formatters.put(DimensionLine.class, new SelectableFormat<DimensionLine>() {
-                public String format(DimensionLine dimensionLine) {
-                  return preferences.getLocalizedString(HomePane.class, "selectObject.dimensionLine", 
-                      preferences.getLengthUnit().getFormatWithUnit().format(dimensionLine.getLength()));
-                }
-              });
-            formatters.put(Label.class, new SelectableFormat<Label>() {
-                public String format(Label label) {
-                  if (label.getText().length() > 0) {
-                    return label.getText();
-                  } else {
-                    return preferences.getLocalizedString(HomePane.class, "selectObject.label");
-                  }
-                }
-              });
-            
-            for (final Selectable item : items) {
-              String format = null;
-              for (Map.Entry<Class<? extends Selectable>, SelectableFormat> entry : formatters.entrySet()) {
-                if (entry.getKey().isInstance(item)) {
-                  format = entry.getValue().format(item);
-                  break;
-                }
-              }
-              if (format != null) {
-                selectObjectMenu.add(new JMenuItem(new AbstractAction(format) {
-                    public void actionPerformed(ActionEvent ev) {
-                      if ((ev.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
-                        planController.toggleItemSelection(item);
-                      } else {
-                        planController.selectItem(item);
-                      }
-                    }
-                  }));
-              }
+          super.popupMenuWillBecomeVisible(ev);
+          Point mouseLocation = getMouseLocation();
+          if (mouseLocation != null
+              && deleteRoomPointMenuItem != null) {
+            Action deleteRoomPointAction = getActionMap().get(ActionType.DELETE_ROOM_POINT);
+            this.deleteRoomPointActionEnabled = deleteRoomPointAction.isEnabled();
+            if (this.deleteRoomPointActionEnabled) {
+              // Check mouse location is over a point of the room
+              Room selectedRoom = (Room)home.getSelectedItems().get(0);
+              float x = planController.getView().convertXPixelToModel(mouseLocation.x);
+              float y = planController.getView().convertYPixelToModel(mouseLocation.y);
+              deleteRoomPointAction.setEnabled(planController.isRoomPointDeletableAt(selectedRoom, x, y));              
             }
           }
         }
  
         public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
-          selectObjectMenu.removeAll();
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Reset action to previous state
+                getActionMap().get(ActionType.DELETE_ROOM_POINT).setEnabled(deleteRoomPointActionEnabled);
+              }
+            });
         }
  
         public void popupMenuCanceled(PopupMenuEvent ev) {
+          popupMenuWillBecomeInvisible(ev);
         }
       });
-    planView.addMouseMotionListener(new MouseMotionAdapter() {
-        @Override
-        public void mouseMoved(MouseEvent ev) {
-          lastMouseMoveLocation.setLocation(ev.getPoint());
-        }
-      });      
-    planView.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseExited(MouseEvent e) {
-          lastMouseMoveLocation.x = -1;
-        }
-      });
+  }
+
+  /**
+   * Adds to the menu a popup listener that will update the menu items able to select 
+   * the selectable items in plan at the location where the menu will be triggered.
+   */
+  private void addSelectObjectMenuItems(final JMenu           selectObjectMenu, 
+                                        final PlanController  planController, 
+                                        final UserPreferences preferences) {
+    ((JPopupMenu)selectObjectMenu.getParent()).addPopupMenuListener(
+        new PopupMenuListenerWithMouseLocation((JComponent)planController.getView()) {
+          @SuppressWarnings({"rawtypes", "unchecked"})
+          public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+            super.popupMenuWillBecomeVisible(ev);
+            Point mouseLocation = getMouseLocation();
+            if (mouseLocation != null
+                && !planController.isModificationState()) {
+              final List<Selectable> items = planController.getSelectableItemsAt(
+                  planController.getView().convertXPixelToModel(mouseLocation.x),
+                  planController.getView().convertYPixelToModel(mouseLocation.y));
+              // Prepare localized formatters
+              Map<Class<? extends Selectable>, SelectableFormat> formatters = 
+                  new HashMap<Class<? extends Selectable>, SelectableFormat>();            
+              formatters.put(Compass.class, new SelectableFormat<Compass>() {
+                  public String format(Compass compass) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.compass");
+                  }
+                });
+              formatters.put(HomePieceOfFurniture.class, new SelectableFormat<HomePieceOfFurniture>() {
+                  public String format(HomePieceOfFurniture piece) {
+                    if (piece.getName().length() > 0) {
+                      return piece.getName();
+                    } else {
+                      return preferences.getLocalizedString(HomePane.class, "selectObject.furniture");
+                    }
+                  }
+                });
+              formatters.put(Wall.class, new SelectableFormat<Wall>() {
+                  public String format(Wall wall) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.wall", 
+                        preferences.getLengthUnit().getFormatWithUnit().format(wall.getLength()));
+                  }
+                });
+              formatters.put(Room.class, new SelectableFormat<Room>() {
+                  public String format(Room room) {
+                    String roomInfo = room.getName() != null && room.getName().length() > 0
+                        ? room.getName()
+                        : (room.isAreaVisible() 
+                              ? preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea())
+                              : "");
+                    if (room.isFloorVisible() && !room.isCeilingVisible()) {
+                      return preferences.getLocalizedString(HomePane.class, "selectObject.floor", roomInfo);
+                    } else if (!room.isFloorVisible() && room.isCeilingVisible()) {
+                      return preferences.getLocalizedString(HomePane.class, "selectObject.ceiling", roomInfo);
+                    } else {
+                      return preferences.getLocalizedString(HomePane.class, "selectObject.room", roomInfo);
+                    }
+                  }
+                });
+              formatters.put(DimensionLine.class, new SelectableFormat<DimensionLine>() {
+                  public String format(DimensionLine dimensionLine) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.dimensionLine", 
+                        preferences.getLengthUnit().getFormatWithUnit().format(dimensionLine.getLength()));
+                  }
+                });
+              formatters.put(Label.class, new SelectableFormat<Label>() {
+                  public String format(Label label) {
+                    if (label.getText().length() > 0) {
+                      return label.getText();
+                    } else {
+                      return preferences.getLocalizedString(HomePane.class, "selectObject.label");
+                    }
+                  }
+                });
+              
+              for (final Selectable item : items) {
+                String format = null;
+                for (Map.Entry<Class<? extends Selectable>, SelectableFormat> entry : formatters.entrySet()) {
+                  if (entry.getKey().isInstance(item)) {
+                    format = entry.getValue().format(item);
+                    break;
+                  }
+                }
+                if (format != null) {
+                  selectObjectMenu.add(new JMenuItem(new AbstractAction(format) {
+                      public void actionPerformed(ActionEvent ev) {
+                        if ((ev.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
+                          planController.toggleItemSelection(item);
+                        } else {
+                          planController.selectItem(item);
+                        }
+                      }
+                    }));
+                }
+              }
+            }
+          }
+   
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+            selectObjectMenu.removeAll();
+          }
+   
+          public void popupMenuCanceled(PopupMenuEvent ev) {
+          }
+        });
   }
   
   /**
@@ -4555,5 +4650,37 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private abstract interface SelectableFormat<T extends Selectable> {
     public abstract String format(T item);
+  }
+
+  /**
+   * A popup listener that stores the location of the mouse.
+   */
+  private static abstract class PopupMenuListenerWithMouseLocation implements PopupMenuListener {
+    private Point mouseLocation;
+    private Point lastMouseMoveLocation;
+
+    public PopupMenuListenerWithMouseLocation(JComponent component) {
+      component.addMouseMotionListener(new MouseMotionAdapter() {
+          @Override
+          public void mouseMoved(MouseEvent ev) {
+            lastMouseMoveLocation = ev.getPoint();
+          }
+        });      
+      component.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseExited(MouseEvent ev) {
+            lastMouseMoveLocation = null;
+          }
+        });
+    }
+    
+    protected Point getMouseLocation() {
+      return this.mouseLocation;
+    }
+    
+    public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+      // Copy last mouse move location in case mouseExited is called while popup menu is displayed
+      this.mouseLocation = this.lastMouseMoveLocation;      
+    }
   }
 }
