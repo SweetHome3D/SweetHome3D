@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.model;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
