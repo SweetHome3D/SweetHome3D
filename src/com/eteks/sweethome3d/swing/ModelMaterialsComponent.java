@@ -609,11 +609,28 @@ public class ModelMaterialsComponent extends JButton implements View {
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelRoot) {
               defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot);
-              // If read materials list is larger, ignore previous materials change
-              // (this could be the case if loader interprets differently a 3D model file)
-              if (materials != null
-                  && materials.length < defaultMaterials.length) {
-                materials = null;
+              if (materials != null) {
+                // Keep only materials that are defined in default materials set
+                // (the list can be different if the model loader interprets differently a 3D model file 
+                // or if materials come from a paste style action)
+                HomeMaterial [] updatedMaterials = new HomeMaterial [defaultMaterials.length];
+                boolean foundInDefaultMaterials = false;
+                for (int i = 0; i < defaultMaterials.length; i++) {
+                  String materialName = defaultMaterials [i].getName();
+                  for (int j = 0; j < materials.length; j++) {
+                    if (materials [j] != null
+                        && materials [j].getName().equals(materialName)) {
+                      updatedMaterials [i] = materials [j];
+                      foundInDefaultMaterials = true;
+                      break;
+                    }
+                  }
+                }
+                if (foundInDefaultMaterials) {
+                  materials = updatedMaterials;
+                } else {
+                  materials = null;
+                }
               }
               fireContentsChanged(MaterialsListModel.this, 0, defaultMaterials.length);
             }

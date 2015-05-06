@@ -96,14 +96,13 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
-import com.eteks.sweethome3d.viewcontroller.HomeView.OpenDamagedHomeAnswer;
-import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
  * A MVC controller for the home view.
@@ -823,6 +822,7 @@ public class HomeController implements Controller {
       view.setEnabled(HomeView.ActionType.CUT, false);
       view.setEnabled(HomeView.ActionType.DELETE, false);
     }
+    enablePasteStyleAction();
 
     view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture);
     // In creation mode all actions bound to selection are disabled
@@ -902,13 +902,40 @@ public class HomeController implements Controller {
    */
   public void enablePasteAction() {
     HomeView view = getView();
+    boolean pasteEnabled = false;
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()) {
-      view.setEnabled(HomeView.ActionType.PASTE,
-          !getPlanController().isModificationState() && !view.isClipboardEmpty());
-    } else {
-      view.setEnabled(HomeView.ActionType.PASTE, false);
+      pasteEnabled = !getPlanController().isModificationState() && !view.isClipboardEmpty();
     }
+    view.setEnabled(HomeView.ActionType.PASTE, pasteEnabled);
+  }
+
+  /**
+   * Enables clipboard paste style action if selection contains some items of a class 
+   * compatible with the clipboard item.
+   */
+  public void enablePasteStyleAction() {
+    HomeView view = getView();
+    boolean pasteStyleEnabled = false;
+    if ((this.focusedView == getFurnitureController().getView()
+          || this.focusedView == getPlanController().getView())
+        && !getPlanController().isModificationState()) {
+      List<Selectable> clipboardItems = view.getClipboardItems();
+      if (clipboardItems != null 
+          && clipboardItems.size() == 1) {
+        Selectable clipboardItem = clipboardItems.get(0);
+        for (Selectable item : this.home.getSelectedItems()) {
+          if (item instanceof HomePieceOfFurniture && clipboardItem instanceof HomePieceOfFurniture
+              || item instanceof Wall && clipboardItem instanceof Wall
+              || item instanceof Room && clipboardItem instanceof Room
+              || item instanceof Label && clipboardItem instanceof Label) {
+            pasteStyleEnabled = true;
+            break;
+          }
+        }
+      }
+    }
+    view.setEnabled(HomeView.ActionType.PASTE_STYLE, pasteStyleEnabled);
   }
 
   /**
@@ -1472,6 +1499,124 @@ public class HomeController implements Controller {
   }
 
   /**
+   * Paste the style of the item in clipboard on selected items compatible with it.
+   */
+  public void pasteStyle() {
+    // Start a compound edit that modifies items with their controller
+    UndoableEditSupport undoSupport = getUndoableEditSupport();
+    undoSupport.beginUpdate();
+    Selectable clipboardItem = getView().getClipboardItems().get(0);
+    final List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (clipboardItem instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture clipboardPiece = (HomePieceOfFurniture)clipboardItem; 
+      HomeFurnitureController furnitureController = new HomeFurnitureController(
+          this.home, this.preferences, this.viewFactory, this.contentManager, undoSupport);
+      HomeMaterial [] materials = clipboardPiece.getModelMaterials();
+      if (materials != null) {
+        furnitureController.getModelMaterialsController().setMaterials(clipboardPiece.getModelMaterials());
+        furnitureController.setPaint(HomeFurnitureController.FurniturePaint.MODEL_MATERIALS);
+      } else if (clipboardPiece.getTexture() != null) {
+        furnitureController.getTextureController().setTexture(clipboardPiece.getTexture());
+        furnitureController.setPaint(HomeFurnitureController.FurniturePaint.TEXTURED);
+      } else if (clipboardPiece.getColor() != null) {
+        furnitureController.setColor(clipboardPiece.getColor());
+        furnitureController.setPaint(HomeFurnitureController.FurniturePaint.COLORED);
+      } else {
+        furnitureController.setPaint(HomeFurnitureController.FurniturePaint.DEFAULT);
+      }
+      Float shininess = clipboardPiece.getShininess();
+      furnitureController.setShininess(shininess == null 
+          ? HomeFurnitureController.FurnitureShininess.DEFAULT
+          : (shininess.floatValue() == 0
+              ? HomeFurnitureController.FurnitureShininess.MATT
+              : HomeFurnitureController.FurnitureShininess.SHINY));
+      furnitureController.modifyFurniture();
+    } else if (clipboardItem instanceof Wall) {
+      Wall clipboardWall = (Wall)clipboardItem;
+      WallController wallController = new WallController(this.home, this.preferences, this.viewFactory, this.contentManager, undoSupport);
+      if (clipboardWall.getLeftSideColor() != null) {
+        wallController.setLeftSideColor(clipboardWall.getLeftSideColor());
+        wallController.setLeftSidePaint(WallController.WallPaint.COLORED);
+      } else if (clipboardWall.getLeftSideTexture() != null) {
+        wallController.getLeftSideTextureController().setTexture(clipboardWall.getLeftSideTexture());
+        wallController.setLeftSidePaint(WallController.WallPaint.TEXTURED);
+      } else {
+        wallController.setLeftSidePaint(WallController.WallPaint.DEFAULT);
+      }
+      wallController.setLeftSideShininess(clipboardWall.getLeftSideShininess());
+      if (clipboardWall.getRightSideColor() != null) {
+        wallController.setRightSideColor(clipboardWall.getRightSideColor());
+        wallController.setRightSidePaint(WallController.WallPaint.COLORED);
+      } else if (clipboardWall.getRightSideTexture() != null) {
+        wallController.getRightSideTextureController().setTexture(clipboardWall.getRightSideTexture());
+        wallController.setRightSidePaint(WallController.WallPaint.TEXTURED);
+      } else {
+        wallController.setRightSidePaint(WallController.WallPaint.DEFAULT);
+      }
+      wallController.setRightSideShininess(clipboardWall.getRightSideShininess());
+      wallController.setPattern(clipboardWall.getPattern());
+      wallController.setTopColor(clipboardWall.getTopColor());
+      wallController.setTopPaint(clipboardWall.getTopColor() != null
+          ? WallController.WallPaint.COLORED
+          : WallController.WallPaint.DEFAULT);
+      wallController.modifyWalls();
+    } else if (clipboardItem instanceof Room) {
+      Room clipboardRoom = (Room)clipboardItem;
+      RoomController roomController = new RoomController(this.home, this.preferences, this.viewFactory, this.contentManager, undoSupport);
+      if (clipboardRoom.getFloorColor() != null) {
+        roomController.setFloorColor(clipboardRoom.getFloorColor());
+        roomController.setFloorPaint(RoomController.RoomPaint.COLORED);
+      } else if (clipboardRoom.getFloorTexture() != null) {
+        roomController.getFloorTextureController().setTexture(clipboardRoom.getFloorTexture());
+        roomController.setFloorPaint(RoomController.RoomPaint.TEXTURED);
+      } else {
+        roomController.setFloorPaint(RoomController.RoomPaint.DEFAULT);
+      }
+      roomController.setFloorShininess(clipboardRoom.getFloorShininess());
+      if (clipboardRoom.getCeilingColor() != null) {
+        roomController.setCeilingColor(clipboardRoom.getCeilingColor());
+        roomController.setCeilingPaint(RoomController.RoomPaint.COLORED);
+      } else if (clipboardRoom.getCeilingTexture() != null) {
+        roomController.getCeilingTextureController().setTexture(clipboardRoom.getCeilingTexture());
+        roomController.setCeilingPaint(RoomController.RoomPaint.TEXTURED);
+      } else {
+        roomController.setCeilingPaint(RoomController.RoomPaint.DEFAULT);
+      }
+      roomController.setCeilingShininess(clipboardRoom.getCeilingShininess());
+      roomController.modifyRooms();
+    } else if (clipboardItem instanceof Label) {
+      Label clipboardLabel = (Label)clipboardItem;
+      LabelController labelController = new LabelController(this.home, this.preferences, this.viewFactory, undoSupport);
+      labelController.setColor(clipboardLabel.getColor());
+      TextStyle labelStyle = clipboardLabel.getStyle();
+      if (labelStyle != null) {
+        labelController.setFontName(labelStyle.getFontName());
+        labelController.setFontSize(labelStyle.getFontSize());
+      } else {
+        labelController.setFontName(null);
+        labelController.setFontSize(this.preferences.getDefaultTextStyle(Label.class).getFontSize());
+      }
+      labelController.modifyLabels();
+    } 
+    
+    // Add a undoable edit to change presentation name
+    undoSupport.postEdit(new AbstractUndoableEdit() {      
+        @Override
+        public void redo() throws CannotRedoException {
+          home.setSelectedItems(selectedItems);
+          super.redo();
+        }
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(HomeController.class, "undoPasteStyle");
+        }      
+      });
+    // End compound edit
+    undoSupport.endUpdate();
+  }
+  
+  /**
    * Deletes the selection in the focused component.
    */
   public void delete() {
@@ -1493,6 +1638,7 @@ public class HomeController implements Controller {
     this.focusedView = focusedView;
     enableActionsBoundToSelection();
     enablePasteAction();
+    enablePasteStyleAction();
     enableSelectAllAction();
   }
   
@@ -1605,7 +1751,7 @@ public class HomeController implements Controller {
    * fixes the damaged home accordingly and shows it.
    */
   private void openDamagedHome(final String homeName, Home damagedHome, List<Content> invalidContent) {
-    OpenDamagedHomeAnswer answer = getView().confirmOpenDamagedHome(
+    HomeView.OpenDamagedHomeAnswer answer = getView().confirmOpenDamagedHome(
         homeName, damagedHome, invalidContent);
     switch (answer) {
       case REMOVE_DAMAGED_ITEMS:
@@ -1615,7 +1761,7 @@ public class HomeController implements Controller {
         replaceDamagedItems(damagedHome, invalidContent);
         break;
     }
-    if (answer != OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME) {
+    if (answer != HomeView.OpenDamagedHomeAnswer.DO_NOT_OPEN_HOME) {
       damagedHome.setName(homeName);
       damagedHome.setRepaired(true);
       addHomeToApplication(damagedHome);
@@ -2330,16 +2476,16 @@ public class HomeController implements Controller {
    * Displays a tip message dialog depending on the given mode and 
    * sets the active mode of the plan controller. 
    */
-  public void setMode(Mode mode) {
+  public void setMode(PlanController.Mode mode) {
     if (getPlanController().getMode() != mode) {
       final String actionKey;
-      if (mode == Mode.WALL_CREATION) {
+      if (mode == PlanController.Mode.WALL_CREATION) {
         actionKey = HomeView.ActionType.CREATE_WALLS.name();
-      } else if (mode == Mode.ROOM_CREATION) {
+      } else if (mode == PlanController.Mode.ROOM_CREATION) {
         actionKey = HomeView.ActionType.CREATE_ROOMS.name();
-      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+      } else if (mode == PlanController.Mode.DIMENSION_LINE_CREATION) {
         actionKey = HomeView.ActionType.CREATE_DIMENSION_LINES.name();
-      } else if (mode == Mode.LABEL_CREATION) {
+      } else if (mode == PlanController.Mode.LABEL_CREATION) {
         actionKey = HomeView.ActionType.CREATE_LABELS.name();
       } else {
         actionKey = null;

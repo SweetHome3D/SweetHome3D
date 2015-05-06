@@ -27,6 +27,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Selectable;
 
 /**
  * The main view that displays a home.
@@ -39,7 +40,7 @@ public interface HomeView extends View {
   public enum ActionType {
       NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, SAVE_AND_COMPRESS,
       PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
-      UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL, SELECT_ALL_AT_ALL_LEVELS,
+      UNDO, REDO, CUT, COPY, PASTE, PASTE_STYLE, DELETE, SELECT_ALL, SELECT_ALL_AT_ALL_LEVELS,
       ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, 
       IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY, IMPORT_TEXTURE, IMPORT_TEXTURES_LIBRARY,
       SORT_HOME_FURNITURE_BY_CATALOG_ID, SORT_HOME_FURNITURE_BY_NAME, 
@@ -278,11 +279,18 @@ public interface HomeView extends View {
    */
   public abstract List<Camera> showDeletedCamerasDialog();
   
-  /**
+   /**
    * Returns <code>true</code> if clipboard contains data that
    * components are able to handle.
    */
   public abstract boolean isClipboardEmpty();
+  
+  /**
+   * Returns the list of selectable items that are currently in clipboard
+   * or <code>null</code> if clipboard doesn't contain any selectable item.
+   * @since 5.0
+   */
+  public abstract List<Selectable> getClipboardItems();
 
   /**
    * Displays the given message and returns <code>false</code> if the user 

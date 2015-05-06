@@ -43,6 +43,7 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -307,6 +308,7 @@ public class HomePane extends JRootPane implements HomeView {
     createClipboardAction(ActionType.CUT, preferences, TransferHandler.getCutAction(), true);
     createClipboardAction(ActionType.COPY, preferences, TransferHandler.getCopyAction(), true);
     createClipboardAction(ActionType.PASTE, preferences, TransferHandler.getPasteAction(), false);
+    createAction(ActionType.PASTE_STYLE, preferences, controller, "pasteStyle");
     createAction(ActionType.DELETE, preferences, controller, "delete");
     createAction(ActionType.SELECT_ALL, preferences, controller, "selectAll");
     
@@ -981,6 +983,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.CUT, editMenu);
     addActionToMenu(ActionType.COPY, editMenu);
     addActionToMenu(ActionType.PASTE, editMenu);
+    addActionToMenu(ActionType.PASTE_STYLE, editMenu);
     editMenu.addSeparator();
     addActionToMenu(ActionType.DELETE, editMenu);
     addActionToMenu(ActionType.SELECT_ALL, editMenu);
@@ -2463,6 +2466,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.CUT, furnitureViewPopup);
       addActionToPopupMenu(ActionType.COPY, furnitureViewPopup);
       addActionToPopupMenu(ActionType.PASTE, furnitureViewPopup);
+      addActionToPopupMenu(ActionType.PASTE_STYLE, furnitureViewPopup);
       furnitureViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.DELETE, furnitureViewPopup);
       addActionToPopupMenu(ActionType.SELECT_ALL, furnitureViewPopup);
@@ -2579,6 +2583,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.CUT, planViewPopup);
       addActionToPopupMenu(ActionType.COPY, planViewPopup);
       addActionToPopupMenu(ActionType.PASTE, planViewPopup);
+      addActionToPopupMenu(ActionType.PASTE_STYLE, planViewPopup);
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.DELETE, planViewPopup);
       Action selectObjectAction = this.menuActionMap.get(MenuActionType.SELECT_OBJECT_MENU);
@@ -4518,13 +4523,31 @@ public class HomePane extends JRootPane implements HomeView {
     try {
       Clipboard clipboard = getToolkit().getSystemClipboard();
       return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
-          || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
+          || clipboard.isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
     } catch (AccessControlException ex) {
       // AWT uses a private clipboard that won't be empty as soon as a copy action will be done
       return this.clipboardEmpty;
     }    
   }
 
+  /**
+   * Returns the list of selectable items that are currently in clipboard
+   * or <code>null</code> if clipboard doesn't contain any selectable item.
+   */
+  @SuppressWarnings("unchecked")
+  public List<Selectable> getClipboardItems() {
+    try {
+      Clipboard clipboard = getToolkit().getSystemClipboard();
+      if (clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)) {
+        return (List<Selectable>)clipboard.getData(HomeTransferableList.HOME_FLAVOR);
+      }
+    } catch (AccessControlException ex) {
+    } catch (UnsupportedFlavorException ex) {      
+    } catch (IOException ex) {
+    }    
+    return null;
+  }
+  
   /**
    * Execute <code>runnable</code> asynchronously in the thread 
    * that manages toolkit events.  
