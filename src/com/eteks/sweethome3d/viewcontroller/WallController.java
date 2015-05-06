@@ -276,10 +276,22 @@ public class WallController implements Controller {
       }
       getLeftSideTextureController().setTexture(leftSideTexture);
       
+      boolean defaultColorsAndTextures = true;
+      for (int i = 0; i < selectedWalls.size(); i++) {
+        Wall wall = selectedWalls.get(i);
+        if (wall.getLeftSideColor() != null
+            || wall.getLeftSideTexture() != null) {
+          defaultColorsAndTextures = false;
+          break;
+        }
+      }
+      
       if (leftSideColor != null) {
         setLeftSidePaint(WallPaint.COLORED);
       } else if (leftSideTexture != null) {
         setLeftSidePaint(WallPaint.TEXTURED);
+      } else if (defaultColorsAndTextures) {
+        setLeftSidePaint(WallPaint.DEFAULT);
       } else {
         setLeftSidePaint(null);
       }
@@ -318,10 +330,22 @@ public class WallController implements Controller {
       }
       getRightSideTextureController().setTexture(rightSideTexture);
       
+      defaultColorsAndTextures = true;
+      for (int i = 0; i < selectedWalls.size(); i++) {
+        Wall wall = selectedWalls.get(i);
+        if (wall.getRightSideColor() != null
+            || wall.getRightSideTexture() != null) {
+          defaultColorsAndTextures = false;
+          break;
+        }
+      }
+      
       if (rightSideColor != null) {
         setRightSidePaint(WallPaint.COLORED);
       } else if (rightSideTexture != null) {
         setRightSidePaint(WallPaint.TEXTURED);
+      } else if (defaultColorsAndTextures) {
+        setRightSidePaint(WallPaint.DEFAULT);
       } else {
         setRightSidePaint(null);
       }
@@ -976,14 +1000,16 @@ public class WallController implements Controller {
       Float yStart = getYStart();
       Float xEnd = getXEnd();
       Float yEnd = getYEnd();
-      Integer leftSideColor = getLeftSidePaint() == WallPaint.COLORED 
+      WallPaint leftSidePaint = getLeftSidePaint();
+      Integer leftSideColor = leftSidePaint == WallPaint.COLORED 
           ? getLeftSideColor() : null;
-      HomeTexture leftSideTexture = getLeftSidePaint() == WallPaint.TEXTURED
+      HomeTexture leftSideTexture = leftSidePaint == WallPaint.TEXTURED
           ? getLeftSideTextureController().getTexture() : null;
       Float leftSideShininess = getLeftSideShininess();
-      Integer rightSideColor = getRightSidePaint() == WallPaint.COLORED
+      WallPaint rightSidePaint = getRightSidePaint();
+      Integer rightSideColor = rightSidePaint == WallPaint.COLORED
           ? getRightSideColor() : null;
-      HomeTexture rightSideTexture = getRightSidePaint() == WallPaint.TEXTURED
+      HomeTexture rightSideTexture = rightSidePaint == WallPaint.TEXTURED
           ? getRightSideTextureController().getTexture() : null;
       TextureImage pattern = getPattern();
       boolean modifiedTopColor = getTopPaint() != null;
@@ -1019,16 +1045,16 @@ public class WallController implements Controller {
       }
       // Apply modification
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
-          leftSideColor, leftSideTexture, leftSideShininess, 
-          rightSideColor, rightSideTexture, rightSideShininess,
+          leftSidePaint, leftSideColor, leftSideTexture, leftSideShininess, 
+          rightSidePaint, rightSideColor, rightSideTexture, rightSideShininess,
           pattern, modifiedTopColor, topColor,
           height, heightAtEnd, thickness, arcExtent);      
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, 
             this.preferences, oldSelection,
             modifiedWalls, xStart, yStart, xEnd, yEnd,
-            leftSideColor, leftSideTexture, leftSideShininess, 
-            rightSideColor, rightSideTexture, rightSideShininess,
+            leftSidePaint, leftSideColor, leftSideTexture, leftSideShininess, 
+            rightSidePaint, rightSideColor, rightSideTexture, rightSideShininess,
             pattern, modifiedTopColor, topColor,
             height, heightAtEnd, thickness, arcExtent);
         this.undoSupport.postEdit(undoableEdit);
@@ -1049,9 +1075,11 @@ public class WallController implements Controller {
     private final Float            yStart;
     private final Float            xEnd;
     private final Float            yEnd;
+    private final WallPaint        leftSidePaint;
     private final Integer          leftSideColor;
     private final HomeTexture      leftSideTexture;
     private final Float            leftSideShininess;
+    private final WallPaint        rightSidePaint;
     private final Integer          rightSideColor;
     private final HomeTexture      rightSideTexture;
     private final Float            rightSideShininess;
@@ -1069,9 +1097,11 @@ public class WallController implements Controller {
                                           ModifiedWall [] modifiedWalls,
                                           Float xStart, Float yStart,
                                           Float xEnd, Float yEnd,
+                                          WallPaint leftSidePaint,
                                           Integer leftSideColor,
                                           HomeTexture leftSideTexture,
                                           Float leftSideShininess,
+                                          WallPaint rightSidePaint,
                                           Integer rightSideColor,
                                           HomeTexture rightSideTexture,
                                           Float rightSideShininess,
@@ -1090,7 +1120,9 @@ public class WallController implements Controller {
       this.yStart = yStart;
       this.xEnd = xEnd;
       this.yEnd = yEnd;
+      this.leftSidePaint = leftSidePaint;
       this.leftSideColor = leftSideColor;
+      this.rightSidePaint = rightSidePaint;
       this.rightSideTexture = rightSideTexture;
       this.leftSideShininess = leftSideShininess;
       this.rightSideColor = rightSideColor;
@@ -1116,8 +1148,8 @@ public class WallController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doModifyWalls(this.modifiedWalls, this.xStart, this.yStart, this.xEnd, this.yEnd, 
-          this.leftSideColor, this.leftSideTexture, this.leftSideShininess, 
-          this.rightSideColor, this.rightSideTexture, this.rightSideShininess,
+          this.leftSidePaint, this.leftSideColor, this.leftSideTexture, this.leftSideShininess, 
+          this.rightSidePaint, this.rightSideColor, this.rightSideTexture, this.rightSideShininess,
           this.pattern, this.modifiedTopColor, this.topColor,
           this.height, this.heightAtEnd, this.thickness, this.arcExtent); 
       this.home.setSelectedItems(this.oldSelection); 
@@ -1134,29 +1166,47 @@ public class WallController implements Controller {
    */
   private static void doModifyWalls(ModifiedWall [] modifiedWalls, 
                                     Float xStart, Float yStart, Float xEnd, Float yEnd,
-                                    Integer leftSideColor, HomeTexture leftSideTexture, Float leftSideShininess,
-                                    Integer rightSideColor, HomeTexture rightSideTexture, Float rightSideShininess,
+                                    WallPaint leftSidePaint, Integer leftSideColor, HomeTexture leftSideTexture, Float leftSideShininess,
+                                    WallPaint rightSidePaint, Integer rightSideColor, HomeTexture rightSideTexture, Float rightSideShininess,
                                     TextureImage pattern, boolean modifiedTopColor, Integer topColor, 
                                     Float height, Float heightAtEnd, Float thickness, Float arcExtent) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
-      if (leftSideTexture != null) {
-        wall.setLeftSideTexture(leftSideTexture);
-        wall.setLeftSideColor(null);
-      } else if (leftSideColor != null) {
-        wall.setLeftSideColor(leftSideColor);
-        wall.setLeftSideTexture(null);
+      if (leftSidePaint != null) {
+        switch (leftSidePaint) {
+          case DEFAULT :
+            wall.setLeftSideColor(null);
+            wall.setLeftSideTexture(null);
+            break;
+          case COLORED :
+            wall.setLeftSideColor(leftSideColor);
+            wall.setLeftSideTexture(null);
+            break;
+          case TEXTURED :
+            wall.setLeftSideColor(null);
+            wall.setLeftSideTexture(leftSideTexture);
+            break;
+        }
       }
       if (leftSideShininess != null) {
         wall.setLeftSideShininess(leftSideShininess);
       }
-      if (rightSideTexture != null) {
-        wall.setRightSideTexture(rightSideTexture);
-        wall.setRightSideColor(null);
-      } else if (rightSideColor != null) {
-        wall.setRightSideColor(rightSideColor);
-        wall.setRightSideTexture(null);
+      if (rightSidePaint != null) {
+        switch (rightSidePaint) {
+          case DEFAULT :
+            wall.setRightSideColor(null);
+            wall.setRightSideTexture(null);
+            break;
+          case COLORED :
+            wall.setRightSideColor(rightSideColor);
+            wall.setRightSideTexture(null);
+            break;
+          case TEXTURED :
+            wall.setRightSideColor(null);
+            wall.setRightSideTexture(rightSideTexture);
+            break;
+        }
       }
       if (rightSideShininess != null) {
         wall.setRightSideShininess(rightSideShininess);

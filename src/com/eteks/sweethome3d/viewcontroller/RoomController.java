@@ -63,7 +63,7 @@ public class RoomController implements Controller {
   /**
    * The possible values for {@linkplain #getFloorPaint() room paint type}.
    */
-  public enum RoomPaint {COLORED, TEXTURED} 
+  public enum RoomPaint {DEFAULT, COLORED, TEXTURED} 
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -292,10 +292,22 @@ public class RoomController implements Controller {
       }
       getFloorTextureController().setTexture(floorTexture);
       
+      boolean defaultColorsAndTextures = true;
+      for (int i = 0; i < selectedRooms.size(); i++) {
+        Room room = selectedRooms.get(i);
+        if (room.getFloorColor() != null
+            || room.getFloorTexture() != null) {
+          defaultColorsAndTextures = false;
+          break;
+        }
+      }
+      
       if (floorColor != null) {
         setFloorPaint(RoomPaint.COLORED);
       } else if (floorTexture != null) {
         setFloorPaint(RoomPaint.TEXTURED);
+      } else if (defaultColorsAndTextures) {
+        setFloorPaint(RoomPaint.DEFAULT);
       } else {
         setFloorPaint(null);
       }
@@ -344,10 +356,22 @@ public class RoomController implements Controller {
       }
       getCeilingTextureController().setTexture(ceilingTexture);
       
+      defaultColorsAndTextures = true;
+      for (int i = 0; i < selectedRooms.size(); i++) {
+        Room room = selectedRooms.get(i);
+        if (room.getCeilingColor() != null
+            || room.getCeilingTexture() != null) {
+          defaultColorsAndTextures = false;
+          break;
+        }
+      }
+      
       if (ceilingColor != null) {
         setCeilingPaint(RoomPaint.COLORED);
       } else if (ceilingTexture != null) {
         setCeilingPaint(RoomPaint.TEXTURED);
+      } else if (defaultColorsAndTextures) {
+        setCeilingPaint(RoomPaint.DEFAULT);
       } else {
         setCeilingPaint(null);
       }
@@ -846,15 +870,17 @@ public class RoomController implements Controller {
       String name = getName();
       Boolean areaVisible = getAreaVisible();
       Boolean floorVisible = getFloorVisible();
-      Integer floorColor = getFloorPaint() == RoomPaint.COLORED 
+      RoomPaint floorPaint = getFloorPaint();
+      Integer floorColor = floorPaint == RoomPaint.COLORED 
           ? getFloorColor() : null;
-      HomeTexture floorTexture = getFloorPaint() == RoomPaint.TEXTURED
+      HomeTexture floorTexture = floorPaint == RoomPaint.TEXTURED
           ? getFloorTextureController().getTexture() : null;
       Float floorShininess = getFloorShininess();
       Boolean ceilingVisible = getCeilingVisible();
-      Integer ceilingColor = getCeilingPaint() == RoomPaint.COLORED
+      RoomPaint ceilingPaint = getCeilingPaint();
+      Integer ceilingColor = ceilingPaint == RoomPaint.COLORED
           ? getCeilingColor() : null;
-      HomeTexture ceilingTexture = getCeilingPaint() == RoomPaint.TEXTURED
+      HomeTexture ceilingTexture = ceilingPaint == RoomPaint.TEXTURED
           ? getCeilingTextureController().getTexture() : null;
       Float ceilingShininess = getCeilingShininess();
       Integer wallSidesColor = getWallSidesPaint() == RoomPaint.COLORED 
@@ -888,14 +914,14 @@ public class RoomController implements Controller {
         modifiedWallSides [i] = new ModifiedWallSide(selectedRoomsWallSides.get(i));
       }
       doModifyRoomsAndWallSides(home, modifiedRooms, name, areaVisible, 
-          floorVisible, floorColor, floorTexture, floorShininess, 
-          ceilingVisible, ceilingColor, ceilingTexture, ceilingShininess,
+          floorVisible, floorPaint, floorColor, floorTexture, floorShininess, 
+          ceilingVisible, ceilingPaint, ceilingColor, ceilingTexture, ceilingShininess,
           modifiedWallSides, wallSidesColor, wallSidesTexture, wallSidesShininess, null, null);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new RoomsAndWallSidesModificationUndoableEdit(
             this.home, this.preferences, oldSelection, newSelection, modifiedRooms, name, areaVisible, 
-            floorColor, floorTexture, floorVisible, floorShininess,
-            ceilingColor, ceilingTexture, ceilingVisible, ceilingShininess,
+            floorVisible, floorPaint, floorColor, floorTexture, floorShininess,
+            ceilingVisible, ceilingPaint, ceilingColor, ceilingTexture, ceilingShininess,
             modifiedWallSides, wallSidesColor, wallSidesTexture, wallSidesShininess,
             deletedWalls.toArray(new ModifiedWall [deletedWalls.size()]), 
             addedWalls.toArray(new ModifiedWall [addedWalls.size()]));
@@ -1092,13 +1118,15 @@ public class RoomController implements Controller {
     private final ModifiedRoom []     modifiedRooms;
     private final String              name;
     private final Boolean             areaVisible;
+    private final Boolean             floorVisible;
+    private final RoomPaint           floorPaint;
     private final Integer             floorColor;
     private final HomeTexture         floorTexture;
-    private final Boolean             floorVisible;
     private final Float               floorShininess;
+    private final Boolean             ceilingVisible;
+    private final RoomPaint           ceilingPaint;
     private final Integer             ceilingColor;
     private final HomeTexture         ceilingTexture;
-    private final Boolean             ceilingVisible;
     private final Float               ceilingShininess;
     private final ModifiedWallSide [] modifiedWallSides;
     private final Integer             wallSidesColor;
@@ -1114,13 +1142,15 @@ public class RoomController implements Controller {
                                           ModifiedRoom [] modifiedRooms,
                                           String name,
                                           Boolean areaVisible,
+                                          Boolean floorVisible,
+                                          RoomPaint floorPaint,
                                           Integer floorColor,
                                           HomeTexture floorTexture,
-                                          Boolean floorVisible,
                                           Float floorShininess,
+                                          Boolean ceilingVisible,
+                                          RoomPaint ceilingPaint,
                                           Integer ceilingColor,
                                           HomeTexture ceilingTexture,
-                                          Boolean ceilingVisible,
                                           Float ceilingShininess,
                                           ModifiedWallSide [] modifiedWallSides,
                                           Integer wallSidesColor,
@@ -1135,13 +1165,15 @@ public class RoomController implements Controller {
       this.modifiedRooms = modifiedRooms;
       this.name = name;
       this.areaVisible = areaVisible;
+      this.floorVisible = floorVisible;
+      this.floorPaint = floorPaint;
       this.floorColor = floorColor;
       this.floorTexture = floorTexture;
-      this.floorVisible = floorVisible;
       this.floorShininess = floorShininess;
+      this.ceilingVisible = ceilingVisible;
+      this.ceilingPaint = ceilingPaint;
       this.ceilingColor = ceilingColor;
       this.ceilingTexture = ceilingTexture;
-      this.ceilingVisible = ceilingVisible;
       this.ceilingShininess = ceilingShininess;
       this.modifiedWallSides = modifiedWallSides;
       this.wallSidesColor = wallSidesColor;
@@ -1163,8 +1195,8 @@ public class RoomController implements Controller {
       super.redo();
       doModifyRoomsAndWallSides(this.home,
           this.modifiedRooms, this.name, this.areaVisible, 
-          this.floorVisible, this.floorColor, this.floorTexture, this.floorShininess, 
-          this.ceilingVisible, this.ceilingColor, this.ceilingTexture, this.ceilingShininess,
+          this.floorVisible, this.floorPaint, this.floorColor, this.floorTexture, this.floorShininess, 
+          this.ceilingVisible, this.ceilingPaint, this.ceilingColor, this.ceilingTexture, this.ceilingShininess,
           this.modifiedWallSides, this.wallSidesColor, this.wallSidesTexture, this.wallSidesShininess,
           this.deletedWalls, this.addedWalls); 
       this.home.setSelectedItems(this.newSelection); 
@@ -1181,8 +1213,8 @@ public class RoomController implements Controller {
    */
   private static void doModifyRoomsAndWallSides(Home home, ModifiedRoom [] modifiedRooms, 
                              String name, Boolean areaVisible, 
-                             Boolean floorVisible, Integer floorColor, HomeTexture floorTexture, Float floorShininess,
-                             Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess,
+                             Boolean floorVisible, RoomPaint floorPaint, Integer floorColor, HomeTexture floorTexture, Float floorShininess,
+                             Boolean ceilingVisible, RoomPaint ceilingPaint, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess,
                              ModifiedWallSide [] modifiedWallSides, 
                              Integer wallSidesColor, HomeTexture wallSidesTexture, Float wallSidesShininess, 
                              ModifiedWall [] deletedWalls, 
@@ -1207,12 +1239,21 @@ public class RoomController implements Controller {
       if (floorVisible != null) {
         room.setFloorVisible(floorVisible);
       }
-      if (floorTexture != null) {
-        room.setFloorTexture(floorTexture);
-        room.setFloorColor(null);
-      } else if (floorColor != null) {
-        room.setFloorColor(floorColor);
-        room.setFloorTexture(null);
+      if (floorPaint != null) {
+        switch (floorPaint) {
+          case DEFAULT :
+            room.setFloorColor(null);
+            room.setFloorTexture(null);
+            break;
+          case COLORED :
+            room.setFloorColor(floorColor);
+            room.setFloorTexture(null);
+            break;
+          case TEXTURED :
+            room.setFloorColor(null);
+            room.setFloorTexture(floorTexture);
+            break;
+        }
       }
       if (floorShininess != null) {
         room.setFloorShininess(floorShininess);
@@ -1220,12 +1261,21 @@ public class RoomController implements Controller {
       if (ceilingVisible != null) {
         room.setCeilingVisible(ceilingVisible);
       }
-      if (ceilingTexture != null) {
-        room.setCeilingTexture(ceilingTexture);
-        room.setCeilingColor(null);
-      } else if (ceilingColor != null) {
-        room.setCeilingColor(ceilingColor);
-        room.setCeilingTexture(null);
+      if (ceilingPaint != null) {
+        switch (ceilingPaint) {
+          case DEFAULT :
+            room.setCeilingColor(null);
+            room.setCeilingTexture(null);
+            break;
+          case COLORED :
+            room.setCeilingColor(ceilingColor);
+            room.setCeilingTexture(null);
+            break;
+          case TEXTURED :
+            room.setCeilingColor(null);
+            room.setCeilingTexture(ceilingTexture);
+            break;
+        }
       }
       if (ceilingShininess != null) {
         room.setCeilingShininess(ceilingShininess);
