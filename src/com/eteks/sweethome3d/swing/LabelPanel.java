@@ -58,6 +58,8 @@ public class LabelPanel extends JPanel implements DialogView {
   private JTextField            textTextField;
   private JLabel                fontNameLabel;
   private FontNameComboBox      fontNameComboBox;
+  private JLabel                fontSizeLabel;
+  private JSpinner              fontSizeSpinner;
   private JLabel                colorLabel;
   private ColorButton           colorButton;
   private NullableCheckBox      visibleIn3DViewCheckBox;
@@ -150,6 +152,30 @@ public class LabelPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(LabelController.Property.FONT_NAME, fontNameChangeListener);
     fontNameChangeListener.propertyChange(null);
 
+    // Create font size label and its spinner bound to FONT_SIZE controller property
+    String unitName = preferences.getLengthUnit().getName();
+    this.fontSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, LabelPanel.class,
+        "fontSizeLabel.text", unitName));
+    final NullableSpinner.NullableSpinnerLengthModel fontSizeSpinnerModel = new NullableSpinner.NullableSpinnerLengthModel(
+        preferences, 5, 999);
+    this.fontSizeSpinner = new NullableSpinner(fontSizeSpinnerModel);
+    final PropertyChangeListener fontSizeChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Float fontSize = controller.getFontSize();
+          fontSizeSpinnerModel.setNullable(fontSize == null);
+          fontSizeSpinnerModel.setLength(fontSize);
+        }
+      };
+    fontSizeChangeListener.propertyChange(null);
+    controller.addPropertyChangeListener(LabelController.Property.FONT_SIZE, fontSizeChangeListener);
+    fontSizeSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(LabelController.Property.FONT_SIZE, fontSizeChangeListener);
+          controller.setFontSize(fontSizeSpinnerModel.getLength());
+          controller.addPropertyChangeListener(LabelController.Property.FONT_SIZE, fontSizeChangeListener);
+        }
+      });
+
     // Create color label and button bound to controller COLOR property
     this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         LabelPanel.class, "colorLabel.text"));
@@ -228,7 +254,7 @@ public class LabelPanel extends JPanel implements DialogView {
     
     // Create elevation label and its spinner bound to ELEVATION controller property
     this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        LabelPanel.class, "elevationLabel.text", preferences.getLengthUnit().getName()));
+        LabelPanel.class, "elevationLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = new NullableSpinner.NullableSpinnerLengthModel(
         preferences, 0f, preferences.getLengthUnit().getMaximumElevation());
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
@@ -282,6 +308,9 @@ public class LabelPanel extends JPanel implements DialogView {
       this.fontNameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           LabelPanel.class, "fontNameLabel.mnemonic")).getKeyCode());
       this.fontNameLabel.setLabelFor(this.fontNameComboBox);
+      this.fontSizeLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(LabelPanel.class, "fontSizeLabel.mnemonic")).getKeyCode());
+      this.fontSizeLabel.setLabelFor(this.fontSizeSpinner);
       this.visibleIn3DViewCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
           LabelPanel.class, "visibleIn3DViewCheckBox.mnemonic")).getKeyCode());
       this.pitch0DegreeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
@@ -308,20 +337,26 @@ public class LabelPanel extends JPanel implements DialogView {
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     nameAndStylePanel.add(this.textTextField, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     nameAndStylePanel.add(this.fontNameLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     nameAndStylePanel.add(this.fontNameComboBox, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    nameAndStylePanel.add(this.colorLabel, new GridBagConstraints(
+    nameAndStylePanel.add(this.fontSizeLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    nameAndStylePanel.add(this.fontSizeSpinner, new GridBagConstraints(
+        1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 5, 0));
+    nameAndStylePanel.add(this.colorLabel, new GridBagConstraints(
+        2, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 10, 0, 5), 0, 0));
     nameAndStylePanel.add(this.colorButton, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, OperatingSystem.isMacOSX()  ? 6  : 0), 0, 0));
     int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
     add(nameAndStylePanel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 

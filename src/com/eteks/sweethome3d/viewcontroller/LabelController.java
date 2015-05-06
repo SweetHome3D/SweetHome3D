@@ -44,7 +44,7 @@ public class LabelController implements Controller {
   /**
    * The property that may be edited by the view associated to this controller. 
    */
-  public enum Property {TEXT, FONT_NAME, COLOR, PITCH, ELEVATION}
+  public enum Property {TEXT, FONT_NAME, FONT_SIZE, COLOR, PITCH, ELEVATION}
   
   private final Home                  home;
   private final Float                 x;
@@ -58,6 +58,7 @@ public class LabelController implements Controller {
   private String  text;
   private String  fontName;
   private boolean fontNameSet;
+  private Float   fontSize;
   private Integer color;
   private Float   pitch;
   private Boolean pitchEnabled;
@@ -97,6 +98,7 @@ public class LabelController implements Controller {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.fontName = preferences.getDefaultFontName();
     this.fontNameSet = true;
+    this.fontSize = preferences.getDefaultTextStyle(Label.class).getFontSize();
     this.pitchEnabled = Boolean.FALSE;
     this.elevation = 0f;
   }
@@ -110,6 +112,7 @@ public class LabelController implements Controller {
       setText(null); // Nothing to edit
       setFontName(null);
       this.fontNameSet = false;
+      setFontSize(null);
       setColor(null);
       setPitch(null);
       this.pitchEnabled = Boolean.FALSE;
@@ -143,6 +146,21 @@ public class LabelController implements Controller {
       setFontName(fontName);
       this.fontNameSet = fontNameSet;
       
+      float labelDefaultFontSize = this.preferences.getDefaultTextStyle(Label.class).getFontSize();
+      Float fontSize = firstLabel.getStyle() != null 
+          ? firstLabel.getStyle().getFontSize()
+          : labelDefaultFontSize;
+      for (int i = 1; i < selectedLabels.size(); i++) {
+        Label label = selectedLabels.get(i);
+        if (!fontSize.equals(label.getStyle() != null 
+                ? label.getStyle().getFontSize()
+                : labelDefaultFontSize)) {
+          fontSize = null;
+          break;
+        }
+      }
+      setFontSize(fontSize);
+
       Integer color = firstLabel.getColor();
       if (color != null) {
         for (int i = 1; i < selectedLabels.size(); i++) {
@@ -252,6 +270,24 @@ public class LabelController implements Controller {
    */
   public String getFontName() {
     return this.fontName;
+  }
+
+  /**
+   * Sets the edited font size.
+   */
+  public void setFontSize(Float fontSize) {
+    if (fontSize != this.fontSize) {
+      Float oldFontSize = this.fontSize;
+      this.fontSize = fontSize;
+      this.propertyChangeSupport.firePropertyChange(Property.FONT_SIZE.name(), oldFontSize, fontSize);
+    }
+  }
+
+  /**
+   * Returns the edited font size.
+   */
+  public Float getFontSize() {
+    return this.fontSize;
   }
 
   /**
@@ -443,6 +479,7 @@ public class LabelController implements Controller {
       String text = getText();
       String fontName = getFontName();
       boolean fontNameSet = isFontNameSet();
+      Float fontSize = getFontSize();
       Integer color = getColor();
       Float pitch = getPitch();
       Boolean pitchEnabled = isPitchEnabled();
@@ -455,10 +492,10 @@ public class LabelController implements Controller {
       }
       // Apply modification
       TextStyle defaultStyle = this.preferences.getDefaultTextStyle(Label.class);
-      doModifyLabels(modifiedLabels, text, fontName, fontNameSet, defaultStyle, color, pitch, pitchEnabled, elevation); 
+      doModifyLabels(modifiedLabels, text, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home, 
-            this.preferences, oldSelection, modifiedLabels, text, fontName, fontNameSet, defaultStyle, color, pitch, pitchEnabled, elevation);
+            this.preferences, oldSelection, modifiedLabels, text, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
         this.undoSupport.postEdit(undoableEdit);
       }      
       this.preferences.addAutoCompletionString("LabelText", text);
@@ -477,6 +514,7 @@ public class LabelController implements Controller {
     private final String           text;
     private final String           fontName;
     private final boolean          fontNameSet;
+    private final Float            fontSize;
     private final TextStyle        defaultStyle;
     private final Integer          color;
     private final Float            pitch;
@@ -488,7 +526,7 @@ public class LabelController implements Controller {
                                           List<Selectable> oldSelection,
                                           ModifiedLabel [] modifiedLabels,
                                           String text, 
-                                          String fontName, boolean fontNameSet, TextStyle defaultStyle,
+                                          String fontName, boolean fontNameSet, Float fontSize, TextStyle defaultStyle,
                                           Integer color, Float pitch, Boolean pitchEnabled,
                                           Float elevation) {
       this.home = home;
@@ -498,6 +536,7 @@ public class LabelController implements Controller {
       this.text = text;
       this.fontName = fontName;
       this.fontNameSet = fontNameSet;
+      this.fontSize = fontSize;
       this.defaultStyle = defaultStyle;
       this.color = color;
       this.pitch = pitch;
@@ -515,7 +554,7 @@ public class LabelController implements Controller {
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModifyLabels(this.modifiedLabels, this.text, this.fontName, this.fontNameSet, this.defaultStyle,
+      doModifyLabels(this.modifiedLabels, this.text, this.fontName, this.fontNameSet, this.fontSize, this.defaultStyle,
           this.color, this.pitch, this.pitchEnabled, this.elevation); 
       this.home.setSelectedItems(this.oldSelection); 
     }
@@ -531,7 +570,8 @@ public class LabelController implements Controller {
    * Modifies labels properties with the values in parameter.
    */
   private static void doModifyLabels(ModifiedLabel [] modifiedLabels, 
-                                     String text, String fontName, boolean fontNameSet, TextStyle defaultStyle,
+                                     String text, String fontName, boolean fontNameSet, 
+                                     Float fontSize, TextStyle defaultStyle,
                                      Integer color, Float pitch, Boolean pitchEnabled,
                                      Float elevation) {
     for (ModifiedLabel modifiedLabel : modifiedLabels) {
@@ -543,6 +583,11 @@ public class LabelController implements Controller {
         label.setStyle(label.getStyle() != null
             ? label.getStyle().deriveStyle(fontName)
             : defaultStyle.deriveStyle(fontName));
+      }
+      if (fontSize != null) {
+        label.setStyle(label.getStyle() != null
+            ? label.getStyle().deriveStyle(fontSize)
+            : defaultStyle.deriveStyle(fontSize));
       }
       if (color != null) {
         label.setColor(color);
