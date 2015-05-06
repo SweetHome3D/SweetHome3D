@@ -309,6 +309,13 @@ public enum LengthUnit {
                                                 '\u215d',   // 5/8
                                                 '\u00be',   // 3/4
                                                 '\u215e'};  // 7/8        
+        final String [] inchFractionStrings  = {"1/8",
+                                                "1/4",  
+                                                "3/8",
+                                                "1/2",
+                                                "5/8",
+                                                "3/4",
+                                                "7/8"};         
         this.lengthFormat = new DecimalFormat("0.000\"") {
             @Override
             public StringBuffer format(double number, StringBuffer result,
@@ -401,9 +408,13 @@ public enum LengthUnit {
                 return value;
               }
 
-              char fractionChar = text.charAt(numberPosition.getIndex());              
+              char fractionChar = text.charAt(numberPosition.getIndex());    
+              String fractionString = text.length() - numberPosition.getIndex() >= 3 
+                  ? text.substring(numberPosition.getIndex(), numberPosition.getIndex() + 3)
+                  : null;
               for (int i = 0; i < inchFractionCharacters.length; i++) {
-                if (inchFractionCharacters [i] == fractionChar) {
+                if (inchFractionCharacters [i] == fractionChar
+                    || inchFractionStrings [i].equals(fractionString)) {
                   // Check no decimal fraction was specified
                   int lastDecimalSeparatorIndex = text.lastIndexOf(getDecimalFormatSymbols().getDecimalSeparator(), 
                       numberPosition.getIndex() - 1);
@@ -415,7 +426,8 @@ public enum LengthUnit {
                     } else {
                       value += inchToCentimeter((i + 1) / 8f);
                     }
-                    parsePosition.setIndex(numberPosition.getIndex() + 1);
+                    parsePosition.setIndex(numberPosition.getIndex() 
+                        + (inchFractionCharacters [i] == fractionChar ? 1 : 3));
                     skipWhiteSpaces(text, parsePosition);
                     if (parsePosition.getIndex() < text.length() 
                         && text.charAt(parsePosition.getIndex()) == '\"') {
