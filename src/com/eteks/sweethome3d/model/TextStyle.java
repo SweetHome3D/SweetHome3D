@@ -22,8 +22,10 @@ package com.eteks.sweethome3d.model;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * The different attributes that defines a text style. 
@@ -37,7 +39,7 @@ public class TextStyle implements Serializable {
   private final boolean bold;
   private final boolean italic;
   
-  private static final Map<TextStyle,TextStyle> textStylesCache = new WeakHashMap<TextStyle,TextStyle>(); 
+  private static final List<WeakReference<TextStyle>> textStylesCache = new ArrayList<WeakReference<TextStyle>>(); 
   
   public TextStyle(float fontSize) {
     this(fontSize, false, false);    
@@ -52,12 +54,18 @@ public class TextStyle implements Serializable {
    * @since 5.0
    */
   public TextStyle(String fontName, float fontSize, boolean bold, boolean italic) {
+    this(fontName, fontSize, bold, italic, true);
+  }
+  
+  private TextStyle(String fontName, float fontSize, boolean bold, boolean italic, boolean cached) {
     this.fontName = fontName;
     this.fontSize = fontSize;
     this.bold = bold;
     this.italic = italic;
     
-    textStylesCache.put(this, this);
+    if (cached) {
+      textStylesCache.add(new WeakReference<TextStyle>(this));
+    }
   }
   
   /**
@@ -66,7 +74,25 @@ public class TextStyle implements Serializable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     
-    textStylesCache.put(this, this);
+    textStylesCache.add(new WeakReference<TextStyle>(this));
+  }
+  
+  /**
+   * Returns the text style instance matching the given parameters.
+   */
+  private TextStyle getInstance(String fontName, float fontSize, boolean bold, boolean italic) {
+    TextStyle textStyle = new TextStyle(fontName, fontSize, bold, italic, false);
+    for (Iterator<WeakReference<TextStyle>> it = textStylesCache.iterator(); it.hasNext(); ) {
+      WeakReference<TextStyle> ref = it.next();
+      TextStyle cachedTextStyle = ref.get();
+      if (cachedTextStyle == null) {
+        it.remove();
+      } else if (cachedTextStyle.equals(textStyle)) {
+        return textStyle;
+      }
+    }
+    textStylesCache.add(new WeakReference<TextStyle>(textStyle));
+    return textStyle;
   }
   
   /**
@@ -106,7 +132,7 @@ public class TextStyle implements Serializable {
         || (fontName != null && fontName.equals(getFontName()))) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(fontName, getFontSize(), isBold(), isItalic()));
+      return getInstance(fontName, getFontSize(), isBold(), isItalic());
     }
   }
 
@@ -117,7 +143,7 @@ public class TextStyle implements Serializable {
     if (getFontSize() == fontSize) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(getFontName(), fontSize, isBold(), isItalic()));
+      return getInstance(getFontName(), fontSize, isBold(), isItalic());
     }
   }
 
@@ -128,7 +154,7 @@ public class TextStyle implements Serializable {
     if (isBold() == bold) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(getFontName(), getFontSize(), bold, isItalic()));
+      return getInstance(getFontName(), getFontSize(), bold, isItalic());
     }
   }
 
@@ -139,24 +165,10 @@ public class TextStyle implements Serializable {
     if (isItalic() == italic) {
       return this;
     } else {
-      return getCachedTextStyle(new TextStyle(getFontName(), getFontSize(), isBold(), italic));
+      return getInstance(getFontName(), getFontSize(), isBold(), italic);
     }
   }
 
-  /**
-   * Returns the text style instance equal to <code>textStyle</code> from cache 
-   * if it exists or <code>textStyle</code> itself after storing it in cache.
-   */
-  private TextStyle getCachedTextStyle(TextStyle textStyle) {
-    TextStyle cachedTextStyle = textStylesCache.get(textStyle);
-    if (cachedTextStyle != null) {
-      return cachedTextStyle;
-    } else {
-      textStylesCache.put(textStyle, textStyle);
-      return textStyle;
-    }
-  }
-  
   /**
    * Returns <code>true</code> if this text style is equal to <code>object</code>.
    */
