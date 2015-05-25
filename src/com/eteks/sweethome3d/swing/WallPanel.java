@@ -818,8 +818,11 @@ public class WallPanel extends JPanel implements DialogView {
     BaseboardChoiceController.BaseboardPaint paint = baseboardChoiceController.getPaint();
     Float thickness = baseboardChoiceController.getThickness();
     Float height = baseboardChoiceController.getHeight();
-    final JComponent view = (JComponent)baseboardChoiceController.getView();    
-    if (SwingTools.showConfirmDialog(parent, view, title, (JComponent)view.getComponent(0)) != JOptionPane.OK_OPTION) {
+    JComponent view = (JComponent)baseboardChoiceController.getView();    
+    // Add baseboard component to a panel with a flow layout to avoid it getting too large
+    JPanel panel = new JPanel();
+    panel.add(view);
+    if (SwingTools.showConfirmDialog(parent, panel, title, (JComponent)view.getComponent(0)) != JOptionPane.OK_OPTION) {
       // Restore initial values
       baseboardChoiceController.setVisible(visible);
       baseboardChoiceController.setColor(color);
