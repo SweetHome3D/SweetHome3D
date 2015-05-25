@@ -162,6 +162,12 @@ public interface ViewFactory {
                                                      TextureChoiceController textureChoiceController);
 
   /**
+   * Returns a new view that edits the baseboard of its controller.  
+   */
+  public abstract View createBaseboardChoiceView(UserPreferences preferences,
+                                                 BaseboardChoiceController baseboardChoiceController);
+
+  /**
    * Returns a new view that edits the materials of its controller.  
    */
   public abstract View createModelMaterialsView(UserPreferences preferences,

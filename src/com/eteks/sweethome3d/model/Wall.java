@@ -43,8 +43,8 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public enum Property {X_START, Y_START, X_END, Y_END, ARC_EXTENT, WALL_AT_START, WALL_AT_END, 
                         THICKNESS, HEIGHT, HEIGHT_AT_END, 
-                        LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, 
-                        RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS,
+                        LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, LEFT_SIDE_BASEBOARD, 
+                        RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS, RIGHT_SIDE_BASEBOARD,
                         PATTERN, TOP_COLOR, LEVEL}
   
   private static final long serialVersionUID = 1L;
@@ -62,9 +62,11 @@ public class Wall implements Serializable, Selectable, Elevatable {
   private Integer      leftSideColor;
   private HomeTexture  leftSideTexture;
   private float        leftSideShininess;
+  private Baseboard    leftSideBaseboard;
   private Integer      rightSideColor;
   private HomeTexture  rightSideTexture;
   private float        rightSideShininess;
+  private Baseboard    rightSideBaseboard;
   private boolean      symmetric = true;
   private TextureImage pattern;  
   private Integer      topColor;
@@ -72,6 +74,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
+  private transient float [][] pointsIncludingBaseboardsCache;
 
 
   /**
@@ -599,6 +602,52 @@ public class Wall implements Serializable, Selectable, Elevatable {
   }
 
   /**
+   * Returns the left side baseboard of this wall.
+   * @since 5.0
+   */
+  public Baseboard getLeftSideBaseboard() {
+    return this.leftSideBaseboard;
+  }
+
+  /**
+   * Sets the left side baseboard of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * @since 5.0
+   */
+  public void setLeftSideBaseboard(Baseboard leftSideBaseboard) {
+    if (leftSideBaseboard != this.leftSideBaseboard
+        && (leftSideBaseboard == null || !leftSideBaseboard.equals(this.leftSideBaseboard))) {
+      Baseboard oldLeftSideBaseboard = this.leftSideBaseboard;
+      this.leftSideBaseboard = leftSideBaseboard;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_BASEBOARD.name(), oldLeftSideBaseboard, leftSideBaseboard);
+    }
+  }
+
+  /**
+   * Returns the right side baseboard of this wall.
+   * @since 5.0
+   */
+  public Baseboard getRightSideBaseboard() {
+    return this.rightSideBaseboard;
+  }
+
+  /**
+   * Sets the right side baseboard of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * @since 5.0
+   */
+  public void setRightSideBaseboard(Baseboard rightSideBaseboard) {
+    if (rightSideBaseboard != this.rightSideBaseboard
+        && (rightSideBaseboard == null || !rightSideBaseboard.equals(this.rightSideBaseboard))) {
+      Baseboard oldRightSideBaseboard = this.rightSideBaseboard;
+      this.rightSideBaseboard = rightSideBaseboard;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_BASEBOARD.name(), oldRightSideBaseboard, rightSideBaseboard);
+    }
+  }
+
+  /**
    * Returns the pattern of this wall in the plan.
    * @since 3.3
    */
@@ -694,157 +743,197 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   private void clearPointsCache() {
     this.pointsCache = null;
+    this.pointsIncludingBaseboardsCache = null;
     if (this.wallAtStart != null ) {
       this.wallAtStart.pointsCache = null;
+      this.wallAtStart.pointsIncludingBaseboardsCache = null;
     }
     if (this.wallAtEnd != null) {
       this.wallAtEnd.pointsCache = null;
+      this.wallAtEnd.pointsIncludingBaseboardsCache = null;
     }
   }
   
   /**
-   * Returns the points of each corner of a wall. 
+   * Returns the points of each corner of a wall not including its baseboards. 
    * @return an array of the (x,y) coordinates of the wall corners.
    *    For a straight wall, the points at index 0 and 3 indicates the start of the wall, 
    *    while the points at index 1 and 2 indicates the end of the wall. 
    */
   public float [][] getPoints() {
-    if (this.pointsCache == null) {
-      final float epsilon = 0.01f;
-      float [][] wallPoints = getUnjoinedShapePoints();
-      int leftSideStartPointIndex = 0;
-      int rightSideStartPointIndex = wallPoints.length - 1;
-      int leftSideEndPointIndex = wallPoints.length / 2 - 1;
-      int rightSideEndPointIndex = wallPoints.length / 2;
-      float limit = 2 * this.thickness;
-      // If wall is joined to a wall at its start, 
-      // compute the intersection between their outlines 
-      if (this.wallAtStart != null) {
-        float [][] wallAtStartPoints = this.wallAtStart.getUnjoinedShapePoints();
-        int wallAtStartLeftSideStartPointIndex = 0;
-        int wallAtStartRightSideStartPointIndex = wallAtStartPoints.length - 1;
-        int wallAtStartLeftSideEndPointIndex = wallAtStartPoints.length / 2 - 1;
-        int wallAtStartRightSideEndPointIndex = wallAtStartPoints.length / 2;
-        boolean wallAtStartJoinedAtEnd = this.wallAtStart.getWallAtEnd() == this
-            // Check the coordinates when walls are joined to each other at both ends 
-            && (this.wallAtStart.getWallAtStart() != this
-                || (this.wallAtStart.xEnd == this.xStart
-                    && this.wallAtStart.yEnd == this.yStart));
-        boolean wallAtStartJoinedAtStart = this.wallAtStart.getWallAtStart() == this
-            // Check the coordinates when walls are joined to each other at both ends 
-            && (this.wallAtStart.getWallAtEnd() != this
-                || (this.wallAtStart.xStart == this.xStart
-                    && this.wallAtStart.yStart == this.yStart));
-        if (wallAtStartJoinedAtEnd) {
-          computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
-              wallAtStartPoints [wallAtStartLeftSideEndPointIndex], wallAtStartPoints [wallAtStartLeftSideEndPointIndex - 1], limit);
-          computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
-              wallAtStartPoints [wallAtStartRightSideEndPointIndex], wallAtStartPoints [wallAtStartRightSideEndPointIndex + 1], limit);
-
-          // If the computed start point of this wall and the computed end point of the wall at start 
-          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
-          if (this.wallAtStart.pointsCache != null) {
-            if (Math.abs(wallPoints [leftSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [leftSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex][1]) < epsilon) {
-              wallPoints [leftSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartLeftSideEndPointIndex];
-            }                        
-            if (Math.abs(wallPoints [rightSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [rightSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex][1]) < epsilon) {
-              wallPoints [rightSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartRightSideEndPointIndex];
-            }
-          }
-        } else if (wallAtStartJoinedAtStart) {
-          computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
-              wallAtStartPoints [wallAtStartRightSideStartPointIndex], wallAtStartPoints [wallAtStartRightSideStartPointIndex - 1], limit);
-          computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
-              wallAtStartPoints [wallAtStartLeftSideStartPointIndex], wallAtStartPoints [wallAtStartLeftSideStartPointIndex + 1], limit);
-          
-          // If the computed start point of this wall and the computed start point of the wall at start 
-          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
-          if (this.wallAtStart.pointsCache != null) {
-            if (Math.abs(wallPoints [leftSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [leftSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex][1]) < epsilon) {
-              wallPoints [leftSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartRightSideStartPointIndex];
-            }                            
-            if (this.wallAtStart.pointsCache != null
-                && Math.abs(wallPoints [rightSideStartPointIndex][0] - this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [rightSideStartPointIndex][1] - this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex][1]) < epsilon) {
-              wallPoints [rightSideStartPointIndex] = this.wallAtStart.pointsCache [wallAtStartLeftSideStartPointIndex];
-            }
-          }
-        }
-      }
-    
-      // If wall is joined to a wall at its end, 
-      // compute the intersection between their outlines 
-      if (this.wallAtEnd != null) {
-        float [][] wallAtEndPoints = this.wallAtEnd.getUnjoinedShapePoints();
-        int wallAtEndLeftSideStartPointIndex = 0;
-        int wallAtEndRightSideStartPointIndex = wallAtEndPoints.length - 1;
-        int wallAtEndLeftSideEndPointIndex = wallAtEndPoints.length / 2 - 1;
-        int wallAtEndRightSideEndPointIndex = wallAtEndPoints.length / 2;
-        boolean wallAtEndJoinedAtStart = this.wallAtEnd.getWallAtStart() == this
-            // Check the coordinates when walls are joined to each other at both ends 
-            && (this.wallAtEnd.getWallAtEnd() != this
-                || (this.wallAtEnd.xStart == this.xEnd
-                    && this.wallAtEnd.yStart == this.yEnd));
-        boolean wallAtEndJoinedAtEnd = this.wallAtEnd.getWallAtEnd() == this
-            // Check the coordinates when walls are joined to each other at both ends 
-            && (this.wallAtEnd.getWallAtStart() != this
-                || (this.wallAtEnd.xEnd == this.xEnd
-                    && this.wallAtEnd.yEnd == this.yEnd));
-        if (wallAtEndJoinedAtStart) {
-          computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1], 
-              wallAtEndPoints [wallAtEndLeftSideStartPointIndex], wallAtEndPoints [wallAtEndLeftSideStartPointIndex + 1], limit);
-          computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
-              wallAtEndPoints [wallAtEndRightSideStartPointIndex], wallAtEndPoints [wallAtEndRightSideStartPointIndex - 1], limit);
-
-          // If the computed end point of this wall and the computed start point of the wall at end 
-          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
-          if (this.wallAtEnd.pointsCache != null) {
-            if (Math.abs(wallPoints [leftSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [leftSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex][1]) < epsilon) {
-              wallPoints [leftSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndLeftSideStartPointIndex];
-            }                        
-            if (Math.abs(wallPoints [rightSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [rightSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex][1]) < epsilon) {
-              wallPoints [rightSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndRightSideStartPointIndex];
-            }
-          }
-        } else if (wallAtEndJoinedAtEnd) {
-          computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1],  
-              wallAtEndPoints [wallAtEndRightSideEndPointIndex], wallAtEndPoints [wallAtEndRightSideEndPointIndex + 1], limit);
-          computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
-              wallAtEndPoints [wallAtEndLeftSideEndPointIndex], wallAtEndPoints [wallAtEndLeftSideEndPointIndex - 1], limit);
-
-          // If the computed end point of this wall and the computed start point of the wall at end 
-          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
-          if (this.wallAtEnd.pointsCache != null) {
-            if (Math.abs(wallPoints [leftSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [leftSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex][1]) < epsilon) {
-              wallPoints [leftSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndRightSideEndPointIndex];
-            }                        
-            if (Math.abs(wallPoints [rightSideEndPointIndex][0] - this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex][0]) < epsilon
-                && Math.abs(wallPoints [rightSideEndPointIndex][1] - this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex][1]) < epsilon) {
-              wallPoints [rightSideEndPointIndex] = this.wallAtEnd.pointsCache [wallAtEndLeftSideEndPointIndex];
-            }
-          }
-        }
-      }
-      // Cache shape
-      this.pointsCache = wallPoints;
-    }
-    float [][] points = new float [this.pointsCache.length][];
-    for (int i = 0; i < this.pointsCache.length; i++) {
-      points [i] = this.pointsCache [i].clone();
-    }
-    return points;
+    return getPoints(false);
   }
 
   /**
-   * Computes the rectangle or the circle arc of a wall with its thickness.
+   * Returns the points of each corner of a wall possibly including its baseboards. 
+   * @since 5.0
+   */
+  public float [][] getPoints(boolean includeBaseboards) {
+    if (includeBaseboards
+        && (this.leftSideBaseboard != null
+            || this.rightSideBaseboard != null)) {
+      if (this.pointsIncludingBaseboardsCache == null) {
+        this.pointsIncludingBaseboardsCache = getShapePoints(true);
+      }
+      return clonePoints(this.pointsIncludingBaseboardsCache);
+    } else {
+      if (this.pointsCache == null) {
+        this.pointsCache = getShapePoints(false);
+      }
+      return clonePoints(this.pointsCache);
+    }
+  }
+
+  /**
+   * Return a clone of the given <code>points</code> array.
+   */
+  private float [][] clonePoints(float [][] points) {
+    float [][] clonedPoints = new float [points.length][];
+    for (int i = 0; i < points.length; i++) {
+      clonedPoints [i] = points [i].clone();
+    }
+    return clonedPoints;
+  }
+
+  /**
+   * Returns the points of the wall possibly including baseboards thickness.
+   */
+  private float [][] getShapePoints(boolean includeBaseboards) {
+    final float epsilon = 0.01f;
+    float [][] wallPoints = getUnjoinedShapePoints(includeBaseboards);
+    int leftSideStartPointIndex = 0;
+    int rightSideStartPointIndex = wallPoints.length - 1;
+    int leftSideEndPointIndex = wallPoints.length / 2 - 1;
+    int rightSideEndPointIndex = wallPoints.length / 2;
+    float limit = 2 * this.thickness;
+    // If wall is joined to a wall at its start, 
+    // compute the intersection between their outlines 
+    if (this.wallAtStart != null) {
+      float [][] wallAtStartPoints = this.wallAtStart.getUnjoinedShapePoints(includeBaseboards);
+      int wallAtStartLeftSideStartPointIndex = 0;
+      int wallAtStartRightSideStartPointIndex = wallAtStartPoints.length - 1;
+      int wallAtStartLeftSideEndPointIndex = wallAtStartPoints.length / 2 - 1;
+      int wallAtStartRightSideEndPointIndex = wallAtStartPoints.length / 2;
+      boolean wallAtStartJoinedAtEnd = this.wallAtStart.getWallAtEnd() == this
+          // Check the coordinates when walls are joined to each other at both ends 
+          && (this.wallAtStart.getWallAtStart() != this
+              || (this.wallAtStart.xEnd == this.xStart
+                  && this.wallAtStart.yEnd == this.yStart));
+      boolean wallAtStartJoinedAtStart = this.wallAtStart.getWallAtStart() == this
+          // Check the coordinates when walls are joined to each other at both ends 
+          && (this.wallAtStart.getWallAtEnd() != this
+              || (this.wallAtStart.xStart == this.xStart
+                  && this.wallAtStart.yStart == this.yStart));
+      float [][] wallAtStartPointsCache = includeBaseboards 
+          ? this.wallAtStart.pointsIncludingBaseboardsCache
+          : this.wallAtStart.pointsCache;
+      if (wallAtStartJoinedAtEnd) {
+        computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
+            wallAtStartPoints [wallAtStartLeftSideEndPointIndex], wallAtStartPoints [wallAtStartLeftSideEndPointIndex - 1], limit);
+        computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
+            wallAtStartPoints [wallAtStartRightSideEndPointIndex], wallAtStartPoints [wallAtStartRightSideEndPointIndex + 1], limit);
+
+        // If the computed start point of this wall and the computed end point of the wall at start 
+        // are equal to within epsilon, share the exact same point to avoid computing errors on areas
+        if (wallAtStartPointsCache != null) {
+          if (Math.abs(wallPoints [leftSideStartPointIndex][0] - wallAtStartPointsCache [wallAtStartLeftSideEndPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [leftSideStartPointIndex][1] - wallAtStartPointsCache [wallAtStartLeftSideEndPointIndex][1]) < epsilon) {
+            wallPoints [leftSideStartPointIndex] = wallAtStartPointsCache [wallAtStartLeftSideEndPointIndex];
+          }                        
+          if (Math.abs(wallPoints [rightSideStartPointIndex][0] - wallAtStartPointsCache [wallAtStartRightSideEndPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [rightSideStartPointIndex][1] - wallAtStartPointsCache [wallAtStartRightSideEndPointIndex][1]) < epsilon) {
+            wallPoints [rightSideStartPointIndex] = wallAtStartPointsCache [wallAtStartRightSideEndPointIndex];
+          }
+        }
+      } else if (wallAtStartJoinedAtStart) {
+        computeIntersection(wallPoints [leftSideStartPointIndex], wallPoints [leftSideStartPointIndex + 1], 
+            wallAtStartPoints [wallAtStartRightSideStartPointIndex], wallAtStartPoints [wallAtStartRightSideStartPointIndex - 1], limit);
+        computeIntersection(wallPoints [rightSideStartPointIndex], wallPoints [rightSideStartPointIndex - 1],  
+            wallAtStartPoints [wallAtStartLeftSideStartPointIndex], wallAtStartPoints [wallAtStartLeftSideStartPointIndex + 1], limit);
+        
+        // If the computed start point of this wall and the computed start point of the wall at start 
+        // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+        if (wallAtStartPointsCache != null) {
+          if (Math.abs(wallPoints [leftSideStartPointIndex][0] - wallAtStartPointsCache [wallAtStartRightSideStartPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [leftSideStartPointIndex][1] - wallAtStartPointsCache [wallAtStartRightSideStartPointIndex][1]) < epsilon) {
+            wallPoints [leftSideStartPointIndex] = wallAtStartPointsCache [wallAtStartRightSideStartPointIndex];
+          }                            
+          if (wallAtStartPointsCache != null
+              && Math.abs(wallPoints [rightSideStartPointIndex][0] - wallAtStartPointsCache [wallAtStartLeftSideStartPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [rightSideStartPointIndex][1] - wallAtStartPointsCache [wallAtStartLeftSideStartPointIndex][1]) < epsilon) {
+            wallPoints [rightSideStartPointIndex] = wallAtStartPointsCache [wallAtStartLeftSideStartPointIndex];
+          }
+        }
+      }
+    }
+  
+    // If wall is joined to a wall at its end, 
+    // compute the intersection between their outlines 
+    if (this.wallAtEnd != null) {
+      float [][] wallAtEndPoints = this.wallAtEnd.getUnjoinedShapePoints(includeBaseboards);
+      int wallAtEndLeftSideStartPointIndex = 0;
+      int wallAtEndRightSideStartPointIndex = wallAtEndPoints.length - 1;
+      int wallAtEndLeftSideEndPointIndex = wallAtEndPoints.length / 2 - 1;
+      int wallAtEndRightSideEndPointIndex = wallAtEndPoints.length / 2;
+      boolean wallAtEndJoinedAtStart = this.wallAtEnd.getWallAtStart() == this
+          // Check the coordinates when walls are joined to each other at both ends 
+          && (this.wallAtEnd.getWallAtEnd() != this
+              || (this.wallAtEnd.xStart == this.xEnd
+                  && this.wallAtEnd.yStart == this.yEnd));
+      boolean wallAtEndJoinedAtEnd = this.wallAtEnd.getWallAtEnd() == this
+          // Check the coordinates when walls are joined to each other at both ends 
+          && (this.wallAtEnd.getWallAtStart() != this
+              || (this.wallAtEnd.xEnd == this.xEnd
+                  && this.wallAtEnd.yEnd == this.yEnd));
+      float [][] wallAtEndPointsCache = includeBaseboards 
+          ? this.wallAtEnd.pointsIncludingBaseboardsCache
+          : this.wallAtEnd.pointsCache;
+      if (wallAtEndJoinedAtStart) {
+        computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1], 
+            wallAtEndPoints [wallAtEndLeftSideStartPointIndex], wallAtEndPoints [wallAtEndLeftSideStartPointIndex + 1], limit);
+        computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
+            wallAtEndPoints [wallAtEndRightSideStartPointIndex], wallAtEndPoints [wallAtEndRightSideStartPointIndex - 1], limit);
+
+        // If the computed end point of this wall and the computed start point of the wall at end 
+        // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+        if (wallAtEndPointsCache != null) {
+          if (Math.abs(wallPoints [leftSideEndPointIndex][0] - wallAtEndPointsCache [wallAtEndLeftSideStartPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [leftSideEndPointIndex][1] - wallAtEndPointsCache [wallAtEndLeftSideStartPointIndex][1]) < epsilon) {
+            wallPoints [leftSideEndPointIndex] = wallAtEndPointsCache [wallAtEndLeftSideStartPointIndex];
+          }                        
+          if (Math.abs(wallPoints [rightSideEndPointIndex][0] - wallAtEndPointsCache [wallAtEndRightSideStartPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [rightSideEndPointIndex][1] - wallAtEndPointsCache [wallAtEndRightSideStartPointIndex][1]) < epsilon) {
+            wallPoints [rightSideEndPointIndex] = wallAtEndPointsCache [wallAtEndRightSideStartPointIndex];
+          }
+        }
+      } else if (wallAtEndJoinedAtEnd) {
+        computeIntersection(wallPoints [leftSideEndPointIndex], wallPoints [leftSideEndPointIndex - 1],  
+            wallAtEndPoints [wallAtEndRightSideEndPointIndex], wallAtEndPoints [wallAtEndRightSideEndPointIndex + 1], limit);
+        computeIntersection(wallPoints [rightSideEndPointIndex], wallPoints [rightSideEndPointIndex + 1], 
+            wallAtEndPoints [wallAtEndLeftSideEndPointIndex], wallAtEndPoints [wallAtEndLeftSideEndPointIndex - 1], limit);
+
+        // If the computed end point of this wall and the computed start point of the wall at end 
+        // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+        if (wallAtEndPointsCache != null) {
+          if (Math.abs(wallPoints [leftSideEndPointIndex][0] - wallAtEndPointsCache [wallAtEndRightSideEndPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [leftSideEndPointIndex][1] - wallAtEndPointsCache [wallAtEndRightSideEndPointIndex][1]) < epsilon) {
+            wallPoints [leftSideEndPointIndex] = wallAtEndPointsCache [wallAtEndRightSideEndPointIndex];
+          }                        
+          if (Math.abs(wallPoints [rightSideEndPointIndex][0] - wallAtEndPointsCache [wallAtEndLeftSideEndPointIndex][0]) < epsilon
+              && Math.abs(wallPoints [rightSideEndPointIndex][1] - wallAtEndPointsCache [wallAtEndLeftSideEndPointIndex][1]) < epsilon) {
+            wallPoints [rightSideEndPointIndex] = wallAtEndPointsCache [wallAtEndLeftSideEndPointIndex];
+          }
+        }
+      }
+    }
+    return wallPoints;
+  }
+
+  /**
+   * Computes the rectangle or the circle arc of a wall according to its thickness 
+   * and possibly the thickness of its baseboards. 
    */  
-  private float [][] getUnjoinedShapePoints() {
+  private float [][] getUnjoinedShapePoints(boolean includeBaseboards) {
     if (this.arcExtent != null
         && this.arcExtent != 0
         && Point2D.distanceSq(this.xStart, this.yStart, this.xEnd, this.yEnd) > 1E-10) {
@@ -857,6 +946,23 @@ public class Wall implements Serializable, Selectable, Elevatable {
       float exteriorArcLength = exteriorArcRadius * Math.abs(this.arcExtent);
       float angleDelta = this.arcExtent / (float)Math.sqrt(exteriorArcLength);
       int angleStepCount = (int)(this.arcExtent / angleDelta);
+      if (includeBaseboards) {
+        if (angleDelta > 0) {
+          if (this.leftSideBaseboard != null) {
+            exteriorArcRadius += this.leftSideBaseboard.getThickness();
+          }
+          if (this.rightSideBaseboard != null) {
+            interiorArcRadius -= this.rightSideBaseboard.getThickness();
+          }
+        } else {
+          if (this.leftSideBaseboard != null) {
+            interiorArcRadius -= this.leftSideBaseboard.getThickness();
+          }
+          if (this.rightSideBaseboard != null) {
+            exteriorArcRadius += this.rightSideBaseboard.getThickness();
+          }
+        }
+      }
       List<float[]> wallPoints = new ArrayList<float[]>((angleStepCount + 2) * 2);      
       if (this.symmetric) {
         if (Math.abs(this.arcExtent - angleStepCount * angleDelta) > 1E-6) {
@@ -880,13 +986,25 @@ public class Wall implements Serializable, Selectable, Elevatable {
     } else { 
       double angle = Math.atan2(this.yEnd - this.yStart, 
                                 this.xEnd - this.xStart);
-      float dx = (float)Math.sin(angle) * this.thickness / 2;
-      float dy = (float)Math.cos(angle) * this.thickness / 2;
+      float sin = (float)Math.sin(angle);
+      float cos = (float)Math.cos(angle);
+      float leftSideTickness = this.thickness / 2;
+      if (includeBaseboards && this.leftSideBaseboard != null) {
+        leftSideTickness += this.leftSideBaseboard.getThickness();
+      }
+      float leftSideDx = sin * leftSideTickness;
+      float leftSideDy = cos * leftSideTickness;
+      float rightSideTickness = this.thickness / 2;
+      if (includeBaseboards && this.rightSideBaseboard != null) {
+        rightSideTickness += this.rightSideBaseboard.getThickness();
+      }
+      float rightSideDx = sin * rightSideTickness;
+      float rightSideDy = cos * rightSideTickness;
       return new float [][] {
-          {this.xStart + dx, this.yStart - dy},
-          {this.xEnd   + dx, this.yEnd   - dy},
-          {this.xEnd   - dx, this.yEnd   + dy},
-          {this.xStart - dx, this.yStart + dy}};
+          {this.xStart + leftSideDx, this.yStart - leftSideDy},
+          {this.xEnd   + leftSideDx, this.yEnd   - leftSideDy},
+          {this.xEnd   - rightSideDx, this.yEnd   + rightSideDy},
+          {this.xStart - rightSideDx, this.yStart + rightSideDy}};
     }
   }
 
@@ -964,16 +1082,24 @@ public class Wall implements Serializable, Selectable, Elevatable {
   public boolean intersectsRectangle(float x0, float y0, float x1, float y1) {
     Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
     rectangle.add(x1, y1);
-    return getShape().intersects(rectangle);
+    return getShape(false).intersects(rectangle);
   }
   
   /**
-   * Returns <code>true</code> if this wall contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if this wall contains the point at (<code>x</code>, <code>y</code>)
+   * not including its baseboards, with a given <code>margin</code>.
    */
   public boolean containsPoint(float x, float y, float margin) {
-    return containsShapeAtWithMargin(getShape(), x, y, margin);
+    return containsPoint(x, y, false, margin);
+  }
+  
+  /**
+   * Returns <code>true</code> if this wall contains the point at (<code>x</code>, <code>y</code>)
+   * possibly including its baseboards, with a given <code>margin</code>.
+   * @since 5.0
+   */
+  public boolean containsPoint(float x, float y, boolean includeBaseboards, float margin) {
+    return containsShapeAtWithMargin(getShape(includeBaseboards), x, y, margin);
   }
   
   /**
@@ -1016,8 +1142,8 @@ public class Wall implements Serializable, Selectable, Elevatable {
   /**
    * Returns the shape matching this wall.
    */
-  private Shape getShape() {
-    float [][] wallPoints = getPoints();
+  private Shape getShape(boolean includeBaseboards) {
+    float [][] wallPoints = getPoints(includeBaseboards);
     GeneralPath wallPath = new GeneralPath();
     wallPath.moveTo(wallPoints [0][0], wallPoints [0][1]);
     for (int i = 1; i < wallPoints.length; i++) {
@@ -1076,6 +1202,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
       clone.wallAtEnd = null;
       clone.level = null;
       clone.pointsCache = null;
+      clone.pointsIncludingBaseboardsCache = null;
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 

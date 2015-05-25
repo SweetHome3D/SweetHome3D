@@ -44,6 +44,7 @@ import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.BaseboardChoiceController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
@@ -79,6 +80,7 @@ public class RoomPanel extends JPanel implements DialogView {
   private JComponent            wallSidesTextureComponent;
   private JRadioButton          wallSidesMattRadioButton;
   private JRadioButton          wallSidesShinyRadioButton;
+  private JComponent            wallSidesBaseboardComponent;
   private boolean               firstWallChange;
   private String                dialogTitle;
 
@@ -513,8 +515,18 @@ public class RoomPanel extends JPanel implements DialogView {
       wallSidesShininessButtonGroup.add(this.wallSidesMattRadioButton);
       wallSidesShininessButtonGroup.add(this.wallSidesShinyRadioButton);
       updateWallSidesShininessRadioButtons(controller);
+      
     }
     
+    if (controller.isPropertyEditable(RoomController.Property.WALL_SIDES_BASEBOARD)) {
+      this.wallSidesBaseboardComponent = (JComponent)controller.getWallSidesBaseboardController().getView();
+      controller.getWallSidesBaseboardController().addPropertyChangeListener(BaseboardChoiceController.Property.VISIBLE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              selectSplitSurroundingWallsAtFirstChange();
+            }
+          });
+    }
     this.dialogTitle = preferences.getLocalizedString(RoomPanel.class, "room.title");
   }
 
@@ -738,6 +750,16 @@ public class RoomPanel extends JPanel implements DialogView {
       add(wallSidesPanel, new GridBagConstraints(
           2, 1, 1, 1, 1, 0, GridBagConstraints.NORTH,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    }
+    if (this.wallSidesBaseboardComponent != null) {
+      JPanel wallSidesBaseboardPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+          RoomPanel.class, "wallSidesBaseboardPanel.title"));
+      wallSidesBaseboardPanel.add(this.wallSidesBaseboardComponent, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      add(wallSidesBaseboardPanel, new GridBagConstraints(
+          3, 0, 1, 2, 0, 1, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     }
   }
   

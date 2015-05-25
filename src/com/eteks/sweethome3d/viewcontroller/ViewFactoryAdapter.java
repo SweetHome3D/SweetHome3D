@@ -174,6 +174,14 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
+  public View createBaseboardChoiceView(UserPreferences preferences,
+                                        BaseboardChoiceController baseboardChoiceController) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @throws UnsupportedOperationException
+   */
   public View createModelMaterialsView(UserPreferences preferences, 
                                        ModelMaterialsController modelMaterialsController) {
     throw new UnsupportedOperationException();

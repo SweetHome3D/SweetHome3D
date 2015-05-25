@@ -96,8 +96,10 @@ public class FileUserPreferences extends UserPreferences {
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
   private static final String NEW_WALL_PATTERN                          = "newWallPattern";
-  private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                        = "newWallThickness";
+  private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
+  private static final String NEW_WALL_BASEBOARD_THICKNESS              = "newWallBaseboardThickness";
+  private static final String NEW_WALL_BASEBOARD_HEIGHT                 = "newWallBaseboardHeight";
   private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
   private static final String CHECK_UPDATES_ENABLED                     = "checkUpdatesEnabled";
   private static final String UPDATES_MINIMUM_DATE                      = "updatesMinimumDate";
@@ -299,6 +301,10 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
         defaultPreferences.getNewWallHeight()));    
+    setNewWallBaseboardThickness(preferences.getFloat(NEW_WALL_BASEBOARD_THICKNESS, 
+        defaultPreferences.getNewWallBaseboardThickness()));
+    setNewWallBaseboardHeight(preferences.getFloat(NEW_WALL_BASEBOARD_HEIGHT,
+        defaultPreferences.getNewWallBaseboardHeight()));
     setNewFloorThickness(preferences.getFloat(NEW_FLOOR_THICKNESS, 
         defaultPreferences.getNewFloorThickness()));
     setCheckUpdatesEnabled(preferences.getBoolean(CHECK_UPDATES_ENABLED,
@@ -860,6 +866,8 @@ public class FileUserPreferences extends UserPreferences {
     }
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
+    preferences.putFloat(NEW_WALL_BASEBOARD_THICKNESS, getNewWallBaseboardThickness());   
+    preferences.putFloat(NEW_WALL_BASEBOARD_HEIGHT, getNewWallBaseboardHeight());
     preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());   
     preferences.putBoolean(CHECK_UPDATES_ENABLED, isCheckUpdatesEnabled());
     Long updatesMinimumDate = getUpdatesMinimumDate();

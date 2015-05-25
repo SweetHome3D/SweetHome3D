@@ -28,6 +28,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
+import com.eteks.sweethome3d.viewcontroller.BaseboardChoiceController;
 import com.eteks.sweethome3d.viewcontroller.CompassController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
@@ -250,6 +251,14 @@ public class SwingViewFactory implements ViewFactory {
   public TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                             TextureChoiceController textureChoiceController) {
     return new TextureChoiceComponent(preferences, textureChoiceController);
+  }
+
+  /**
+   * Returns a new view that edits the baseboard of its controller.  
+   */
+  public View createBaseboardChoiceView(UserPreferences preferences,
+                                        BaseboardChoiceController baseboardChoiceController) {
+    return new BaseboardChoiceComponent(preferences, baseboardChoiceController);
   }
 
   /**

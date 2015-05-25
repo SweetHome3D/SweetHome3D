@@ -66,6 +66,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
@@ -1544,6 +1545,7 @@ public class HomeController implements Controller {
         wallController.setLeftSidePaint(WallController.WallPaint.DEFAULT);
       }
       wallController.setLeftSideShininess(clipboardWall.getLeftSideShininess());
+      wallController.getLeftSideBaseboardController().setBaseboard(clipboardWall.getLeftSideBaseboard());
       if (clipboardWall.getRightSideColor() != null) {
         wallController.setRightSideColor(clipboardWall.getRightSideColor());
         wallController.setRightSidePaint(WallController.WallPaint.COLORED);
@@ -1554,6 +1556,7 @@ public class HomeController implements Controller {
         wallController.setRightSidePaint(WallController.WallPaint.DEFAULT);
       }
       wallController.setRightSideShininess(clipboardWall.getRightSideShininess());
+      wallController.getRightSideBaseboardController().setBaseboard(clipboardWall.getRightSideBaseboard());
       wallController.setPattern(clipboardWall.getPattern());
       wallController.setTopColor(clipboardWall.getTopColor());
       wallController.setTopPaint(clipboardWall.getTopColor() != null

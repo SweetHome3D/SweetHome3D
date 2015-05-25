@@ -1251,27 +1251,24 @@ public class FurnitureController implements Controller {
     float margin = Math.min(piece.getWidth(), piece.getDepth()) * 0.05f;
     HomePieceOfFurniture highestSurroundingPiece = null;
     float highestElevation = Float.MIN_VALUE;
-    List<HomePieceOfFurniture> furnitureInSameGroup = getFurnitureInSameGroup(piece);
-    if (furnitureInSameGroup != null) {
-      for (HomePieceOfFurniture homePiece : furnitureInSameGroup) {
-        if (homePiece != piece 
-            && !ignoredFurniture.contains(homePiece)
-            && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
-            && homePiece.getDropOnTopElevation() >= 0) {
-          boolean surroundingPieceContainsPiece = true;
-          for (float [] point : piecePoints) {
-            if (!homePiece.containsPoint(point [0], point [1], margin)) {
-              surroundingPieceContainsPiece = false;
-              break;
-            }
+    for (HomePieceOfFurniture homePiece : getFurnitureInSameGroup(piece)) {
+      if (homePiece != piece 
+          && !ignoredFurniture.contains(homePiece)
+          && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
+          && homePiece.getDropOnTopElevation() >= 0) {
+        boolean surroundingPieceContainsPiece = true;
+        for (float [] point : piecePoints) {
+          if (!homePiece.containsPoint(point [0], point [1], margin)) {
+            surroundingPieceContainsPiece = false;
+            break;
           }
-          if (surroundingPieceContainsPiece) {
-            float elevation = homePiece.getElevation() 
-                + homePiece.getHeight() * homePiece.getDropOnTopElevation();
-            if (elevation > highestElevation) {
-              highestElevation = elevation;
-              highestSurroundingPiece = homePiece;
-            }
+        }
+        if (surroundingPieceContainsPiece) {
+          float elevation = homePiece.getElevation() 
+              + homePiece.getHeight() * homePiece.getDropOnTopElevation();
+          if (elevation > highestElevation) {
+            highestElevation = elevation;
+            highestSurroundingPiece = homePiece;
           }
         }
       }
@@ -1280,11 +1277,18 @@ public class FurnitureController implements Controller {
   }
   
   /**
-   * Returns the furniture list of the given <code>piece</code> which belongs to same group.
+   * Returns the furniture list of the given <code>piece</code> which belongs to same group
+   * or home furniture if it doesn't belong to home furniture.
    * @since 5.0
    */
   protected List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece) {
-    return getFurnitureInSameGroup(piece, this.home.getFurniture());
+    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+    List<HomePieceOfFurniture> furnitureInSameGroup = getFurnitureInSameGroup(piece, homeFurniture);
+    if (furnitureInSameGroup != null) {
+      return furnitureInSameGroup;
+    } else {
+      return homeFurniture;
+    }
   }
   
   private List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece, List<HomePieceOfFurniture> furniture) {

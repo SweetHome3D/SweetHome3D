@@ -49,6 +49,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -176,6 +177,7 @@ public class PlanController extends FurnitureController implements Controller {
   private float                           xLastMouseMove;
   private float                           yLastMouseMove;
   private Area                            wallsAreaCache;
+  private Area                            wallsIncludingBaseboardsAreaCache;
   private Area                            insideWallsAreaCache;
   private List<GeneralPath>               roomPathsCache;
   private Map<HomePieceOfFurniture, Area> furnitureSidesCache;
@@ -979,15 +981,19 @@ public class PlanController extends FurnitureController implements Controller {
       Integer rightSideColor = wall.getRightSideColor();
       HomeTexture rightSideTexture = wall.getRightSideTexture();
       float leftSideShininess = wall.getLeftSideShininess();
+      Baseboard leftSideBaseboard = wall.getLeftSideBaseboard();
       Integer leftSideColor = wall.getLeftSideColor();
       HomeTexture leftSideTexture = wall.getLeftSideTexture();
       float rightSideShininess = wall.getRightSideShininess();
+      Baseboard rightSideBaseboard = wall.getRightSideBaseboard();
       wall.setLeftSideColor(rightSideColor);
       wall.setLeftSideTexture(rightSideTexture);
       wall.setLeftSideShininess(rightSideShininess);
+      wall.setLeftSideBaseboard(rightSideBaseboard);
       wall.setRightSideColor(leftSideColor);
       wall.setRightSideTexture(leftSideTexture);
       wall.setRightSideShininess(leftSideShininess);
+      wall.setRightSideBaseboard(leftSideBaseboard);
       
       Float heightAtEnd = wall.getHeightAtEnd();
       if (heightAtEnd != null) {
@@ -1670,7 +1676,9 @@ public class PlanController extends FurnitureController implements Controller {
               || Wall.Property.ARC_EXTENT.name().equals(propertyName)
               || Wall.Property.LEVEL.name().equals(propertyName)
               || Wall.Property.HEIGHT.name().equals(propertyName)
-              || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)) {
+              || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)
+              || Wall.Property.LEFT_SIDE_BASEBOARD.name().equals(propertyName)
+              || Wall.Property.RIGHT_SIDE_BASEBOARD.name().equals(propertyName)) {
             resetAreaCache();
             // Unselect unreachable wall
             Wall wall = (Wall)ev.getSource();
@@ -1737,6 +1745,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   private void resetAreaCache() {
     wallsAreaCache = null;
+    wallsIncludingBaseboardsAreaCache = null;
     insideWallsAreaCache = null;
     roomPathsCache = null;
   }
@@ -1786,8 +1795,9 @@ public class PlanController extends FurnitureController implements Controller {
    * to appear on the top of the latter. 
    */
   protected void adjustMagnetizedPieceOfFurniture(HomePieceOfFurniture piece, float x, float y) {
+    boolean pieceElevationAdjusted = adjustPieceOfFurnitureElevation(piece) != null;
     Wall magnetWall = adjustPieceOfFurnitureOnWallAt(piece, x, y, true);
-    if (adjustPieceOfFurnitureElevation(piece) == null) {
+    if (!pieceElevationAdjusted) {
       adjustPieceOfFurnitureSideBySideAt(piece, magnetWall == null, magnetWall);
     }
   }
@@ -1803,7 +1813,9 @@ public class PlanController extends FurnitureController implements Controller {
     Level selectedLevel = this.home.getSelectedLevel();
     float [][] piecePoints = piece.getPoints();
     
-    Area wallsArea = getWallsArea();
+    final boolean includeBaseboards = !piece.isDoorOrWindow()
+        && piece.getElevation() == 0;
+    Area wallsArea = getWallsArea(includeBaseboards);
     Collection<Wall> walls = this.home.getWalls();
     
     Wall referenceWall = null;
@@ -1812,7 +1824,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Search if point (x, y) is contained in home walls with no margin
       for (Wall wall : walls) {
         if (wall.isAtLevel(selectedLevel) 
-            && wall.containsPoint(x, y, 0) 
+            && wall.containsPoint(x, y, includeBaseboards, 0) 
             && wall.getStartPointToEndPointDistance() > 0) {
           referenceWall = getReferenceWall(wall, x, y);
           break;
@@ -1822,7 +1834,7 @@ public class PlanController extends FurnitureController implements Controller {
         // If not found search if point (x, y) is contained in home walls with a margin
         for (Wall wall : walls) {
           if (wall.isAtLevel(selectedLevel)
-              && wall.containsPoint(x, y, margin)
+              && wall.containsPoint(x, y, includeBaseboards, 0) 
               && wall.getStartPointToEndPointDistance() > 0) {
             referenceWall = getReferenceWall(wall, x, y);
             break;
@@ -1840,7 +1852,7 @@ public class PlanController extends FurnitureController implements Controller {
       for (Wall wall : walls) {
         if (wall.isAtLevel(selectedLevel) 
             && wall.getStartPointToEndPointDistance() > 0) {
-          float [][] wallPoints = wall.getPoints();
+          float [][] wallPoints = wall.getPoints(includeBaseboards);
           Area wallAreaIntersection = new Area(getPath(wallPoints));
           wallAreaIntersection.intersect(pieceAreaWithMargin);
           if (!wallAreaIntersection.isEmpty()) {
@@ -1869,7 +1881,7 @@ public class PlanController extends FurnitureController implements Controller {
       float halfDepth = piece.getDepth() / 2;
       double wallAngle = Math.atan2(referenceWall.getYEnd() - referenceWall.getYStart(), 
           referenceWall.getXEnd() - referenceWall.getXStart());
-      float [][] wallPoints = referenceWall.getPoints();
+      float [][] wallPoints = referenceWall.getPoints(includeBaseboards);
       boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2;
       double cosWallAngle = Math.cos(wallAngle);
       double sinWallAngle = Math.sin(wallAngle);
@@ -1879,7 +1891,7 @@ public class PlanController extends FurnitureController implements Controller {
           wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
       boolean adjustOrientation = forceOrientation
           || piece.isDoorOrWindow() 
-          || referenceWall.containsPoint(x, y, PIXEL_MARGIN / getScale());
+          || referenceWall.containsPoint(x, y, includeBaseboards, PIXEL_MARGIN / getScale());
       if (adjustOrientation) {
         double distanceToPieceLeftSide = Line2D.ptLineDist(
             piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
@@ -1947,10 +1959,27 @@ public class PlanController extends FurnitureController implements Controller {
             referenceWall.getXEnd(), referenceWall.getYEnd());
         Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), (float)(pieceAngle - wallAngle));
         double rotatedBoundingBoxDepth = pieceBoundingBox.getBounds2D().getHeight();
-        double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
+        float relativeCCWToPieceCenterSignum = Math.signum(centerLine.relativeCCW(piece.getX(), piece.getY()));
+        float relativeCCWToPointSignum = Math.signum(centerLine.relativeCCW(x, y));
+        double distance = relativeCCWToPieceCenterSignum 
             * (-referenceWall.getThickness() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);
-        if (Math.signum(centerLine.relativeCCW(x, y)) != Math.signum(centerLine.relativeCCW(piece.getX(), piece.getY()))) {
-          distance -= Math.signum(centerLine.relativeCCW(x, y)) * (rotatedBoundingBoxDepth + referenceWall.getThickness());
+        if (includeBaseboards) {
+          if (relativeCCWToPieceCenterSignum > 0
+              && referenceWall.getLeftSideBaseboard() != null) {
+            distance -= relativeCCWToPieceCenterSignum * referenceWall.getLeftSideBaseboard().getThickness(); 
+          } else if (relativeCCWToPieceCenterSignum < 0
+                     && referenceWall.getRightSideBaseboard() != null) {
+            distance -= relativeCCWToPieceCenterSignum * referenceWall.getRightSideBaseboard().getThickness(); 
+          }
+        }
+        if (relativeCCWToPointSignum != relativeCCWToPieceCenterSignum) {
+          distance -= relativeCCWToPointSignum * (rotatedBoundingBoxDepth + referenceWall.getThickness()); 
+          if (referenceWall.getLeftSideBaseboard() != null) {
+            distance -= relativeCCWToPointSignum * referenceWall.getLeftSideBaseboard().getThickness(); 
+          } 
+          if (referenceWall.getRightSideBaseboard() != null) {
+            distance -= relativeCCWToPointSignum * referenceWall.getRightSideBaseboard().getThickness(); 
+          }
         }
         xPiece = piece.getX() + (float)(-distance * sinWallAngle);
         yPiece = piece.getY() + (float)(distance * cosWallAngle);
@@ -1960,7 +1989,7 @@ public class PlanController extends FurnitureController implements Controller {
           && (referenceWall.getArcExtent() == null // Ignore reoriented piece when (x, y) is inside a round wall
               || !adjustOrientation
               || Line2D.relativeCCW(referenceWall.getXStart(), referenceWall.getYStart(), 
-                  referenceWall.getXEnd(), referenceWall.getYEnd(), x, y) > 0)) {
+                    referenceWall.getXEnd(), referenceWall.getYEnd(), x, y) > 0)) {
         // Search if piece intersects some other walls and avoid it intersects the closest one 
         Area wallsAreaIntersection = new Area(wallsArea);
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
@@ -2008,7 +2037,7 @@ public class PlanController extends FurnitureController implements Controller {
       piece.setX(xPiece);
       piece.setY(yPiece);
       if (piece instanceof HomeDoorOrWindow) {
-        ((HomeDoorOrWindow) piece).setBoundToWall(true);
+        ((HomeDoorOrWindow)piece).setBoundToWall(true);
       }
       return referenceWall;
     } 
@@ -2032,6 +2061,8 @@ public class PlanController extends FurnitureController implements Controller {
           (float)(wall.getXArcCircleCenter() + Math.cos(angle - epsilonAngle) * radius), 
           (float)(wall.getYArcCircleCenter() - Math.sin(angle - epsilonAngle) * radius), wall.getThickness(), 0);
       wallPart.setArcExtent(epsilonAngle * 2);
+      wallPart.setLeftSideBaseboard(wall.getLeftSideBaseboard());
+      wallPart.setRightSideBaseboard(wall.getRightSideBaseboard());
       return wallPart;
     }
   }
@@ -4203,7 +4234,7 @@ public class PlanController extends FurnitureController implements Controller {
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
     super.addFurniture(furniture);
     if (this.preferences.isMagnetismEnabled()) {
-      Area wallsArea = getWallsArea();
+      Area wallsArea = getWallsArea(false);
       for (HomePieceOfFurniture piece : furniture) {
         if (piece instanceof HomeDoorOrWindow) {
           float [][] piecePoints = piece.getPoints();
@@ -5456,7 +5487,7 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath> getRoomPathsFromWalls() {
     if (this.roomPathsCache == null) {
       // Iterate over all the paths the walls area contains
-      Area wallsArea = getWallsArea();
+      Area wallsArea = getWallsArea(false);
       List<GeneralPath> roomPaths = getAreaPaths(wallsArea);
       Area insideWallsArea = new Area(wallsArea);
       for (GeneralPath roomPath : roomPaths) {
@@ -5508,19 +5539,26 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the area covered by walls.
    */
-  private Area getWallsArea() {
-    if (this.wallsAreaCache == null) {
+  private Area getWallsArea(boolean includeBaseboards) {
+    if (!includeBaseboards && this.wallsAreaCache == null
+        || includeBaseboards && this.wallsIncludingBaseboardsAreaCache == null) {
       // Compute walls area
       Area wallsArea = new Area();
       Level selectedLevel = this.home.getSelectedLevel();
       for (Wall wall : home.getWalls()) {
         if (wall.isAtLevel(selectedLevel)) {
-          wallsArea.add(new Area(getPath(wall.getPoints())));
+          wallsArea.add(new Area(getPath(wall.getPoints(includeBaseboards))));
         }
       }
-      this.wallsAreaCache = wallsArea;
+      if (includeBaseboards) {
+        this.wallsIncludingBaseboardsAreaCache = wallsArea;
+      } else {
+        this.wallsAreaCache = wallsArea;
+      }
     }
-    return this.wallsAreaCache;
+    return includeBaseboards 
+        ? this.wallsIncludingBaseboardsAreaCache
+        : this.wallsAreaCache;
   }
   
   /**
@@ -6503,8 +6541,9 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
         if (this.magnetismEnabled && !this.alignmentActivated) {
+          boolean elevationAdjusted = adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) != null;
           Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
-          if (adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) == null) {
+          if (!elevationAdjusted) {
             adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall);
           }
           if (magnetWall != null) {
@@ -6975,8 +7014,9 @@ public class PlanController extends FurnitureController implements Controller {
         this.draggedPieceOfFurniture.setElevation(this.elevationDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.move(x, y);
 
+        boolean elevationAdjusted = adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) != null;
         Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.draggedPieceOfFurniture, x, y, true);
-        if (adjustPieceOfFurnitureElevation(this.draggedPieceOfFurniture) == null) {
+        if (!elevationAdjusted) {
           adjustPieceOfFurnitureSideBySideAt(this.draggedPieceOfFurniture, magnetWall == null, magnetWall);
         }
         if (magnetWall != null) {
@@ -9853,7 +9893,7 @@ public class PlanController extends FurnitureController implements Controller {
             if (intersectionCount == 2
                 && doorPoints.length == 4) {
               // Find the intersection of the door with home walls
-              Area wallsDoorIntersection = new Area(getWallsArea());
+              Area wallsDoorIntersection = new Area(getWallsArea(false));
               wallsDoorIntersection.intersect(new Area(getPath(doorPoints)));
               // Reduce the size of intersection to its half
               float [][] intersectionPoints = getPathPoints(getPath(wallsDoorIntersection), false);

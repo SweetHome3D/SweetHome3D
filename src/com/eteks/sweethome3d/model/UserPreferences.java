@@ -50,10 +50,10 @@ public abstract class UserPreferences {
    */
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, NEW_FLOOR_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
-                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
-                        CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS,
-                        RECENT_COLORS, RECENT_TEXTURES}
+                        NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
+                        RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+                        AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, 
+                        AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -109,6 +109,8 @@ public abstract class UserPreferences {
   private TextureImage     newWallPattern;
   private float            newWallThickness;
   private float            newWallHeight;
+  private float            newWallBaseboardThickness;
+  private float            newWallBaseboardHeight;
   private float            newFloorThickness;
   private List<String>     recentHomes;
   private boolean          checkUpdatesEnabled;
@@ -760,6 +762,50 @@ public abstract class UserPreferences {
       this.newWallHeight = newWallHeight;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.name(), 
           oldWallHeight, newWallHeight);
+    }
+  }
+
+  /**
+   * Returns default baseboard thickness of new walls in home. 
+   * @since 5.0
+   */
+  public float getNewWallBaseboardThickness() {
+    return this.newWallBaseboardThickness;
+  }
+
+  /**
+   * Sets default baseboard thickness of new walls in home, and notifies
+   * listeners of this change.  
+   * @since 5.0
+   */
+  public void setNewWallBaseboardThickness(float newWallBaseboardThickness) {
+    if (this.newWallBaseboardThickness != newWallBaseboardThickness) {
+      float oldThickness = this.newWallBaseboardThickness;
+      this.newWallBaseboardThickness = newWallBaseboardThickness;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_SIDEBOARD_THICKNESS.name(), 
+          oldThickness, newWallBaseboardThickness);
+    }
+  }
+
+  /**
+   * Returns default baseboard height of new home walls. 
+   * @since 5.0
+   */
+  public float getNewWallBaseboardHeight() {
+    return this.newWallBaseboardHeight;
+  }
+
+  /**
+   * Sets default baseboard height of new walls, and notifies
+   * listeners of this change. 
+   * @since 5.0
+   */
+  public void setNewWallBaseboardHeight(float newWallBaseboardHeight) {
+    if (this.newWallBaseboardHeight != newWallBaseboardHeight) {
+      float oldHeight = this.newWallBaseboardHeight;
+      this.newWallBaseboardHeight = newWallBaseboardHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_SIDEBOARD_HEIGHT.name(), 
+          oldHeight, newWallBaseboardHeight);
     }
   }
 

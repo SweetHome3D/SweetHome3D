@@ -258,6 +258,8 @@ public class AppletUserPreferences extends UserPreferences {
             String.valueOf(defaultPreferences.getNewWallThickness()))));
     setNewWallHeight(Float.parseFloat(properties.getProperty(NEW_WALL_HEIGHT,
         String.valueOf(defaultPreferences.getNewWallHeight()))));    
+    setNewWallBaseboardThickness(defaultPreferences.getNewWallBaseboardThickness());
+    setNewWallBaseboardHeight(defaultPreferences.getNewWallBaseboardHeight());
     setNewFloorThickness(Float.parseFloat(properties.getProperty(NEW_FLOOR_THICKNESS, 
         String.valueOf(defaultPreferences.getNewFloorThickness()))));
     setCurrency(defaultPreferences.getCurrency());    
