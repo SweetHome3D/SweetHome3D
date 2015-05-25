@@ -727,7 +727,7 @@ public class RoomPanel extends JPanel implements DialogView {
                                 {this.floorMattRadioButton, this.floorShinyRadioButton}});
       add(floorPanel, new GridBagConstraints(
           0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     }      
     if (this.ceilingVisibleCheckBox != null || this.ceilingColorRadioButton != null || this.ceilingMattRadioButton != null) {
       JPanel ceilingPanel = createVerticalTitledPanel(preferences.getLocalizedString(
@@ -738,7 +738,7 @@ public class RoomPanel extends JPanel implements DialogView {
                                 {this.ceilingMattRadioButton, this.ceilingShinyRadioButton}});
       add(ceilingPanel, new GridBagConstraints(
           1, 1, 1, 1, 1, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     }  
     if (this.wallSidesColorRadioButton != null || this.wallSidesMattRadioButton != null) {
       JPanel wallSidesPanel = createVerticalTitledPanel(preferences.getLocalizedString(
@@ -749,7 +749,7 @@ public class RoomPanel extends JPanel implements DialogView {
                                {this.wallSidesMattRadioButton, this.wallSidesShinyRadioButton}});
       add(wallSidesPanel, new GridBagConstraints(
           2, 1, 1, 1, 1, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (this.wallSidesBaseboardComponent != null) {
       JPanel wallSidesBaseboardPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(

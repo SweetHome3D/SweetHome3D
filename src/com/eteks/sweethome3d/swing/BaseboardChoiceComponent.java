@@ -297,11 +297,11 @@ public class BaseboardChoiceComponent extends JPanel implements View {
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     add(this.heightLabel, new GridBagConstraints(
         3, 5, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     int spinnerPadX = OperatingSystem.isMacOSX()  ? -20  : -10;
     add(this.heightSpinner, new GridBagConstraints(
         4, 5, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), spinnerPadX, 0));
     add(this.thicknessLabel, new GridBagConstraints(
         3, 6, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
