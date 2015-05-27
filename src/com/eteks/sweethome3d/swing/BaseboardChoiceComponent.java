@@ -75,7 +75,7 @@ public class BaseboardChoiceComponent extends JPanel implements View {
    */
   private void createComponents(UserPreferences preferences, 
                                 final BaseboardChoiceController controller) {
-   // Wall sides baseboard visible check box bound to VISIBLE controller property
+    // Baseboard visible check box bound to VISIBLE controller property
     this.visibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         BaseboardChoiceComponent.class, "visibleCheckBox.text"));
     this.visibleCheckBox.setNullable(controller.getVisible() == null);
