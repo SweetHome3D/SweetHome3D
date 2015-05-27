@@ -1171,8 +1171,8 @@ public class HomeFurnitureController implements Controller {
       // Apply modification
       doModifyFurniture(modifiedFurniture, name, nameVisible, description, price, x, y, elevation, angle, basePlanItem, width, depth, height, 
           paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
-      List<Selectable> newSelection = this.home.getSelectedItems(); 
       if (this.undoSupport != null) {
+        List<Selectable> newSelection = this.home.getSelectedItems(); 
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, newSelection, modifiedFurniture, 
             name, nameVisible, description, price, x, y, elevation, angle, basePlanItem, width, depth, height, 
@@ -1266,7 +1266,7 @@ public class HomeFurnitureController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyFurniture(this.modifiedFurniture);
-      home.setSelectedItems(this.oldSelection); 
+      this.home.setSelectedItems(this.oldSelection); 
     }
 
     @Override
@@ -1278,7 +1278,7 @@ public class HomeFurnitureController implements Controller {
           this.paint, this.color, this.texture, this.modelMaterials, 
           this.defaultShininess, this.shininess,
           this.visible, this.modelMirrored, this.lightPower); 
-      home.setSelectedItems(this.newSelection); 
+      this.home.setSelectedItems(this.newSelection); 
     }
 
     @Override
