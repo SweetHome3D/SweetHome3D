@@ -502,7 +502,7 @@ public class SweetHome3D extends HomeApplication {
       // Force the use of Quartz under Mac OS X for better Java 2D rendering performance
       System.setProperty("apple.awt.graphics.UseQuartz", "true");
       if (System.getProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler") == null
-          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+          && OperatingSystem.isJavaVersionBetween("1.7", "1.8.0_40")) {
         System.setProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler", "true");
       }
     }
