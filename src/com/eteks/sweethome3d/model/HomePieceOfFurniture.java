@@ -1028,14 +1028,24 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   /**
-   * Returns <code>true</code> if this piece is visible at the given level.
+   * Returns <code>true</code> if this piece is at the given <code>level</code> 
+   * or at a level with the same elevation and a smaller elevation index
+   * or if the elevation of its highest point is higher than <code>level</code> elevation.
    * @since 3.4
    */
   public boolean isAtLevel(Level level) {
-    return this.level == level 
-        || this.level != null && level != null
-            && this.level.getElevation() < level.getElevation()
-            && isTopAtLevel(level);
+    if (this.level == level) {
+      return true;
+    } else if (this.level != null && level != null) {
+      float pieceLevelElevation = this.level.getElevation();
+      float levelElevation = level.getElevation();
+      return pieceLevelElevation == levelElevation
+             && this.level.getElevationIndex() < level.getElevationIndex()
+          || pieceLevelElevation < levelElevation
+             && isTopAtLevel(level);
+    } else {
+      return false;
+    }
   }
   
   /**

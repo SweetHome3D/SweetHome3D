@@ -266,7 +266,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0 
           && piece.isVisible() 
           && (piece.getLevel() == null
-            || piece.getLevel().isVisible());
+            || piece.getLevel().isViewableAndVisible());
       HomeLight light = (HomeLight)piece;
       LightSource [] lightSources = light.getLightSources();
       if (numChildren() > 2) {
@@ -364,7 +364,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Update visibility of filled model shapes
     boolean visible = piece.isVisible() 
         && (piece.getLevel() == null
-            || piece.getLevel().isVisible()); 
+            || piece.getLevel().isViewableAndVisible()); 
     setVisible(getFilledModelNode(), visible
         && (drawingMode == null
             || drawingMode == HomeEnvironment.DrawingMode.FILL 

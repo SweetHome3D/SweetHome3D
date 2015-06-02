@@ -2076,6 +2076,29 @@ public class FurnitureTable extends JTable implements View, Printable {
             }
           }
         });
+      // Add listeners to levels to hide / show furniture when levels is not viewable
+      final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
+              filterAndSortFurniture();
+            }
+          }
+        };
+      for (Level level : home.getLevels()) {
+        level.addPropertyChangeListener(levelElevationChangeListener);
+      }
+      home.addLevelsListener(new CollectionListener<Level>() {
+          public void collectionChanged(CollectionEvent<Level> ev) {
+            switch (ev.getType()) {
+              case ADD :
+                ev.getItem().addPropertyChangeListener(levelElevationChangeListener);
+                break;
+              case DELETE :
+                ev.getItem().removePropertyChangeListener(levelElevationChangeListener);
+                break;
+            }
+          }
+        });
     }
 
     @Override
@@ -2126,13 +2149,22 @@ public class FurnitureTable extends JTable implements View, Printable {
      */
     private List<HomePieceOfFurniture> getFilteredAndSortedFurniture(List<HomePieceOfFurniture> furniture, 
                                                                      boolean includeExpandedGroups) {
+      // Search furniture at viewable levels 
+      List<HomePieceOfFurniture> viewableFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
+      for (HomePieceOfFurniture homePiece : furniture) {
+        if (homePiece.getLevel() == null
+            || homePiece.getLevel().isViewable()) {
+          viewableFurniture.add(homePiece);
+        }
+      }
+      
       List<HomePieceOfFurniture> filteredAndSortedFurniture;
       if (this.furnitureFilter == null) {
-        filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(furniture);
+        filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(viewableFurniture);
       } else {
         // Create the filtered list of home furniture
-        filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
-        for (HomePieceOfFurniture homePiece : furniture) {
+        filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(viewableFurniture.size());
+        for (HomePieceOfFurniture homePiece : viewableFurniture) {
           if (this.furnitureFilter.include(this.home, homePiece)) {
             filteredAndSortedFurniture.add(homePiece);
           }

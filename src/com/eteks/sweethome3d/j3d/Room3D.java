@@ -147,7 +147,7 @@ public class Room3D extends Object3DBranch {
     Shape3D roomShape = (Shape3D)getChild(roomPart);
     int currentGeometriesCount = roomShape.numGeometries();
     Room room = (Room)getUserData();
-    if (room.getLevel() == null || room.getLevel().isVisible()) {
+    if (room.getLevel() == null || room.getLevel().isViewableAndVisible()) {
       for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
         roomShape.addGeometry(roomGeometry);
       }
@@ -560,7 +560,9 @@ public class Room3D extends Object3DBranch {
                                                           boolean firstLevel) {
     List<HomePieceOfFurniture> visibleStaircases = new ArrayList<HomePieceOfFurniture>(furniture.size());
     for (HomePieceOfFurniture piece : furniture) {
-      if (piece.isVisible()) {
+      if (piece.isVisible()
+          && (piece.getLevel() == null
+              || piece.getLevel().isViewable())) {
         if (piece instanceof HomeFurnitureGroup) {
           visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel, firstLevel));
         } else if (piece.getStaircaseCutOutShape() != null
@@ -607,7 +609,8 @@ public class Room3D extends Object3DBranch {
       float [][] closestWallPoints = null;
       int closestIndex = -1;
       for (Wall wall : this.home.getWalls()) {
-        if (wall.isAtLevel(roomLevel)) {
+        if ((wall.getLevel() == null || wall.getLevel().isViewable())
+            && wall.isAtLevel(roomLevel)) {
           float [][] points = wall.getPoints();
           for (int i = 0; i < points.length; i++) {
             double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], x, y);

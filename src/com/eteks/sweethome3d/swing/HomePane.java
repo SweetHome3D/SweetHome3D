@@ -459,6 +459,7 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.SHOW_BACKGROUND_IMAGE, preferences, controller, "showBackgroundImage");
       createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, controller, "deleteBackgroundImage");
       createAction(ActionType.ADD_LEVEL, preferences, planController, "addLevel");
+      createAction(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, preferences, planController, "addLevelAtSameElevation");
       createAction(ActionType.MODIFY_LEVEL, preferences, planController, "modifySelectedLevel");
       createAction(ActionType.DELETE_LEVEL, preferences, planController, "deleteSelectedLevel");
       createAction(ActionType.ZOOM_IN, preferences, controller, "zoomIn");
@@ -1051,6 +1052,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.DELETE_BACKGROUND_IMAGE, planMenu);
     planMenu.addSeparator();
     addActionToMenu(ActionType.ADD_LEVEL, planMenu);
+    addActionToMenu(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, planMenu);
     addActionToMenu(ActionType.MODIFY_LEVEL, planMenu);
     addActionToMenu(ActionType.DELETE_LEVEL, planMenu);
     planMenu.addSeparator();
@@ -2201,47 +2203,50 @@ public class HomePane extends JRootPane implements HomeView {
             controller.getFurnitureCatalogController().setSelectedFurniture(emptyList);
             controller.getFurnitureCatalogController().setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {this.selectedPiece}));
 
-            List<Selectable> transferredFurniture = Arrays.asList(
-                new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
-            View view;
-            float [] pointInView = getPointInPlanView(ev, transferredFurniture);
-            if (pointInView != null) {
-              view = controller.getPlanController().getView();
-            } else {
-              view = controller.getFurnitureController().getView();
-              pointInView = getPointInFurnitureView(ev);
-            }
+            Level selectedLevel = home.getSelectedLevel();
+            if (selectedLevel == null || selectedLevel.isViewable()) {
+              List<Selectable> transferredFurniture = Arrays.asList(
+                  new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
+              View view;
+              float [] pointInView = getPointInPlanView(ev, transferredFurniture);
+              if (pointInView != null) {
+                view = controller.getPlanController().getView();
+              } else {
+                view = controller.getFurnitureController().getView();
+                pointInView = getPointInFurnitureView(ev);
+              }
 
-            if (this.previousView != view) {
-              if (this.previousView != null) {
-                if (this.previousView == controller.getPlanController().getView()
-                    && !this.escaped) {
-                  controller.getPlanController().stopDraggedItems();
-                }
-                JComponent component = (JComponent)this.previousView;
-                component.setCursor(this.previousCursor);
-                if (component.getParent() instanceof JViewport) {
+              if (this.previousView != view) {
+                if (this.previousView != null) {
+                  if (this.previousView == controller.getPlanController().getView()
+                      && !this.escaped) {
+                    controller.getPlanController().stopDraggedItems();
+                  }
+                  JComponent component = (JComponent)this.previousView;
                   component.setCursor(this.previousCursor);
-                }
-                this.previousCursor = null;
-                this.previousView = null;
-              }
-              if (view != null) {
-                JComponent component = (JComponent)view;
-                this.previousCursor = component.getCursor();
-                this.previousView = view;
-                if (!escaped) {
-                  component.setCursor(DragSource.DefaultCopyDrop);
                   if (component.getParent() instanceof JViewport) {
-                    ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
+                    component.setCursor(this.previousCursor);
                   }
-                  if (view == controller.getPlanController().getView()) {
-                    controller.getPlanController().startDraggedItems(transferredFurniture, pointInView [0], pointInView [1]);
+                  this.previousCursor = null;
+                  this.previousView = null;
+                }
+                if (view != null) {
+                  JComponent component = (JComponent)view;
+                  this.previousCursor = component.getCursor();
+                  this.previousView = view;
+                  if (!escaped) {
+                    component.setCursor(DragSource.DefaultCopyDrop);
+                    if (component.getParent() instanceof JViewport) {
+                      ((JViewport)component.getParent()).setCursor(DragSource.DefaultCopyDrop);
+                    }
+                    if (view == controller.getPlanController().getView()) {
+                      controller.getPlanController().startDraggedItems(transferredFurniture, pointInView [0], pointInView [1]);
+                    }
                   }
                 }
+              } else if (pointInView != null) {
+                controller.getPlanController().moveMouse(pointInView [0], pointInView [1]);
               }
-            } else if (pointInView != null) {
-              controller.getPlanController().moveMouse(pointInView [0], pointInView [1]);
             }
           }
         }
@@ -2285,26 +2290,29 @@ public class HomePane extends JRootPane implements HomeView {
           if (SwingUtilities.isLeftMouseButton(ev)) {
             if (this.selectedPiece != null) {
               if (!this.escaped) {
-                List<Selectable> transferredFurniture = Arrays.asList(
-                        new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
-                View view;
-                float [] pointInView = getPointInPlanView(ev, transferredFurniture);
-                if (pointInView != null) {
-                  controller.getPlanController().stopDraggedItems();
-                  view = controller.getPlanController().getView();
-                } else {
-                  view = controller.getFurnitureController().getView();
-                  pointInView = getPointInFurnitureView(ev);
-                }
-                if (pointInView != null) {
-                  controller.drop(transferredFurniture, view, pointInView [0], pointInView [1]);
-                  JComponent component = (JComponent)this.previousView;
-                  component.setCursor(this.previousCursor);
-                  if (component.getParent() instanceof JViewport) {
-                    component.getParent().setCursor(this.previousCursor);
+                Level selectedLevel = home.getSelectedLevel();
+                if (selectedLevel == null || selectedLevel.isViewable()) {
+                  List<Selectable> transferredFurniture = Arrays.asList(
+                          new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
+                  View view;
+                  float [] pointInView = getPointInPlanView(ev, transferredFurniture);
+                  if (pointInView != null) {
+                    controller.getPlanController().stopDraggedItems();
+                    view = controller.getPlanController().getView();
+                  } else {
+                    view = controller.getFurnitureController().getView();
+                    pointInView = getPointInFurnitureView(ev);
                   }
+                  if (pointInView != null) {
+                    controller.drop(transferredFurniture, view, pointInView [0], pointInView [1]);
+                    JComponent component = (JComponent)this.previousView;
+                    component.setCursor(this.previousCursor);
+                    if (component.getParent() instanceof JViewport) {
+                      component.getParent().setCursor(this.previousCursor);
+                    }
+                  }
+                  this.selectedPiece = null;
                 }
-                this.selectedPiece = null;
               }
 
               JComponent source = (JComponent)ev.getSource();
@@ -2657,6 +2665,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.DELETE_BACKGROUND_IMAGE, planViewPopup);
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.ADD_LEVEL, planViewPopup);
+      addActionToPopupMenu(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.DELETE_LEVEL, planViewPopup);
       planViewPopup.addSeparator();
@@ -4270,35 +4279,18 @@ public class HomePane extends JRootPane implements HomeView {
           }
         }
         
-        // Write 3D walls 
+        // Write 3D objects 
         int i = 0;
-        for (Wall wall : exportedWalls) {
-          // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
-          Node wallNode = (Node)object3dFactory.createObject3D(home, wall, true);
-          writer.writeNode(wallNode, "wall_" + ++i);
-        }
-        // Write 3D furniture 
-        i = 0;
-        for (HomePieceOfFurniture piece : exportedFurniture) {
-          if (piece.isVisible()) {
-            // Create a not alive new piece to be able to explore its coordinates without setting capabilities
-            Node pieceNode = (Node)object3dFactory.createObject3D(home, piece, true);
-            writer.writeNode(pieceNode);
+        for (Selectable item : home.getSelectableViewableItems()) {
+          // Create a not alive new node to be able to explore its coordinates without setting capabilities 
+          Node node = (Node)object3dFactory.createObject3D(home, item, true);
+          if (node != null) {
+            if (item instanceof HomePieceOfFurniture) {
+              writer.writeNode(node);
+            } else {
+              writer.writeNode(node, item.getClass().getSimpleName().toLowerCase() + "_" + ++i);
+            }
           }
-        }
-        // Write 3D rooms 
-        i = 0;
-        for (Room room : exportedRooms) {
-          // Create a not alive new room to be able to explore its coordinates without setting capabilities 
-          Node roomNode = (Node)object3dFactory.createObject3D(home, room, true);
-          writer.writeNode(roomNode, "room_" + ++i);
-        }
-        // Write 3D labels 
-        i = 0;
-        for (Label label : exportedLabels) {
-          // Create a not alive new label to be able to explore its coordinates without setting capabilities 
-          Node labelNode = (Node)object3dFactory.createObject3D(home, label, true);
-          writer.writeNode(labelNode, "label_" + ++i);
         }
       } catch (InterruptedIOException ex) {
         exportInterrupted = true;
@@ -4344,7 +4336,9 @@ public class HomePane extends JRootPane implements HomeView {
     private static List<HomePieceOfFurniture> getVisibleFurniture(List<HomePieceOfFurniture> furniture) {
       List<HomePieceOfFurniture> visibleFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
       for (HomePieceOfFurniture piece : furniture) {
-        if (piece.isVisible()) {
+        if (piece.isVisible()
+            && (piece.getLevel() == null
+                || piece.getLevel().isViewable())) {
           if (piece instanceof HomeFurnitureGroup) {
             visibleFurniture.addAll(getVisibleFurniture(((HomeFurnitureGroup)piece).getFurniture()));
           } else {
@@ -4363,7 +4357,7 @@ public class HomePane extends JRootPane implements HomeView {
       for (Selectable item : items) {
         if (!(item instanceof Elevatable)
             || ((Elevatable)item).getLevel() == null
-            || ((Elevatable)item).getLevel().isVisible()) {
+            || ((Elevatable)item).getLevel().isViewableAndVisible()) {
           for (float [] point : item.getPoints()) {
             if (objectBounds == null) {
               objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);

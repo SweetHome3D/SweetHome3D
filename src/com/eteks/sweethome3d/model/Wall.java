@@ -714,14 +714,24 @@ public class Wall implements Serializable, Selectable, Elevatable {
   }
 
   /**
-   * Returns <code>true</code> if this wall is visible at the given level.
+   * Returns <code>true</code> if this wall is at the given <code>level</code> 
+   * or at a level with the same elevation and a smaller elevation index
+   * or if the elevation of its highest point is higher than <code>level</code> elevation.
    * @since 3.4
    */
   public boolean isAtLevel(Level level) {
-    return this.level == level
-        || this.level != null && level != null
-            && this.level.getElevation() <= level.getElevation()
-            && this.level.getElevation() + getWallMaximumHeight() > level.getElevation();
+    if (this.level == level) {
+      return true;
+    } else if (this.level != null && level != null) {
+      float wallLevelElevation = this.level.getElevation();
+      float levelElevation = level.getElevation();
+      return wallLevelElevation == levelElevation
+             && this.level.getElevationIndex() < level.getElevationIndex()
+          || wallLevelElevation < levelElevation
+             && wallLevelElevation + getWallMaximumHeight() > levelElevation;
+    } else {
+      return false;
+    }
   }
   
   /**

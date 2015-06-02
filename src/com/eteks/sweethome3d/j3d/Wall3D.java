@@ -199,7 +199,7 @@ public class Wall3D extends Object3DBranch {
           : null;
       currentGeometriesCounts [i] = wallFilledShapes [i].numGeometries();
     }
-    if (wall.getLevel() == null || wall.getLevel().isVisible()) {
+    if (wall.getLevel() == null || wall.getLevel().isViewableAndVisible()) {
       List [] wallGeometries = {new ArrayList<Geometry>(), 
                                 new ArrayList<Geometry>(), 
                                 new ArrayList<Geometry>(), 
@@ -264,7 +264,7 @@ public class Wall3D extends Object3DBranch {
     float topElevationAtStart;
     float topElevationAtEnd;
     if (baseboard == null) {
-      topElevationAtStart = getWallTopElevationSAtStart();
+      topElevationAtStart = getWallTopElevationAtStart();
       topElevationAtEnd = getWallTopElevationAtEnd();
     } else {
       topElevationAtStart = 
@@ -303,9 +303,9 @@ public class Wall3D extends Object3DBranch {
           if (baseboard != null) {
             if (Math.abs(wallYawAngle - piece.getAngle()) % Math.PI < 1E-5f) {
               // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
-              piece = piece.clone();
-              piece.setDepth(piece.getDepth() + 2 * baseboard.getThickness());
-              pieceArea = new Area(getShape(piece.getPoints()));
+              HomePieceOfFurniture deeperPiece = piece.clone();
+              deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
+              pieceArea = new Area(getShape(deeperPiece.getPoints()));
             } 
             intersectionArea = new Area(wallOrBaseboardShape);
             intersectionArea.intersect(pieceArea);
@@ -597,7 +597,9 @@ public class Wall3D extends Object3DBranch {
   private List<HomePieceOfFurniture> getVisibleDoorsAndWindows(List<HomePieceOfFurniture> furniture) {
     List<HomePieceOfFurniture> visibleDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(furniture.size());
     for (HomePieceOfFurniture piece : furniture) {
-      if (piece.isVisible()) {
+      if (piece.isVisible()
+          && (piece.getLevel() == null
+          || piece.getLevel().isViewable())) {
         if (piece instanceof HomeFurnitureGroup) {
           visibleDoorsAndWindows.addAll(getVisibleDoorsAndWindows(((HomeFurnitureGroup)piece).getFurniture()));
         } else if (piece.isDoorOrWindow()) {
@@ -1205,7 +1207,7 @@ public class Wall3D extends Object3DBranch {
   /**
    * Returns the elevation of the wall top at its start.
    */
-  private float getWallTopElevationSAtStart() {
+  private float getWallTopElevationAtStart() {
     Float wallHeight = ((Wall)getUserData()).getHeight();      
     float wallHeightAtStart;
     if (wallHeight != null) {
@@ -1238,7 +1240,7 @@ public class Wall3D extends Object3DBranch {
       return wall.getHeightAtEnd() + getWallElevation() + getFloorThicknessBottomWall() + getTopElevationShift();
     } else {
       // If the wall isn't trapezoidal, use same height as at wall start
-      return getWallTopElevationSAtStart();
+      return getWallTopElevationAtStart();
     }
   }
   

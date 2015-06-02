@@ -146,13 +146,14 @@ public class Ground3D extends Object3DBranch {
     Map<Level, Area> roomAreas = new TreeMap<Level, Area>(levelComparator);
     for (Room room : home.getRooms()) {
       Level roomLevel = room.getLevel();
-      if (room.isFloorVisible()) {
+      if ((roomLevel == null || roomLevel.isViewable())
+          && room.isFloorVisible()) {
         float [][] roomPoints = room.getPoints();
         if (roomPoints.length > 2) {
           Area roomArea = null;
           if (roomLevel == null
               || (roomLevel.getElevation() <= 0
-                  && roomLevel.isVisible())) {
+                  && roomLevel.isViewableAndVisible())) {
             roomArea = new Area(getShape(roomPoints));
             areaRemovedFromGround.add(roomArea);
             updateUndergroundAreas(roomAreas, room.getLevel(), roomPoints, roomArea);
@@ -164,15 +165,19 @@ public class Ground3D extends Object3DBranch {
     
     // Search all items at negative levels that could dig the ground 
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      if (piece.getStaircaseCutOutShape() == null) {
-        updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
-      } else {
-        updateUndergroundAreas(undergroundAreas, piece.getLevel(), null, ModelManager.getInstance().getAreaOnFloor(piece));
+      if (piece.getLevel() == null || piece.getLevel().isViewable()) {
+        if (piece.getStaircaseCutOutShape() == null) {
+          updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
+        } else {
+          updateUndergroundAreas(undergroundAreas, piece.getLevel(), null, ModelManager.getInstance().getAreaOnFloor(piece));
+        }
       }
     }
     Map<Level, Area> wallAreas = new HashMap<Level, Area>();
     for (Wall wall : home.getWalls()) {
-      updateUndergroundAreas(wallAreas, wall.getLevel(), wall.getPoints(), null);
+      if (wall.getLevel() == null || wall.getLevel().isViewable()) {
+        updateUndergroundAreas(wallAreas, wall.getLevel(), wall.getPoints(), null);
+      }
     }
     // Consider that walls around a closed area define a hole 
     for (Map.Entry<Level, Area> wallAreaEntry : wallAreas.entrySet()) {

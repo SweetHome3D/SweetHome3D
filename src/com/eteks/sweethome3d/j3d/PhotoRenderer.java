@@ -105,7 +105,6 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
-import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -182,23 +181,14 @@ public class PhotoRenderer {
     HomeEnvironment homeEnvironment = home.getEnvironment();
     float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
     // Dividing walls and rooms surface in subparts is useless
-    homeEnvironment.setSubpartSizeUnderLight(0); 
-    for (Wall wall : home.getWalls()) {
-      String [] wallNames = exportNode((Node)object3dFactory.createObject3D(home, wall, true), true, silk);
-      this.homeItemsNames.put(wall, wallNames);
+    homeEnvironment.setSubpartSizeUnderLight(0);
+    for (Selectable item : home.getSelectableViewableItems()) {
+      Node node = (Node)object3dFactory.createObject3D(home, item, true);
+      if (node != null) {
+        String [] itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
+        this.homeItemsNames.put(item, itemNames);
+      }
     }
-    for (HomePieceOfFurniture piece : home.getFurniture()) {
-      String [] pieceNames = exportNode((Node)object3dFactory.createObject3D(home, piece, true), false, silk);
-      this.homeItemsNames.put(piece, pieceNames);
-    }
-    for (Room room : home.getRooms()) {
-      String [] roomNames = exportNode((Node)object3dFactory.createObject3D(home, room, true), true, silk);
-      this.homeItemsNames.put(room, roomNames);
-    } 
-    for (Label label : home.getLabels()) {
-      String [] labelNames = exportNode((Node)object3dFactory.createObject3D(home, label, true), true, silk);
-      this.homeItemsNames.put(label, labelNames);
-    } 
     // Create a 3D ground large enough to join the sky at the horizon  
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
     Transform3D translation = new Transform3D();
@@ -244,7 +234,7 @@ public class PhotoRenderer {
       for (Room room : home.getRooms()) {
         Level roomLevel = room.getLevel();
         if (room.isCeilingVisible() 
-            && (roomLevel == null || roomLevel.isVisible())) {
+            && (roomLevel == null || roomLevel.isViewableAndVisible())) {
           float xCenter = room.getXCenter();
           float yCenter = room.getYCenter();
           
@@ -258,7 +248,8 @@ public class PhotoRenderer {
           if (roomLevel == null || levels.indexOf(roomLevel) == levels.size() - 1) {
             // Search the height of the wall closest to the point xCenter, yCenter
             for (Wall wall : home.getWalls()) {
-              if (wall.isAtLevel(roomLevel)) {
+              if ((wall.getLevel() == null || wall.getLevel().isViewable())
+                  && wall.isAtLevel(roomLevel)) {
                 float wallElevation = wall.getLevel() == null ? 0 : wall.getLevel().getElevation();
                 Float wallHeightAtStart = wall.getHeight();
                 float [][] points = wall.getPoints();
@@ -302,7 +293,7 @@ public class PhotoRenderer {
       if (light.isVisible()
           && lightPower > 0f
           && (level == null
-              || level.isVisible())) {
+              || level.isViewableAndVisible())) {
         float angle = light.getAngle();
         float cos = (float)Math.cos(angle);
         float sin = (float)Math.sin(angle);
@@ -387,13 +378,10 @@ public class PhotoRenderer {
         }
         
         Node node = (Node)this.object3dFactory.createObject3D(home, item, true);
-        if (item instanceof Wall 
-            || item instanceof Room) {
-          itemNames = exportNode(node, true, silk);
-        } else {
-          itemNames = exportNode(node, false, silk);
+        if (node != null) {
+          itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
+          this.homeItemsNames.put(item, itemNames);
         }
-        this.homeItemsNames.put(item, itemNames);
       }
     }
     

@@ -89,6 +89,8 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   private static final String ONE_LEVEL_PANEL_NAME = "oneLevelPanel";
   private static final String MULTIPLE_LEVELS_PANEL_NAME = "multipleLevelsPanel";
   
+  private static final ImageIcon sameElevationIcon = new ImageIcon(FurnitureTable.class.getResource("resources/sameElevation.png"));
+  
   private PlanComponent planComponent;
   private JScrollPane   planScrollPane;
   private JTabbedPane   multipleLevelsTabbedPane;
@@ -170,8 +172,10 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
             int index = home.getLevels().indexOf(ev.getSource());
             multipleLevelsTabbedPane.setTitleAt(index, (String)ev.getNewValue());
             updateTabComponent(home, index);
+          } else if (Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
+            updateTabComponent(home, home.getLevels().indexOf(ev.getSource()));
           } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
-              || Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+              || Level.Property.ELEVATION_INDEX.name().equals(ev.getPropertyName())) {
             multipleLevelsTabbedPane.removeChangeListener(changeListener);
             multipleLevelsTabbedPane.removeAll();
             createTabs(home, preferences);
@@ -241,7 +245,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
       JLabel tabLabel = new JLabel(this.multipleLevelsTabbedPane.getTitleAt(i)) {
           @Override
           protected void paintComponent(Graphics g) {
-            if (home.isAllLevelsSelection()) {
+            if (home.isAllLevelsSelection() && isEnabled()) {
               Graphics2D g2D = (Graphics2D)g;
               // Draw text outline with half transparent selection color when all tabs are selected
               g2D.setPaint(planComponent.getSelectionColor());
@@ -254,13 +258,24 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
               g2D.setStroke(new BasicStroke(strokeWidth));
               FontRenderContext fontRenderContext = g2D.getFontRenderContext();
               TextLayout textLayout = new TextLayout(getText(), font, fontRenderContext);
+              AffineTransform oldTransform = g2D.getTransform();
+              if (getIcon() != null) {
+                g2D.translate(getIcon().getIconWidth() + getIconTextGap(), 0);
+              }
               g2D.draw(textLayout.getOutline(AffineTransform.getTranslateInstance(-strokeWidth / 5, 
                   (getHeight() - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent() - strokeWidth / 5)));
               g2D.setComposite(oldComposite);
+              g2D.setTransform(oldTransform);
             }
             super.paintComponent(g);
           }
         };
+      List<Level> levels = home.getLevels();
+      tabLabel.setEnabled(levels.get(i).isViewable());
+      if (i > 0 
+          && levels.get(i - 1).getElevation() == levels.get(i).getElevation()) {
+        tabLabel.setIcon(sameElevationIcon);
+      }
         
       try {
         // Invoke dynamically Java 6 setTabComponentAt method 

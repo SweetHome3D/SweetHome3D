@@ -237,11 +237,16 @@ public class DimensionLine implements Serializable, Selectable, Elevatable {
   }
 
   /**
-   * Returns <code>true</code> if this dimension line is at the given level.
+   * Returns <code>true</code> if this dimension line is at the given <code>level</code> 
+   * or at a level with the same elevation and a smaller elevation index.
    * @since 3.4
    */
   public boolean isAtLevel(Level level) {
-    return this.level == level;
+    return this.level == level
+        || this.level != null && level != null
+           && this.level.getElevation() == level.getElevation()
+           && this.level.getElevationIndex() < level.getElevationIndex();
+
   }
   
   /**

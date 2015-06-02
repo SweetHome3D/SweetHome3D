@@ -33,6 +33,7 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -125,9 +126,11 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
    */
   @Override
   public boolean canImportFlavor(DataFlavor [] flavors) {
+    Level selectedLevel = this.home.getSelectedLevel();
     List<DataFlavor> flavorList = Arrays.asList(flavors);
-    return flavorList.contains(HomeTransferableList.HOME_FLAVOR)
-        || flavorList.contains(DataFlavor.javaFileListFlavor);
+    return (selectedLevel == null || selectedLevel.isViewable())
+        && (flavorList.contains(HomeTransferableList.HOME_FLAVOR)
+            || flavorList.contains(DataFlavor.javaFileListFlavor));
   }
 
   /**

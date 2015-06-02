@@ -66,7 +66,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
-import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
@@ -295,10 +294,6 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_CSV, true);
     homeView.setEnabled(HomeView.ActionType.SELECT, true);
     homeView.setEnabled(HomeView.ActionType.PAN, true);
-    homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, true);
-    homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, true);
-    homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, true);
-    homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, true);
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
@@ -307,6 +302,7 @@ public class HomeController implements Controller {
         ? selectedLevel.getBackgroundImage()
         : this.home.getBackgroundImage());
     homeView.setEnabled(HomeView.ActionType.ADD_LEVEL, true);
+    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL_AT_SAME_ELEVATION, true);
     List<Level> levels = this.home.getLevels();
     boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
     homeView.setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, levels.size() > 1);
@@ -333,7 +329,20 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, true);
     homeView.setEnabled(HomeView.ActionType.HELP, true);
     homeView.setEnabled(HomeView.ActionType.ABOUT, true);
+    enableCreationToolsActions(homeView);
     homeView.setTransferEnabled(true);
+  }
+
+  /**
+   * Enables plan actions depending on the selected level is viewable or not.
+   */
+  private void enableCreationToolsActions(HomeView homeView) {
+    Level selectedLevel = this.home.getSelectedLevel();
+    boolean viewableLevel = selectedLevel == null || selectedLevel.isViewable();
+    homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, viewableLevel);
+    homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, viewableLevel);
+    homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, viewableLevel);
+    homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, viewableLevel);
   }
 
   /**
@@ -634,7 +643,9 @@ public class HomeController implements Controller {
    * Enables background image actions.
    */
   private void enableBackgroungImageActions(HomeView homeView, BackgroundImage backgroundImage) {
-    boolean homeHasBackgroundImage = backgroundImage != null;
+    Level selectedLevel = this.home.getSelectedLevel();
+    boolean homeHasBackgroundImage = backgroundImage != null
+        && (selectedLevel == null || selectedLevel.isViewable());
     getView().setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, !homeHasBackgroundImage);
     getView().setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
     getView().setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
@@ -825,7 +836,10 @@ public class HomeController implements Controller {
     }
     enablePasteStyleAction();
 
-    view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture);
+    Level selectedLevel = this.home.getSelectedLevel();
+    boolean viewableLevel = selectedLevel == null || selectedLevel.isViewable();
+    view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture
+        && viewableLevel);
     // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomeView.ActionType.DELETE_HOME_FURNITURE,
         homeSelectionContainsDeletableFurniture);
@@ -906,7 +920,9 @@ public class HomeController implements Controller {
     boolean pasteEnabled = false;
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()) {
-      pasteEnabled = !getPlanController().isModificationState() && !view.isClipboardEmpty();
+      Level selectedLevel = this.home.getSelectedLevel();
+      pasteEnabled = (selectedLevel == null || selectedLevel.isViewable())
+          && !getPlanController().isModificationState() && !view.isClipboardEmpty();
     }
     view.setEnabled(HomeView.ActionType.PASTE, pasteEnabled);
   }
@@ -1050,6 +1066,7 @@ public class HomeController implements Controller {
             }
             home.setSelectedItems(selectedItemsAtLevel);
           }
+          enableCreationToolsActions(getView());
           enableBackgroungImageActions(getView(), selectedLevel == null 
               ? home.getBackgroundImage()
               : selectedLevel.getBackgroundImage());
@@ -1067,7 +1084,16 @@ public class HomeController implements Controller {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
             enableBackgroungImageActions(getView(), (BackgroundImage)ev.getNewValue());
-          }
+          } else if (Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
+            enableCreationToolsActions(getView());
+            if (!(Boolean)ev.getNewValue()) {
+              PlanController.Mode mode = getPlanController().getMode();
+              if (mode != PlanController.Mode.SELECTION
+                  && mode != PlanController.Mode.PANNING) {
+                getPlanController().setMode(PlanController.Mode.SELECTION);
+              }
+            }
+          }  
         }
       };
     for (Level level : home.getLevels()) {

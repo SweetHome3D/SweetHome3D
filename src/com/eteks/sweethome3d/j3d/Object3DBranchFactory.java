@@ -45,7 +45,7 @@ public class Object3DBranchFactory implements Object3DFactory {
     } else if (item instanceof Label) {
       return new Label3D((Label)item, home, waitForLoading);
     } else {
-      throw new IllegalArgumentException("Can't create 3D object for an item of class " + item.getClass());
+      return null;
     }  
   }
 }

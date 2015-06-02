@@ -376,14 +376,14 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
-   * Returns whether all levels should be displayed or not.
+   * Returns whether all levels should be visible or not.
    */
   public boolean isAllLevelsVisible() {
     return this.allLevelsVisible;
   }
   
   /**
-   * Sets whether all levels should be displayed or not and fires a <code>PropertyChangeEvent</code>.
+   * Sets whether all levels should be visible or not and fires a <code>PropertyChangeEvent</code>.
    */
   public void setAllLevelsVisible(boolean allLevelsVisible) {
     if (allLevelsVisible != this.allLevelsVisible) {

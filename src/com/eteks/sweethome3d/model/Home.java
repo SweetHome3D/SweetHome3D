@@ -56,7 +56,7 @@ public class Home implements Serializable, Cloneable {
         if (elevationComparison != 0) {
           return elevationComparison;
         } else {
-          return -Float.compare(level1.getHeight(), level2.getHeight());
+          return level1.getElevationIndex() - level2.getElevationIndex();
         }
       }
     };
@@ -167,7 +167,6 @@ public class Home implements Serializable, Cloneable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     init(false);
     in.defaultReadObject();
-    addModelListeners();
     
     if (KEEP_BACKWARD_COMPATIBLITY) {
       // Restore furnitureSortedProperty from furnitureSortedPropertyName
@@ -230,7 +229,28 @@ public class Home implements Serializable, Cloneable {
             | ((((groundColor >> 8) & 0xFF) * 3 / 4) << 8)
             | ((groundColor & 0xFF) * 3 / 4));
       }
+      
+      // Assign level elevation index from current order if index is equal to -1
+      if (this.levels.size() > 0) {
+        Level previousLevel = this.levels.get(0);
+        if (previousLevel.getElevationIndex() == -1) {
+          previousLevel.setElevationIndex(0);
+        }
+        for (int i = 1; i < this.levels.size(); i++) {
+          Level level = this.levels.get(i);
+          if (level.getElevationIndex() == -1) {
+            if (previousLevel.getElevation() == level.getElevation()) {
+              level.setElevationIndex(previousLevel.getElevationIndex() + 1);
+            } else {
+              level.setElevationIndex(0);
+            }
+          }
+          previousLevel = level;
+        }
+      }
     }
+
+    addModelListeners();
   }
 
   private void init(boolean newHome) {
@@ -286,7 +306,7 @@ public class Home implements Serializable, Cloneable {
     final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
-              || Level.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+              || Level.Property.ELEVATION_INDEX.name().equals(ev.getPropertyName())) {
             levels = new ArrayList<Level>(levels);
             Collections.sort(levels, LEVEL_ELEVATION_COMPARATOR);
           }
@@ -470,6 +490,18 @@ public class Home implements Serializable, Cloneable {
    * @since 3.4
    */
   public void addLevel(Level level) {
+    if (level.getElevationIndex() < 0) {
+      // Search elevation index of the added level
+      int elevationIndex = 0;
+      for (Level homeLevel : this.levels) {
+        if (homeLevel.getElevation() == level.getElevation()) {
+          elevationIndex = homeLevel.getElevationIndex() + 1;
+        } else if (homeLevel.getElevation() > level.getElevation()) {
+          break;
+        }
+      }
+      level.setElevationIndex(elevationIndex);
+    }
     // Make a copy of the list to avoid conflicts in the list returned by getLevels
     this.levels = new ArrayList<Level>(this.levels);
     // Search at which index should be inserted the new level
@@ -937,6 +969,50 @@ public class Home implements Serializable, Cloneable {
       this.labels.remove(index);
       this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
     }
+  }
+  
+  /**
+   * Returns all the selectable and viewable items in this home, except the observer camera.
+   * @return a list containing viewable walls, furniture, dimension lines, labels and compass.
+   * @since 5.0
+   */
+  public List<Selectable> getSelectableViewableItems() {
+    List<Selectable> homeItems = new ArrayList<Selectable>();
+    for (Wall wall : getWalls()) {
+      if (wall.getLevel() == null
+          || wall.getLevel().isViewable()) {
+        homeItems.add(wall);
+      }
+    }
+    for (Room room : getRooms()) {
+      if (room.getLevel() == null
+          || room.getLevel().isViewable()) {
+        homeItems.add(room);
+      }
+    }
+    for (DimensionLine dimensionLine : getDimensionLines()) {
+      if (dimensionLine.getLevel() == null
+          || dimensionLine.getLevel().isViewable()) {
+        homeItems.add(dimensionLine);
+      }
+    }
+    for (Label label : getLabels()) {
+      if (label.getLevel() == null
+          || label.getLevel().isViewable()) {
+        homeItems.add(label);
+      }
+    }
+    for (HomePieceOfFurniture piece : getFurniture()) {
+      if (piece.isVisible()
+          && (piece.getLevel() == null
+              || piece.getLevel().isViewable())) {
+        homeItems.add(piece);
+      }
+    }
+    if (getCompass().isVisible()) {
+      homeItems.add(getCompass());
+    }
+    return homeItems;
   }
   
   /**

@@ -268,10 +268,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private boolean                           planBoundsCacheValid = false;  
   private BufferedImage                     backgroundImageCache;
   private Map<TextureImage, BufferedImage>  patternImagesCache;
-  private List<Wall>                        otherLevelWallsCache;
-  private Area                              otherLevelWallAreaCache;
-  private List<Room>                        otherLevelRoomsCache;
-  private Area                              otherLevelRoomAreaCache;
+  private List<Wall>                        otherLevelsWallsCache;
+  private Area                              otherLevelsWallAreaCache;
+  private List<Room>                        otherLevelsRoomsCache;
+  private Area                              otherLevelsRoomAreaCache;
   private Color                             wallsPatternBackgroundCache;
   private Color                             wallsPatternForegroundCache;
   private Map<Collection<Wall>, Area>       wallAreasCache;
@@ -668,16 +668,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Wall.Property.ARC_EXTENT.name().equals(propertyName)
               || Wall.Property.PATTERN.name().equals(propertyName)) {
             if (home.isAllLevelsSelection()) {
-              otherLevelWallAreaCache = null;
-              otherLevelWallsCache = null;
+              otherLevelsWallAreaCache = null;
+              otherLevelsWallsCache = null;
             }
             wallAreasCache = null;
             revalidate();
           } else if (Wall.Property.LEVEL.name().equals(propertyName)
               || Wall.Property.HEIGHT.name().equals(propertyName)
               || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)) {
-            otherLevelWallAreaCache = null;
-            otherLevelWallsCache = null;
+            otherLevelsWallAreaCache = null;
+            otherLevelsWallsCache = null;
             wallAreasCache = null;
             repaint();
           }
@@ -693,8 +693,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(wallChangeListener);
           }
-          otherLevelWallAreaCache = null;
-          otherLevelWallsCache = null;
+          otherLevelsWallAreaCache = null;
+          otherLevelsWallsCache = null;
           wallAreasCache = null;
           revalidate();
         }
@@ -716,8 +716,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.AREA_STYLE.name().equals(propertyName)
               || Room.Property.AREA_ANGLE.name().equals(propertyName)) {
             sortedLevelRooms = null;
-            otherLevelRoomsCache = null;
-            otherLevelRoomAreaCache = null;
+            otherLevelsRoomsCache = null;
+            otherLevelsRoomAreaCache = null;
             revalidate();
           } else if (preferences.isRoomFloorColoredOrTextured()
                      && (Room.Property.FLOOR_COLOR.name().equals(propertyName)
@@ -738,8 +738,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             ev.getItem().removePropertyChangeListener(roomChangeListener);
           }
           sortedLevelRooms = null;
-          otherLevelRoomsCache = null;
-          otherLevelRoomAreaCache = null;
+          otherLevelsRoomsCache = null;
+          otherLevelsRoomAreaCache = null;
           revalidate();
         }
       });
@@ -791,13 +791,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (Level.Property.BACKGROUND_IMAGE.name().equals(propertyName)) {
             backgroundImageCache = null;
             revalidate();
-          } else if (Level.Property.ELEVATION.name().equals(propertyName)) {
-            otherLevelWallAreaCache = null;
-            otherLevelWallsCache = null;
-            otherLevelRoomsCache = null;
-            otherLevelRoomAreaCache = null;
+          } else if (Level.Property.ELEVATION.name().equals(propertyName)
+                     || Level.Property.ELEVATION_INDEX.name().equals(propertyName)
+                     || Level.Property.VIEWABLE.name().equals(propertyName)) {
+            backgroundImageCache = null;
+            otherLevelsWallAreaCache = null;
+            otherLevelsWallsCache = null;
+            otherLevelsRoomsCache = null;
+            otherLevelsRoomAreaCache = null;
             wallAreasCache = null;
             sortedLevelFurniture = null;
+            sortedLevelRooms = null;
             repaint();
           }
         }
@@ -863,10 +867,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           backgroundImageCache = null;
-          otherLevelWallAreaCache = null;
-          otherLevelWallsCache = null;
-          otherLevelRoomsCache = null;
-          otherLevelRoomAreaCache = null;
+          otherLevelsWallAreaCache = null;
+          otherLevelsWallsCache = null;
+          otherLevelsRoomsCache = null;
+          otherLevelsRoomAreaCache = null;
           wallAreasCache = null;
           sortedLevelRooms = null;
           sortedLevelFurniture = null;
@@ -1534,20 +1538,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * painted by this component wherever the level they belong to is selected or not.
    */
   protected List<Selectable> getPaintedItems() {
-    List<Selectable> homeItems = new ArrayList<Selectable>(this.home.getWalls());
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible()) {
-        homeItems.add(piece);
-      }
-    }
-    homeItems.addAll(this.home.getRooms());
-    homeItems.addAll(this.home.getDimensionLines());
-    homeItems.addAll(this.home.getLabels());
-    Compass compass = this.home.getCompass();
-    if (compass.isVisible()) {
-      homeItems.add(compass);
-    }
-    return homeItems;
+    return this.home.getSelectableViewableItems();
   }
   
   /**
@@ -2107,9 +2098,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints background image and returns <code>true</code> if an image is painted.
    */
   private boolean paintBackgroundImage(Graphics2D g2D, PaintMode paintMode) {
-    final BackgroundImage backgroundImage = this.home.getSelectedLevel() == null 
+    Level selectedLevel = this.home.getSelectedLevel();
+    Level backgroundImageLevel = null;
+    if (selectedLevel != null) { 
+      // Search the first level at same elevation with a background image
+      List<Level> levels = this.home.getLevels();
+      for (int i = levels.size() - 1; i >= 0; i--) {
+        Level level = levels.get(i);
+        if (level.getElevation() == selectedLevel.getElevation()
+            && level.getElevationIndex() <= selectedLevel.getElevationIndex()
+            && level.isViewable()
+            && level.getBackgroundImage() != null
+            && level.getBackgroundImage().isVisible()) {
+          backgroundImageLevel = level;
+          break;
+        }
+      }
+    }
+    final BackgroundImage backgroundImage = backgroundImageLevel == null 
         ? this.home.getBackgroundImage()
-        : this.home.getSelectedLevel().getBackgroundImage();
+        : backgroundImageLevel.getBackgroundImage();
     if (backgroundImage != null && backgroundImage.isVisible()) {
       // Under Mac OS X, prepare background image with alpha because Java 5/6 doesn't always 
       // paint images correctly with alpha, and Java 7 blocks for some images
@@ -2145,9 +2153,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setTransform(previousTransform);
       }
       return true;
-    } else {
-      return false;
-    }
+    } 
+    return false;
   }
 
   /**
@@ -2210,57 +2217,105 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Level selectedLevel = this.home.getSelectedLevel();
     if (levels.size() > 1 
         && selectedLevel != null) {
-      int selectedLevelIndex = levels.indexOf(selectedLevel);
-      boolean level0 = levels.get(0) == selectedLevel 
-          || levels.get(selectedLevelIndex - 1).getElevation() == selectedLevel.getElevation();
-      if (this.otherLevelRoomAreaCache == null
-          && (!level0 || levels.size() >= 2)) {
-        // Search floors in level 1 or ceilings in previous level 
-        Level otherLevel = levels.get(level0 && selectedLevelIndex < levels.size() - 1 
-            ? selectedLevelIndex + 1 
-            : selectedLevelIndex  - 1);
-        List<Room> otherLevelRooms = new ArrayList<Room>();
-        for (Room room : this.home.getRooms()) {
-          if (room.isAtLevel(otherLevel)
-              && (level0 && room.isFloorVisible()
-                  || !level0 && room.isCeilingVisible())) {
-            otherLevelRooms.add(room);
+      boolean level0 = levels.get(0).getElevation() == selectedLevel.getElevation();
+      List<Level> otherLevels = null;
+      if (this.otherLevelsRoomsCache == null
+          || this.otherLevelsWallsCache == null) {
+        int selectedLevelIndex = levels.indexOf(selectedLevel);
+        otherLevels = new ArrayList<Level>();
+        if (level0) {
+          // Search levels at the same elevation above level0 
+          int nextElevationLevelIndex = selectedLevelIndex;
+          while (++nextElevationLevelIndex < levels.size()
+              && levels.get(nextElevationLevelIndex).getElevation() == selectedLevel.getElevation()) {
+          }
+          if (nextElevationLevelIndex < levels.size()) {
+            Level nextLevel = levels.get(nextElevationLevelIndex);
+            float nextElevation = nextLevel.getElevation();
+            do {
+              if (nextLevel.isViewable()) {
+                otherLevels.add(nextLevel);
+              }
+            } while (++nextElevationLevelIndex < levels.size() 
+                && (nextLevel = levels.get(nextElevationLevelIndex)).getElevation() == nextElevation);
+          }
+        } else {
+          // Search levels at the same elevation below level0
+          int previousElevationLevelIndex = selectedLevelIndex;
+          while (--previousElevationLevelIndex >= 0
+              && levels.get(previousElevationLevelIndex).getElevation() == selectedLevel.getElevation()) {
+          }
+          if (previousElevationLevelIndex >= 0) {
+            Level previousLevel = levels.get(previousElevationLevelIndex);
+            float previousElevation = previousLevel.getElevation();
+            do {
+              if (previousLevel.isViewable()) {
+                otherLevels.add(previousLevel);
+              }
+            } while (--previousElevationLevelIndex >= 0 
+                && (previousLevel = levels.get(previousElevationLevelIndex)).getElevation() == previousElevation);
           }
         }
-        if (otherLevelRooms.size() > 0) {
-          this.otherLevelRoomAreaCache = getItemsArea(otherLevelRooms);
-          this.otherLevelRoomsCache = otherLevelRooms;
+      
+        if (this.otherLevelsRoomsCache == null) {
+          if (!otherLevels.isEmpty()) {
+            // Search viewable floors in levels above level0 or ceilings in levels below level0
+            List<Room> otherLevelsRooms = new ArrayList<Room>();
+            for (Room room : this.home.getRooms()) {
+              for (Level otherLevel : otherLevels) {
+                if (room.isAtLevel(otherLevel)
+                    && (level0 && room.isFloorVisible()
+                        || !level0 && room.isCeilingVisible())) {
+                  otherLevelsRooms.add(room);
+                }
+              }
+            }
+            if (otherLevelsRooms.size() > 0) {
+              this.otherLevelsRoomAreaCache = getItemsArea(otherLevelsRooms);
+              this.otherLevelsRoomsCache = otherLevelsRooms;
+            }
+          }
+          if (this.otherLevelsRoomsCache == null) {
+            this.otherLevelsRoomsCache = Collections.emptyList();
+          }
+        }
+    
+        if (this.otherLevelsWallsCache == null) {
+          if (!otherLevels.isEmpty()) {
+            // Search viewable walls in other levels
+            List<Wall> otherLevelswalls = new ArrayList<Wall>();
+            for (Wall wall : this.home.getWalls()) {
+              if (!isViewableAtSelectedLevel(wall)) {
+                for (Level otherLevel : otherLevels) {
+                  if (wall.isAtLevel(otherLevel)) {
+                    otherLevelswalls.add(wall);
+                  }
+                }
+              }
+            }
+            if (otherLevelswalls.size() > 0) {
+              this.otherLevelsWallAreaCache = getItemsArea(otherLevelswalls);
+              this.otherLevelsWallsCache = otherLevelswalls;
+            }
+          }
+        }
+        if (this.otherLevelsWallsCache == null) {
+          this.otherLevelsWallsCache = Collections.emptyList();
         }
       }
-      if (this.otherLevelRoomAreaCache != null) {
+      
+      if (!this.otherLevelsRoomsCache.isEmpty()) {
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
         g2D.setPaint(Color.GRAY);
-        g2D.fill(this.otherLevelRoomAreaCache);
+        g2D.fill(this.otherLevelsRoomAreaCache);
         g2D.setComposite(oldComposite);
       }
-
-      if (this.otherLevelWallAreaCache == null) {
-        // Search visible walls in level 1 or in previous level 
-        Level otherLevel = levels.get(level0 && selectedLevelIndex < levels.size() - 1 
-            ? selectedLevelIndex + 1 
-            : selectedLevelIndex  - 1);
-        List<Wall> otherLevelwalls = new ArrayList<Wall>();
-        for (Wall wall : this.home.getWalls()) {
-          if (!isViewableAtSelectedLevel(wall)
-              && wall.isAtLevel(otherLevel)) {
-            otherLevelwalls.add(wall);
-          }
-        }
-        if (otherLevelwalls.size() > 0) {
-          this.otherLevelWallAreaCache = getItemsArea(otherLevelwalls);
-          this.otherLevelWallsCache = otherLevelwalls;
-        }
-      }
-      if (this.otherLevelWallAreaCache != null) {
+      
+      if (!this.otherLevelsWallsCache.isEmpty()) {
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
-        fillAndDrawWallsArea(g2D, this.otherLevelWallAreaCache, planScale, 
+        fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale, 
             getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getWallPattern()), 
             foregroundColor, PaintMode.PAINT);
         g2D.setComposite(oldComposite);
@@ -3171,10 +3226,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns <code>true</code> if the given item can be viewed in the plan at the selected level. 
    */
   private boolean isViewableAtSelectedLevel(Elevatable item) {
-    Level selectedLevel = this.home.getSelectedLevel();
-    return item.getLevel() == null
-        || item.getLevel() == selectedLevel
-        || item.isAtLevel(selectedLevel);
+    Level level = item.getLevel();
+    return level == null
+        || (level.isViewable()
+            && item.isAtLevel(this.home.getSelectedLevel()));
   }
 
   /**
@@ -4103,7 +4158,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float y = (float)locationFeedback.getY();
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
-      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelWallsCache)) {
+      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelsWallsCache)) {
         if (wall != alignedWall) {
           if (Math.abs(x - wall.getXStart()) < margin
               && (alignedWall == null
@@ -4250,7 +4305,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
-      for (Room room : getViewedItems(this.home.getRooms(), this.otherLevelRoomsCache)) {
+      for (Room room : getViewedItems(this.home.getRooms(), this.otherLevelsRoomsCache)) {
         float [][] roomPoints = room.getPoints();
         int editedPointIndex = -1;
         if (room == alignedRoom) {
@@ -4276,7 +4331,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       // Search which wall points are at locationFeedback abscissa or ordinate
-      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelWallsCache)) {
+      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelsWallsCache)) {
         float [][] wallPoints = wall.getPoints();
         // Take into account only points at start and end of the wall
         wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
@@ -4339,7 +4394,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
-      for (Room room : getViewedItems(this.home.getRooms(), this.otherLevelRoomsCache)) {
+      for (Room room : getViewedItems(this.home.getRooms(), this.otherLevelsRoomsCache)) {
         float [][] roomPoints = room.getPoints();
         for (int i = 0; i < roomPoints.length; i++) {
           if (Math.abs(x - roomPoints [i][0]) < margin
@@ -4390,7 +4445,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       // Search which wall points are at locationFeedback abscissa or ordinate
-      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelWallsCache)) {
+      for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelsWallsCache)) {
         float [][] wallPoints = wall.getPoints();
         // Take into account only points at start and end of the wall
         wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 

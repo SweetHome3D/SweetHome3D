@@ -655,7 +655,7 @@ public class HomeController3D implements Controller {
      * Returns <code>true</code> if the given <code>item</code> is at a visible level.
      */
     private boolean isItemAtVisibleLevel(Elevatable item) {
-      return item.getLevel() == null || item.getLevel().isVisible();
+      return item.getLevel() == null || item.getLevel().isViewableAndVisible();
     }
     
     /**

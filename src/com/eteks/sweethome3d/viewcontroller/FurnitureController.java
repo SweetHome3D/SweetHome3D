@@ -1312,7 +1312,9 @@ public class FurnitureController implements Controller {
    */
   protected boolean isPieceOfFurnitureVisibleAtSelectedLevel(HomePieceOfFurniture piece) {
     Level selectedLevel = this.home.getSelectedLevel();
-    return piece.isVisible() 
+    return piece.isVisible()
+        && (piece.getLevel() == null
+            || piece.getLevel().isViewable())
         && (piece.getLevel() == selectedLevel
             || piece.isAtLevel(selectedLevel));
   }

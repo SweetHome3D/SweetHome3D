@@ -637,7 +637,8 @@ public class RoomController implements Controller {
         }
       } else {
         for (Wall wall : this.home.getWalls()) {
-          if (wall.isAtLevel(this.home.getSelectedLevel())) {
+          if ((wall.getLevel() == null || wall.getLevel().isViewable())
+              && wall.isAtLevel(this.home.getSelectedLevel())) {
             float [][] wallPoints = wall.getPoints();
             if (isRoomItersectingWallSide(wallPoints, WallSide.LEFT_SIDE, roomArea)) {
               wallSides.add(new WallSide(wall, WallSide.LEFT_SIDE));

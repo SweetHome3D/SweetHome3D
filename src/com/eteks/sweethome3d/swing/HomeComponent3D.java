@@ -1058,7 +1058,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (this.approximateHomeBoundsCache == null) {
       BoundingBox approximateHomeBounds = null;
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-        if (piece.isVisible()) {
+        if (piece.isVisible()
+            && (piece.getLevel() == null
+                || piece.getLevel().isViewable())) {
           Point3d pieceLocation = new Point3d(piece.getX(), piece.getY(), piece.getGroundElevation());
           if (approximateHomeBounds == null) {
             approximateHomeBounds = new BoundingBox(pieceLocation, pieceLocation);
@@ -1068,27 +1070,35 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       }
       for (Wall wall : this.home.getWalls()) {
-        Point3d startPoint = new Point3d(wall.getXStart(), wall.getYStart(), 
-            wall.getLevel() != null ? wall.getLevel().getElevation() : 0);
-        if (approximateHomeBounds == null) {
-          approximateHomeBounds = new BoundingBox(startPoint, startPoint);
-        } else {
-          approximateHomeBounds.combine(startPoint);
+        if (wall.getLevel() == null
+            || wall.getLevel().isViewable()) {
+          Point3d startPoint = new Point3d(wall.getXStart(), wall.getYStart(), 
+              wall.getLevel() != null ? wall.getLevel().getElevation() : 0);
+          if (approximateHomeBounds == null) {
+            approximateHomeBounds = new BoundingBox(startPoint, startPoint);
+          } else {
+            approximateHomeBounds.combine(startPoint);
+          }
+          approximateHomeBounds.combine(new Point3d(wall.getXEnd(), wall.getYEnd(), 
+              startPoint.z + (wall.getHeight() != null ? wall.getHeight() : this.home.getWallHeight())));
         }
-        approximateHomeBounds.combine(new Point3d(wall.getXEnd(), wall.getYEnd(), 
-            startPoint.z + (wall.getHeight() != null ? wall.getHeight() : this.home.getWallHeight())));
       }
       for (Room room : this.home.getRooms()) {
-        Point3d center = new Point3d(room.getXCenter(), room.getYCenter(), 
-            room.getLevel() != null ? room.getLevel().getElevation() : 0);
-        if (approximateHomeBounds == null) {
-          approximateHomeBounds = new BoundingBox(center, center);
-        } else {
-          approximateHomeBounds.combine(center);
+        if (room.getLevel() == null
+            || room.getLevel().isViewable()) {
+          Point3d center = new Point3d(room.getXCenter(), room.getYCenter(), 
+              room.getLevel() != null ? room.getLevel().getElevation() : 0);
+          if (approximateHomeBounds == null) {
+            approximateHomeBounds = new BoundingBox(center, center);
+          } else {
+            approximateHomeBounds.combine(center);
+          }
         }
       }
       for (Label label : this.home.getLabels()) {
-        if (label.getPitch() != null) {
+        if ((label.getLevel() == null
+              || label.getLevel().isViewable())
+            && label.getPitch() != null) {
           Point3d center = new Point3d(label.getX(), label.getY(), label.getGroundElevation());
           if (approximateHomeBounds == null) {
             approximateHomeBounds = new BoundingBox(center, center);
@@ -1982,7 +1992,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.levelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
-              || Level.Property.VISIBLE.name().equals(ev.getPropertyName())) {
+              || Level.Property.VISIBLE.name().equals(ev.getPropertyName())
+              || Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
             updateObjects(home.getLabels());          
             updateObjects(home.getWalls());          
             updateObjects(home.getRooms());
@@ -2536,7 +2547,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (piece.getLevel() == null) {
             level = new Level("Dummy", 0, 0, 0);
           }
-          if (level.isVisible()) {
+          if (level.isViewableAndVisible()) {
             Area areaOnLevel = areasOnLevel.get(level);
             if (areaOnLevel == null) {
               areaOnLevel = new Area();

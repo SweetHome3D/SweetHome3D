@@ -24,10 +24,12 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.DefaultListSelectionModel;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -62,6 +64,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class LevelPanel extends JPanel implements DialogView {
   private final LevelController controller;
+  private NullableCheckBox      viewableCheckBox;         
   private JLabel                nameLabel;
   private JTextField            nameTextField;
   private JLabel                elevationLabel;
@@ -70,6 +73,8 @@ public class LevelPanel extends JPanel implements DialogView {
   private JSpinner              floorThicknessSpinner;
   private JLabel                heightLabel;
   private JSpinner              heightSpinner;
+  private JButton               increaseElevationIndexButton;
+  private JButton               decreaseElevationIndexButton;
   private JLabel                levelsSummaryLabel;
   private JTable                levelsSummaryTable;
   private String                dialogTitle;
@@ -96,7 +101,26 @@ public class LevelPanel extends JPanel implements DialogView {
                                 final LevelController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
-    
+
+    if (controller.isPropertyEditable(LevelController.Property.VIEWABLE)) {
+      // Create viewable check box bound to VIEWABLE controller property
+      this.viewableCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          LevelPanel.class, "viewableCheckBox.text"));
+      this.viewableCheckBox.setNullable(controller.getViewable() == null);
+      this.viewableCheckBox.setValue(controller.getViewable());
+      this.viewableCheckBox.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setViewable(viewableCheckBox.getValue());
+          }
+        });
+      controller.addPropertyChangeListener(LevelController.Property.VIEWABLE, 
+          new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                viewableCheckBox.setValue(controller.getViewable());
+              }
+            });
+    }
+
     if (controller.isPropertyEditable(LevelController.Property.NAME)) {
       // Create name label and its text field bound to NAME controller property
       this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "nameLabel.text"));
@@ -155,6 +179,8 @@ public class LevelPanel extends JPanel implements DialogView {
             controller.removePropertyChangeListener(LevelController.Property.ELEVATION, 
                 elevationChangeListener);
             controller.setElevation(elevationSpinnerModel.getLength());
+            setFloorThicknessEnabled(controller);
+            setElevationIndexButtonsEnabled(controller);
             controller.addPropertyChangeListener(LevelController.Property.ELEVATION, 
                 elevationChangeListener);
           }
@@ -185,6 +211,7 @@ public class LevelPanel extends JPanel implements DialogView {
             controller.addPropertyChangeListener(LevelController.Property.FLOOR_THICKNESS, floorThicknessChangeListener);
           }
         });
+      setFloorThicknessEnabled(controller);
     }
     
     if (controller.isPropertyEditable(LevelController.Property.HEIGHT)) {
@@ -212,6 +239,24 @@ public class LevelPanel extends JPanel implements DialogView {
         });
     }
     
+    if (controller.isPropertyEditable(LevelController.Property.ELEVATION_INDEX)) {
+      this.increaseElevationIndexButton = new JButton(new ResourceAction(preferences, LevelPanel.class, "INCREASE_ELEVATION_INDEX") {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            controller.setElevationIndex(controller.getElevationIndex() + 1);
+            setElevationIndexButtonsEnabled(controller);
+          }
+        });
+      this.decreaseElevationIndexButton = new JButton(new ResourceAction(preferences, LevelPanel.class, "DECREASE_ELEVATION_INDEX") {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            controller.setElevationIndex(controller.getElevationIndex() - 1);
+            setElevationIndexButtonsEnabled(controller);
+          }
+        });
+      setElevationIndexButtonsEnabled(controller);
+    }
+    
     this.levelsSummaryLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         LevelPanel.class, "levelsSummaryLabel.text", unitName));
     final String [] columnNames = {
@@ -219,9 +264,17 @@ public class LevelPanel extends JPanel implements DialogView {
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "elevationColumn"),
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "floorThicknessColumn"),
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "heightColumn")};
-    this.levelsSummaryTable = new JTable(new LevelsTableModel(controller.getLevels(), columnNames));
+    this.levelsSummaryTable = new JTable(new LevelsTableModel(controller, columnNames));
     // Display lengths according to the current length unit
     TableColumnModel columnModel = this.levelsSummaryTable.getColumnModel();    
+    columnModel.getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
+          setEnabled((Boolean)table.getModel().getValueAt(row, 4));
+          return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+      });
     TableCellRenderer lengthRenderer = new DefaultTableCellRenderer() {
         public Component getTableCellRendererComponent(JTable table, Object value, 
                                                        boolean isSelected, boolean hasFocus, 
@@ -230,6 +283,7 @@ public class LevelPanel extends JPanel implements DialogView {
             value = preferences.getLengthUnit().getFormat().format((Float)value);
             setHorizontalAlignment(JLabel.RIGHT);
           }
+          setEnabled((Boolean)table.getModel().getValueAt(row, 4));
           return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
       };
@@ -238,6 +292,20 @@ public class LevelPanel extends JPanel implements DialogView {
     columnModel.getColumn(3).setCellRenderer(lengthRenderer);
     // Ensure only selected level is selected in the table
     this.levelsSummaryTable.setSelectionModel(new DefaultListSelectionModel() {
+        {
+          controller.addPropertyChangeListener(LevelController.Property.SELECT_LEVEL_INDEX, new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                Integer selectedLevelIndex = controller.getSelectedLevelIndex();
+                if (selectedLevelIndex != null) {
+                  // Levels are listed in the table in reverse order
+                  int selectedRow = levelsSummaryTable.getRowCount() - selectedLevelIndex - 1;
+                  fireValueChanged(selectedRow, selectedRow);
+                  scrollToSelectedLevel(controller);
+                }
+              }
+            });
+        }
+        
         public void setSelectionInterval(int index0, int index1) {
         }
         
@@ -252,7 +320,8 @@ public class LevelPanel extends JPanel implements DialogView {
         }
         
         public boolean isSelectedIndex(int index) {
-          return controller.getSelectedLevelIndex() == index;
+          // Levels are listed in the table in reverse order
+          return controller.getSelectedLevelIndex() == levelsSummaryTable.getRowCount() - index - 1;
         }
         
         public void insertIndexInterval(int index, int length, boolean before) {
@@ -261,11 +330,7 @@ public class LevelPanel extends JPanel implements DialogView {
     this.levelsSummaryTable.setFocusable(false);
     this.levelsSummaryTable.addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
-          // Ensure selected row is visible when table is displayed 
-          Integer selectedRow = controller.getSelectedLevelIndex();
-          if (selectedRow != null) {
-            levelsSummaryTable.scrollRectToVisible(levelsSummaryTable.getCellRect(selectedRow, 0, true));
-          }  
+          scrollToSelectedLevel(controller);  
           ev.getComponent().removeAncestorListener(this);        
         }
         
@@ -279,11 +344,52 @@ public class LevelPanel extends JPanel implements DialogView {
     this.dialogTitle = preferences.getLocalizedString(LevelPanel.class, "level.title");
   }
   
+  private void setFloorThicknessEnabled(final LevelController controller) {
+    if (this.floorThicknessSpinner != null) {
+      Level [] levels = controller.getLevels();
+      this.floorThicknessSpinner.setEnabled(levels [controller.getSelectedLevelIndex()].getElevation()
+          != levels [0].getElevation());
+    }
+  }
+
+  /**
+   * Ensures selected level is visible. 
+   */
+  private void scrollToSelectedLevel(final LevelController controller) {
+    Integer selectedLevelIndex = controller.getSelectedLevelIndex();
+    if (selectedLevelIndex != null) {
+      // Levels are listed in the table in reverse order
+      int selectedRow = levelsSummaryTable.getRowCount() - selectedLevelIndex - 1;
+      this.levelsSummaryTable.scrollRectToVisible(this.levelsSummaryTable.getCellRect(selectedRow, 0, true));
+    }
+  }
+
+  /**
+   * Updates elevation index buttons. 
+   */
+  private void setElevationIndexButtonsEnabled(final LevelController controller) {
+    Integer selectedLevelIndex = controller.getSelectedLevelIndex();
+    if (selectedLevelIndex != null) {
+      Level [] levels = controller.getLevels();
+      this.increaseElevationIndexButton.setEnabled(selectedLevelIndex < levels.length - 1
+          && levels [selectedLevelIndex].getElevation() == levels [selectedLevelIndex + 1].getElevation());
+      this.decreaseElevationIndexButton.setEnabled(selectedLevelIndex > 0
+          && levels [selectedLevelIndex].getElevation() == levels [selectedLevelIndex - 1].getElevation());
+    } else {
+      this.increaseElevationIndexButton.setEnabled(false);
+      this.decreaseElevationIndexButton.setEnabled(false);
+    }
+  }
+
   /**
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
+      if (this.viewableCheckBox != null) {
+        this.viewableCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            LevelPanel.class, "viewableCheckBox.mnemonic")).getKeyCode());
+      }
       if (this.nameLabel != null) {
         this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             LevelPanel.class, "nameLabel.mnemonic")).getKeyCode());
@@ -317,62 +423,79 @@ public class LevelPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     Insets labelInsets = new Insets(0, 0, 5, 5);
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
-    if (this.nameLabel != null) {
+    if (this.viewableCheckBox != null) {
       // First row    
+      add(this.viewableCheckBox, new GridBagConstraints(
+          1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, -4, 5, 0), 0, 0));
+    }
+    if (this.nameLabel != null) {
+      // Second row
       add(this.nameLabel, new GridBagConstraints(
-          0, 0, 1, 1, 0, 0, labelAlignment, 
+          0, 1, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.nameTextField, new GridBagConstraints(
-          1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.elevationLabel != null) {
-      // Second row
+      // Third row
       add(this.elevationLabel, new GridBagConstraints(
-          0, 1, 1, 1, 0, 0, labelAlignment, 
+          0, 2, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.elevationSpinner, new GridBagConstraints(
-          1, 1, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
+          1, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
       add(new JLabel(), new GridBagConstraints(
-          2, 1, 1, 1, 0.2, 0, GridBagConstraints.LINE_START, 
+          2, 2, 1, 1, 0.2, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.floorThicknessLabel != null) {
-      // Third row
+      // Forth row
       add(this.floorThicknessLabel, new GridBagConstraints(
-          0, 2, 1, 1, 0, 0, labelAlignment, 
+          0, 3, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.floorThicknessSpinner, new GridBagConstraints(
-          1, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
+          1, 3, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
       add(new JLabel(), new GridBagConstraints(
           2, 3, 1, 1, 0.2, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.heightLabel != null) {
-      // Last row
+      // Fifth row
       add(this.heightLabel, new GridBagConstraints(
-          0, 3, 1, 1, 0, 0, labelAlignment, 
+          0, 4, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       add(this.heightSpinner, new GridBagConstraints(
-          1, 3, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
+          1, 4, 1, 1, 0.1, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
       add(new JLabel(), new GridBagConstraints(
-          2, 3, 1, 1, 0.2, 0, GridBagConstraints.LINE_START, 
+          2, 4, 1, 1, 0.2, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     add(new JSeparator(), new GridBagConstraints(
-        0, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 5, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     add(this.levelsSummaryLabel, new GridBagConstraints(
-        0, 5, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        0, 6, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     JScrollPane levelsSummaryPane = new JScrollPane(this.levelsSummaryTable);
     levelsSummaryPane.setPreferredSize(new Dimension(320, 150));
     add(levelsSummaryPane, new GridBagConstraints(
-        0, 6, 4, 1, 1, 1, GridBagConstraints.CENTER, 
+        0, 7, 3, 2, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    // Add elevation index buttons at right of the levels table
+    add(this.increaseElevationIndexButton, new GridBagConstraints(
+        3, 7, 1, 1, 0, 0.5, GridBagConstraints.SOUTH, 
+        GridBagConstraints.NONE, new Insets(0, 5, 2, 0), 0, 0));
+    add(this.decreaseElevationIndexButton, new GridBagConstraints(
+        3, 8, 1, 1, 0, 0.5, GridBagConstraints.NORTH, 
+        GridBagConstraints.NONE, new Insets(2, 5, 0, 0), 0, 0));
+    
+    // Make buttons square
+    this.increaseElevationIndexButton.setPreferredSize(new Dimension(30, 30));
+    this.decreaseElevationIndexButton.setPreferredSize(new Dimension(30, 30));
   }
 
   /**
@@ -389,12 +512,18 @@ public class LevelPanel extends JPanel implements DialogView {
    * The model of the table used to show levels information. 
    */
   private static final class LevelsTableModel extends AbstractTableModel {
-    private final Level  []  levels;
-    private final String [] columnNames;
+    private Level  [] levels;
+    private String [] columnNames;
 
-    private LevelsTableModel(Level [] levels, String [] columnNames) {
-      this.levels = levels;
+    private LevelsTableModel(final LevelController controller, String [] columnNames) {
+      this.levels = controller.getLevels();
       this.columnNames = columnNames;
+      controller.addPropertyChangeListener(LevelController.Property.LEVELS, new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            levels = controller.getLevels();
+            fireTableDataChanged();
+          }
+        });
     }
 
     public int getRowCount() {
@@ -406,22 +535,20 @@ public class LevelPanel extends JPanel implements DialogView {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      Level level = this.levels [rowIndex];
+      Level level = this.levels [this.levels.length - rowIndex - 1]; // List in reverse order
       switch (columnIndex) {
         case 0 : return level.getName();
         case 1 : return level.getElevation();
         case 2 :
-          for ( ; rowIndex > 0; rowIndex--) {
-            if (this.levels [rowIndex - 1].getElevation() < level.getElevation()) {
-              break;
-            }
-          }
-          if (rowIndex == 0) {
+          if (level.getElevation() == this.levels [0].getElevation()) {
             return null; // Don't display floor thickness of first levels 
           } else {
             return level.getFloorThickness();
           }
         case 3 : return level.getHeight();
+        case 4 :
+          // Use not visible 5th column to retrieve viewable information
+          return level.isViewable(); 
       }
       return null;
     }

@@ -37,7 +37,7 @@ public class Level implements Serializable, Cloneable {
    * The properties of a level that may change. <code>PropertyChangeListener</code>s added 
    * to a level will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, ELEVATION, HEIGHT, FLOOR_THICKNESS, BACKGROUND_IMAGE, VISIBLE};
+  public enum Property {NAME, ELEVATION, HEIGHT, FLOOR_THICKNESS, BACKGROUND_IMAGE, VISIBLE, VIEWABLE, ELEVATION_INDEX};
       
   private String           name;
   private float            elevation;
@@ -45,6 +45,8 @@ public class Level implements Serializable, Cloneable {
   private float            height;
   private BackgroundImage  backgroundImage;
   private boolean          visible;
+  private boolean          viewable;
+  private int              elevationIndex;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -62,6 +64,8 @@ public class Level implements Serializable, Cloneable {
     this.floorThickness = floorThickness;
     this.height = height;
     this.visible = true;
+    this.viewable = true;
+    this.elevationIndex = -1;
   }
 
   /**
@@ -71,6 +75,8 @@ public class Level implements Serializable, Cloneable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.visible = true;
+    this.viewable = true;
+    this.elevationIndex = -1;
     in.defaultReadObject();
   }
 
@@ -198,6 +204,54 @@ public class Level implements Serializable, Cloneable {
     if (visible != this.visible) {
       this.visible = visible;
       this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), !visible, visible);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this level is viewable.
+   * @since 5.0
+   */
+  public boolean isViewable() {
+    return this.viewable;
+  }
+  
+  /**
+   * Sets whether this level is viewable or not. Once this level is updated, 
+   * listeners added to this level will receive a change notification.
+   * @since 5.0
+   */
+  public void setViewable(boolean viewable) {
+    if (viewable != this.viewable) {
+      this.viewable = viewable;
+      this.propertyChangeSupport.firePropertyChange(Property.VIEWABLE.name(), !viewable, viewable);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this level is viewable and visible.
+   * @since 5.0
+   */
+  public boolean isViewableAndVisible() {
+    return this.viewable && this.visible;
+  }
+  
+  /**
+   * Returns the index of this level used to order levels at the same elevation.
+   * @since 5.0
+   */
+  public int getElevationIndex() {
+    return this.elevationIndex;
+  }
+
+  /**
+   * Sets the index of this level used to order levels at the same elevation.
+   * @since 5.0
+   */
+  public void setElevationIndex(int elevationIndex) {
+    if (elevationIndex != this.elevationIndex) {
+      int oldElevationIndex = this.elevationIndex;
+      this.elevationIndex = elevationIndex;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_INDEX.name(), oldElevationIndex, elevationIndex);
     }
   }
 
