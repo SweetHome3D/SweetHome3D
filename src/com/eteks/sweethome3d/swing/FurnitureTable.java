@@ -2000,9 +2000,6 @@ public class FurnitureTable extends JTable implements View, Printable {
                 }
                 break;
               case DELETE :
-                if (piece instanceof HomeFurnitureGroup) {
-                  expandedGroups.remove(piece);
-                }
                 if (furnitureFilter != null
                     || containsHiddenFurniture) {
                   filterAndSortFurniture();
@@ -2017,6 +2014,9 @@ public class FurnitureTable extends JTable implements View, Printable {
                       fireTreeModelChanged();
                     }
                   }
+                }
+                if (piece instanceof HomeFurnitureGroup) {
+                  expandedGroups.remove(piece);
                 }
                 break;
             }
