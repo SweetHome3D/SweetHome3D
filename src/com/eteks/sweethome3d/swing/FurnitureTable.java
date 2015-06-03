@@ -626,6 +626,7 @@ public class FurnitureTable extends JTable implements View, Printable {
           }
         }
       });
+    // Add listeners to levels to update furniture when levels change
     for (Level level : home.getLevels()) {
       level.addPropertyChangeListener(changeListener);
     }
@@ -1968,6 +1969,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     private Set<HomeFurnitureGroup>                 expandedGroups;
     private List<TreeModelListener>                 treeModelListeners;
     private Map<Object, List<HomePieceOfFurniture>> childFurnitureCache;  
+    private boolean                                 containsHiddenFurniture;
     
     public FurnitureTreeTableModel(Home home) {
       this.home = home;
@@ -1985,7 +1987,8 @@ public class FurnitureTable extends JTable implements View, Printable {
             int pieceIndex = ev.getIndex();
             switch (ev.getType()) {
               case ADD :
-                if (expandedGroups.isEmpty()) {
+                if (expandedGroups.isEmpty()
+                    && !containsHiddenFurniture) {
                   int insertionIndex = getPieceOfFurnitureInsertionIndex(piece, home, pieceIndex);
                   if (insertionIndex != -1) {
                     filteredAndSortedFurniture.add(insertionIndex, piece);
@@ -2000,7 +2003,8 @@ public class FurnitureTable extends JTable implements View, Printable {
                 if (piece instanceof HomeFurnitureGroup) {
                   expandedGroups.remove(piece);
                 }
-                if (furnitureFilter != null) {
+                if (furnitureFilter != null
+                    || containsHiddenFurniture) {
                   filterAndSortFurniture();
                 } else {
                   int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
@@ -2076,29 +2080,6 @@ public class FurnitureTable extends JTable implements View, Printable {
             }
           }
         });
-      // Add listeners to levels to hide / show furniture when levels is not viewable
-      final PropertyChangeListener levelElevationChangeListener = new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            if (Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
-              filterAndSortFurniture();
-            }
-          }
-        };
-      for (Level level : home.getLevels()) {
-        level.addPropertyChangeListener(levelElevationChangeListener);
-      }
-      home.addLevelsListener(new CollectionListener<Level>() {
-          public void collectionChanged(CollectionEvent<Level> ev) {
-            switch (ev.getType()) {
-              case ADD :
-                ev.getItem().addPropertyChangeListener(levelElevationChangeListener);
-                break;
-              case DELETE :
-                ev.getItem().removePropertyChangeListener(levelElevationChangeListener);
-                break;
-            }
-          }
-        });
     }
 
     @Override
@@ -2151,12 +2132,16 @@ public class FurnitureTable extends JTable implements View, Printable {
                                                                      boolean includeExpandedGroups) {
       // Search furniture at viewable levels 
       List<HomePieceOfFurniture> viewableFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
+      boolean containsHiddenFurniture = false;
       for (HomePieceOfFurniture homePiece : furniture) {
         if (homePiece.getLevel() == null
             || homePiece.getLevel().isViewable()) {
           viewableFurniture.add(homePiece);
+        } else {
+          containsHiddenFurniture = true;
         }
       }
+      this.containsHiddenFurniture = containsHiddenFurniture;
       
       List<HomePieceOfFurniture> filteredAndSortedFurniture;
       if (this.furnitureFilter == null) {
