@@ -301,7 +301,8 @@ public class Wall3D extends Object3DBranch {
         intersectionArea.intersect(pieceArea);
         if (!intersectionArea.isEmpty()) {
           if (baseboard != null) {
-            if (Math.abs(wallYawAngle - piece.getAngle()) % Math.PI < 1E-5f) {
+            double pieceWallAngle = Math.abs(wallYawAngle - piece.getAngle()) % Math.PI;
+            if (pieceWallAngle < 1E-5 || (Math.PI - pieceWallAngle) < 1E-5) {
               // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
               HomePieceOfFurniture deeperPiece = piece.clone();
               deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
