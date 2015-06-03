@@ -1005,17 +1005,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           0, 2, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       sizePanel.add(this.heightSpinner, new GridBagConstraints(
-          1, 2, 1, 1, 0, 1, GridBagConstraints.LINE_START, 
+          1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, -10, 0));
     }
     if (this.keepProportionsCheckBox != null) {
       sizePanel.add(this.keepProportionsCheckBox, new GridBagConstraints(
-          0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          0, 3, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.mirroredModelCheckBox != null) {
       sizePanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
-          0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          0, 4, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (sizePanel.getComponentCount() > 0) {
