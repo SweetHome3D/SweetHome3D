@@ -260,7 +260,7 @@ public class Wall3D extends Object3DBranch {
     final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSideOrBaseboardPoints [0].clone()
         : wallSideOrBaseboardPoints [wallSideOrBaseboardPoints.length - 1].clone();
-    final float wallElevation = getWallElevation();
+    final float wallElevation = getWallElevation(baseboard != null);
     float topElevationAtStart;
     float topElevationAtEnd;
     if (baseboard == null) {
@@ -1171,11 +1171,13 @@ public class Wall3D extends Object3DBranch {
   /**
    * Returns the elevation of the wall managed by this 3D object.
    */
-  private float getWallElevation() {
+  private float getWallElevation(boolean ignoreFloorThickness) {
     Wall wall = (Wall)getUserData();      
     Level level = wall.getLevel();
     if (level == null) {
       return 0;
+    } else if (ignoreFloorThickness) {
+      return level.getElevation();
     } else {
       float floorThicknessBottomWall = getFloorThicknessBottomWall();
       if (floorThicknessBottomWall > 0) {
@@ -1212,10 +1214,10 @@ public class Wall3D extends Object3DBranch {
     Float wallHeight = ((Wall)getUserData()).getHeight();      
     float wallHeightAtStart;
     if (wallHeight != null) {
-      wallHeightAtStart = wallHeight + getWallElevation() + getFloorThicknessBottomWall();
+      wallHeightAtStart = wallHeight + getWallElevation(true);
     } else {
       // If wall height isn't set, use home wall height
-      wallHeightAtStart = this.home.getWallHeight() + getWallElevation() + getFloorThicknessBottomWall();
+      wallHeightAtStart = this.home.getWallHeight() + getWallElevation(true);
     }
     return wallHeightAtStart + getTopElevationShift();
   }
@@ -1238,7 +1240,7 @@ public class Wall3D extends Object3DBranch {
   private float getWallTopElevationAtEnd() {
     Wall wall = (Wall)getUserData();      
     if (wall.isTrapezoidal()) {
-      return wall.getHeightAtEnd() + getWallElevation() + getFloorThicknessBottomWall() + getTopElevationShift();
+      return wall.getHeightAtEnd() + getWallElevation(true) + getFloorThicknessBottomWall() + getTopElevationShift();
     } else {
       // If the wall isn't trapezoidal, use same height as at wall start
       return getWallTopElevationAtStart();
@@ -1249,7 +1251,7 @@ public class Wall3D extends Object3DBranch {
    * Returns the elevation of the given baseboard top.
    */
   private float getBaseboardTopElevation(Baseboard baseboard) {
-    return baseboard.getHeight() + getWallElevation() + getFloorThicknessBottomWall() + getTopElevationShift();
+    return baseboard.getHeight() + getWallElevation(true);
   }
   
   /**
