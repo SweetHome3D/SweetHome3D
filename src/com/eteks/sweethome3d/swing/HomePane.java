@@ -4249,23 +4249,12 @@ public class HomePane extends JRootPane implements HomeView {
       try {
         writer = new OBJWriter(objFile, header, -1);
   
-        List<HomePieceOfFurniture> exportedFurniture;
-        List<Room> exportedRooms;
-        Collection<Wall> exportedWalls;
-        Collection<Label> exportedLabels;
-        if (exportAllToOBJ) {
-          exportedFurniture = home.getFurniture();
-          exportedRooms = home.getRooms();
-          exportedWalls = home.getWalls();
-          exportedLabels = home.getLabels();
-        } else {
-          List<Selectable> selectedItems = home.getSelectedItems();
-          exportedFurniture = Home.getFurnitureSubList(selectedItems);
-          exportedRooms = Home.getRoomsSubList(selectedItems);
-          exportedWalls = Home.getWallsSubList(selectedItems);
-          exportedLabels = Home.getLabelsSubList(selectedItems);
+        List<Selectable> exportedItems = home.getSelectableViewableItems();
+        if (!exportAllToOBJ) {
+          // Keep only selected items
+          exportedItems.retainAll(home.getSelectedItems());
         }
-        
+
         List<Selectable> emptySelection = Collections.emptyList();
         home.setSelectedItems(emptySelection);
         if (exportAllToOBJ) {
@@ -4281,7 +4270,7 @@ public class HomePane extends JRootPane implements HomeView {
         
         // Write 3D objects 
         int i = 0;
-        for (Selectable item : home.getSelectableViewableItems()) {
+        for (Selectable item : exportedItems) {
           // Create a not alive new node to be able to explore its coordinates without setting capabilities 
           Node node = (Node)object3dFactory.createObject3D(home, item, true);
           if (node != null) {
