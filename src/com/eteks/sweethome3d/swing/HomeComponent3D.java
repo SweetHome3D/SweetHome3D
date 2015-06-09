@@ -2333,9 +2333,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           Label label = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              // Add label to its group at the index indicated by the event 
-              // to ensure the 3D labels are drawn in the same order as in the plan  
-              addObject(group, label, ev.getIndex(), true, false);
+              addObject(group, label, true, false);
               label.addPropertyChangeListener(labelChangeListener);
               break;
             case DELETE :
