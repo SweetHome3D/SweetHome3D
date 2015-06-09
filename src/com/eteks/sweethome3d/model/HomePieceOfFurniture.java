@@ -540,7 +540,6 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       if (height != this.height) {
         float oldHeight = this.height;
         this.height = height;
-        this.shapeCache = null;
         this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
       }
     } else {
