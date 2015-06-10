@@ -1418,8 +1418,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return preferences.getLocalizedString(
-            PlanController.class, "undoModifyTextStyleName");
+        return preferences.getLocalizedString(PlanController.class, "undoModifyTextStyleName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -2720,6 +2719,35 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
 
+  /**
+   * Toggles the viewability of the selected level.
+   * @since 5.0
+   */
+  public void toggleSelectedLevelViewability() {
+    final Level selectedLevel = this.home.getSelectedLevel();
+    selectedLevel.setViewable(!selectedLevel.isViewable());
+    undoSupport.postEdit(new AbstractUndoableEdit() {
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          setSelectedLevel(selectedLevel);
+          selectedLevel.setViewable(!selectedLevel.isViewable());
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          setSelectedLevel(selectedLevel);
+          selectedLevel.setViewable(!selectedLevel.isViewable());
+        }
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(PlanController.class, "undoModifyLevelName");
+        }      
+      });
+  }
+  
   public void modifySelectedLevel() {
     if (this.home.getSelectedLevel() != null) {
       new LevelController(this.home, this.preferences, this.viewFactory,

@@ -463,6 +463,8 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.DELETE_BACKGROUND_IMAGE, preferences, controller, "deleteBackgroundImage");
       createAction(ActionType.ADD_LEVEL, preferences, planController, "addLevel");
       createAction(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, preferences, planController, "addLevelAtSameElevation");
+      createAction(ActionType.MAKE_LEVEL_VIEWABLE, preferences, planController, "toggleSelectedLevelViewability");
+      createAction(ActionType.MAKE_LEVEL_UNVIEWABLE, preferences, planController, "toggleSelectedLevelViewability");
       createAction(ActionType.MODIFY_LEVEL, preferences, planController, "modifySelectedLevel");
       createAction(ActionType.DELETE_LEVEL, preferences, planController, "deleteSelectedLevel");
       createAction(ActionType.ZOOM_IN, preferences, controller, "zoomIn");
@@ -1058,6 +1060,10 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.addSeparator();
     addActionToMenu(ActionType.ADD_LEVEL, planMenu);
     addActionToMenu(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, planMenu);
+    JMenuItem makeLevelUnviewableViewableMenuItem = createMakeLevelUnviewableViewableMenuItem(home, false);
+    if (makeLevelUnviewableViewableMenuItem != null) {
+      planMenu.add(makeLevelUnviewableViewableMenuItem);
+    }
     addActionToMenu(ActionType.MODIFY_LEVEL, planMenu);
     addActionToMenu(ActionType.DELETE_LEVEL, planMenu);
     planMenu.addSeparator();
@@ -1777,6 +1783,63 @@ public class HomePane extends JRootPane implements HomeView {
     return popup 
         ? new ResourceAction.PopupMenuItemAction(backgroundImageAction)
         : new ResourceAction.MenuItemAction(backgroundImageAction);
+  }
+  
+  /**
+   * Returns Make level unviewable / viewable menu item.
+   */
+  private JMenuItem createMakeLevelUnviewableViewableMenuItem(final Home home, 
+                                                              final boolean popup) {
+    ActionMap actionMap = getActionMap();
+    Action makeLevelUnviewableAction = actionMap.get(ActionType.MAKE_LEVEL_UNVIEWABLE);
+    Action makeLevelViewableAction = actionMap.get(ActionType.MAKE_LEVEL_VIEWABLE);
+    if (makeLevelUnviewableAction != null
+        && makeLevelUnviewableAction.getValue(Action.NAME) != null
+        && makeLevelViewableAction.getValue(Action.NAME) != null) {
+      final JMenuItem makeLevelUnviewableViewableMenuItem = new JMenuItem(
+          createMakeLevelUnviewableViewableAction(home, popup));
+      // Add a listener to home and selected level on viewable property change to switch action
+      final PropertyChangeListener viewabilityChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            makeLevelUnviewableViewableMenuItem.setAction(
+                createMakeLevelUnviewableViewableAction(home, popup));
+          }
+        };
+      Level selectedLevel = home.getSelectedLevel();
+      if (selectedLevel != null) {
+        selectedLevel.addPropertyChangeListener(viewabilityChangeListener);
+      }
+      home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              makeLevelUnviewableViewableMenuItem.setAction(
+                  createMakeLevelUnviewableViewableAction(home, popup));
+              if (ev.getOldValue() != null) {
+                ((Level)ev.getOldValue()).removePropertyChangeListener(viewabilityChangeListener);
+              }
+              if (ev.getNewValue() != null) {
+                ((Level)ev.getNewValue()).addPropertyChangeListener(viewabilityChangeListener);
+              }
+            }
+          });
+      return makeLevelUnviewableViewableMenuItem;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the action active on Make level unviewable / viewable  menu item.
+   */
+  private Action createMakeLevelUnviewableViewableAction(Home home, boolean popup) {
+    Level selectedLevel = home.getSelectedLevel();
+    ActionType levelViewabilityActionType = selectedLevel == null || selectedLevel.isViewable()        
+        ? ActionType.MAKE_LEVEL_UNVIEWABLE
+        : ActionType.MAKE_LEVEL_VIEWABLE;
+    Action levelViewabilityAction = getActionMap().get(levelViewabilityActionType);
+    return popup 
+        ? new ResourceAction.PopupMenuItemAction(levelViewabilityAction)
+        : new ResourceAction.MenuItemAction(levelViewabilityAction);
   }
   
   /**
@@ -2673,6 +2736,10 @@ public class HomePane extends JRootPane implements HomeView {
       planViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.ADD_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, planViewPopup);
+      JMenuItem makeLevelUnviewableViewableMenuItem = createMakeLevelUnviewableViewableMenuItem(home, true);
+      if (makeLevelUnviewableViewableMenuItem != null) {
+        planViewPopup.add(makeLevelUnviewableViewableMenuItem);
+      }
       addActionToPopupMenu(ActionType.MODIFY_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.DELETE_LEVEL, planViewPopup);
       planViewPopup.addSeparator();
