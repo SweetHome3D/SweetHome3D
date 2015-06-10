@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -162,24 +162,50 @@ public class FurnitureController implements Controller {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
+    addFurniture(furniture, null);
+  }
+  
+  /**
+   * Controls new furniture added to the given group. 
+   * Once added the furniture will be selected in view 
+   * and undo support will receive a new undoable edit.
+   * @param furniture the furniture to add.
+   * @param group     the group to which furniture will be added.
+   */
+  public void addFurnitureToGroup(List<HomePieceOfFurniture> furniture, HomeFurnitureGroup group) {
+    if (group == null) {
+      throw new IllegalArgumentException("Group shouldn't be null");
+    }
+    addFurniture(furniture, group);
+  }
+    
+  private void addFurniture(List<HomePieceOfFurniture> furniture, HomeFurnitureGroup group) {
     final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
     final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
-    final HomePieceOfFurniture [] newFurniture = furniture.
-        toArray(new HomePieceOfFurniture [furniture.size()]);
-    // Get indices of furniture added to home
+    final HomePieceOfFurniture [] newFurniture = 
+        furniture.toArray(new HomePieceOfFurniture [furniture.size()]);
+    // Get indices of added furniture 
     final int [] furnitureIndex = new int [furniture.size()];
-    int endIndex = this.home.getFurniture().size();
+    final HomeFurnitureGroup [] furnitureGroups = group != null
+        ? new HomeFurnitureGroup [furniture.size()]
+        : null;
+    int endIndex = group == null 
+        ? this.home.getFurniture().size()
+        : group.getFurniture().size();
     boolean basePlanLocked = oldBasePlanLocked;
     for (int i = 0; i < furnitureIndex.length; i++) {
       furnitureIndex [i] = endIndex++; 
       // Unlock base plan if the piece is a part of it
       basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(newFurniture [i]);
+      if (furnitureGroups != null) {
+        furnitureGroups [i] = group;
+      }
     }  
     final boolean newBasePlanLocked = basePlanLocked;
     final Level furnitureLevel = this.home.getSelectedLevel();
     
-    doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
+    doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
@@ -192,7 +218,7 @@ public class FurnitureController implements Controller {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddFurniture(newFurniture, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
+          doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
         }
         
         @Override
@@ -205,13 +231,18 @@ public class FurnitureController implements Controller {
   }
   
   private void doAddFurniture(HomePieceOfFurniture [] furniture,
-                              int [] furnitureIndex,
+                              HomeFurnitureGroup [] furnitureGroups,
+                              int [] furnitureIndex, 
                               Level furnitureLevel, 
-                              Level [] furnitureLevels, 
+                              Level [] furnitureLevels,
                               boolean basePlanLocked,
                               boolean allLevelsSelection) {
     for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.addPieceOfFurniture (furniture [i], furnitureIndex [i]);
+      if (furnitureGroups != null && furnitureGroups [i] != null) {
+        this.home.addPieceOfFurnitureToGroup(furniture [i], furnitureGroups [i], furnitureIndex [i]);
+      } else {
+        this.home.addPieceOfFurniture(furniture [i], furnitureIndex [i]);
+      }
       furniture [i].setLevel(furnitureLevels != null ? furnitureLevels [i] : furnitureLevel);
     }
     this.home.setBasePlanLocked(basePlanLocked);
@@ -234,36 +265,68 @@ public class FurnitureController implements Controller {
   public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
     final boolean basePlanLocked = this.home.isBasePlanLocked();
     final boolean allLevelsSelection = this.home.isAllLevelsSelection();
+    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
-    // Sort the deletable furniture in the ascending order of their index in home
-    Map<Integer, HomePieceOfFurniture> sortedMap = 
-        new TreeMap<Integer, HomePieceOfFurniture>(); 
+
+    // Replace pieces by their group when they have to be all deleted
+    deletedFurniture = new ArrayList<HomePieceOfFurniture>(deletedFurniture);
+    List<HomeFurnitureGroup> homeGroups = new ArrayList<HomeFurnitureGroup>();  
+    searchGroups(homeFurniture, homeGroups);
+    boolean updated;
+    do {
+      updated = false;
+      for (HomeFurnitureGroup group : homeGroups) {
+        List<HomePieceOfFurniture> groupFurniture = group.getFurniture();
+        if (deletedFurniture.containsAll(groupFurniture)) {
+          deletedFurniture.removeAll(groupFurniture);
+          deletedFurniture.add(group);
+          updated = true;
+        }
+      }
+    } while (updated);
+      
+    // Sort the deletable furniture in the ascending order of their index in home or their group
+    Map<HomeFurnitureGroup, Map<Integer, HomePieceOfFurniture>> deletedFurnitureMap =
+        new HashMap<HomeFurnitureGroup, Map<Integer, HomePieceOfFurniture>>();
+    int deletedFurnitureCount = 0;
     for (HomePieceOfFurniture piece : deletedFurniture) {
       // Check piece is deletable and doesn't belong to a group
       if (isPieceOfFurnitureDeletable(piece)) {
-        int index = homeFurniture.indexOf(piece);
-        if (index != -1) {
-          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece, null, homeFurniture);
+        Map<Integer, HomePieceOfFurniture> sortedMap = deletedFurnitureMap.get(group);
+        if (sortedMap == null) {
+          sortedMap = new TreeMap<Integer, HomePieceOfFurniture>();
+          deletedFurnitureMap.put(group, sortedMap);
         }
+        if (group == null) {
+          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        } else {
+          sortedMap.put(group.getFurniture().indexOf(piece), piece);
+        }
+        deletedFurnitureCount++;
       }
     }
-    final HomePieceOfFurniture [] furniture = sortedMap.values().
-        toArray(new HomePieceOfFurniture [sortedMap.size()]); 
+    final HomePieceOfFurniture [] furniture = new HomePieceOfFurniture [deletedFurnitureCount]; 
     final int [] furnitureIndex = new int [furniture.length];
     final Level [] furnitureLevels = new Level [furniture.length];
+    final HomeFurnitureGroup [] furnitureGroups = new HomeFurnitureGroup [furniture.length];
     int i = 0;
-    for (int index : sortedMap.keySet()) {
-      furnitureIndex [i] = index; 
-      furnitureLevels [i] = furniture [i].getLevel();
-      i++;
-    }
+    for (Map.Entry<HomeFurnitureGroup, Map<Integer, HomePieceOfFurniture>> sortedMapEntry : deletedFurnitureMap.entrySet()) {
+      for (Map.Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMapEntry.getValue().entrySet()) {
+        furniture [i] = pieceEntry.getValue();
+        furnitureIndex [i] = pieceEntry.getKey(); 
+        furnitureLevels [i] = furniture [i].getLevel();
+        furnitureGroups [i++] = sortedMapEntry.getKey();
+      }
+    } 
     doDeleteFurniture(furniture, basePlanLocked, false); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doAddFurniture(furniture, furnitureIndex, null, furnitureLevels, basePlanLocked, allLevelsSelection); 
+          doAddFurniture(furniture, furnitureGroups, furnitureIndex, null, furnitureLevels, basePlanLocked, allLevelsSelection); 
+          home.setSelectedItems(oldSelection);
         }
         
         @Override
@@ -292,6 +355,39 @@ public class FurnitureController implements Controller {
     this.home.setAllLevelsSelection(allLevelsSelection);
   }
 
+  /**
+   * Searches all the groups among furniture and its children.
+   */
+  private void searchGroups(List<HomePieceOfFurniture> furniture,
+                            List<HomeFurnitureGroup> groups) {
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece instanceof HomeFurnitureGroup) {
+        groups.add((HomeFurnitureGroup)piece);
+        searchGroups(((HomeFurnitureGroup)piece).getFurniture(), groups);
+      }
+    }
+  }
+
+  /**
+   * Returns the furniture group that contains the given <code>piece</code> or <code>null</code> if it can't be found.
+   */
+  private HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece, 
+                                                      HomeFurnitureGroup furnitureGroup, 
+                                                      List<HomePieceOfFurniture> furniture) {
+    for (HomePieceOfFurniture homePiece : furniture) {
+      if (homePiece.equals(piece)) {
+        return furnitureGroup;
+      } else if (homePiece instanceof HomeFurnitureGroup) {
+        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece, 
+            (HomeFurnitureGroup)homePiece, ((HomeFurnitureGroup)homePiece).getFurniture());
+        if (group != null) {
+          return group;
+        }
+      }
+    }
+    return null;
+  }
+  
   /**
    * Updates the selected furniture in home.
    */
@@ -501,65 +597,84 @@ public class FurnitureController implements Controller {
       final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
-      // Sort the grouped furniture in the ascending order of their index in home
-      TreeMap<Integer, HomePieceOfFurniture> sortedMap = 
-          new TreeMap<Integer, HomePieceOfFurniture>(); 
+      // Sort the grouped furniture in the ascending order of their index in home or their group
+      Map<HomeFurnitureGroup, TreeMap<Integer, HomePieceOfFurniture>> groupedFurnitureMap =
+          new HashMap<HomeFurnitureGroup, TreeMap<Integer, HomePieceOfFurniture>>();
+      int groupedFurnitureCount = 0;
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        sortedMap.put(homeFurniture.indexOf(piece), piece);
+        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece, null, homeFurniture);
+        TreeMap<Integer, HomePieceOfFurniture> sortedMap = groupedFurnitureMap.get(group);
+        if (sortedMap == null) {
+          sortedMap = new TreeMap<Integer, HomePieceOfFurniture>();
+          groupedFurnitureMap.put(group, sortedMap);
+        }
+        if (group == null) {
+          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        } else {
+          sortedMap.put(group.getFurniture().indexOf(piece), piece);
+        }
+        groupedFurnitureCount++;
       }
-      final HomePieceOfFurniture [] groupPieces = sortedMap.values().
-          toArray(new HomePieceOfFurniture [sortedMap.size()]); 
-      final int [] groupPiecesIndex = new int [groupPieces.length];
-      final Level [] groupPiecesLevel = new Level [groupPieces.length];
-      final float [] groupPiecesElevation = new float [groupPieces.length];
-      final boolean [] groupPiecesMovable = new boolean [groupPieces.length];
-      final boolean [] groupPiecesVisible = new boolean [groupPieces.length];
+      final HomePieceOfFurniture [] groupedPieces = new HomePieceOfFurniture [groupedFurnitureCount]; 
+      final int [] groupedPiecesIndex = new int [groupedPieces.length];
+      final Level [] groupedPiecesLevel = new Level [groupedPieces.length];
+      final float [] groupPiecesElevation = new float [groupedPieces.length];
+      final boolean [] groupPiecesMovable = new boolean [groupedPieces.length];
+      final boolean [] groupPiecesVisible = new boolean [groupedPieces.length];
+      final HomeFurnitureGroup [] groupedPiecesGroups = new HomeFurnitureGroup [groupedPieces.length];
       Level minLevel = this.home.getSelectedLevel();
       int i = 0;
-      for (Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMap.entrySet()) {
-        groupPiecesIndex [i] = pieceEntry.getKey();
-        HomePieceOfFurniture piece = pieceEntry.getValue();
-        groupPiecesLevel [i] = piece.getLevel();
-        groupPiecesElevation [i] = piece.getElevation();
-        groupPiecesMovable [i] = piece.isMovable();
-        groupPiecesVisible [i] = piece.isVisible();
-        if (groupPiecesLevel [i] != null) {
-          if (minLevel == null
-              || groupPiecesLevel [i].getElevation() < minLevel.getElevation()) {
-            minLevel = groupPiecesLevel [i];
+      for (Map.Entry<HomeFurnitureGroup, TreeMap<Integer, HomePieceOfFurniture>> sortedMapEntry : groupedFurnitureMap.entrySet()) {
+        for (Map.Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMapEntry.getValue().entrySet()) {
+          HomePieceOfFurniture piece = pieceEntry.getValue();
+          groupedPieces [i] = piece;
+          groupedPiecesIndex [i] = pieceEntry.getKey();
+          groupedPiecesLevel [i] = piece.getLevel();
+          groupPiecesElevation [i] = piece.getElevation();
+          groupPiecesMovable [i] = piece.isMovable();
+          groupPiecesVisible [i] = piece.isVisible();
+          groupedPiecesGroups [i] = sortedMapEntry.getKey();
+          if (groupedPiecesLevel [i] != null) {
+            if (minLevel == null
+                || groupedPiecesLevel [i].getElevation() < minLevel.getElevation()) {
+              minLevel = groupedPiecesLevel [i];
+            }
           }
+          i++;
         }
-        i++;
-      }
-
-      final HomeFurnitureGroup furnitureGroup;
+      } 
+      final HomeFurnitureGroup group;
       if (selectedFurniture.indexOf(this.leadSelectedPieceOfFurniture) > 0) {
-        furnitureGroup = createHomeFurnitureGroup(Arrays.asList(groupPieces), this.leadSelectedPieceOfFurniture);
+        group = createHomeFurnitureGroup(Arrays.asList(groupedPieces), this.leadSelectedPieceOfFurniture);
       } else {
-        furnitureGroup = createHomeFurnitureGroup(Arrays.asList(groupPieces));
+        group = createHomeFurnitureGroup(Arrays.asList(groupedPieces));
       }
-      final float [] groupPiecesNewElevation = new float [groupPieces.length];
+      // Store piece elevation that could have been updated during grouping
+      final float [] groupPiecesNewElevation = new float [groupedPieces.length];
       i = 0;
-      for (HomePieceOfFurniture piece : sortedMap.values()) {
+      for (HomePieceOfFurniture piece : groupedPieces) {
         groupPiecesNewElevation [i++] = piece.getElevation();
       }
-      final int furnitureGroupIndex = sortedMap.lastKey() + 1 - groupPieces.length;
-      final boolean movable = furnitureGroup.isMovable();
+      TreeMap<Integer, HomePieceOfFurniture> homeSortedMap = groupedFurnitureMap.get(null);
+      final int groupIndex = homeSortedMap != null 
+          ? homeSortedMap.lastKey() + 1 - groupedPieces.length
+          : homeFurniture.size();
+      final boolean movable = group.isMovable();
       final Level groupLevel = minLevel;
       
-      doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
-          new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
+      doGroupFurniture(groupedPieces, new HomeFurnitureGroup [] {group}, 
+          null, new int [] {groupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
             @Override
             public void undo() throws CannotUndoException {
               super.undo();
-              doUngroupFurniture(groupPieces, groupPiecesIndex, 
-                  new HomeFurnitureGroup [] {furnitureGroup}, groupPiecesLevel, basePlanLocked, allLevelsSelection);
-              for (int i = 0; i < groupPieces.length; i++) {
-                groupPieces [i].setElevation(groupPiecesElevation [i]);
-                groupPieces [i].setMovable(groupPiecesMovable [i]);
-                groupPieces [i].setVisible(groupPiecesVisible [i]);
+              doUngroupFurniture(new HomeFurnitureGroup [] {group}, groupedPieces, 
+                  groupedPiecesGroups, groupedPiecesIndex, groupedPiecesLevel, basePlanLocked, allLevelsSelection);
+              for (int i = 0; i < groupedPieces.length; i++) {
+                groupedPieces [i].setElevation(groupPiecesElevation [i]);
+                groupedPieces [i].setMovable(groupPiecesMovable [i]);
+                groupedPieces [i].setVisible(groupPiecesVisible [i]);
               }
               home.setSelectedItems(oldSelection);
             }
@@ -567,14 +682,14 @@ public class FurnitureController implements Controller {
             @Override
             public void redo() throws CannotRedoException {
               super.redo();
-              for (int i = 0; i < groupPieces.length; i++) {
-                groupPieces [i].setElevation(groupPiecesNewElevation [i]);
-                groupPieces [i].setLevel(null);
+              for (int i = 0; i < groupedPieces.length; i++) {
+                groupedPieces [i].setElevation(groupPiecesNewElevation [i]);
+                groupedPieces [i].setLevel(null);
               }
-              furnitureGroup.setMovable(movable);
-              furnitureGroup.setVisible(true);
-              doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
-                  new int [] {furnitureGroupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
+              group.setMovable(movable);
+              group.setVisible(true);
+              doGroupFurniture(groupedPieces, new HomeFurnitureGroup [] {group}, 
+                  null, new int [] {groupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
             }
             
             @Override
@@ -618,24 +733,26 @@ public class FurnitureController implements Controller {
     return i;
   }
 
-  private void doGroupFurniture(HomePieceOfFurniture [] groupPieces,
-                                HomeFurnitureGroup [] furnitureGroups,
-                                int [] furnitureGroupsIndex,
-                                Level [] groupLevels, 
+  private void doGroupFurniture(HomePieceOfFurniture [] groupedPieces,
+                                HomeFurnitureGroup [] groups,
+                                HomeFurnitureGroup [] groupsGroups,
+                                int [] groupsIndex, 
+                                Level [] groupsLevels,
                                 boolean basePlanLocked,
                                 boolean allLevelsSelection) {
-    doDeleteFurniture(groupPieces, basePlanLocked, allLevelsSelection);
-    doAddFurniture(furnitureGroups, furnitureGroupsIndex, null, groupLevels, basePlanLocked, allLevelsSelection);
+    doDeleteFurniture(groupedPieces, basePlanLocked, allLevelsSelection);
+    doAddFurniture(groups, groupsGroups, groupsIndex, null, groupsLevels, basePlanLocked, allLevelsSelection);
   }
 
-  private void doUngroupFurniture(HomePieceOfFurniture [] groupPieces,
-                                  int [] groupPiecesIndex,
-                                  HomeFurnitureGroup [] furnitureGroups,
-                                  Level [] groupLevels, 
+  private void doUngroupFurniture(HomeFurnitureGroup [] groups,
+                                  HomePieceOfFurniture [] ungroupedPieces,
+                                  HomeFurnitureGroup [] ungroupedPiecesGroups,
+                                  int [] ungroupedPiecesIndex, 
+                                  Level [] ungroupedPiecesLevels,
                                   boolean basePlanLocked,
                                   boolean allLevelsSelection) {
-    doDeleteFurniture(furnitureGroups, basePlanLocked, allLevelsSelection);
-    doAddFurniture(groupPieces, groupPiecesIndex, null, groupLevels, basePlanLocked, allLevelsSelection);
+    doDeleteFurniture(groups, basePlanLocked, allLevelsSelection);
+    doAddFurniture(ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, null, ungroupedPiecesLevels, basePlanLocked, allLevelsSelection);
   }
 
   /**
@@ -643,66 +760,90 @@ public class FurnitureController implements Controller {
    */
   public void ungroupSelectedFurniture() {
     List<HomeFurnitureGroup> movableSelectedFurnitureGroups = new ArrayList<HomeFurnitureGroup>(); 
-    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item instanceof HomeFurnitureGroup) {
         HomeFurnitureGroup group = (HomeFurnitureGroup)item;
-        if (isPieceOfFurnitureMovable(group)
-            && homeFurniture.contains(group)) {
+        if (isPieceOfFurnitureMovable(group)) {
           movableSelectedFurnitureGroups.add(group);
         }
       }
     }  
     if (!movableSelectedFurnitureGroups.isEmpty()) {
+      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
       final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
-      // Sort the groups in the ascending order of their index in home
-      TreeMap<Integer, HomeFurnitureGroup> sortedMap = 
-          new TreeMap<Integer, HomeFurnitureGroup>(); 
-      for (HomeFurnitureGroup group : movableSelectedFurnitureGroups) {
-        sortedMap.put(homeFurniture.indexOf(group), group);
+      // Sort the groups in the ascending order of their index in home or their group
+      Map<HomeFurnitureGroup, TreeMap<Integer, HomeFurnitureGroup>> groupsMap =
+          new HashMap<HomeFurnitureGroup, TreeMap<Integer, HomeFurnitureGroup>>();
+      int groupsCount = 0;
+      for (HomeFurnitureGroup piece : movableSelectedFurnitureGroups) {
+        HomeFurnitureGroup groupGroup = getPieceOfFurnitureGroup(piece, null, homeFurniture);
+        TreeMap<Integer, HomeFurnitureGroup> sortedMap = groupsMap.get(groupGroup);
+        if (sortedMap == null) {
+          sortedMap = new TreeMap<Integer, HomeFurnitureGroup>();
+          groupsMap.put(groupGroup, sortedMap);
+        }
+        if (groupGroup == null) {
+          sortedMap.put(homeFurniture.indexOf(piece), piece);
+        } else {
+          sortedMap.put(groupGroup.getFurniture().indexOf(piece), piece);
+        }
+        groupsCount++;
       }
-      final HomeFurnitureGroup [] furnitureGroups = sortedMap.values().
-          toArray(new HomeFurnitureGroup [sortedMap.size()]); 
-      final int [] furnitureGroupsIndex = new int [furnitureGroups.length];
+      final HomeFurnitureGroup [] groups = new HomeFurnitureGroup [groupsCount]; 
+      final HomeFurnitureGroup [] groupsGroups = new HomeFurnitureGroup [groups.length];
+      final int [] groupsIndex = new int [groups.length];
+      final Level [] groupsLevels = new Level [groups.length];
       int i = 0;
-      for (int index : sortedMap.keySet()) {
-        furnitureGroupsIndex [i++] = index; 
-      }
-
-      List<HomePieceOfFurniture> groupPiecesList = new ArrayList<HomePieceOfFurniture>();
-      for (HomeFurnitureGroup furnitureGroup : furnitureGroups) {
-        groupPiecesList.addAll(furnitureGroup.getFurniture());
-      }
-      final HomePieceOfFurniture [] groupPieces = 
-          groupPiecesList.toArray(new HomePieceOfFurniture [groupPiecesList.size()]);      
-      final int [] groupPiecesIndex = new int [groupPieces.length];
-      final Level [] groupPiecesLevel = new Level [groupPieces.length];
-      int endIndex = sortedMap.lastKey() + 1 - furnitureGroups.length;
+      List<HomePieceOfFurniture> ungroupedPiecesList = new ArrayList<HomePieceOfFurniture>();
+      List<Integer> ungroupedPiecesIndexList = new ArrayList<Integer>();
+      List<HomeFurnitureGroup> ungroupedPiecesGroupsList = new ArrayList<HomeFurnitureGroup>();
+      for (Map.Entry<HomeFurnitureGroup, TreeMap<Integer, HomeFurnitureGroup>> sortedMapEntry : groupsMap.entrySet()) {
+        TreeMap<Integer, HomeFurnitureGroup> sortedMap = sortedMapEntry.getValue();
+        int endIndex = sortedMap.lastKey() + 1 - sortedMap.size();
+        for (Map.Entry<Integer, HomeFurnitureGroup> groupEntry : sortedMap.entrySet()) {
+          HomeFurnitureGroup group = groupEntry.getValue();
+          groups [i] = group;
+          groupsGroups [i] = sortedMapEntry.getKey();
+          groupsIndex [i] = groupEntry.getKey(); 
+          groupsLevels [i++] = group.getLevel();
+          for (HomePieceOfFurniture groupPiece : group.getFurniture()) {
+            ungroupedPiecesList.add(groupPiece);
+            ungroupedPiecesGroupsList.add(sortedMapEntry.getKey());
+            ungroupedPiecesIndexList.add(endIndex++);
+          }
+        }
+      } 
+      final HomePieceOfFurniture [] ungroupedPieces = 
+          ungroupedPiecesList.toArray(new HomePieceOfFurniture [ungroupedPiecesList.size()]);      
+      final HomeFurnitureGroup [] ungroupedPiecesGroups = 
+          ungroupedPiecesGroupsList.toArray(new HomeFurnitureGroup [ungroupedPiecesGroupsList.size()]);      
+      final int [] ungroupedPiecesIndex = new int [ungroupedPieces.length];
+      final Level [] ungroupedPiecesLevels = new Level [ungroupedPieces.length];
       boolean basePlanLocked = oldBasePlanLocked;
-      for (i = 0; i < groupPieces.length; i++) {
-        groupPiecesIndex [i] = endIndex++; 
-        groupPiecesLevel [i] = groupPieces [i].getLevel();
+      for (i = 0; i < ungroupedPieces.length; i++) {
+        ungroupedPiecesIndex [i] = ungroupedPiecesIndexList.get(i); 
+        ungroupedPiecesLevels [i] = ungroupedPieces [i].getLevel();
         // Unlock base plan if the piece is a part of it
-        basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(groupPieces [i]);
+        basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(ungroupedPieces [i]);
       }  
       final boolean newBasePlanLocked = basePlanLocked;
 
-      doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked, false);
+      doUngroupFurniture(groups, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
             @Override
             public void undo() throws CannotUndoException {
               super.undo();
-              doGroupFurniture(groupPieces, furnitureGroups, furnitureGroupsIndex, groupPiecesLevel, oldBasePlanLocked, allLevelsSelection);
+              doGroupFurniture(ungroupedPieces, groups, groupsGroups, groupsIndex, groupsLevels, oldBasePlanLocked, allLevelsSelection);
               home.setSelectedItems(oldSelection);
             }
             
             @Override
             public void redo() throws CannotRedoException {
               super.redo();
-              doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, groupPiecesLevel, newBasePlanLocked, false);
+              doUngroupFurniture(groups, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
             }
             
             @Override

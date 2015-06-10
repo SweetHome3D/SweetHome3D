@@ -654,22 +654,64 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
+   * Adds the <code>piece</code> in parameter at the <code>index</code> in the given <code>group</code>.
+   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification with an event {@link CollectionEvent#getIndex() index} equal to -1.
+   */
+  public void addPieceOfFurnitureToGroup(HomePieceOfFurniture piece, HomeFurnitureGroup group, int index) {
+    piece.setLevel(this.selectedLevel);
+    group.addPieceOfFurniture(piece, index);
+    this.furnitureChangeSupport.fireCollectionChanged(piece, CollectionEvent.Type.ADD);
+  }
+
+  /**
    * Deletes the <code>piece</code> in parameter from this home.
    * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification.
+   * notification. If the removed <code>piece</code> belongs to a group, the 
+   * {@link CollectionEvent#getIndex() index} of the event will be -1.
    */
   public void deletePieceOfFurniture(HomePieceOfFurniture piece) {
     // Ensure selectedItems don't keep a reference to piece
     deselectItem(piece);
     int index = this.furniture.indexOf(piece);
-    if (index != -1) {
+    HomeFurnitureGroup group = index == -1
+        ? getPieceOfFurnitureGroup(piece, null, this.furniture)
+        : null;
+    if (index != -1
+        || group != null) {
       piece.setLevel(null);
       // Make a copy of the list to avoid conflicts in the list returned by getFurniture
       this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
-      this.furniture.remove(index);
-      this.furnitureChangeSupport.fireCollectionChanged(piece, index, CollectionEvent.Type.DELETE);
+      if (group != null) {
+        group.deletePieceOfFurniture(piece);
+        this.furnitureChangeSupport.fireCollectionChanged(piece, CollectionEvent.Type.DELETE);
+      } else {
+        this.furniture.remove(index);
+        this.furnitureChangeSupport.fireCollectionChanged(piece, index, CollectionEvent.Type.DELETE);
+      }
     }
+  }
+
+  /**
+   * Returns the furniture group that contains the given <code>piece</code> or <code>null</code> if it can't be found.
+   */
+  private HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece, 
+                                                      HomeFurnitureGroup furnitureGroup, 
+                                                      List<HomePieceOfFurniture> furniture) {
+    for (HomePieceOfFurniture homePiece : furniture) {
+      if (homePiece.equals(piece)) {
+        return furnitureGroup;
+      } else if (homePiece instanceof HomeFurnitureGroup) {
+        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece, 
+            (HomeFurnitureGroup)homePiece, ((HomeFurnitureGroup)homePiece).getFurniture());
+        if (group != null) {
+          return group;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -1486,6 +1528,19 @@ public class Home implements Serializable, Cloneable {
       destination.add(clone);
       if (sourceSelectedItems.contains(item)) {
         destinationSelectedItems.add(clone);
+      } else if (item instanceof HomeFurnitureGroup) {
+        // Check if furniture in group is selected
+        List<HomePieceOfFurniture> sourceFurnitureGroup = ((HomeFurnitureGroup)item).getAllFurniture();
+        List<HomePieceOfFurniture> destinationFurnitureGroup = null;
+        for (int i = 0, n = sourceFurnitureGroup.size(); i < n; i++) {
+          HomePieceOfFurniture piece = sourceFurnitureGroup.get(i);
+          if (sourceSelectedItems.contains(piece)) {
+            if (destinationFurnitureGroup == null) {
+              destinationFurnitureGroup = ((HomeFurnitureGroup)clone).getAllFurniture();
+            }
+            destinationSelectedItems.add(destinationFurnitureGroup.get(i));
+          }
+        }
       }
     }
     return destination;

@@ -724,6 +724,8 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsThreeMovablePiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsOnlyOneGroup = selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomeFurnitureGroup;
     boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
@@ -735,12 +737,9 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsCompass = false;
     FurnitureController furnitureController = getFurnitureController();
     if (!modificationState) {
-      List<HomePieceOfFurniture> furniture = this.home.getFurniture();
       for (Selectable item : selectedItems) {
-        // Check item is deletable and doesn't belong to a group if it's a piece of furniture
-        if (getPlanController().isItemDeletable(item)
-            && (!(item instanceof HomePieceOfFurniture)
-                || furniture.contains(item))) {
+        // Check item is deletable 
+        if (getPlanController().isItemDeletable(item)) {
           homeSelectionContainsDeletableItems = true;
           break;
         }
@@ -748,16 +747,14 @@ public class HomeController implements Controller {
       List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(selectedItems);
       homeSelectionContainsFurniture = !selectedFurniture.isEmpty();
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        // Check piece is deletable and doesn't belong to a group
-        if (furnitureController.isPieceOfFurnitureDeletable(piece)
-            && furniture.contains(piece)) {
+        // Check piece is deletable 
+        if (furnitureController.isPieceOfFurnitureDeletable(piece)) {
           homeSelectionContainsDeletableFurniture = true;
           break;
         }
       }
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        if (piece instanceof HomeFurnitureGroup
-            && furniture.contains(piece)) {
+        if (piece instanceof HomeFurnitureGroup) {
           homeSelectionContainsFurnitureGroup = true;
           break;
         }
@@ -778,10 +775,11 @@ public class HomeController implements Controller {
       }
       if (homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore) {
         homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = true;
+        List<HomePieceOfFurniture> furniture = this.home.getFurniture();
         // Allow to group only furniture that are not in subgroups
         for (HomePieceOfFurniture piece : selectedFurniture) {
-          if (furnitureController.isPieceOfFurnitureMovable(piece)
-              && !furniture.contains(piece)) {
+          if (!furnitureController.isPieceOfFurnitureMovable(piece)
+              || !furniture.contains(piece)) {
             homeSelectionContainsTwoMovableGroupablePiecesOfFurnitureOrMore = false;
             break;
           }
@@ -834,12 +832,15 @@ public class HomeController implements Controller {
       view.setEnabled(HomeView.ActionType.CUT, false);
       view.setEnabled(HomeView.ActionType.DELETE, false);
     }
+    enablePasteToGroupAction();
     enablePasteStyleAction();
 
     Level selectedLevel = this.home.getSelectedLevel();
     boolean viewableLevel = selectedLevel == null || selectedLevel.isViewable();
     view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture
         && viewableLevel);
+    view.setEnabled(HomeView.ActionType.ADD_FURNITURE_TO_GROUP, catalogSelectionContainsFurniture
+        && viewableLevel && homeSelectionContainsOnlyOneGroup);
     // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomeView.ActionType.DELETE_HOME_FURNITURE,
         homeSelectionContainsDeletableFurniture);
@@ -918,20 +919,68 @@ public class HomeController implements Controller {
   public void enablePasteAction() {
     HomeView view = getView();
     boolean pasteEnabled = false;
+    boolean pasteToGroupEnabled = false;
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()) {
       Level selectedLevel = this.home.getSelectedLevel();
       pasteEnabled = (selectedLevel == null || selectedLevel.isViewable())
           && !getPlanController().isModificationState() && !view.isClipboardEmpty();
+      
+      if (pasteEnabled) {
+        List<Selectable> selectedItems = this.home.getSelectedItems();
+        if (selectedItems.size() == 1
+            && selectedItems.get(0) instanceof HomeFurnitureGroup) {
+          pasteToGroupEnabled = true;
+          for (Selectable item : view.getClipboardItems()) {
+            if (!(item instanceof HomePieceOfFurniture)) {
+              pasteToGroupEnabled = false;
+              break;
+            }
+          }
+        }
+      }
     }
     view.setEnabled(HomeView.ActionType.PASTE, pasteEnabled);
+    enablePasteToGroupAction();
+    enablePasteStyleAction();
+  }
+
+  /**
+   * Enables paste to group action if clipboard contains furniture and 
+   * home selected item is a furniture group.
+   */
+  private void enablePasteToGroupAction() {
+    HomeView view = getView();
+    boolean pasteToGroupEnabled = false;
+    if (this.focusedView == getFurnitureController().getView()
+        || this.focusedView == getPlanController().getView()) {
+      Level selectedLevel = this.home.getSelectedLevel();
+      if ((selectedLevel == null || selectedLevel.isViewable())
+          && !getPlanController().isModificationState()) {
+        List<Selectable> selectedItems = this.home.getSelectedItems();
+        if (selectedItems.size() == 1
+            && selectedItems.get(0) instanceof HomeFurnitureGroup) {
+          List<Selectable> clipboardItems = view.getClipboardItems();
+          if (clipboardItems != null) {
+            pasteToGroupEnabled = true;
+            for (Selectable item : clipboardItems) {
+              if (!(item instanceof HomePieceOfFurniture)) {
+                pasteToGroupEnabled = false;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    view.setEnabled(HomeView.ActionType.PASTE_TO_GROUP, pasteToGroupEnabled);
   }
 
   /**
    * Enables clipboard paste style action if selection contains some items of a class 
    * compatible with the clipboard item.
    */
-  public void enablePasteStyleAction() {
+  private void enablePasteStyleAction() {
     HomeView view = getView();
     boolean pasteStyleEnabled = false;
     if ((this.focusedView == getFurnitureController().getView()
@@ -1169,28 +1218,35 @@ public class HomeController implements Controller {
    * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
+    addFurniture(null);
+  }
+  
+  /**
+   * Adds the selected furniture in catalog to the selected group and selects it.
+   * @since 5.0  
+   */
+  public void addFurnitureToGroup() {
+    addFurniture((HomeFurnitureGroup)this.home.getSelectedItems().get(0));
+  }
+  
+  private void addFurniture(HomeFurnitureGroup group) {
     // Use automatically selection mode  
     getPlanController().setMode(PlanController.Mode.SELECTION);
     List<CatalogPieceOfFurniture> selectedFurniture = 
       getFurnitureCatalogController().getSelectedFurniture();
     if (!selectedFurniture.isEmpty()) {
-      List<HomePieceOfFurniture> newFurniture = 
-          new ArrayList<HomePieceOfFurniture>();
+      List<HomePieceOfFurniture> addedFurniture = new ArrayList<HomePieceOfFurniture>();
       for (CatalogPieceOfFurniture piece : selectedFurniture) {
-        HomePieceOfFurniture homePiece = getFurnitureController().createHomePieceOfFurniture(piece);
-        // If magnetism is enabled, adjust piece size and elevation
-        if (this.preferences.isMagnetismEnabled()) {
-          if (homePiece.isResizable()) {
-            homePiece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f));
-            homePiece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f));
-            homePiece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f));
-          }
-          homePiece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(homePiece.getElevation(), 0.1f));
-        }
-        newFurniture.add(homePiece);
+        addedFurniture.add(getFurnitureController().createHomePieceOfFurniture(piece));
       }
-      // Add newFurniture to home with furnitureController
-      getFurnitureController().addFurniture(newFurniture);
+      adjustFurnitureSizeAndElevation(addedFurniture, false);
+
+      // Add furniture to home with furnitureController
+      if (group != null) {
+        getFurnitureController().addFurnitureToGroup(addedFurniture, group);
+      } else {
+        getFurnitureController().addFurniture(addedFurniture);
+      }
     }
   }
   
@@ -1440,20 +1496,7 @@ public class HomeController implements Controller {
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
-      // If magnetism is enabled, adjust furniture size and elevation
-      if (this.preferences.isMagnetismEnabled()) {
-        for (HomePieceOfFurniture piece : addedFurniture) {
-          if (piece.isResizable()) {
-            piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
-            // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
-            if (!(piece instanceof HomeDoorOrWindow) || dx != 0 || dy != 0) {
-              piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
-            }
-            piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
-          }
-          piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
-        }
-      }
+      adjustFurnitureSizeAndElevation(addedFurniture, dx == 0 && dy == 0);
       getPlanController().moveItems(items, dx, dy);
       if (isDropInPlanView 
           && this.preferences.isMagnetismEnabled()
@@ -1472,6 +1515,25 @@ public class HomeController implements Controller {
      
       // End compound edit
       undoSupport.endUpdate();
+    }
+  }
+
+  /**
+   * Adjusts furniture size and elevation if magnetism is enabled.
+   */
+  private void adjustFurnitureSizeAndElevation(List<HomePieceOfFurniture> furniture, boolean keepDoorsAndWindowDepth) {
+    if (this.preferences.isMagnetismEnabled()) {
+      for (HomePieceOfFurniture piece : furniture) {
+        if (piece.isResizable()) {
+          piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
+          // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
+          if (!(piece instanceof HomeDoorOrWindow) || !keepDoorsAndWindowDepth) {
+            piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+          }
+          piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
+        }
+        piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
+      }
     }
   }
 
@@ -1525,6 +1587,29 @@ public class HomeController implements Controller {
     undoSupport.endUpdate();
   }
 
+  /**
+   * Paste the furniture in clipboard to the selected group in home.
+   * @since 5.0
+   */
+  public void pasteToGroup() {
+    // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home
+    UndoableEditSupport undoSupport = getUndoableEditSupport();
+    undoSupport.beginUpdate();
+    List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(getView().getClipboardItems());
+    adjustFurnitureSizeAndElevation(addedFurniture, true);
+    getFurnitureController().addFurnitureToGroup(addedFurniture, 
+        (HomeFurnitureGroup)this.home.getSelectedItems().get(0));
+    undoSupport.postEdit(new AbstractUndoableEdit() {      
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(HomeController.class, "undoPasteToGroupName");
+        }      
+      });
+   
+    // End compound edit
+    undoSupport.endUpdate();
+  }
+  
   /**
    * Paste the style of the item in clipboard on selected items compatible with it.
    */
@@ -1667,6 +1752,7 @@ public class HomeController implements Controller {
     this.focusedView = focusedView;
     enableActionsBoundToSelection();
     enablePasteAction();
+    enablePasteToGroupAction();
     enablePasteStyleAction();
     enableSelectAllAction();
   }

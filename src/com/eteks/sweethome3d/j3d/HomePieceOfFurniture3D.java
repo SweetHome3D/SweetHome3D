@@ -119,13 +119,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
     
-    if (piece instanceof HomeFurnitureGroup) {
-      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-        addChild(new HomePieceOfFurniture3D(groupPiece, home, ignoreDrawingMode, waitModelAndTextureLoadingEnd));
-      }
-    } else {
-      createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
-    }
+    createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
   }
 
   /**
@@ -206,19 +200,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   @Override
   public void update() {
-    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
-    if (piece instanceof HomeFurnitureGroup) {
-      Enumeration<?> enumeration = getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        ((HomePieceOfFurniture3D)enumeration.nextElement()).update();
-      }
-    } else {
-      updatePieceOfFurnitureTransform();
-      updatePieceOfFurnitureModelMirrored();
-      updatePieceOfFurnitureColorAndTexture(false);      
-      updateLight();
-      updatePieceOfFurnitureVisibility();      
-    }
+    updatePieceOfFurnitureTransform();
+    updatePieceOfFurnitureModelMirrored();
+    updatePieceOfFurnitureColorAndTexture(false);      
+    updateLight();
+    updatePieceOfFurnitureVisibility();      
   }
 
   /**

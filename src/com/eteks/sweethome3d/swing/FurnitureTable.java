@@ -393,13 +393,15 @@ public class FurnitureTable extends JTable implements View, Printable {
             if (columnId == HomePieceOfFurniture.SortableProperty.VISIBLE) {
               Component visibilityComponent = getCellRenderer(row, column).
                   getTableCellRendererComponent(FurnitureTable.this, getValueAt(row, column), false, false, row, column);
-              Rectangle cellRect = getCellRect(row, column, false);
-              // Center visibilityComponent in cell rect
-              visibilityComponent.setSize(visibilityComponent.getPreferredSize());
-              visibilityComponent.setLocation(cellRect.x + (cellRect.width - visibilityComponent.getWidth()) / 2, 
-                      cellRect.y + (cellRect.height - visibilityComponent.getHeight()) / 2);
-              // Check if mouse point is exactly on the visibility component
-              isVisibleColumn = visibilityComponent.getBounds().contains(ev.getPoint());
+              if (visibilityComponent.isEnabled()) {
+                Rectangle cellRect = getCellRect(row, column, false);
+                // Center visibilityComponent in cell rect
+                visibilityComponent.setSize(visibilityComponent.getPreferredSize());
+                visibilityComponent.setLocation(cellRect.x + (cellRect.width - visibilityComponent.getWidth()) / 2, 
+                        cellRect.y + (cellRect.height - visibilityComponent.getHeight()) / 2);
+                // Check if mouse point is exactly on the visibility component
+                isVisibleColumn = visibilityComponent.getBounds().contains(ev.getPoint());
+              }
             } else if (columnId == HomePieceOfFurniture.SortableProperty.NAME) {
               TableCellRenderer cellRenderer = getCellRenderer(row, column);
               if (cellRenderer instanceof TreeTableNameCellRenderer) {
@@ -1642,9 +1644,15 @@ public class FurnitureTable extends JTable implements View, Printable {
               @Override
               public Component getTableCellRendererComponent(JTable table, 
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                return super.getTableCellRendererComponent(table, 
+                Component component = super.getTableCellRendererComponent(table, 
                     value != null  ? ((HomePieceOfFurniture)value).isVisible()  : null, 
                     isSelected, hasFocus, row, column);
+                if (value != null) {
+                  // Enable component only for root children to avoid the complexity of managing partially visible groups
+                  FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)table.getModel();
+                  component.setEnabled(tableModel.getIndexOfChild(tableModel.getRoot(), value) != -1);
+                }
+                return component;
               }
             };
         default :
@@ -1987,21 +1995,23 @@ public class FurnitureTable extends JTable implements View, Printable {
             int pieceIndex = ev.getIndex();
             switch (ev.getType()) {
               case ADD :
-                if (expandedGroups.isEmpty()
-                    && !containsHiddenFurniture) {
+                if (!expandedGroups.isEmpty()
+                    || containsHiddenFurniture
+                    || pieceIndex < 0) {
+                  filterAndSortFurniture();
+                } else { 
                   int insertionIndex = getPieceOfFurnitureInsertionIndex(piece, home, pieceIndex);
                   if (insertionIndex != -1) {
                     filteredAndSortedFurniture.add(insertionIndex, piece);
                     fireTableRowsInserted(insertionIndex, insertionIndex);
                     fireTreeModelChanged();
                   }
-                } else { 
-                  filterAndSortFurniture();
                 }
                 break;
               case DELETE :
                 if (furnitureFilter != null
-                    || containsHiddenFurniture) {
+                    || containsHiddenFurniture
+                    || pieceIndex < 0) {
                   filterAndSortFurniture();
                 } else {
                   int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);

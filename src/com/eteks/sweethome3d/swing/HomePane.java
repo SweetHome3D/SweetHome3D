@@ -87,6 +87,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -308,11 +309,13 @@ public class HomePane extends JRootPane implements HomeView {
     createClipboardAction(ActionType.CUT, preferences, TransferHandler.getCutAction(), true);
     createClipboardAction(ActionType.COPY, preferences, TransferHandler.getCopyAction(), true);
     createClipboardAction(ActionType.PASTE, preferences, TransferHandler.getPasteAction(), false);
+    createAction(ActionType.PASTE_TO_GROUP, preferences, controller, "pasteToGroup");
     createAction(ActionType.PASTE_STYLE, preferences, controller, "pasteStyle");
     createAction(ActionType.DELETE, preferences, controller, "delete");
     createAction(ActionType.SELECT_ALL, preferences, controller, "selectAll");
     
     createAction(ActionType.ADD_HOME_FURNITURE, preferences, controller, "addHomeFurniture");
+    createAction(ActionType.ADD_FURNITURE_TO_GROUP, preferences, controller, "addFurnitureToGroup");
     FurnitureController furnitureController = controller.getFurnitureController();
     createAction(ActionType.DELETE_HOME_FURNITURE, preferences, furnitureController, "deleteSelection");
     createAction(ActionType.MODIFY_FURNITURE, preferences, controller, "modifySelectedFurniture");
@@ -984,6 +987,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.CUT, editMenu);
     addActionToMenu(ActionType.COPY, editMenu);
     addActionToMenu(ActionType.PASTE, editMenu);
+    addActionToMenu(ActionType.PASTE_TO_GROUP, editMenu);
     addActionToMenu(ActionType.PASTE_STYLE, editMenu);
     editMenu.addSeparator();
     addActionToMenu(ActionType.DELETE, editMenu);
@@ -993,6 +997,7 @@ public class HomePane extends JRootPane implements HomeView {
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(this.menuActionMap.get(MenuActionType.FURNITURE_MENU));
     addActionToMenu(ActionType.ADD_HOME_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.ADD_FURNITURE_TO_GROUP, furnitureMenu);
     addActionToMenu(ActionType.MODIFY_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.GROUP_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.UNGROUP_FURNITURE, furnitureMenu);
@@ -2443,6 +2448,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.DELETE, catalogViewPopup);
       catalogViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.ADD_HOME_FURNITURE, catalogViewPopup);
+      addActionToPopupMenu(ActionType.ADD_FURNITURE_TO_GROUP, catalogViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_FURNITURE, catalogViewPopup);
       catalogViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.IMPORT_FURNITURE, catalogViewPopup);
@@ -2474,6 +2480,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.CUT, furnitureViewPopup);
       addActionToPopupMenu(ActionType.COPY, furnitureViewPopup);
       addActionToPopupMenu(ActionType.PASTE, furnitureViewPopup);
+      addActionToPopupMenu(ActionType.PASTE_TO_GROUP, furnitureViewPopup);
       addActionToPopupMenu(ActionType.PASTE_STYLE, furnitureViewPopup);
       furnitureViewPopup.addSeparator();
       addActionToPopupMenu(ActionType.DELETE, furnitureViewPopup);
@@ -4249,11 +4256,23 @@ public class HomePane extends JRootPane implements HomeView {
       try {
         writer = new OBJWriter(objFile, header, -1);
   
-        List<Selectable> exportedItems = home.getSelectableViewableItems();
-        if (!exportAllToOBJ) {
-          // Keep only selected items
-          exportedItems.retainAll(home.getSelectedItems());
+        List<Selectable> exportedItems = new ArrayList<Selectable>(exportAllToOBJ
+            ? home.getSelectableViewableItems()
+            : home.getSelectedItems());
+        // Search furniture in groups
+        List<Selectable> furnitureInGroups = new ArrayList<Selectable>();
+        for (Iterator<Selectable> it = exportedItems.iterator(); it.hasNext();) {
+          Selectable selectable = (Selectable)it.next();
+          if (selectable instanceof HomeFurnitureGroup) {
+            it.remove();
+            for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)selectable).getAllFurniture()) {
+              if (!(piece instanceof HomeFurnitureGroup)) {
+                furnitureInGroups.add(piece);
+              }
+            }
+          }
         }
+        exportedItems.addAll(furnitureInGroups);
 
         List<Selectable> emptySelection = Collections.emptyList();
         home.setSelectedItems(emptySelection);

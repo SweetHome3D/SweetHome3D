@@ -292,6 +292,38 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Adds the <code>piece</code> in parameter at the given <code>index</code>.
+   */
+  void addPieceOfFurniture(HomePieceOfFurniture piece, int index) {
+    // Make a copy of the list to avoid conflicts in the list returned by getFurniture
+    this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
+    piece.setLevel(getLevel());
+    this.furniture.add(index, piece);
+    piece.addPropertyChangeListener(this.furnitureListener);
+    updateLocationAndSize(this.furniture, getAngle(), false);
+  }
+
+  /**
+   * Deletes the <code>piece</code> in parameter from this group.
+   * @throws IllegalStateException if the last piece in this group is the one in parameter
+   */
+  void deletePieceOfFurniture(HomePieceOfFurniture piece) {
+    int index = this.furniture.indexOf(piece);
+    if (index != -1) {
+      if (this.furniture.size() > 1) {
+        piece.setLevel(null);
+        piece.removePropertyChangeListener(this.furnitureListener);
+        // Make a copy of the list to avoid conflicts in the list returned by getFurniture
+        this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
+        this.furniture.remove(index);
+        updateLocationAndSize(this.furniture, getAngle(), false);
+      } else {
+        throw new IllegalStateException("Group can't be empty");
+      }
+    }
+  }
+
+  /**
    * Returns <code>null</code>.
    */
   @Override

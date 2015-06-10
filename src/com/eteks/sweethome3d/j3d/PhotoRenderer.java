@@ -177,16 +177,28 @@ public class PhotoRenderer {
     }
     this.object3dFactory = object3dFactory;
     
-    // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
     HomeEnvironment homeEnvironment = home.getEnvironment();
     float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
     // Dividing walls and rooms surface in subparts is useless
     homeEnvironment.setSubpartSizeUnderLight(0);
+
+    // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
     for (Selectable item : home.getSelectableViewableItems()) {
-      Node node = (Node)object3dFactory.createObject3D(home, item, true);
-      if (node != null) {
-        String [] itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
-        this.homeItemsNames.put(item, itemNames);
+      if (item instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getAllFurniture()) {
+          if (!(piece instanceof HomeFurnitureGroup)) {
+            Node node = (Node)object3dFactory.createObject3D(home, piece, true);
+            if (node != null) {
+              this.homeItemsNames.put(piece, exportNode(node, false, silk));
+            }
+          }
+        }
+      } else {
+        Node node = (Node)object3dFactory.createObject3D(home, item, true);
+        if (node != null) {
+          String [] itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
+          this.homeItemsNames.put(item, itemNames);
+        }
       }
     }
     // Create a 3D ground large enough to join the sky at the horizon  

@@ -1950,7 +1950,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     Map<HomePieceOfFurniture, Node> pieces3D = new HashMap<HomePieceOfFurniture, Node>();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      pieces3D.put(piece, addObject(homeRoot, piece, listenToHomeUpdates, waitForLoading));
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          if (!(childPiece instanceof HomeFurnitureGroup)) {
+            pieces3D.put(childPiece, addObject(homeRoot, childPiece, listenToHomeUpdates, waitForLoading));
+          }
+        }
+      } else {
+        pieces3D.put(piece, addObject(homeRoot, piece, listenToHomeUpdates, waitForLoading));
+      }
     }
     
     if (displayShadowOnFloor) {
@@ -2088,7 +2096,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group group) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          HomePieceOfFurniture updatedPiece = getHomePieceOfFurniture((HomePieceOfFurniture)ev.getSource());
+          HomePieceOfFurniture updatedPiece = (HomePieceOfFurniture)ev.getSource();
           String propertyName = ev.getPropertyName();
           if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
               || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
@@ -2113,19 +2121,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
 
-        private HomePieceOfFurniture getHomePieceOfFurniture(HomePieceOfFurniture piece) {
-          List<HomePieceOfFurniture> furniture = home.getFurniture();
-          if (!furniture.contains(piece)) {
-            for (HomePieceOfFurniture homePiece : furniture) {
-              if (homePiece instanceof HomeFurnitureGroup
-                  && ((HomeFurnitureGroup)homePiece).getAllFurniture().contains(piece)) {
-                return homePiece;
-              }
-            }
-          }
-          return piece;
-        }
-
         private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece) {
           updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
           // If piece is or contains a door or a window, update walls that intersect with piece
@@ -2140,11 +2135,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       };
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      piece.addPropertyChangeListener(this.furnitureChangeListener);
       if (piece instanceof HomeFurnitureGroup) {
         for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
           childPiece.addPropertyChangeListener(this.furnitureChangeListener);
         }
+      } else {
+        piece.addPropertyChangeListener(this.furnitureChangeListener);
       }
     }      
     this.furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
@@ -2152,21 +2148,29 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addObject(group, piece, true, false);
-              piece.addPropertyChangeListener(furnitureChangeListener);
               if (piece instanceof HomeFurnitureGroup) {
                 for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
-                  childPiece.addPropertyChangeListener(furnitureChangeListener);
+                  if (!(childPiece instanceof HomeFurnitureGroup)) {
+                    addObject(group, childPiece, true, false);
+                    childPiece.addPropertyChangeListener(furnitureChangeListener);
+                  }
                 }
+              } else {
+                addObject(group, piece, true, false);
+                piece.addPropertyChangeListener(furnitureChangeListener);
               }
               break;
-            case DELETE :
-              deleteObject(piece);
-              piece.removePropertyChangeListener(furnitureChangeListener);
+            case DELETE : 
               if (piece instanceof HomeFurnitureGroup) {
                 for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
-                  childPiece.removePropertyChangeListener(furnitureChangeListener);
+                  if (!(childPiece instanceof HomeFurnitureGroup)) {
+                    deleteObject(childPiece);
+                    childPiece.removePropertyChangeListener(furnitureChangeListener);
+                  }
                 }
+              } else {
+                deleteObject(piece);
+                piece.removePropertyChangeListener(furnitureChangeListener);
               }
               break;
           }
