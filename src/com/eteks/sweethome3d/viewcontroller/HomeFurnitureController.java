@@ -105,6 +105,7 @@ public class HomeFurnitureController implements Controller {
   private boolean            resizable;
   private boolean            deformable;
   private boolean            texturable;
+  private boolean            visibleEditable;
 
   /**
    * Creates the controller of home furniture view with undo support.
@@ -251,6 +252,7 @@ public class HomeFurnitureController implements Controller {
       }
       setPaint(null);
       setShininess(null);
+      this.visibleEditable = false;
       setVisible(null);
       setModelMirrored(null);
       this.lightPowerEditable = false;
@@ -482,14 +484,28 @@ public class HomeFurnitureController implements Controller {
       }
       setShininess(shininess);
 
-      Boolean visible = firstPiece.isVisible();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (visible != selectedFurniture.get(i).isVisible()) {
-          visible = null;
+      boolean visibleEditable = true;
+      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        if (!homeFurniture.contains(piece)) {
+          visibleEditable = false;
           break;
         }
       }
-      setVisible(visible);           
+      this.visibleEditable = visibleEditable;
+
+      if (visibleEditable) {
+        Boolean visible = firstPiece.isVisible();
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (visible != selectedFurniture.get(i).isVisible()) {
+            visible = null;
+            break;
+          }
+        }
+        setVisible(visible);  
+      } else {
+        setVisible(null);
+      }
 
       Boolean modelMirrored = firstPiece.isModelMirrored();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -567,6 +583,8 @@ public class HomeFurnitureController implements Controller {
         return false;
       case LIGHT_POWER :
         return isLightPowerEditable();
+      case VISIBLE :
+        return this.visibleEditable;
       default :
         return true;
     }
