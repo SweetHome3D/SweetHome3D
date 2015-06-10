@@ -1798,7 +1798,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             for (int i = 0; i < lights.length - 1; i++) {
               updateLightColor(lights [i]);
             }
-            updateObjects(new ArrayList<Selectable>(Home.getSubList(home.getFurniture(), HomeLight.class)));
+            updateObjects(getHomeObjects(HomeLight.class));
           }
         };
       this.home.getEnvironment().addPropertyChangeListener(
@@ -1811,7 +1811,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               // Update 3D objects if not at initialization 
               Collection<Selectable> homeItems = new ArrayList<Selectable>(home.getWalls());
               homeItems.addAll(home.getRooms());
-              homeItems.addAll(Home.getSubList(home.getFurniture(), HomeLight.class));
+              homeItems.addAll(getHomeObjects(HomeLight.class));
               updateObjects(homeItems);
               clearPrintedImageCache();
             }
@@ -1839,8 +1839,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 scope.add((Group)wall3D.getChild(3));
                 scope.add((Group)wall3D.getChild(5));
               }
-              List<Selectable> otherItems = new ArrayList<Selectable>(home.getFurniture());
-              otherItems.addAll(home.getRooms());
+              List<Selectable> otherItems = new ArrayList<Selectable>(home.getRooms());
+              otherItems.addAll(getHomeObjects(HomePieceOfFurniture.class));
               for (Selectable item : otherItems) {
                 // Add item to scope if one of its points don't belong to lightScopeWallsArea
                 for (float [] point : item.getPoints()) {
@@ -1879,6 +1879,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     
     return lights;
+  }
+
+  /**
+   * Returns the home objects displayed by this component of the given class.
+   */
+  private <T> List<T> getHomeObjects(Class<T> objectClass) {
+    return Home.getSubList(new ArrayList<Selectable>(homeObjects.keySet()), objectClass);
   }
 
   /**
@@ -2002,10 +2009,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
               || Level.Property.VISIBLE.name().equals(ev.getPropertyName())
               || Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
-            updateObjects(home.getLabels());          
-            updateObjects(home.getWalls());          
-            updateObjects(home.getRooms());
-            updateObjects(home.getFurniture());
+            updateObjects(homeObjects.keySet());          
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());          
@@ -2247,7 +2251,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               updateObjects(home.getRooms());
             } else {
               updateObjects(Arrays.asList(new Room [] {updatedRoom}));
-              updateObjects(Home.getSubList(home.getFurniture(), HomeLight.class));
+              updateObjects(getHomeObjects(HomeLight.class));
               // Search the rooms that overlap the updated one
               Area oldArea = new Area(getShape((float [][])ev.getOldValue()));
               Area newArea = new Area(getShape((float [][])ev.getNewValue()));
@@ -2274,7 +2278,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             }
             groundChangeListener.propertyChange(null);
             updateObjectsLightScope(Arrays.asList(new Room [] {updatedRoom}));
-            updateObjectsLightScope(Home.getSubList(home.getFurniture(), HomeLight.class));
+            updateObjectsLightScope(getHomeObjects(HomeLight.class));
           }            
         }
       };
@@ -2299,7 +2303,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           updateObjects(home.getRooms());
           groundChangeListener.propertyChange(null);
           updateObjectsLightScope(Arrays.asList(new Room [] {room}));
-          updateObjectsLightScope(Home.getSubList(home.getFurniture(), HomeLight.class));
+          updateObjectsLightScope(getHomeObjects(HomeLight.class));
         }
       };
     this.home.addRoomsListener(this.roomListener);
@@ -2366,7 +2370,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.drawingModeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
-          updateObjects(home.getFurniture());
+          updateObjects(getHomeObjects(HomePieceOfFurniture.class));
         }
       };
     this.home.getEnvironment().addPropertyChangeListener(
