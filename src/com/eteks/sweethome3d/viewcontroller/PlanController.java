@@ -4242,7 +4242,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Adds furniture to home and updates door and window flags if they intersect with walls and magnestism is enabled. 
+   * Adds furniture to home and updates door and window flags if they intersect with walls and magnetism is enabled. 
    */
   @Override
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
