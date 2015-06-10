@@ -2475,7 +2475,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           this.lightScopeObjectsToUpdate.clear();
           this.lightScopeObjectsToUpdate.add(null);
         } else if (!this.lightScopeObjectsToUpdate.contains(null)) {
-          this.homeObjectsToUpdate.addAll(objects);
+          this.lightScopeObjectsToUpdate.addAll(objects);
         }
       } else {
         this.lightScopeObjectsToUpdate = new HashSet<Selectable>();
