@@ -395,7 +395,12 @@ public class AppletUserPreferences extends UserPreferences {
       properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
       properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
       properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));
-      properties.setProperty(DEFAULT_FONT_NAME, getDefaultFontName());
+      String defaultFontName = getDefaultFontName();
+      if (defaultFontName == null) {
+        properties.remove(DEFAULT_FONT_NAME);
+      } else {
+        properties.put(DEFAULT_FONT_NAME, defaultFontName);
+      }
       properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
       properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
       properties.setProperty(WALL_PATTERN, getWallPattern().getName());
