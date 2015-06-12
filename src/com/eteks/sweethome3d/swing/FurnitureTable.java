@@ -1977,7 +1977,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     private Set<HomeFurnitureGroup>                 expandedGroups;
     private List<TreeModelListener>                 treeModelListeners;
     private Map<Object, List<HomePieceOfFurniture>> childFurnitureCache;  
-    private boolean                                 containsHiddenFurniture;
+    private boolean                                 containsNotViewableFurniture;
     
     public FurnitureTreeTableModel(Home home) {
       this.home = home;
@@ -1996,7 +1996,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             switch (ev.getType()) {
               case ADD :
                 if (!expandedGroups.isEmpty()
-                    || containsHiddenFurniture
+                    || containsNotViewableFurniture
                     || pieceIndex < 0) {
                   filterAndSortFurniture();
                 } else { 
@@ -2010,7 +2010,6 @@ public class FurnitureTable extends JTable implements View, Printable {
                 break;
               case DELETE :
                 if (furnitureFilter != null
-                    || containsHiddenFurniture
                     || pieceIndex < 0) {
                   filterAndSortFurniture();
                 } else {
@@ -2076,7 +2075,9 @@ public class FurnitureTable extends JTable implements View, Printable {
            */
           private int getPieceOfFurnitureDeletionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
             if (furnitureFilter == null
-                && home.getFurnitureSortedProperty() == null) {
+                && home.getFurnitureSortedProperty() == null
+                && expandedGroups.isEmpty()
+                && !containsNotViewableFurniture) {
               return homePieceIndex;
             } 
             return getPieceOfFurnitureIndex(piece);              
@@ -2126,7 +2127,19 @@ public class FurnitureTable extends JTable implements View, Printable {
       int previousRowCount = this.filteredAndSortedFurniture != null 
           ? this.filteredAndSortedFurniture.size()
           : 0;
-      this.filteredAndSortedFurniture = getFilteredAndSortedFurniture(this.home.getFurniture(), true);      
+      List<HomePieceOfFurniture> furniture = this.home.getFurniture();
+      // Search if home furniture contains some not viewable furniture (no need to explore  
+      // furniture in groups because all furniture in a group belong to the same level) 
+      boolean containsNotViewableFurniture = false;
+      for (HomePieceOfFurniture homePiece : furniture) {
+        Level level = homePiece.getLevel();
+        if (level != null && !level.isViewable()) {
+          containsNotViewableFurniture = true;
+          break;
+        }
+      }
+      this.containsNotViewableFurniture = containsNotViewableFurniture;      
+      this.filteredAndSortedFurniture = getFilteredAndSortedFurniture(furniture, true);      
       if (previousRowCount != this.filteredAndSortedFurniture.size()) {
         fireTableDataChanged();
       } else {
@@ -2142,20 +2155,16 @@ public class FurnitureTable extends JTable implements View, Printable {
                                                                      boolean includeExpandedGroups) {
       // Search furniture at viewable levels 
       List<HomePieceOfFurniture> viewableFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
-      boolean containsHiddenFurniture = false;
       for (HomePieceOfFurniture homePiece : furniture) {
         if (homePiece.getLevel() == null
             || homePiece.getLevel().isViewable()) {
           viewableFurniture.add(homePiece);
-        } else {
-          containsHiddenFurniture = true;
         }
       }
-      this.containsHiddenFurniture = containsHiddenFurniture;
       
       List<HomePieceOfFurniture> filteredAndSortedFurniture;
       if (this.furnitureFilter == null) {
-        filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(viewableFurniture);
+        filteredAndSortedFurniture = viewableFurniture;
       } else {
         // Create the filtered list of home furniture
         filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(viewableFurniture.size());
