@@ -163,7 +163,7 @@ public class HomeFramePane extends JRootPane implements View {
                             final HomeController controller,
                             final JFrame frame) {
     // Add a listener that keeps track of window location and size
-    frame.addComponentListener(new ComponentAdapter() {
+    final ComponentAdapter componentListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
           // Store new size only if frame isn't maximized
@@ -184,10 +184,11 @@ public class HomeFramePane extends JRootPane implements View {
             controller.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
           }
         }
-      });
+      };
+    frame.addComponentListener(componentListener);
     // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    WindowAdapter windowListener = new WindowAdapter () {
+    final WindowAdapter windowListener = new WindowAdapter () {
         private Component mostRecentFocusOwner;
 
         @Override
@@ -239,6 +240,9 @@ public class HomeFramePane extends JRootPane implements View {
               && ev.getType() == CollectionEvent.Type.DELETE) {
             application.removeHomesListener(this);
             frame.dispose();
+            frame.removeWindowListener(windowListener);
+            frame.removeWindowStateListener(windowListener);
+            frame.removeComponentListener(componentListener);
           }
         };
       });
@@ -320,7 +324,7 @@ public class HomeFramePane extends JRootPane implements View {
           frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
         // Add a listener that will set the normal size when the frame leaves the maximized state
-        frame.addWindowStateListener(new WindowAdapter() {
+        WindowAdapter windowStateListener = new WindowAdapter() {
             @Override
             public void windowStateChanged(WindowEvent ev) {
               if ((ev.getOldState() == JFrame.MAXIMIZED_BOTH 
@@ -344,7 +348,15 @@ public class HomeFramePane extends JRootPane implements View {
                 frame.removeWindowStateListener(this);
               }
             }
-          });
+            
+            @Override
+            public void windowClosed(WindowEvent ev) {
+              frame.removeWindowListener(this);
+              frame.removeWindowStateListener(this);
+            }
+          };
+        frame.addWindowStateListener(windowStateListener);
+        frame.addWindowListener(windowStateListener);
       } else {
         // Reuse home bounds
         frame.setBounds(frameBounds);
