@@ -2181,8 +2181,9 @@ public class HomeController implements Controller {
    * in view whether home should be saved. Once home is actually saved,
    * home is removed from application homes list and <code>postCloseTask</code> 
    * is called if it's not <code>null</code>.
+   * @since 5.0
    */
-  protected void close(final Runnable postCloseTask) {
+  public void close(final Runnable postCloseTask) {
     // Create a task that deletes home and run postCloseTask
     Runnable closeTask = new Runnable() {
         public void run() {
@@ -2563,7 +2564,7 @@ public class HomeController implements Controller {
   /**
    * Controls application exit. If any home in application homes list is modified,
    * the user will be {@link HomeView#confirmExit() prompted} in view whether he wants
-   * to discard his modifications ot not.  
+   * to discard his modifications or not.  
    */
   public void exit() {
     for (Home home : this.application.getHomes()) {

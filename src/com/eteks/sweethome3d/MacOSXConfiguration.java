@@ -128,13 +128,34 @@ class MacOSXConfiguration {
     macosxApplication.addApplicationListener(new ApplicationAdapter() {      
       @Override
       public void handleQuit(ApplicationEvent ev) { 
-        handleAction(new Runnable() {
-            public void run() {
-              getHomeController().exit();
-            }
-          });
-        if (homeApplication.getHomes().isEmpty()) {
-          System.exit(0);
+        Home modifiedHome = null;
+        int modifiedHomesCount = 0;
+        for (Home home : homeApplication.getHomes()) {
+          if (home.isModified()) {
+            modifiedHome = home;
+            modifiedHomesCount++;
+          }
+        }
+        
+        if (modifiedHomesCount == 1) {
+          // If only one home is modified, close it and exit if it was successfully closed
+          homeApplication.getHomeFrameController(modifiedHome).getHomeController().close(
+              new Runnable() {
+                public void run() {
+                  if (homeApplication.getHomes().isEmpty()) {
+                    System.exit(0);
+                  }
+                }
+              });
+        } else {
+          handleAction(new Runnable() {
+              public void run() {
+                getHomeController().exit();
+              }
+            });
+          if (homeApplication.getHomes().isEmpty()) {
+            System.exit(0);
+          }
         }
       }
       
