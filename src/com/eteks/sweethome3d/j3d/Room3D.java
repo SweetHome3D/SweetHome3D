@@ -25,6 +25,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.media.j3d.Appearance;
@@ -191,32 +192,52 @@ public class Room3D extends Object3DBranch {
 
       // Find rooms at the same elevation 
       // and room ceilings at same elevation as the floor bottom  
-      List<Room> roomsAtSameElevation = new ArrayList<Room>();
+      final List<Room> roomsAtSameElevation = new ArrayList<Room>();
       List<Room> ceilingsAtSameFloorBottomElevation = new ArrayList<Room>();
       for (Room homeRoom : this.home.getRooms()) {
         Level homeRoomLevel = homeRoom.getLevel();
-        if (room == homeRoom // Store also the room itself to know its order among rooms at same elevation
-            || roomLevel == homeRoomLevel
-                && (roomPart == FLOOR_PART && homeRoom.isFloorVisible()
-                    || roomPart == CEILING_PART && homeRoom.isCeilingVisible()) 
-            || roomLevel != null 
-                && homeRoomLevel != null 
-                && (roomPart == FLOOR_PART 
-                        && homeRoom.isFloorVisible()
-                        && Math.abs(roomElevation - homeRoomLevel.getElevation()) < 1E-4
-                    || roomPart == CEILING_PART 
-                        && homeRoom.isCeilingVisible()
-                        && !lastLevel
-                        && !isLastLevel(homeRoomLevel, levels)
-                        && Math.abs(roomElevation + roomLevel.getHeight() - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4)) {         
-          roomsAtSameElevation.add(homeRoom);
-        } else if (floorBottomVisible 
-                    && homeRoomLevel != null 
-                    && homeRoom.isCeilingVisible() 
-                    && !isLastLevel(homeRoomLevel, levels) 
-                    && Math.abs(floorBottomElevation - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4) {
-          ceilingsAtSameFloorBottomElevation.add(homeRoom);
+        if (homeRoomLevel == null || homeRoomLevel.isViewableAndVisible()) {
+          if (room == homeRoom // Store also the room itself to know its order among rooms at same elevation
+              || roomLevel == homeRoomLevel
+                  && (roomPart == FLOOR_PART && homeRoom.isFloorVisible()
+                      || roomPart == CEILING_PART && homeRoom.isCeilingVisible()) 
+              || roomLevel != null 
+                  && homeRoomLevel != null 
+                  && (roomPart == FLOOR_PART 
+                          && homeRoom.isFloorVisible()
+                          && Math.abs(roomElevation - homeRoomLevel.getElevation()) < 1E-4
+                      || roomPart == CEILING_PART 
+                          && homeRoom.isCeilingVisible()
+                          && !lastLevel
+                          && !isLastLevel(homeRoomLevel, levels)
+                          && Math.abs(roomElevation + roomLevel.getHeight() - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4)) {         
+            roomsAtSameElevation.add(homeRoom);
+          } else if (floorBottomVisible 
+                      && homeRoomLevel != null 
+                      && homeRoom.isCeilingVisible() 
+                      && !isLastLevel(homeRoomLevel, levels) 
+                      && Math.abs(floorBottomElevation - (homeRoomLevel.getElevation() + homeRoomLevel.getHeight())) < 1E-4) {
+            ceilingsAtSameFloorBottomElevation.add(homeRoom);
+          }
         }
+      }
+      if (roomLevel != null) {
+        // Update order to ensure that rooms are sorted first in level order
+        Collections.sort(roomsAtSameElevation, new Comparator<Room>() {
+            public int compare(Room room1, Room room2) {
+              int comparison = Float.compare(room1.getLevel().getElevation(), room2.getLevel().getElevation());
+              if (comparison != 0) {
+                return comparison;
+              } else {
+                comparison = room1.getLevel().getElevationIndex() - room2.getLevel().getElevationIndex();
+                if (comparison != 0) {
+                  return comparison;
+                } else {
+                  return roomsAtSameElevation.indexOf(room1) - roomsAtSameElevation.indexOf(room2);
+                }
+              }
+            }
+          });
       }
       
       List<HomePieceOfFurniture> visibleStaircases;
