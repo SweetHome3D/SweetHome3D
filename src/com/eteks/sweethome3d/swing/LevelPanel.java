@@ -345,9 +345,10 @@ public class LevelPanel extends JPanel implements DialogView {
   }
   
   private void setFloorThicknessEnabled(final LevelController controller) {
-    if (this.floorThicknessSpinner != null) {
+    Integer selectedLevelIndex = controller.getSelectedLevelIndex();
+    if (this.floorThicknessSpinner != null && selectedLevelIndex != null) {
       Level [] levels = controller.getLevels();
-      this.floorThicknessSpinner.setEnabled(levels [controller.getSelectedLevelIndex()].getElevation()
+      this.floorThicknessSpinner.setEnabled(levels [selectedLevelIndex].getElevation()
           != levels [0].getElevation());
     }
   }
