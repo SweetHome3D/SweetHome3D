@@ -2792,11 +2792,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         
         Composite oldComposite = setTransparency(g2D, 0.75f);
-        fillShape(g2D, getShape(room.getPoints()), paintMode);
+        Shape roomShape = getShape(room.getPoints());
+        fillShape(g2D, roomShape, paintMode);
         g2D.setComposite(oldComposite);
 
         g2D.setPaint(foregroundColor);
-        g2D.draw(getShape(room.getPoints()));
+        g2D.draw(roomShape);
       }
     }
   }
