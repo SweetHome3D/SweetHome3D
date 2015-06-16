@@ -229,12 +229,7 @@ public class Room3D extends Object3DBranch {
               if (comparison != 0) {
                 return comparison;
               } else {
-                comparison = room1.getLevel().getElevationIndex() - room2.getLevel().getElevationIndex();
-                if (comparison != 0) {
-                  return comparison;
-                } else {
-                  return roomsAtSameElevation.indexOf(room1) - roomsAtSameElevation.indexOf(room2);
-                }
+                return room1.getLevel().getElevationIndex() - room2.getLevel().getElevationIndex();
               }
             }
           });
