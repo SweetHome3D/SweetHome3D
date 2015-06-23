@@ -279,7 +279,7 @@ public class Ground3D extends Object3DBranch {
     List<float [][]> areaPoints = new ArrayList<float [][]>();
     List<float []>   areaPartPoints  = new ArrayList<float[]>();
     float [] previousRoomPoint = null;
-    for (PathIterator it = area.getPathIterator(null, 1); !it.isDone(); ) {
+    for (PathIterator it = area.getPathIterator(null, 1); !it.isDone(); it.next()) {
       float [] roomPoint = new float[2];
       if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
         if (areaPartPoints.get(0) [0] == previousRoomPoint [0] 
@@ -298,8 +298,7 @@ public class Ground3D extends Object3DBranch {
           areaPartPoints.add(roomPoint);
         }
         previousRoomPoint = roomPoint;
-      }
-      it.next();
+      }      
     }
     return areaPoints;
   }

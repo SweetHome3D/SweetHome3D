@@ -352,7 +352,7 @@ public class Wall3D extends Object3DBranch {
     List<float[]> points = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
     float [] previousPoint = null;
-    for (PathIterator it = wallOrBaseboardArea.getPathIterator(null); !it.isDone(); ) {
+    for (PathIterator it = wallOrBaseboardArea.getPathIterator(null); !it.isDone(); it.next()) {
       float [] wallPoint = new float[2];
       if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
         if (points.size() > 2) {
@@ -380,7 +380,6 @@ public class Wall3D extends Object3DBranch {
         points.add(wallPoint);
         previousPoint = wallPoint;
       }
-      it.next();
     }
     
     // Generate geometry for each wall part above and below a window
@@ -388,7 +387,7 @@ public class Wall3D extends Object3DBranch {
     previousPoint = null;
     for (DoorOrWindowArea windowIntersection : windowIntersections) {
       if (!windowIntersection.getArea().isEmpty()) {
-        for (PathIterator it = windowIntersection.getArea().getPathIterator(null); !it.isDone(); ) {
+        for (PathIterator it = windowIntersection.getArea().getPathIterator(null); !it.isDone(); it.next()) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
             // Remove last point if it's equal to first point
@@ -497,7 +496,6 @@ public class Wall3D extends Object3DBranch {
             points.add(wallPoint);
             previousPoint = wallPoint;
           }
-          it.next();
         }
       } 
     }

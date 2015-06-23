@@ -157,10 +157,9 @@ public abstract class Object3DBranch extends BranchGroup {
     List<List<float []>> areaHolesLists = new ArrayList<List<float[]>>();
     ArrayList<float []>  currentPathPoints = null;
     float [] previousPoint = null;
-    for (PathIterator pathIterator = area.getPathIterator(null, flatness); 
-         !pathIterator.isDone(); ) {
+    for (PathIterator it = area.getPathIterator(null, flatness); !it.isDone(); it.next()) {
       float [] point = new float [2];
-      switch (pathIterator.currentSegment(point)) {
+      switch (it.currentSegment(point)) {
         case PathIterator.SEG_MOVETO :
           currentPathPoints = new ArrayList<float[]>();
           currentPathPoints.add(point);
@@ -212,7 +211,6 @@ public abstract class Object3DBranch extends BranchGroup {
           }
           break;
       }
-      pathIterator.next();        
     }
     
     List<float [][]> areaPointsWithoutHoles = new ArrayList<float[][]>(); 
