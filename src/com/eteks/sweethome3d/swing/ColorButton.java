@@ -135,13 +135,13 @@ public class ColorButton extends JButton {
       }
 
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(getForeground());
-        g.drawRect(x + 2, y + 2, iconWidth - 5, iconHeight - 5);
         if (color != null) {
           g.setColor(new Color(color));
-          g.fillRect(x + 3, y + 3, iconWidth - 6,
-                  iconHeight - 6);
+          g.fillRect(x + 2, y + 2, iconWidth - 4,
+              iconHeight - 4);
         }
+        g.setColor(getForeground());
+        g.drawRect(x + 2, y + 2, iconWidth - 5, iconHeight - 5);
       }
     });
 
