@@ -131,6 +131,13 @@ public interface ViewFactory {
                                             RoomController roomController);
   
   /**
+   * Returns a new view that edits polyline values.
+   * @since 5.0
+   */
+  public abstract DialogView createPolylineView(UserPreferences preferences,
+                                                PolylineController polylineController);
+
+  /**
    * Returns a new view that edits label values.
    */
   public abstract DialogView createLabelView(boolean modification,

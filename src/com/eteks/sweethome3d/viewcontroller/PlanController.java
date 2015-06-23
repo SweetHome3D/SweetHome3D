@@ -66,6 +66,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -90,6 +91,7 @@ public class PlanController extends FurnitureController implements Controller {
     public static final Mode PANNING                 = new Mode("PANNING");
     public static final Mode WALL_CREATION           = new Mode("WALL_CREATION");
     public static final Mode ROOM_CREATION           = new Mode("ROOM_CREATION");
+    public static final Mode POLYLINE_CREATION       = new Mode("POLYLINE_CREATION");
     public static final Mode DIMENSION_LINE_CREATION = new Mode("DIMENSION_LINE_CREATION");
     public static final Mode LABEL_CREATION          = new Mode("LABEL_CREATION");
     
@@ -159,6 +161,9 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       roomAreaRotationState;
   private final ControllerState       roomNameOffsetState;
   private final ControllerState       roomNameRotationState;
+  private final ControllerState       polylineCreationState;
+  private final ControllerState       polylineDrawingState;
+  private final ControllerState       polylineResizeState;
   private final ControllerState       labelCreationState;
   private final ControllerState       labelRotationState;
   private final ControllerState       labelElevationState;
@@ -234,6 +239,9 @@ public class PlanController extends FurnitureController implements Controller {
     this.roomAreaRotationState = new RoomAreaRotationState();
     this.roomNameOffsetState = new RoomNameOffsetState();
     this.roomNameRotationState = new RoomNameRotationState();
+    this.polylineCreationState = new PolylineCreationState();
+    this.polylineDrawingState = new PolylineDrawingState();
+    this.polylineResizeState = new PolylineResizeState();
     this.labelCreationState = new LabelCreationState();
     this.labelRotationState = new LabelRotationState();
     this.labelElevationState = new LabelElevationState();
@@ -638,6 +646,30 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getRoomNameRotationState() {
     return this.roomNameRotationState;
+  }
+  
+  /**
+   * Returns the polyline creation state.
+   * @since 5.0
+   */
+  protected ControllerState getPolylineCreationState() {
+    return this.polylineCreationState;
+  }
+
+  /**
+   * Returns the polyline drawing state.
+   * @since 5.0
+   */
+  protected ControllerState getPolylineDrawingState() {
+    return this.polylineDrawingState;
+  }
+  
+  /**
+   * Returns the polyline resize state.
+   * @since 5.0
+   */
+  protected ControllerState getPolylineResizeState() {
+    return this.polylineResizeState;
   }
   
   /**
@@ -1148,6 +1180,17 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
   
+  /**
+   * Controls the modification of the selected polylines.
+   * @since 5.0
+   */
+  public void modifySelectedPolylines() {
+    if (!Home.getPolylinesSubList(this.home.getSelectedItems()).isEmpty()) {
+      new PolylineController(this.home, this.preferences, this.viewFactory,
+          this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
+
   /**
    * Controls the modification of the compass.
    */
@@ -3252,6 +3295,38 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns a new polyline instance with the given points. 
+   * The new polyline is added to home.
+   */
+  private Polyline createPolyline(float [][] polylinePoints) {
+    Polyline newPolyline = new Polyline(polylinePoints);
+    LengthUnit lengthUnit = preferences.getLengthUnit();
+    newPolyline.setThickness(lengthUnit == LengthUnit.INCH || lengthUnit == LengthUnit.INCH_DECIMALS 
+        ? LengthUnit.inchToCentimeter(1) 
+        : 2);
+    this.home.addPolyline(newPolyline);
+    return newPolyline;
+  }
+
+  /**
+   * Returns the selected polyline with a point at (<code>x</code>, <code>y</code>).
+   */
+  private Polyline getResizedPolylineAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Polyline
+        && isItemResizable(selectedItems.get(0))) {
+      Polyline polyline = (Polyline)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getScale();
+      if (polyline.isAtLevel(this.home.getSelectedLevel())
+          && polyline.getPointIndexAt(x, y, margin) != -1) {
+        return polyline;
+      }
+    } 
+    return null;
+  }
+
+  /**
    * Returns the selected item at (<code>x</code>, <code>y</code>) point.
    */
   private boolean isItemSelectedAt(float x, float y) {
@@ -3333,6 +3408,22 @@ public class PlanController extends FurnitureController implements Controller {
           && dimensionLine.isAtLevel(selectedLevel)
           && dimensionLine.containsPoint(x, y, margin)) {
         items.add(dimensionLine);
+        if (stopAtFirstItem) {
+          return items;
+        }
+      }
+    }    
+    
+    List<Polyline> polylines = this.home.getPolylines();
+    // Search in home polylines in reverse order to give priority to last drawn polyline
+    for (int i = polylines.size() - 1; i >= 0; i--) {
+      Polyline polyline = polylines.get(i);
+      if ((!basePlanLocked 
+            || !isItemPartOfBasePlan(polyline))
+          && isLevelNullOrViewable(polyline.getLevel())
+          && polyline.isAtLevel(selectedLevel)
+          && polyline.containsPoint(x, y, margin)) {
+        items.add(polyline);
         if (stopAtFirstItem) {
           return items;
         }
@@ -3897,6 +3988,7 @@ public class PlanController extends FurnitureController implements Controller {
           new ArrayList<Selectable>(Home.getWallsSubList(deletedItems));
       deletedOtherItems.addAll(Home.getRoomsSubList(deletedItems));
       deletedOtherItems.addAll(Home.getDimensionLinesSubList(deletedItems));
+      deletedOtherItems.addAll(Home.getPolylinesSubList(deletedItems));
       deletedOtherItems.addAll(Home.getLabelsSubList(deletedItems));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls and rooms index can't be stored       
@@ -3956,6 +4048,24 @@ public class PlanController extends FurnitureController implements Controller {
       dimensionLinesLevels [i] = dimensionLines [i].getLevel();
     }
     
+    // Manage polylines and their index
+    List<Polyline> deletedPolylines = Home.getPolylinesSubList(deletedItems);
+    List<Polyline> homePolylines = this.home.getPolylines(); 
+    // Sort the deleted polylines in the ascending order of their index in home
+    Map<Integer, Polyline> sortedPolylinesMap = new TreeMap<Integer, Polyline>(); 
+    for (Polyline polyline : deletedPolylines) {
+      sortedPolylinesMap.put(homePolylines.indexOf(polyline), polyline); 
+    }
+    final Polyline [] polylines = sortedPolylinesMap.values().toArray(new Polyline [sortedPolylinesMap.size()]); 
+    final int [] polylinesIndices = new int [polylines.length];
+    final Level [] polylinesLevels = new Level [polylines.length]; 
+    i = 0;
+    for (int index : sortedPolylinesMap.keySet()) {
+      polylinesIndices [i] = index; 
+      polylinesLevels [i] = polylines [i].getLevel();
+      i++;
+    }
+
     // Manage labels
     List<Label> deletedLabels = Home.getLabelsSubList(deletedItems);
     final Label [] labels = deletedLabels.toArray(new Label [deletedLabels.size()]);
@@ -3971,6 +4081,7 @@ public class PlanController extends FurnitureController implements Controller {
         doAddWalls(joinedDeletedWalls, basePlanLocked);       
         doAddRooms(rooms, roomsIndices, roomsLevels, null, basePlanLocked);
         doAddDimensionLines(dimensionLines, dimensionLinesLevels, null, basePlanLocked);
+        doAddPolylines(polylines, polylinesIndices, polylinesLevels, null, basePlanLocked);
         doAddLabels(labels, labelsLevels, null, basePlanLocked);
         selectAndShowItems(deletedItems, allLevelsSelection);
       }
@@ -3982,6 +4093,7 @@ public class PlanController extends FurnitureController implements Controller {
         doDeleteWalls(joinedDeletedWalls, basePlanLocked);       
         doDeleteRooms(rooms, basePlanLocked);
         doDeleteDimensionLines(dimensionLines, basePlanLocked);
+        doDeletePolylines(polylines, basePlanLocked);
         doDeleteLabels(labels, basePlanLocked);
       }      
       
@@ -4006,6 +4118,8 @@ public class PlanController extends FurnitureController implements Controller {
         home.deleteDimensionLine((DimensionLine)item);
       } else if (item instanceof Room) {
         home.deleteRoom((Room)item);
+      } else if (item instanceof Polyline) {
+        home.deletePolyline((Polyline)item);
       } else if (item instanceof Label) {
         home.deleteLabel((Label)item);
       } else if (item instanceof HomePieceOfFurniture) {
@@ -4248,6 +4362,7 @@ public class PlanController extends FurnitureController implements Controller {
     addFurniture(Home.getFurnitureSubList(items));
     addWalls(Home.getWallsSubList(items));
     addRooms(Home.getRoomsSubList(items));
+    addPolylines(Home.getPolylinesSubList(items));
     addDimensionLines(Home.getDimensionLinesSubList(items));
     addLabels(Home.getLabelsSubList(items));
     this.home.setSelectedItems(items);
@@ -4592,6 +4707,114 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Add <code>newPolylines</code> to home and post an undoable new polyline line operation.
+   */
+  public void addPolylines(List<Polyline> polylines) {
+    final Polyline [] newPolylines = polylines.toArray(new Polyline [polylines.size()]);
+    // Get indices of polylines added to home
+    final int [] polylinesIndex = new int [polylines.size()];
+    int endIndex = home.getPolylines().size();
+    for (int i = 0; i < polylinesIndex.length; i++) {
+      polylinesIndex [i] = endIndex++; 
+      this.home.addPolyline(newPolylines [i], polylinesIndex [i]);
+    }
+    postCreatePolylines(newPolylines, polylinesIndex, this.home.getSelectedItems(), 
+        this.home.isBasePlanLocked(), this.home.isAllLevelsSelection());
+  }
+
+  /**
+   * Posts an undoable new polyline operation, about <code>newPolylines</code>.
+   */
+  private void postCreatePolylines(final Polyline [] newPolylines,
+                                   final int [] polylinesIndex,
+                                   List<Selectable> oldSelection,
+                                   final boolean oldBasePlanLocked,
+                                   final boolean oldAllLevelsSelection) {
+    if (newPolylines.length > 0) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
+      if (basePlanLocked) {
+        for (Polyline polyline : newPolylines) {
+          // Unlock base plan if polyline is a part of it
+          basePlanLocked &= !isItemPartOfBasePlan(polyline);
+        }
+        this.home.setBasePlanLocked(basePlanLocked);
+      }
+      final boolean newBasePlanLocked = basePlanLocked;
+
+      final Selectable [] oldSelectedItems = 
+          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Level polylinesLevel = this.home.getSelectedLevel();
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          doDeletePolylines(newPolylines, oldBasePlanLocked);
+          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          doAddPolylines(newPolylines, polylinesIndex, null, polylinesLevel, newBasePlanLocked);       
+          selectAndShowItems(Arrays.asList(newPolylines));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCreatePolylinesName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Posts an undoable new polyline operation, about <code>newPolylines</code>.
+   */
+  private void postCreatePolylines(List<Polyline> polylines, 
+                               List<Selectable> oldSelection,
+                               boolean basePlanLocked,
+                               boolean allLevelsSelection) {
+    // Search the index of polylines in home list of polylines
+    Polyline [] newPolylines = polylines.toArray(new Polyline [polylines.size()]);
+    int [] polylinesIndex = new int [polylines.size()];
+    List<Polyline> homePolylines = home.getPolylines(); 
+    for (int i = 0; i < polylinesIndex.length; i++) {
+      polylinesIndex [i] = homePolylines.lastIndexOf(newPolylines [i]); 
+    }
+    postCreatePolylines(newPolylines, polylinesIndex, oldSelection, basePlanLocked, allLevelsSelection);
+  }
+
+  /**
+   * Adds the <code>polylines</code> to plan component.
+   */
+  private void doAddPolylines(Polyline [] polylines,
+                              int [] polylinesIndex, 
+                              Level [] polylinesLevels,
+                              Level uniqueDimensionLinesLevel,
+                              boolean basePlanLocked) {
+    for (int i = 0; i < polylinesIndex.length; i++) {
+      this.home.addPolyline(polylines [i], polylinesIndex [i]);
+      polylines [i].setLevel(polylinesLevels != null 
+          ? polylinesLevels [i] 
+          : uniqueDimensionLinesLevel);
+    }
+    this.home.setBasePlanLocked(basePlanLocked);
+  }
+
+  /**
+   * Deletes <code>polylines</code>.
+   */
+  private void doDeletePolylines(Polyline [] polylines,
+                                 boolean basePlanLocked) {
+    for (Polyline polyline : polylines) {
+      this.home.deletePolyline(polyline);
+    }
+    this.home.setBasePlanLocked(basePlanLocked);
+  }
+
+/**
    * Add <code>labels</code> to home and post an undoable new label operation.
    */
   public void addLabels(List<Label> labels) {
@@ -4872,6 +5095,7 @@ public class PlanController extends FurnitureController implements Controller {
     List<Selectable> emptyList = Collections.emptyList();
     postCreateWalls(Home.getWallsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
     postCreateRooms(Home.getRoomsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
+    postCreatePolylines(Home.getPolylinesSubList(items), emptyList, basePlanLocked, allLevelsSelection);
     postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList, basePlanLocked, allLevelsSelection);
     postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
 
@@ -5418,6 +5642,40 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Posts an undoable operation about <code>polyline</code> resizing.
+   */
+  private void postPolylineResize(final Polyline polyline, final float oldX, final float oldY, 
+                                  final int pointIndex) {
+    float [] polylinePoint = polyline.getPoints() [pointIndex];
+    final float newX = polylinePoint [0];
+    final float newY = polylinePoint [1];
+    if (newX != oldX || newY != oldY) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          polyline.setPoint(oldX, oldY, pointIndex);
+          selectAndShowItems(Arrays.asList(new Polyline [] {polyline}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          polyline.setPoint(newX, newY, pointIndex);
+          selectAndShowItems(Arrays.asList(new Polyline [] {polyline}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPolylineResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Post to undo support a north direction change on <code>compass</code>. 
    */
   private void postCompassRotation(final Compass compass, 
@@ -5488,7 +5746,7 @@ public class PlanController extends FurnitureController implements Controller {
                                    boolean removeAlignedPoints) {
     List<float []> pathPoints = new ArrayList<float[]>();
     float [] previousPathPoint = null;
-    for (PathIterator it = path.getPathIterator(null); !it.isDone(); ) {
+    for (PathIterator it = path.getPathIterator(null); !it.isDone(); it.next()) {
       float [] pathPoint = new float[2];
       if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE
           && (previousPathPoint == null
@@ -5510,7 +5768,6 @@ public class PlanController extends FurnitureController implements Controller {
         }
         previousPathPoint = pathPoint;
       }
-      it.next();
     }      
     
     // Remove last point if it's equal to first point
@@ -5548,7 +5805,7 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath> getAreaPaths(Area area) {
     List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
     GeneralPath roomPath = new GeneralPath();
-    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); ) {
+    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); it.next()) {
       float [] roomPoint = new float[2];
       switch (it.currentSegment(roomPoint)) {
         case PathIterator.SEG_MOVETO : 
@@ -5563,7 +5820,6 @@ public class PlanController extends FurnitureController implements Controller {
           roomPath = new GeneralPath();
           break;
       }
-      it.next();        
     }
     return roomPaths;
   }
@@ -5622,7 +5878,7 @@ public class PlanController extends FurnitureController implements Controller {
   private GeneralPath getPath(Area area) {
     GeneralPath path = new GeneralPath();
     float [] point = new float [2];
-    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); ) {
+    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); it.next()) {
       switch (it.currentSegment(point)) {
         case PathIterator.SEG_MOVETO : 
           path.moveTo(point [0], point [1]);
@@ -5631,7 +5887,6 @@ public class PlanController extends FurnitureController implements Controller {
           path.lineTo(point [0], point [1]);
           break;
       }
-      it.next();
     }
     return path;
   }
@@ -6287,6 +6542,8 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getWallCreationState());
       } else if (mode == Mode.ROOM_CREATION) {
         setState(getRoomCreationState());
+      } else if (mode == Mode.POLYLINE_CREATION) {
+        setState(getPolylineCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
         setState(getDimensionLineCreationState());
       } else if (mode == Mode.LABEL_CREATION) {
@@ -6362,6 +6619,7 @@ public class PlanController extends FurnitureController implements Controller {
           || getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
           || getResizedWallEndAt(x, y) != null
+          || getResizedPolylineAt(x, y) != null
           || getResizedRoomAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
       } else if (getModifiedLightPowerAt(x, y) != null) {
@@ -6425,6 +6683,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getRoomResizeState());
         } else if (getOffsetDimensionLineAt(x, y) != null) {
           setState(getDimensionLineOffsetState());
+        } else if (getResizedPolylineAt(x, y) != null) {
+          setState(getPolylineResizeState());
         } else if (getModifiedLightPowerAt(x, y) != null) {
           setState(getLightPowerModificationState());
         } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
@@ -6463,6 +6723,8 @@ public class PlanController extends FurnitureController implements Controller {
             modifySelectedFurniture();
           } else if (item instanceof Room) {
             modifySelectedRooms();
+          } else if (item instanceof Polyline) {
+            modifySelectedPolylines();
           } else if (item instanceof Label) {
             modifySelectedLabels();
           } else if (item instanceof Compass) {
@@ -6735,6 +6997,8 @@ public class PlanController extends FurnitureController implements Controller {
               home.addWall((Wall)item);
             } else if (item instanceof Room) {
               home.addRoom((Room)item);
+            } else if (item instanceof Polyline) {
+              home.addPolyline((Polyline)item);
             } else if (item instanceof DimensionLine) {
               home.addDimensionLine((DimensionLine)item);
             } else if (item instanceof HomePieceOfFurniture) {
@@ -6954,6 +7218,8 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getWallCreationState());
       } else if (mode == Mode.ROOM_CREATION) {
         setState(getRoomCreationState());
+      } else if (mode == Mode.POLYLINE_CREATION) {
+        setState(getPolylineCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
         setState(getDimensionLineCreationState());
       } else if (mode == Mode.LABEL_CREATION) {
@@ -7302,6 +7568,8 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getPanningState());
       } else if (mode == Mode.ROOM_CREATION) {
         setState(getRoomCreationState());
+      } else if (mode == Mode.POLYLINE_CREATION) {
+        setState(getPolylineCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
         setState(getDimensionLineCreationState());
       } else if (mode == Mode.LABEL_CREATION) {
@@ -8965,6 +9233,8 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getWallCreationState());
       } else if (mode == Mode.ROOM_CREATION) {
         setState(getRoomCreationState());
+      } else if (mode == Mode.POLYLINE_CREATION) {
+        setState(getPolylineCreationState());
       } else if (mode == Mode.LABEL_CREATION) {
         setState(getLabelCreationState());
       } 
@@ -9763,6 +10033,8 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getPanningState());
       } else if (mode == Mode.WALL_CREATION) {
         setState(getWallCreationState());
+      } else if (mode == Mode.POLYLINE_CREATION) {
+        setState(getPolylineCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
         setState(getDimensionLineCreationState());
       } else if (mode == Mode.LABEL_CREATION) {
@@ -10131,20 +10403,20 @@ public class PlanController extends FurnitureController implements Controller {
           case LENGTH : 
             float length = value != null ? ((Number)value).floatValue() : 0;
             length = Math.max(0.001f, Math.min(length, preferences.getLengthUnit().getMaximumLength()));
-            double wallAngle = Math.PI - Math.atan2(previousPoint [1] - point [1], 
+            double sideAngle = Math.PI - Math.atan2(previousPoint [1] - point [1], 
                 previousPoint [0] - point [0]);
-            newX = (float)(previousPoint [0] + length * Math.cos(wallAngle));
-            newY = (float)(previousPoint [1] - length * Math.sin(wallAngle));
+            newX = (float)(previousPoint [0] + length * Math.cos(sideAngle));
+            newY = (float)(previousPoint [1] - length * Math.sin(sideAngle));
             break;      
           case ANGLE : 
-            wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+            sideAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
             if (roomPoints.length > 2) {
-              wallAngle -= Math.atan2(roomPoints [roomPoints.length - 3][1] - previousPoint [1], 
+              sideAngle -= Math.atan2(roomPoints [roomPoints.length - 3][1] - previousPoint [1], 
                   roomPoints [roomPoints.length - 3][0] - previousPoint [0]);
             }
-            float wallLength = getRoomSideLength(this.newRoom, roomPoints.length - 1);
-            newX = (float)(previousPoint [0] + wallLength * Math.cos(wallAngle));
-            newY = (float)(previousPoint [1] - wallLength * Math.sin(wallAngle));
+            float sideLength = getRoomSideLength(this.newRoom, roomPoints.length - 1);
+            newX = (float)(previousPoint [0] + sideLength * Math.cos(sideAngle));
+            newY = (float)(previousPoint [1] - sideLength * Math.sin(sideAngle));
             break;
           default :
             return;
@@ -10656,6 +10928,563 @@ public class PlanController extends FurnitureController implements Controller {
     }  
   }
   
+  /**
+   * Polyline creation state. This state manages transition to
+   * other modes, and initial polyline creation.
+   */
+  private class PolylineCreationState extends AbstractModeChangeState {
+    @Override
+    public Mode getMode() {
+      return Mode.POLYLINE_CREATION;
+    }
+
+    @Override
+    public void enter() {
+      getView().setCursor(PlanView.CursorType.DRAW);
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown, boolean duplicationActivated) {
+      // Change state to PolylineDrawingState
+      setState(getPolylineDrawingState());
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      if (editionActivated) {
+        setState(getPolylineDrawingState());
+        PlanController.this.setEditionActivated(editionActivated);
+      }
+    }
+  }
+
+  /**
+   * Polyline modification state.  
+   */
+  private abstract class AbstractPolylineState extends ControllerState {
+    private String polylineSegmentLengthToolTipFeedback;
+    private String polylineSegmentAngleToolTipFeedback;
+    
+    @Override
+    public void enter() {
+      this.polylineSegmentLengthToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "polylineSegmentLengthToolTipFeedback");
+      this.polylineSegmentAngleToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "polylineSegmentAngleToolTipFeedback");
+    }
+    
+    protected String getToolTipFeedbackText(Polyline polyline, int pointIndex) {
+      if (pointIndex != 0 || polyline.isClosedPath()) {
+        float length = getPolylineSegmentLength(polyline, pointIndex);
+        int angle = getPolylineSegmentAngle(polyline, pointIndex);
+        return "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, 
+            preferences.getLengthUnit().getFormatWithUnit().format(length))
+            + "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
+      } else {
+        return null;
+      }
+    }
+    
+    protected float getPolylineSegmentLength(Polyline polyline, int pointIndex) {
+      float [][] points = polyline.getPoints();
+      int previousPointIndex = pointIndex == 0 
+          ? points.length - 1
+          : pointIndex - 1;
+      return (float)Point2D.distance(points [previousPointIndex][0], points [previousPointIndex][1], 
+          points [pointIndex][0], points [pointIndex][1]);
+    }
+
+    /**
+     * Returns polyline segment angle at the given point index in degrees.
+     */
+    protected Integer getPolylineSegmentAngle(Polyline polyline, int pointIndex) {
+      float [][] points = polyline.getPoints();
+      int previousPointIndex = pointIndex == 0 
+          ? points.length - 1
+          : pointIndex - 1;
+      int previousPreviousPointIndex = previousPointIndex == 0 
+          ? points.length - 1
+          : previousPointIndex - 1;
+      float segmentLength = (float)Point2D.distance(
+          points [previousPointIndex][0], points [previousPointIndex][1], 
+          points [pointIndex][0], points [pointIndex][1]);
+      float previousSegmentLength = (float)Point2D.distance(
+          points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1],
+          points [previousPointIndex][0], points [previousPointIndex][1]);
+      if (pointIndex > 2 
+          && segmentLength != 0 && previousSegmentLength != 0) {
+        // Compute the angle between the segment finishing at pointIndex 
+        // and the previous segment
+        float xSegmentVector = (points [pointIndex][0] - points [previousPointIndex][0]) / segmentLength;
+        float ySegmentVector = (points [pointIndex][1] - points [previousPointIndex][1]) / segmentLength;
+        float xPreviousSegmentVector = (points [previousPointIndex][0] - points [previousPreviousPointIndex][0]) / previousSegmentLength;
+        float yPreviousSegmentVector = (points [previousPointIndex][1] - points [previousPreviousPointIndex][1]) / previousSegmentLength;
+        int segmentAngle = (int)Math.round(180 - Math.toDegrees(Math.atan2(
+            ySegmentVector * xPreviousSegmentVector - xSegmentVector * yPreviousSegmentVector,
+            xSegmentVector * xPreviousSegmentVector + ySegmentVector * yPreviousSegmentVector)));
+        if (segmentAngle > 180) {
+          segmentAngle -= 360;
+        }
+        return segmentAngle;
+      }
+      if (segmentLength == 0) {
+        return 0;
+      } else {
+        return (int)Math.round(Math.toDegrees(Math.atan2(
+            points [pointIndex][1] - points [previousPointIndex][1], 
+            points [pointIndex][0] - points [previousPointIndex][0])));
+      }
+    }
+
+    protected void showPolylineAngleFeedback(Polyline polyline, int pointIndex) {
+      float [][] points = polyline.getPoints();
+      if (pointIndex >= 2
+          || points.length > 2 && polyline.isClosedPath()) {
+        int previousPointIndex = pointIndex == 0 
+            ? points.length - 1
+            : pointIndex - 1;
+        int previousPreviousPointIndex = previousPointIndex == 0 
+            ? points.length - 1
+            : previousPointIndex - 1;
+        getView().setAngleFeedback(points [previousPointIndex][0], points [previousPointIndex][1], 
+            points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1], 
+            points [pointIndex][0], points [pointIndex][1]);
+      }
+    }
+  }
+
+  /**
+   * Polyline drawing state. This state manages polyline creation at mouse press. 
+   */
+  private class PolylineDrawingState extends AbstractPolylineState {
+    private float                  xPreviousPoint;
+    private float                  yPreviousPoint;
+    private Polyline               newPolyline;
+    private float []               newPoint;
+    private List<Selectable>       oldSelection;
+    private boolean                oldBasePlanLocked;
+    private boolean                oldAllLevelsSelection;
+    private boolean                alignmentActivated;
+    private boolean                curvedPolyline;
+    private long                   lastPointCreationTime;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.POLYLINE_CREATION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void setMode(Mode mode) {
+      // Escape current creation and change state to matching mode
+      escape();
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.PANNING) {
+        setState(getPanningState());
+      } else if (mode == Mode.WALL_CREATION) {
+        setState(getWallCreationState());
+      } else if (mode == Mode.ROOM_CREATION) {
+        setState(getRoomCreationState());
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        setState(getDimensionLineCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
+      } 
+    }
+
+    @Override
+    public void enter() {
+      super.enter();
+      this.oldSelection = home.getSelectedItems();
+      this.oldBasePlanLocked = home.isBasePlanLocked();
+      this.oldAllLevelsSelection = home.isAllLevelsSelection();
+      this.newPolyline = null;
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      this.xPreviousPoint = getXLastMousePress();
+      this.yPreviousPoint = getYLastMousePress();
+      setDuplicationActivated(wasDuplicationActivatedLastMousePress());
+      deselectAll();
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      PlanView planView = getView();
+      // Compute the coordinates where current edit polyline point should be moved
+      float xEnd = x;
+      float yEnd = y;
+      if (this.alignmentActivated) {
+        PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
+            this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getLengthUnit(), planView.getPixelLength());
+        xEnd = pointWithAngleMagnetism.getX();
+        yEnd = pointWithAngleMagnetism.getY();
+      } 
+
+      // If current polyline doesn't exist
+      if (this.newPolyline == null) {
+        // Create a new one
+        this.newPolyline = createAndSelectPolyline(this.xPreviousPoint, this.yPreviousPoint, xEnd, yEnd);
+      } else if (this.newPoint != null) {
+        // Add a point to current polyline
+        float [][] points = this.newPolyline.getPoints();
+        this.xPreviousPoint = points [points.length - 1][0];
+        this.yPreviousPoint = points [points.length - 1][1]; 
+        this.newPolyline.addPoint(xEnd, yEnd);
+        this.newPoint [0] = xEnd; 
+        this.newPoint [1] = yEnd; 
+        this.newPoint = null;
+      } else {
+        // Otherwise update its last point
+        this.newPolyline.setPoint(xEnd, yEnd, this.newPolyline.getPointCount() - 1);
+      }         
+      planView.setAlignmentFeedback(Polyline.class, null, x, y, false);
+      planView.setToolTipFeedback(
+          getToolTipFeedbackText(this.newPolyline, this.newPolyline.getPointCount() - 1), x, y);
+      if (this.newPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+        showPolylineAngleFeedback(this.newPolyline, this.newPolyline.getPointCount() - 1);
+      }
+      
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+    }
+    
+    /**
+     * Returns a new polyline instance with one segment between (<code>xStart</code>,
+     * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
+     * The new polyline is added to home and selected
+     */
+    private Polyline createAndSelectPolyline(float xStart, float yStart,
+                                     float xEnd, float yEnd) {
+      Polyline newPolyline = createPolyline(new float [][] {{xStart, yStart}, {xEnd, yEnd}});
+      if (this.curvedPolyline) {
+        newPolyline.setJoinStyle(Polyline.JoinStyle.CURVED);
+      }
+      selectItems(Arrays.asList(new Selectable [] {newPolyline}));      
+      return newPolyline;
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount, 
+                           boolean shiftDown, boolean duplicationActivated) {
+      if (clickCount == 2) {
+        int pointIndex = this.newPolyline.getPointIndexAt(x, y, PIXEL_MARGIN / getScale());
+        if (pointIndex == 0) {
+          this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
+          this.newPolyline.setClosedPath(true);
+        }
+        validateDrawnPolyline();
+      } else {
+        endPolylineSegment();
+      }
+    }
+
+    private void validateDrawnPolyline() {
+      if (this.newPolyline != null) {
+        float [][] points = this.newPolyline.getPoints();
+        if (points.length < 2) {
+          // Delete current created polyline if it doesn't have more than 2 clicked points
+          home.deletePolyline(this.newPolyline);
+        } else {
+          // Post polyline creation to undo support
+          postCreatePolylines(Arrays.asList(new Polyline [] {this.newPolyline}), 
+              this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
+        }
+      }
+      // Change state to PolylineCreationState 
+      setState(polylineCreationState);
+    }
+
+    private void endPolylineSegment() {
+      // Create a new polyline segment only when its length is greater than zero
+      if (this.newPolyline != null
+          && getPolylineSegmentLength(this.newPolyline, this.newPolyline.getPointCount() - 1) > 0) {    
+        this.newPoint = new float [2];
+        if (this.newPolyline.getPointCount() <= 2
+            && this.curvedPolyline
+            && newPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+          // Give a second chance to create a curved polyline
+          newPolyline.setJoinStyle(Polyline.JoinStyle.CURVED);
+        }
+      }
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      PlanView planView = getView();
+      if (editionActivated) {
+        planView.deleteFeedback();
+        if (this.newPolyline == null) {
+          // Edit xStart and yStart
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.X,
+                                                                       EditableProperty.Y},
+              new Object [] {this.xPreviousPoint, this.yPreviousPoint},
+              this.xPreviousPoint, this.yPreviousPoint);
+        } else {
+          if (this.newPoint != null) {
+            // May happen if edition is activated after the user clicked to add a new point 
+            createNextSegment();            
+          }
+          // Edit length and angle
+          float [][] points = this.newPolyline.getPoints();
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
+                                                                       EditableProperty.ANGLE},
+              new Object [] {getPolylineSegmentLength(this.newPolyline, points.length - 1), 
+                             getPolylineSegmentAngle(this.newPolyline, points.length - 1)},
+              points [points.length - 1][0], points [points.length - 1][1]);
+        }
+      } else { 
+        if (this.newPolyline == null) {
+          // Create a new segment once user entered the start point of the polyline 
+          LengthUnit lengthUnit = preferences.getLengthUnit();
+          float defaultLength = lengthUnit == LengthUnit.INCH || lengthUnit == LengthUnit.INCH_DECIMALS
+              ? LengthUnit.footToCentimeter(10) : 300;
+          this.newPolyline = createAndSelectPolyline(this.xPreviousPoint, this.yPreviousPoint, 
+              this.xPreviousPoint + defaultLength, this.yPreviousPoint);
+          // Activate automatically second step to let user enter the 
+          // length and angle of the new segment
+          planView.deleteFeedback();
+          setEditionActivated(true);
+        } else if (System.currentTimeMillis() - this.lastPointCreationTime < 300) {
+          // If the user deactivated edition less than 300 ms after activation, 
+          // escape current segment creation
+          escape();
+        } else {
+          endPolylineSegment();
+          float [][] points = this.newPolyline.getPoints();
+          // If last edited point matches first point validate drawn polyline 
+          if (points.length > 2 
+              && this.newPolyline.getPointIndexAt(points [points.length - 1][0], points [points.length - 1][1], 0.001f) == 0) {
+            // Remove last currently edited point and close path
+            this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
+            this.newPolyline.setClosedPath(true);
+            validateDrawnPolyline();
+            return;
+          }
+          createNextSegment();
+          // Reactivate automatically second step
+          planView.deleteToolTipFeedback();
+          setEditionActivated(true);
+        }
+      }
+    }
+
+    private void createNextSegment() {
+      // Add a point to current polyline
+      float [][] points = this.newPolyline.getPoints();
+      this.xPreviousPoint = points [points.length - 1][0];
+      this.yPreviousPoint = points [points.length - 1][1]; 
+      // Create a new segment with an angle equal to previous segment angle - 90°
+      double previousSegmentAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1], 
+          points [points.length - 2][0] - points [points.length - 1][0]);
+      previousSegmentAngle -=  Math.PI / 2;
+      float previousSegmentLength = getPolylineSegmentLength(this.newPolyline, points.length - 1); 
+      this.newPolyline.addPoint(
+          (float)(this.xPreviousPoint + previousSegmentLength * Math.cos(previousSegmentAngle)),
+          (float)(this.yPreviousPoint - previousSegmentLength * Math.sin(previousSegmentAngle)));
+      this.newPoint = null;
+      this.lastPointCreationTime = System.currentTimeMillis();
+    }
+        
+    @Override
+    public void updateEditableProperty(EditableProperty editableProperty, Object value) {
+      PlanView planView = getView();
+      if (this.newPolyline == null) {
+        // Update start point of the first wall
+        switch (editableProperty) {
+          case X : 
+            this.xPreviousPoint = value != null ? ((Number)value).floatValue() : 0;
+            this.xPreviousPoint = Math.max(-100000f, Math.min(this.xPreviousPoint, 100000f));
+            break;      
+          case Y : 
+            this.yPreviousPoint = value != null ? ((Number)value).floatValue() : 0;
+            this.yPreviousPoint = Math.max(-100000f, Math.min(this.yPreviousPoint, 100000f));
+            break;      
+        }
+        planView.setAlignmentFeedback(Polyline.class, null, this.xPreviousPoint, this.yPreviousPoint, true);
+        planView.makePointVisible(this.xPreviousPoint, this.yPreviousPoint);
+      } else {
+        float [][] points = this.newPolyline.getPoints();
+        float [] previousPoint = points [points.length - 2];
+        float [] point = points [points.length - 1];
+        float newX;
+        float newY;
+        // Update end point of the current polyline
+        switch (editableProperty) {
+          case LENGTH : 
+            float length = value != null ? ((Number)value).floatValue() : 0;
+            length = Math.max(0.001f, Math.min(length, preferences.getLengthUnit().getMaximumLength()));
+            double segmentAngle = Math.PI - Math.atan2(previousPoint [1] - point [1], 
+                previousPoint [0] - point [0]);
+            newX = (float)(previousPoint [0] + length * Math.cos(segmentAngle));
+            newY = (float)(previousPoint [1] - length * Math.sin(segmentAngle));
+            break;      
+          case ANGLE : 
+            segmentAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+            if (points.length > 2) {
+              segmentAngle -= Math.atan2(points [points.length - 3][1] - previousPoint [1], 
+                  points [points.length - 3][0] - previousPoint [0]);
+            }
+            float segmentLength = getPolylineSegmentLength(this.newPolyline, points.length - 1);              
+            newX = (float)(previousPoint [0] + segmentLength * Math.cos(segmentAngle));
+            newY = (float)(previousPoint [1] - segmentLength * Math.sin(segmentAngle));
+            break;
+          default :
+            return;
+        }
+        this.newPolyline.setPoint(newX, newY, points.length - 1);
+
+        if (this.newPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+          showPolylineAngleFeedback(this.newPolyline, points.length - 1);
+        }
+        planView.setAlignmentFeedback(Polyline.class, null, newX, newY, false);
+        // Ensure polyline segment points are visible
+        planView.makePointVisible(points [points.length - 2][0], points [points.length - 2][1]);
+        planView.makePointVisible(points [points.length - 1][0], points [points.length - 1][1]);
+      }
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void setDuplicationActivated(boolean duplicationActivated) {
+      // Reuse duplication activation for curved polyline creation
+      this.               curvedPolyline = duplicationActivated;
+    }
+    
+    @Override
+    public void escape() {
+      if (this.newPolyline != null
+          && this.newPoint == null) {
+        // Remove last currently edited point.
+        this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
+      }
+      validateDrawnPolyline();
+    }
+
+    @Override
+    public void exit() {
+      getView().deleteFeedback();
+      this.newPolyline = null;
+      this.newPoint = null;
+      this.oldSelection = null;
+    }  
+  }
+
+  /**
+   * Polyline resize state. This state manages polyline resizing. 
+   */
+  private class PolylineResizeState extends AbstractPolylineState {
+    private Collection<Polyline> polylines;
+    private Polyline             selectedPolyline;
+    private int                  polylinePointIndex;
+    private float                oldX;
+    private float                oldY;
+    private float                deltaXToResizePoint;
+    private float                deltaYToResizePoint;
+    private boolean              alignmentActivated;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      super.enter();
+      this.selectedPolyline = (Polyline)home.getSelectedItems().get(0);
+      this.polylines = new ArrayList<Polyline>(home.getPolylines());
+      this.polylines.remove(this.selectedPolyline);
+      float margin = PIXEL_MARGIN / getScale();
+      this.polylinePointIndex = this.selectedPolyline.getPointIndexAt( 
+          getXLastMousePress(), getYLastMousePress(), margin);
+      float [][] polylinePoints = this.selectedPolyline.getPoints();
+      this.oldX = polylinePoints [this.polylinePointIndex][0];
+      this.oldY = polylinePoints [this.polylinePointIndex][1];
+      this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
+      this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      String toolTipFeedbackText = getToolTipFeedbackText(this.selectedPolyline, this.polylinePointIndex);
+      if (toolTipFeedbackText != null) {
+        planView.setToolTipFeedback(toolTipFeedbackText, getXLastMousePress(), getYLastMousePress());
+        if (this.selectedPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+          showPolylineAngleFeedback(this.selectedPolyline, this.polylinePointIndex);
+        }
+      }
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      PlanView planView = getView();
+      float newX = x - this.deltaXToResizePoint;
+      float newY = y - this.deltaYToResizePoint;
+      if (this.alignmentActivated) {
+        // Use magnetism if closest wall point is too far
+        float [][] polylinePoints = this.selectedPolyline.getPoints();
+        int previousPointIndex = this.polylinePointIndex == 0 
+            ? polylinePoints.length - 1 
+            : this.polylinePointIndex - 1;
+        float xPreviousPoint = polylinePoints [previousPointIndex][0];
+        float yPreviousPoint = polylinePoints [previousPointIndex][1];
+        PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
+            xPreviousPoint, yPreviousPoint, newX, newY, preferences.getLengthUnit(), planView.getPixelLength());
+        newX = pointWithAngleMagnetism.getX();
+        newY = pointWithAngleMagnetism.getY();
+      } 
+      this.selectedPolyline.setPoint(newX, newY, this.polylinePointIndex);
+
+      if (this.polylinePointIndex > 0 || this.selectedPolyline.isClosedPath()) {
+        planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedPolyline, this.polylinePointIndex), x, y);
+        if (this.selectedPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+          showPolylineAngleFeedback(this.selectedPolyline, this.polylinePointIndex);
+        }
+      }
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPolylineResize(this.selectedPolyline, this.oldX, this.oldY, this.polylinePointIndex);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedPolyline.setPoint(this.oldX, this.oldY, this.polylinePointIndex);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedPolyline = null;
+    }  
+  } 
+
   /**
    * Label creation state. This state manages transition to
    * other modes, and initial label creation.

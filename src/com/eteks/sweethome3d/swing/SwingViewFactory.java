@@ -52,6 +52,7 @@ import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PhotosController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.PolylineController;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
 import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
@@ -212,6 +213,14 @@ public class SwingViewFactory implements ViewFactory {
     return new RoomPanel(preferences, roomController);
   }
   
+  /**
+   * Returns a new view that edits polyline values.
+   */
+  public DialogView createPolylineView(UserPreferences preferences,
+                                       PolylineController polylineController) {
+    return new PolylinePanel(preferences, polylineController);
+  }
+
   /**
    * Returns a new view that edits label values.
    */

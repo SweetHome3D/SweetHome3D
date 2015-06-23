@@ -62,6 +62,7 @@ import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
+import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -186,6 +187,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.Selectable;
@@ -306,8 +308,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final GeneralPath COMPASS_ROTATION_INDICATOR;
   private static final GeneralPath COMPASS_RESIZE_INDICATOR;
   
+  private static final GeneralPath ARROW;
+  
   private static final Stroke      INDICATOR_STROKE = new BasicStroke(1.5f);
-  private static final Stroke      POINT_STROKE = new BasicStroke(2f);
+  private static final Stroke      POINT_STROKE = new BasicStroke(2f);  
   
   private static final float       WALL_STROKE_WIDTH = 1.5f;
   private static final float       BORDER_STROKE_WIDTH = 1f;
@@ -536,6 +540,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     COMPASS_RESIZE_INDICATOR.lineTo(12, 0);
     COMPASS_RESIZE_INDICATOR.lineTo(9, 1.5f);
     
+    ARROW = new GeneralPath();
+    ARROW.moveTo(-5, -2);
+    ARROW.lineTo(0, 0);
+    ARROW.lineTo(-5, 2);
+
     ERROR_TEXTURE_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
     Graphics g = ERROR_TEXTURE_IMAGE.getGraphics();
     g.setColor(Color.RED);
@@ -744,10 +753,36 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       });
 
+     // Add listener to update plan when polylines change
+     final PropertyChangeListener changeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+            revalidate();
+          }
+        };
+     for (Polyline polyline : home.getPolylines()) {
+       polyline.addPropertyChangeListener(changeListener);
+     }
+     home.addPolylinesListener(new CollectionListener<Polyline>() {
+        public void collectionChanged(CollectionEvent<Polyline> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(changeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(changeListener);
+          }
+          revalidate();
+        }
+      });
+
     // Add listener to update plan when dimension lines change
     final PropertyChangeListener dimensionLineChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          revalidate();
+          String propertyName = ev.getPropertyName();
+          if (Polyline.Property.COLOR.name().equals(propertyName)
+              || Polyline.Property.DASH_STYLE.name().equals(propertyName)) {
+            repaint();
+          } else {
+            revalidate();
+          }
         }
       };
     for (DimensionLine dimensionLine : home.getDimensionLines()) {
@@ -1597,6 +1632,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               yRoomCenter + room.getAreaYOffset(), room.getAreaAngle(), itemBounds);
         }
       }
+    } else if (item instanceof Polyline) {
+      Polyline polyline = (Polyline)item;      
+      return getPolylineShape(polyline).getBounds2D();
     } else if (item instanceof HomePieceOfFurniture) {
       if (item instanceof HomeDoorOrWindow) {
         HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
@@ -1641,31 +1679,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               ? -lengthFontMetrics.getDescent() - 1
               : lengthFontMetrics.getAscent() + 1);
       GeneralPath lengthTextBoundsPath = new GeneralPath(lengthTextBounds);
-      for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); ) {
+      for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); it.next()) {
         float [] pathPoint = new float[2];
         if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
           itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-        it.next();
       }
       // Add to bounds the end lines drawn at dimension line start and end  
       transform.setToTranslation(dimensionLine.getXStart(), dimensionLine.getYStart());
       transform.rotate(angle);
       transform.translate(0, dimensionLine.getOffset());
-      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
+      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); it.next()) {
         float [] pathPoint = new float[2];
         if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
           itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-        it.next();
       }
       transform.translate(dimensionLineLength, 0);
-      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
+      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); it.next()) {
         float [] pathPoint = new float[2];
         if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
           itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-        it.next();
       }
     } else if (item instanceof Label) {
       // Add to bounds the displayed text of a label 
@@ -1722,12 +1757,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       transform.translate(-halfTextLength, 0);
       GeneralPath textBoundsPath = new GeneralPath(textBounds);
       List<float []> textPoints = new ArrayList<float[]>(4);
-      for (PathIterator it = textBoundsPath.getPathIterator(transform); !it.isDone(); ) {
+      for (PathIterator it = textBoundsPath.getPathIterator(transform); !it.isDone(); it.next()) {
         float [] pathPoint = new float[2];
         if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
           textPoints.add(pathPoint);
         }
-        it.next();
       }
       return textPoints.toArray(new float [textPoints.size()][]);
     }
@@ -1879,9 +1913,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (Home.getRoomsSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(Room.class, paintMode));
     }
+    List<Polyline> polylines = Home.getPolylinesSubList(items);
+    if (polylines.size() > 0) {
+      for (Polyline polyline : polylines) {        
+        extraMargin = Math.max(extraMargin, polyline.getStartArrowStyle() != null ||  polyline.getEndArrowStyle() != null 
+            ? 1.5f * polyline.getThickness()
+            : polyline.getThickness());
+      }
+    }    
     if (Home.getDimensionLinesSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(DimensionLine.class, paintMode));
-    }
+    }    
     return extraMargin / 2;
   }
   
@@ -2516,6 +2558,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
               selectionColor, locationFeedbackStroke, planScale,
               selectionOutlinePaint, selectionOutlineStroke);
+        } else if (Polyline.class.isAssignableFrom(this.alignedObjectClass)) {
+          if (this.showPointFeedback) {
+            paintPointFeedback(g2D, this.locationFeeback, selectionColor, planScale, selectionOutlinePaint, selectionOutlineStroke);
+          }
         } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
           paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,               
               selectionColor, locationFeedbackStroke, planScale,
@@ -2573,19 +2619,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Collections.sort(this.sortedLevelFurniture,
           new Comparator<HomePieceOfFurniture>() {
             public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-              int elevationComparison = Float.compare(piece1.getGroundElevation(), piece2.getGroundElevation());
-              if (elevationComparison != 0) {
-                return elevationComparison;
-              } else if (piece1.getLevel() != null && piece2.getLevel() != null) {
-                int levelElevationComparison = Float.compare(piece1.getLevel().getElevation(), piece2.getLevel().getElevation());
-                if (levelElevationComparison != 0) {
-                  return levelElevationComparison;
-                } else {
-                  return piece1.getLevel().getElevationIndex() - piece2.getLevel().getElevationIndex();
-                }
-              } else {
-                return 0;
-              }
+              return Float.compare(piece1.getGroundElevation(), piece2.getGroundElevation());
             }
           });
     }    
@@ -2612,6 +2646,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     checkCurrentThreadIsntInterrupted(paintMode);
     paintFurniture(g2D, this.sortedLevelFurniture, selectedItems, 
         planScale, backgroundColor, foregroundColor, getFurnitureOutlineColor(), paintMode, true);
+    
+    checkCurrentThreadIsntInterrupted(paintMode);
+    paintPolylines(g2D, this.home.getPolylines(), selectedItems, selectionOutlinePaint,  
+        selectionColor, planScale, foregroundColor, paintMode);
     
     checkCurrentThreadIsntInterrupted(paintMode);
     paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
@@ -2792,7 +2830,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         
         Composite oldComposite = setTransparency(g2D, 0.75f);
-        Shape roomShape = getShape(room.getPoints());
+        Shape roomShape = getShape(room.getPoints(), true);
         fillShape(g2D, roomShape, paintMode);
         g2D.setComposite(oldComposite);
 
@@ -2932,7 +2970,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (isViewableAtSelectedLevel(room)) {
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(room.getPoints()));
+        g2D.draw(getShape(room.getPoints(), true));
   
         if (indicatorPaint != null) {
           g2D.setPaint(indicatorPaint);         
@@ -2953,7 +2991,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, PaintMode.PAINT) / planScale));
     for (Room room : rooms) { 
       if (isViewableAtSelectedLevel(room)) {
-        g2D.draw(getShape(room.getPoints()));
+        g2D.draw(getShape(room.getPoints(), true));
       }
     }
 
@@ -2964,7 +3002,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Room selectedRoom = rooms.iterator().next();
       if (isViewableAtSelectedLevel(selectedRoom)) {
         g2D.setPaint(indicatorPaint);         
-        paintRoomResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale);
+        paintPointsResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale, true, 0, 0);
         paintRoomNameOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
         paintRoomAreaOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
       }
@@ -2972,19 +3010,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints resize indicators on <code>room</code>.
+   * Paints resize indicators on selectable <code>item</code>.
    */
-  private void paintRoomResizeIndicators(Graphics2D g2D, Room room,
-                                         Paint indicatorPaint, 
-                                         float planScale) {
+  private void paintPointsResizeIndicators(Graphics2D g2D, Selectable item,
+                                           Paint indicatorPaint, 
+                                           float planScale,
+                                           boolean closedPath,
+                                           float   angleAtStart,
+                                           float   angleAtEnd) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
       AffineTransform previousTransform = g2D.getTransform();
       float scaleInverse = 1 / planScale;
-      float [][] points = room.getPoints();
+      float [][] points = item.getPoints();
       for (int i = 0; i < points.length; i++) {
-        // Draw resize indicator at room point
+        // Draw resize indicator at point
         float [] point = points [i];
         g2D.translate(point[0], point[1]);
         g2D.scale(scaleInverse, scaleInverse);
@@ -2994,21 +3035,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         float [] nextPoint = i == points.length - 1
             ? points [0]
             : points [i + 1];
+        double angle;
+        if (closedPath || (i > 0 && i < points.length - 1)) {
         // Compute the angle of the mean normalized normal at point i
-        float distance1 = (float)Point2D.distance(
-            previousPoint [0], previousPoint [1], point [0], point [1]);
-        float xNormal1 = (point [1] - previousPoint [1]) / distance1;
-        float yNormal1 = (previousPoint [0] - point [0]) / distance1;
-        float distance2 = (float)Point2D.distance(
-            nextPoint [0], nextPoint [1], point [0], point [1]);
-        float xNormal2 = (nextPoint [1] - point [1]) / distance2;
-        float yNormal2 = (point [0] - nextPoint [0]) / distance2;
-        double angle = Math.atan2(yNormal1 + yNormal2, xNormal1 + xNormal2);         
-        // Ensure the indicator will be drawn outside of room 
-        if (room.containsPoint(point [0] + (float)Math.cos(angle), 
-              point [1] + (float)Math.sin(angle), 0.001f)) {
-          angle += Math.PI;
-        }        
+          float distance1 = (float)Point2D.distance(
+              previousPoint [0], previousPoint [1], point [0], point [1]);
+          float xNormal1 = (point [1] - previousPoint [1]) / distance1;
+          float yNormal1 = (previousPoint [0] - point [0]) / distance1;
+          float distance2 = (float)Point2D.distance(
+              nextPoint [0], nextPoint [1], point [0], point [1]);
+          float xNormal2 = (nextPoint [1] - point [1]) / distance2;
+          float yNormal2 = (point [0] - nextPoint [0]) / distance2;
+          angle = Math.atan2(yNormal1 + yNormal2, xNormal1 + xNormal2);         
+          // Ensure the indicator will be drawn outside of room 
+          if (item.containsPoint(point [0] + (float)Math.cos(angle), 
+                point [1] + (float)Math.sin(angle), 0.001f)) {
+            angle += Math.PI;
+          }
+        } else if (i == 0) {
+          angle = angleAtStart;
+        } else {
+          angle = angleAtEnd;              
+        }
         g2D.rotate(angle);
         g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
         g2D.setTransform(previousTransform);
@@ -3138,7 +3186,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Draw selection border
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(wall.getPoints()));
+        g2D.draw(getShape(wall.getPoints(), true));
         
         if (indicatorPaint != null) {
           // Draw start point of the wall
@@ -3353,7 +3401,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Area getItemsArea(Collection<? extends Selectable> items) {
     Area itemsArea = new Area();
     for (Selectable item : items) {
-      itemsArea.add(new Area(getShape(item.getPoints())));
+      itemsArea.add(new Area(getShape(item.getPoints(), true)));
     }
     return itemsArea;
   }
@@ -3402,7 +3450,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (paintMode != PaintMode.CLIPBOARD
                     || selectedPiece) {
             // In clipboard paint mode, paint piece only if it is selected
-            Shape pieceShape = getShape(piece.getPoints());
+            Shape pieceShape = getShape(piece.getPoints(), true);
             Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
@@ -3601,12 +3649,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (homePieceOfFurniture != piece) {
           Area groupArea = null;
           if (lastGroup != homePieceOfFurniture) {
-            Shape groupShape = getShape(homePieceOfFurniture.getPoints());          
+            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true);          
             groupArea = new Area(groupShape);
             // Enlarge group area
             groupArea.add(new Area(furnitureGroupsStroke.createStrokedShape(groupShape)));
           }
-          Area pieceArea = new Area(getShape(piece.getPoints()));
+          Area pieceArea = new Area(getShape(piece.getPoints(), true));
           if (furnitureGroupsArea == null) {
             furnitureGroupsArea = groupArea;
             furnitureInGroupsArea = pieceArea;
@@ -3634,7 +3682,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     for (HomePieceOfFurniture piece : furniture) {
       float [][] points = piece.getPoints();
-      Shape pieceShape = getShape(points);
+      Shape pieceShape = getShape(points, true);
       
       // Draw selection border
       g2D.setPaint(selectionOutlinePaint);
@@ -3846,6 +3894,139 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Paints polylines. 
+   */
+  private void paintPolylines(Graphics2D g2D, 
+                              Collection<Polyline> polylines, List<Selectable> selectedItems,   
+                              Paint selectionOutlinePaint,  
+                              Paint indicatorPaint, float planScale, 
+                              Color foregroundColor, PaintMode paintMode) {
+    // Draw polylines
+    for (Polyline polyline : polylines) {
+      if (isViewableAtSelectedLevel(polyline)) {
+        boolean selected = selectedItems.contains(polyline);
+        if (paintMode != PaintMode.CLIPBOARD
+            || selected) {
+          g2D.setPaint(new Color(polyline.getColor()));
+          float thickness = polyline.getThickness();
+          g2D.setStroke(SwingTools.getStroke(thickness, 
+              polyline.getCapStyle(), polyline.getJoinStyle(), polyline.getDashStyle()));
+          Shape polylineShape = getPolylineShape(polyline);
+          g2D.draw(polylineShape);
+          
+          // Search angle at start and at end
+          float [] firstPoint = null;
+          float [] secondPoint = null;
+          float [] beforeLastPoint = null;
+          float [] lastPoint = null;
+          for (PathIterator it = polylineShape.getPathIterator(null, 0.1); !it.isDone(); it.next()) {
+            float [] pathPoint = new float [2];
+            if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+              if (firstPoint == null) {
+                firstPoint = pathPoint;
+              } else if (secondPoint == null) {
+                secondPoint = pathPoint;
+              }
+              beforeLastPoint = lastPoint;
+              lastPoint = pathPoint;
+            }
+          }
+          float angleAtStart = (float)Math.atan2(firstPoint [1] - secondPoint [1], 
+              firstPoint [0] - secondPoint [0]);
+          float angleAtEnd = (float)Math.atan2(lastPoint [1] - beforeLastPoint [1], 
+              lastPoint [0] - beforeLastPoint [0]);
+          float arrowDelta = polyline.getCapStyle() != Polyline.CapStyle.BUTT  
+              ? thickness / 2  
+              : 0;
+          paintArrow(g2D, firstPoint, angleAtStart, polyline.getStartArrowStyle(), thickness, arrowDelta);
+          paintArrow(g2D, lastPoint, angleAtEnd, polyline.getEndArrowStyle(), thickness, arrowDelta);
+          
+          if (selected
+              && paintMode == PaintMode.PAINT) {
+            g2D.setPaint(selectionOutlinePaint);
+            g2D.setStroke(SwingTools.getStroke(thickness + 4 / planScale, 
+                polyline.getCapStyle(), polyline.getJoinStyle(), Polyline.DashStyle.SOLID));
+            g2D.draw(polylineShape);
+            
+            // Paint resize indicators of the polyline if indicator paint exists
+            if (selectedItems.size() == 1 
+                && indicatorPaint != null) {
+              Polyline selectedPolyline = (Polyline)selectedItems.get(0);
+              if (isViewableAtSelectedLevel(selectedPolyline)) {
+                g2D.setPaint(indicatorPaint);         
+                paintPointsResizeIndicators(g2D, selectedPolyline, indicatorPaint, planScale, selectedPolyline.isClosedPath(), angleAtStart, angleAtEnd);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  /**
+   * Returns the shape of a polyline.
+   */
+  private Shape getPolylineShape(Polyline polyline) {
+    float [][] points = polyline.getPoints();
+    boolean closedPath = polyline.isClosedPath();
+    if (polyline.getJoinStyle() == Polyline.JoinStyle.CURVED) {
+      GeneralPath polylineShape = new GeneralPath();
+      for (int i = 0, n = closedPath ? points.length : points.length - 1; i < n; i++) {
+        CubicCurve2D.Float curve2D = new CubicCurve2D.Float();
+        float [] previousPoint = points [i == 0 ?  points.length - 1  : i - 1];
+        float [] point         = points [i];
+        float [] nextPoint     = points [i == points.length - 1 ?  0  : i + 1];
+        float [] vectorToBisectorPoint = new float [] {nextPoint [0] - previousPoint [0], nextPoint [1] - previousPoint [1]};
+        float [] nextNextPoint     = points [(i + 2) % points.length];
+        float [] vectorToBisectorNextPoint = new float [] {point[0] - nextNextPoint [0], point[1] - nextNextPoint [1]};
+        curve2D.setCurve(point[0], point[1], 
+            point [0] + (i != 0 || closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0), 
+            point [1] + (i != 0 || closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0), 
+            nextPoint [0] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0), 
+            nextPoint [1] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0), 
+            nextPoint [0], nextPoint [1]);
+        polylineShape.append(curve2D, true);
+      }
+      return polylineShape;
+    } else {
+      return getShape(points, closedPath);
+    }
+  }
+
+  /**
+   * Paints polyline arrow at the given point and orientation.
+   */
+  private void paintArrow(Graphics2D g2D, float [] point, float angle, 
+                          Polyline.ArrowStyle arrowStyle, float thickness, float arrowDelta) {
+    if (arrowStyle != null
+        && arrowStyle != Polyline.ArrowStyle.NONE) {
+      AffineTransform oldTransform = g2D.getTransform();
+      g2D.translate(point [0], point [1]);
+      g2D.rotate(angle);
+      g2D.translate(arrowDelta, 0);
+      double scale = Math.pow(thickness, 0.66f) * 2;
+      g2D.scale(scale, scale);
+      switch (arrowStyle) {
+        case DISC :
+          g2D.fill(new Ellipse2D.Float(-3.5f, -2, 4, 4));
+          break;
+        case OPEN :
+          g2D.scale(0.9, 0.9);
+          g2D.setStroke(new BasicStroke((float)(thickness / scale / 0.9), BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+          g2D.draw(ARROW);
+          break;
+        case DELTA :
+          g2D.translate(1.65f, 0);
+          g2D.fill(ARROW);
+          break;
+        default:
+          break;
+      }
+      g2D.setTransform(oldTransform);
+    }  
+  }
+
+  /**
    * Paints dimension lines. 
    */
   private void paintDimensionLines(Graphics2D g2D, 
@@ -4035,7 +4216,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             g2D.setPaint(selectionOutlinePaint);
             g2D.setStroke(selectionOutlineStroke);
             float [][] textBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle);
-            g2D.draw(getShape(textBounds));
+            g2D.draw(getShape(textBounds, true));
             g2D.setPaint(foregroundColor);
             if (indicatorPaint != null 
                 && selectedItems.size() == 1 
@@ -4680,13 +4861,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the shape matching the coordinates in <code>points</code> array.
    */
-  private Shape getShape(float [][] points) {
+  private Shape getShape(float [][] points, boolean closedPath) {
     GeneralPath path = new GeneralPath();
     path.moveTo(points [0][0], points [0][1]);
     for (int i = 1; i < points.length; i++) {
       path.lineTo(points [i][0], points [i][1]);
     }
-    path.closePath();
+    if (closedPath) {
+      path.closePath();
+    }
     return path;
   }
 

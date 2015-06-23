@@ -178,6 +178,7 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Library;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -432,6 +433,8 @@ public class HomePane extends JRootPane implements HomeView {
           preferences, controller, "setMode", PlanController.Mode.WALL_CREATION);
       createToggleAction(ActionType.CREATE_ROOMS, planController.getMode() == PlanController.Mode.ROOM_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.ROOM_CREATION);
+      createToggleAction(ActionType.CREATE_POLYLINES, planController.getMode() == PlanController.Mode.POLYLINE_CREATION, modeGroup, 
+          preferences, controller, "setMode", PlanController.Mode.POLYLINE_CREATION);
       createToggleAction(ActionType.CREATE_DIMENSION_LINES, planController.getMode() == PlanController.Mode.DIMENSION_LINE_CREATION, modeGroup, 
           preferences, controller, "setMode", PlanController.Mode.DIMENSION_LINE_CREATION);
       createToggleAction(ActionType.CREATE_LABELS, planController.getMode() == PlanController.Mode.LABEL_CREATION, modeGroup, 
@@ -445,6 +448,7 @@ public class HomePane extends JRootPane implements HomeView {
       // ADD_ROOM_POINT and DELETE_ROOM_POINT actions are actually defined later in updateRoomActions  
       createAction(ActionType.ADD_ROOM_POINT, preferences);
       createAction(ActionType.DELETE_ROOM_POINT, preferences);
+      createAction(ActionType.MODIFY_POLYLINE, preferences, planController, "modifySelectedPolylines");
       createAction(ActionType.MODIFY_LABEL, preferences, planController, "modifySelectedLabels");
       createAction(ActionType.INCREASE_TEXT_SIZE, preferences, planController, "increaseTextSize");
       createAction(ActionType.DECREASE_TEXT_SIZE, preferences, planController, "decreaseTextSize");
@@ -732,6 +736,7 @@ public class HomePane extends JRootPane implements HomeView {
             setToggleButtonModelSelected(ActionType.PAN, mode == PlanController.Mode.PANNING);
             setToggleButtonModelSelected(ActionType.CREATE_WALLS, mode == PlanController.Mode.WALL_CREATION);
             setToggleButtonModelSelected(ActionType.CREATE_ROOMS, mode == PlanController.Mode.ROOM_CREATION);
+            setToggleButtonModelSelected(ActionType.CREATE_POLYLINES, mode == PlanController.Mode.POLYLINE_CREATION);
             setToggleButtonModelSelected(ActionType.CREATE_DIMENSION_LINES, mode == PlanController.Mode.DIMENSION_LINE_CREATION);
             setToggleButtonModelSelected(ActionType.CREATE_LABELS, mode == PlanController.Mode.LABEL_CREATION);
           }
@@ -1033,6 +1038,7 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToMenu(ActionType.PAN, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_WALLS, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_ROOMS, true, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_POLYLINES, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_DIMENSION_LINES, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_LABELS, true, planMenu);
     planMenu.addSeparator();
@@ -1045,6 +1051,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.REVERSE_WALL_DIRECTION, planMenu);
     addActionToMenu(ActionType.SPLIT_WALL, planMenu);
     addActionToMenu(ActionType.MODIFY_ROOM, planMenu);
+    addActionToMenu(ActionType.MODIFY_POLYLINE, planMenu);
     addActionToMenu(ActionType.MODIFY_LABEL, planMenu);
     planMenu.add(createTextStyleMenu(home, preferences, false));
     planMenu.addSeparator();
@@ -1984,6 +1991,7 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToToolBar(ActionType.PAN, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_WALLS, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_ROOMS, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_POLYLINES, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_LABELS, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
@@ -2702,6 +2710,7 @@ public class HomePane extends JRootPane implements HomeView {
       addToggleActionToPopupMenu(ActionType.PAN, true, planViewPopup);
       addToggleActionToPopupMenu(ActionType.CREATE_WALLS, true, planViewPopup);
       addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, true, planViewPopup);
+      addToggleActionToPopupMenu(ActionType.CREATE_POLYLINES, true, planViewPopup);
       addToggleActionToPopupMenu(ActionType.CREATE_DIMENSION_LINES, true, planViewPopup);
       addToggleActionToPopupMenu(ActionType.CREATE_LABELS, true, planViewPopup);
       planViewPopup.addSeparator();
@@ -2721,6 +2730,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.MODIFY_ROOM, planViewPopup);
       JMenuItem addRoomPointMenuItem = addActionToPopupMenu(ActionType.ADD_ROOM_POINT, planViewPopup);
       JMenuItem deleteRoomPointMenuItem = addActionToPopupMenu(ActionType.DELETE_ROOM_POINT, planViewPopup);
+      addActionToPopupMenu(ActionType.MODIFY_POLYLINE, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_LABEL, planViewPopup);
       planViewPopup.add(createTextStyleMenu(home, preferences, true));
       planViewPopup.addSeparator();
@@ -3066,6 +3076,12 @@ public class HomePane extends JRootPane implements HomeView {
                     } else {
                       return preferences.getLocalizedString(HomePane.class, "selectObject.room", roomInfo);
                     }
+                  }
+                });
+              formatters.put(Polyline.class, new SelectableFormat<Polyline>() {
+                  public String format(Polyline polyline) {
+                    return preferences.getLocalizedString(HomePane.class, "selectObject.polyline", 
+                        preferences.getLengthUnit().getFormatWithUnit().format(polyline.getLength()));
                   }
                 });
               formatters.put(DimensionLine.class, new SelectableFormat<DimensionLine>() {

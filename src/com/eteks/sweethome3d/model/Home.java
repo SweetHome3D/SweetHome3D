@@ -82,6 +82,8 @@ public class Home implements Serializable, Cloneable {
   private transient CollectionChangeSupport<Wall>     wallsChangeSupport;
   private List<Room>                                  rooms;
   private transient CollectionChangeSupport<Room>     roomsChangeSupport;
+  private List<Polyline>                              polylines;
+  private transient CollectionChangeSupport<Polyline> polylinesChangeSupport;
   private List<DimensionLine>                         dimensionLines;
   private transient CollectionChangeSupport<DimensionLine> dimensionLinesChangeSupport;
   private List<Label>                                 labels;
@@ -261,6 +263,7 @@ public class Home implements Serializable, Cloneable {
     this.levelsChangeSupport = new CollectionChangeSupport<Level>(this);
     this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
     this.roomsChangeSupport = new CollectionChangeSupport<Room>(this);
+    this.polylinesChangeSupport = new CollectionChangeSupport<Polyline>(this);
     this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
     this.labelsChangeSupport = new CollectionChangeSupport<Label>(this);
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -287,6 +290,7 @@ public class Home implements Serializable, Cloneable {
     // Initialize new fields 
     this.environment = new HomeEnvironment();
     this.rooms = new ArrayList<Room>();
+    this.polylines = new ArrayList<Polyline>();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.labels = new ArrayList<Label>();
     this.compass = new Compass(-100, 50, 100);
@@ -541,6 +545,11 @@ public class Home implements Serializable, Cloneable {
       for (Wall wall : this.walls) {
         if (wall.getLevel() == level) {
           deleteWall(wall);
+        }
+      }
+      for (Polyline polyline : this.polylines) {
+        if (polyline.getLevel() == level) {
+          deletePolyline(polyline);
         }
       }
       for (DimensionLine dimensionLine : this.dimensionLines) {
@@ -899,6 +908,79 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
+   * Adds the polyline <code>listener</code> in parameter to this home.
+   * @since 5.0
+   */
+  public void addPolylinesListener(CollectionListener<Polyline> listener) {
+    this.polylinesChangeSupport.addCollectionListener(listener);
+  }
+  
+  /**
+   * Removes the polyline <code>listener</code> in parameter from this home.
+   * @since 5.0
+   */
+  public void removePolylinesListener(CollectionListener<Polyline> listener) {
+    this.polylinesChangeSupport.removeCollectionListener(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the polylines of this home.
+   * @since 5.0
+   */
+  public List<Polyline> getPolylines() {
+    return Collections.unmodifiableList(this.polylines);
+  }
+
+  /**
+   * Adds a given <code>polyline</code> to the set of polylines of this home.
+   * Once the <code>polyline</code> is added, polyline listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * @since 5.0
+   */
+  public void addPolyline(Polyline polyline) {
+    addPolyline(polyline, this.polylines.size());
+  }
+
+  /**
+   * Adds a <code>polyline</code> at a given <code>index</code> of the set of polylines of this home.
+   * Once the <code>polyline</code> is added, polyline listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * @since 5.0
+   */
+  public void addPolyline(Polyline polyline, int index) {
+    // Make a copy of the list to avoid conflicts in the list returned by getPolylines
+    this.polylines = new ArrayList<Polyline>(this.polylines);
+    this.polylines.add(index, polyline);
+    polyline.setLevel(this.selectedLevel);
+    this.polylinesChangeSupport.fireCollectionChanged(polyline, CollectionEvent.Type.ADD);
+  }
+
+  /**
+   * Removes a given <code>polyline</code> from the set of polylines of this home.
+   * Once the <code>polyline</code> is removed, polyline listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   * @since 5.0
+   */
+  public void deletePolyline(Polyline polyline) {
+    //  Ensure selectedItems don't keep a reference to polyline
+    deselectItem(polyline);
+    int index = this.polylines.indexOf(polyline);
+    if (index != -1) {
+      polyline.setLevel(null);
+      // Make a copy of the list to avoid conflicts in the list returned by getPolylines
+      this.polylines = new ArrayList<Polyline>(this.polylines);
+      this.polylines.remove(index);
+      this.polylinesChangeSupport.fireCollectionChanged(polyline, CollectionEvent.Type.DELETE);
+    }
+  }
+
+  /**
    * Adds the dimension line <code>listener</code> in parameter to this home.
    */
   public void addDimensionLinesListener(CollectionListener<DimensionLine> listener) {
@@ -1020,30 +1102,11 @@ public class Home implements Serializable, Cloneable {
    */
   public List<Selectable> getSelectableViewableItems() {
     List<Selectable> homeItems = new ArrayList<Selectable>();
-    for (Wall wall : getWalls()) {
-      if (wall.getLevel() == null
-          || wall.getLevel().isViewable()) {
-        homeItems.add(wall);
-      }
-    }
-    for (Room room : getRooms()) {
-      if (room.getLevel() == null
-          || room.getLevel().isViewable()) {
-        homeItems.add(room);
-      }
-    }
-    for (DimensionLine dimensionLine : getDimensionLines()) {
-      if (dimensionLine.getLevel() == null
-          || dimensionLine.getLevel().isViewable()) {
-        homeItems.add(dimensionLine);
-      }
-    }
-    for (Label label : getLabels()) {
-      if (label.getLevel() == null
-          || label.getLevel().isViewable()) {
-        homeItems.add(label);
-      }
-    }
+    addViewableItems(this.walls, homeItems);
+    addViewableItems(this.rooms, homeItems);
+    addViewableItems(this.dimensionLines, homeItems);
+    addViewableItems(this.polylines, homeItems);
+    addViewableItems(this.labels, homeItems);
     for (HomePieceOfFurniture piece : getFurniture()) {
       if (piece.isVisible()
           && (piece.getLevel() == null
@@ -1056,6 +1119,19 @@ public class Home implements Serializable, Cloneable {
     }
     return homeItems;
   }
+
+  /**
+   * Adds the viewable items to the set of selectable viewable items.
+   */
+  private <T extends Elevatable & Selectable> void addViewableItems(Collection<T> items, 
+                                                                    List<Selectable> selectableViewableItems) {
+    for (T label : items) {
+      if (label.getLevel() == null
+          || label.getLevel().isViewable()) {
+        selectableViewableItems.add(label);
+      }
+    }
+  }
   
   /**
    * Returns <code>true</code> if this home doesn't contain any item i.e.  
@@ -1067,6 +1143,7 @@ public class Home implements Serializable, Cloneable {
         && this.walls.isEmpty()
         && this.rooms.isEmpty()
         && this.dimensionLines.isEmpty()
+        && this.polylines.isEmpty()
         && this.labels.isEmpty();
   }
 
@@ -1425,6 +1502,8 @@ public class Home implements Serializable, Cloneable {
       clone.rooms = cloneSelectableItems(this.rooms, this.selectedItems, clone.selectedItems);
       clone.dimensionLines = cloneSelectableItems(
           this.dimensionLines, this.selectedItems, clone.selectedItems);
+      clone.polylines = cloneSelectableItems(
+          this.polylines, this.selectedItems, clone.selectedItems);
       clone.labels = cloneSelectableItems(this.labels, this.selectedItems, clone.selectedItems);
       // Deep clone walls
       clone.walls = Wall.clone(this.walls);
@@ -1459,6 +1538,12 @@ public class Home implements Serializable, Cloneable {
           Level dimensionLineLevel = this.dimensionLines.get(i).getLevel();
           if (dimensionLineLevel != null) {
             clone.dimensionLines.get(i).setLevel(clone.levels.get(this.levels.indexOf(dimensionLineLevel)));
+          }
+        }
+        for (int i = 0; i < this.polylines.size(); i++) {
+          Level polylineLevel = this.polylines.get(i).getLevel();
+          if (polylineLevel != null) {
+            clone.polylines.get(i).setLevel(clone.levels.get(this.levels.indexOf(polylineLevel)));
           }
         }
         for (int i = 0; i < this.labels.size(); i++) {
@@ -1503,6 +1588,7 @@ public class Home implements Serializable, Cloneable {
       clone.selectionListeners = new ArrayList<SelectionListener>();
       clone.wallsChangeSupport = new CollectionChangeSupport<Wall>(clone);
       clone.roomsChangeSupport = new CollectionChangeSupport<Room>(clone);
+      clone.polylinesChangeSupport = new CollectionChangeSupport<Polyline>(clone);
       clone.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(clone);
       clone.labelsChangeSupport = new CollectionChangeSupport<Label>(clone);
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
@@ -1582,6 +1668,14 @@ public class Home implements Serializable, Cloneable {
    */
   public static List<Room> getRoomsSubList(List<? extends Selectable> items) {
     return getSubList(items, Room.class);
+  }
+  
+  /**
+   * Returns a sub list of <code>items</code> that contains only labels.
+   * @since 5.0
+   */
+  public static List<Polyline> getPolylinesSubList(List<? extends Selectable> items) {
+    return getSubList(items, Polyline.class);
   }
   
   /**

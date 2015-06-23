@@ -91,6 +91,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.NotEnoughSpaceRecorderException;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
@@ -343,6 +344,7 @@ public class HomeController implements Controller {
     boolean viewableLevel = selectedLevel == null || selectedLevel.isViewable();
     homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, viewableLevel);
     homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, viewableLevel);
+    homeView.setEnabled(HomeView.ActionType.CREATE_POLYLINES, viewableLevel);
     homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, viewableLevel);
     homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, viewableLevel);
   }
@@ -731,6 +733,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
+    boolean homeSelectionContainsPolylines = false;
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOnlyOneRoom = false;
     boolean homeSelectionContainsOnlyOneRoomWithFourPointsOrMore = false;
@@ -797,12 +800,14 @@ public class HomeController implements Controller {
       homeSelectionContainsOnlyOneRoomWithFourPointsOrMore = homeSelectionContainsOnlyOneRoom 
           && selectedRooms.get(0).getPointCount() >= 4;
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
+      homeSelectionContainsPolylines = !Home.getPolylinesSubList(selectedItems).isEmpty();
       homeSelectionContainsLabels = !Home.getLabelsSubList(selectedItems).isEmpty();
       homeSelectionContainsCompass = selectedItems.contains(this.home.getCompass());
       homeSelectionContainsOneCopiableItemOrMore = 
           homeSelectionContainsFurniture || homeSelectionContainsWalls 
           || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
-          || homeSelectionContainsLabels || homeSelectionContainsCompass; 
+          || homeSelectionContainsPolylines || homeSelectionContainsLabels 
+          || homeSelectionContainsCompass; 
       homeSelectionContainsItemsWithText = 
           homeSelectionContainsFurniture || homeSelectionContainsRooms 
           || homeSelectionContainsDimensionLines || homeSelectionContainsLabels;
@@ -868,6 +873,8 @@ public class HomeController implements Controller {
         homeSelectionContainsOneWall);
     view.setEnabled(HomeView.ActionType.MODIFY_ROOM,
         homeSelectionContainsRooms);
+    view.setEnabled(HomeView.ActionType.MODIFY_POLYLINE,
+        homeSelectionContainsPolylines);
     view.setEnabled(HomeView.ActionType.MODIFY_LABEL,
         homeSelectionContainsLabels);
     view.setEnabled(HomeView.ActionType.TOGGLE_BOLD_STYLE, 
@@ -996,6 +1003,7 @@ public class HomeController implements Controller {
           if (item instanceof HomePieceOfFurniture && clipboardItem instanceof HomePieceOfFurniture
               || item instanceof Wall && clipboardItem instanceof Wall
               || item instanceof Room && clipboardItem instanceof Room
+              || item instanceof Polyline && clipboardItem instanceof Polyline
               || item instanceof Label && clipboardItem instanceof Label) {
             pasteStyleEnabled = true;
             break;
@@ -1082,6 +1090,7 @@ public class HomeController implements Controller {
     this.home.addFurnitureListener((CollectionListener<HomePieceOfFurniture>)homeItemsListener);
     this.home.addWallsListener((CollectionListener<Wall>)homeItemsListener);
     this.home.addRoomsListener((CollectionListener<Room>)homeItemsListener);
+    this.home.addPolylinesListener((CollectionListener<Polyline>)homeItemsListener);
     this.home.addDimensionLinesListener((CollectionListener<DimensionLine>)homeItemsListener);
     this.home.addLabelsListener((CollectionListener<Label>)homeItemsListener);
     this.home.getCompass().addPropertyChangeListener(new PropertyChangeListener() {
@@ -1496,7 +1505,7 @@ public class HomeController implements Controller {
             && !(items.get(0) instanceof Compass))) {
       // Always use selection mode after a drop or a paste operation
       getPlanController().setMode(PlanController.Mode.SELECTION);
-      // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home
+      // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
@@ -1596,7 +1605,7 @@ public class HomeController implements Controller {
    * @since 5.0
    */
   public void pasteToGroup() {
-    // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home
+    // Start a compound edit that adds furniture
     UndoableEditSupport undoSupport = getUndoableEditSupport();
     undoSupport.beginUpdate();
     List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(getView().getClipboardItems());
@@ -1616,6 +1625,7 @@ public class HomeController implements Controller {
   
   /**
    * Paste the style of the item in clipboard on selected items compatible with it.
+   * @since 5.0
    */
   public void pasteStyle() {
     // Start a compound edit that modifies items with their controller
@@ -1702,6 +1712,18 @@ public class HomeController implements Controller {
       }
       roomController.setCeilingShininess(clipboardRoom.getCeilingShininess());
       roomController.modifyRooms();
+    } else if (clipboardItem instanceof Polyline) {
+      Polyline clipboardPolyline = (Polyline)clipboardItem;
+      PolylineController polylineController = new PolylineController(
+          this.home, this.preferences, this.viewFactory, this.contentManager, undoSupport);
+      polylineController.setThickness(clipboardPolyline.getThickness());
+      polylineController.setJoinStyle(clipboardPolyline.getJoinStyle());
+      polylineController.setCapStyle(clipboardPolyline.getCapStyle());
+      polylineController.setStartArrowStyle(clipboardPolyline.getStartArrowStyle());
+      polylineController.setEndArrowStyle(clipboardPolyline.getEndArrowStyle());
+      polylineController.setDashStyle(clipboardPolyline.getDashStyle());
+      polylineController.setColor(clipboardPolyline.getColor());
+      polylineController.modifyPolylines();
     } else if (clipboardItem instanceof Label) {
       Label clipboardLabel = (Label)clipboardItem;
       LabelController labelController = new LabelController(this.home, this.preferences, this.viewFactory, undoSupport);
@@ -2603,6 +2625,8 @@ public class HomeController implements Controller {
         actionKey = HomeView.ActionType.CREATE_WALLS.name();
       } else if (mode == PlanController.Mode.ROOM_CREATION) {
         actionKey = HomeView.ActionType.CREATE_ROOMS.name();
+      } else if (mode == PlanController.Mode.POLYLINE_CREATION) {
+        actionKey = HomeView.ActionType.CREATE_POLYLINES.name();
       } else if (mode == PlanController.Mode.DIMENSION_LINE_CREATION) {
         actionKey = HomeView.ActionType.CREATE_DIMENSION_LINES.name();
       } else if (mode == PlanController.Mode.LABEL_CREATION) {

@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -35,6 +36,7 @@ import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -98,6 +100,7 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -953,5 +956,61 @@ public class SwingTools {
         in.close();
       }
     }
+  }
+  
+  /**
+   * Returns the line stroke matching the given line styles.
+   */
+  public static Stroke getStroke(float thickness, 
+                                 Polyline.CapStyle capStyle,
+                                 Polyline.JoinStyle joinStyle, 
+                                 Polyline.DashStyle dashStyle) {
+    int strokeCapStyle;
+    switch (capStyle) {
+      case ROUND :
+        strokeCapStyle = BasicStroke.CAP_ROUND;
+        break;
+      case SQUARE :
+        strokeCapStyle = BasicStroke.CAP_SQUARE;
+        break;
+      default:
+        strokeCapStyle = BasicStroke.CAP_BUTT;
+        break;
+    }
+    
+    int strokeJoinStyle;
+    switch (joinStyle) {
+      case ROUND :
+      case CURVED :
+        strokeJoinStyle = BasicStroke.JOIN_ROUND;
+        break;
+      case BEVEL :
+        strokeJoinStyle = BasicStroke.JOIN_BEVEL;
+        break;
+      default:
+        strokeJoinStyle = BasicStroke.JOIN_MITER;
+        break;
+    }
+    
+    float [] strokeDashes;
+    switch (dashStyle) {
+      case DOT :
+        strokeDashes = new float [] {thickness, thickness}; 
+        break;
+      case DASH :
+        strokeDashes = new float [] {thickness * 4, thickness * 2}; 
+        break;
+      case DASH_DOT :
+        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2};
+        break;
+      case DASH_DOT_DOT :
+        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2, thickness * 2, thickness * 2};
+        break;
+      default :
+        strokeDashes = null;
+        break;
+    }
+    
+    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, 0);
   }
 }

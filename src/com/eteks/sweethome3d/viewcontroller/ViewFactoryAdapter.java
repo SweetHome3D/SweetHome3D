@@ -151,6 +151,14 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
+  public DialogView createPolylineView(UserPreferences preferences,
+                                       PolylineController polylineController) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @throws UnsupportedOperationException
+   */
   public DialogView createCompassView(UserPreferences preferences, CompassController compassController) {
     throw new UnsupportedOperationException();
   }
