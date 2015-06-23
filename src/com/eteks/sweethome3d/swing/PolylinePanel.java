@@ -194,6 +194,8 @@ public class PolylinePanel extends JPanel implements DialogView {
           } else {
             arrowsStyleComboBox.setSelectedItem(null);
           }
+          arrowsStyleLabel.setEnabled(controller.isArrowsStyleEditable());
+          arrowsStyleComboBox.setEnabled(controller.isArrowsStyleEditable());
         }
       };
     controller.addPropertyChangeListener(PolylineController.Property.START_ARROW_STYLE, 

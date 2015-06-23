@@ -53,10 +53,12 @@ public class PolylineController implements Controller {
   private DialogView                  polylineView;
 
   private Float               thickness;
+  private boolean             capStyleEditable;
   private Polyline.CapStyle   capStyle;
   private Polyline.JoinStyle  joinStyle;
   private boolean             joinStyleEditable;
   private Polyline.DashStyle  dashStyle;
+  private boolean             arrowsStyleEditable;
   private Polyline.ArrowStyle startArrowStyle;
   private Polyline.ArrowStyle endArrowStyle;
   private Integer             color;
@@ -117,10 +119,14 @@ public class PolylineController implements Controller {
     List<Polyline> selectedPolylines = Home.getSubList(this.home.getSelectedItems(), Polyline.class);
     if (selectedPolylines.isEmpty()) {
       setThickness(null); // Nothing to edit
+      this.capStyleEditable = false;
       setCapStyle(null);
       this.joinStyleEditable = false;
       setJoinStyle(null);
       setDashStyle(null);
+      this.arrowsStyleEditable = false;
+      setStartArrowStyle(null);
+      setEndArrowStyle(null);
       setColor(null);
     } else {
       // Search the common properties among selected polylines
@@ -138,16 +144,28 @@ public class PolylineController implements Controller {
       }
       setThickness(thickness);
       
-      Polyline.CapStyle capStyle = firstPolyline.getCapStyle();
-      if (capStyle != null) {
-        for (int i = 1; i < selectedPolylines.size(); i++) {
-          if (capStyle != selectedPolylines.get(i).getCapStyle()) {
-            capStyle = null;
-            break;
-          }
+      this.capStyleEditable = false;
+      for (int i = 0; i < selectedPolylines.size(); i++) {
+        if (!selectedPolylines.get(i).isClosedPath()) {
+          this.capStyleEditable = true;
+          break;
         }
       }
-      setCapStyle(capStyle);
+
+      if (this.capStyleEditable) {
+        Polyline.CapStyle capStyle = firstPolyline.getCapStyle();
+        if (capStyle != null) {
+          for (int i = 1; i < selectedPolylines.size(); i++) {
+            if (capStyle != selectedPolylines.get(i).getCapStyle()) {
+              capStyle = null;
+              break;
+            }
+          }
+        }
+        setCapStyle(capStyle);
+      } else {
+        setCapStyle(null);
+      }      
       
       this.joinStyleEditable = false;
       for (int i = 0; i < selectedPolylines.size(); i++) {
@@ -183,27 +201,33 @@ public class PolylineController implements Controller {
       }
       setDashStyle(dashStyle);
 
-      Polyline.ArrowStyle startArrowStyle = firstPolyline.getStartArrowStyle();
-      if (startArrowStyle != null) {
-        for (int i = 1; i < selectedPolylines.size(); i++) {
-          if (startArrowStyle != selectedPolylines.get(i).getStartArrowStyle()) {
-            startArrowStyle = null;
-            break;
+      this.arrowsStyleEditable = this.capStyleEditable;
+      if (this.arrowsStyleEditable) {
+        Polyline.ArrowStyle startArrowStyle = firstPolyline.getStartArrowStyle();
+        if (startArrowStyle != null) {
+          for (int i = 1; i < selectedPolylines.size(); i++) {
+            if (startArrowStyle != selectedPolylines.get(i).getStartArrowStyle()) {
+              startArrowStyle = null;
+              break;
+            }
           }
         }
-      }
-      setStartArrowStyle(startArrowStyle);
-
-      Polyline.ArrowStyle endArrowStyle = firstPolyline.getEndArrowStyle();
-      if (endArrowStyle != null) {
-        for (int i = 1; i < selectedPolylines.size(); i++) {
-          if (endArrowStyle != selectedPolylines.get(i).getEndArrowStyle()) {
-            endArrowStyle = null;
-            break;
+        setStartArrowStyle(startArrowStyle);
+  
+        Polyline.ArrowStyle endArrowStyle = firstPolyline.getEndArrowStyle();
+        if (endArrowStyle != null) {
+          for (int i = 1; i < selectedPolylines.size(); i++) {
+            if (endArrowStyle != selectedPolylines.get(i).getEndArrowStyle()) {
+              endArrowStyle = null;
+              break;
+            }
           }
         }
+        setEndArrowStyle(endArrowStyle);
+      } else {
+        setStartArrowStyle(null);
+        setEndArrowStyle(null);
       }
-      setEndArrowStyle(endArrowStyle);
 
       // Search the common color among polylines
       Integer color = firstPolyline.getColor();
@@ -253,6 +277,13 @@ public class PolylineController implements Controller {
    */
   public Polyline.CapStyle getCapStyle() {
     return this.capStyle;
+  }
+  
+  /**
+   * Returns <code>true</code> if cap style is editable.
+   */
+  public boolean isCapStyleEditable() {
+    return this.capStyleEditable;
   }
   
   /**
@@ -332,6 +363,13 @@ public class PolylineController implements Controller {
    */
   public Polyline.ArrowStyle getEndArrowStyle() {
     return this.endArrowStyle;
+  }
+  
+  /**
+   * Returns <code>true</code> if arrows style is editable.
+   */
+  public boolean isArrowsStyleEditable() {
+    return this.arrowsStyleEditable;
   }
   
   /**
