@@ -2305,7 +2305,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             List<Room> otherLevelsRooms = new ArrayList<Room>();
             for (Room room : this.home.getRooms()) {
               for (Level otherLevel : otherLevels) {
-                if (room.isAtLevel(otherLevel)
+                if (room.getLevel() == otherLevel
                     && (level0 && room.isFloorVisible()
                         || !level0 && room.isCeilingVisible())) {
                   otherLevelsRooms.add(room);
@@ -2323,13 +2323,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
     
         if (this.otherLevelsWallsCache == null) {
+          System.out.println(otherLevels.size());
           if (!otherLevels.isEmpty()) {
             // Search viewable walls in other levels
             List<Wall> otherLevelswalls = new ArrayList<Wall>();
             for (Wall wall : this.home.getWalls()) {
               if (!isViewableAtSelectedLevel(wall)) {
                 for (Level otherLevel : otherLevels) {
-                  if (wall.isAtLevel(otherLevel)) {
+                  if (wall.getLevel() == otherLevel) {
                     otherLevelswalls.add(wall);
                   }
                 }
