@@ -2754,6 +2754,9 @@ public class PlanController extends FurnitureController implements Controller {
     for (Room room : this.home.getRooms()) {
       room.setLevel(level);
     }
+    for (Polyline polyline : this.home.getPolylines()) {
+      polyline.setLevel(level);
+    }
     for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
       dimensionLine.setLevel(level);
     }
