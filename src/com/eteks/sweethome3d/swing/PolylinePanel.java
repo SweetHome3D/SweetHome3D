@@ -425,8 +425,8 @@ public class PolylinePanel extends JPanel implements DialogView {
    * Displays this panel in a dialog box. 
    */
   public void displayView(View parentView) {
-    if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, this.dialogTitle, this.thicknessSpinner) == JOptionPane.OK_OPTION
+    if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle, 
+          ((JSpinner.DefaultEditor)this.thicknessSpinner.getEditor()).getTextField()) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyPolylines();
     }
