@@ -755,10 +755,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
      // Add listener to update plan when polylines change
      final PropertyChangeListener changeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-            revalidate();
-          }
-        };
+         public void propertyChange(PropertyChangeEvent ev) {
+           String propertyName = ev.getPropertyName();
+           if (Polyline.Property.COLOR.name().equals(propertyName)
+               || Polyline.Property.DASH_STYLE.name().equals(propertyName)) {
+             repaint();
+           } else {
+             revalidate();
+           }
+         }
+       };
      for (Polyline polyline : home.getPolylines()) {
        polyline.addPropertyChangeListener(changeListener);
      }
@@ -776,13 +782,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when dimension lines change
     final PropertyChangeListener dimensionLineChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          String propertyName = ev.getPropertyName();
-          if (Polyline.Property.COLOR.name().equals(propertyName)
-              || Polyline.Property.DASH_STYLE.name().equals(propertyName)) {
-            repaint();
-          } else {
-            revalidate();
-          }
+          revalidate();
         }
       };
     for (DimensionLine dimensionLine : home.getDimensionLines()) {
