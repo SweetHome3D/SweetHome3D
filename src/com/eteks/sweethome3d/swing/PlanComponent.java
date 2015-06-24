@@ -2323,7 +2323,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
     
         if (this.otherLevelsWallsCache == null) {
-          System.out.println(otherLevels.size());
           if (!otherLevels.isEmpty()) {
             // Search viewable walls in other levels
             List<Wall> otherLevelswalls = new ArrayList<Wall>();
