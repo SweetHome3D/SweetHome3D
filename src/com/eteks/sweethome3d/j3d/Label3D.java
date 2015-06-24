@@ -121,14 +121,18 @@ public class Label3D extends Object3DBranch {
         int width;
         int height;
         float scale;
-        if (textBounds.getWidth() > textBounds.getHeight()) {
-          width = (int)Math.round(Math.max(254, Math.min(textBounds.getWidth(), 510)));
-          scale = (float)(width / textBounds.getWidth());
+        double textWidth = textBounds.getWidth();
+        if (style.isItalic()) {
+          textWidth += fontMetrics.getHeight() * 0.2;
+        }
+        if (textWidth > textBounds.getHeight()) {
+          width = (int)Math.round(Math.max(254, Math.min(textWidth, 510)));
+          scale = (float)(width / textWidth);
           height = (int)Math.round(scale * textBounds.getHeight());
         } else {
           height = (int)Math.round(Math.max(254, Math.min(textBounds.getHeight(), 510)));
           scale = (float)(height / textBounds.getHeight());
-          width = (int)Math.round(scale * textBounds.getWidth());
+          width = (int)Math.round(scale * textWidth);
         }
   
         // Draw text in an image
@@ -143,7 +147,7 @@ public class Label3D extends Object3DBranch {
         g2D.dispose();
 
         Transform3D scaleTransform = new Transform3D();
-        scaleTransform.setScale(new Vector3d(textBounds.getWidth(), 1, textBounds.getHeight()));
+        scaleTransform.setScale(new Vector3d(textWidth, 1, textBounds.getHeight()));
         // Move to the middle of base line
         this.baseLineTransform = new Transform3D();
         this.baseLineTransform.setTranslation(new Vector3d(0, 0, textBounds.getHeight() / 2 + textBounds.getY()));
