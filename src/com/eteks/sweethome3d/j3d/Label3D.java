@@ -88,7 +88,9 @@ public class Label3D extends Object3DBranch {
     Float pitch = label.getPitch();
     TextStyle style = label.getStyle();
     if (pitch != null
-        && style != null) {
+        && style != null
+        && (label.getLevel() == null
+            || label.getLevel().isViewableAndVisible())) {
       String text = label.getText();
       Integer color = label.getColor();
       if (!text.equals(this.text)
@@ -121,18 +123,21 @@ public class Label3D extends Object3DBranch {
         int width;
         int height;
         float scale;
-        double textWidth = textBounds.getWidth();
+        float textWidth = (float)textBounds.getWidth();
+        float textHeight = (float)textBounds.getHeight();
         if (style.isItalic()) {
-          textWidth += fontMetrics.getHeight() * 0.2;
+          textWidth += fontMetrics.getAscent() * 0.2;
         }
-        if (textWidth > textBounds.getHeight()) {
-          width = (int)Math.round(Math.max(254, Math.min(textWidth, 510)));
+        // Ensure that text image size is between 256x256 and 512x512 pixels
+        float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
+        if (textRatio > 1) {
+          width = (int)Math.ceil(Math.max(255 * textRatio, Math.min(textWidth, 511 * textRatio)));
           scale = (float)(width / textWidth);
-          height = (int)Math.round(scale * textBounds.getHeight());
+          height = (int)Math.ceil(scale * textHeight);
         } else {
-          height = (int)Math.round(Math.max(254, Math.min(textBounds.getHeight(), 510)));
-          scale = (float)(height / textBounds.getHeight());
-          width = (int)Math.round(scale * textWidth);
+          height = (int)Math.ceil(Math.max(255 * textRatio, Math.min(textHeight, 511 / textRatio)));
+          scale = (float)(height / textHeight);
+          width = (int)Math.ceil(scale * textWidth);
         }
   
         // Draw text in an image
@@ -147,10 +152,10 @@ public class Label3D extends Object3DBranch {
         g2D.dispose();
 
         Transform3D scaleTransform = new Transform3D();
-        scaleTransform.setScale(new Vector3d(textWidth, 1, textBounds.getHeight()));
+        scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
         // Move to the middle of base line
         this.baseLineTransform = new Transform3D();
-        this.baseLineTransform.setTranslation(new Vector3d(0, 0, textBounds.getHeight() / 2 + textBounds.getY()));
+        this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
         this.baseLineTransform.mul(scaleTransform);
         this.texture = new TextureLoader(textureImage).getTexture();
         this.text = text;
@@ -175,7 +180,7 @@ public class Label3D extends Object3DBranch {
         appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
         appearance.setTransparencyAttributes(DEFAULT_TRANSPARENCY_ATTRIBUTES);
         appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-            TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .501f), new Vector4f(0, 1, -1, .501f)));
+            TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
         appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 
         Box box = new Box(0.5f, 0f, 0.5f, appearance);
