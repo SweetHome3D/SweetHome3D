@@ -71,7 +71,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
     DATE("$date", "{3, date}"),
     TIME("$time", "{3, time}"),
     HOME_PRESENTATION_NAME("$name", "{4}"),
-    HOME_NAME("$file", "{5}");    
+    HOME_NAME("$file", "{5}"),
+    LEVEL_NAME("$level", "{6}");    
     
     private final String userCode;
     private final String formatCode;
@@ -263,10 +264,14 @@ public class HomePrintableComponent extends JComponent implements Printable {
         if (homeName == null) {
           homeName = "";
         }
+        String levelName = "";
+        if (this.home.getSelectedLevel() != null) {
+          levelName = this.home.getSelectedLevel().getName();
+        }
         String homePresentationName = this.controller.getContentManager().getPresentationName(
              homeName, ContentManager.ContentType.SWEET_HOME_3D);
         Object [] variableValues = new Object [] {
-            pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName};
+            pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName, levelName};
         
         // Create header text
         String headerFormat = homePrint.getHeaderFormat();      

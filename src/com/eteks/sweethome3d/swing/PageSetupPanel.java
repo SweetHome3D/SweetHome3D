@@ -188,6 +188,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.TIME));
     this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.HOME_PRESENTATION_NAME));
     this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.HOME_NAME));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.LEVEL_NAME));
     for (int i = 0, n = this.variableButtonsToolBar.getComponentCount(); i < n; i++) {        
       JComponent component = (JComponent)this.variableButtonsToolBar.getComponentAtIndex(i); 
       // Remove focusable property on buttons
