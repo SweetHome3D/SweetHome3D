@@ -139,12 +139,16 @@ class MacOSXConfiguration {
         
         if (modifiedHomesCount == 1) {
           // If only one home is modified, close it and exit if it was successfully closed
+          homeApplication.getHomeFrame(modifiedHome).toFront();
           homeApplication.getHomeFrameController(modifiedHome).getHomeController().close(
               new Runnable() {
                 public void run() {
-                  if (homeApplication.getHomes().isEmpty()) {
-                    System.exit(0);
+                  for (Home home : homeApplication.getHomes()) {
+                    if (home.isModified()) {
+                      return;
+                    }
                   }
+                  System.exit(0);
                 }
               });
         } else {
