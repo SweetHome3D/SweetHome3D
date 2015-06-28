@@ -163,6 +163,18 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
+   * Creates a home from an other one. All mutable data of the source <code>home</code>
+   * is cloned to this home and listeners support is reset.
+   * @since 5.0
+   */
+  protected Home(Home home) {
+    this.wallHeight = home.getWallHeight();
+    copyHomeData(home, this);
+    initListenersSupport(this);
+    addModelListeners();
+  }    
+
+  /**
    * Initializes new and transient home fields to their default values 
    * and reads home from <code>in</code> stream with default reading method.
    */
@@ -258,15 +270,7 @@ public class Home implements Serializable, Cloneable {
   private void init(boolean newHome) {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
-    this.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(this);
-    this.selectionListeners = new ArrayList<SelectionListener>();
-    this.levelsChangeSupport = new CollectionChangeSupport<Level>(this);
-    this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
-    this.roomsChangeSupport = new CollectionChangeSupport<Room>(this);
-    this.polylinesChangeSupport = new CollectionChangeSupport<Polyline>(this);
-    this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
-    this.labelsChangeSupport = new CollectionChangeSupport<Label>(this);
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    initListenersSupport(this);
 
     if (this.furnitureVisibleProperties == null) {
       // Set the furniture properties that were visible before version 0.19 
@@ -300,6 +304,18 @@ public class Home implements Serializable, Cloneable {
     this.visualProperties = new HashMap<String, Object>();
     
     this.version = CURRENT_VERSION;
+  }
+
+  private static void initListenersSupport(Home home) {
+    home.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(home);
+    home.selectionListeners = new ArrayList<SelectionListener>();
+    home.levelsChangeSupport = new CollectionChangeSupport<Level>(home);
+    home.wallsChangeSupport = new CollectionChangeSupport<Wall>(home);
+    home.roomsChangeSupport = new CollectionChangeSupport<Room>(home);
+    home.polylinesChangeSupport = new CollectionChangeSupport<Polyline>(home);
+    home.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(home);
+    home.labelsChangeSupport = new CollectionChangeSupport<Label>(home);
+    home.propertyChangeSupport = new PropertyChangeSupport(home);
   }
 
   /**
@@ -1488,110 +1504,8 @@ public class Home implements Serializable, Cloneable {
   public Home clone() {
     try {
       Home clone = (Home)super.clone();
-      // Deep clone selectable items
-      clone.selectedItems = new ArrayList<Selectable>(this.selectedItems.size());
-      clone.furniture = cloneSelectableItems(
-          this.furniture, this.selectedItems, clone.selectedItems);
-      for (int i = 0; i < this.furniture.size(); i++) {
-        HomePieceOfFurniture piece = this.furniture.get(i);
-        if (piece instanceof HomeDoorOrWindow
-            && ((HomeDoorOrWindow)piece).isBoundToWall()) {
-          ((HomeDoorOrWindow)clone.furniture.get(i)).setBoundToWall(true);
-        }
-      }
-      clone.rooms = cloneSelectableItems(this.rooms, this.selectedItems, clone.selectedItems);
-      clone.dimensionLines = cloneSelectableItems(
-          this.dimensionLines, this.selectedItems, clone.selectedItems);
-      clone.polylines = cloneSelectableItems(
-          this.polylines, this.selectedItems, clone.selectedItems);
-      clone.labels = cloneSelectableItems(this.labels, this.selectedItems, clone.selectedItems);
-      // Deep clone walls
-      clone.walls = Wall.clone(this.walls);
-      for (int i = 0; i < this.walls.size(); i++) {
-        Wall wall = this.walls.get(i);
-        if (this.selectedItems.contains(wall)) {
-          clone.selectedItems.add(clone.walls.get(i));
-        }
-      }
-      // Clone levels and set the level of cloned objects 
-      clone.levels = new ArrayList<Level>();
-      if (this.levels.size() > 0) {
-        for (Level level : this.levels) {
-          clone.levels.add(level.clone());
-        }
-        for (int i = 0; i < this.furniture.size(); i++) {
-          Level pieceLevel = this.furniture.get(i).getLevel();
-          if (pieceLevel != null) {
-            // As soon as there's more than one level, every object is supposed to have its level set
-            // but as level can still be null for a undetermined reason, prefer to keep level
-            // to null in the cloned object and having errors further than throwing exception here
-            clone.furniture.get(i).setLevel(clone.levels.get(this.levels.indexOf(pieceLevel)));
-          }
-        }
-        for (int i = 0; i < this.rooms.size(); i++) {
-          Level roomLevel = this.rooms.get(i).getLevel();
-          if (roomLevel != null) {
-            clone.rooms.get(i).setLevel(clone.levels.get(this.levels.indexOf(roomLevel)));
-          }
-        }
-        for (int i = 0; i < this.dimensionLines.size(); i++) {
-          Level dimensionLineLevel = this.dimensionLines.get(i).getLevel();
-          if (dimensionLineLevel != null) {
-            clone.dimensionLines.get(i).setLevel(clone.levels.get(this.levels.indexOf(dimensionLineLevel)));
-          }
-        }
-        for (int i = 0; i < this.polylines.size(); i++) {
-          Level polylineLevel = this.polylines.get(i).getLevel();
-          if (polylineLevel != null) {
-            clone.polylines.get(i).setLevel(clone.levels.get(this.levels.indexOf(polylineLevel)));
-          }
-        }
-        for (int i = 0; i < this.labels.size(); i++) {
-          Level labelLevel = this.labels.get(i).getLevel();
-          if (labelLevel != null) {
-            clone.labels.get(i).setLevel(clone.levels.get(this.levels.indexOf(labelLevel)));
-          }
-        }
-        for (int i = 0; i < this.walls.size(); i++) {
-          Level wallLevel = this.walls.get(i).getLevel();
-          if (wallLevel != null) {
-            clone.walls.get(i).setLevel(clone.levels.get(this.levels.indexOf(wallLevel)));
-          }
-        }
-        if (this.selectedLevel != null) {
-          clone.selectedLevel = clone.levels.get(this.levels.indexOf(this.selectedLevel));
-        }
-      }
-      // Clone cameras
-      clone.observerCamera = this.observerCamera.clone();
-      clone.topCamera = this.topCamera.clone();
-      if (this.camera == this.observerCamera) {
-        clone.camera = clone.observerCamera;
-        if (this.selectedItems.contains(this.observerCamera)) {
-          clone.selectedItems.add(clone.observerCamera);
-        }
-      } else {
-        clone.camera = clone.topCamera;
-      }
-      clone.storedCameras = new ArrayList<Camera>(this.storedCameras.size());
-      for (Camera camera : this.storedCameras) {
-        clone.storedCameras.add(camera.clone());
-      }
-      // Clone other mutable objects
-      clone.environment = this.environment.clone();
-      clone.compass = this.compass.clone();
-      clone.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
-          this.furnitureVisibleProperties);
-      clone.visualProperties = new HashMap<String, Object>(this.visualProperties);
-      // Create new listeners support
-      clone.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(clone);
-      clone.selectionListeners = new ArrayList<SelectionListener>();
-      clone.wallsChangeSupport = new CollectionChangeSupport<Wall>(clone);
-      clone.roomsChangeSupport = new CollectionChangeSupport<Room>(clone);
-      clone.polylinesChangeSupport = new CollectionChangeSupport<Polyline>(clone);
-      clone.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(clone);
-      clone.labelsChangeSupport = new CollectionChangeSupport<Label>(clone);
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      copyHomeData(this, clone);
+      initListenersSupport(clone);
       clone.addModelListeners();
       return clone;
     } catch (CloneNotSupportedException ex) {
@@ -1600,14 +1514,133 @@ public class Home implements Serializable, Cloneable {
   }
   
   /**
+   * Copies all data of a <code>source</code> home to a <code>destination</code> home.
+   */
+  private static void copyHomeData(Home source, Home destination) {
+    // Copy non mutable data
+    destination.allLevelsSelection = source.allLevelsSelection;
+    destination.name = source.name;
+    destination.modified = source.modified;
+    destination.recovered = source.recovered;
+    destination.repaired = source.repaired;
+    destination.backgroundImage = source.backgroundImage;
+    destination.print = source.print;
+    destination.furnitureDescendingSorted = source.furnitureDescendingSorted;
+    destination.version = source.version;
+    destination.basePlanLocked = source.basePlanLocked;
+    destination.skyColor = source.skyColor;
+    destination.groundColor = source.groundColor;
+    destination.lightColor = source.lightColor;
+    destination.wallsAlpha = source.wallsAlpha;
+    destination.furnitureSortedProperty = source.furnitureSortedProperty;
+    destination.furnitureVisibleProperties = source.furnitureVisibleProperties;
+    
+    // Deep copy selectable items
+    destination.selectedItems = new ArrayList<Selectable>(source.selectedItems.size());
+    destination.furniture = cloneSelectableItems(
+        source.furniture, source.selectedItems, destination.selectedItems);
+    for (int i = 0; i < source.furniture.size(); i++) {
+      HomePieceOfFurniture piece = source.furniture.get(i);
+      if (piece instanceof HomeDoorOrWindow
+          && ((HomeDoorOrWindow)piece).isBoundToWall()) {
+        ((HomeDoorOrWindow)destination.furniture.get(i)).setBoundToWall(true);
+      }
+    }
+    destination.rooms = cloneSelectableItems(source.rooms, source.selectedItems, destination.selectedItems);
+    destination.dimensionLines = cloneSelectableItems(
+        source.dimensionLines, source.selectedItems, destination.selectedItems);
+    destination.polylines = cloneSelectableItems(
+        source.polylines, source.selectedItems, destination.selectedItems);
+    destination.labels = cloneSelectableItems(source.labels, source.selectedItems, destination.selectedItems);
+    // Deep copy walls
+    destination.walls = Wall.clone(source.walls);
+    for (int i = 0; i < source.walls.size(); i++) {
+      Wall wall = source.walls.get(i);
+      if (source.selectedItems.contains(wall)) {
+        destination.selectedItems.add(destination.walls.get(i));
+      }
+    }
+    // Clone levels and set the level of cloned objects 
+    destination.levels = new ArrayList<Level>();
+    if (source.levels.size() > 0) {
+      for (Level level : source.levels) {
+        destination.levels.add(level.clone());
+      }
+      for (int i = 0; i < source.furniture.size(); i++) {
+        Level pieceLevel = source.furniture.get(i).getLevel();
+        if (pieceLevel != null) {
+          // As soon as there's more than one level, every object is supposed to have its level set
+          // but as level can still be null for a undetermined reason, prefer to keep level
+          // to null in the cloned object and having errors further than throwing exception here
+          destination.furniture.get(i).setLevel(destination.levels.get(source.levels.indexOf(pieceLevel)));
+        }
+      }
+      for (int i = 0; i < source.rooms.size(); i++) {
+        Level roomLevel = source.rooms.get(i).getLevel();
+        if (roomLevel != null) {
+          destination.rooms.get(i).setLevel(destination.levels.get(source.levels.indexOf(roomLevel)));
+        }
+      }
+      for (int i = 0; i < source.dimensionLines.size(); i++) {
+        Level dimensionLineLevel = source.dimensionLines.get(i).getLevel();
+        if (dimensionLineLevel != null) {
+          destination.dimensionLines.get(i).setLevel(destination.levels.get(source.levels.indexOf(dimensionLineLevel)));
+        }
+      }
+      for (int i = 0; i < source.polylines.size(); i++) {
+        Level polylineLevel = source.polylines.get(i).getLevel();
+        if (polylineLevel != null) {
+          destination.polylines.get(i).setLevel(destination.levels.get(source.levels.indexOf(polylineLevel)));
+        }
+      }
+      for (int i = 0; i < source.labels.size(); i++) {
+        Level labelLevel = source.labels.get(i).getLevel();
+        if (labelLevel != null) {
+          destination.labels.get(i).setLevel(destination.levels.get(source.levels.indexOf(labelLevel)));
+        }
+      }
+      for (int i = 0; i < source.walls.size(); i++) {
+        Level wallLevel = source.walls.get(i).getLevel();
+        if (wallLevel != null) {
+          destination.walls.get(i).setLevel(destination.levels.get(source.levels.indexOf(wallLevel)));
+        }
+      }
+      if (source.selectedLevel != null) {
+        destination.selectedLevel = destination.levels.get(source.levels.indexOf(source.selectedLevel));
+      }
+    }
+    // Copy cameras
+    destination.observerCamera = source.observerCamera.clone();
+    destination.topCamera = source.topCamera.clone();
+    if (source.camera == source.observerCamera) {
+      destination.camera = destination.observerCamera;
+      if (source.selectedItems.contains(source.observerCamera)) {
+        destination.selectedItems.add(destination.observerCamera);
+      }
+    } else {
+      destination.camera = destination.topCamera;
+    }
+    destination.storedCameras = new ArrayList<Camera>(source.storedCameras.size());
+    for (Camera camera : source.storedCameras) {
+      destination.storedCameras.add(camera.clone());
+    }
+    // Copy other mutable objects
+    destination.environment = source.environment.clone();
+    destination.compass = source.compass.clone();
+    destination.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
+        source.furnitureVisibleProperties);
+    destination.visualProperties = new HashMap<String, Object>(source.visualProperties);
+  }
+  
+  /**
    * Returns the list of cloned items in <code>source</code>.
    * If a cloned item is selected its clone will be selected too (ie added to 
    * <code>destinationSelectedItems</code>).
    */
   @SuppressWarnings("unchecked")
-  private <T extends Selectable> List<T> cloneSelectableItems(List<T> source,
-                                                              List<Selectable> sourceSelectedItems,
-                                                              List<Selectable> destinationSelectedItems) {
+  private static <T extends Selectable> List<T> cloneSelectableItems(List<T> source,
+                                                                     List<Selectable> sourceSelectedItems,
+                                                                     List<Selectable> destinationSelectedItems) {
     List<T> destination = new ArrayList<T>(source.size());
     for (T item : source) {
       T clone = (T)item.clone();
