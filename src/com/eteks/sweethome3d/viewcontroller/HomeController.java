@@ -1749,7 +1749,7 @@ public class HomeController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoPasteStyle");
+          return preferences.getLocalizedString(HomeController.class, "undoPasteStyleName");
         }      
       });
     // End compound edit
