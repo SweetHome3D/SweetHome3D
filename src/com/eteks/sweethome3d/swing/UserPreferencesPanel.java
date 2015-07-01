@@ -929,7 +929,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.topViewRadioButton, new GridBagConstraints(
           2, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.roomRenderingLabel != null) {
       // Twelfth row
@@ -941,7 +941,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
           2, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.newWallPatternLabel != null) {
       // Thirteenth row
