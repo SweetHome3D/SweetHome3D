@@ -64,6 +64,7 @@ import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PolylineController;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
 import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
@@ -372,6 +373,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new LevelController(home, preferences, viewFactory, undoableEditSupport).getView();
       new WallController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new RoomController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
+      new PolylineController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();
       new CompassController(home, preferences, viewFactory, undoableEditSupport).getView();
       new ObserverCameraController(home, preferences, viewFactory).getView();
