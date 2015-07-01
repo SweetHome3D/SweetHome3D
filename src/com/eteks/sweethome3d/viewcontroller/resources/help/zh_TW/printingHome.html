@@ -1,0 +1,101 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=big5">
+	<title>列印家居模型</title>
+	<link href="../helpLargerFont.css" rel="stylesheet" media="all">
+</head>
+
+<body  bgcolor="#ffffff">
+<div id="banner">
+	<div id="helpheader"><a class="bread" href="index.html">Sweet Home 3D 說明</a> &#8594; <a class="bread" href="tocCreating.html">
+		建立家居模型&#12289;繪製牆體&#12289;插入傢俱</a></div>
+</div>
+<div id="mainbox" align="left">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr valign="bottom" height="32">
+	<td width="3" height="32">&nbsp;</td>
+	<td width="32" height="32"><img src="../images/applicationIcon32.png" alt="Sweet Home 3D 圖示" height="32" width="32"></td>
+	<td width="8" height="32">&nbsp;&nbsp;</td>
+	<td valign="bottom" height="32"><font id="topic">列印家居模型</font></td>
+	</tr>
+	<tr height="10">
+	<td colspan="4" height="10">&nbsp;</td>
+	</tr>
+</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="3">
+  <tr>
+    <td><p>&#12288;&#12288;如果您要列印當前的家居模型，請在功能表上選擇<B>檔案</B>&#8594;<B>列印</B>&#12290;<br>&#12288;&#12288;選擇該功能表項目後螢幕上會出現您使用的作業系統預設的列印對話方塊，您可以在其中選擇印表機&#12289;列印的範圍&#12289;列印的品質，等等&#12290;</p>
+      <p>&#12288;&#12288;預設情況下，Sweet Home 3D 列印的內容為當前家居模型的傢俱清單&#12289;平面圖和當前顯示在 3D 視圖中的內容，並使用預設的紙張大小&#12289;頁邊距和方向&#12290;如果您想要更改這些參數，請使用<B>檔</B>&#8594;<B>頁面設置...</B> 功能表項目&#12290;</p>
+        <p align="center"><img src="images/pageSetup.png" alt="頁面設置"></p>
+      <p>&#12288;&#12288;在頁面設置視窗中，您可以按一下<B>頁面格式</B>按鈕修改頁面的大小和方向&#12290;您也可以設置是否列印家居模型的傢俱清單&#12289;平面圖和 3D 視圖中的內容&#12290;如果您不想使用軟體自動計算出的最適合紙張大小的比例進行平面圖的列印，請在&#8220;<B>固定比例</B>&#8221;中指定您想要的數值&#12290;<br>&#12288;&#12288;您還可以在這裡自訂出現在每一頁上的頁眉與頁腳&#12290;您既可以在<B>頁眉</B>和<B>頁腳</B>中輸入靜態文字，也可在其中使用變數&#12290;這些變數在列印的時候會被替換為對應的值&#12290;下面列出的是目前可用的 7 個變數（全部為半形字元）：</p>
+      <ul>
+        <li><B>$pageNumber</B>：頁碼</li>
+        <li><B>$pageCount</B>：總頁數</li>
+        <li><B>$planScale</B>：平面圖比例（自動計算和手動設置的比例均適用）</li>
+        <li><B>$date</B>：執行列印操作的日期</li>
+        <li><B>$time</B>：執行列印操作的時間</li>
+        <li><B>$name</B>：家居模型的檔案名</li>
+        <li><B>$file</B>：家居模型的路徑（包含檔案名）</li>
+        </ul>      
+      <p>&#12288;&#12288;為防止逐鍵輸入變數名的過程中發生錯誤，請使用<B>頁眉</B>和<B>頁腳</B>輸入框下麵的<B>變數按鈕</B>輸入變數&#12290;由於半形的&#8220;$&#8221;字元被保留作了變數名的識別字，故如果您想在列印時直接輸出一個&#8220;$&#8221;，請輸入&#8220;<B>$$</B>&#8221;（兩個半形&#8220;$&#8221;）&#12290;</p>      
+      <p>&#12288;&#12288;列印家居模型之前，您可以使用功能表上的<B>檔</B>&#8594;<B>預覽列印...</B> 在螢幕上預覽您的頁面設置&#12290;</p>
+        <p align="center"><img src="images/printPreview.png" alt="預覽列印"></p>
+      <p>&#12288;&#12288;您可以在&#8220;預覽列印&#8221;視窗中逐頁預覽家居模型列印的效果&#12290;如要切換預覽的頁面，請按一下頂部的箭頭或按鍵盤上的方向鍵&#12290;</p></td>
+  </tr>
+</table>
+<div id="taskbox">
+  <table width="100%" border="0" cellspacing="0" cellpadding="7" BGCOLOR="#eeeeee">
+    <tr valign="top" BGCOLOR="#eeeeee">
+      <td bgcolor="#eeeeee" width="98%">
+        <table border="0" cellspacing="0" cellpadding="4">
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>列印功能在 Linux 下可能會無法使用&#12290;如果出現這樣的情況，請使用<B>檔</B>&#8594;<B>列印到 PDF...</B> 功能表項目創建一個 PDF 檔，然後再用您查看 PDF 檔的工具列印該檔&#12290;</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>在某些系統組態下，3D 視圖的列印可能會無法使用&#12290;此時&#8220;頁面設置&#8221;中的&#8220;<B>列印 3D 視圖</B>&#8221;會被置為未選中的狀態，且被禁用&#12290;</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>家居模型的 3D 視圖使用固定的 150 dpi 解析度進行列印，在單一頁面上佔據除頁邊距外的空間&#12290;</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>除了使用頁眉或頁腳中的&#8220;比例&#8221;變數外，您還可以在平面圖中畫一條標準長度（如一米）的<a href="drawingDimensions.html">標註線</a>來標明平面圖的比例尺&#12290;</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>您選擇的頁面設置會隨家居模型檔一起<a href="savingHome.html">儲存</a>&#12290;</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>預覽列印視窗可以使用滑鼠拖曳放大&#12290;</p>
+            </td>
+          </tr>
+        </table>
+        </td>
+    </tr>
+  </table>
+</div>
+</div>
+</body>
+
+</html>
