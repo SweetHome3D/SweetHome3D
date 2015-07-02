@@ -65,7 +65,7 @@ public class UnfocusableToolBar extends JToolBar {
    * on toolbar orientation and whether a button is after or before a separator.
    */
   private void updateToolBarButtons() {
-    // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+    // Retrieve component orientation because Mac OS X 10.5 doesn't take it into account 
     ComponentOrientation orientation = getComponentOrientation();
     Component previousComponent = null;
     for (int i = 0, n = getComponentCount(); i < n; i++) {        
