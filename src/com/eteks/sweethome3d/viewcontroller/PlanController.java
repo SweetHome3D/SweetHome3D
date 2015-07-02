@@ -11061,16 +11061,17 @@ public class PlanController extends FurnitureController implements Controller {
    * Polyline drawing state. This state manages polyline creation at mouse press. 
    */
   private class PolylineDrawingState extends AbstractPolylineState {
-    private float                  xPreviousPoint;
-    private float                  yPreviousPoint;
-    private Polyline               newPolyline;
-    private float []               newPoint;
-    private List<Selectable>       oldSelection;
-    private boolean                oldBasePlanLocked;
-    private boolean                oldAllLevelsSelection;
-    private boolean                alignmentActivated;
-    private boolean                curvedPolyline;
-    private long                   lastPointCreationTime;
+    private float            xPreviousPoint;
+    private float            yPreviousPoint;
+    private Polyline         newPolyline;
+    private float []         newPoint;
+    private List<Selectable> oldSelection;
+    private boolean          oldBasePlanLocked;
+    private boolean          oldAllLevelsSelection;
+    private boolean          magnetismEnabled;
+    private boolean          alignmentActivated;
+    private boolean          curvedPolyline;
+    private long             lastPointCreationTime;
     
     @Override
     public Mode getMode() {
@@ -11109,6 +11110,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldAllLevelsSelection = home.isAllLevelsSelection();
       this.newPolyline = null;
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       this.xPreviousPoint = getXLastMousePress();
       this.yPreviousPoint = getYLastMousePress();
       setDuplicationActivated(wasDuplicationActivatedLastMousePress());
@@ -11121,7 +11123,8 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute the coordinates where current edit polyline point should be moved
       float xEnd = x;
       float yEnd = y;
-      if (this.alignmentActivated) {
+      if (this.alignmentActivated 
+          || this.magnetismEnabled) {
         PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
             this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getLengthUnit(), planView.getPixelLength());
         xEnd = pointWithAngleMagnetism.getX();
@@ -11352,6 +11355,16 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      if (this.newPolyline != null) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
+    }
+
+    @Override
     public void setAlignmentActivated(boolean alignmentActivated) {
       this.alignmentActivated = alignmentActivated;
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
@@ -11360,7 +11373,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void setDuplicationActivated(boolean duplicationActivated) {
       // Reuse duplication activation for curved polyline creation
-      this.               curvedPolyline = duplicationActivated;
+      this.curvedPolyline = duplicationActivated;
     }
     
     @Override
@@ -11393,6 +11406,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                oldY;
     private float                deltaXToResizePoint;
     private float                deltaYToResizePoint;
+    private boolean              magnetismEnabled;
     private boolean              alignmentActivated;
     
     @Override
@@ -11420,6 +11434,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       String toolTipFeedbackText = getToolTipFeedbackText(this.selectedPolyline, this.polylinePointIndex);
@@ -11436,7 +11451,8 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       float newX = x - this.deltaXToResizePoint;
       float newY = y - this.deltaYToResizePoint;
-      if (this.alignmentActivated) {
+      if (this.alignmentActivated 
+          || this.magnetismEnabled) {
         // Use magnetism if closest wall point is too far
         float [][] polylinePoints = this.selectedPolyline.getPoints();
         int previousPointIndex = this.polylinePointIndex == 0 
@@ -11465,6 +11481,14 @@ public class PlanController extends FurnitureController implements Controller {
     public void releaseMouse(float x, float y) {
       postPolylineResize(this.selectedPolyline, this.oldX, this.oldY, this.polylinePointIndex);
       setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
