@@ -3002,7 +3002,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Room selectedRoom = rooms.iterator().next();
       if (isViewableAtSelectedLevel(selectedRoom)) {
         g2D.setPaint(indicatorPaint);         
-        paintPointsResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale, true, 0, 0);
+        paintPointsResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale, true, 0, 0, true);
         paintRoomNameOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
         paintRoomAreaOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
       }
@@ -3017,7 +3017,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                            float planScale,
                                            boolean closedPath,
                                            float   angleAtStart,
-                                           float   angleAtEnd) {
+                                           float   angleAtEnd,
+                                           boolean orientateIndicatorOutsideShape) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
@@ -3037,7 +3038,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             : points [i + 1];
         double angle;
         if (closedPath || (i > 0 && i < points.length - 1)) {
-        // Compute the angle of the mean normalized normal at point i
+          // Compute the angle of the mean normalized normal at point i
           float distance1 = (float)Point2D.distance(
               previousPoint [0], previousPoint [1], point [0], point [1]);
           float xNormal1 = (point [1] - previousPoint [1]) / distance1;
@@ -3047,9 +3048,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float xNormal2 = (nextPoint [1] - point [1]) / distance2;
           float yNormal2 = (point [0] - nextPoint [0]) / distance2;
           angle = Math.atan2(yNormal1 + yNormal2, xNormal1 + xNormal2);         
-          // Ensure the indicator will be drawn outside of room 
-          if (item.containsPoint(point [0] + (float)Math.cos(angle), 
-                point [1] + (float)Math.sin(angle), 0.001f)) {
+          // Ensure the indicator will be drawn outside of shape 
+          if (orientateIndicatorOutsideShape 
+                && item.containsPoint(point [0] + (float)Math.cos(angle), 
+                      point [1] + (float)Math.sin(angle), 0.001f)
+              || !orientateIndicatorOutsideShape
+                  && (xNormal1 * yNormal2 - yNormal1 * xNormal2) < 0) {
             angle += Math.PI;
           }
         } else if (i == 0) {
@@ -3954,7 +3958,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               Polyline selectedPolyline = (Polyline)selectedItems.get(0);
               if (isViewableAtSelectedLevel(selectedPolyline)) {
                 g2D.setPaint(indicatorPaint);         
-                paintPointsResizeIndicators(g2D, selectedPolyline, indicatorPaint, planScale, selectedPolyline.isClosedPath(), angleAtStart, angleAtEnd);
+                paintPointsResizeIndicators(g2D, selectedPolyline, indicatorPaint, planScale, 
+                    selectedPolyline.isClosedPath(), angleAtStart, angleAtEnd, false);
               }
             }
           }
