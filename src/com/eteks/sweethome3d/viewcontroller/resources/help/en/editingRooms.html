@@ -86,9 +86,10 @@
           room should be displayed in the 3D view, and set their color, their 
           texture and their shininess.<br>
           When  the selected room touches or is very close to one or more walls, the room pane displays 
-          also a <i>Wall sides around room</i> section that will let you choose the color or the texture 
-          of the side of the walls lying along the room or in the room. If necessary, this section provides a 
-          <i>Recompute walls</i> option that if selected, will automatically split the walls spreading along the other nearby rooms.</p>
+          also <i>Wall sides around room</i> and <i>Wall sides baseboard</i> sections that will let you choose the color or the texture 
+          of the side of the walls lying along the room or in the room, as well as their baseboard when the <i>Add baseboard</i> option 
+          is selected. If necessary, select the <i>Recompute walls</i> option to automatically split the walls spreading along the other 
+          nearby rooms.</p>
         <table align="center"><tr>
           <td><img src="../images/notRecomputedWallsAroundRoom.png" border="1" ></td>
 		  <td>&nbsp;</td>
@@ -122,20 +123,29 @@
                 texts displaying the name and the area of the selected rooms.</td>
           </tr>
           <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-            <td>
-              <p>If you want to set different colors or textures on different parts of the floor of a same room,   <a href="drawingRooms.html">create</a> a
-                room for each part and change their color or texture.</td>
+            <td><p>&#149;</p></td>
+            <td><p>You may add a point to an existing room by placing the mouse cursor where the new point should be added, 
+            then choosing <i>Add point to room</i> in the contextual menu of the plan. Similarly, you can delete the point 
+            of a room under the mouse cursor by choosing <i>Delete point from room</i> in the contextual menu of the plan.</td>
           </tr>
           <tr valign="top">
             <td>
               <p>&#149;</p>
             </td>
             <td>
-              <p>The elevation of the floor of a room is always  equal to the elevation of the <a href="addingLevels.html">level</a> the room belongs to (i.e. 0 if no level was added to home). If the room isn't at the <b>last level</b>, the elevation of the ceiling will be equal to the elevation + the height of the level it belongs to. Otherwise, the height of the ceiling of a room is computed at each
-                point of the room, and the height at each of these points is equal to the height of the closest   point of a wall. This allows to create the ceiling of a garret when you set different heights at the
+              <p>If you want to set different colors or textures on different parts of the floor of a same room, 
+              <a href="drawingRooms.html">create</a> a room for each part and change their color or texture.</td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>The elevation of the floor of a room is always  equal to the elevation of the <a href="addingLevels.html">level</a> 
+              the room belongs to (i.e. 0 if no level was added to home). If the room isn't at the <b>last level</b>, the elevation 
+              of the ceiling will be equal to the elevation + the height of the level it belongs to. Otherwise, the height of the 
+              ceiling of a room is computed at each point of the room, and the height at each of these points is equal to the height 
+              of the closest point of a wall. This allows to create the ceiling of a garret when you set different heights at the
               start and end points of <a href="editingWalls.html">sloping walls</a>.</td>
           </tr>
           <tr valign="top">
@@ -154,8 +164,9 @@
             </td>
             <td>
               <p>If you want to
-                disable the activated magnetism  on wall intersection points and for the angles of the lines you draw,  disable the magnetism in the <a href="editingPreferences.html">preferences</a> pane or while  moving points, hold
-                down the <i>Alt</i> key under Windows, the <i>cmd</i> key under Mac OS X or the <i>Shift</i> +<i> Alt</i> keys under Linux.</p>
+                disable the activated magnetism  on wall intersection points and for the angles of the lines you draw,  disable the magnetism 
+                in the <a href="editingPreferences.html">preferences</a> pane or while  moving points, hold down the <i>Alt</i> key under Windows, 
+                the <i>cmd</i> key under Mac OS X or the <i>Shift</i> +<i> Alt</i> keys under Linux.</p>
             </td>
           </tr>
           <tr valign="top">
@@ -163,7 +174,7 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>If the objects selected in the plan contain walls,  rooms, furniture,  dimensions and texts, all these
+              <p>If the objects selected in the plan contain walls,  rooms, furniture,  dimensions, polylines and texts, all these
                 objects will be moved with a drag and drop or the keyboard arrows. If you keep the <i>Ctrl</i> key (or under Mac
                 OS X, the <i>alt</i> key) pressed while
               you drag and drop these objects, they will be duplicated.</td>
@@ -176,14 +187,6 @@
               <p>The unit displayed by default for the area depends on your country. You may switch
                 to Centimeter, Meter, Millimeter  or Inch in the <a href="editingPreferences.html">preferences</a> pane. If Inch is the chosen
             unit, the room areas will be displayed in square feet, otherwise they will be displayed in square meter.</td>
-          </tr>
-          <tr valign="top">
-            <td>
-              <p>&#149;</p>
-            </td>
-              <td> <p>Choose the items of the menu <i>Plan &gt; Modify text style</i> 
-                  to modify the size and the style of the font used 
-                  to draw the name and the area of a room. </td>
           </tr>
         </table>
       </td>
