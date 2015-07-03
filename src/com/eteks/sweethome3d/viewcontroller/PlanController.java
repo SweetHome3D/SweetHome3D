@@ -10978,18 +10978,18 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     protected String getToolTipFeedbackText(Polyline polyline, int pointIndex) {
-      if (pointIndex != 0 || polyline.isClosedPath()) {
-        float length = getPolylineSegmentLength(polyline, pointIndex);
-        int angle = getPolylineSegmentAngle(polyline, pointIndex);
-        return "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, 
-            preferences.getLengthUnit().getFormatWithUnit().format(length))
-            + "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
-      } else {
-        return null;
-      }
+      float length = getPolylineSegmentLength(polyline, pointIndex);
+      int angle = getPolylineSegmentAngle(polyline, pointIndex);
+      return "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, 
+          preferences.getLengthUnit().getFormatWithUnit().format(length))
+          + "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
     }
     
     protected float getPolylineSegmentLength(Polyline polyline, int pointIndex) {
+      if (pointIndex == 0 && !polyline.isClosedPath()) {        
+        // Return the length of the first segment for index 0 of a not closed path
+        pointIndex++;
+      }
       float [][] points = polyline.getPoints();
       int previousPointIndex = pointIndex == 0 
           ? points.length - 1
@@ -11002,6 +11002,10 @@ public class PlanController extends FurnitureController implements Controller {
      * Returns polyline segment angle at the given point index in degrees.
      */
     protected Integer getPolylineSegmentAngle(Polyline polyline, int pointIndex) {
+      if (pointIndex == 0 && !polyline.isClosedPath()) {
+        // Return the angle of the first segment for index 0 of a not closed path
+        pointIndex++;
+      }
       float [][] points = polyline.getPoints();
       int previousPointIndex = pointIndex == 0 
           ? points.length - 1
@@ -11453,10 +11457,11 @@ public class PlanController extends FurnitureController implements Controller {
       float newY = y - this.deltaYToResizePoint;
       if (this.alignmentActivated 
           || this.magnetismEnabled) {
-        // Use magnetism if closest wall point is too far
         float [][] polylinePoints = this.selectedPolyline.getPoints();
         int previousPointIndex = this.polylinePointIndex == 0 
-            ? polylinePoints.length - 1 
+            ? (this.selectedPolyline.isClosedPath()  
+                  ? polylinePoints.length - 1 
+                  : 1)
             : this.polylinePointIndex - 1;
         float xPreviousPoint = polylinePoints [previousPointIndex][0];
         float yPreviousPoint = polylinePoints [previousPointIndex][1];
@@ -11467,11 +11472,9 @@ public class PlanController extends FurnitureController implements Controller {
       } 
       this.selectedPolyline.setPoint(newX, newY, this.polylinePointIndex);
 
-      if (this.polylinePointIndex > 0 || this.selectedPolyline.isClosedPath()) {
-        planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedPolyline, this.polylinePointIndex), x, y);
-        if (this.selectedPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
-          showPolylineAngleFeedback(this.selectedPolyline, this.polylinePointIndex);
-        }
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedPolyline, this.polylinePointIndex), x, y);
+      if (this.selectedPolyline.getJoinStyle() != Polyline.JoinStyle.CURVED) {
+        showPolylineAngleFeedback(this.selectedPolyline, this.polylinePointIndex);
       }
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
