@@ -1212,10 +1212,10 @@ public class Wall3D extends Object3DBranch {
     Float wallHeight = ((Wall)getUserData()).getHeight();      
     float wallHeightAtStart;
     if (wallHeight != null) {
-      wallHeightAtStart = wallHeight + getWallElevation(true);
+      wallHeightAtStart = wallHeight + getWallElevation(false) + getFloorThicknessBottomWall();
     } else {
       // If wall height isn't set, use home wall height
-      wallHeightAtStart = this.home.getWallHeight() + getWallElevation(true);
+      wallHeightAtStart = this.home.getWallHeight() + getWallElevation(false) + getFloorThicknessBottomWall();
     }
     return wallHeightAtStart + getTopElevationShift();
   }
@@ -1238,7 +1238,7 @@ public class Wall3D extends Object3DBranch {
   private float getWallTopElevationAtEnd() {
     Wall wall = (Wall)getUserData();      
     if (wall.isTrapezoidal()) {
-      return wall.getHeightAtEnd() + getWallElevation(true) + getFloorThicknessBottomWall() + getTopElevationShift();
+      return wall.getHeightAtEnd() + getWallElevation(false) + getFloorThicknessBottomWall() + getTopElevationShift();
     } else {
       // If the wall isn't trapezoidal, use same height as at wall start
       return getWallTopElevationAtStart();
