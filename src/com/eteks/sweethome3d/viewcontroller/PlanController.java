@@ -10991,10 +10991,8 @@ public class PlanController extends FurnitureController implements Controller {
         pointIndex++;
       }
       float [][] points = polyline.getPoints();
-      int previousPointIndex = pointIndex == 0 
-          ? points.length - 1
-          : pointIndex - 1;
-      return (float)Point2D.distance(points [previousPointIndex][0], points [previousPointIndex][1], 
+      float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+      return (float)Point2D.distance(previousPoint [0], previousPoint [1], 
           points [pointIndex][0], points [pointIndex][1]);
     }
 
@@ -11007,26 +11005,23 @@ public class PlanController extends FurnitureController implements Controller {
         pointIndex++;
       }
       float [][] points = polyline.getPoints();
-      int previousPointIndex = pointIndex == 0 
-          ? points.length - 1
-          : pointIndex - 1;
-      int previousPreviousPointIndex = previousPointIndex == 0 
-          ? points.length - 1
-          : previousPointIndex - 1;
+      float [] point = points [pointIndex];
+      float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+      float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
       float segmentLength = (float)Point2D.distance(
-          points [previousPointIndex][0], points [previousPointIndex][1], 
+          previousPoint [0], previousPoint [1], 
           points [pointIndex][0], points [pointIndex][1]);
       float previousSegmentLength = (float)Point2D.distance(
-          points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1],
-          points [previousPointIndex][0], points [previousPointIndex][1]);
-      if (pointIndex > 2 
+          previousPreviousPoint [0], previousPreviousPoint [1],
+          previousPoint [0], previousPoint [1]);
+      if (previousPreviousPoint != point 
           && segmentLength != 0 && previousSegmentLength != 0) {
         // Compute the angle between the segment finishing at pointIndex 
         // and the previous segment
-        float xSegmentVector = (points [pointIndex][0] - points [previousPointIndex][0]) / segmentLength;
-        float ySegmentVector = (points [pointIndex][1] - points [previousPointIndex][1]) / segmentLength;
-        float xPreviousSegmentVector = (points [previousPointIndex][0] - points [previousPreviousPointIndex][0]) / previousSegmentLength;
-        float yPreviousSegmentVector = (points [previousPointIndex][1] - points [previousPreviousPointIndex][1]) / previousSegmentLength;
+        float xSegmentVector = (point [0] - previousPoint [0]) / segmentLength;
+        float ySegmentVector = (point [1] - previousPoint [1]) / segmentLength;
+        float xPreviousSegmentVector = (previousPoint [0] - previousPreviousPoint [0]) / previousSegmentLength;
+        float yPreviousSegmentVector = (previousPoint [1] - previousPreviousPoint [1]) / previousSegmentLength;
         int segmentAngle = (int)Math.round(180 - Math.toDegrees(Math.atan2(
             ySegmentVector * xPreviousSegmentVector - xSegmentVector * yPreviousSegmentVector,
             xSegmentVector * xPreviousSegmentVector + ySegmentVector * yPreviousSegmentVector)));
@@ -11039,8 +11034,8 @@ public class PlanController extends FurnitureController implements Controller {
         return 0;
       } else {
         return (int)Math.round(Math.toDegrees(Math.atan2(
-            points [pointIndex][1] - points [previousPointIndex][1], 
-            points [pointIndex][0] - points [previousPointIndex][0])));
+            previousPoint [1] - point [1], 
+            point [0] - previousPoint [0])));
       }
     }
 
@@ -11048,14 +11043,10 @@ public class PlanController extends FurnitureController implements Controller {
       float [][] points = polyline.getPoints();
       if (pointIndex >= 2
           || points.length > 2 && polyline.isClosedPath()) {
-        int previousPointIndex = pointIndex == 0 
-            ? points.length - 1
-            : pointIndex - 1;
-        int previousPreviousPointIndex = previousPointIndex == 0 
-            ? points.length - 1
-            : previousPointIndex - 1;
-        getView().setAngleFeedback(points [previousPointIndex][0], points [previousPointIndex][1], 
-            points [previousPreviousPointIndex][0], points [previousPreviousPointIndex][1], 
+        float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+        float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
+        getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
+            previousPreviousPoint [0], previousPreviousPoint [1], 
             points [pointIndex][0], points [pointIndex][1]);
       }
     }
