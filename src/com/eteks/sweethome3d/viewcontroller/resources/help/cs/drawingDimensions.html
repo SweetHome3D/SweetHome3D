@@ -1,7 +1,7 @@
 <html>
 <head>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8">
-	<title>Kreslení rozměrů</title>
+	<title>Kreslení kót</title>
 	<link href="../help.css" rel="stylesheet" media="all">
 </head>
 
@@ -17,7 +17,7 @@
 	<td width="3" height="32">&nbsp;</td>
 	<td width="32" height="32"><img src="../images/applicationIcon32.png" alt="Sweet Home 3D Icon" height="32" width="32"></td>
 	<td width="8" height="32">&nbsp;&nbsp;</td>
-	<td valign="bottom" height="32"><font id="topic">Kreslení rozměrů</font></td>
+	<td valign="bottom" height="32"><font id="topic">Kreslení kót</font></td>
 	</tr>
 	<tr height="10">
 	<td colspan="4" height="10">&nbsp;</td>
@@ -25,32 +25,33 @@
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
-	<td><p>Rozměry v projektu vytvoříte buď prostřednictvím nabídky <i>Plán &gt; Vytvořit rozměry</i> nebo vybráním nástroje <i>Nakreslit rozměry v plánu</i>.
-	</p>
-	  <blockquote>
-	    <p><img src="../images/createDimensionsTool.png" alt="Dimension Creation mode tool" width="24" height="24" align="absmiddle">&nbsp;Nástroj <i>Nakreslit rozměry v plánu</i></p>
-	    </blockquote>	  
-	  <p class="plist">Každý rozměr vytvoříte třemi kliknutími v plánu projektu&nbsp;:</p>
-	  <ol>
-	    <li>prvním kliknutím vytvoříte počáteční bod nového rozměru, </li>
-	    <li>druhým kliknutím vytvoříte konečný bod rozměru, </li>
-	    <li>třetí kliknutí vám pomůže nastavit velikost vynášecí čar vykreslených na každém konci rozměru. V případě, že jste mezi druhým a třetím kliknutím nehýbali myší, nový rozměr nebude mít žádné vynášecí čáry.</li>
-	    </ol>	  
-	  <p>Tvorbu rozměru můžete kdykoli zrušit stisknutím klávesy Escape.</p>
-      <p>Během druhého kroku každý pohyb myši aktualizuje v plánu velikost nového rozměru a délku, kterou zobrazuje.</p>
+	<td><p>Kóty v projektu vytvoříte buď prostřednictvím nabídky <i>Plán &gt; Vytvořit kóty</i> nebo vybráním nástroje <i>Vytvořit kóty</i> v plánu.</p>
+        <blockquote> 
+          <p><img src="../images/createDimensionsTool.png" alt="Dimension Creation mode tool" width="24" height="24" align="absmiddle">&nbsp;Nástroj <i>Vytvořit kóty</i></p>
+        </blockquote> <p class="plist">Novou kótu vytvoříte v plánu projektu tímto způsobem:</p>
+        <ul>
+          <li>Klikněte na počáteční bod nové kóty, klikněte na její konečný bod, posunutím myši nastavte délku 
+          	vynášecích čar a tedy vzdálenost kóty od označených bodů a třetím kliknutím kótu finálně umístěte. </li>
+          <li> Přesuňte kurzor myši na okraj umístěného nábytku, hranu zdi nebo místnosti, které chcete okótovat nebo změřit, 
+          dvojklikem potvrďte dočasnou navrhovanou hodnotu kóty, posunutím myši nastavte délku vynášecích čar a tedy vzdálenost kóty 
+          od měřených objektů a třetím kliknutím kótu finálně vytvořte.</li>
+        </ul>
+        <p>V obou případech, pokud jste mezi druhým a třetím kliknutím nehýbali myší, nová kóta nebude mít žádné vynášecí čáry. 
+        Tvorbu kóty můžete kdykoli zrušit stisknutím klávesy <i>Escape</i>. Než zvolíte koncový bod, každý pohyb myši aktualizuje a zobrazuje 
+        v plánu hodnotu velikosti nové kóty.</p>
 	    <table border="0" align="center" cellpadding="0" cellspacing="5">
           <tr>
             <td><img src="../images/drawingDimensions.png" alt="Drawing dimensions" width="247" height="175"></td>
             <td><img src="../images/drawingExtensionLines.png" alt="Drawing dimensions with extension lines" width="247" height="175"></td>
           </tr>
           <tr align="center">
-            <td>Vytvoření rozměrů<br>
-                <b>bez</b> vynášecí čar</td>
-            <td>Vytvoření rozměru<br>
-                <b>s</b> vynášecí čarami</td>
+            <td>Vytvoření kóty<br>
+                <b>bez</b> vynášecích čar</td>
+            <td>Vytvoření kóty<br>
+                <b>s</b> vynášecími čarami</td>
           </tr>
         </table>
-	    <p>Vytváření rozměrů ukončíte prostřednictvím nabídky <i>Plán &gt; Vybrat</i> nebo volbou nástroje <i>Vybrat</i>.</p>
+	    <p>Vytváření kót ukončíte prostřednictvím nabídky <i>Plán &gt; Vybrat</i> nebo volbou nástroje <i>Vybrat</i>.</p>
 	  <blockquote>
 	    <p><img src="../images/selectTool.png" alt="Select tool" width="24" height="24" align="absmiddle">&nbsp;Nástroj <i>Vybrat</i></p>
       </blockquote></td>
@@ -66,15 +67,19 @@
           <p>&#149;</p>
         </td>
         <td>
-          <p>K co nejpřesnějšímu vytvoření rozměrů využijte zarovnávací čáry vykreslované od aktuální pozice myši k nejbližší zdi nebo rohu kusu nábytku.</p>
+          <p>K přesnému umístění kót použijte zarovnávací čáry, které vychází z aktuální pozice kurzoru do nejbližšího rohu zdi, místnosti nebo umístěného nábytku. 
+          Pokud stisknete <i>Enter</i> během kreslení kóty, zobrazí se editovatelná nápověda, kde můžete zadat délku a úhel kóty z klávesnice (pokud jste ještě kótu nezačali 
+          vytvářet, po Enteru nápověda zobrazí souřadnice počátečního bodu nové kóty), poté její odsazení, neboli délku vynášecích čar. Použijte šipku nahoru, šipku dolů 
+          nebo klávesu tabelátoru ke změně dalších hodnot a stiskněte <i>Enter</i> pro potvrzení hodnot, které jste vložili. Pokud chcete pro zadávání kóty znovu použít myš, 
+          prostě s ní jen pohněte v okně plánu.</p>
         </td>
 	    </tr>
-<tr valign="top">
+	    <tr valign="top">
 	    <td>
 	      <p>&#149;</p>
 	      </td>
 	    <td>
-	      <p>Umístění a směr vzdálenosti vykreslené na rozměrové čáře závisí na relativním umístění počátku a konce rozměru a na umístění jeho dodatečných čar.</p>
+	      <p>Umístění a směr hodnoty kóty vykreslené na kótovací čáře závisí na umístění počátku a konce kóty a na umístění jejích vynášecích čar.</p>
 	      </td>
 	    </tr>
 	  <tr valign="top">
@@ -82,7 +87,8 @@
 	      <p>&#149;</p>
 	      </td>
 	    <td>
-	      <p>Pro snadnost tvoření rovnoběžných rozměrů je úhel rozměrů standardně násobkem 15&deg;. Toto přichycování můžete zrušit držením stisknuté klávesy <i>Alt</i> v průběhu kreslení, případně zrušením přichycování v okně <a href="editingPreferences.html">Nastavení</a>.</p>
+	      <p>Pro snadnou tvorbu rovnoběžných kót jsou úhly kót standardně nabízeny jako násobky 15°. Toto tzv. přichytávání můžete dočasně zrušit v průběhu kreslení 
+	      držením stisknuté klávesy <i>Alt</i> ve Windows, klávesy <i>cmd</i> v Mac OS X nebo <i>Shift</i> + <i>Alt</i> v Linuxu, případně zrušením přichytávání v panelu <a href="editingPreferences.html">Nastavení</a>.</p>
 	      </td>
 	    </tr>
 	  <tr valign="top">
@@ -90,7 +96,7 @@
           <p>&#149;</p>
         </td>
         <td>
-          <p>Umístění a velikost již vytvořených rozměrů můžete kdykoli <a href="editingDimensions.html">změnit</a> pomocí myši.</p>
+          <p>Umístění a velikost již vytvořených kót můžete kdykoli <a href="editingDimensions.html">změnit</a> pomocí myši.</p>
         </td>
 	    </tr>
 	  <tr valign="top">
@@ -98,7 +104,7 @@
           <p>&#149;</p>
         </td>
         <td>
-          <p>Vzdálenost zobrazená u rozměrů je vyjádřena standardně v měrné jednotce vaší země. Měrné jednotky lze měnit mezi centimetry a palci v okně <a href="editingPreferences.html">Nastavení</a>.          
+          <p>Hodnoty kót jsou standardně uváděny v měrné jednotce vaší země. Měrné jednotky lze měnit mezi milimetry, centimetry, metry a palci v panelu <a href="editingPreferences.html">Nastavení</a>.          
         </td>
 	    </tr>
 	  <tr valign="top">
@@ -106,13 +112,16 @@
           <p>&#149;</p>
         </td>
         <td>
-          <p>Výška písma použitého pro kreslení rozměrů může být zvětšena nebo zmenšena změnou měřítka plánu prostřednictvím nabídek
-			<i>Plán &gt; Zvětšit</i> nebo <i>Plán &gt; Zmenšit</i>.</td>
+          <p>Pro úpravu velikosti a stylu písma vybrané kóty použijte menu <i>Plán &gt; Upravit styl textu</i> nebo přímo nástroje <i>Zvětšit písmo</i>, <i>Zmenšit písmo</i>, <i>Tučné</i> a <i>Kurzíva</i>.</td>
 	    </tr>
-	  <tr valign="top"><td width="16"><p>&#149;</p></td><td>
-	<p>Když je vybrán nástroj <i>Vytvořit rozměry</i>, mnoho nástrojů a nabídek je zakázáno. Pokud tyto nástroje potřebujete, zvolte zpět nástroj <i>Vybrat</i>.</p>
-	</td>
-	</tr></table>
+	    	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>Když je vybrán nástroj <i>Vytvořit kóty</i>, mnoho nástrojů a nabídek je nedostupných. Pokud tyto nástroje potřebujete, zvolte znovu nástroj <i>Vybrat</i>.</td>
+	    </tr>
+	 </table>
 	 </td>
 	</tr>
 </table></div>
