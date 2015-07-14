@@ -1139,12 +1139,15 @@ public class Home implements Serializable, Cloneable {
   /**
    * Adds the viewable items to the set of selectable viewable items.
    */
-  private <T extends Elevatable & Selectable> void addViewableItems(Collection<T> items, 
-                                                                    List<Selectable> selectableViewableItems) {
-    for (T label : items) {
-      if (label.getLevel() == null
-          || label.getLevel().isViewable()) {
-        selectableViewableItems.add(label);
+  private <T extends Selectable> void addViewableItems(Collection<T> items, 
+                                                       List<Selectable> selectableViewableItems) {
+    for (T item : items) {
+      if (item instanceof Elevatable) {
+        Elevatable elevatableItem = (Elevatable)item;
+        if (elevatableItem.getLevel() == null
+            || elevatableItem.getLevel().isViewable()) {
+          selectableViewableItems.add(item);
+        }
       }
     }
   }
