@@ -174,14 +174,15 @@ public class BaseboardChoiceComponent extends JPanel implements View {
     // Create baseboard height label and its spinner bound to HEIGHT controller property
     String unitName = preferences.getLengthUnit().getName();
     float minimumLength = preferences.getLengthUnit().getMinimumLength();
-    float maximumLength = preferences.getLengthUnit().getMaximumLength();
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         BaseboardChoiceComponent.class, "heightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength / 10);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, 
+            controller.getMaxHeight() == null
+                ? preferences.getLengthUnit().getMaximumLength() / 10
+                : controller.getMaxHeight());
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     heightSpinnerModel.setNullable(controller.getHeight() == null);
-    heightSpinnerModel.setLength(controller.getHeight());
     final PropertyChangeListener heightChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           heightSpinnerModel.setNullable(ev.getNewValue() == null);
@@ -190,6 +191,11 @@ public class BaseboardChoiceComponent extends JPanel implements View {
       };
     controller.addPropertyChangeListener(BaseboardChoiceController.Property.HEIGHT, 
         heightChangeListener);
+    if (controller.getHeight() != null && controller.getMaxHeight() != null) {
+      heightSpinnerModel.setLength(Math.min(controller.getHeight(), controller.getMaxHeight()));
+    } else {
+      heightSpinnerModel.setLength(controller.getHeight());
+    }
     heightSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(BaseboardChoiceController.Property.HEIGHT, 
@@ -199,6 +205,18 @@ public class BaseboardChoiceComponent extends JPanel implements View {
               heightChangeListener);
         }
       });
+    controller.addPropertyChangeListener(BaseboardChoiceController.Property.MAX_HEIGHT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (ev.getOldValue() == null
+                || controller.getMaxHeight() != null
+                   && ((Number)heightSpinnerModel.getMaximum()).floatValue() < controller.getMaxHeight()) {
+              // Change max only if larger value to avoid taking into account intermediate max values  
+              // that may be fired by auto commit spinners while entering a value
+              heightSpinnerModel.setMaximum(controller.getMaxHeight());
+            }
+          }
+        });
     
     // Create baseboard thickness label and its spinner bound to THICKNESS controller property
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 

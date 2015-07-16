@@ -35,7 +35,7 @@ public class BaseboardChoiceController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {VISIBLE, COLOR, PAINT, HEIGHT, THICKNESS}
+  public enum Property {VISIBLE, COLOR, PAINT, HEIGHT, MAX_HEIGHT, THICKNESS}
   
   /**
    * The possible values for {@linkplain #getPaint() paint type}.
@@ -52,6 +52,7 @@ public class BaseboardChoiceController implements Controller {
   private Boolean   visible;
   private Float     thickness;
   private Float     height;
+  private Float     maxHeight;
   private Integer   color;
   private BaseboardPaint paint;
 
@@ -166,6 +167,26 @@ public class BaseboardChoiceController implements Controller {
    */
   public Float getHeight() {
     return this.height;
+  }
+  
+  /**
+   * Sets the maximum height allowed for the edited baseboard.
+   */
+  public void setMaxHeight(Float maxHeight) {
+    if (this.maxHeight == null
+        || maxHeight != this.maxHeight) {
+      Float oldMaxHeight = this.maxHeight;
+      this.maxHeight = maxHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.MAX_HEIGHT.name(), 
+          oldMaxHeight, maxHeight);
+    }
+  }
+  
+  /**
+   * Returns the maximum height allowed for the edited baseboard.
+   */
+  public Float getMaxHeight() {
+    return this.maxHeight;
   }
   
   /**

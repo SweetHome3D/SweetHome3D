@@ -1109,6 +1109,26 @@ public class WallController implements Controller {
       WallShape oldShape = this.shape;
       this.shape = shape;
       this.propertyChangeSupport.firePropertyChange(Property.SHAPE.name(), oldShape, shape);
+      
+      if (shape == WallShape.RECTANGULAR_WALL) {
+        if (this.rectangularWallHeight != null) {
+          getLeftSideBaseboardController().setMaxHeight(this.rectangularWallHeight);
+          getRightSideBaseboardController().setMaxHeight(this.rectangularWallHeight);
+        }
+      } else if (shape == WallShape.SLOPING_WALL) {
+        if (this.slopingWallHeightAtStart != null
+            && this.sloppingWallHeightAtEnd != null) {
+          float baseboardMaxHeight = Math.max(this.sloppingWallHeightAtEnd, this.slopingWallHeightAtStart);
+          getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+          getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+        } else if (this.slopingWallHeightAtStart != null) {
+          getLeftSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
+          getRightSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
+        } else if (this.sloppingWallHeightAtEnd != null) {
+          getLeftSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
+          getRightSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
+        }
+      }
     }
   }
   
@@ -1130,6 +1150,10 @@ public class WallController implements Controller {
           oldRectangularWallHeight, rectangularWallHeight);
       
       setShape(WallShape.RECTANGULAR_WALL);
+      if (rectangularWallHeight != null) {
+        getLeftSideBaseboardController().setMaxHeight(rectangularWallHeight);
+        getRightSideBaseboardController().setMaxHeight(rectangularWallHeight);
+      }
     }
   }
   
@@ -1151,6 +1175,13 @@ public class WallController implements Controller {
           oldSlopingHeightHeightAtStart, slopingWallHeightAtStart);
       
       setShape(WallShape.SLOPING_WALL);
+      if (slopingWallHeightAtStart != null) {
+        float baseboardMaxHeight = this.sloppingWallHeightAtEnd != null
+            ? Math.max(this.sloppingWallHeightAtEnd, slopingWallHeightAtStart) 
+            : slopingWallHeightAtStart;
+        getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+        getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+      }
     }
   }
   
@@ -1172,6 +1203,13 @@ public class WallController implements Controller {
           oldSlopingWallHeightAtEnd, sloppingWallHeightAtEnd);
       
       setShape(WallShape.SLOPING_WALL);
+      if (sloppingWallHeightAtEnd != null) {
+        float baseboardMaxHeight = this.slopingWallHeightAtStart != null
+            ? Math.max(this.slopingWallHeightAtStart, sloppingWallHeightAtEnd) 
+            : sloppingWallHeightAtEnd;
+        getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+        getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
+      }
     }
   }
   
@@ -1283,6 +1321,16 @@ public class WallController implements Controller {
         heightAtEnd = getRectangularWallHeight();
       } else {
         heightAtEnd = null;
+      }
+      
+      if (height != null && heightAtEnd != null) {
+        float maxHeight = Math.max(height, heightAtEnd);
+        if (leftSideBaseboardHeight != null) {
+          leftSideBaseboardHeight = Math.min(leftSideBaseboardHeight, maxHeight);
+        }
+        if (rightSideBaseboardHeight != null) {
+          rightSideBaseboardHeight = Math.min(rightSideBaseboardHeight, maxHeight);
+        }
       }
       
       // Create an array of modified walls with their current properties values

@@ -514,7 +514,7 @@ public class RoomController implements Controller {
       }
       getWallSidesBaseboardController().setVisible(wallSidesBaseboardVisible);
 
-      // Search the common thickness right baseboard among walls
+      // Search the common baseboard thickness  among walls
       Float wallSidesBaseboardThickness = firstWallSideBaseboard != null
           ? firstWallSideBaseboard.getThickness()
           : this.preferences.getNewWallBaseboardThickness();
@@ -532,7 +532,7 @@ public class RoomController implements Controller {
       }
       getWallSidesBaseboardController().setThickness(wallSidesBaseboardThickness);
       
-      // Search the common height right baseboard among walls
+      // Search the common baseboard height among walls
       Float wallSidesBaseboardHeight = firstWallSideBaseboard != null
           ? firstWallSideBaseboard.getHeight()
           : this.preferences.getNewWallBaseboardHeight();
@@ -550,7 +550,20 @@ public class RoomController implements Controller {
       }
       getWallSidesBaseboardController().setHeight(wallSidesBaseboardHeight);
 
-      // Search the common right baseboard color among walls
+      // Search the maximum height among walls
+      float maxBaseboardHeight = firstWallSide.getWall().isTrapezoidal()
+          ? Math.max(firstWallSide.getWall().getHeight(), firstWallSide.getWall().getHeightAtEnd())
+          : firstWallSide.getWall().getHeight();
+      for (int i = 1; i < wallSides.size(); i++) {
+        Wall wall = wallSides.get(i).getWall();
+        maxBaseboardHeight = Math.max(maxBaseboardHeight, 
+            wall.isTrapezoidal()
+                ? Math.max(wall.getHeight(), wall.getHeightAtEnd())
+                : wall.getHeight());
+      }
+      getWallSidesBaseboardController().setMaxHeight(maxBaseboardHeight);
+
+      // Search the common baseboard color among walls
       Integer wallSidesBaseboardColor = firstWallSideBaseboard != null
           ? firstWallSideBaseboard.getColor()
           : null;
