@@ -452,6 +452,7 @@ public class AppletApplication extends HomeApplication {
     addToggleActionToToolBar(homeView, HomeView.ActionType.PAN, toolBar);
     addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_WALLS, toolBar);
     addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_ROOMS, toolBar);
+    addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_POLYLINES, toolBar);
     addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES, toolBar);
     addToggleActionToToolBar(homeView, HomeView.ActionType.CREATE_LABELS, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
