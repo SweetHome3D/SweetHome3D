@@ -121,7 +121,7 @@ public abstract class UserPreferences {
   private List<TextureImage> recentTextures;
 
   /**
-   * Creates user preferences.</br> 
+   * Creates user preferences.<br> 
    * Caution: during creation, the default locale will be updated if it doesn't belong to the supported ones. 
    */
   public UserPreferences() {

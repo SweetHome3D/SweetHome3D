@@ -356,8 +356,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
 
   /**
    * Sets whether this loader should try or avoid accessing to URLs with cache.
-   * @param useCaches <id>Boolean.TRUE</id>, <id>Boolean.FALSE</id>, or 
-   *    <id>null</id> then caches will be used according to the value 
+   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or 
+   *    <code>null</code> then caches will be used according to the value 
    *    returned by {@link URLConnection#getDefaultUseCaches()}.
    */
   public void setUseCaches(Boolean useCaches) {
