@@ -598,7 +598,7 @@ public class Wall3D extends Object3DBranch {
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()
           && (piece.getLevel() == null
-          || piece.getLevel().isViewable())) {
+          || piece.getLevel().isViewableAndVisible())) {
         if (piece instanceof HomeFurnitureGroup) {
           visibleDoorsAndWindows.addAll(getVisibleDoorsAndWindows(((HomeFurnitureGroup)piece).getFurniture()));
         } else if (piece.isDoorOrWindow()) {

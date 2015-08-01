@@ -578,7 +578,7 @@ public class Room3D extends Object3DBranch {
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()
           && (piece.getLevel() == null
-              || piece.getLevel().isViewable())) {
+              || piece.getLevel().isViewableAndVisible())) {
         if (piece instanceof HomeFurnitureGroup) {
           visibleStaircases.addAll(getVisibleStaircases(((HomeFurnitureGroup)piece).getFurniture(), roomPart, roomLevel, firstLevel));
         } else if (piece.getStaircaseCutOutShape() != null
