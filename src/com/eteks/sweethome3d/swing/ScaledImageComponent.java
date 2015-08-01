@@ -1,5 +1,5 @@
 /*
- * TextureButton.java 01 oct. 2008
+ * ScaledImageComponent.java 01 oct. 2008
  *
  * Sweet Home 3D, Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>
  *
