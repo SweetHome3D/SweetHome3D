@@ -12,7 +12,7 @@ and run the application matching your operating system:
 - SweetHome3D-linux-x86   for Linux 32 bits
 - SweetHome3D-linux-x64   for Linux 64 bits
 
-This version comes with the 600+ pieces of furniture available at:
+This version comes with the 1000+ pieces of furniture available at:
 http://www.sweethome3d.com/importModels.jsp
 and the translations proposed by contributors at:
 http://www.sweethome3d.com/translations.jsp
