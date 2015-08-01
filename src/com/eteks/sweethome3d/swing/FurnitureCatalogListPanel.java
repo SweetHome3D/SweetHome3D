@@ -321,9 +321,9 @@ class FurnitureCatalogListPanel extends JPanel implements View {
       if (furnitureCatalogPanel == null) {
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
-        furnitureCatalogPanel.categoryFilterLabel.setText(preferences.getLocalizedString(
+        furnitureCatalogPanel.categoryFilterLabel.setText(SwingTools.getLocalizedLabelText(preferences,
             FurnitureCatalogListPanel.class, "categoryFilterLabel.text"));
-        furnitureCatalogPanel.searchLabel.setText(preferences.getLocalizedString(
+        furnitureCatalogPanel.searchLabel.setText(SwingTools.getLocalizedLabelText(preferences,
             FurnitureCatalogListPanel.class, "searchLabel.text"));
         furnitureCatalogPanel.setMnemonics(preferences);
         // Categories listed in combo box are updated through collectionChanged
