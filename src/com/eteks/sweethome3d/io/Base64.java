@@ -14,7 +14,7 @@ package com.eteks.sweethome3d.io;
  * <p>Example:</p>
  * 
  * <code>String encoded = Base64.encode( myByteArray );</code>
- * <br />
+ * <br>
  * <code>byte[] myByteArray = Base64.decode( encoded );</code>
  *
  * <p>The <tt>options</tt> parameter, which appears in a few places, is used to pass 
