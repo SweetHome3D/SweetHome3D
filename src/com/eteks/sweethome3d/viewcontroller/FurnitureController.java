@@ -479,7 +479,7 @@ public class FurnitureController implements Controller {
    * Controls the sort of the furniture in home. If home furniture isn't sorted
    * or is sorted on an other property, it will be sorted on the given
    * <code>furnitureProperty</code> in ascending order. If home furniture is already
-   * sorted on the given <code>furnitureProperty<code>, it will be sorted in descending 
+   * sorted on the given <code>furnitureProperty</code>, it will be sorted in descending 
    * order, if the sort is in ascending order, otherwise it won't be sorted at all 
    * and home furniture will be listed in insertion order. 
     * @param furnitureProperty  the furniture property on which the view wants
