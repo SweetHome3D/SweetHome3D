@@ -741,7 +741,7 @@
   <target name="macosxBundle" depends="application,furniture,textures,help"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
-    <mkdir dir="install/macosx/SweetHome3D-${version}/"/>
+    <mkdir dir="install/macosx/SweetHome3D-${version}"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app">
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
@@ -861,7 +861,7 @@
          to install/linux/i386/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/i386/SweetHome3D-${version}/lib"/>
     <!-- Copy SweetHome3D command -->
-    <copy todir="install/linux/i386/SweetHome3D-${version}/" 
+    <copy todir="install/linux/i386/SweetHome3D-${version}" 
           file="install/linux/SweetHome3D"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs 
@@ -904,28 +904,6 @@
         <exclude name="bin/policytool"/>
         <exclude name="bin/orbd"/>
         <exclude name="bin/servertool"/>
-        <exclude name="lib/jfr"/>
-        <exclude name="lib/jfr.jar"/>
-        <!-- No need of JavaFX support -->
-        <exclude name="THIRDPARTYLICENSEREADME-JAVAFX.txt"/>
-        <exclude name="lib/javafx.properties"/>
-      	<exclude name="lib/jfxswt.jar"/>
-      	<exclude name="lib/i386/libdecora-sse.so"/>
-      	<exclude name="lib/i386/libfxplugins.so"/>
-      	<exclude name="lib/i386/libglass.so"/>
-      	<exclude name="lib/i386/libgstreamer-lite.so"/>
-      	<exclude name="lib/i386/libjavafx_font_freetype.so"/>
-      	<exclude name="lib/i386/libjavafx_font_pango.so"/>
-      	<exclude name="lib/i386/libjavafx_font_t2k.so"/>
-      	<exclude name="lib/i386/libjavafx-font.so"/>
-      	<exclude name="lib/i386/libjavafx-iio.so"/>
-      	<exclude name="lib/i386/libjfxmedia.so"/>
-      	<exclude name="lib/i386/libjfxwebkit.so"/>
-      	<exclude name="lib/i386/libprism_common.so"/>
-      	<exclude name="lib/i386/libprism_es2.so"/>
-      	<exclude name="lib/i386/libprism_sw.so"/>
-      	<exclude name="lib/ext/jfxrt.jar"/>
-        <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
 
@@ -960,7 +938,7 @@
          to install/linux/x64/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/x64/SweetHome3D-${version}/lib"/>
     <!-- Copy SweetHome3D command -->
-    <copy todir="install/linux/x64/SweetHome3D-${version}/" 
+    <copy todir="install/linux/x64/SweetHome3D-${version}" 
           file="install/linux/SweetHome3D"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs 
@@ -1003,28 +981,6 @@
         <exclude name="bin/policytool"/>
         <exclude name="bin/orbd"/>
         <exclude name="bin/servertool"/>
-        <exclude name="lib/jfr"/>
-        <exclude name="lib/jfr.jar"/>
-        <!-- No need of JavaFX support -->
-        <exclude name="THIRDPARTYLICENSEREADME-JAVAFX.txt"/>
-        <exclude name="lib/javafx.properties"/>
-      	<exclude name="lib/jfxswt.jar"/>
-      	<exclude name="lib/amd64/libdecora-sse.so"/>
-      	<exclude name="lib/amd64/libprism_common.so"/>
-      	<exclude name="lib/amd64/libprism_es2.so"/>
-      	<exclude name="lib/amd64/libprism_sw.so"/>
-      	<exclude name="lib/amd64/libfxplugins.so"/>
-      	<exclude name="lib/amd64/libglass.so"/>
-      	<exclude name="lib/amd64/libgstreamer-lite.so"/>
-      	<exclude name="lib/amd64/libjavafx_font_freetype.so"/>
-      	<exclude name="lib/amd64/libjavafx_font_pango.so"/>
-      	<exclude name="lib/amd64/libjavafx_font_t2k.so"/>
-      	<exclude name="lib/amd64/libjavafx-font.so"/>
-      	<exclude name="lib/amd64/libjavafx-iio.so"/>
-      	<exclude name="lib/amd64/libjfxmedia.so"/>
-      	<exclude name="lib/amd64/libjfxwebkit.so"/>
-      	<exclude name="lib/ext/jfxrt.jar"/>
-        <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
 
