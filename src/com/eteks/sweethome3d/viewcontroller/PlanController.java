@@ -6900,17 +6900,12 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        List<Selectable> selectedItems = home.getSelectedItems();
-        if (selectedItems.size() > 1
-            || (this.oldSelection.size() == 1
-                && this.oldSelection.get(0) instanceof HomeFurnitureGroup)) {
-          boolean selectionChanged = Collections.disjoint(selectedItems, this.oldSelection);
-          if (!selectionChanged) {
-            Selectable itemUnderCursor = getSelectableItemAt(x, y, false);
-            if (itemUnderCursor != null) {
-              // Select only the item under cursor position
-              selectItem(itemUnderCursor);
-            }
+        boolean selectionChanged = Collections.disjoint(home.getSelectedItems(), this.oldSelection);
+        if (!selectionChanged) {
+          Selectable itemUnderCursor = getSelectableItemAt(x, y, false);
+          if (itemUnderCursor != null) {
+            // Select only the item under cursor position
+            selectItem(itemUnderCursor);
           }
         }
       }
