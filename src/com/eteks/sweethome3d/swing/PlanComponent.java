@@ -4208,7 +4208,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (labelStyle == null) {
             labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
           }
-          if (labelStyle.getFontName() == null) {
+          if (labelStyle.getFontName() == null && getFont() != null) {
             labelStyle = labelStyle.deriveStyle(getFont().getFontName());
           }
           Integer color = label.getColor();
