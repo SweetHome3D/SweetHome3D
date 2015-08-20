@@ -4101,7 +4101,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (lengthStyle == null) {
           lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
         }          
-        if (feedback) {
+        if (feedback && getFont() != null) {
           // Use default for feedback
           lengthStyle = lengthStyle.deriveStyle(getFont().getSize() / getScale());
         }
