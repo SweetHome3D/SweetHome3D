@@ -1022,7 +1022,7 @@
     <input message="Enter signature password:" 
            addproperty="password"/> 
     <!-- Sign launchers -->
-    <exec executable="C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\signtool.exe" failonerror="yes">
+    <exec executable="C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe" failonerror="yes">
       <arg value="sign"/>
       <arg value="/f"/>
       <arg value="${basedir}\keys.p12"/>
