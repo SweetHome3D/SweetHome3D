@@ -950,10 +950,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         && geometry instanceof GeometryArray) {
       geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
       geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
+      geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
       geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
       geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
       geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-      geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
     }
   }
 
