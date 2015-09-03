@@ -129,6 +129,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private Date                 printDate;
   private JLabel               fixedHeaderLabel;
   private JLabel               fixedFooterLabel;
+  private JLabel               fixedFirstPageHeaderLabel;
+  private JLabel               fixedFirstPageFooterLabel;
   
   /**
    * Creates a printable component that will print or display the
@@ -145,6 +147,14 @@ public class HomePrintableComponent extends JComponent implements Printable {
       ResourceBundle resource = ResourceBundle.getBundle(HomePrintableComponent.class.getName());
       this.fixedHeaderLabel = getFixedHeaderOrFooterLabel(resource, "fixedHeader");
       this.fixedFooterLabel = getFixedHeaderOrFooterLabel(resource, "fixedFooter");
+      this.fixedFirstPageHeaderLabel = getFixedHeaderOrFooterLabel(resource, "fixedFirstPageHeader");
+      if (this.fixedFirstPageHeaderLabel == null) {
+        this.fixedFirstPageHeaderLabel = this.fixedHeaderLabel;
+      }
+      this.fixedFirstPageFooterLabel = getFixedHeaderOrFooterLabel(resource, "fixedFirstPageFooter");
+      if (this.fixedFirstPageFooterLabel == null) {
+        this.fixedFirstPageFooterLabel = this.fixedFooterLabel;
+      }
     } catch (MissingResourceException ex) {
       // No resource bundle 
     }
@@ -214,27 +224,31 @@ public class HomePrintableComponent extends JComponent implements Printable {
     float  xFixedFooter = 0;
     float  yFixedFooter = 0;
     
-    if (this.fixedHeaderLabel != null) {
-      this.fixedHeaderLabel.setSize((int)pageFormat.getImageableWidth(), this.fixedHeaderLabel.getPreferredSize().height);
-      imageableHeight -= this.fixedHeaderLabel.getHeight() + HEADER_FOOTER_MARGIN;
-      imageableY += this.fixedHeaderLabel.getHeight() + HEADER_FOOTER_MARGIN;
+    JLabel fixedHeaderPageLabel = page == 0
+        ? this.fixedFirstPageHeaderLabel : this.fixedHeaderLabel;
+    JLabel fixedFooterPageLabel = page == 0
+        ? this.fixedFirstPageFooterLabel : this.fixedFooterLabel;
+    if (fixedHeaderPageLabel != null) {
+      fixedHeaderPageLabel.setSize((int)pageFormat.getImageableWidth(), fixedHeaderPageLabel.getPreferredSize().height);
+      imageableHeight -= fixedHeaderPageLabel.getHeight() + HEADER_FOOTER_MARGIN;
+      imageableY += fixedHeaderPageLabel.getHeight() + HEADER_FOOTER_MARGIN;
       xFixedHeader = (float)pageFormat.getImageableX();
       yFixedHeader = (float)pageFormat.getImageableY();
     }
     
-    if (this.fixedFooterLabel != null) {
-      this.fixedFooterLabel.setSize((int)pageFormat.getImageableWidth(), this.fixedFooterLabel.getPreferredSize().height);
-      imageableHeight -= this.fixedFooterLabel.getHeight() + HEADER_FOOTER_MARGIN;
+    if (fixedFooterPageLabel != null) {
+      fixedFooterPageLabel.setSize((int)pageFormat.getImageableWidth(), fixedFooterPageLabel.getPreferredSize().height);
+      imageableHeight -= fixedFooterPageLabel.getHeight() + HEADER_FOOTER_MARGIN;
       xFixedFooter = (float)pageFormat.getImageableX();
-      yFixedFooter = (float)(pageFormat.getImageableY() + pageFormat.getImageableHeight()) - this.fixedFooterLabel.getHeight();
+      yFixedFooter = (float)(pageFormat.getImageableY() + pageFormat.getImageableHeight()) - fixedFooterPageLabel.getHeight();
     }
     
     Rectangle clipBounds = g2D.getClipBounds();
     AffineTransform oldTransform = g2D.getTransform();
     final PlanView planView = this.controller.getPlanController().getView();
     if (homePrint != null
-        || this.fixedHeaderLabel != null
-        || this.fixedFooterLabel != null) {
+        || fixedHeaderPageLabel != null
+        || fixedFooterPageLabel != null) {
       if (homePrint != null) {
         FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
         float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() + HEADER_FOOTER_MARGIN;
@@ -391,9 +405,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
       g2D.setClip(clipBounds);
       g2D.setFont(this.headerFooterFont);
       g2D.setColor(Color.BLACK);
-      if (this.fixedHeaderLabel != null) {
+      if (fixedHeaderPageLabel != null) {
         g2D.translate(xFixedHeader, yFixedHeader);
-        this.fixedHeaderLabel.print(g2D);
+        fixedHeaderPageLabel.print(g2D);
         g2D.translate(-xFixedHeader, -yFixedHeader);
       }
       if (header != null) {
@@ -402,9 +416,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
       if (footer != null) {
         g2D.drawString(footer, xFooter, yFooter);
       }
-      if (this.fixedFooterLabel != null) {
+      if (fixedFooterPageLabel != null) {
         g2D.translate(xFixedFooter, yFixedFooter);
-        this.fixedFooterLabel.print(g2D);
+        fixedFooterPageLabel.print(g2D);
         g2D.translate(-xFixedFooter, -yFixedFooter);
       }
     }  
