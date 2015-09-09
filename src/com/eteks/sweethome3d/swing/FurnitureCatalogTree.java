@@ -513,9 +513,13 @@ public class FurnitureCatalogTree extends JTree implements View {
     public int getChildCount(Object parent) {
       if (parent instanceof FurnitureCatalog) {
         return ((FurnitureCatalog)parent).getCategoriesCount();
-      } else {
+      } else if (parent instanceof FurnitureCategory) {
         return ((FurnitureCategory)parent).getFurnitureCount();
-      } 
+      } else {
+        // Shouldn't be necessary for other tree items, but javax.swing.plaf.basic.BasicTreeUI$Actions.traverse 
+        // might call getChildCount even for tree leaves   
+        return 0;
+      }
     }
 
     public int getIndexOfChild(Object parent, Object child) {
