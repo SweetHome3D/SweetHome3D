@@ -996,7 +996,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   
   private Boolean                 useCaches;
   private List<Point3f>           vertices;
-  private List<TexCoord2f>        textureCoodinates;
+  private List<TexCoord2f>        textureCoordinates;
   private List<Vector3f>          normals;
   private Map<String, Group>      groups;
   private Group                   currentGroup;
@@ -1102,7 +1102,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   private Scene parseObjectStream(Reader reader, 
                                   URL baseUrl) throws IOException {
     this.vertices = new ArrayList<Point3f>();
-    this.textureCoodinates = new ArrayList<TexCoord2f>();
+    this.textureCoordinates = new ArrayList<TexCoord2f>();
     this.normals = new ArrayList<Vector3f>();
     this.groups = new LinkedHashMap<String, Group>();
     this.currentGroup = new Group("default");
@@ -1128,7 +1128,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       return createScene();
     } finally {
       this.vertices = null;
-      this.textureCoodinates = null;
+      this.textureCoordinates = null;
       this.normals = null;
       this.groups = null;
       this.appearances = null;
@@ -1140,8 +1140,8 @@ public class OBJLoader extends LoaderBase implements Loader {
    */
   private SceneBase createScene() {
     Point3f [] vertices = this.vertices.toArray(new Point3f [this.vertices.size()]);
-    TexCoord2f [] textureCoodinates = 
-        this.textureCoodinates.toArray(new TexCoord2f [this.textureCoodinates.size()]);
+    TexCoord2f [] textureCoordinates = 
+        this.textureCoordinates.toArray(new TexCoord2f [this.textureCoordinates.size()]);
     Vector3f [] normals = this.normals.toArray(new Vector3f [this.normals.size()]);
   
     SceneBase scene = new SceneBase();
@@ -1208,7 +1208,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             
             if (firstGeometryHasTextureCoordinateIndices) {
               geometryInfo.setTextureCoordinateParams(1, 2);
-              geometryInfo.setTextureCoordinates(0, textureCoodinates);
+              geometryInfo.setTextureCoordinates(0, textureCoordinates);
               geometryInfo.setTextureCoordinateIndices(0, textureCoordinateIndices);
             } 
             
@@ -1242,7 +1242,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             }
             if (firstGeometryHasTextureCoordinateIndices) {
               for (int j = 0; j < coordinatesIndices.length; j++) {
-                geometryArray.setTextureCoordinate(0, j, textureCoodinates [textureCoordinateIndices [j]]);
+                geometryArray.setTextureCoordinate(0, j, textureCoordinates [textureCoordinateIndices [j]]);
               }
             }
           }
@@ -1313,7 +1313,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       float x = parseNumber(tokenizer);
       skipBackSlash(tokenizer);
       float y = parseNumber(tokenizer);
-      this.textureCoodinates.add(new TexCoord2f(x, y));    
+      this.textureCoordinates.add(new TexCoord2f(x, y));    
       // Skip next number if it exists
       if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
         tokenizer.pushBack();
@@ -1350,7 +1350,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           // l v/vt : read texture coordinate index 
           int textureCoordinateIndex = parseInteger(tokenizer) - 1;
           if (textureCoordinateIndex < 0) {
-            textureCoordinateIndex += this.textureCoodinates.size() + 1;
+            textureCoordinateIndex += this.textureCoordinates.size() + 1;
           }          
           textureCoordinateIndices.add(textureCoordinateIndex);
         }
@@ -1403,7 +1403,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             tokenizer.pushBack();        
             int textureCoordinateIndex = parseInteger(tokenizer) - 1;
             if (textureCoordinateIndex < 0) {
-              textureCoordinateIndex += this.textureCoodinates.size() + 1;
+              textureCoordinateIndex += this.textureCoordinates.size() + 1;
             }          
             textureCoordinateIndices.add(textureCoordinateIndex);
             tokenizer.nextToken();
