@@ -1148,7 +1148,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     BranchGroup sceneRoot = new BranchGroup();
     scene.setSceneGroup(sceneRoot);
     for (Group group : this.groups.values()) {
-      List<Geometry> geometries = group.getGeometry();
+      List<Geometry> geometries = group.getGeometries();
       if (geometries != null
           && !geometries.isEmpty()) {
         int i = 0;
@@ -1910,16 +1910,16 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
   
   /**
-   * A named group of faces. 
+   * A named group of geometries. 
    */
   private static class Group {
     private final String   name;
     private boolean        smooth;
-    private List<Geometry> faces;
+    private List<Geometry> geometries;
  
     public Group(String name) {
       this.name = name;
-      this.faces = new ArrayList<Geometry>();
+      this.geometries = new ArrayList<Geometry>();
     }
     
     public String getName() {
@@ -1935,11 +1935,11 @@ public class OBJLoader extends LoaderBase implements Loader {
     }
     
     public void addGeometry(Geometry face) {
-      this.faces.add(face);
+      this.geometries.add(face);
     }
     
-    public List<Geometry> getGeometry() {
-      return this.faces;
+    public List<Geometry> getGeometries() {
+      return this.geometries;
     }
   }
 }
