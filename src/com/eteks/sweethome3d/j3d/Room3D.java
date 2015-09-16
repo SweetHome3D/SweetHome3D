@@ -651,6 +651,7 @@ public class Room3D extends Object3DBranch {
           if (closestWall.isTrapezoidal()) {
             Float arcExtent = closestWall.getArcExtent();
             if (arcExtent == null
+                || arcExtent.floatValue() == 0
                 || closestIndex == closestWallPoints.length / 2 
                 || closestIndex == closestWallPoints.length / 2 - 1) {
               roomHeight += closestWall.getHeightAtEnd();

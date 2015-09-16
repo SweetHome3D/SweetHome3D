@@ -278,7 +278,8 @@ public class Wall3D extends Object3DBranch {
     final double sinWallYawAngle = Math.sin(wallYawAngle);
     double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
     double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
-    boolean roundWall = wall.getArcExtent() != null && wall.getArcExtent() != 0; 
+    Float arcExtent = wall.getArcExtent();
+    boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0; 
     final double topLineAlpha;
     final double topLineBeta;
     if (topElevationAtStart == topElevationAtEnd) {
@@ -664,7 +665,9 @@ public class Wall3D extends Object3DBranch {
                                               float [] textureReferencePoint,
                                               int wallSide) {
     final float subpartSize = this.home.getEnvironment().getSubpartSizeUnderLight();
-    if (wall.getArcExtent() == null && subpartSize > 0) {
+    Float arcExtent = wall.getArcExtent();
+    if ((arcExtent == null || arcExtent == 0) 
+        && subpartSize > 0) {
       // Subdivide points in smaller parts to ensure a smoother effect with point lights
       List<float []> pointsList = new ArrayList<float[]>(points.length * 2);
       pointsList.add(points [0]);
@@ -688,7 +691,6 @@ public class Wall3D extends Object3DBranch {
     float yStart = wall.getYStart();
     float xEnd = wall.getXEnd();
     float yEnd = wall.getYEnd();
-    Float arcExtent = wall.getArcExtent();
     float [] arcCircleCenter = null;
     float arcCircleRadius = 0;
     float referencePointAngle = 0;

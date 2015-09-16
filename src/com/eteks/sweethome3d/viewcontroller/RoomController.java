@@ -1141,7 +1141,8 @@ public class RoomController implements Controller {
           it.hasNext() && splitWallSide == null; ) {
         WallSide wallSide = (WallSide)it.next();
         Wall wall = wallSide.getWall();
-        if (wall.getArcExtent() == null) { // Ignore round walls
+        Float arcExtent = wall.getArcExtent();
+        if (arcExtent == null || arcExtent.floatValue() == 0) { // Ignore round walls
           Area wallArea = new Area(getPath(wall.getPoints(), true));
           for (WallSide intersectedWallSide : wallSides) {
             Wall intersectedWall = intersectedWallSide.getWall();

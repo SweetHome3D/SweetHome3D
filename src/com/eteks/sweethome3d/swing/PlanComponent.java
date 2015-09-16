@@ -3209,7 +3209,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           double startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
           double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
               wall.getXEnd() - wall.getXStart());
-          if (arcExtent != null) {
+          if (arcExtent != null
+              && arcExtent.floatValue() != 0) {
             xArcCircleCenter = wall.getXArcCircleCenter();
             yArcCircleCenter = wall.getYArcCircleCenter();
             arcCircleRadius = Point2D.distance(wall.getXStart(), wall.getYStart(), 
@@ -3302,7 +3303,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       
       Float arcExtent = wall.getArcExtent();
       double indicatorAngle;
-      if (arcExtent != null) {
+      if (arcExtent != null
+          && arcExtent.floatValue() != 0) {
         indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYEnd(), 
                 wall.getXArcCircleCenter() - wall.getXEnd())  
             + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);

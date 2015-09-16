@@ -222,7 +222,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   public float getLength() {
     if (this.arcExtent == null
-        || this.arcExtent == 0) {
+        || this.arcExtent.floatValue() == 0) {
       return (float)Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
     } else {
       float [] arcCircleCenter = getArcCircleCenter();
@@ -945,7 +945,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */  
   private float [][] getUnjoinedShapePoints(boolean includeBaseboards) {
     if (this.arcExtent != null
-        && this.arcExtent != 0
+        && this.arcExtent.floatValue() != 0
         && Point2D.distanceSq(this.xStart, this.yStart, this.xEnd, this.yEnd) > 1E-10) {
       float [] arcCircleCenter = getArcCircleCenter();
       float startAngle = (float)Math.atan2(arcCircleCenter [1] - this.yStart, arcCircleCenter [0] - this.xStart);

@@ -1889,6 +1889,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     if (referenceWall != null
         && (referenceWall.getArcExtent() == null 
+            || referenceWall.getArcExtent().floatValue() == 0 
             || !piece.isDoorOrWindow())) {
       float xPiece = x;
       float yPiece = y;
@@ -2073,7 +2074,8 @@ public class PlanController extends FurnitureController implements Controller {
    * (<code>x</code>, <code>y</code>) point if the given <code>wall</code> is round. 
    */
   private Wall getReferenceWall(Wall wall, float x, float y) {
-    if (wall.getArcExtent() == null) {
+    Float arcExtent = wall.getArcExtent();
+    if (arcExtent == null || arcExtent.floatValue() == 0) {
       return wall;
     } else {
       double angle = Math.atan2(wall.getYArcCircleCenter() - y, x - wall.getXArcCircleCenter());
