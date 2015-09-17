@@ -1169,7 +1169,7 @@ public class OBJLoader extends LoaderBase implements Loader {
                 || material == null && firstGeometryMaterial != null
                 || material != null && getAppearance(material) != appearance
                 || (firstGeometryHasTextureCoordinateIndices ^ geometry.hasTextureCoordinateIndices())
-                || (firstFaceHasNormalIndices ^ ((firstGeometry instanceof Face) && ((Face)geometry).hasNormalIndices()))) {
+                || (firstFaceHasNormalIndices ^ ((geometry instanceof Face) && ((Face)geometry).hasNormalIndices()))) {
               break;
             }
           }
