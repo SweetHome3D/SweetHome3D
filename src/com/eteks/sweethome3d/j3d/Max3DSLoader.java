@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -583,9 +582,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             }
             
             // Add vertex index to the list of shared vertices 
-            Mesh3DSSharedVertex sharedVertice = new Mesh3DSSharedVertex(i, normal);
-            sharedVertice.setNextVertex(sharedVertices [vertexIndex]);
-            sharedVertices [vertexIndex] = sharedVertice;
+            Mesh3DSSharedVertex sharedVertex = new Mesh3DSSharedVertex(i, normal);
+            sharedVertex.setNextVertex(sharedVertices [vertexIndex]);
+            sharedVertices [vertexIndex] = sharedVertex;
             defaultNormals [k] = normal;
           }
         }
