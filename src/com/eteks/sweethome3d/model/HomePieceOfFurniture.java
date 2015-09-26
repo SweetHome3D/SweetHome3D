@@ -69,7 +69,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     SORTABLE_PROPERTY_COMPARATORS = new HashMap<SortableProperty, Comparator<HomePieceOfFurniture>>();
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.CATALOG_ID, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.catalogId == null) {
+          if (piece1.catalogId == piece2.catalogId) {
+            return 0;
+          } else if (piece1.catalogId == null) {
             return -1;
           } else if (piece2.catalogId == null) {
             return 1; 
@@ -80,7 +82,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.NAME, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.name == null) {
+          if (piece1.name == piece2.name) {
+            return 0;
+          } else if (piece1.name == null) {
             return -1;
           } else if (piece2.name == null) {
             return 1; 
@@ -116,7 +120,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.COLOR, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.color == null) {
+          if (piece1.color == piece2.color) {
+            return 0; 
+          } else if (piece1.color == null) {
             return -1;
           } else if (piece2.color == null) {
             return 1; 
@@ -127,7 +133,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.TEXTURE, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.texture == null) {
+          if (piece1.texture == piece2.texture) {
+            return 0; 
+          } else if (piece1.texture == null) {
             return -1;
           } else if (piece2.texture == null) {
             return 1; 
@@ -199,7 +207,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   private static int compare(BigDecimal value1, BigDecimal value2) {
-    if (value1 == null) {
+    if (value1 == value2) {
+      return 0;
+    } else if (value1 == null) {
       return -1;
     } else if (value2 == null) {
       return 1; 
@@ -209,7 +219,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   private static int compare(Level level1, Level level2) {
-    if (level1 == null) {
+    if (level1 == level2) {
+      return 0;
+    } else if (level1 == null) {
       return -1;
     } else if (level2 == null) {
       return 1; 
