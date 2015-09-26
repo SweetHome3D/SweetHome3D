@@ -1856,23 +1856,10 @@ public class FurnitureTable extends JTable implements View, Printable {
         this.nameRendererTree.setRowHeight(table.getRowHeight());
         this.nameRendererTree.setRootVisible(false);
         this.nameRendererTree.setShowsRootHandles(true);
+        updateExpandedRows(tableTreeModel);
         tableTreeModel.addTreeModelListener(new TreeModelListener() {
             public void treeStructureChanged(TreeModelEvent ev) {
-              for (int row = 0; row < tableTreeModel.getRowCount(); row++) {
-                if (tableTreeModel.getValueAt(row, 0) instanceof HomeFurnitureGroup) {
-                  if (tableTreeModel.isRowExpanded(row)) {
-                    TreePath pathForRow = nameRendererTree.getPathForRow(row);
-                    if (nameRendererTree.isCollapsed(pathForRow)) {
-                      nameRendererTree.expandPath(pathForRow); 
-                    }
-                  } else {
-                    TreePath pathForRow = nameRendererTree.getPathForRow(row);
-                    if (nameRendererTree.isExpanded(pathForRow)) {
-                      nameRendererTree.collapsePath(pathForRow);
-                    }
-                  }
-                }
-              }
+              updateExpandedRows(tableTreeModel);
             }
             
             public void treeNodesRemoved(TreeModelEvent ev) {
@@ -1887,6 +1874,24 @@ public class FurnitureTable extends JTable implements View, Printable {
       }
     }
 
+    private void updateExpandedRows(FurnitureTreeTableModel tableTreeModel) {
+      for (int row = 0; row < tableTreeModel.getRowCount(); row++) {
+        if (tableTreeModel.getValueAt(row, 0) instanceof HomeFurnitureGroup) {
+          if (tableTreeModel.isRowExpanded(row)) {
+            TreePath pathForRow = this.nameRendererTree.getPathForRow(row);
+            if (this.nameRendererTree.isCollapsed(pathForRow)) {
+              this.nameRendererTree.expandPath(pathForRow); 
+            }
+          } else {
+            TreePath pathForRow = this.nameRendererTree.getPathForRow(row);
+            if (this.nameRendererTree.isExpanded(pathForRow)) {
+              this.nameRendererTree.collapsePath(pathForRow);
+            }
+          }
+        }
+      }
+    }
+    
     /**
      * Returns the bounds of the space in front of a tree node.
      */
