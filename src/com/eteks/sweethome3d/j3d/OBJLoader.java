@@ -1174,15 +1174,15 @@ public class OBJLoader extends LoaderBase implements Loader {
             }
           }
           
-          // Create indices arrays for the faces with an index between i and max
-          int faceCount = max - i;
+          // Create indices arrays for the geometries with an index between i and max
+          int geometryCount = max - i;
           int indexCount = 0;
-          for (int j = 0; j < faceCount; j++) {
+          for (int j = 0; j < geometryCount; j++) {
             indexCount += geometries.get(i + j).getVertexIndices().length;
           }
           int [] coordinatesIndices = new int [indexCount];
-          int [] stripCounts = new int [faceCount]; 
-          for (int j = 0, destIndex = 0; j < faceCount; j++) {
+          int [] stripCounts = new int [geometryCount]; 
+          for (int j = 0, destIndex = 0; j < geometryCount; j++) {
             int [] geometryVertexIndices = geometries.get(i + j).getVertexIndices();
             System.arraycopy(geometryVertexIndices, 0, coordinatesIndices, destIndex, geometryVertexIndices.length);
             stripCounts [j] = geometryVertexIndices.length;
@@ -1192,7 +1192,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           int [] textureCoordinateIndices = null;
           if (firstGeometryHasTextureCoordinateIndices) {
             textureCoordinateIndices = new int [indexCount];
-            for (int j = 0, destIndex = 0; j < faceCount; j++) {
+            for (int j = 0, destIndex = 0; j < geometryCount; j++) {
               int [] geometryTextureCoordinateIndices = geometries.get(i + j).getTextureCoordinateIndices();
               System.arraycopy(geometryTextureCoordinateIndices, 0, textureCoordinateIndices, destIndex, geometryTextureCoordinateIndices.length);
               destIndex += geometryTextureCoordinateIndices.length;
@@ -1214,7 +1214,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             
             if (firstFaceHasNormalIndices) {
               int [] normalIndices = new int [indexCount];
-              for (int j = 0, destIndex = 0; j < faceCount; j++) {
+              for (int j = 0, destIndex = 0; j < geometryCount; j++) {
                 int [] faceNormalIndices = ((Face)geometries.get(i + j)).getNormalIndices();
                 System.arraycopy(faceNormalIndices, 0, normalIndices, destIndex, faceNormalIndices.length);
                 destIndex += faceNormalIndices.length;
