@@ -193,6 +193,7 @@ public class Ground3D extends Object3DBranch {
     for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
       Level level = undergroundAreaEntry.getKey();
       Area area = undergroundAreaEntry.getValue();
+      Area areaAtStart = (Area)area.clone();
       undergroundSideAreas.put(level, (Area)area.clone());
       upperLevelAreas.put(level, new Area());
       // Remove lower levels areas from the area at the current level
@@ -210,13 +211,18 @@ public class Ground3D extends Object3DBranch {
       // Add underground area to ground area at ground level
       for (float [][] points : getAreaPoints(area)) {
         if (new Room(points).isClockwise()) {
-          upperLevelAreas.get(level).add(new Area(getShape(points)));
+          // Hole surrounded by a union of rooms that form a polygon  
+          Area coveredHole = new Area(getShape(points));
+          // Compute the missing hole area in the level area before other sublevels were subtracted from it 
+          coveredHole.exclusiveOr(areaAtStart);
+          coveredHole.subtract(areaAtStart);
+          upperLevelAreas.get(level).add(coveredHole);
         } else {
           areaRemovedFromGround.add(new Area(getShape(points)));
         }
       }
     }
-    // Remove room areas 
+    // Remove room areas because they are displayed by Room3D instances
     for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
       Level level = undergroundAreaEntry.getKey();
       Area area = undergroundAreaEntry.getValue();
