@@ -547,7 +547,7 @@
         <exclude name="bin/policytool.exe"/>
         <exclude name="bin/orbd.exe"/>
         <exclude name="bin/servertool.exe"/>
-        <exclude name="lib/jfr"/>
+        <exclude name="lib/jfr/**"/>
         <exclude name="lib/jfr.jar"/>
 
         <exclude name="bin/java.exe"/>
@@ -584,7 +584,7 @@
       	<exclude name="bin/jfxmedia.dll"/>
       	<exclude name="bin/jfxwebkit.dll"/>
       	<exclude name="bin/prism_common.dll"/>
-      	<exclude name="bin/prism-d3d.dll"/>
+      	<exclude name="bin/prism_d3d.dll"/>
       	<exclude name="bin/prism_es2.dll"/>
       	<exclude name="bin/prism_sw.dll"/>
       	<exclude name="lib/ext/jfxrt.jar"/>
@@ -613,7 +613,7 @@
         <exclude name="bin/policytool.exe"/>
         <exclude name="bin/orbd.exe"/>
         <exclude name="bin/servertool.exe"/>
-        <exclude name="lib/jfr"/>
+        <exclude name="lib/jfr/**"/>
         <exclude name="lib/jfr.jar"/>
 
         <exclude name="bin/java.exe"/>
@@ -650,7 +650,7 @@
       	<exclude name="bin/jfxmedia.dll"/>
       	<exclude name="bin/jfxwebkit.dll"/>
       	<exclude name="bin/prism_common.dll"/>
-      	<exclude name="bin/prism-d3d.dll"/>
+      	<exclude name="bin/prism_d3d.dll"/>
       	<exclude name="bin/prism_es2.dll"/>
       	<exclude name="bin/prism_sw.dll"/>
       	<exclude name="lib/ext/jfxrt.jar"/>
