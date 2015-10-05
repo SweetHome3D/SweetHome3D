@@ -2358,7 +2358,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
         fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale, 
-            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getWallPattern()), 
+            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getNewWallPattern()), 
             foregroundColor, PaintMode.PAINT);
         g2D.setComposite(oldComposite);
       }
