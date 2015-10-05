@@ -165,7 +165,8 @@ public class Ground3D extends Object3DBranch {
     
     // Search all items at negative levels that could dig the ground 
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      if (piece.getLevel() == null || piece.getLevel().isViewable()) {
+      if (piece.getGroundElevation() < 0
+          && (piece.getLevel() == null || piece.getLevel().isViewable())) {
         if (piece.getStaircaseCutOutShape() == null) {
           updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
         } else {
