@@ -229,7 +229,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Properties listener that updates the size and location of this group. 
-   * This listener is bound to this controller with a weak reference to avoid a strong link 
+   * This listener is bound to this group with a weak reference to avoid a strong link 
    * of this group towards the furniture it contains.  
    */
   private static class LocationAndSizeChangeListener implements PropertyChangeListener { 
