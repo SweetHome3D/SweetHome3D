@@ -309,6 +309,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       this.nameVisible = homePiece.isNameVisible();
       this.nameXOffset = homePiece.getNameXOffset();
       this.nameYOffset = homePiece.getNameYOffset();
+      this.nameAngle = homePiece.getNameAngle();
       this.nameStyle = homePiece.getNameStyle();
       this.visible = homePiece.isVisible();
       this.angle = homePiece.getAngle();
@@ -316,6 +317,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       this.y = homePiece.getY();
       this.modelMirrored = homePiece.isModelMirrored();
       this.texture = homePiece.getTexture();
+      this.shininess = homePiece.getShininess();
       this.modelMaterials = homePiece.getModelMaterials();
     } else {
       if (piece instanceof CatalogPieceOfFurniture) {
