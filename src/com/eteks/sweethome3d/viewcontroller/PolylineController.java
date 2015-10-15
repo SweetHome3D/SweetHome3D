@@ -116,7 +116,7 @@ public class PolylineController implements Controller {
    * Updates edited properties from selected polylines in the home edited by this controller.
    */
   protected void updateProperties() {
-    List<Polyline> selectedPolylines = Home.getSubList(this.home.getSelectedItems(), Polyline.class);
+    List<Polyline> selectedPolylines = Home.getPolylinesSubList(this.home.getSelectedItems());
     if (selectedPolylines.isEmpty()) {
       setThickness(null); // Nothing to edit
       this.capStyleEditable = false;
@@ -395,7 +395,7 @@ public class PolylineController implements Controller {
    */
   public void modifyPolylines() {
     List<Selectable> oldSelection = this.home.getSelectedItems(); 
-    List<Polyline> selectedPolylines = Home.getSubList(oldSelection, Polyline.class);
+    List<Polyline> selectedPolylines = Home.getPolylinesSubList(oldSelection);
     if (!selectedPolylines.isEmpty()) {
       Float thickness = getThickness(); 
       Polyline.CapStyle capStyle = getCapStyle();
