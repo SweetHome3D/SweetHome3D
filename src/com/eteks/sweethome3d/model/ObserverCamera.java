@@ -202,13 +202,13 @@ public class ObserverCamera extends Camera implements Selectable {
    * @return an array of the 4 (x,y) coordinates of the camera corners.
    */
   public float [][] getPoints() {
-    float [][] piecePoints = new float[4][2];
+    float [][] cameraPoints = new float[4][2];
     PathIterator it = getRectangleShape().getPathIterator(null);
-    for (int i = 0; i < piecePoints.length; i++) {
-      it.currentSegment(piecePoints [i]);
+    for (int i = 0; i < cameraPoints.length; i++) {
+      it.currentSegment(cameraPoints [i]);
       it.next();
     }
-    return piecePoints;
+    return cameraPoints;
   }
   
   /**
