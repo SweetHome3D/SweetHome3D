@@ -67,14 +67,13 @@ public class CollectionChangeSupport<T> {
   public void fireCollectionChanged(T item, int index, 
                                     CollectionEvent.Type eventType) {
     if (!this.collectionListeners.isEmpty()) {
-      CollectionEvent<T> furnitureEvent = 
-          new CollectionEvent<T>(this.source, item, index, eventType);
+      CollectionEvent<T> event = new CollectionEvent<T>(this.source, item, index, eventType);
       // Work on a copy of collectionListeners to ensure a listener 
       // can modify safely listeners list
       CollectionListener<T> [] listeners = this.collectionListeners.
         toArray(new CollectionListener [this.collectionListeners.size()]);
       for (CollectionListener<T> listener : listeners) {
-        listener.collectionChanged(furnitureEvent);
+        listener.collectionChanged(event);
       }
     }
   }
