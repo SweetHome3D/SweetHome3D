@@ -1291,7 +1291,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               if (ev.isAltDown()) {
                 // Mouse move along Y axis while alt is down changes camera location
                 float delta = 1.25f * (this.yLastMouseMove - ev.getY());
-                // Multiply delta by 10 if shift is down
+                // Multiply delta by 5 if shift is down
                 if (ev.isShiftDown()) {
                   delta *= 5;
                 } 
@@ -1300,7 +1300,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 final float ANGLE_FACTOR = 0.005f;
                 // Mouse move along X axis changes camera yaw 
                 float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
-                // Multiply yaw delta by 10 if shift is down
+                // Multiply yaw delta by 5 if shift is down
                 if (ev.isShiftDown()) {
                   yawDelta *= 5;
                 } 
