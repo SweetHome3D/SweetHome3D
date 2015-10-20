@@ -214,8 +214,9 @@ public class SweetHome3D extends HomeApplication {
       this.userPreferences = new FileUserPreferences(preferencesFolder, applicationFolders, eventQueueExecutor) {
           @Override
           public List<Library> getLibraries() {
-            if (pluginManager != null) {
-              List<Library> pluginLibraries = pluginManager.getPluginLibraries();
+            if (userPreferences != null // Don't go further if preferences are not ready
+                && getPluginManager() != null) {
+              List<Library> pluginLibraries = getPluginManager().getPluginLibraries();
               if (!pluginLibraries.isEmpty()) {
                 // Add plug-ins to the list returned by user preferences
                 ArrayList<Library> libraries = new ArrayList<Library>(super.getLibraries());
@@ -228,14 +229,17 @@ public class SweetHome3D extends HomeApplication {
           
           @Override
           public void deleteLibraries(List<Library> libraries) throws RecorderException {
-            super.deleteLibraries(libraries);
-            List<Library> plugins = new ArrayList<Library>();
-            for (Library library : libraries) {
-              if (PluginManager.PLUGIN_LIBRARY_TYPE.equals(library.getType())) {
-                plugins.add(library);
+            if (userPreferences != null // Don't go further if preferences are not ready
+                && getPluginManager() != null) {
+              super.deleteLibraries(libraries);
+              List<Library> plugins = new ArrayList<Library>();
+              for (Library library : libraries) {
+                if (PluginManager.PLUGIN_LIBRARY_TYPE.equals(library.getType())) {
+                  plugins.add(library);
+                }
               }
+              getPluginManager().deletePlugins(plugins);
             }
-            pluginManager.deletePlugins(plugins);            
           }
         };
       this.checkUpdatesNeeded = this.userPreferences.isCheckUpdatesEnabled();
