@@ -69,7 +69,7 @@ public abstract class Object3DBranch extends BranchGroup {
   }
   
   /**
-   * Updates the this branch from the home object.
+   * Updates this branch from the home object.
    */
   public abstract void update();
 
