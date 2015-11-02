@@ -686,6 +686,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
             if (defaultMaterialAndTexture != null) {
               appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+              appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
             }
           }
           Texture homeTexture = getHomeTextureClone(texture, home);
