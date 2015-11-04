@@ -44,6 +44,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -1158,6 +1159,9 @@ public class RoomController implements Controller {
                   // Clone new walls to copy their characteristics 
                   firstWall = wall.clone();
                   secondWall = wall.clone();
+                  // Store wall level to add new walls at the same level as the split wall
+                  firstWall.setLevel(wall.getLevel());
+                  secondWall.setLevel(wall.getLevel());
                   
                   // Change split walls end and start point
                   firstWall.setXEnd(intersection [0]);
@@ -1267,9 +1271,11 @@ public class RoomController implements Controller {
     if (deletedWalls == null) { 
       return false; 
     } else {
-      for (Wall newWall : newWalls) {      
+      for (Wall newWall : newWalls) {     
+        ModifiedWall addedWall = new ModifiedWall(newWall);
+        addedWalls.add(addedWall);
         this.home.addWall(newWall);
-        addedWalls.add(new ModifiedWall(newWall));
+        newWall.setLevel(addedWall.getLevel());
       }
       for (ModifiedWall deletedWall : deletedWalls) {
         this.home.deleteWall(deletedWall.getWall());
@@ -1441,8 +1447,9 @@ public class RoomController implements Controller {
                                                 ModifiedWall [] addedWalls) {
     if (deletedWalls != null) {
       for (ModifiedWall newWall : addedWalls) {
-        newWall.reset();
+        newWall.resetJoinedWalls();
         home.addWall(newWall.getWall());
+        newWall.getWall().setLevel(newWall.getLevel());
       }
       for (ModifiedWall deletedWall : deletedWalls) {
         home.deleteWall(deletedWall.getWall());
@@ -1608,8 +1615,9 @@ public class RoomController implements Controller {
       home.deleteWall(newWall.getWall());
     }
     for (ModifiedWall deletedWall : deletedWalls) {
-      deletedWall.reset();
+      deletedWall.resetJoinedWalls();
       home.addWall(deletedWall.getWall());
+      deletedWall.getWall().setLevel(deletedWall.getLevel());
     }
   }
   
@@ -1718,6 +1726,7 @@ public class RoomController implements Controller {
    */
   private class ModifiedWall {
     private Wall          wall;
+    private final Level   level;
     private final Wall    wallAtStart;
     private final Wall    wallAtEnd;
     private final boolean joinedAtEndOfWallAtStart;
@@ -1725,6 +1734,7 @@ public class RoomController implements Controller {
     
     public ModifiedWall(Wall wall) {
       this.wall = wall;
+      this.level = wall.getLevel();
       this.wallAtStart = wall.getWallAtStart();
       this.joinedAtEndOfWallAtStart =
           this.wallAtStart != null
@@ -1739,7 +1749,11 @@ public class RoomController implements Controller {
       return this.wall;
     }
     
-    public void reset() {
+    public Level getLevel() {
+      return this.level;
+    }
+    
+    public void resetJoinedWalls() {
       if (this.wallAtStart != null) {
         this.wall.setWallAtStart(this.wallAtStart);
         if (this.joinedAtEndOfWallAtStart) {
