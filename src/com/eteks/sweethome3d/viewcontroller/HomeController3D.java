@@ -341,6 +341,7 @@ public class HomeController3D implements Controller {
 
     public void moveCamera(float delta) {
     }
+    
     public void moveCameraSideways(float delta) {
     }
 
