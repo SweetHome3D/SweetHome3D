@@ -114,7 +114,7 @@ public class HomeController3D implements Controller {
     if (selectedLevel != null) {
       selectedLevel.addPropertyChangeListener(levelElevationChangeListener);
     }
-    this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
+    home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           Level oldSelectedLevel = (Level)ev.getOldValue();
           Level selectedLevel = home.getSelectedLevel();
@@ -147,8 +147,8 @@ public class HomeController3D implements Controller {
            }
          }
        };
-     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);     
-     this.home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.ALL_LEVELS_VISIBLE, selectedLevelListener);
+    home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);     
+    home.getEnvironment().addPropertyChangeListener(HomeEnvironment.Property.ALL_LEVELS_VISIBLE, selectedLevelListener);
   }
 
   private float getObserverCameraMinimumElevation(final Home home) {
@@ -894,8 +894,8 @@ public class HomeController3D implements Controller {
         selectedItems.remove(this.observerCamera);
         home.setSelectedItems(selectedItems);
       }
-      for (Level room : home.getLevels()) {
-        room.removePropertyChangeListener(this.levelElevationChangeListener);
+      for (Level level : home.getLevels()) {
+        level.removePropertyChangeListener(this.levelElevationChangeListener);
       }
       home.removeLevelsListener(this.levelsListener);
       this.observerCamera = null;
