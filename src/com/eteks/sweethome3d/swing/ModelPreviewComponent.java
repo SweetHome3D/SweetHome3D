@@ -545,21 +545,18 @@ public class ModelPreviewComponent extends JComponent {
     double nominalDistanceToCenter = 1.4 / Math.tan(Math.PI / 8);
     // We don't use a TransformGroup in scene tree to be able to share the same scene 
     // in the different views displayed by OrientationPreviewComponent class 
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(new Vector3d(0, 0, nominalDistanceToCenter));
     Transform3D pitchRotation = new Transform3D();
     pitchRotation.rotX(viewPitch);
     Transform3D yawRotation = new Transform3D();
     yawRotation.rotY(viewYaw);
-    Transform3D transform = new Transform3D();
-    transform.setTranslation(
-        new Vector3d(Math.sin(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch), 
-            nominalDistanceToCenter * Math.sin(-viewPitch), 
-            Math.cos(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch)));
     Transform3D scale = new Transform3D();
     scale.setScale(viewScale);
     
+    pitchRotation.mul(translation);
     yawRotation.mul(pitchRotation);
-    transform.mul(yawRotation);
-    scale.mul(transform);
+    scale.mul(yawRotation);
     viewPlatformTransform.setTransform(scale);
   }
   
