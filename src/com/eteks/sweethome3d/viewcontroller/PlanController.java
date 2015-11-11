@@ -6020,9 +6020,9 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private static final class JoinedWall {
     private final Wall    wall;
+    private final Level   level;
     private final Wall    wallAtStart;
     private final Wall    wallAtEnd;
-    private final Level   level;
     private final boolean joinedAtEndOfWallAtStart;
     private final boolean joinedAtStartOfWallAtEnd;
     
