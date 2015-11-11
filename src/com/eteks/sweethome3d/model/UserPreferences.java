@@ -320,7 +320,7 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns the array of available languages in Sweet Home 3D.
+   * Sets the available languages in Sweet Home 3D.
    * @since 3.4
    */
   protected void setSupportedLanguages(String [] supportedLanguages) {
