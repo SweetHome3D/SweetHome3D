@@ -1109,7 +1109,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       }
       this.approximateHomeBoundsCache = approximateHomeBounds;
     }
-    return approximateHomeBoundsCache;
+    return this.approximateHomeBoundsCache;
   }
 
   /**
