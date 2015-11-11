@@ -1666,11 +1666,11 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
     } else if ("Ka".equals(tokenizer.sval)) {
       // Read ambient color Ka r g b
-      Color3f ambiantColor = new Color3f(parseNumber(tokenizer), 
+      Color3f ambientColor = new Color3f(parseNumber(tokenizer), 
           parseNumber(tokenizer), parseNumber(tokenizer));
       if (currentAppearance != null) {
         Material material = getMaterial(currentAppearance);
-        material.setAmbientColor(ambiantColor);
+        material.setAmbientColor(ambientColor);
       }
     } else if ("Kd".equals(tokenizer.sval)) {
       // Read diffuse or emissive color Kd r g b
