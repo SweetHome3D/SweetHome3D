@@ -484,10 +484,10 @@ public class HomeController3D implements Controller {
      */
     private void updateCameraFromHomeBounds(boolean firstPieceOfFurnitureAddedToEmptyHome) {
       if (this.aerialViewBoundsLowerPoint == null) {
-        updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
+        updateAerialViewBoundsFromHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
       }
       float distanceToCenter = getCameraToAerialViewCenterDistance();
-      updateAerialViewBounds(this.aerialViewCenteredOnSelectionEnabled);
+      updateAerialViewBoundsFromHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
       updateCameraIntervalToAerialViewCenter();
       placeCameraAt(distanceToCenter, firstPieceOfFurnitureAddedToEmptyHome);
     }
@@ -505,7 +505,7 @@ public class HomeController3D implements Controller {
      * Sets the bounds that includes walls, furniture and rooms, or only selected items 
      * if <code>centerOnSelection</code> is <code>true</code>.
      */
-    private void updateAerialViewBounds(boolean centerOnSelection) {
+    private void updateAerialViewBoundsFromHomeBounds(boolean centerOnSelection) {
       this.aerialViewBoundsLowerPoint = 
       this.aerialViewBoundsUpperPoint = null;
       List<Selectable> selectedItems = Collections.emptyList();
