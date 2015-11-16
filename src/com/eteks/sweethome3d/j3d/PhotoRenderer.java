@@ -348,7 +348,7 @@ public class PhotoRenderer {
     }
 
     // Use a spiral computing
-    this.sunflow.parameter("bucket.size", 32);
+    this.sunflow.parameter("bucket.size", 64);
     this.sunflow.parameter("bucket.order", "spiral");
     this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
   }
@@ -519,10 +519,12 @@ public class PhotoRenderer {
     
     int antiAliasingMin = Integer.parseInt(getRenderingParameterValue("antiAliasing.min"));
     int antiAliasingMax = Integer.parseInt(getRenderingParameterValue("antiAliasing.max"));
-    this.sunflow.parameter("filter", antiAliasingMax > 0  ? "blackman-harris"  : "box");
+    String filter = getRenderingParameterValue("filter");
+    this.sunflow.parameter("filter", filter);
     this.sunflow.parameter("aa.min", antiAliasingMin);
     this.sunflow.parameter("aa.max", antiAliasingMax); 
-    this.sunflow.parameter("sampler", "bucket"); // ipr, fast or bucket 
+    String samplerAlgorithm = getRenderingParameterValue("samplerAlgorithm");
+    this.sunflow.parameter("sampler", samplerAlgorithm); // ipr, fast or bucket 
 
     // Render image with default camera
     this.sunflow.parameter("camera", CAMERA_NAME);
