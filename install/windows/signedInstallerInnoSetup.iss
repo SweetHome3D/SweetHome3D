@@ -69,6 +69,11 @@ Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
+[InstallDelete]
+; Remove old jres
+Type: filesandordirs; Name: "{app}\jre6"
+Type: filesandordirs; Name: "{app}\jre1.8.0_51"
+
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
 Source: "build\lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
