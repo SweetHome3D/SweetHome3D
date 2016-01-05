@@ -772,7 +772,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case MESH_VERSION : 
           in.readLittleEndianInt();
           break;
-        case MASTER_SCALE: 
+        case MASTER_SCALE : 
           this.masterScale = in.readLittleEndianFloat();
           break;
         case NAMED_OBJECT : 
@@ -798,14 +798,14 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case V_GRADIENT :
         case USE_BIT_MAP :
         case USE_SOLID_BGND :
-        case USE_V_GRADIENT:
+        case USE_V_GRADIENT :
         case FOG :
         case LAYER_FOG :
         case DISTANCE_CUE :
         case USE_FOG :
         case USE_LAYER_FOG :
         case USE_DISTANCE_CUE : 
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -832,7 +832,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case OBJECT_DOESNT_RCVSHADOW :
         case OBJECT_FAST :
         case OBJECT_FROZEN :
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -892,7 +892,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                 }
                 break;
               case MESH_BOXMAP :
-              default:
+              default :
                 in.readUntilChunkEnd();
                 break;
             }
@@ -986,7 +986,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                 // Ignore next frames
                 in.readUntilChunkEnd();
                 break;
-              default:
+              default :
                 in.readUntilChunkEnd();
                 break;
             }
@@ -1026,7 +1026,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           }
           currentTransformGroup.setTransform(transform);
           break;
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -1124,7 +1124,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case MATERIAL_REFBLUR : 
         case MATERIAL_USE_REFBLUR :
         case MATERIAL_SHADING : 
-        case MATERIAL_DECAL:
+        case MATERIAL_DECAL :
         case MATERIAL_ADDITIVE :
         case MATERIAL_FACEMAP :
         case MATERIAL_PHONGSOFT :
@@ -1147,7 +1147,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case MATERIAL_REFLMAP :
         case MATERIAL_REFLMASK :
         case MATERIAL_ACUBIC :
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -1189,7 +1189,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             color = readColor;
           }
           break;
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -1212,7 +1212,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case PERCENTAGE_INT :
           percentage = in.readLittleEndianShort() / 100.f;
           break;
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
@@ -1237,8 +1237,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
         case PERCENTAGE_INT :
         case MATERIAL_MAP_TILING :
-        case MATERIAL_MAP_TEXBLUR: 
-        case MATERIAL_MAP_USCALE:
+        case MATERIAL_MAP_TEXBLUR : 
+        case MATERIAL_MAP_USCALE :
         case MATERIAL_MAP_VSCALE :
         case MATERIAL_MAP_UOFFSET :
         case MATERIAL_MAP_VOFFSET :
@@ -1248,7 +1248,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case MATERIAL_MAP_RCOL :
         case MATERIAL_MAP_GCOL :
         case MATERIAL_MAP_BCOL :
-        default:
+        default :
           in.readUntilChunkEnd();
           break;
       }
