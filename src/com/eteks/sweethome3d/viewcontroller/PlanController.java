@@ -1922,7 +1922,7 @@ public class PlanController extends FurnitureController implements Controller {
             : wallAngle + Math.PI);
 
         if (piece.isDoorOrWindow()) {
-          final float thicknessEpsilon = 0.00025f;
+          final float thicknessEpsilon = 0.00075f;
           float wallDistance = thicknessEpsilon / 2;
           if (piece instanceof HomeDoorOrWindow) {
             HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
