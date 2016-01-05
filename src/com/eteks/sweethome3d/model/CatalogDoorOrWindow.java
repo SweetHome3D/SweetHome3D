@@ -314,7 +314,7 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              boolean resizable, boolean deformable, boolean texturable, 
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     super(id, name, description, information, tags, creationDate, grade, 
-        icon, planIcon, model, width, depth, height, elevation, movable, 
+        icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
         null, modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     this.cutOutShape = cutOutShape;
     this.wallThickness = wallThickness;

@@ -255,7 +255,7 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       boolean resizable, boolean deformable, boolean texturable, 
                       BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     super(id, name, description, information, tags, creationDate, grade, 
-        icon, planIcon, model, width, depth, height, elevation, movable, 
+        icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
         staircaseCutOutShape, modelRotation, creator, resizable, deformable, texturable, 
         price, valueAddedTaxPercentage, currency);
     this.lightSources = lightSources;
