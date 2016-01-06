@@ -198,9 +198,15 @@ public class ModelMaterialsComponent extends JButton implements View {
           public void stateChanged(ChangeEvent ev) {
             if (colorRadioButton.isEnabled() && colorRadioButton.isSelected()) {
               HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+              int selectedMaterialIndex = materialsList.getSelectedIndex();
+              Integer defaultColor = ((MaterialsListModel)materialsList.getModel()).
+                  getDefaultMaterialAt(selectedMaterialIndex).getColor();
+              Integer color = defaultColor != colorButton.getColor()
+                  ? colorButton.getColor()
+                  : null;
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
-                  new HomeMaterial(material.getName(), colorButton.getColor(), null, material.getShininess()),
-                  materialsList.getSelectedIndex());
+                  new HomeMaterial(material.getName(), color, null, material.getShininess()),
+                  selectedMaterialIndex);
             }
           }
         };
@@ -225,9 +231,15 @@ public class ModelMaterialsComponent extends JButton implements View {
           public void stateChanged(ChangeEvent ev) {
             if (textureRadioButton.isEnabled() && textureRadioButton.isSelected()) {
               HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+              int selectedMaterialIndex = materialsList.getSelectedIndex();
+              HomeTexture defaultTexture = ((MaterialsListModel)materialsList.getModel()).
+                  getDefaultMaterialAt(selectedMaterialIndex).getTexture();
+              HomeTexture texture = defaultTexture != textureController.getTexture()
+                  ? textureController.getTexture()
+                  : null;
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
-                  new HomeMaterial(material.getName(), null, textureController.getTexture(), material.getShininess()),
-                  materialsList.getSelectedIndex());
+                  new HomeMaterial(material.getName(), null, texture, material.getShininess()),
+                  selectedMaterialIndex);
             }
           }
         };
