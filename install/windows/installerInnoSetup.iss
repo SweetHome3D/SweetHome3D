@@ -1,8 +1,8 @@
 ; installerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2007-2016 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
-; SweetHome3D-5.1-windows.exe setup program creator
+; SweetHome3D-5.2-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -13,9 +13,9 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVersion=5.1
-AppCopyright=Copyright (c) 2007-2015 eTeks
-AppVerName=Sweet Home 3D version 5.1
+AppVersion=5.2
+AppCopyright=Copyright (c) 2007-2016 eTeks
+AppVerName=Sweet Home 3D version 5.2
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -24,14 +24,14 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-5.1-windows
+OutputBaseFilename=..\SweetHome3D-5.2-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=5.1.0.0
-VersionInfoTextVersion=5.1
+VersionInfoVersion=5.2.0.0
+VersionInfoTextVersion=5.2
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2015 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2016 eTeks
 VersionInfoCompany=eTeks
 ; Install in 64 bit mode if possible
 ArchitecturesInstallIn64BitMode=x64
@@ -61,6 +61,7 @@ Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm
 ; Remove old jres
 Type: filesandordirs; Name: "{app}\jre6"
 Type: filesandordirs; Name: "{app}\jre1.8.0_51"
+Type: filesandordirs; Name: "{app}\jre1.8.0_60"
 
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
@@ -69,11 +70,11 @@ Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
 ; Install JRE and DLLs for not 64 bit
 Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "build\jre1.8.0_60\x86\*"; DestDir: "{app}\jre1.8.0_60"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
+Source: "build\jre1.8.0_66\x86\*"; DestDir: "{app}\jre1.8.0_66"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
 ; Install JRE and DLLs for 64 bit
 Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "build\jre1.8.0_60\x64\*"; DestDir: "{app}\jre1.8.0_60"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
+Source: "build\jre1.8.0_66\x64\*"; DestDir: "{app}\jre1.8.0_66"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
@@ -82,17 +83,17 @@ Name: "{userdesktop}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Tasks: d
 
 [Run]
 ; Unpack largest jars
-Filename: "{app}\jre1.8.0_60\bin\unpack200.exe"; Parameters:"-r -q ""{app}\jre1.8.0_60\lib\rt.pack.gz"" ""{app}\jre1.8.0_60\lib\rt.jar"""; Flags: runhidden; StatusMsg: "{cm:UnpackingMessage,rt.jar}";
-Filename: "{app}\jre1.8.0_60\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHome3D.pack.gz"" ""{app}\lib\SweetHome3D.jar"""; StatusMsg: "{cm:UnpackingMessage,SweetHome3D.jar}"; Flags: runhidden
+Filename: "{app}\jre1.8.0_66\bin\unpack200.exe"; Parameters:"-r -q ""{app}\jre1.8.0_66\lib\rt.pack.gz"" ""{app}\jre1.8.0_66\lib\rt.jar"""; Flags: runhidden; StatusMsg: "{cm:UnpackingMessage,rt.jar}";
+Filename: "{app}\jre1.8.0_66\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHome3D.pack.gz"" ""{app}\lib\SweetHome3D.jar"""; StatusMsg: "{cm:UnpackingMessage,SweetHome3D.jar}"; Flags: runhidden
 ; Propose user to launch Sweet Home 3D at installation end
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; Delete unpacked jars
-Type: files; Name: "{app}\jre1.8.0_60\lib\rt.jar"
+Type: files; Name: "{app}\jre1.8.0_66\lib\rt.jar"
 Type: files; Name: "{app}\lib\SweetHome3D.jar"
 ; Delete files created by Launch4j
-Type: filesandordirs; Name: "{app}\jre1.8.0_60\launch4j-tmp"
+Type: filesandordirs; Name: "{app}\jre1.8.0_66\launch4j-tmp"
 
 [CustomMessages]
 SweetHome3DComment=Arrange the furniture of your house

@@ -1,12 +1,12 @@
 <!-- SweetHome3D-windows-x64.xml
 
-     Sweet Home 3D, Copyright (c) 2012-2015 Emmanuel PUYBARET / eTeks <info@eteks.com>
+     Sweet Home 3D, Copyright (c) 2012-2016 Emmanuel PUYBARET / eTeks <info@eteks.com>
 
      SweetHome3D-windows-x64.exe creator for Launch4j 
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D-windows-x64.exe in the current directory running with
-     JRE stored in jre/windows/x64/jre1.8.0_60 subdirectory 
+     JRE stored in jre/windows/x64/jre1.8.0_66 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
@@ -37,10 +37,10 @@
     <cp>lib/ext/j3dcore.jar</cp>
     <cp>lib/ext/j3dutils.jar</cp>
     <cp>lib/ext/vecmath.jar</cp>
-    <cp>jre/windows/x64/jre1.8.0_60/lib/javaws.jar</cp>
+    <cp>jre/windows/x64/jre1.8.0_66/lib/javaws.jar</cp>
   </classPath>
   <jre>
-    <path>jre/windows/x64/jre1.8.0_60</path>
+    <path>jre/windows/x64/jre1.8.0_66</path>
     <bundledJre64Bit>true</bundledJre64Bit>
     <minVersion>1.8.0</minVersion>
     <maxVersion></maxVersion>
@@ -51,12 +51,12 @@
     <opt>-Djava.library.path=lib/ext/windows/x64 -Dcom.eteks.sweethome3d.preferencesFolder=data -Dcom.eteks.sweethome3d.applicationFolders=data -Dcom.eteks.sweethome3d.deploymentInformation=portable -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Portable</opt>
   </jre>
   <versionInfo>
-    <fileVersion>5.1.0.0</fileVersion>
-    <txtFileVersion>5.1</txtFileVersion>
+    <fileVersion>5.2.0.0</fileVersion>
+    <txtFileVersion>5.2</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
-    <copyright>Copyright (c) 2007-2015 eTeks</copyright>
-    <productVersion>5.1.0.0</productVersion>
-    <txtProductVersion>5.1</txtProductVersion>
+    <copyright>Copyright (c) 2007-2016 eTeks</copyright>
+    <productVersion>5.2.0.0</productVersion>
+    <txtProductVersion>5.2</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
