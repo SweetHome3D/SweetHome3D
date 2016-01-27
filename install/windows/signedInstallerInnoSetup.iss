@@ -74,6 +74,7 @@ Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm
 Type: filesandordirs; Name: "{app}\jre6"
 Type: filesandordirs; Name: "{app}\jre1.8.0_51"
 Type: filesandordirs; Name: "{app}\jre1.8.0_60"
+Type: filesandordirs; Name: "{app}\jre1.8.0_66"
 
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
@@ -82,11 +83,11 @@ Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
 ; Install JRE and DLLs for not 64 bit
 Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "build\jre1.8.0_66\x86\*"; DestDir: "{app}\jre1.8.0_66"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
+Source: "build\jre8\x86\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
 ; Install JRE and DLLs for 64 bit
 Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "build\jre1.8.0_66\x64\*"; DestDir: "{app}\jre1.8.0_66"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
+Source: "build\jre8\x64\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
@@ -95,17 +96,17 @@ Name: "{userdesktop}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Tasks: d
 
 [Run]
 ; Unpack largest jars
-Filename: "{app}\jre1.8.0_66\bin\unpack200.exe"; Parameters:"-r -q ""{app}\jre1.8.0_66\lib\rt.pack.gz"" ""{app}\jre1.8.0_66\lib\rt.jar"""; Flags: runhidden; StatusMsg: "{cm:UnpackingMessage,rt.jar}";
-Filename: "{app}\jre1.8.0_66\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHome3D.pack.gz"" ""{app}\lib\SweetHome3D.jar"""; StatusMsg: "{cm:UnpackingMessage,SweetHome3D.jar}"; Flags: runhidden
+Filename: "{app}\jre8\bin\unpack200.exe"; Parameters:"-r -q ""{app}\jre8\lib\rt.pack.gz"" ""{app}\jre8\lib\rt.jar"""; Flags: runhidden; StatusMsg: "{cm:UnpackingMessage,rt.jar}";
+Filename: "{app}\jre8\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHome3D.pack.gz"" ""{app}\lib\SweetHome3D.jar"""; StatusMsg: "{cm:UnpackingMessage,SweetHome3D.jar}"; Flags: runhidden
 ; Propose user to launch Sweet Home 3D at installation end
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; Delete unpacked jars
-Type: files; Name: "{app}\jre1.8.0_66\lib\rt.jar"
+Type: files; Name: "{app}\jre8\lib\rt.jar"
 Type: files; Name: "{app}\lib\SweetHome3D.jar"
 ; Delete files created by Launch4j
-Type: filesandordirs; Name: "{app}\jre1.8.0_66\launch4j-tmp"
+Type: filesandordirs; Name: "{app}\jre8\launch4j-tmp"
 
 [CustomMessages]
 SweetHome3DComment=Arrange the furniture of your house

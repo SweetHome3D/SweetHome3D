@@ -6,7 +6,7 @@
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D.exe in build directory running with
-     JRE stored in jre1.8.0_66 subdirectory 
+     JRE stored in jre8 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
@@ -37,10 +37,10 @@
     <cp>lib/j3dcore.jar</cp>
     <cp>lib/j3dutils.jar</cp>
     <cp>lib/vecmath.jar</cp>
-    <cp>jre1.8.0_66/lib/javaws.jar</cp>
+    <cp>jre8/lib/javaws.jar</cp>
   </classPath>
   <jre>
-    <path>jre1.8.0_66</path>
+    <path>jre8</path>
     <bundledJre64Bit>true</bundledJre64Bit>
     <minVersion>1.8.0</minVersion>
     <maxVersion></maxVersion>
