@@ -591,6 +591,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       boolean advancedComponentsVisible = this.advancedComponentsSeparator.isVisible();
       if (advancedComponentsVisible != highQuality) {
         setAdvancedComponentsVisible(highQuality);
+        updateRatioComponents();
         int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 6
             + this.dateSpinner.getPreferredSize().height + 5
             + this.lensComboBox.getPreferredSize().height;
@@ -617,8 +618,9 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void updateRatioComponents() {
     Lens lens = this.controller.getLens();
-    boolean fixedProportions = lens == Camera.Lens.FISHEYE 
-        || lens == Camera.Lens.SPHERICAL;
+    boolean fixedProportions = this.lensComboBox.isVisible()
+        && (lens == Camera.Lens.FISHEYE 
+            || lens == Camera.Lens.SPHERICAL);
     this.sizeAndQualityPanel.setProportionsChoiceEnabled(!fixedProportions);
   }
 
