@@ -202,9 +202,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   public void update() {
     updatePieceOfFurnitureTransform();
     updatePieceOfFurnitureModelMirrored();
+    updatePieceOfFurnitureVisibility();      
     updatePieceOfFurnitureColorAndTexture(false);      
     updateLight();
-    updatePieceOfFurnitureVisibility();      
   }
 
   /**
@@ -220,6 +220,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   /**
    * Sets the color and the texture applied to piece model.
+   * Should be called after {@link #updatePieceOfFurnitureVisibility()} because 
+   * it may render some shapes invisible if a material color alpha is 0.
    */
   private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
@@ -420,9 +422,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
     updatePieceOfFurnitureModelMirrored();
+    updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
     updateLight();
-    updatePieceOfFurnitureVisibility();
 
     // Manage light sources visibility 
     if (this.home != null 
@@ -632,10 +634,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               }
               color = material.getColor();                
               if (color != null) {
-                appearance.setMaterial(getMaterial(color, color, materialShininess));
-                appearance.setTexture(null);
-                appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-                appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+                if ((color.intValue() & 0xFF000000) == 0) {
+                  // Make shape invisible
+                  appearance.getRenderingAttributes().setVisible(false);
+                } else {
+                  appearance.setMaterial(getMaterial(color, color, materialShininess));
+                  appearance.setTexture(null);
+                  appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+                  appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+                }
               } else if (color == null && material.getTexture() != null) {
                 if (isTexturesCoordinatesDefined(shape)) {
                   restoreDefaultTextureCoordinatesGeneration(appearance);

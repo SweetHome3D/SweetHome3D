@@ -116,6 +116,7 @@ public class ModelMaterialsComponent extends JButton implements View {
     private JList                  materialsList;
     private JLabel                 colorAndTextureLabel;
     private JRadioButton           defaultColorAndTextureRadioButton;
+    private JRadioButton           invisibleRadioButton;
     private JRadioButton           colorRadioButton;
     private ColorButton            colorButton;
     private JRadioButton           textureRadioButton;
@@ -191,7 +192,21 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         };
       this.defaultColorAndTextureRadioButton.addChangeListener(defaultChoiceChangeListener);
-      
+
+      this.invisibleRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
+          ModelMaterialsComponent.class, "invisibleRadioButton.text"));
+      final ChangeListener invisibleChoiceChangeListener = new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            if (invisibleRadioButton.isEnabled() && invisibleRadioButton.isSelected()) {
+              HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+              ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
+                  new HomeMaterial(material.getName(), 0, null, material.getShininess()),
+                  materialsList.getSelectedIndex());
+            }
+          }
+        };
+      this.invisibleRadioButton.addChangeListener(invisibleChoiceChangeListener);
+
       this.colorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           ModelMaterialsComponent.class, "colorRadioButton.text"));
       final ChangeListener colorChoiceChangeListener = new ChangeListener() {
@@ -258,6 +273,7 @@ public class ModelMaterialsComponent extends JButton implements View {
         
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(this.defaultColorAndTextureRadioButton);
+      buttonGroup.add(this.invisibleRadioButton);
       buttonGroup.add(this.colorRadioButton);
       buttonGroup.add(this.textureRadioButton);
       
@@ -291,6 +307,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             public void valueChanged(ListSelectionEvent ev) {
               if (!materialsList.isSelectionEmpty()) {
                 defaultColorAndTextureRadioButton.removeChangeListener(defaultChoiceChangeListener);
+                invisibleRadioButton.removeChangeListener(invisibleChoiceChangeListener);
                 colorRadioButton.removeChangeListener(colorChoiceChangeListener);
                 textureRadioButton.removeChangeListener(textureChoiceChangeListener);
                 colorButton.removePropertyChangeListener(ColorButton.COLOR_PROPERTY, colorChangeListener);
@@ -323,6 +340,20 @@ public class ModelMaterialsComponent extends JButton implements View {
                   textureRadioButton.setSelected(true);
                   colorButton.setColor(null);
                   textureController.setTexture(texture);
+                } else if ((color.intValue() & 0xFF000000) == 0) {
+                  invisibleRadioButton.setSelected(true);
+                  // Display default color or texture in buttons
+                  texture = defaultMaterial.getTexture();
+                  if (texture != null) {
+                    colorButton.setColor(null);
+                    controller.getTextureController().setTexture(texture);
+                  } else {
+                    color = defaultMaterial.getColor();
+                    if (color != null) {
+                      textureController.setTexture(null);
+                      colorButton.setColor(color);
+                    }
+                  }
                 } else {
                   colorRadioButton.setSelected(true);
                   textureController.setTexture(null);
@@ -336,6 +367,7 @@ public class ModelMaterialsComponent extends JButton implements View {
                 }
                 
                 defaultColorAndTextureRadioButton.addChangeListener(defaultChoiceChangeListener);
+                invisibleRadioButton.addChangeListener(invisibleChoiceChangeListener);
                 colorRadioButton.addChangeListener(colorChoiceChangeListener);
                 textureRadioButton.addChangeListener(textureChoiceChangeListener);
                 colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, colorChangeListener);
@@ -480,6 +512,7 @@ public class ModelMaterialsComponent extends JButton implements View {
     private void enableComponents() {
       boolean selectionEmpty = this.materialsList.isSelectionEmpty();
       defaultColorAndTextureRadioButton.setEnabled(!selectionEmpty);
+      invisibleRadioButton.setEnabled(!selectionEmpty);
       textureRadioButton.setEnabled(!selectionEmpty);
       textureComponent.setEnabled(!selectionEmpty);
       colorRadioButton.setEnabled(!selectionEmpty);
@@ -497,6 +530,8 @@ public class ModelMaterialsComponent extends JButton implements View {
         this.materialsLabel.setLabelFor(this.materialsList);
         this.defaultColorAndTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             ModelMaterialsComponent.class, "defaultColorAndTextureRadioButton.mnemonic")).getKeyCode());
+        this.invisibleRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            ModelMaterialsComponent.class, "invisibleRadioButton.mnemonic")).getKeyCode());
         this.colorRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             ModelMaterialsComponent.class, "colorRadioButton.mnemonic")).getKeyCode());
         this.textureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
@@ -517,7 +552,7 @@ public class ModelMaterialsComponent extends JButton implements View {
           GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
       this.previewComponent.setPreferredSize(new Dimension(150, 150));
       add(this.previewComponent, new GridBagConstraints(
-          0, 1, 1, 5, 0, 0, GridBagConstraints.NORTH,
+          0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
       
       // Materials list
@@ -526,9 +561,9 @@ public class ModelMaterialsComponent extends JButton implements View {
           GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
       JScrollPane scrollPane = new JScrollPane(this.materialsList);
       Dimension preferredSize = scrollPane.getPreferredSize();
-      scrollPane.setPreferredSize(new Dimension(Math.min(150, preferredSize.width), preferredSize.height));
+      scrollPane.setPreferredSize(new Dimension(Math.min(200, preferredSize.width), preferredSize.height));
       add(scrollPane, new GridBagConstraints(
-          1, 1, 1, 5, 1, 1, GridBagConstraints.CENTER,
+          1, 1, 1, 7, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
       SwingTools.installFocusBorder(this.materialsList);
       
@@ -539,26 +574,29 @@ public class ModelMaterialsComponent extends JButton implements View {
       add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
           2, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      add(this.invisibleRadioButton, new GridBagConstraints(
+          2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.colorRadioButton, new GridBagConstraints(
-          2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
       add(this.colorButton, new GridBagConstraints(
-          3, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.textureRadioButton, new GridBagConstraints(
-          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
-          3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          3, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
 
       // Shininess 
       add(this.shininessLabel, new GridBagConstraints(
-          2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(15, 0, 5, 0), 0, 0));
       add(this.shininessSlider, new GridBagConstraints(
-          2, 5, 2, 1, 0, 0, GridBagConstraints.NORTH, 
+          2, 6, 2, 1, 0, 0, GridBagConstraints.NORTH, 
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
     }
     
