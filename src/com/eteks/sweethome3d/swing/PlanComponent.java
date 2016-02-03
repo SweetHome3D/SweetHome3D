@@ -176,7 +176,6 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
-import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
