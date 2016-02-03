@@ -1026,7 +1026,7 @@ public class ModelManager {
   Area getFrontArea(String cutOutShape, Node node) {
     Area frontArea;
     if (cutOutShape != null) {
-      frontArea = new Area(parseShape(cutOutShape));
+      frontArea = new Area(getShape(cutOutShape));
       frontArea.transform(AffineTransform.getScaleInstance(1, -1));
       frontArea.transform(AffineTransform.getTranslateInstance(-.5, .5));
     } else {
@@ -1631,7 +1631,7 @@ public class ModelManager {
     if (staircase.getStaircaseCutOutShape() == null) {
       throw new IllegalArgumentException("No cut out shape associated to piece");
     }
-    Shape shape = parseShape(staircase.getStaircaseCutOutShape());
+    Shape shape = getShape(staircase.getStaircaseCutOutShape());
     Area staircaseArea = new Area(shape);
     if (staircase.isModelMirrored()) {
       staircaseArea = getMirroredArea(staircaseArea);
@@ -1679,8 +1679,8 @@ public class ModelManager {
   /**
    * Returns the AWT shape matching the given <a href="http://www.w3.org/TR/SVG/paths.html">SVG path shape</a>.  
    */
-  private Shape parseShape(String svgPathShape) {
-    Shape shape = parsedShapes.get(svgPathShape);
+  public Shape getShape(String svgPathShape) {
+    Shape shape = this.parsedShapes.get(svgPathShape);
     if (shape == null) {
       try {
         shape = SVGPathSupport.parsePathShape(svgPathShape);
@@ -1688,7 +1688,7 @@ public class ModelManager {
         // Fallback to default square shape if batik classes aren't in classpath
         shape = new Rectangle2D.Float(0, 0, 1, 1);
       }
-      parsedShapes.put(svgPathShape, shape);
+      this.parsedShapes.put(svgPathShape, shape);
     }
     return shape;
   }

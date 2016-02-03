@@ -176,6 +176,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
@@ -3536,11 +3537,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Shape getDoorOrWindowShapeAtWallIntersection(HomeDoorOrWindow doorOrWindow) {
     // For doors and windows, compute rectangle at wall intersection 
     float wallThickness = doorOrWindow.getDepth() * doorOrWindow.getWallThickness(); 
-    float wallDistance  = doorOrWindow.getDepth() * doorOrWindow.getWallDistance(); 
+    float wallDistance  = doorOrWindow.getDepth() * doorOrWindow.getWallDistance();
+    String cutOutShape = doorOrWindow.getCutOutShape();
+    float width = doorOrWindow.getWidth();
+    float x;
+    if (cutOutShape != null
+        && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
+      // In case of a complex cut out, compute location and width of the window hole at wall intersection 
+      Shape shape = ModelManager.getInstance().getShape(cutOutShape);
+      Rectangle2D bounds = shape.getBounds2D();
+      if (doorOrWindow.isModelMirrored()) {
+        x = doorOrWindow.getX() + (float)(0.5 - bounds.getX() - bounds.getWidth()) * width;
+      } else {
+        x = doorOrWindow.getX() - (float)(0.5 - bounds.getX()) * width;
+      }
+      width *= bounds.getWidth();
+    } else {
+      x = doorOrWindow.getX() - width / 2;
+    }
     Rectangle2D doorOrWindowRectangle = new Rectangle2D.Float(
-        doorOrWindow.getX() - doorOrWindow.getWidth() / 2,
-        doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
-        doorOrWindow.getWidth(), wallThickness);
+        x, doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
+        width, wallThickness);
     // Apply rotation to the rectangle
     AffineTransform rotation = AffineTransform.getRotateInstance(
         doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
