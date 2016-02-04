@@ -38,6 +38,7 @@ import java.util.zip.ZipInputStream;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.SimpleURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -121,6 +122,7 @@ public class ContentDigestManager {
         if (content instanceof ResourceURLContent) {
           digest = getResourceContentDigest((ResourceURLContent)content);
         } else if (content instanceof URLContent
+                   && !(content instanceof SimpleURLContent)
                    && ((URLContent)content).isJAREntry()) {
           URLContent urlContent = (URLContent)content;
           // If content comes from a home stream

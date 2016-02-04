@@ -104,6 +104,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.SimpleURLContent;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.loaders.IncorrectFormatException;
@@ -986,8 +987,15 @@ public class ModelManager {
       if (appearanceTexture != null) {
         URL textureImageUrl = (URL)appearanceTexture.getUserData();
         if (textureImageUrl != null) {
-          Content textureImage = new URLContent(textureImageUrl);
-          texture = new HomeTexture(new CatalogTexture(null, textureImage, -1, -1));
+          Content textureImage = new SimpleURLContent(textureImageUrl);
+          // Extract image name
+          String textureImageName = textureImageUrl.getFile();
+          textureImageName = textureImageName.substring(textureImageName.lastIndexOf('/') + 1);
+          int lastPoint = textureImageName.lastIndexOf('.');
+          if (lastPoint != -1) {
+            textureImageName = textureImageName.substring(0, lastPoint);
+          }
+          texture = new HomeTexture(new CatalogTexture(textureImageName, textureImage, -1, -1));
         }
       }
       try {

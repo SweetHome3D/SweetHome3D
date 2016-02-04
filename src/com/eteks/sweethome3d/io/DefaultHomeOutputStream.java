@@ -40,6 +40,7 @@ import java.util.zip.ZipOutputStream;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.SimpleURLContent;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -139,6 +140,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       if (content instanceof ResourceURLContent) {
         writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
       } else if (content instanceof URLContent
+                 && !(content instanceof SimpleURLContent)
                  && ((URLContent)content).isJAREntry()) {
         URLContent urlContent = (URLContent)content;
         // If content comes from a home stream
@@ -294,7 +296,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
           URLContent urlContent = (URLContent)obj;
           // Check if duplicated content can be avoided 
           ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
-          for (Map.Entry<Content, URLContent> contentEntry : savedContents.entrySet()) {
+          for (Map.Entry<Content, URLContent> contentEntry : this.savedContents.entrySet()) {
             if (contentDigestManager.equals(urlContent, contentEntry.getKey())) {
               return contentEntry.getValue();
             }
@@ -320,7 +322,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
                   subEntryName = entryName.substring(lastSlashIndex);
                 }
               }
-            } else {
+            } else if (!(urlContent instanceof SimpleURLContent)) {
               // Retrieve entry name in zipped stream
               subEntryName = "/" + entryName;
             }            
