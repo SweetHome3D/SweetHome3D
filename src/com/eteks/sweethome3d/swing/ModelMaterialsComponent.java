@@ -479,7 +479,8 @@ public class ModelMaterialsComponent extends JButton implements View {
                 }
               }
             });          
-        } else if (materialColor != null) {
+        } else if (materialColor != null 
+                   && (materialColor.intValue() & 0xFF000000) != 0) {
           // Display material color with an icon  
           final Color color = new Color(materialColor);
           setIcon(new Icon () {
@@ -492,7 +493,7 @@ public class ModelMaterialsComponent extends JButton implements View {
               }
       
               public void paintIcon(Component c, Graphics g, int x, int y) {
-                int squareSize = getIconHeight();
+                int squareSize = getIconHeight();                
                 g.setColor(color);          
                 g.fillRect(x + 2, y + 2, squareSize - 3, squareSize - 3);
                 g.setColor(c.getParent().getParent().getForeground());

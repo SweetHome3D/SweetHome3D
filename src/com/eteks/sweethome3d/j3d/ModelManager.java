@@ -977,7 +977,8 @@ public class ModelManager {
       if (material != null) {
         Color3f diffuseColor = new Color3f();
         material.getDiffuseColor(diffuseColor);
-        color = ((int)(diffuseColor.x * 255) << 16) 
+        color = 0xFF000000 
+            | ((int)(diffuseColor.x * 255) << 16) 
             | ((int)(diffuseColor.y * 255) << 8)
             | (int)(diffuseColor.z * 255); 
         shininess = material.getShininess() / 128;          
