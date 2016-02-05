@@ -104,6 +104,7 @@ public class Home implements Serializable, Cloneable {
   private List<String>                                furnitureVisiblePropertyNames;
   private boolean                                     furnitureDescendingSorted;
   private Map<String, Object>                         visualProperties;
+  private Map<String, String>                         properties;
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
   private boolean                                     basePlanLocked; 
@@ -262,11 +263,48 @@ public class Home implements Serializable, Cloneable {
           previousLevel = level;
         }
       }
+      
+      // Move known visual properties to string properties
+      moveVisualProperty("com.eteks.sweethome3d.swing.PhotoPanel.PhotoDialogX");
+      moveVisualProperty("com.eteks.sweethome3d.swing.PhotoPanel.PhotoDialogY");
+      moveVisualProperty("com.eteks.sweethome3d.swing.PhotosPanel.PhotoDialogX");
+      moveVisualProperty("com.eteks.sweethome3d.swing.PhotosPanel.PhotoDialogY");
+      moveVisualProperty("com.eteks.sweethome3d.swing.VideoPanel.VideoDialogX");
+      moveVisualProperty("com.eteks.sweethome3d.swing.VideoPanel.VideoDialogY");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedViewX");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedViewY");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedViewWidth");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedViewHeight");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedView");
+      moveVisualProperty("com.eteks.sweethome3d.swing.HomeComponent3D.detachedViewDividerLocation");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.PlanPaneDividerLocation");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.PlanViewportX");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.PlanViewportY");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FurnitureViewportY");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.PlanScale");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.ExpandedGroups");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FrameX");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FrameY");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FrameWidth");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FrameHeight");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.FrameMaximized");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.ScreenWidth");
+      moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.ScreenHeight");
     }
 
     addModelListeners();
   }
 
+  private void moveVisualProperty(String visualPropertyName) {
+    if (this.visualProperties.containsKey(visualPropertyName)) {
+      Object value = this.visualProperties.get(visualPropertyName);
+      this.properties.put(visualPropertyName, value != null  ? String.valueOf(value)  : null);
+      this.visualProperties.remove(visualPropertyName);
+    }
+  }
+  
   private void init(boolean newHome) {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
@@ -302,6 +340,7 @@ public class Home implements Serializable, Cloneable {
     // Let compass be visible only on new homes
     this.compass.setVisible(newHome);
     this.visualProperties = new HashMap<String, Object>();
+    this.properties = new HashMap<String, String>();
     
     this.version = CURRENT_VERSION;
   }
@@ -1452,6 +1491,9 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Returns the value of the visual property <code>propertyName</code> associated with this home.
+   * @deprecated {@link #getVisualProperty(String) getVisualProperty} and {@link #setVisualProperty(String, Object) setVisualProperty} 
+   *     should be replaced by calls to {@link #getProperty(String) getProperty} and {@link #setProperty(String, String) setProperty}
+   *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
   public Object getVisualProperty(String propertyName) {
     return this.visualProperties.get(propertyName);
@@ -1459,11 +1501,64 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Sets a visual property associated with this home.
+   * @deprecated {@link #getVisualProperty(String) getVisualProperty} and {@link #setVisualProperty(String, Object) setVisualProperty} 
+   *     should be replaced by calls to {@link #getProperty(String) getProperty} and {@link #setProperty(String, String) setProperty}
+   *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
   public void setVisualProperty(String propertyName, Object propertyValue) {
     this.visualProperties.put(propertyName, propertyValue);
   }
 
+  /**
+   * Returns the value of the property <code>propertyName</code> associated with this home.
+   * @return the value of the property or <code>null</code> if it doesn't exist. 
+   * @since 5.2
+   */
+  public String getProperty(String propertyName) {
+    return this.properties.get(propertyName);
+  }
+  
+  /**
+   * Returns the numeric value of the property <code>propertyName</code> associated with this home.
+   * @return an instance of {@link Long}, {@link Double} or <code>null</code> if the property 
+   * doesn't exist or can't be parsed. 
+   * @since 5.2
+   */
+  public Number getNumericProperty(String propertyName) {
+    String value = this.properties.get(propertyName);
+    if (value != null) {
+      try {
+        return new Long (value);
+      } catch (NumberFormatException ex) {
+        try {
+          return new Double (value);
+        } catch (NumberFormatException ex1) {
+        }
+      }
+    }
+    return null;
+  }
+  
+  /**
+   * Sets a property associated with this home.
+   * @since 5.2
+   */
+  public void setProperty(String propertyName, String propertyValue) {
+    if (this.properties.containsKey(propertyName) && propertyValue == null) {
+      this.properties.remove(propertyName);
+    }
+    this.properties.put(propertyName, propertyValue);
+  }
+  
+  /**
+   * Returns the property names.
+   * @return a collection of all the names of the properties set with {@link #setProperty(String, String) setProperty} 
+   * @since 5.2
+   */
+  public Collection<String> getPropertyNames() {
+    return this.properties.keySet();
+  }
+  
   /**
    * Returns <code>true</code> if the home objects belonging to the base plan 
    * (generally walls, rooms, dimension lines and texts) are locked.

@@ -253,9 +253,9 @@ public class PlanController extends FurnitureController implements Controller {
     addModelListeners();
     
     // Restore previous scale if it exists
-    Float scale = (Float)home.getVisualProperty(SCALE_VISUAL_PROPERTY);
+    Number scale = home.getNumericProperty(SCALE_VISUAL_PROPERTY);
     if (scale != null) {
-      setScale(scale);
+      setScale(scale.floatValue());
     }
   }
 
@@ -1527,7 +1527,7 @@ public class PlanController extends FurnitureController implements Controller {
         moveMouse(getView().convertXPixelToModel(x), getView().convertYPixelToModel(y));
       }
       this.propertyChangeSupport.firePropertyChange(Property.SCALE.name(), oldScale, scale);
-      this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
+      this.home.setProperty(SCALE_VISUAL_PROPERTY, String.valueOf(scale));
     }
   } 
   

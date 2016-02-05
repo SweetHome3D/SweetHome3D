@@ -486,8 +486,8 @@ public class PhotosPanel extends JPanel implements DialogView {
       Point dialogLocation = null;
       if (homeRoot != null) {
         // Restore location if it exists
-        Integer x = (Integer)this.home.getVisualProperty(PHOTOS_DIALOG_X_VISUAL_PROPERTY);
-        Integer y = (Integer)this.home.getVisualProperty(PHOTOS_DIALOG_Y_VISUAL_PROPERTY);      
+        Number x = this.home.getNumericProperty(PHOTOS_DIALOG_X_VISUAL_PROPERTY);
+        Number y = this.home.getNumericProperty(PHOTOS_DIALOG_Y_VISUAL_PROPERTY);      
 
         int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
@@ -506,9 +506,9 @@ public class PhotosPanel extends JPanel implements DialogView {
         }
         int dialogHeight = dialog.getHeight();
         if (x != null && y != null 
-            && x + dialogWidth <= screenRightBorder
-            && y + dialogHeight <= screenBottomBorder) {
-          dialogLocation = new Point(x, y);
+            && x.intValue() + dialogWidth <= screenRightBorder
+            && y.intValue() + dialogHeight <= screenBottomBorder) {
+          dialogLocation = new Point(x.intValue(), y.intValue());
         } else if (screenRightBorder - windowRightBorder > dialogWidth / 2
                    || dialogHeight == screenHeight) {
           // If there some space left at the right of the window,

@@ -302,7 +302,7 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void updateExpandedRows(Home home) {
     if (home.getVersion() >= 5000) {
-      final String expandedRows = (String)home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
+      final String expandedRows = home.getProperty(EXPANDED_ROWS_VISUAL_PROPERTY);
       if (expandedRows != null && expandedRows.length() > 0) {        
         addAncestorListener(new AncestorListener() {
             public void ancestorAdded(AncestorEvent event) {
@@ -341,9 +341,9 @@ public class FurnitureTable extends JTable implements View, Printable {
         rows.append(row);
       }
     }
-    if (home.getVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY) != null
+    if (home.getProperty(EXPANDED_ROWS_VISUAL_PROPERTY) != null
         || rows.length() > 0) {
-      controller.setVisualProperty(EXPANDED_ROWS_VISUAL_PROPERTY, rows.toString());
+      controller.setProperty(EXPANDED_ROWS_VISUAL_PROPERTY, rows.toString());
     }
   }
 

@@ -2460,9 +2460,9 @@ public class HomePane extends JRootPane implements HomeView {
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, resizeWeightUpdater);
     
     // Restore divider location previously set 
-    Integer dividerLocation = (Integer)home.getVisualProperty(dividerLocationProperty);
+    Number dividerLocation = home.getNumericProperty(dividerLocationProperty);
     if (dividerLocation != null) {
-      splitPane.setDividerLocation(dividerLocation);
+      splitPane.setDividerLocation(dividerLocation.intValue());
       // Update resize weight once split pane location is set
       splitPane.addAncestorListener(new AncestorListener() {
         private boolean firstCall = true;
@@ -2497,7 +2497,7 @@ public class HomePane extends JRootPane implements HomeView {
                       focusedComponent.requestFocusInWindow();
                     }
                   }
-                  controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
+                  controller.setProperty(dividerLocationProperty, String.valueOf(ev.getNewValue()));
                 }
               });
           }
@@ -2582,13 +2582,13 @@ public class HomePane extends JRootPane implements HomeView {
                 viewport.getView().requestFocusInWindow();
               }
             });    
-        Integer viewportY = (Integer)home.getVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY);
+        Number viewportY = home.getNumericProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY);
         if (viewportY != null) {
-          viewport.setViewPosition(new Point(0, viewportY));
+          viewport.setViewPosition(new Point(0, viewportY.intValue()));
         }
         viewport.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
-              controller.setVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, viewport.getViewPosition().y);
+              controller.setProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewport.getViewPosition().y));
             }
           });
         ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
@@ -2801,16 +2801,16 @@ public class HomePane extends JRootPane implements HomeView {
             new RulersVisibilityChangeListener(this, planScrollPane, controller));
         // Restore viewport position if it exists
         final JViewport viewport = planScrollPane.getViewport();
-        Integer viewportX = (Integer)home.getVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
-        Integer viewportY = (Integer)home.getVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY);
+        Number viewportX = home.getNumericProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
+        Number viewportY = home.getNumericProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY);
         if (viewportX != null && viewportY != null) {
-          viewport.setViewPosition(new Point(viewportX, viewportY));
+          viewport.setViewPosition(new Point(viewportX.intValue(), viewportY.intValue()));
         }
         viewport.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
               Point viewportPosition = viewport.getViewPosition();
-              controller.setVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, viewportPosition.x);
-              controller.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
+              controller.setProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, String.valueOf(viewportPosition.x));
+              controller.setProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewportPosition.y));
             }
           });
       }
@@ -2857,9 +2857,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
     
       final JComponent planView3DPane;
-      Boolean detachedView3DProperty = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
-      boolean detachedView3D = detachedView3DProperty != null 
-          && detachedView3DProperty.booleanValue();        
+      boolean detachedView3D = Boolean.parseBoolean(home.getProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY));
       if (planView != null) {
         // Create a split pane that displays both components
         final JSplitPane planView3DSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, view3D);
@@ -2867,10 +2865,10 @@ public class HomePane extends JRootPane implements HomeView {
         configureSplitPane((JSplitPane)planView3DSplitPane, home, 
             PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
 
-        final Integer dividerLocation = (Integer)home.getVisualProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
+        final Number dividerLocation = home.getNumericProperty(PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY);
         if (OperatingSystem.isMacOSX() 
             && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
-            && !detachedView3D && dividerLocation != null && dividerLocation > 2
+            && !detachedView3D && dividerLocation != null && dividerLocation.intValue() > 2
             && !Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
           // Under Mac OS X, ensure that the 3D view of an existing home will be displayed during a while
           // to avoid a freeze when the 3D view was saved as hidden and then the window displaying the 3D view is enlarged 
@@ -2880,11 +2878,11 @@ public class HomePane extends JRootPane implements HomeView {
                 planView3DSplitPane.removeAncestorListener(this);
                 if (planView3DSplitPane.getRightComponent().getHeight() == 0) {
                   // If the 3D view is invisible, make it appear during a while
-                  planView3DSplitPane.setDividerLocation(dividerLocation - 2);
+                  planView3DSplitPane.setDividerLocation(dividerLocation.intValue() - 2);
                   new Timer(1000, new ActionListener() {
                       public void actionPerformed(ActionEvent ev) {
                         ((Timer)ev.getSource()).stop();
-                        planView3DSplitPane.setDividerLocation(dividerLocation);
+                        planView3DSplitPane.setDividerLocation(dividerLocation.intValue());
                       }
                     }).start();
                 }
@@ -2905,34 +2903,35 @@ public class HomePane extends JRootPane implements HomeView {
     
       // Detach 3D view if it was detached when saved and its dialog can be viewed in one of the screen devices
       if (detachedView3D) {
-        final Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
-        final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
-        final Integer dialogWidth = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
-        final Integer dialogHeight = (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY);
+        final Number dialogX = this.home.getNumericProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+        final Number dialogY = this.home.getNumericProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
+        final Number dialogWidth = home.getNumericProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
+        final Number dialogHeight = home.getNumericProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY);
         if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null) {
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 View view3D = controller.getHomeController3D().getView();
                 // Check 3D view can be viewed in one of the available screens      
                 if (getActionMap().get(ActionType.DETACH_3D_VIEW).isEnabled() 
-                    && SwingTools.isRectangleVisibleAtScreen(new Rectangle(dialogX, dialogY, dialogWidth, dialogHeight))) {
-                  detachView(view3D, dialogX, dialogY, dialogWidth, dialogHeight);
+                    && SwingTools.isRectangleVisibleAtScreen(new Rectangle(
+                        dialogX.intValue(), dialogY.intValue(), dialogWidth.intValue(), dialogHeight.intValue()))) {
+                  detachView(view3D, dialogX.intValue(), dialogY.intValue(), dialogWidth.intValue(), dialogHeight.intValue());
                 } else if (planView3DPane instanceof JSplitPane) {
                   // Restore the divider location of the split pane displaying the 3D view   
                   final JSplitPane splitPane = ((JSplitPane)planView3DPane);
-                  final Float dividerLocation = (Float)home.getVisualProperty(
+                  final Number dividerLocation = home.getNumericProperty(
                       view3D.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
                   if (dividerLocation != null 
-                      && dividerLocation != -1f) {
-                    splitPane.setDividerLocation(dividerLocation);
+                      && dividerLocation.floatValue() != -1f) {
+                    splitPane.setDividerLocation(dividerLocation.floatValue());
                   }
-                  controller.setVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
+                  controller.setProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
                 }
               }
             });
           return planView3DPane;
         }
-        controller.setVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
+        controller.setProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
       }
       
       return planView3DPane;
@@ -3271,13 +3270,12 @@ public class HomePane extends JRootPane implements HomeView {
       dividerLocation = -1;
     }
     
-    Integer dialogX = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
-    Integer dialogWidth = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
-    if (dialogX != null && dialogWidth != null) {
-      detachView(view, dialogX, 
-          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY),
-          dialogWidth,
-          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
+    Number dialogX = this.home.getNumericProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+    Number dialogY = this.home.getNumericProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
+    Number dialogWidth = this.home.getNumericProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
+    Number dialogHeight = this.home.getNumericProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY);
+    if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null) {
+      detachView(view, dialogX.intValue(), dialogY.intValue(), dialogWidth.intValue(), dialogHeight.intValue());
     } else {
       Point componentLocation = new Point();
       Dimension componentSize = component.getSize();
@@ -3289,7 +3287,7 @@ public class HomePane extends JRootPane implements HomeView {
           componentSize.width + insets.left + insets.right,
           componentSize.height + insets.top + insets.bottom);
     }
-    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, dividerLocation);
+    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, String.valueOf(dividerLocation));
   }
   
   /**
@@ -3423,14 +3421,14 @@ public class HomePane extends JRootPane implements HomeView {
     separateWindow.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, separateWindow.getWidth());
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, separateWindow.getHeight());
+          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, String.valueOf(separateWindow.getWidth()));
+          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, String.valueOf(separateWindow.getHeight()));
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, separateWindow.getX());
-          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, separateWindow.getY());
+          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, String.valueOf(separateWindow.getX()));
+          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, String.valueOf(separateWindow.getY()));
         }
       });
 
@@ -3438,14 +3436,14 @@ public class HomePane extends JRootPane implements HomeView {
     separateWindow.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateWindow.getBounds()));
     separateWindow.setVisible(true);
     
-    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, true);
+    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, Boolean.TRUE.toString());
   }
   
   /**
    * Attaches the given <code>view</code> to home view.
    */
   public void attachView(final View view) {
-    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
+    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
 
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
     if (dummyComponent != null) {
@@ -3459,10 +3457,12 @@ public class HomePane extends JRootPane implements HomeView {
       Container parent = dummyComponent.getParent();
       if (parent instanceof JSplitPane) {
         JSplitPane splitPane = (JSplitPane)parent;
-        float dividerLocation = (Float)this.home.getVisualProperty(
-            view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
         splitPane.setDividerSize(UIManager.getInt("SplitPane.dividerSize"));
-        splitPane.setDividerLocation(dividerLocation);
+        Number dividerLocation = this.home.getNumericProperty(
+            view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
+        if (dividerLocation != null) {
+          splitPane.setDividerLocation(dividerLocation.floatValue());
+        }
         if (splitPane.getLeftComponent() == dummyComponent) {
           splitPane.setLeftComponent(component);
         } else {
