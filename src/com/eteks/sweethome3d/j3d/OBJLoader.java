@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1771,14 +1772,35 @@ public class OBJLoader extends LoaderBase implements Loader {
           URL textureImageUrl = baseUrl != null
               ? new URL(baseUrl, imageFileName.replace("%", "%25").replace("#", "%23"))
               : new File(imageFileName).toURI().toURL();
-          in = openStream(textureImageUrl, useCaches);
-          BufferedImage textureImage = ImageIO.read(in);          
-          if (textureImage != null) {
-            TextureLoader textureLoader = new TextureLoader(textureImage);
-            Texture texture = textureLoader.getTexture();
-            // Keep in user data the URL of the texture image
-            texture.setUserData(textureImageUrl);
-            currentAppearance.setTexture(texture);
+          // Check texture image wasn't already loaded
+          Texture texture = null;
+          for (Appearance appearance : appearances.values()) {
+            texture = appearance.getTexture();
+            if (texture != null
+                && textureImageUrl.equals(texture.getUserData())) {
+              currentAppearance.setTexture(texture);
+            }
+          }
+          if (texture == null) {  
+            in = openStream(textureImageUrl, useCaches);
+            BufferedImage textureImage = null;          
+            try {
+              textureImage = ImageIO.read(in);
+            } catch (ConcurrentModificationException ex) {
+              // Try to read the image once more, 
+              // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
+              in.close();
+              in = openStream(textureImageUrl, useCaches);
+              textureImage = ImageIO.read(in);
+            }
+            
+            if (textureImage != null) {
+              TextureLoader textureLoader = new TextureLoader(textureImage);
+              texture = textureLoader.getTexture();
+              // Keep in user data the URL of the texture image
+              texture.setUserData(textureImageUrl);
+              currentAppearance.setTexture(texture);
+            }
           }
         } catch (IOException ex) {
           // Ignore images at other format
