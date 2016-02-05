@@ -37,6 +37,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -1349,7 +1350,16 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           ? new URL(baseUrl, fileName.replace("%", "%25").replace("#", "%23"))
           : new File(fileName).toURI().toURL();
       imageStream = openStream(textureImageUrl, useCaches);
-      BufferedImage textureImage = ImageIO.read(imageStream);          
+      BufferedImage textureImage;          
+      try {
+        textureImage = ImageIO.read(imageStream);
+      } catch (ConcurrentModificationException ex) {
+        // Try to read the image once more, 
+        // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
+        imageStream.close();
+        imageStream = openStream(textureImageUrl, useCaches);
+        textureImage = ImageIO.read(imageStream);
+      }
       if (textureImage != null) {
         TextureLoader textureLoader = new TextureLoader(textureImage);
         Texture texture = textureLoader.getTexture();

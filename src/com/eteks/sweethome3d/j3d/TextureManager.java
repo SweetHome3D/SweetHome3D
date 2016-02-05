@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -239,7 +240,16 @@ public class TextureManager {
     try {
       // Read the image 
       InputStream contentStream = content.openStream();
-      BufferedImage image = ImageIO.read(contentStream);
+      BufferedImage image;          
+      try {
+        image = ImageIO.read(contentStream);
+      } catch (ConcurrentModificationException ex) {
+        // Try to read the image once more, 
+        // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
+        contentStream.close();
+        contentStream = content.openStream();
+       image = ImageIO.read(contentStream);
+      }
       if (angle != 0) {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);

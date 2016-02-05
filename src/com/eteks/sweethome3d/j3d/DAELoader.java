@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -639,7 +640,16 @@ public class DAELoader extends LoaderBase implements Loader {
           // Don't interpret possible # sign in URLs as anchor separator
           URL textureImageUrl = new URL(this.baseUrl, getCharacters().replace("#", "%23"));
           in = openStream(textureImageUrl);
-          BufferedImage textureImage = ImageIO.read(in);
+          BufferedImage textureImage;
+          try {
+            textureImage = ImageIO.read(in);
+          } catch (ConcurrentModificationException ex) {
+            // Try to read the image once more, 
+            // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
+            in.close();
+            in = openStream(textureImageUrl);
+            textureImage = ImageIO.read(in);
+          }
           if (textureImage != null) {
             TextureLoader textureLoader = new TextureLoader(textureImage);
             Texture texture = textureLoader.getTexture();
