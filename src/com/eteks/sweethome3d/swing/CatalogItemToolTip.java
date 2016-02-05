@@ -108,7 +108,7 @@ public class CatalogItemToolTip extends JToolTip {
       if (this.preferences != null) {
         String creator = item.getCreator();
         if (creator != null) {
-          tipTextCreator = this.preferences.getLocalizedString(FurnitureCatalogTree.class, "tooltipCreator", creator);
+          tipTextCreator = this.preferences.getLocalizedString(CatalogItemToolTip.class, "tooltipCreator", creator);
         }
       }
       
