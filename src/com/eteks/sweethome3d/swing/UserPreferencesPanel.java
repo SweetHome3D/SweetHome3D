@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -915,6 +916,15 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       add(this.defaultFontNameLabel, new GridBagConstraints(
           0, 9, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
+      Dimension preferredSize = this.defaultFontNameComboBox.getPreferredSize();
+      if (this.unitComboBox != null 
+          && this.floorColorOrTextureRadioButton != null) {
+        preferredSize.width = Math.min(preferredSize.width, 
+            this.unitComboBox.getPreferredSize().width + 5 + this.floorColorOrTextureRadioButton.getPreferredSize().width);
+      } else {
+        preferredSize.width = Math.min(preferredSize.width, 250); 
+      }
+      this.defaultFontNameComboBox.setPreferredSize(preferredSize);
       add(this.defaultFontNameComboBox, new GridBagConstraints(
           1, 9, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));

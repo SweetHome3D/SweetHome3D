@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -342,9 +343,12 @@ public class LabelPanel extends JPanel implements DialogView {
     nameAndStylePanel.add(this.fontNameLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    Dimension preferredSize = this.fontNameComboBox.getPreferredSize();
+    preferredSize.width = Math.min(preferredSize.width, this.textTextField.getPreferredSize().width);
+    this.fontNameComboBox.setPreferredSize(preferredSize);
     nameAndStylePanel.add(this.fontNameComboBox, new GridBagConstraints(
         1, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     nameAndStylePanel.add(this.fontSizeLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
