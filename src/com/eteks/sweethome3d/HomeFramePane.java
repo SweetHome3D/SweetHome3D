@@ -168,20 +168,20 @@ public class HomeFramePane extends JRootPane implements View {
         public void componentResized(ComponentEvent ev) {
           // Store new size only if frame isn't maximized
           if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
-            controller.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
-            controller.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
+            controller.setProperty(FRAME_WIDTH_VISUAL_PROPERTY, String.valueOf(frame.getWidth()));
+            controller.setProperty(FRAME_HEIGHT_VISUAL_PROPERTY, String.valueOf(frame.getHeight()));
           }
           Dimension userScreenSize = getUserScreenSize();
-          controller.setVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY, userScreenSize.width);
-          controller.setVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, userScreenSize.height);
+          controller.setProperty(SCREEN_WIDTH_VISUAL_PROPERTY, String.valueOf(userScreenSize.width));
+          controller.setProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, String.valueOf(userScreenSize.height));
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
           // Store new location only if frame isn't maximized
           if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
-            controller.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
-            controller.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
+            controller.setProperty(FRAME_X_VISUAL_PROPERTY, String.valueOf(frame.getX()));
+            controller.setProperty(FRAME_Y_VISUAL_PROPERTY, String.valueOf(frame.getY()));
           }
         }
       };
@@ -193,8 +193,8 @@ public class HomeFramePane extends JRootPane implements View {
 
         @Override
         public void windowStateChanged(WindowEvent ev) {
-          controller.setVisualProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
-              (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH);
+          controller.setProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
+              String.valueOf((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH));
         }
         
         @Override
@@ -289,23 +289,23 @@ public class HomeFramePane extends JRootPane implements View {
    * Computes <code>frame</code> size and location to fit into screen.
    */
   private void computeFrameBounds(Home home, final JFrame frame) {
-    Integer x = (Integer)home.getVisualProperty(FRAME_X_VISUAL_PROPERTY);
-    Integer y = (Integer)home.getVisualProperty(FRAME_Y_VISUAL_PROPERTY);
-    Integer width = (Integer)home.getVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY);
-    Integer height = (Integer)home.getVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY);
-    Boolean maximized = (Boolean)home.getVisualProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY);
-    Integer screenWidth = (Integer)home.getVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
-    Integer screenHeight = (Integer)home.getVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
+    Number x = home.getNumericProperty(FRAME_X_VISUAL_PROPERTY);
+    Number y = home.getNumericProperty(FRAME_Y_VISUAL_PROPERTY);
+    Number width = home.getNumericProperty(FRAME_WIDTH_VISUAL_PROPERTY);
+    Number height = home.getNumericProperty(FRAME_HEIGHT_VISUAL_PROPERTY);
+    boolean maximized = Boolean.parseBoolean(home.getProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY));
+    Number screenWidth = home.getNumericProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
+    Number screenHeight = home.getNumericProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
     
     Dimension screenSize = getUserScreenSize();
     // If home frame bounds exist and screen resolution didn't reduce 
     if (x != null && y != null 
         && width != null && height != null 
         && screenWidth != null && screenHeight != null
-        && screenWidth <= screenSize.width
-        && screenHeight <= screenSize.height) {
-      final Rectangle frameBounds = new Rectangle(x, y, width, height);
-      if (maximized != null && maximized) {
+        && screenWidth.intValue() <= screenSize.width
+        && screenHeight.intValue() <= screenSize.height) {
+      final Rectangle frameBounds = new Rectangle(x.intValue(), y.intValue(), width.intValue(), height.intValue());
+      if (maximized) {
         if (OperatingSystem.isMacOSX() 
             && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
           // Display the frame at its maximum size because calling setExtendedState to maximize 
@@ -394,7 +394,7 @@ public class HomeFramePane extends JRootPane implements View {
         } else {
           y = maxY + 23;
         }
-        frame.setLocation(x, y);
+        frame.setLocation(x.intValue(), y.intValue());
       }
     }
   }
