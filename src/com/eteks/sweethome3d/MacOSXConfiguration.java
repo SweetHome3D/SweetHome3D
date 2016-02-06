@@ -35,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowStateListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -105,7 +106,7 @@ class MacOSXConfiguration {
     final HomeController defaultController = 
         homeApplication.createHomeFrameController(homeApplication.createHome()).getHomeController();
     final HomePane defaultHomeView = (HomePane)defaultController.getView();
-    setDefaultActionsEnabled(defaultHomeView, true);
+    setDefaultActionsEnabled(defaultHomeView, false);
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
     
     JFrame frame = null;
@@ -115,7 +116,7 @@ class MacOSXConfiguration {
         frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
       } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
         macosxApplication.setDefaultMenuBar(defaultMenuBar);
-        addWindowMenu(null, defaultMenuBar, homeApplication, true);
+        addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
       }
     } catch (NoSuchMethodError ex) {
       // Create default frame if setDefaultMenuBar isn't available
@@ -315,7 +316,7 @@ class MacOSXConfiguration {
           }
           // Add Mac OS X Window menu on new homes
           MacOSXConfiguration.addWindowMenu(
-              homeFrame, homeFrame.getJMenuBar(), homeApplication, false);
+              homeFrame, homeFrame.getJMenuBar(), homeApplication, defaultHomeView, false);
           
           if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
             // Help system to understand it should display the main menu of one of the remaining windows when a window is closed
@@ -332,12 +333,17 @@ class MacOSXConfiguration {
                 }
               });
           }
+          homeFrame.addWindowStateListener(new WindowStateListener() {
+              public void windowStateChanged(WindowEvent ev) {
+                // Enable default actions if needed
+                enableDefaultActions(homeApplication, defaultHomeView);
+              }
+            });
           // Don't enable actions in default menu bar (the menu bar might be displayed when file dialogs are displayed)
           setDefaultActionsEnabled(defaultHomeView, false);
-        } else if (ev.getType() == CollectionEvent.Type.DELETE
-                    && homeApplication.getHomes().size() == 0) {
-          // Enable default actions
-          setDefaultActionsEnabled(defaultHomeView, true);
+        } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+          // Enable default actions if needed
+          enableDefaultActions(homeApplication, defaultHomeView);
         }
       };
     });
@@ -355,6 +361,20 @@ class MacOSXConfiguration {
     }
   }
 
+  /**
+   * Enables default menu bar actions if no window is at screen.
+   */
+  private static void enableDefaultActions(SweetHome3D homeApplication, HomePane defaultHomeView) {
+    for (Home home : homeApplication.getHomes()) {
+      if ((homeApplication.getHomeFrame(home).getState() & JFrame.ICONIFIED) == 0) {
+        setDefaultActionsEnabled(defaultHomeView, false);
+        return;
+      }
+    }
+    // If all homes are iconified, enable actions in default menu bar
+    setDefaultActionsEnabled(defaultHomeView, true);
+  }
+  
   /**
    * Enables / disables default actions in the given view.
    */
@@ -391,7 +411,7 @@ class MacOSXConfiguration {
           frame.setVisible(true);
           frame.setJMenuBar(defaultMenuBar);
           frame.setContentPane(defaultHomeView);
-          addWindowMenu(frame, defaultMenuBar, homeApplication, true);
+          addWindowMenu(frame, defaultMenuBar, homeApplication, defaultHomeView, true);
         }
       });
     homeApplication.addHomesListener(new CollectionListener<Home>() {
@@ -420,6 +440,7 @@ class MacOSXConfiguration {
   private static void addWindowMenu(final JFrame frame, 
                                     final JMenuBar menuBar, 
                                     final SweetHome3D homeApplication,
+                                    final HomePane defaultHomeView, 
                                     boolean defaultFrame) {
     UserPreferences preferences = homeApplication.getUserPreferences();
     final JMenu windowMenu = new JMenu(
