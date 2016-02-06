@@ -202,9 +202,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   public void update() {
     updatePieceOfFurnitureTransform();
     updatePieceOfFurnitureModelMirrored();
-    updatePieceOfFurnitureVisibility();      
     updatePieceOfFurnitureColorAndTexture(false);      
     updateLight();
+    updatePieceOfFurnitureVisibility();      
   }
 
   /**
@@ -220,8 +220,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   /**
    * Sets the color and the texture applied to piece model.
-   * Should be called after {@link #updatePieceOfFurnitureVisibility()} because 
-   * it may render some shapes invisible if a material color alpha is 0.
    */
   private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
@@ -353,15 +351,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     boolean visible = piece.isVisible() 
         && (piece.getLevel() == null
             || piece.getLevel().isViewableAndVisible()); 
+    HomeMaterial [] materials = piece.getColor() == null && piece.getTexture() == null
+        ? piece.getModelMaterials()
+        : null;
     setVisible(getFilledModelNode(), visible
         && (drawingMode == null
             || drawingMode == HomeEnvironment.DrawingMode.FILL 
-            || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
+            || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE),
+        materials);
     if (outlineModelNode != null) {
       // Update visibility of outline model shapes
       setVisible(outlineModelNode, visible
           && (drawingMode == HomeEnvironment.DrawingMode.OUTLINE
-              || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
+              || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE),
+          materials);
     }
   }
 
@@ -422,9 +425,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
     updatePieceOfFurnitureModelMirrored();
-    updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
     updateLight();
+    updatePieceOfFurnitureVisibility();
 
     // Manage light sources visibility 
     if (this.home != null 
@@ -633,16 +636,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                 materialShininess = material.getShininess();
               }
               color = material.getColor();                
-              if (color != null) {
-                if ((color.intValue() & 0xFF000000) == 0) {
-                  // Make shape invisible
-                  appearance.getRenderingAttributes().setVisible(false);
-                } else {
-                  appearance.setMaterial(getMaterial(color, color, materialShininess));
-                  appearance.setTexture(null);
-                  appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-                  appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
-                }
+              if (color != null 
+                  && (color.intValue() & 0xFF000000) != 0) {
+                appearance.setMaterial(getMaterial(color, color, materialShininess));
+                appearance.setTexture(null);
+                appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+                appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
               } else if (color == null && material.getTexture() != null) {
                 if (isTexturesCoordinatesDefined(shape)) {
                   restoreDefaultTextureCoordinatesGeneration(appearance);
@@ -778,15 +777,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   /**
    * Sets the visible attribute of the <code>Shape3D</code> children nodes of <code>node</code>.
    */
-  private void setVisible(Node node, boolean visible) {
+  private void setVisible(Node node, boolean visible, HomeMaterial [] materials) {
     if (node instanceof Group) {
       // Set visibility of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setVisible((Node)enumeration.nextElement(), visible);
+        setVisible((Node)enumeration.nextElement(), visible, materials);
       }
     } else if (node instanceof Link) {
-      setVisible(((Link)node).getSharedGroup(), visible);
+      setVisible(((Link)node).getSharedGroup(), visible, materials);
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -811,6 +810,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         // Don't display light sources shapes of unselected lights
         visible = false;
       }
+      
+      if (visible
+          && materials != null) {
+        // Check whether the material color used by this shape isn't invisible 
+        for (HomeMaterial material : materials) {
+          if (material != null 
+              && material.getName().equals(appearance.getName())) {
+            Integer color = material.getColor();                
+            visible = color == null
+                || (color.intValue() & 0xFF000000) != 0;
+            break;
+          }
+        }
+      }  
       // Change visibility
       renderingAttributes.setVisible(visible);
     } 
