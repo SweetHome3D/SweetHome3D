@@ -1775,10 +1775,11 @@ public class OBJLoader extends LoaderBase implements Loader {
           // Check texture image wasn't already loaded
           Texture texture = null;
           for (Appearance appearance : appearances.values()) {
-            texture = appearance.getTexture();
-            if (texture != null
-                && textureImageUrl.equals(texture.getUserData())) {
-              currentAppearance.setTexture(texture);
+            Texture appearanceTexture = appearance.getTexture();
+            if (appearanceTexture != null
+                && textureImageUrl.equals(appearanceTexture.getUserData())) {
+              currentAppearance.setTexture(appearanceTexture);
+              texture = appearanceTexture;
             }
           }
           if (texture == null) {  
