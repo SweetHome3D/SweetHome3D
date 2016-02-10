@@ -1125,10 +1125,12 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folder where language libraries files must be placed 
+   * Returns the folders where language libraries files are placed 
    * or <code>null</code> if that folder can't be retrieved.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
    */
-  private File [] getLanguageLibrariesPluginFolders() {
+  protected File [] getLanguageLibrariesPluginFolders() {
     try {
       return getApplicationSubfolders(LANGUAGE_LIBRARIES_PLUGIN_SUB_FOLDER);
     } catch (IOException ex) {
@@ -1137,10 +1139,12 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folder where furniture catalog files must be placed 
+   * Returns the folders where furniture catalog files are placed 
    * or <code>null</code> if that folder can't be retrieved.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
    */
-  private File [] getFurnitureLibrariesPluginFolders() {
+  protected File [] getFurnitureLibrariesPluginFolders() {
     try {
       return getApplicationSubfolders(FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER);
     } catch (IOException ex) {
@@ -1149,10 +1153,12 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folder where texture catalog files must be placed 
+   * Returns the folders where texture catalog files are placed 
    * or <code>null</code> if that folder can't be retrieved.
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
    */
-  private File [] getTexturesLibrariesPluginFolders() {
+  protected File [] getTexturesLibrariesPluginFolders() {
     try {
       return getApplicationSubfolders(TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER);
     } catch (IOException ex) {
@@ -1174,6 +1180,8 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Returns Sweet Home 3D application folders. 
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
    */
   public File [] getApplicationFolders() throws IOException {
     if (this.applicationFolders != null) {
@@ -1185,6 +1193,8 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Returns subfolders of Sweet Home 3D application folders of a given name. 
+   * Caution : This method can be called from constructor so overriding implementations
+   * shouldn't be based on the state of their fields.
    */
   public File [] getApplicationSubfolders(String subfolder) throws IOException {
     File [] applicationFolders = getApplicationFolders();
