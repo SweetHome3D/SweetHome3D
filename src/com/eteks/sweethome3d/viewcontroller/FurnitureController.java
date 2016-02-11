@@ -240,6 +240,7 @@ public class FurnitureController implements Controller {
     for (int i = 0; i < furnitureIndex.length; i++) {
       if (furnitureGroups != null && furnitureGroups [i] != null) {
         this.home.addPieceOfFurnitureToGroup(furniture [i], furnitureGroups [i], furnitureIndex [i]);
+        furniture [i].setVisible(furnitureGroups [i].isVisible());
       } else {
         this.home.addPieceOfFurniture(furniture [i], furnitureIndex [i]);
       }
