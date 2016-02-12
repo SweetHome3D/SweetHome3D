@@ -634,15 +634,7 @@ public class RoomController implements Controller {
   private List<WallSide> getRoomsWallSides(List<Room> rooms, List<WallSide> defaultWallSides) {
     List<WallSide> wallSides = new ArrayList<WallSide>();
     for (Room room : rooms) {
-      float [][] points = room.getPoints();
-      GeneralPath roomShape = new GeneralPath();
-      roomShape.moveTo(points [0][0], points [0][1]);
-      for (int i = 1; i < points.length; i++) {
-        roomShape.lineTo(points [i][0], points [i][1]);
-      }
-      roomShape.closePath();
-      Area roomArea = new Area(roomShape);
-
+      Area roomArea = new Area(getPath(room.getPoints(), true));
       if (defaultWallSides != null) {
         for (WallSide wallSide : defaultWallSides) {
           if (isRoomItersectingWallSide(wallSide.getWall().getPoints(), wallSide.getSide(), roomArea)) {
