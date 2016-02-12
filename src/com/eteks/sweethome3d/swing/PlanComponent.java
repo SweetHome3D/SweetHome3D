@@ -4921,7 +4921,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (selectionBounds != null) {
               Rectangle pixelBounds = getShapePixelBounds(selectionBounds);
               pixelBounds.grow(5, 5);
-              scrollRectToVisible(pixelBounds);
+              Rectangle visibleRectangle = getVisibleRect();
+              if (!pixelBounds.intersects(visibleRectangle)) {
+                scrollRectToVisible(pixelBounds);
+              }
             }
           }
         });
