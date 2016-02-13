@@ -5434,7 +5434,7 @@ public class PlanController extends FurnitureController implements Controller {
     final float newDepth = piece.getDepth();
     final float newHeight = piece.getHeight();
     final boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
-    && ((HomeDoorOrWindow)piece).isBoundToWall();
+        && ((HomeDoorOrWindow)piece).isBoundToWall();
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -8392,6 +8392,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
     private boolean                 magnetismEnabled;
+    private boolean                 alignmentActivated;
     private float                   deltaYToResizePoint;
     private ResizedPieceOfFurniture resizedPiece;
     private float []                topLeftPoint;
@@ -8420,6 +8421,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasMagnetismToggledLastMousePress();
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getHeight()), 
@@ -8444,7 +8446,8 @@ public class PlanController extends FurnitureController implements Controller {
       selectedPiece.setHeight(newHeight);
 
       // Manage proportional constraint 
-      if (!selectedPiece.isDeformable()) {
+      if (!selectedPiece.isDeformable()
+          || this.alignmentActivated) {
         float ratio = newHeight / this.resizedPiece.getHeight();
         float newWidth = this.resizedPiece.getWidth() * ratio;
         float newDepth = this.resizedPiece.getDepth() * ratio;
@@ -8458,6 +8461,9 @@ public class PlanController extends FurnitureController implements Controller {
         selectedPiece.setY(newY);
         selectedPiece.setWidth(newWidth);
         selectedPiece.setDepth(newDepth);
+        if (selectedPiece instanceof HomeDoorOrWindow) {
+          ((HomeDoorOrWindow)selectedPiece).setBoundToWall(false);
+        }
       }
       
       // Ensure point at (x,y) is visible
@@ -8480,6 +8486,12 @@ public class PlanController extends FurnitureController implements Controller {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+    
     @Override
     public void escape() {
       this.resizedPiece.reset();
@@ -8505,6 +8517,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureResizeState extends ControllerState {
     private boolean                 magnetismEnabled;
+    private boolean                 alignmentActivated;
     private float                   deltaXToResizePoint;
     private float                   deltaYToResizePoint;
     private ResizedPieceOfFurniture resizedPiece;
@@ -8536,7 +8549,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasMagnetismToggledLastMousePress();      
+                              ^ wasMagnetismToggledLastMousePress();  
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth()), 
@@ -8561,9 +8575,11 @@ public class PlanController extends FurnitureController implements Controller {
       newWidth = Math.min(Math.max(newWidth, preferences.getLengthUnit().getMinimumLength()), 
           preferences.getLengthUnit().getMaximumLength());
       
+      float depth = this.resizedPiece.getDepth();
       float newDepth;
       if (!this.resizedPiece.isDoorOrWindowBoundToWall()
           || !selectedPiece.isDeformable()
+          || this.alignmentActivated
           || !this.magnetismEnabled) {
         // Update piece depth if it's not a door a window 
         // or if it's a a door a window unbound to a wall when magnetism is enabled
@@ -8574,21 +8590,15 @@ public class PlanController extends FurnitureController implements Controller {
         newDepth = Math.min(Math.max(newDepth, preferences.getLengthUnit().getMinimumLength()), 
             preferences.getLengthUnit().getMaximumLength());
       } else {
-        newDepth = this.resizedPiece.getDepth();
+        newDepth = depth;
       }
       
       // Manage proportional constraint 
       float newHeight = this.resizedPiece.getHeight();
-      if (!selectedPiece.isDeformable()) {
-        float [][] resizedPiecePoints = selectedPiece.getPoints();
-        float ratio;
-        if (Line2D.relativeCCW(resizedPiecePoints [0][0], resizedPiecePoints [0][1], resizedPiecePoints [2][0], resizedPiecePoints [2][1], x, y) >= 0) {
-          ratio = newWidth / this.resizedPiece.getWidth();
-          newDepth = this.resizedPiece.getDepth() * ratio;
-        } else {
-          ratio = newDepth / this.resizedPiece.getDepth();
-          newWidth = this.resizedPiece.getWidth() * ratio;
-        }
+      if (!selectedPiece.isDeformable()
+          || this.alignmentActivated) {
+        float ratio = newWidth / this.resizedPiece.getWidth();
+        newDepth = depth * ratio;
         newHeight = this.resizedPiece.getHeight() * ratio;
       }
       
@@ -8603,7 +8613,7 @@ public class PlanController extends FurnitureController implements Controller {
       selectedPiece.setHeight(newHeight);
       if (this.resizedPiece.isDoorOrWindowBoundToWall()) {
         // Maintain boundToWall flag
-        ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled);
+        ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled && newDepth == depth);
       }
 
       // Ensure point at (x,y) is visible
@@ -8626,6 +8636,12 @@ public class PlanController extends FurnitureController implements Controller {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+    
     @Override
     public void escape() {
       this.resizedPiece.reset();
