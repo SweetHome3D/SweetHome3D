@@ -663,10 +663,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    * Sets the <code>materials</code> of the furniture of this group.
    */
   @Override
-  public void setModelMaterials(HomeMaterial [] modelMaterials) {
+  public void setModelMaterials(HomeMaterial [] materials) {
     if (isTexturable()) {
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.setModelMaterials(modelMaterials);
+        piece.setModelMaterials(materials);
       }
     } 
   }
