@@ -582,28 +582,25 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             || shininess != null;
         boolean windowPane = shapeName != null
             && shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX);
-        if (!windowPane && appearanceModified            
-            || windowPane && materialModified) {
+        float materialShininess = 0;
+        if (appearanceModified) {
           // Use appearance user data to store shape default material 
-          // (global color or texture change doesn't have effect on window panes)
           defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
           if (defaultMaterialAndTexture == null) {
             defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
             appearance.setUserData(defaultMaterialAndTexture);
           }
-        }
-        float materialShininess = 0;
-        if (appearanceModified) {
+          
           materialShininess = shininess != null
               ? shininess.floatValue()
-              : (appearance.getMaterial() != null
-                  ? appearance.getMaterial().getShininess() / 128f
+              : (defaultMaterialAndTexture.getMaterial() != null
+                  ? defaultMaterialAndTexture.getMaterial().getShininess() / 128f
                   : 0);
         }
         if (colorModified) {
           // Change color only of shapes that are not window panes
           if (windowPane) {
-            restoreDefaultMaterialAndTexture(appearance, null);
+            restoreDefaultMaterialAndTexture(appearance, materialShininess);
           } else {
             // Change material if no default texture is displayed on the shape
             // (textures always keep the colors of their image file)
@@ -617,7 +614,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         } else if (textureModified) {            
           // Change texture only of shapes that are not window panes
           if (windowPane) {
-            restoreDefaultMaterialAndTexture(appearance, null);
+            restoreDefaultMaterialAndTexture(appearance, materialShininess);
           } else {
             // Change material to white then texture
             appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
