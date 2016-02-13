@@ -275,29 +275,6 @@ public class HomeFurnitureController implements Controller {
       }
       setIcon(icon);
       
-      HomeMaterial [] modelMaterials = firstPiece.getModelMaterials();
-      Content model = firstPiece.getModel();
-      if (model != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          HomePieceOfFurniture piece = selectedFurniture.get(i);
-          if (!Arrays.equals(modelMaterials, piece.getModelMaterials())
-              || model != piece.getModel()) {
-            modelMaterials = null;
-            model = null;
-            break;
-          }
-        }
-      }
-      if (modelMaterialsController != null) {
-        // Materials management available since version 4.0 only
-        modelMaterialsController.setMaterials(modelMaterials);
-        modelMaterialsController.setModel(model);
-        // Set a default size from the first piece before checking whether the selected pieces have the same size  
-        modelMaterialsController.setModelSize(firstPiece.getWidth(), firstPiece.getDepth(), firstPiece.getHeight());
-        modelMaterialsController.setModelRotation(firstPiece.getModelRotation());
-        modelMaterialsController.setBackFaceShown(firstPiece.isBackFaceShown());
-      }
-      
       String name = firstPiece.getName();
       if (name != null) {
         for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -420,10 +397,12 @@ public class HomeFurnitureController implements Controller {
       }
       setHeight(height, true, false);
 
-      Integer color = firstPiece.getColor();
+      List<HomePieceOfFurniture> selectedFurnitureWithoutGroups = getFurnitureWithoutGroups(selectedFurniture);
+      HomePieceOfFurniture firstPieceExceptGroup = selectedFurnitureWithoutGroups.get(0);
+      Integer color = firstPieceExceptGroup.getColor();
       if (color != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          if (!color.equals(selectedFurniture.get(i).getColor())) {
+        for (int i = 1; i < selectedFurnitureWithoutGroups.size(); i++) {
+          if (!color.equals(selectedFurnitureWithoutGroups.get(i).getColor())) {
             color = null;
             break;
           }
@@ -431,10 +410,10 @@ public class HomeFurnitureController implements Controller {
       }
       setColor(color);
 
-      HomeTexture texture = firstPiece.getTexture();
+      HomeTexture texture = firstPieceExceptGroup.getTexture();
       if (texture != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          if (!texture.equals(selectedFurniture.get(i).getTexture())) {
+        for (int i = 1; i < selectedFurnitureWithoutGroups.size(); i++) {
+          if (!texture.equals(selectedFurnitureWithoutGroups.get(i).getTexture())) {
             texture = null;
             break;
           }
@@ -445,9 +424,32 @@ public class HomeFurnitureController implements Controller {
         textureController.setTexture(texture);
       }
      
+      HomeMaterial [] modelMaterials = firstPieceExceptGroup.getModelMaterials();
+      Content model = firstPieceExceptGroup.getModel();
+      if (model != null) {
+        for (int i = 1; i < selectedFurnitureWithoutGroups.size(); i++) {
+          HomePieceOfFurniture piece = selectedFurnitureWithoutGroups.get(i);
+          if (!Arrays.equals(modelMaterials, piece.getModelMaterials())
+              || model != piece.getModel()) {
+            modelMaterials = null;
+            model = null;
+            break;
+          }
+        }
+      }
+      if (modelMaterialsController != null) {
+        // Materials management available since version 4.0 only
+        modelMaterialsController.setMaterials(modelMaterials);
+        modelMaterialsController.setModel(model);
+        // Set a default size from the first piece before checking whether the selected pieces have the same size  
+        modelMaterialsController.setModelSize(firstPieceExceptGroup.getWidth(), firstPieceExceptGroup.getDepth(), firstPieceExceptGroup.getHeight());
+        modelMaterialsController.setModelRotation(firstPieceExceptGroup.getModelRotation());
+        modelMaterialsController.setBackFaceShown(firstPieceExceptGroup.isBackFaceShown());
+      }
+      
       boolean defaultColorsAndTextures = true;
-      for (int i = 0; i < selectedFurniture.size(); i++) {
-        HomePieceOfFurniture piece = selectedFurniture.get(i);
+      for (int i = 0; i < selectedFurnitureWithoutGroups.size(); i++) {
+        HomePieceOfFurniture piece = selectedFurnitureWithoutGroups.get(i);
         if (piece.getColor() != null
             || piece.getTexture() != null
             || piece.getModelMaterials() != null) {
@@ -468,14 +470,14 @@ public class HomeFurnitureController implements Controller {
         setPaint(null);
       }
 
-      Float firstPieceShininess = firstPiece.getShininess();
+      Float firstPieceShininess = firstPieceExceptGroup.getShininess();
       FurnitureShininess shininess = firstPieceShininess == null 
           ? FurnitureShininess.DEFAULT
           : (firstPieceShininess.floatValue() == 0
               ? FurnitureShininess.MATT
               : FurnitureShininess.SHINY);
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        HomePieceOfFurniture piece = selectedFurniture.get(i);
+      for (int i = 1; i < selectedFurnitureWithoutGroups.size(); i++) {
+        HomePieceOfFurniture piece = selectedFurnitureWithoutGroups.get(i);
         if (firstPieceShininess != piece.getShininess()
             || (firstPieceShininess != null && !firstPieceShininess.equals(piece.getShininess()))) {
           shininess = null;
@@ -570,6 +572,21 @@ public class HomeFurnitureController implements Controller {
     }
   }  
   
+  /**
+   * Returns all the pieces of the given <code>furniture</code> list except groups.  
+   */
+  private List<HomePieceOfFurniture> getFurnitureWithoutGroups(List<HomePieceOfFurniture> furniture) {
+    List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece instanceof HomeFurnitureGroup) {
+        pieces.addAll(getFurnitureWithoutGroups(((HomeFurnitureGroup)piece).getFurniture()));
+      } else {
+        pieces.add(piece);
+      }
+    }
+    return pieces;
+  }
+
   /**
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
@@ -1362,29 +1379,30 @@ public class HomeFurnitureController implements Controller {
           piece.setModelMirrored(modelMirrored);
         }
       }
-      if (piece.isTexturable()
-          && paint != null) {
-        switch (paint) {
-          case DEFAULT :
-            piece.setColor(null);
-            piece.setTexture(null);
-            piece.setModelMaterials(null);
-            break;
-          case COLORED :
-            piece.setColor(color);
-            piece.setTexture(null);
-            piece.setModelMaterials(null);
-            break;
-          case TEXTURED :
-            piece.setColor(null);
-            piece.setTexture(texture);
-            piece.setModelMaterials(null);
-            break;
-          case MODEL_MATERIALS :
-            piece.setColor(null);
-            piece.setTexture(null);
-            piece.setModelMaterials(modelMaterials);
-            break;
+      if (piece.isTexturable()) {
+        if (paint != null) {
+          switch (paint) {
+            case DEFAULT :
+              piece.setColor(null);
+              piece.setTexture(null);
+              piece.setModelMaterials(null);
+              break;
+            case COLORED :
+              piece.setColor(color);
+              piece.setTexture(null);
+              piece.setModelMaterials(null);
+              break;
+            case TEXTURED :
+              piece.setColor(null);
+              piece.setTexture(texture);
+              piece.setModelMaterials(null);
+              break;
+            case MODEL_MATERIALS :
+              piece.setColor(null);
+              piece.setTexture(null);
+              piece.setModelMaterials(modelMaterials);
+              break;
+          }
         }
         if (defaultShininess) {
           piece.setShininess(null);
@@ -1530,6 +1548,10 @@ public class HomeFurnitureController implements Controller {
     private final float [] groupFurnitureY;
     private final float [] groupFurnitureWidth;
     private final float [] groupFurnitureDepth;
+    private final Integer []     groupFurnitureColor;
+    private final HomeTexture [] groupFurnitureTexture;
+    private final HomeMaterial [][] groupFurnitureModelMaterials;
+    private final Float []          groupFurnitureShininess;
     
     public ModifiedFurnitureGroup(HomeFurnitureGroup group) {
       super(group);
@@ -1538,12 +1560,20 @@ public class HomeFurnitureController implements Controller {
       this.groupFurnitureY = new float [groupFurniture.size()];
       this.groupFurnitureWidth = new float [groupFurniture.size()];
       this.groupFurnitureDepth = new float [groupFurniture.size()];
+      this.groupFurnitureColor = new Integer [groupFurniture.size()];
+      this.groupFurnitureTexture = new HomeTexture [groupFurniture.size()];
+      this.groupFurnitureShininess = new Float [groupFurniture.size()];
+      this.groupFurnitureModelMaterials = new HomeMaterial [groupFurniture.size()][];
       for (int i = 0; i < groupFurniture.size(); i++) {
         HomePieceOfFurniture groupPiece = groupFurniture.get(i);
         this.groupFurnitureX [i] = groupPiece.getX();
         this.groupFurnitureY [i] = groupPiece.getY();
         this.groupFurnitureWidth [i] = groupPiece.getWidth();
         this.groupFurnitureDepth [i] = groupPiece.getDepth();
+        this.groupFurnitureColor [i] = groupPiece.getColor();
+        this.groupFurnitureTexture [i] = groupPiece.getTexture();
+        this.groupFurnitureShininess [i] = groupPiece.getShininess();
+        this.groupFurnitureModelMaterials [i] = groupPiece.getModelMaterials();
       }
     }
 
@@ -1559,6 +1589,14 @@ public class HomeFurnitureController implements Controller {
           groupPiece.setY(this.groupFurnitureY [i]);
           groupPiece.setWidth(this.groupFurnitureWidth [i]);
           groupPiece.setDepth(this.groupFurnitureDepth [i]);
+        }
+        if (group.isTexturable()
+            && !(groupPiece instanceof HomeFurnitureGroup)) {
+          // Restore group furniture color and texture 
+          groupPiece.setColor(this.groupFurnitureColor [i]);
+          groupPiece.setTexture(this.groupFurnitureTexture [i]);
+          groupPiece.setModelMaterials(this.groupFurnitureModelMaterials [i]);
+          groupPiece.setShininess(this.groupFurnitureShininess [i]);
         }
       }
     }

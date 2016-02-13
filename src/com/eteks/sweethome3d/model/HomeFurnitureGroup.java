@@ -30,7 +30,6 @@ import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,8 +53,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private float                      fixedHeight;
   private float                      dropOnTopElevation; 
   private String                     currency;
-  private List<Integer>              furnitureDefaultColors;
-  private List<HomeTexture>          furnitureDefaultTextures;
+  // Fields removed in version 5.2
+  // private List<Integer>           furnitureDefaultColors;
+  // private List<HomeTexture>       furnitureDefaultTextures;
 
   private transient PropertyChangeListener furnitureListener;
 
@@ -78,6 +78,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             HomePieceOfFurniture leadingPiece,
+                            String name) {
+    this(furniture, leadingPiece.getAngle(), false, name);
+  }
+  
+  /**
+   * Creates a group from the given <code>furniture</code> list. 
+   * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
+   * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
+   * @since 5.2
+   */
+  public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
+                            float angle, boolean modelMirrored,
                             String name) {
     super(furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture); 
@@ -112,13 +124,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setDescription(null);
     setMovable(movable);
     setVisible(visible);
-    if (this.texturable) {
-      super.setColor(null);
-      super.setTexture(null);
-    }
-    
-    updateLocationAndSize(furniture, leadingPiece.getAngle(), true);
-    super.setAngle(leadingPiece.getAngle());
+   
+    updateLocationAndSize(furniture, angle, true);
+    super.setAngle(angle);
+    super.setModelMirrored(modelMirrored);
 
     addFurnitureListener();
   }
@@ -600,68 +609,86 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns <code>null</code>.
+   * @since 5.2
+   */
+  @Override
+  public Integer getColor() {
+    return null;
+  }
+  
+  /**
    * Sets the <code>color</code> of the furniture of this group.
    */
   @Override
   public void setColor(Integer color) {
-    super.setColor(color);
-    if (color != null) {      
-      storeDefaultColorsAndTextures();
+    if (isTexturable()) {
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.setTexture(null);
         piece.setColor(color);
-      } 
-    } else if (getTexture() == null) {
-      restoreDefaultColorsAndTextures();
-    }
+      }
+    } 
   }
 
+  /**
+   * Returns <code>null</code>.
+   * @since 5.2
+   */
+  @Override
+  public HomeTexture getTexture() {
+    return null;
+  }
+  
   /**
    * Sets the <code>texture</code> of the furniture of this group.
    */
   @Override
   public void setTexture(HomeTexture texture) {
-    super.setTexture(texture);
-    if (texture != null) {      
-      storeDefaultColorsAndTextures();
+    if (isTexturable()) {
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.setColor(null);
         piece.setTexture(texture);
-      } 
-    } else if (getColor() == null) {
-      restoreDefaultColorsAndTextures();
-    }
-  }
-  
-  /**
-   * Stores default colors and textures. 
-   */
-  private void storeDefaultColorsAndTextures() {
-    if (this.furnitureDefaultColors == null) {
-      // Retrieve default color and texture of child furniture
-      Integer [] furnitureDefaultColors = new Integer [this.furniture.size()];
-      HomeTexture [] furnitureDefaultTextures = new HomeTexture [this.furniture.size()];
-      for (int i = 0; i < this.furniture.size(); i++) {
-        furnitureDefaultColors [i] = this.furniture.get(i).getColor();
-        furnitureDefaultTextures [i] = this.furniture.get(i).getTexture();
-      } 
-      this.furnitureDefaultColors = Arrays.asList(furnitureDefaultColors);
-      this.furnitureDefaultTextures = Arrays.asList(furnitureDefaultTextures);
-    }
-  }
-  
-  /**
-   * Restores default colors and textures
-   */
-  private void restoreDefaultColorsAndTextures() {
-    if (this.furnitureDefaultColors != null) {
-      for (int i = 0; i < this.furniture.size(); i++) {
-        this.furniture.get(i).setColor(this.furnitureDefaultColors.get(i));
-        this.furniture.get(i).setTexture(this.furnitureDefaultTextures.get(i));
       }
-      this.furnitureDefaultColors = null;
-      this.furnitureDefaultTextures = null;
-    }
+    } 
+  }
+  
+  /**
+   * Returns <code>null</code>.
+   * @since 5.2
+   */
+  @Override
+  public HomeMaterial [] getModelMaterials() {
+    return null;
+  }
+
+  /**
+   * Sets the <code>materials</code> of the furniture of this group.
+   */
+  @Override
+  public void setModelMaterials(HomeMaterial [] modelMaterials) {
+    if (isTexturable()) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setModelMaterials(modelMaterials);
+      }
+    } 
+  }
+  
+  /**
+   * Returns <code>null</code>.
+   * @since 5.2
+   */
+  public Float getShininess() {
+    return null;
+  }
+  
+  /**
+   * Sets the shininess of the furniture of this group.
+   * @since 5.2
+   */
+  public void setShininess(Float shininess) {
+    if (isTexturable()) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setShininess(shininess);
+      }
+    } 
   }
 
   /**
@@ -912,12 +939,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       }
     }
     clone.furniture = Collections.unmodifiableList(clone.furniture);
-    if (this.furnitureDefaultColors != null)  {
-      clone.furnitureDefaultColors = new ArrayList<Integer>(this.furnitureDefaultColors);
-    }
-    if (this.furnitureDefaultTextures != null) {
-      clone.furnitureDefaultTextures = new ArrayList<HomeTexture>(this.furnitureDefaultTextures);
-    }
     clone.addFurnitureListener();
     return clone;
   }
