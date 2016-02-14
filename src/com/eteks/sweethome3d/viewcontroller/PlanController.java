@@ -8392,7 +8392,6 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
     private boolean                 magnetismEnabled;
-    private boolean                 alignmentActivated;
     private float                   deltaYToResizePoint;
     private ResizedPieceOfFurniture resizedPiece;
     private float []                topLeftPoint;
@@ -8421,7 +8420,6 @@ public class PlanController extends FurnitureController implements Controller {
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasMagnetismToggledLastMousePress();
-      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getHeight()), 
@@ -8446,8 +8444,7 @@ public class PlanController extends FurnitureController implements Controller {
       selectedPiece.setHeight(newHeight);
 
       // Manage proportional constraint 
-      if (!selectedPiece.isDeformable()
-          || this.alignmentActivated) {
+      if (!selectedPiece.isDeformable()) {
         float ratio = newHeight / this.resizedPiece.getHeight();
         float newWidth = this.resizedPiece.getWidth() * ratio;
         float newDepth = this.resizedPiece.getDepth() * ratio;
@@ -8461,9 +8458,6 @@ public class PlanController extends FurnitureController implements Controller {
         selectedPiece.setY(newY);
         selectedPiece.setWidth(newWidth);
         selectedPiece.setDepth(newDepth);
-        if (selectedPiece instanceof HomeDoorOrWindow) {
-          ((HomeDoorOrWindow)selectedPiece).setBoundToWall(false);
-        }
       }
       
       // Ensure point at (x,y) is visible
@@ -8486,12 +8480,6 @@ public class PlanController extends FurnitureController implements Controller {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
-    @Override
-    public void setAlignmentActivated(boolean alignmentActivated) {
-      this.alignmentActivated = alignmentActivated;
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
-    }
-    
     @Override
     public void escape() {
       this.resizedPiece.reset();
