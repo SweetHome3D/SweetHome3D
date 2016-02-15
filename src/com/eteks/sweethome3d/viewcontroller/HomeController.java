@@ -2315,7 +2315,7 @@ public class HomeController implements Controller {
             public Void call() throws RecorderException {
               // Write home with application recorder
               application.getHomeRecorder(recorderType).writeHome(savedHome, homeName);
-              updateSavedHome(homeName, postSaveTask);
+              updateSavedHome(homeName, savedHome.getVersion(), postSaveTask);
               return null;
             }
           };
@@ -2355,6 +2355,7 @@ public class HomeController implements Controller {
    * if it's not <code>null</code>.
    */
   private void updateSavedHome(final String homeName,
+                               final long savedVersion, 
                                final Runnable postSaveTask) {
     getView().invokeLater(new Runnable() {
         public void run() {
@@ -2362,6 +2363,7 @@ public class HomeController implements Controller {
           home.setModified(false);
           home.setRecovered(false);
           home.setRepaired(false);
+          home.setVersion(savedVersion);
           // Update recent homes list
           List<String> recentHomes = new ArrayList<String>(preferences.getRecentHomes());
           int homeNameIndex = recentHomes.indexOf(homeName);

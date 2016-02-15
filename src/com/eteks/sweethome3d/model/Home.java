@@ -1594,6 +1594,14 @@ public class Home implements Serializable, Cloneable {
   }
   
   /**
+   * Sets the version of this home.
+   * @since 5.2
+   */
+  public void setVersion(long version) {
+    this.version = version;
+  }
+  
+  /**
    * Returns a clone of this home and the objects it contains. 
    * Listeners bound to this home aren't added to the returned home.
    * @since 2.3
