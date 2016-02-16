@@ -2693,10 +2693,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             return selectionColor.darker();
           }
         }
-        return UIManager.getColor("List.selectionBackground");
-      } else { 
-        return UIManager.getColor("textHighlight");
-      }
+        Color selectionColor = UIManager.getColor("List.selectionBackground");
+        if (selectionColor != null) {
+          return selectionColor;
+        }
+      }  
+        
+      return UIManager.getColor("textHighlight");
     } else {
       // On systems different from Mac OS X, take a darker color
       return UIManager.getColor("textHighlight").darker();
