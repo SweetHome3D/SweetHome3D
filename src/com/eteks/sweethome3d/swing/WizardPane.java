@@ -212,13 +212,31 @@ public class WizardPane extends JOptionPane implements DialogView {
     // Add new icon
     URL stepIcon = controller.getStepIcon();
     if (stepIcon != null) {
+      Color backgroundColor1 = new Color(163, 168, 226);
+      Color backgroundColor2 = new Color(80, 86, 158);
+      try {
+        // Read gradient colors used to paint icon background 
+        String [] stepIconBackgroundColors = this.preferences.getLocalizedString(
+            WizardPane.class, "stepIconBackgroundColors").trim().split(" ");
+        backgroundColor1 = new Color(Integer.decode(stepIconBackgroundColors [0]));
+        if (stepIconBackgroundColors.length == 1) {
+          backgroundColor2 = backgroundColor1;  
+        } else if (stepIconBackgroundColors.length == 2) {
+          backgroundColor2 = new Color(Integer.decode(stepIconBackgroundColors [1]));;
+        }
+      } catch (IllegalArgumentException ex) {
+        // Don't change colors if stepIconBackgroundColor doesn't exist or if colors are wrongly formatted
+      }
+         
+      final Color gradientColor1 = backgroundColor1;
+      final Color gradientColor2 = backgroundColor2;
       JLabel iconLabel = new JLabel(new ImageIcon(stepIcon)) {
           @Override
           protected void paintComponent(Graphics g) {
             Graphics2D g2D = (Graphics2D)g;
              // Paint a blue gradient behind icon
-            g2D.setPaint(new GradientPaint(0, 0, new Color(163, 168, 226), 
-                                           0, getHeight(), new Color(80, 86, 158)));
+            g2D.setPaint(new GradientPaint(0, 0, gradientColor1, 
+                                           0, getHeight(), gradientColor2));
             g.fillRect(0, 0, getWidth(), getHeight());
             super.paintComponent(g);
           }
