@@ -193,7 +193,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
    * A panel that displays available textures in a list to let user make choose one. 
    */
   private static class TexturePanel extends JPanel {
-    private static final int PREVIEW_ICON_SIZE = 128; 
+    private static final int PREVIEW_ICON_SIZE = Math.round(128 * SwingTools.getResolutionScale());; 
     private static String    searchFilterText = "";
     private static Dimension dialogPreferredSize; 
     

@@ -62,7 +62,7 @@ public class CatalogItemToolTip extends JToolTip {
      */
     ICON_NAME_AUTHOR_CATEGORY}
 
-  private static final int        ICON_SIZE = 128;
+  private static final int ICON_SIZE = Math.round(128 * SwingTools.getResolutionScale());
   
   private final DisplayedInformation displayedInformation;
   private final UserPreferences      preferences;

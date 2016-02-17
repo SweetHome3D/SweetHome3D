@@ -97,6 +97,8 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private static final int IMAGE_PREFERRED_MAX_SIZE = 512;
   private static final int LARGE_IMAGE_MAX_PIXEL_COUNT = IMAGE_PREFERRED_MAX_SIZE * IMAGE_PREFERRED_MAX_SIZE;
   
+  private static final int IMAGE_PREFERRED_SIZE = Math.round(150 * SwingTools.getResolutionScale());
+  
   private final ImportedTextureWizardController controller;
   private CardLayout                      cardLayout;
   private JLabel                          imageChoiceOrChangeLabel;
@@ -441,7 +443,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     imageChoiceTopPanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    this.imageChoicePreviewComponent.setPreferredSize(new Dimension(150, 150));
+    this.imageChoicePreviewComponent.setPreferredSize(new Dimension(IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE));
     if (this.findImagesButton != null) {
       imageChoiceTopPanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
           0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_END, 
@@ -467,7 +469,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     attributesPanel.add(this.attributesLabel, new GridBagConstraints(
         0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 10, 0), 0, 0));
-    this.attributesPreviewComponent.setPreferredSize(new Dimension(150, 150));
+    this.attributesPreviewComponent.setPreferredSize(new Dimension(IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE));
     attributesPanel.add(this.attributesPreviewComponent, new GridBagConstraints(
         0, 1, 1, 5, 1, 0, GridBagConstraints.NORTH, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
@@ -817,24 +819,23 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
    */
   private void updateAttributesPreviewImage() {
     BufferedImage attributesPreviewImage = this.attributesPreviewComponent.getImage();
-    final int imageSize = 150;
     if (attributesPreviewImage == null
         || attributesPreviewImage == this.imageChoicePreviewComponent.getImage()) {
-      attributesPreviewImage = new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_RGB);
+      attributesPreviewImage = new BufferedImage(IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE, BufferedImage.TYPE_INT_RGB);
       this.attributesPreviewComponent.setImage(attributesPreviewImage);
     }
     // Fill image with a white background
     Graphics2D g2D = (Graphics2D)attributesPreviewImage.getGraphics();
     g2D.setPaint(Color.WHITE);
-    g2D.fillRect(0, 0, imageSize, imageSize);    
+    g2D.fillRect(0, 0, IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE);    
     BufferedImage textureImage = this.imageChoicePreviewComponent.getImage();
     if (textureImage != null) {
       // Draw the texture image as if it will be shown on a 250 x 250 cm wall
       g2D.setPaint(new TexturePaint(textureImage, 
           new Rectangle2D.Float(0, 0, 
-              this.controller.getWidth() / 250 * imageSize,
-              this.controller.getHeight() / 250 * imageSize)));
-      g2D.fillRect(0, 0, imageSize, imageSize);
+              this.controller.getWidth() / 250 * IMAGE_PREFERRED_SIZE,
+              this.controller.getHeight() / 250 * IMAGE_PREFERRED_SIZE)));
+      g2D.fillRect(0, 0, IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE);
     }
     g2D.dispose();
     this.attributesPreviewComponent.repaint();

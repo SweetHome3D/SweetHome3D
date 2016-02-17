@@ -435,8 +435,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
     PageFormat pageFormat = getPageFormat(this.home.getPrint());
     double maxSize = Math.max(pageFormat.getWidth(), pageFormat.getHeight());
     Insets insets = getInsets();
-    return new Dimension((int)(pageFormat.getWidth() / maxSize * 400) + insets.left + insets.right, 
-        (int)(pageFormat.getHeight() / maxSize * 400) + insets.top + insets.bottom);
+    int maxPreferredSize = Math.round(400 * SwingTools.getResolutionScale());
+    return new Dimension((int)(pageFormat.getWidth() / maxSize * maxPreferredSize) + insets.left + insets.right, 
+        (int)(pageFormat.getHeight() / maxSize * maxPreferredSize) + insets.top + insets.bottom);
   }
   
   /**

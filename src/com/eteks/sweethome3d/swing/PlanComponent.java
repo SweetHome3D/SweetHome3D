@@ -227,7 +227,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   private final Home            home;
   private final UserPreferences preferences;
-  private float                 scale  = 0.5f;
+  private float                 scale = 0.5f * SwingTools.getResolutionScale();
   private boolean               selectedItemsOutlinePainted = true;
   private boolean               backgroundPainted = true;
 

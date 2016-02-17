@@ -33,7 +33,6 @@ import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -111,6 +110,11 @@ public class FurnitureCatalogTree extends JTree implements View {
                               UserPreferences preferences, 
                               FurnitureCatalogController controller) {
     this.preferences = preferences;
+    float resolutionScale = SwingTools.getResolutionScale();
+    if (resolutionScale != 1) {
+      // Adapt row height to specified resolution scale
+      setRowHeight(Math.round(getRowHeight() * resolutionScale));
+    }
     this.toolTip = new CatalogItemToolTip(true, preferences);
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);

@@ -721,7 +721,8 @@ public class ColorButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
       Insets insets = getInsets();
-      return new Dimension(15 + insets.right + insets.left, 128 + insets.bottom + insets.top);
+      return new Dimension(Math.round(15 * SwingTools.getResolutionScale()) + insets.right + insets.left, 
+          Math.round(128 * SwingTools.getResolutionScale()) + insets.bottom + insets.top);
     }
 
     public Color getColorAt(int y) {
@@ -757,7 +758,8 @@ public class ColorButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
       Insets insets = getInsets();
-      return new Dimension(256 + insets.right + insets.left, 128 + insets.bottom + insets.top);
+      return new Dimension(Math.round(256 * SwingTools.getResolutionScale()) + insets.right + insets.left, 
+          Math.round(128 * SwingTools.getResolutionScale()) + insets.bottom + insets.top);
     }
 
     public Color getColorAt(int x, int y) {
@@ -812,6 +814,7 @@ public class ColorButton extends JButton {
       if (!OperatingSystem.isMacOSX()) {
         addPopupMenuListener(comboBoxPopupMenuListener);
       } 
+      final int iconHeight = Math.round(16 * SwingTools.getResolutionScale());
       setRenderer(new DefaultListCellRenderer() {
           @Override
           public Component getListCellRendererComponent(final JList list, 
@@ -827,11 +830,11 @@ public class ColorButton extends JButton {
             if (color != null) {
               setIcon(new Icon() {
                   public int getIconWidth() {
-                    return 32;
+                    return iconHeight * 2;
                   }
             
                   public int getIconHeight() {
-                    return 16;
+                    return iconHeight;
                   }
             
                   public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -1180,6 +1183,7 @@ public class ColorButton extends JButton {
             GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       }      
       List<Integer> recentColors = preferences.getRecentColors();
+      final int colorComponentSize = Math.round(20 * SwingTools.getResolutionScale());
       for (int j = 0; j < recentColors.size() && j < MAX_COLORS; j++) {
         final Integer color = recentColors.get(j);
         Component colorComponent = new JComponent() {
@@ -1197,7 +1201,7 @@ public class ColorButton extends JButton {
             
             @Override
             public Dimension getPreferredSize() {
-              return new Dimension(20, 20);
+              return new Dimension(colorComponentSize, colorComponentSize);
             }
           };
         colorComponent.addMouseListener(new MouseAdapter() {

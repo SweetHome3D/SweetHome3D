@@ -40,6 +40,8 @@ import javax.swing.border.EtchedBorder;
  * @author Emmanuel Puybaret 
  */
 public class ScaledImageComponent extends JComponent {
+  private static final int MODEL_PREFERRED_SIZE = Math.round(300 * SwingTools.getResolutionScale());
+  
   private BufferedImage image;
   private boolean       imageEnlargementEnabled;
   private float         scaleMultiplier = 1f;
@@ -79,8 +81,8 @@ public class ScaledImageComponent extends JComponent {
       return super.getPreferredSize();
     } else {
       Insets insets = getInsets();
-      final int defaultPreferredWidth  = 300; 
-      final int defaultPreferredHeight = 300; 
+      final int defaultPreferredWidth  = MODEL_PREFERRED_SIZE; 
+      final int defaultPreferredHeight = MODEL_PREFERRED_SIZE; 
       int insetsWidth = insets.left + insets.right;
       int insetsHeight = insets.top + insets.bottom;
       if (this.image == null) {

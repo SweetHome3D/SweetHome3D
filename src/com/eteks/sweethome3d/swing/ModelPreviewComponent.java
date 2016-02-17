@@ -99,6 +99,8 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * Super class of 3D preview component for model. 
  */
 public class ModelPreviewComponent extends JComponent {
+  private static final int MODEL_PREFERRED_SIZE = Math.round(200 * SwingTools.getResolutionScale());
+  
   private SimpleUniverse          universe;
   private JPanel                  component3DPanel;
   private Component               component3D;
@@ -163,7 +165,7 @@ public class ModelPreviewComponent extends JComponent {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     } else {
-      return new Dimension(200, 200);
+      return new Dimension(MODEL_PREFERRED_SIZE, MODEL_PREFERRED_SIZE);
     }
   }
 

@@ -121,7 +121,7 @@ public class ResourceAction extends AbstractAction {
     
     String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON, false);
     if (smallIcon != null) {
-      putValue(SMALL_ICON, new ImageIcon(resourceClass.getResource(smallIcon)));
+      putValue(SMALL_ICON, SwingTools.getScaledImageIcon(resourceClass.getResource(smallIcon)));
     }
 
     String propertyKey = propertyPrefix + ACCELERATOR_KEY;

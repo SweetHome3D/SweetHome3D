@@ -265,6 +265,11 @@ public class LevelPanel extends JPanel implements DialogView {
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "floorThicknessColumn"),
          SwingTools.getLocalizedLabelText(preferences, LevelPanel.class, "heightColumn")};
     this.levelsSummaryTable = new JTable(new LevelsTableModel(controller, columnNames));
+    float resolutionScale = SwingTools.getResolutionScale();
+    if (resolutionScale != 1) {
+      // Adapt row height to specified resolution scale
+      this.levelsSummaryTable.setRowHeight(Math.round(this.levelsSummaryTable.getRowHeight() * resolutionScale));
+    }
     // Display lengths according to the current length unit
     TableColumnModel columnModel = this.levelsSummaryTable.getColumnModel();    
     columnModel.getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
@@ -482,7 +487,8 @@ public class LevelPanel extends JPanel implements DialogView {
         0, 6, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     JScrollPane levelsSummaryPane = new JScrollPane(this.levelsSummaryTable);
-    levelsSummaryPane.setPreferredSize(new Dimension(320, 150));
+    levelsSummaryPane.setPreferredSize(new Dimension(Math.round(320 * SwingTools.getResolutionScale()), 
+        this.levelsSummaryTable.getTableHeader().getPreferredSize().height + this.levelsSummaryTable.getRowHeight() * 8 + 1));
     add(levelsSummaryPane, new GridBagConstraints(
         0, 7, 3, 2, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -494,9 +500,14 @@ public class LevelPanel extends JPanel implements DialogView {
         3, 8, 1, 1, 0, 0.5, GridBagConstraints.NORTH, 
         GridBagConstraints.NONE, new Insets(2, 5, 0, 0), 0, 0));
     
-    // Make buttons square
-    this.increaseElevationIndexButton.setPreferredSize(new Dimension(30, 30));
-    this.decreaseElevationIndexButton.setPreferredSize(new Dimension(30, 30));
+    if (!OperatingSystem.isMacOSX()) {
+      // Make buttons square
+      Dimension preferredSize = this.increaseElevationIndexButton.getPreferredSize();
+      preferredSize.width = 
+      preferredSize.height = preferredSize.height + 4;
+      this.increaseElevationIndexButton.setPreferredSize(preferredSize);
+      this.decreaseElevationIndexButton.setPreferredSize(preferredSize);
+    }
   }
 
   /**

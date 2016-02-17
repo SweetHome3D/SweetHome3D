@@ -89,7 +89,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   private static final String ONE_LEVEL_PANEL_NAME = "oneLevelPanel";
   private static final String MULTIPLE_LEVELS_PANEL_NAME = "multipleLevelsPanel";
   
-  private static final ImageIcon sameElevationIcon = new ImageIcon(FurnitureTable.class.getResource("resources/sameElevation.png"));
+  private static final ImageIcon sameElevationIcon = SwingTools.getScaledImageIcon(FurnitureTable.class.getResource("resources/sameElevation.png"));
   
   private PlanComponent planComponent;
   private JScrollPane   planScrollPane;
@@ -328,7 +328,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     }
     String createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.SmallIcon");
     String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.ShortDescription");
-    ImageIcon newLevelIcon = new ImageIcon(MultipleLevelsPlanPanel.class.getResource(createNewLevelIcon));
+    ImageIcon newLevelIcon = SwingTools.getScaledImageIcon(MultipleLevelsPlanPanel.class.getResource(createNewLevelIcon));
     this.multipleLevelsTabbedPane.addTab("", newLevelIcon, new JLabel(), createNewLevelTooltip);
     // Disable last tab to avoid user stops on it
     this.multipleLevelsTabbedPane.setEnabledAt(this.multipleLevelsTabbedPane.getTabCount() - 1, false);

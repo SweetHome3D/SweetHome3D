@@ -906,6 +906,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           // Ignore panel orientation to ensure left button is always at left of panel
         }
       };
+    if (!OperatingSystem.isMacOSX()) {
+      // Make buttons square
+      Dimension preferredSize = this.turnUpButton.getPreferredSize();
+      preferredSize.width = 
+      preferredSize.height = preferredSize.height + 4;
+      this.turnUpButton.setPreferredSize(preferredSize);
+      this.turnLeftButton.setPreferredSize(preferredSize);
+      this.turnRightButton.setPreferredSize(preferredSize);
+      this.turnDownButton.setPreferredSize(preferredSize);
+      this.defaultOrientationButton.setPreferredSize(preferredSize);
+    }
+      
     rotationButtonsPanel.add(this.turnUpButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTH, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));    
@@ -1527,6 +1539,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    * Preview component for model orientation. 
    */
   private static class RotationPreviewComponent extends JPanel {
+    private static final int COMPONENT_PREFERRED_WIDTH = Math.round(200 * SwingTools.getResolutionScale());
+    
     private ModelPreviewComponent perspectiveViewComponent3D;
     private JLabel                frontViewLabel;
     private ModelPreviewComponent frontViewComponent3D;
@@ -1595,7 +1609,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(200, 204 + this.frontViewLabel.getPreferredSize().height * 2);
+      return new Dimension(COMPONENT_PREFERRED_WIDTH, 
+          COMPONENT_PREFERRED_WIDTH + 4 + this.frontViewLabel.getPreferredSize().height * 2);
     }
 
     /**
@@ -1768,6 +1783,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    * Preview component for model icon. 
    */
   private static class IconPreviewComponent extends AbstractModelPreviewComponent {
+    private static final int ICON_SIZE = Math.round(128 * SwingTools.getResolutionScale());
+    
     private ImportedFurnitureWizardController controller;
 
     public IconPreviewComponent(ImportedFurnitureWizardController controller) {
@@ -1777,13 +1794,17 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addColorListener(controller);
       addIconYawListener(controller);
 
-      setBackground(UIManager.getColor("window"));
+      Color backgroundColor = UIManager.getColor("window");
+      if (backgroundColor == null) {
+        backgroundColor = Color.LIGHT_GRAY;
+      }
+      setBackground(backgroundColor);
     }
 
     @Override
     public Dimension getPreferredSize() {
       Insets insets = getInsets();
-      return new Dimension(128 + insets.left + insets.right, 128  + insets.top + insets.bottom);
+      return new Dimension(ICON_SIZE + insets.left + insets.right, ICON_SIZE  + insets.top + insets.bottom);
     }
 
     /**

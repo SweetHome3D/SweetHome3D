@@ -26,12 +26,14 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -76,6 +78,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenu;
@@ -1012,5 +1015,102 @@ public class SwingTools {
     }
     
     return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, 0);
+  }
+
+  /**
+   * Updates Swing components default size according to resolution scale.
+   */
+  static void updateComponentDefaults() {
+    float resolutionScale = getResolutionScale();
+    if (resolutionScale != 1) {
+      Font buttonFont = updateComponentFontSize("Button.font", resolutionScale);
+      updateComponentFontSize("ToggleButton.font", resolutionScale);
+      updateComponentFontSize("RadioButton.font", resolutionScale);
+      updateComponentFontSize("CheckBox.font", resolutionScale);
+      updateComponentFontSize("ColorChooser.font", resolutionScale);
+      updateComponentFontSize("ComboBox.font", resolutionScale);
+      updateComponentFontSize("InternalFrame.titleFont", resolutionScale);
+      Font labelFont = updateComponentFontSize("Label.font", resolutionScale);
+      updateComponentFontSize("List.font", resolutionScale);
+      updateComponentFontSize("MenuBar.font", resolutionScale);
+      updateComponentFontSize("MenuItem.font", resolutionScale);
+      updateComponentFontSize("MenuItem.acceleratorFont", resolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.font", resolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.acceleratorFont", resolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.font", resolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.acceleratorFont", resolutionScale);
+      updateComponentFontSize("Menu.font", resolutionScale);
+      updateComponentFontSize("Menu.acceleratorFont", resolutionScale);
+      updateComponentFontSize("PopupMenu.font", resolutionScale);
+      updateComponentFontSize("OptionPane.font", resolutionScale);
+      updateComponentFontSize("Panel.font", resolutionScale);
+      updateComponentFontSize("ProgressBar.font", resolutionScale);
+      updateComponentFontSize("ScrollPane.font", resolutionScale);
+      updateComponentFontSize("Viewport.font", resolutionScale);
+      updateComponentFontSize("Slider.font", resolutionScale);
+      updateComponentFontSize("Spinner.font", resolutionScale);
+      updateComponentFontSize("Table.font", resolutionScale);
+      updateComponentFontSize("TabbedPane.font", resolutionScale);
+      updateComponentFontSize("TableHeader.font", resolutionScale);
+      updateComponentFontSize("TextField.font", resolutionScale);
+      updateComponentFontSize("FormattedTextField.font", resolutionScale);
+      updateComponentFontSize("PasswordField.font", resolutionScale);
+      updateComponentFontSize("TextArea.font", resolutionScale);
+      updateComponentFontSize("EditorPane.font", resolutionScale);
+      updateComponentFontSize("TitledBorder.font", resolutionScale);
+      updateComponentFontSize("ToolBar.font", resolutionScale);
+      updateComponentFontSize("ToolTip.font", resolutionScale);
+      updateComponentFontSize("Tree.font", resolutionScale);
+      UIManager.put("OptionPane.messageFont", labelFont);
+      UIManager.put("OptionPane.buttonFont", buttonFont);
+      int dividerSize = UIManager.getInt("SplitPane.dividerSize");
+      if (dividerSize != 0) {
+        UIManager.put("SplitPane.dividerSize", Math.round(dividerSize * resolutionScale));
+      }
+    }
+  }
+
+  private static Font updateComponentFontSize(String fontKey, float resolutionScale) {
+    Font font = UIManager.getFont(fontKey);
+    if (font != null) {
+      font = font.deriveFont(font.getSize() * resolutionScale);
+      UIManager.put(fontKey, font);
+    }
+    return font;
+  }
+  
+  /**
+   * Returns a scale factor used to adapt user interface items to screen resolution.
+   */
+  public static float getResolutionScale() {
+    String resolutionScaleProperty = System.getProperty("com.eteks.sweethome3d.resolutionScale");
+    if (resolutionScaleProperty != null) {
+      try {
+        return Float.parseFloat(resolutionScaleProperty.trim());
+      } catch (NumberFormatException ex) {
+        // Ignore resolution
+      }
+    }
+    
+    return 1f;
+  }
+  
+  /**
+   * Returns an image icon scaled according to the value returned by {@link #getResolutionScale()}.
+   */
+  public static ImageIcon getScaledImageIcon(URL imageUrl) {
+    float resolutionScale = getResolutionScale();
+    if (resolutionScale == 1) {
+      return new ImageIcon(imageUrl);
+    } else {
+      try {
+        BufferedImage image = ImageIO.read(imageUrl);
+        Image scaledImage = image.getScaledInstance(Math.round(image.getWidth() * resolutionScale), 
+            Math.round(image.getHeight() * resolutionScale), Image.SCALE_SMOOTH);
+        return new ImageIcon(scaledImage);
+      } catch (IOException ex) {
+        return null;
+      }
+    }
   }
 }

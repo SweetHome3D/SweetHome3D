@@ -27,10 +27,15 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.DefaultFocusTraversalPolicy;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -56,10 +61,20 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Element;
 import javax.swing.text.Highlighter;
+import javax.swing.text.Position;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.BlockView;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -247,6 +262,79 @@ public class HelpPane extends JRootPane implements HelpView {
       };
     controller.addPropertyChangeListener(HelpController.Property.HIGHLIGHTED_TEXT, highlightingTextListener);
     this.helpEditorPane.addPropertyChangeListener("page", highlightingTextListener);
+    final float resolutionScale = SwingTools.getResolutionScale();
+    if (resolutionScale != 1) {
+      final ViewFactory htmlFactory = new HTMLFactory() {
+          @Override
+          public View create(Element element) {
+            AttributeSet attributes = element.getAttributes();
+            if (attributes.getAttribute(AbstractDocument.ElementNameAttribute) == null
+                && attributes.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HTML) {
+              return new BlockView(element, View.Y_AXIS) {
+                  @Override
+                  protected void layout(int width, int height) {
+                    super.layout(Math.round(width / resolutionScale), Math.round(height * resolutionScale));
+                  }
+
+                  @Override
+                  public void paint(Graphics g, Shape allocation) {
+                    Graphics2D g2D = (Graphics2D)g;
+                    AffineTransform oldTransform = g2D.getTransform();
+                    g2D.scale(resolutionScale, resolutionScale);
+                    super.paint(g2D, allocation);
+                    g2D.setTransform(oldTransform);
+                  }
+
+                  @Override
+                  public float getMinimumSpan(int axis) {
+                    return super.getMinimumSpan(axis) * resolutionScale;
+                  }
+
+                  @Override
+                  public float getMaximumSpan(int axis) {
+                    return super.getMaximumSpan(axis) * resolutionScale;
+                  }
+
+                  @Override
+                  public float getPreferredSpan(int axis) {
+                    return super.getPreferredSpan(axis) * resolutionScale;
+                  }
+
+                  @Override
+                  public Shape modelToView(int pos, Shape shape, Position.Bias b) throws BadLocationException {
+                    Rectangle bounds = shape.getBounds();
+                    shape = super.modelToView(pos, bounds, b);
+                    bounds = shape.getBounds();
+                    bounds.x *= resolutionScale;
+                    bounds.y *= resolutionScale;
+                    bounds.width *= resolutionScale;
+                    bounds.height *= resolutionScale;
+                    return bounds;
+                  }
+
+                  @Override
+                  public int viewToModel(float x, float y, Shape shape, Position.Bias[] bias) {
+                    Rectangle bounds = shape.getBounds();
+                    x /= resolutionScale;
+                    y /= resolutionScale;
+                    bounds.x /= resolutionScale;
+                    bounds.y /= resolutionScale;
+                    bounds.width /= resolutionScale;
+                    bounds.height /= resolutionScale;
+                    return super.viewToModel(x, y, bounds, bias);
+                  }
+                };
+            }
+            return super.create(element);
+          }
+        };
+      this.helpEditorPane.setEditorKit(new HTMLEditorKit() {
+          @Override
+          public ViewFactory getViewFactory() {
+            return htmlFactory;
+          }
+        });
+    }
     
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
         @Override
@@ -272,7 +360,7 @@ public class HelpPane extends JRootPane implements HelpView {
       }                            
       highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(), 
           highlightedWords.toArray(new String [highlightedWords.size()]), highlightPainter);
-    }
+    } 
   }
 
   private void highlightWords(Element element, 
@@ -468,7 +556,8 @@ public class HelpPane extends JRootPane implements HelpView {
     Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
     screenSize.width -= screenInsets.left + screenInsets.right;
     screenSize.height -= screenInsets.top + screenInsets.bottom;
-    frame.setSize(Math.min(2 * screenSize.width / 3, 800), screenSize.height * 4 / 5);
+    frame.setSize(Math.min(2 * screenSize.width / 3, Math.round(800 * SwingTools.getResolutionScale())), 
+        screenSize.height * 4 / 5);
   }
   
   /**

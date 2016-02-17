@@ -640,7 +640,7 @@ class FurnitureCatalogListPanel extends JPanel implements View {
    * Cell renderer for the furniture list.
    */
   private static class CatalogCellRenderer extends JComponent implements ListCellRenderer {
-    private static final int DEFAULT_ICON_HEIGHT = 48;
+    private static final int DEFAULT_ICON_HEIGHT = Math.round(48 * SwingTools.getResolutionScale());
     private Font                    defaultFont;
     private Font                    modifiablePieceFont;
     private DefaultListCellRenderer nameLabel;

@@ -225,7 +225,7 @@ public class HomePane extends JRootPane implements HomeView {
   private static final String DETACHED_VIEW_WIDTH_VISUAL_PROPERTY            = ".detachedViewWidth";
   private static final String DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY           = ".detachedViewHeight";
 
-  private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
+  private static final int    DEFAULT_SMALL_ICON_HEIGHT = Math.round(16 * SwingTools.getResolutionScale());
   
   private final Home            home;
   private final UserPreferences preferences;
@@ -3814,6 +3814,9 @@ public class HomePane extends JRootPane implements HomeView {
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setEditable(false);
+    if (SwingTools.getResolutionScale() != 1) {
+      messagePane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+    }
     // Add a listener that displays hyperlinks content in browser
     messagePane.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent ev) {
@@ -3858,8 +3861,9 @@ public class HomePane extends JRootPane implements HomeView {
         // Add a description table
         JTable librariesTable = createLibrariesTable(typeLibraries);
         JScrollPane librariesScrollPane = SwingTools.createScrollPane(librariesTable);
-        librariesScrollPane.setPreferredSize(new Dimension(500, 
-            OperatingSystem.isWindows() ? 95 : 100));
+        librariesScrollPane.setPreferredSize(new Dimension(
+            Math.round(500 * SwingTools.getResolutionScale()), 
+            librariesTable.getTableHeader().getPreferredSize().height + librariesTable.getRowHeight() * 5 + 3));
         messagePanel.add(librariesScrollPane, new GridBagConstraints(
             0, row++, 1, 1, 1, 1, GridBagConstraints.CENTER, 
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -3922,6 +3926,11 @@ public class HomePane extends JRootPane implements HomeView {
         }
       };
     
+    float resolutionScale = SwingTools.getResolutionScale();
+    if (resolutionScale != 1) {
+      // Adapt row height to specified resolution scale
+      librariesTable.setRowHeight(Math.round(librariesTable.getRowHeight() * resolutionScale));
+    }
     // Set column widths
     librariesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     TableColumnModel columnModel = librariesTable.getColumnModel();

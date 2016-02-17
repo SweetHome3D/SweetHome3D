@@ -369,7 +369,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             });
         }
       });
-    zoomInButton.setPreferredSize(new Dimension(30, 30));
 
     zoomOutButton.setAction(new ResourceAction(preferences, 
         BackgroundImageWizardStepsPanel.class, "ZOOM_OUT", false) {
@@ -389,7 +388,15 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             });
         }
       });
-    zoomOutButton.setPreferredSize(new Dimension(30, 30));
+    
+    if (!OperatingSystem.isMacOSX()) {
+      // Make buttons square
+      Dimension preferredSize = zoomInButton.getPreferredSize();
+      preferredSize.width = 
+      preferredSize.height = preferredSize.height + 4;
+      zoomInButton.setPreferredSize(preferredSize);
+      zoomOutButton.setPreferredSize(preferredSize);
+    }
     
     JPanel panel = new JPanel(new GridBagLayout());
     JScrollPane scrollPane = SwingTools.createScrollPane(imageComponent);

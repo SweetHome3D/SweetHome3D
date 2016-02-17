@@ -148,6 +148,11 @@ public class FurnitureTable extends JTable implements View, Printable {
   public FurnitureTable(Home home, UserPreferences preferences, 
                        FurnitureController controller) {
     this.preferences = preferences;
+    float resolutionScale = SwingTools.getResolutionScale();
+    if (resolutionScale != 1) {
+      // Adapt row height to specified resolution scale
+      setRowHeight(Math.round(getRowHeight() * resolutionScale));
+    }
     setModel(new FurnitureTreeTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
     updateTableColumnsWidth(0);
@@ -1924,7 +1929,7 @@ public class FurnitureTable extends JTable implements View, Printable {
      */
     private static class PanelWithInformationIcon extends JPanel {
       private static final ImageIcon INFORMATION_ICON = 
-          new ImageIcon(FurnitureTable.class.getResource("resources/furnitureInformation.png"));
+          SwingTools.getScaledImageIcon(FurnitureTable.class.getResource("resources/furnitureInformation.png"));
       private JLabel informationLabel;
       
       public PanelWithInformationIcon() {
