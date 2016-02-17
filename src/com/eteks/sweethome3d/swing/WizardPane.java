@@ -225,7 +225,7 @@ public class WizardPane extends JOptionPane implements DialogView {
           backgroundColor2 = new Color(Integer.decode(stepIconBackgroundColors [1]));;
         }
       } catch (IllegalArgumentException ex) {
-        // Don't change colors if stepIconBackgroundColor doesn't exist or if colors are wrongly formatted
+        // Don't change colors if stepIconBackgroundColors doesn't exist or if colors are wrongly formatted
       }
          
       final Color gradientColor1 = backgroundColor1;
