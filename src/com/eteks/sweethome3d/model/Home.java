@@ -1639,7 +1639,6 @@ public class Home implements Serializable, Cloneable {
     destination.lightColor = source.lightColor;
     destination.wallsAlpha = source.wallsAlpha;
     destination.furnitureSortedProperty = source.furnitureSortedProperty;
-    destination.furnitureVisibleProperties = source.furnitureVisibleProperties;
     
     // Deep copy selectable items
     destination.selectedItems = new ArrayList<Selectable>(source.selectedItems.size());
@@ -1736,6 +1735,7 @@ public class Home implements Serializable, Cloneable {
     destination.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
         source.furnitureVisibleProperties);
     destination.visualProperties = new HashMap<String, Object>(source.visualProperties);
+    destination.properties = new HashMap<String, String>(source.properties);
   }
   
   /**
