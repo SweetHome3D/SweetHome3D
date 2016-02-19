@@ -2854,7 +2854,7 @@ public class HomeController implements Controller {
   /**
    * Controls the change of value of a visual property in home.
    * @deprecated {@link #setVisualProperty(String, Object) setVisualProperty} should be replaced by a call to 
-   * {@link #setProperty(String, String) setProperty} to ensure the property can be easily saved and read.
+   * {@link #setHomeProperty(String, String)} to ensure the property can be easily saved and read.
    */
   public void setVisualProperty(String propertyName,
                                 Object propertyValue) {
@@ -2865,7 +2865,7 @@ public class HomeController implements Controller {
    * Controls the change of value of a property in home.
    * @since 5.2
    */
-  public void setProperty(String propertyName,
+  public void setHomeProperty(String propertyName,
                                 String propertyValue) {
     this.home.setProperty(propertyName, propertyValue);
   }

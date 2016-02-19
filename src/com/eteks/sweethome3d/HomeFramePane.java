@@ -168,20 +168,20 @@ public class HomeFramePane extends JRootPane implements View {
         public void componentResized(ComponentEvent ev) {
           // Store new size only if frame isn't maximized
           if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
-            controller.setProperty(FRAME_WIDTH_VISUAL_PROPERTY, String.valueOf(frame.getWidth()));
-            controller.setProperty(FRAME_HEIGHT_VISUAL_PROPERTY, String.valueOf(frame.getHeight()));
+            controller.setHomeProperty(FRAME_WIDTH_VISUAL_PROPERTY, String.valueOf(frame.getWidth()));
+            controller.setHomeProperty(FRAME_HEIGHT_VISUAL_PROPERTY, String.valueOf(frame.getHeight()));
           }
           Dimension userScreenSize = getUserScreenSize();
-          controller.setProperty(SCREEN_WIDTH_VISUAL_PROPERTY, String.valueOf(userScreenSize.width));
-          controller.setProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, String.valueOf(userScreenSize.height));
+          controller.setHomeProperty(SCREEN_WIDTH_VISUAL_PROPERTY, String.valueOf(userScreenSize.width));
+          controller.setHomeProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, String.valueOf(userScreenSize.height));
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
           // Store new location only if frame isn't maximized
           if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
-            controller.setProperty(FRAME_X_VISUAL_PROPERTY, String.valueOf(frame.getX()));
-            controller.setProperty(FRAME_Y_VISUAL_PROPERTY, String.valueOf(frame.getY()));
+            controller.setHomeProperty(FRAME_X_VISUAL_PROPERTY, String.valueOf(frame.getX()));
+            controller.setHomeProperty(FRAME_Y_VISUAL_PROPERTY, String.valueOf(frame.getY()));
           }
         }
       };
@@ -193,7 +193,7 @@ public class HomeFramePane extends JRootPane implements View {
 
         @Override
         public void windowStateChanged(WindowEvent ev) {
-          controller.setProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
+          controller.setHomeProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
               String.valueOf((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH));
         }
         

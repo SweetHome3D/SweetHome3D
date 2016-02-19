@@ -2497,7 +2497,7 @@ public class HomePane extends JRootPane implements HomeView {
                       focusedComponent.requestFocusInWindow();
                     }
                   }
-                  controller.setProperty(dividerLocationProperty, String.valueOf(ev.getNewValue()));
+                  controller.setHomeProperty(dividerLocationProperty, String.valueOf(ev.getNewValue()));
                 }
               });
           }
@@ -2588,7 +2588,7 @@ public class HomePane extends JRootPane implements HomeView {
         }
         viewport.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
-              controller.setProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewport.getViewPosition().y));
+              controller.setHomeProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewport.getViewPosition().y));
             }
           });
         ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
@@ -2809,8 +2809,8 @@ public class HomePane extends JRootPane implements HomeView {
         viewport.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
               Point viewportPosition = viewport.getViewPosition();
-              controller.setProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, String.valueOf(viewportPosition.x));
-              controller.setProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewportPosition.y));
+              controller.setHomeProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, String.valueOf(viewportPosition.x));
+              controller.setHomeProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, String.valueOf(viewportPosition.y));
             }
           });
       }
@@ -2925,13 +2925,13 @@ public class HomePane extends JRootPane implements HomeView {
                       && dividerLocation.floatValue() != -1f) {
                     splitPane.setDividerLocation(dividerLocation.floatValue());
                   }
-                  controller.setProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
+                  controller.setHomeProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
                 }
               }
             });
           return planView3DPane;
         }
-        controller.setProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
+        controller.setHomeProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
       }
       
       return planView3DPane;
@@ -3287,7 +3287,7 @@ public class HomePane extends JRootPane implements HomeView {
           componentSize.width + insets.left + insets.right,
           componentSize.height + insets.top + insets.bottom);
     }
-    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, String.valueOf(dividerLocation));
+    this.controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, String.valueOf(dividerLocation));
   }
   
   /**
@@ -3421,14 +3421,14 @@ public class HomePane extends JRootPane implements HomeView {
     separateWindow.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
-          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, String.valueOf(separateWindow.getWidth()));
-          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, String.valueOf(separateWindow.getHeight()));
+          controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, String.valueOf(separateWindow.getWidth()));
+          controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, String.valueOf(separateWindow.getHeight()));
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
-          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, String.valueOf(separateWindow.getX()));
-          controller.setProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, String.valueOf(separateWindow.getY()));
+          controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, String.valueOf(separateWindow.getX()));
+          controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, String.valueOf(separateWindow.getY()));
         }
       });
 
@@ -3436,14 +3436,14 @@ public class HomePane extends JRootPane implements HomeView {
     separateWindow.setLocationByPlatform(!SwingTools.isRectangleVisibleAtScreen(separateWindow.getBounds()));
     separateWindow.setVisible(true);
     
-    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, Boolean.TRUE.toString());
+    this.controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, Boolean.TRUE.toString());
   }
   
   /**
    * Attaches the given <code>view</code> to home view.
    */
   public void attachView(final View view) {
-    this.controller.setProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
+    this.controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
 
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
     if (dummyComponent != null) {

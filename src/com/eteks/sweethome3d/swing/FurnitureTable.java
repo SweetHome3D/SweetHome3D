@@ -348,7 +348,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     }
     if (home.getProperty(EXPANDED_ROWS_VISUAL_PROPERTY) != null
         || rows.length() > 0) {
-      controller.setProperty(EXPANDED_ROWS_VISUAL_PROPERTY, rows.toString());
+      controller.setHomeProperty(EXPANDED_ROWS_VISUAL_PROPERTY, rows.toString());
     }
   }
 

@@ -1067,8 +1067,8 @@ public class VideoPanel extends JPanel implements DialogView {
 
           @Override
           public void componentMoved(ComponentEvent ev) {
-            controller.setVisualProperty(VIDEO_DIALOG_X_VISUAL_PROPERTY, dialog.getX());
-            controller.setVisualProperty(VIDEO_DIALOG_Y_VISUAL_PROPERTY, dialog.getY());
+            controller.setHomeProperty(VIDEO_DIALOG_X_VISUAL_PROPERTY, String.valueOf(dialog.getX()));
+            controller.setHomeProperty(VIDEO_DIALOG_Y_VISUAL_PROPERTY, String.valueOf(dialog.getY()));
           }
         });
       dialog.setVisible(true);

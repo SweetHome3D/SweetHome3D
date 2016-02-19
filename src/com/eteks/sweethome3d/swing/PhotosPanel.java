@@ -543,8 +543,8 @@ public class PhotosPanel extends JPanel implements DialogView {
 
           @Override
           public void componentMoved(ComponentEvent ev) {
-            controller.setVisualProperty(PHOTOS_DIALOG_X_VISUAL_PROPERTY, dialog.getX());
-            controller.setVisualProperty(PHOTOS_DIALOG_Y_VISUAL_PROPERTY, dialog.getY());
+            controller.setHomeProperty(PHOTOS_DIALOG_X_VISUAL_PROPERTY, String.valueOf(dialog.getX()));
+            controller.setHomeProperty(PHOTOS_DIALOG_Y_VISUAL_PROPERTY, String.valueOf(dialog.getY()));
           }
         });
       dialog.setVisible(true);
