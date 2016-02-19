@@ -1491,8 +1491,8 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Returns the value of the visual property <code>propertyName</code> associated with this home.
-   * @deprecated {@link #getVisualProperty(String) getVisualProperty} and {@link #setVisualProperty(String, Object) setVisualProperty} 
-   *     should be replaced by calls to {@link #getProperty(String) getProperty} and {@link #setProperty(String, String) setProperty}
+   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)} 
+   *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
   public Object getVisualProperty(String propertyName) {
@@ -1501,8 +1501,8 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Sets a visual property associated with this home.
-   * @deprecated {@link #getVisualProperty(String) getVisualProperty} and {@link #setVisualProperty(String, Object) setVisualProperty} 
-   *     should be replaced by calls to {@link #getProperty(String) getProperty} and {@link #setProperty(String, String) setProperty}
+   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)} 
+   *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
   public void setVisualProperty(String propertyName, Object propertyValue) {
