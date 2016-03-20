@@ -5848,7 +5848,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute walls area
       Area wallsArea = new Area();
       Level selectedLevel = this.home.getSelectedLevel();
-      for (Wall wall : home.getWalls()) {
+      for (Wall wall : this.home.getWalls()) {
         if (wall.isAtLevel(selectedLevel)) {
           wallsArea.add(new Area(getPath(wall.getPoints(includeBaseboards))));
         }
@@ -9355,10 +9355,15 @@ public class PlanController extends FurnitureController implements Controller {
           && clickCount == 2) {
         // Try to guess the item to measure
         DimensionLine dimensionLine = getMeasuringDimensionLineAt(x, y, this.magnetismEnabled);
-        this.newDimensionLine = createDimensionLine(
-            dimensionLine.getXStart(), dimensionLine.getYStart(), 
-            dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
-            dimensionLine.getOffset());
+        if (dimensionLine != null) {
+          this.newDimensionLine = createDimensionLine(
+              dimensionLine.getXStart(), dimensionLine.getYStart(), 
+              dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+              dimensionLine.getOffset());
+        } else {
+          setState(getDimensionLineCreationState());
+          return;
+        }
       }
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
@@ -11174,12 +11179,16 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount, 
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 2) {
-        int pointIndex = this.newPolyline.getPointIndexAt(x, y, PIXEL_MARGIN / getScale());
-        if (pointIndex == 0) {
-          this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
-          this.newPolyline.setClosedPath(true);
+        if (this.newPolyline != null) {
+          int pointIndex = this.newPolyline.getPointIndexAt(x, y, PIXEL_MARGIN / getScale());
+          if (pointIndex == 0) {
+            this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
+            this.newPolyline.setClosedPath(true);
+          }
+          validateDrawnPolyline();
+        } else {
+          setState(getPolylineCreationState());
         }
-        validateDrawnPolyline();
       } else {
         endPolylineSegment();
       }
@@ -11198,7 +11207,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }
       // Change state to PolylineCreationState 
-      setState(polylineCreationState);
+      setState(getPolylineCreationState());
     }
 
     private void endPolylineSegment() {
