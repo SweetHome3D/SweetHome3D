@@ -294,7 +294,7 @@ public class HomeAppletController extends HomePluginController {
             application.getUserPreferences().getLocalizedString(HomeAppletController.class, "importFromSH3DDialog.title"), 
             ContentManager.ContentType.SWEET_HOME_3D);    
         if (sh3dName != null) {
-          // Export home in a threaded task
+          // Import home in a threaded task
           Callable<Void> exportToObjTask = new Callable<Void>() {
               public Void call() throws RecorderException {
                 final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences(), true).readHome(sh3dName);
