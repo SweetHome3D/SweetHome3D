@@ -1,4 +1,11 @@
-#Produced by Art of Illusion 2.5, Mon Sep 24 18:44:29 CEST 2007
+# Produced by Art of Illusion 2.5, Mon Sep 24 18:44:29 CEST 2007
+#
+# Created by GdB / Damien Leduc
+#
+# This file is distributed under Free Art License, see http://artlibre.org/licence/lal/en for more informations
+# and under CC-BY Creative Commons Attribution 3.0 Unported license, see http://creativecommons.org/licenses/by/3.0/
+# at your choice
+# 
 g Couche:OBJECT018
 usemtl lighttan
 v -1.27 -1.92 -1.52

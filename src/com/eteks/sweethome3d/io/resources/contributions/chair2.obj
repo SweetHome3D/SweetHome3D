@@ -1,4 +1,11 @@
-#Produced by Art of Illusion 2.5, Sat Oct 06 00:10:02 CEST 2007
+# Produced by Art of Illusion 2.5, Sat Oct 06 00:10:02 CEST 2007
+#
+# Created by Sleipnir1
+#
+# This file is distributed under Free Art License, see http://artlibre.org/licence/lal/en for more informations
+# and under CC-BY Creative Commons Attribution 3.0 Unported license, see http://creativecommons.org/licenses/by/3.0/
+# at your choice
+# 
 g Cube_3
 usemtl flltbrown
 v 0.4461 0.13637 0.05163

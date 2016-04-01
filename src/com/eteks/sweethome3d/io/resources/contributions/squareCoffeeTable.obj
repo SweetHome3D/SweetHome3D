@@ -1,4 +1,11 @@
-#Produced by Art of Illusion 2.5, Mon Sep 24 17:35:38 CEST 2007
+# Produced by Art of Illusion 2.5, Mon Sep 24 17:35:38 CEST 2007
+#
+# Created by GdB / Damien Leduc
+#
+# This file is distributed under Free Art License, see http://artlibre.org/licence/lal/en for more informations
+# and under CC-BY Creative Commons Attribution 3.0 Unported license, see http://creativecommons.org/licenses/by/3.0/
+# at your choice
+# 
 g Couche:OBJECT005
 usemtl black
 v 0.67 0.18 -0.67
