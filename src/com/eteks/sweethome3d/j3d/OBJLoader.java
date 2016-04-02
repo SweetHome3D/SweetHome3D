@@ -1002,6 +1002,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   private Map<String, Group>      groups;
   private Group                   currentGroup;
   private String                  currentMaterial;
+  private boolean                 currentSmooth;
   private Map<String, Appearance> appearances;
   
 
@@ -1157,6 +1158,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           Geometry firstGeometry = geometries.get(i);          
           boolean firstGeometryHasTextureCoordinateIndices = firstGeometry.hasTextureCoordinateIndices();
           boolean firstFaceHasNormalIndices = (firstGeometry instanceof Face) && ((Face)firstGeometry).hasNormalIndices();
+          boolean firstFaceIsSmooth = (firstGeometry instanceof Face) && ((Face)firstGeometry).isSmooth();
           
           String firstGeometryMaterial = firstGeometry.getMaterial();
           Appearance appearance = getAppearance(firstGeometryMaterial);
@@ -1169,6 +1171,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             if (geometry.getClass() != firstGeometry.getClass()
                 || material == null && firstGeometryMaterial != null
                 || material != null && getAppearance(material) != appearance
+                || (firstFaceIsSmooth ^ ((geometry instanceof Face) && ((Face)geometry).isSmooth()))
                 || (firstGeometryHasTextureCoordinateIndices ^ geometry.hasTextureCoordinateIndices())
                 || (firstFaceHasNormalIndices ^ ((geometry instanceof Face) && ((Face)geometry).hasNormalIndices()))) {
               break;
@@ -1224,7 +1227,7 @@ public class OBJLoader extends LoaderBase implements Loader {
               geometryInfo.setNormalIndices(normalIndices);
             } else {
               NormalGenerator normalGenerator = new NormalGenerator(Math.PI / 2);
-              if (!group.isSmooth()) {
+              if (!firstFaceIsSmooth) {
                 normalGenerator.setCreaseAngle(0);
               }
               normalGenerator.generateNormals(geometryInfo);
@@ -1436,13 +1439,12 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       if (vertexIndices.size() > 2) {
         this.currentGroup.addGeometry(new Face(vertexIndices, textureCoordinateIndices, normalIndices, 
-            this.currentMaterial));
+            this.currentSmooth, this.currentMaterial));
       }
     } else if ("g".equals(tokenizer.sval)
                || "o".equals(tokenizer.sval)) {
       // Read group name g name 
       //  or object name o name
-      boolean smoothingGroup = this.currentGroup.isSmooth();
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
         this.currentGroup = this.groups.get(tokenizer.sval);
         if (this.currentGroup == null) {
@@ -1456,7 +1458,6 @@ public class OBJLoader extends LoaderBase implements Loader {
       } else {  
         throw new IncorrectFormatException("Expected group or object name at line " + tokenizer.lineno());
       }
-      this.currentGroup.setSmooth(smoothingGroup);
       // Skip other names
       while (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {        
       }
@@ -1465,7 +1466,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Read smoothing group s n 
       //                   or s off
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
-        this.currentGroup.setSmooth(!"off".equals(tokenizer.sval));
+        this.currentSmooth = !"off".equals(tokenizer.sval);
       } else {
         throw new IncorrectFormatException("Expected smoothing group or off at line " + tokenizer.lineno());
       }
@@ -1907,19 +1908,26 @@ public class OBJLoader extends LoaderBase implements Loader {
    * The coordinates indices of a face. 
    */
   private static class Face extends Geometry {
-    private int [] normalIndices;
+    private int []  normalIndices;
+    private boolean smooth;
     
     public Face(List<Integer> vertexIndices, 
                 List<Integer> textureCoordinateIndices, 
                 List<Integer> normalIndices,
+                boolean       smooth,
                 String        material) {
       super(vertexIndices, textureCoordinateIndices, material);
+      this.smooth = smooth;
       if (normalIndices.size() != 0) {
         this.normalIndices = new int [normalIndices.size()];
         for (int i = 0; i < this.normalIndices.length; i++) {
           this.normalIndices [i] = normalIndices.get(i);
         }
       }
+    }
+    
+    public boolean isSmooth() {
+      return this.smooth;
     }
     
     public int [] getNormalIndices() {
@@ -1937,7 +1945,6 @@ public class OBJLoader extends LoaderBase implements Loader {
    */
   private static class Group {
     private final String   name;
-    private boolean        smooth;
     private List<Geometry> geometries;
  
     public Group(String name) {
@@ -1947,14 +1954,6 @@ public class OBJLoader extends LoaderBase implements Loader {
     
     public String getName() {
       return this.name;
-    }
-    
-    public void setSmooth(boolean smooth) {
-      this.smooth = smooth;
-    }
-    
-    public boolean isSmooth() {
-      return this.smooth;
     }
     
     public void addGeometry(Geometry face) {
