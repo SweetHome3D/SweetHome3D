@@ -218,7 +218,7 @@ public class ModelManager {
   }
 
   /**
-   * Shutdowns the multithreaded service that load textures. 
+   * Shutdowns the multithreaded service that load models and clears loaded models cache. 
    */
   public void clear() {
     if (this.modelsLoader != null) {
@@ -242,6 +242,7 @@ public class ModelManager {
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
    * sphere for a scene.
+   * @param node     the root of a model 
    */
   public Vector3f getSize(Node node) {
     return getSize(node, new Transform3D());
@@ -252,6 +253,9 @@ public class ModelManager {
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
    * sphere for a scene.
+   * @param node     the root of a model 
+   * @param transformation the transformation applied to the model  
+   *                 or <code>null</code> if no transformation should be applied to node.
    */
   public Vector3f getSize(Node node, Transform3D transformation) {
     BoundingBox bounds = getBounds(node, transformation);
@@ -269,6 +273,7 @@ public class ModelManager {
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
    * sphere for a scene.
+   * @param node  the root of a model 
    */
   public BoundingBox getBounds(Node node) {
     return getBounds(node, new Transform3D());
@@ -278,6 +283,9 @@ public class ModelManager {
    * Returns the bounds of the 3D shapes of <code>node</code> with an additional <code>transformation</code>.
    * This method computes the exact box that contains all the shapes, contrary to <code>node.getBounds()</code> 
    * that returns a bounding sphere for a scene.
+   * @param node     the root of a model 
+   * @param transformation the transformation applied to the model  
+   *                 or <code>null</code> if no transformation should be applied to node.
    */
   public BoundingBox getBounds(Node node, Transform3D transformation) {
     BoundingBox objectBounds = new BoundingBox(
