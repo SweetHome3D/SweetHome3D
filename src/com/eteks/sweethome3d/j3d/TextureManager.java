@@ -99,6 +99,7 @@ public class TextureManager {
       this.contentTextures.clear();
       this.textures.clear();
     }
+    this.loadingTextureObservers.clear();
   }
   
   /**
@@ -210,8 +211,11 @@ public class TextureManager {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       // Notify loaded texture to observer
-                      for (TextureObserver observer : loadingTextureObservers.remove(contentKey)) {
-                        observer.textureUpdated(texture);
+                      List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
+                      if (observers != null) {
+                        for (TextureObserver observer : observers) {
+                          observer.textureUpdated(texture);
+                        }
                       }
                     }
                   });

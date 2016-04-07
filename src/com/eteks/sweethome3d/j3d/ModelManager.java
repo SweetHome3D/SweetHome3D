@@ -228,6 +228,7 @@ public class ModelManager {
     synchronized (this.loadedModelNodes) {
       this.loadedModelNodes.clear();
     }
+    this.loadingModelObservers.clear();
   }
   
   /**
@@ -585,16 +586,22 @@ public class ModelManager {
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    for (final ModelObserver observer : loadingModelObservers.remove(content)) {
-                      observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    if (observers != null) {
+                      for (final ModelObserver observer : observers) {
+                        observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
+                      }
                     }
                   }
                 });
             } catch (final IOException ex) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    for (final ModelObserver observer : loadingModelObservers.remove(content)) {
-                      observer.modelError(ex);
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    if (observers != null) {
+                      for (final ModelObserver observer : observers) {
+                        observer.modelError(ex);
+                      }
                     }
                   }
                 });
