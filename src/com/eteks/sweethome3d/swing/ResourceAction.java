@@ -26,7 +26,6 @@ import java.lang.ref.WeakReference;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 import javax.swing.event.SwingPropertyChangeSupport;
 
