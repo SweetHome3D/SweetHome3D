@@ -81,11 +81,11 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * Creates default environment.
    */
   public HomeEnvironment() {
-    this(0xA8A8A8, // Ground color
-        null,      // Ground texture
-        (204 << 16) + (228 << 8) + 252, // Sky color
-        0xD0D0D0,  // Light color
-        0);        // Walls alpha
+    this(0xFFA8A8A8, // Ground color
+        null,        // Ground texture
+        0xFFCCE4FC, // Sky color
+        0xFFD0D0D0, // Light color
+        0);         // Walls alpha
   }
 
   /**
@@ -111,7 +111,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.skyColor = skyColor;
     this.skyTexture = skyTexture;
     this.lightColor = lightColor;
-    this.ceilingLightColor = 0xD0D0D0;
+    this.ceilingLightColor = 0xFFD0D0D0;
     this.wallsAlpha = wallsAlpha;
     this.drawingMode = DrawingMode.FILL;
     this.photoWidth = 400;
