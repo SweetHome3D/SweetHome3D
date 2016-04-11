@@ -1694,7 +1694,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Updates<code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.
+   * Updates <code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.
    */
   private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home, 
                                                boolean waitForLoading) {
