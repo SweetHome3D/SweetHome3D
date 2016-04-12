@@ -125,7 +125,7 @@ public abstract class Object3DBranch extends BranchGroup {
                                                     ((diffuseColor >>> 8) & 0xFF) / 255f,
                                                             (diffuseColor & 0xFF) / 255f);
         material = new Material(ambientMaterialColor, new Color3f(), diffuseMaterialColor, 
-            new Color3f(shininess, shininess, shininess), shininess * 128);
+            new Color3f(shininess, shininess, shininess), Math.max(1, shininess * 128));
         material.setCapability(Material.ALLOW_COMPONENT_READ);
         // Store created materials in cache
         materials.put(materialKey, material);
