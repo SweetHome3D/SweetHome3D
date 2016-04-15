@@ -358,7 +358,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
-   * Sets whether this piece is movable or not.
+   * Sets whether this piece and its children are movable or not.
    * @since 3.1
    */
   @Override
