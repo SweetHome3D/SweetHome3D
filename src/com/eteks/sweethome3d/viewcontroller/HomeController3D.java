@@ -281,6 +281,8 @@ public class HomeController3D implements Controller {
   
   /**
    * Moves home camera of <code>delta</code>.
+   * @param delta  the value in cm that the camera should move forward 
+   *               (with a negative delta) or backward (with a positive delta)
    */
   public void moveCamera(float delta) {
     this.cameraState.moveCamera(delta);
@@ -288,6 +290,8 @@ public class HomeController3D implements Controller {
 
   /**
    * Moves home camera sideways of <code>delta</code>.
+   * @param delta  the value in cm that the camera should move left 
+   *               (with a negative delta) or right (with a positive delta)
    * @since 4.4 
    */
   public void moveCameraSideways(float delta) {
@@ -296,6 +300,8 @@ public class HomeController3D implements Controller {
 
   /**
    * Elevates home camera of <code>delta</code>.
+   * @param delta the value in cm that the camera should move down 
+   *              (with a negative delta) or up (with a positive delta)
    */
   public void elevateCamera(float delta) {
     this.cameraState.elevateCamera(delta);
@@ -303,6 +309,7 @@ public class HomeController3D implements Controller {
 
   /**
    * Rotates home camera yaw angle of <code>delta</code> radians.
+   * @param delta  the value in rad that the camera should turn around yaw axis
    */
   public void rotateCameraYaw(float delta) {
     this.cameraState.rotateCameraYaw(delta);
@@ -310,6 +317,7 @@ public class HomeController3D implements Controller {
 
   /**
    * Rotates home camera pitch angle of <code>delta</code> radians.
+   * @param delta  the value in rad that the camera should turn around pitch axis
    */
   public void rotateCameraPitch(float delta) {
     this.cameraState.rotateCameraPitch(delta);
