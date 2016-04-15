@@ -1200,7 +1200,7 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns the maximum abcissa of the vertices of <code>piece</code>.  
+   * Returns the maximum abscissa of the vertices of <code>piece</code>.  
    */
   private float getMaxX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();

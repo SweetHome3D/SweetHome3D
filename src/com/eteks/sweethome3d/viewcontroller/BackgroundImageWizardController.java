@@ -341,7 +341,7 @@ public class BackgroundImageWizardController extends WizardController
   }
 
   /**
-   * Returns the abcissa of the origin of the background image.
+   * Returns the abscissa of the origin of the background image.
    */
   public float getXOrigin() {
     return this.xOrigin;

@@ -86,7 +86,7 @@ public class BackgroundImage implements Serializable {
   }
 
   /**
-   * Returns the abcissa of the start point used to compute 
+   * Returns the abscissa of the start point used to compute 
    * the scale of this image.
    */
   public float getScaleDistanceXStart() {
@@ -102,7 +102,7 @@ public class BackgroundImage implements Serializable {
   }
 
   /**
-   * Returns the abcissa of the end point used to compute 
+   * Returns the abscissa of the end point used to compute 
    * the scale of this image.
    */
   public float getScaleDistanceXEnd() {
