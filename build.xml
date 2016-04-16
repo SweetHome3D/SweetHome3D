@@ -1176,7 +1176,7 @@
   </target>
 
   <!-- Builds install/SweetHome3D-version-javadoc.zip archive that contains 
-       SweetHome3D source files in directory named SweetHome3D-version-src -->
+       the generated Javadoc of Java files found in SweetHome3D-version-src -->
   <target name="javadoc"
           description="Builds install/SweetHome3D-version-javadoc.zip archive">
     <mkdir dir="install/javadoc/SweetHome3D-${version}-javadoc"/>
