@@ -38,8 +38,8 @@ public class CollectionEvent<T> extends EventObject {
 
   /**
    * Creates an event for an item that has no index.
-   * @param source The object to which an item was added or deleted
-   * @param item   The added or deleted item
+   * @param source the object to which an item was added or deleted
+   * @param item   the added or deleted item
    * @param type   <code>CollectionEvent.Type.ADD</code> or <code>CollectionEvent.Type.DELETE</code> 
    */
   public CollectionEvent(Object source, T item, Type type) {
@@ -48,9 +48,9 @@ public class CollectionEvent<T> extends EventObject {
 
   /**
    * Creates an event for an item with its index. 
-   * @param source The object to which an item was added or deleted
-   * @param item   The added or deleted item
-   * @param index  The index at which the item was added or deleted, or -1 if unknown
+   * @param source the object to which an item was added or deleted
+   * @param item   the added or deleted item
+   * @param index  the index at which the item was added or deleted, or -1 if unknown
    * @param type   <code>CollectionEvent.Type.ADD</code> or <code>CollectionEvent.Type.DELETE</code> 
    */
   public CollectionEvent(Object source, T item, int index, Type type) {
