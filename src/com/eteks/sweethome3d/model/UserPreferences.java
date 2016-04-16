@@ -341,7 +341,7 @@ public abstract class UserPreferences {
    * <code>resourceClass</code>, then if this file doesn't exist, it searches 
    * the key prefixed by <code>resourceClass</code> name and a dot in a package.properties file 
    * in the folder matching the package of <code>resourceClass</code>. 
-   * @exception IllegalArgumentException if no string for the given key can be found
+   * @throws IllegalArgumentException if no string for the given key can be found
    */
   public String getLocalizedString(Class<?> resourceClass,
                                    String   resourceKey, 
@@ -383,7 +383,7 @@ public abstract class UserPreferences {
    * as a format string, and the returned string will be formatted with these parameters. 
    * This implementation searches the key in a properties file named as 
    * <code>resourceFamily</code>. 
-   * @exception IllegalArgumentException if no string for the given key can be found
+   * @throws IllegalArgumentException if no string for the given key can be found
    * @since 2.3
    */
   public String getLocalizedString(String resourceFamily,
