@@ -166,7 +166,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the yaw angle in radians of this camera.
+   * Sets the yaw angle in radians of this camera and notifies listeners of this change.
    */
   public void setYaw(float yaw) {
     if (yaw != this.yaw) {
@@ -184,7 +184,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the pitch angle in radians of this camera.
+   * Sets the pitch angle in radians of this camera and notifies listeners of this change.
    */
   public void setPitch(float pitch) {
     if (pitch != this.pitch) {
@@ -202,7 +202,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the field of view in radians of this camera.
+   * Sets the field of view in radians of this camera and notifies listeners of this change.
    */
   public void setFieldOfView(float fieldOfView) {
     if (fieldOfView != this.fieldOfView) {
@@ -220,7 +220,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the abscissa of this camera.
+   * Sets the abscissa of this camera and notifies listeners of this change.
    */
   public void setX(float x) {
     if (x != this.x) {
@@ -238,7 +238,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the ordinate of this camera.
+   * Sets the ordinate of this camera and notifies listeners of this change.
    */
   public void setY(float y) {
     if (y != this.y) {
@@ -256,7 +256,7 @@ public class Camera implements Serializable, Cloneable {
   }
   
   /**
-   * Sets the elevation of this camera.
+   * Sets the elevation of this camera and notifies listeners of this change.
    */
   public void setZ(float z) {
     if (z != this.z) {
@@ -316,7 +316,7 @@ public class Camera implements Serializable, Cloneable {
   }
   
   /**
-   * Sets the lens of this camera.
+   * Sets the lens of this camera and notifies listeners of this change.
    * @since 3.0
    */
   public void setLens(Lens lens) {
