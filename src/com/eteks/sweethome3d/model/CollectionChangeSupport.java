@@ -33,6 +33,7 @@ public class CollectionChangeSupport<T> {
   
   /**
    * Creates a collection change support.
+   * @param source  the collection to which data will be added.  
    */
   public CollectionChangeSupport(Object source) {
     this.source = source;
@@ -41,6 +42,7 @@ public class CollectionChangeSupport<T> {
   
   /**
    * Adds the <code>listener</code> in parameter to the list of listeners that may be notified.
+   * @param listener  the listener to add
    */
   public void addCollectionListener(CollectionListener<T> listener) {
     this.collectionListeners.add(listener);
@@ -48,6 +50,7 @@ public class CollectionChangeSupport<T> {
 
   /**
    * Removes the <code>listener</code> in parameter to the list of listeners that may be notified.
+   * @param listener  the listener to remove. If it doesn't exist, it's simply ignored.
    */
   public void removeCollectionListener(CollectionListener<T> listener) {
     this.collectionListeners.remove(listener);
@@ -55,6 +58,8 @@ public class CollectionChangeSupport<T> {
 
   /**
    * Fires a collection event about <code>item</code>.
+   * @param item     the added ore deleted item 
+   * @param eventType <code>CollectionEvent.Type.ADD</code> or <code>CollectionEvent.Type.DELETE</code> 
    */
   public void fireCollectionChanged(T item, CollectionEvent.Type eventType) {
     fireCollectionChanged(item, -1, eventType);
@@ -62,6 +67,9 @@ public class CollectionChangeSupport<T> {
 
   /**
    * Fires a collection event about <code>item</code> at a given <code>index</code>.
+   * @param item     the added ore deleted item 
+   * @param index    the optional index at which the item was added or deleted 
+   * @param eventType <code>CollectionEvent.Type.ADD</code> or <code>CollectionEvent.Type.DELETE</code> 
    */
   @SuppressWarnings("unchecked")
   public void fireCollectionChanged(T item, int index, 
