@@ -942,8 +942,8 @@ public abstract class UserPreferences {
   
   /**
    * Returns whether an action tip should be ignored or not. 
-   * <br>This method should be overridden to return the the display information
-   * stored in {@link #setActionTipIgnored(String) setActionTipDisplayed}.
+   * <br>This method should be overridden to return the display information
+   * stored in {@link #setActionTipIgnored(String) setActionTipIgnored}.
    * By default it returns <code>true</code>. 
    */
   public boolean isActionTipIgnored(String actionKey) {
