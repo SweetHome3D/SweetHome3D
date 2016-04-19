@@ -198,6 +198,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         });
   }
 
+  /**
+   * Updates this branch from the home piece it manages.
+   */
   @Override
   public void update() {
     updatePieceOfFurnitureTransform();
