@@ -142,7 +142,7 @@ public class HomeFileRecorder implements HomeRecorder {
 
     try {
       // Check disk space under Java 1.6
-      long usableSpace = (Long)File.class.getMethod("getUsableSpace").invoke(homeFile.getParentFile());
+      long usableSpace = (Long)File.class.getMethod("getUsableSpace").invoke(homeFile);
       long requiredSpace = tempFile.length();
       if (homeFile.exists()) {
         requiredSpace -= homeFile.length();
@@ -152,7 +152,7 @@ public class HomeFileRecorder implements HomeRecorder {
         throw new NotEnoughSpaceRecorderException("Not enough disk space to save file " + name, requiredSpace - usableSpace);
       }
     } catch (NoSuchMethodException ex) {
-      // This method doesn't exist under Java 5
+      // The method File#getUsableSpace doesn't exist under Java 5
     } catch (NotEnoughSpaceRecorderException ex) {
       if (tempFile != null) {
         tempFile.delete();
