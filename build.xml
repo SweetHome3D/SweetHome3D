@@ -529,7 +529,7 @@
     <!-- Copy 32 bit JRE to install/windows/build/jre/x86... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x86">
-      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_74">
+      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_92">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -595,7 +595,7 @@
     <!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x64">
-      <fileset dir="C:\Program Files\Java\jre1.8.0_74">
+      <fileset dir="C:\Program Files\Java\jre1.8.0_92">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -667,20 +667,20 @@
     </exec>
 
     <!-- Pack largest jars -->
-    <exec executable="C:\Program Files\Java\jre1.8.0_74\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_92\bin\pack200.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.pack.gz"/>
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_74\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_92\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_74\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_92\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.jar"/>
