@@ -30,7 +30,7 @@
 -->
 <project basedir="." default="jarExecutable" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="5.2"/>
+  <property name="version" value="5.3"/>
 
   <target name="build" 
           description="Builds build/SweetHome3D.jar with all its classes">
@@ -1191,7 +1191,7 @@
                        <td>&copy; Copyrights 2006-2016 Emmanuel PUYBARET / <a href='http://www.eteks.com' target='_parent'>eTeks</a>
                            <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
       <link href="http://docs.oracle.com/javase/1.5.1/docs/api/"/>
-      <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>
+      <link href="http://download.java.net/media/java3d/javadoc/1.5.3/"/>
       <group title="Base classes" packages="*"/>
       <group title="Application and Applet" packages="com.eteks.sweethome3d:com.eteks.sweethome3d.applet"/>
       <classpath>
