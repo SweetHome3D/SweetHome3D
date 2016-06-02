@@ -889,6 +889,8 @@
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/i386/SweetHome3D-${version}" />
+  	<copy file="src/com/eteks/sweethome3d/swing/resources/aboutIcon.png" 
+  		  tofile="install/linux/i386/SweetHome3D-${version}/SweetHome3DIcon.png"/>
 
     <!-- Copy JRE to install/linux/i386/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
@@ -966,6 +968,8 @@
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/x64/SweetHome3D-${version}" />
+  	<copy file="src/com/eteks/sweethome3d/swing/resources/aboutIcon.png" 
+  		  tofile="install/linux/x64/SweetHome3D-${version}/SweetHome3DIcon.png"/>
 
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
