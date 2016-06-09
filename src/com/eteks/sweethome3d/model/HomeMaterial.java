@@ -30,6 +30,7 @@ public class HomeMaterial implements Serializable {
   private static final long serialVersionUID = 1L;
   
   private final String      name;
+  private final String      key;
   private final Integer     color;
   private final HomeTexture texture;
   private final Float       shininess;
@@ -39,7 +40,16 @@ public class HomeMaterial implements Serializable {
    * @since 4.0
    */
   public HomeMaterial(String name, Integer color, HomeTexture texture, Float shininess) {
+    this(name, null, color, texture, shininess);
+  }
+
+  /**
+   * Creates a material instance from parameters.
+   * @since 5.3
+   */
+  public HomeMaterial(String name, String key, Integer color, HomeTexture texture, Float shininess) {
     this.name = name;
+    this.key = key;
     this.color = color;
     this.texture = texture;
     this.shininess = shininess;
@@ -52,6 +62,17 @@ public class HomeMaterial implements Serializable {
    */
   public String getName() {
     return this.name;
+  }
+  
+  /**
+   * Returns the key of this material. If not <code>null</code>, this key should be used
+   * as the unique identifier to find this material among the ones available on a model, 
+   * rather than the name of this material.
+   * @return the key of the material or <code>null</code> if material has no key.
+   * @since 5.3
+   */
+  public String getKey() {
+    return this.key;
   }
   
   /**

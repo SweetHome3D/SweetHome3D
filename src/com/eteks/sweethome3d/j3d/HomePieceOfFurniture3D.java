@@ -630,8 +630,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           boolean materialFound = false;
           // Apply color, texture and shininess of the material named as appearance name
           for (HomeMaterial material : materials) {
-            if (material != null 
-                && material.getName().equals(appearance.getName())) {
+            if (material != null
+                && (material.getKey() != null
+                        && material.getKey().equals(appearance.getName())
+                    || material.getKey() == null
+                        && material.getName().equals(appearance.getName()))) {
               if (material.getShininess() != null) {
                 materialShininess = material.getShininess();
               }

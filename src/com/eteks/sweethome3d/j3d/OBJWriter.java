@@ -1314,6 +1314,22 @@ public class OBJWriter extends FilterWriter {
                                         int compressionLevel,
                                         String entryName, 
                                         String header) throws IOException {
+    writeNodeInZIPFile(node, null, zipFile, compressionLevel, entryName, header);
+  }
+  
+  /**
+   * Writes <code>node</code> in an entry at OBJ format of the given zip file 
+   * along with its MTL file and texture images.
+   * Once saved, <code>materialAppearances</code> will contain the appearances matching 
+   * each material saved in the MTL file. Material names used as keys maybe be different     
+   * of the appearance names to respect MTL specifications.
+   */
+  public static void writeNodeInZIPFile(Node node, 
+                                        Map<String, Appearance> materialAppearances,
+                                        File zipFile,    
+                                        int compressionLevel,
+                                        String entryName, 
+                                        String header) throws IOException {
     // Create a temporary folder
     File tempFolder = null;
     for (int i = 0; i < 10 && tempFolder == null; i++) { 
@@ -1353,6 +1369,13 @@ public class OBJWriter extends FilterWriter {
               tempIn.close();
             }
           }          
+        }
+      }
+
+      if (materialAppearances != null) {
+        // Update material / appearance map
+        for (Map.Entry<ComparableAppearance, String> appearanceEntry : writer.appearances.entrySet()) {
+          materialAppearances.put(appearanceEntry.getValue(), appearanceEntry.getKey().getAppearance());
         }
       }
     } finally {
