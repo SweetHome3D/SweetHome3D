@@ -947,7 +947,7 @@ public class ModelManager {
   public void checkAppearancesName(Node node) {
     // Search appearances used by node shapes keeping their enumeration order 
     Set<Appearance> appearances = new LinkedHashSet<Appearance>(); 
-    searchMaterials(node, appearances);
+    searchAppearances(node, appearances);
     int i = 0;
     for (Appearance appearance : appearances) {
       try {
@@ -967,7 +967,7 @@ public class ModelManager {
   public HomeMaterial [] getMaterials(Node node) {
     // Search appearances used by node shapes 
     Set<Appearance> appearances = new HashSet<Appearance>(); 
-    searchMaterials(node, appearances);
+    searchAppearances(node, appearances);
     Set<HomeMaterial> materials = new TreeSet<HomeMaterial>(new Comparator<HomeMaterial>() {
         public int compare(HomeMaterial m1, HomeMaterial m2) {
           String name1 = m1.getName();
@@ -1024,15 +1024,15 @@ public class ModelManager {
     return materials.toArray(new HomeMaterial [materials.size()]);
   }
 
-  private void searchMaterials(Node node, Set<Appearance> appearances) {
+  private void searchAppearances(Node node, Set<Appearance> appearances) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        searchMaterials((Node)enumeration.nextElement(), appearances);
+        searchAppearances((Node)enumeration.nextElement(), appearances);
       }
     } else if (node instanceof Link) {
-      searchMaterials(((Link)node).getSharedGroup(), appearances);
+      searchAppearances(((Link)node).getSharedGroup(), appearances);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
