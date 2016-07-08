@@ -39,13 +39,14 @@ public class Label implements Selectable, Serializable, Elevatable {
    * The properties of a label that may change. <code>PropertyChangeListener</code>s added 
    * to a label will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {TEXT, X, Y, ELEVATION, STYLE, COLOR, ANGLE, PITCH, LEVEL};
+  public enum Property {TEXT, X, Y, ELEVATION, STYLE, COLOR, OUTLINE_COLOR, ANGLE, PITCH, LEVEL};
   
   private String    text;
   private float     x;
   private float     y;
   private TextStyle style;
   private Integer   color;
+  private Integer   outlineColor;
   private float     angle;
   private Float     pitch;
   private float     elevation;
@@ -212,6 +213,27 @@ public class Label implements Selectable, Serializable, Elevatable {
       Integer oldColor = this.color;
       this.color = color;
       this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+    }
+  }
+
+  /**
+   * Returns the color used to outline the text of this label.
+   * @since 5.3
+   */
+  public Integer getOutlineColor() {
+    return this.outlineColor;  
+  }
+
+  /**
+   * Sets the color used to outline the text of this label.
+   * Once this label is updated, listeners added to this label will receive a change notification.
+   * @since 5.3
+   */
+  public void setOutlineColor(Integer outlineColor) {
+    if (outlineColor != this.outlineColor) {
+      Integer oldOutlineColor = this.outlineColor;
+      this.outlineColor = outlineColor;
+      this.propertyChangeSupport.firePropertyChange(Property.OUTLINE_COLOR.name(), oldOutlineColor, outlineColor);
     }
   }
 

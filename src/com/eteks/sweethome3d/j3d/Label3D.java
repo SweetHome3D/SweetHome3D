@@ -19,11 +19,13 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -93,6 +95,7 @@ public class Label3D extends Object3DBranch {
             || label.getLevel().isViewableAndVisible())) {
       String text = label.getText();
       Integer color = label.getColor();
+      Integer outlineColor = label.getOutlineColor();
       if (!text.equals(this.text)
           || (style == null && this.style != null)
           || (style != null && !style.equals(this.style))
@@ -112,7 +115,8 @@ public class Label3D extends Object3DBranch {
         } else {
           defaultFont = UIManager.getFont("TextField.font");
         }
-        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize());
+        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
+        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
   
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
@@ -120,16 +124,16 @@ public class Label3D extends Object3DBranch {
         g2D.dispose();
         
         Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        int width;
-        int height;
-        float scale;
-        float textWidth = (float)textBounds.getWidth();
-        float textHeight = (float)textBounds.getHeight();
+        float textWidth = (float)textBounds.getWidth() + 2 * stroke.getLineWidth();
         if (style.isItalic()) {
           textWidth += fontMetrics.getAscent() * 0.2;
         }
-        // Ensure that text image size is between 256x256 and 512x512 pixels
+        float textHeight = (float)textBounds.getHeight() + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
+        int width;
+        int height;
+        float scale;
+        // Ensure that text image size is between 256x256 and 512x512 pixels
         if (textRatio > 1) {
           width = (int)Math.ceil(Math.max(255 * textRatio, Math.min(textWidth, 511 * textRatio)));
           scale = (float)(width / textWidth);
@@ -143,12 +147,20 @@ public class Label3D extends Object3DBranch {
         // Draw text in an image
         BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
         g2D = (Graphics2D)textureImage.getGraphics();
+        g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
+        g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
+        if (outlineColor != null) {
+          g2D.setColor(new Color(outlineColor));
+          g2D.setStroke(stroke);
+          TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+          g2D.draw(textLayout.getOutline(null));
+        }
         g2D.setFont(font);
         g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
-        g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-        g2D.drawString(text, 0f, -(float)(textBounds.getY()));
+        g2D.drawString(text, 0f, 0f);
         g2D.dispose();
 
         Transform3D scaleTransform = new Transform3D();

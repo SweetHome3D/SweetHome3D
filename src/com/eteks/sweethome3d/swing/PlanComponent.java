@@ -2914,7 +2914,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (name != null) {
           name = name.trim();
           if (name.length() > 0) {
-            paintText(g2D, room.getClass(), name, room.getNameStyle(), 
+            paintText(g2D, room.getClass(), name, room.getNameStyle(), null,
                 xRoomCenter + room.getNameXOffset(),
                 yRoomCenter + room.getNameYOffset(),
                 room.getNameAngle(), previousFont);
@@ -2925,7 +2925,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (area > 0.01f) {
             // Draw room area 
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);            
-            paintText(g2D, room.getClass(), areaText, room.getAreaStyle(), 
+            paintText(g2D, room.getClass(), areaText, room.getAreaStyle(), null,
                 xRoomCenter + room.getAreaXOffset(),
                 yRoomCenter + room.getAreaYOffset(),
                 room.getAreaAngle(), previousFont);
@@ -2941,7 +2941,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintText(Graphics2D g2D,
                          Class<? extends Selectable> selectableClass,
-                         String text, TextStyle style, 
+                         String text, TextStyle style, Integer outlineColor, 
                          float x, float y, float angle,
                          Font defaultFont) {
     AffineTransform previousTransform = g2D.getTransform();
@@ -2950,11 +2950,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }              
     FontMetrics fontMetrics = getFontMetrics(defaultFont, style);
     Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-    // Draw text
-    g2D.setFont(getFont(defaultFont, style));
     g2D.translate(x, y);
     g2D.rotate(angle);
-    g2D.drawString(text, -(float)textBounds.getWidth() / 2, 0);
+    if (outlineColor != null) {
+      // Draw text outline
+      BasicStroke stroke = new BasicStroke(style.getFontSize() * 0.05f); 
+      TextStyle outlineStyle = style.deriveStyle(style.getFontSize() - stroke.getLineWidth());
+      Font font = getFont(defaultFont, outlineStyle);
+      g2D.setFont(font);
+      Color defaultColor = g2D.getColor();
+      g2D.setColor(new Color(outlineColor));
+      g2D.setStroke(stroke);
+      g2D.translate(-(float)textBounds.getWidth() / 2 + stroke.getLineWidth() / 2, 0);
+      TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+      g2D.draw(textLayout.getOutline(null));
+      g2D.setColor(defaultColor);
+    } else {
+      g2D.setFont(getFont(defaultFont, style));
+      g2D.translate(-(float)textBounds.getWidth() / 2, 0);
+    }
+    // Draw text
+    g2D.drawString(text, 0, 0);
     g2D.setTransform(previousTransform);
   }
   
@@ -3637,7 +3653,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           String name = piece.getName().trim();
           if (name.length() > 0) {
             // Draw piece name
-            paintText(g2D, piece.getClass(), name, piece.getNameStyle(), 
+            paintText(g2D, piece.getClass(), name, piece.getNameStyle(), null,
                 piece.getX() + piece.getNameXOffset(),
                 piece.getY() + piece.getNameYOffset(),
                 piece.getNameAngle(), previousFont);
@@ -4234,7 +4250,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
           Integer color = label.getColor();
           g2D.setPaint(color != null ?  new Color(color) : foregroundColor);
-          paintText(g2D, label.getClass(), labelText, labelStyle, 
+          paintText(g2D, label.getClass(), labelText, labelStyle, label.getOutlineColor(), 
               xLabel, yLabel, labelAngle, previousFont);
 
           if (paintMode == PaintMode.PAINT && this.selectedItemsOutlinePainted && selectedLabel) {
