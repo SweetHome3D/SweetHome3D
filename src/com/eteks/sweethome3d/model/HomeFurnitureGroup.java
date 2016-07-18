@@ -282,6 +282,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   
   /**
    * Returns the furniture of this group and of all its subgroups.  
+   * @since 5.0
    */
   public List<HomePieceOfFurniture> getAllFurniture() {
     List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>(this.furniture);
