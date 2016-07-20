@@ -406,8 +406,8 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
               if (clickedPieceIndex != -1) {
                 controller.modifySelectedFurniture();
               }
-            } else if (catalogFurnitureList.getCellRenderer() instanceof CatalogCellRenderer) {
-              URL url = ((CatalogCellRenderer)catalogFurnitureList.getCellRenderer()).getURLAt(ev.getPoint(), (JList)ev.getSource());
+            } else {
+              URL url = getURLAt(ev.getPoint(), catalogFurnitureList);
               if (url != null) {
                 SwingTools.showDocumentInBrowser(url);
               }
@@ -417,17 +417,55 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         
         @Override
         public void mouseMoved(MouseEvent ev) {
-          if (catalogFurnitureList.getCellRenderer() instanceof CatalogCellRenderer) {
-            URL url = ((CatalogCellRenderer)catalogFurnitureList.getCellRenderer()).getURLAt(ev.getPoint(), (JList)ev.getSource());
-            if (url != null) {
-              EventQueue.invokeLater(new Runnable() {                  
-                  public void run() {
-                    setCursor(handCursor);
+          final URL url = getURLAt(ev.getPoint(), catalogFurnitureList);
+          EventQueue.invokeLater(new Runnable() {                  
+              public void run() {
+                if (url != null) {
+                  setCursor(handCursor);
+                } else {
+                  setCursor(Cursor.getDefaultCursor());
+                }
+              }
+            });
+        }
+
+        private URL getURLAt(Point point, JList list) {
+          int pieceIndex = list.locationToIndex(point);
+          if (pieceIndex != -1) {
+            CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)list.getModel().getElementAt(pieceIndex);
+            String information = piece.getInformation();
+            if (information != null) {
+              JComponent rendererComponent = (JComponent)list.getCellRenderer().
+                  getListCellRendererComponent(list, piece, pieceIndex, list.isSelectedIndex(pieceIndex), false);
+              for (JEditorPane pane : SwingTools.findChildren(rendererComponent, JEditorPane.class)) {
+                Rectangle cellBounds = list.getCellBounds(pieceIndex, pieceIndex);
+                point.x -= cellBounds.x; 
+                point.y -= cellBounds.y + pane.getY(); 
+                if (point.x > 0 && point.y > 0) {
+                  // Search in information pane if point is over a HTML link
+                  int position = pane.viewToModel(point);
+                  if (position > 1
+                      && pane.getDocument() instanceof HTMLDocument) {
+                    HTMLDocument hdoc = (HTMLDocument)pane.getDocument();
+                    Element element = hdoc.getCharacterElement(position);
+                    AttributeSet a = element.getAttributes();
+                    AttributeSet anchor = (AttributeSet)a.getAttribute(HTML.Tag.A);
+                    if (anchor != null) {
+                      String href = (String)anchor.getAttribute(HTML.Attribute.HREF);
+                      if (href != null) {
+                        try {
+                          return new URL(href);
+                        } catch (MalformedURLException ex) {
+                          // Ignore malformed URL
+                        }
+                      }
+                    }
                   }
-                });
+                }
+              }
             }
           }
-          setCursor(Cursor.getDefaultCursor());
+          return null;
         }
       };
     catalogFurnitureList.addMouseListener(mouseListener);
@@ -514,24 +552,28 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    * won't be seen. 
    */
   private void spreadFurnitureIconsAlongListWidth() {
-    int size = this.catalogFurnitureList.getModel().getSize();
+    ListModel model = this.catalogFurnitureList.getModel();
+    int size = model.getSize();
     int extentWidth = ((JViewport)this.catalogFurnitureList.getParent()).getExtentSize().width;
-    // Compute a fixed cell width that will spread 
     ListCellRenderer cellRenderer = this.catalogFurnitureList.getCellRenderer();
-    Dimension rendererPreferredSize = ((JComponent)cellRenderer).getPreferredSize();
-    int minCellWidth = rendererPreferredSize.width;
-    int visibleItemsPerRow = Math.max(1, extentWidth / minCellWidth);
+    // Search max width and height
+    int maxCellWidth = 1;
+    int maxCellHeight = 0;
+    for (int i = 0; i < size; i++) {
+      Dimension cellPreferredSize = cellRenderer.getListCellRendererComponent(this.catalogFurnitureList, model.getElementAt(i), 
+          i, this.catalogFurnitureList.isSelectedIndex(i), false).getPreferredSize();
+      maxCellWidth = Math.max(maxCellWidth, cellPreferredSize.width);
+      maxCellHeight = Math.max(maxCellHeight, cellPreferredSize.height);
+    }
+    // Compute a fixed cell width that will spread 
+    int visibleItemsPerRow = Math.max(1, extentWidth / maxCellWidth);
     this.catalogFurnitureList.setVisibleRowCount(size % visibleItemsPerRow == 0 
         ? size / visibleItemsPerRow 
         : size / visibleItemsPerRow + 1);
-    this.catalogFurnitureList.setFixedCellWidth(minCellWidth + (extentWidth % minCellWidth) / visibleItemsPerRow);
+    this.catalogFurnitureList.setFixedCellWidth(maxCellWidth + (extentWidth % maxCellWidth) / visibleItemsPerRow);
     // Set also cell height otherwise first calls to repaint done by icon manager won't repaint it 
     // because the list have a null size at the beginning  
-    if (cellRenderer instanceof CatalogCellRenderer) {
-      this.catalogFurnitureList.setFixedCellHeight(((CatalogCellRenderer)cellRenderer).getPreferredHeight(this.catalogFurnitureList));
-    } else {
-      this.catalogFurnitureList.setFixedCellHeight(rendererPreferredSize.height);
-    }
+    this.catalogFurnitureList.setFixedCellHeight(maxCellHeight);
   }
   
   /** 
@@ -689,44 +731,22 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.nameLabel.setFont(piece.isModifiable() 
           ? this.modifiablePieceFont : this.defaultFont);
 
-      String information = piece.getInformation();
-      if (information != null) {
-        this.informationPane.setText(information);
-        this.informationPane.setVisible(true);
-      } else {
-        this.informationPane.setVisible(false);
-      }
+      this.informationPane.setText(piece.getInformation());
       return this;
-    }
-
-    public int getPreferredHeight(JList list) {
-      ListModel model = list.getModel();
-      this.informationPane.setVisible(false);
-      for (int i = 0, size = model.getSize(); i < size; i++) {
-        if (((CatalogPieceOfFurniture)model.getElementAt(i)).getInformation() != null) {
-          this.informationPane.setVisible(true);
-          break;
-        }
-      }
-      return getPreferredSize().height;
     }
 
     @Override
     public void doLayout() {
       Dimension namePreferredSize = this.nameLabel.getPreferredSize();
       this.nameLabel.setSize(getWidth(), namePreferredSize.height);
-      if (this.informationPane.isVisible()) {
-        this.informationPane.setBounds(0, namePreferredSize.height,
-            getWidth(), getHeight() - namePreferredSize.height);
-      }
+      this.informationPane.setBounds(0, namePreferredSize.height,
+          getWidth(), getHeight() - namePreferredSize.height);
     }
     
     @Override
     public Dimension getPreferredSize() {
       Dimension preferredSize = this.nameLabel.getPreferredSize();
-      if (this.informationPane.isVisible()) {
-        preferredSize.height += this.informationPane.getPreferredSize().height + 2;
-      }
+      preferredSize.height += this.informationPane.getPreferredSize().height + 2;
       return preferredSize;
     }
     
@@ -759,41 +779,6 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
           RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       super.paintChildren(g);
-    }
-
-    public URL getURLAt(Point point, JList list) {
-      int pieceIndex = list.locationToIndex(point);
-      if (pieceIndex != -1) {
-        CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)list.getModel().getElementAt(pieceIndex);
-        String information = piece.getInformation();
-        if (information != null) {
-          getListCellRendererComponent(list, piece, pieceIndex, false, false);
-          Rectangle cellBounds = list.getCellBounds(pieceIndex, pieceIndex);
-          point.x -= cellBounds.x; 
-          point.y -= cellBounds.y + this.informationPane.getY(); 
-          if (point.x > 0 && point.y > 0) {
-            // Search in information pane if point is over a HTML link
-            int position = this.informationPane.viewToModel(point);
-            if (position > 1) {
-              HTMLDocument hdoc = (HTMLDocument)this.informationPane.getDocument();
-              Element element = hdoc.getCharacterElement(position);
-              AttributeSet a = element.getAttributes();
-              AttributeSet anchor = (AttributeSet)a.getAttribute(HTML.Tag.A);
-              if (anchor != null) {
-                String href = (String)anchor.getAttribute(HTML.Attribute.HREF);
-                if (href != null) {
-                  try {
-                    return new URL(href);
-                  } catch (MalformedURLException ex) {
-                    // Ignore malformed URL
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return null;
     }
   }
   

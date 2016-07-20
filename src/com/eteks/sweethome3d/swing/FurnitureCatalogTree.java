@@ -237,8 +237,8 @@ public class FurnitureCatalogTree extends JTree implements View {
                   && clickedPath.getLastPathComponent() instanceof CatalogPieceOfFurniture) {
                 controller.modifySelectedFurniture();
               }
-            } else if (getCellRenderer() instanceof CatalogCellRenderer) {
-              URL url = ((CatalogCellRenderer)getCellRenderer()).getURLAt(ev.getPoint(), (JTree)ev.getSource());
+            } else {
+              URL url = getURLAt(ev.getPoint(), (JTree)ev.getSource());
               if (url != null) {
                 SwingTools.showDocumentInBrowser(url);
               }
@@ -248,17 +248,57 @@ public class FurnitureCatalogTree extends JTree implements View {
         
         @Override
         public void mouseMoved(MouseEvent ev) {
-          if (getCellRenderer() instanceof CatalogCellRenderer) {
-            URL url = ((CatalogCellRenderer)getCellRenderer()).getURLAt(ev.getPoint(), (JTree)ev.getSource());
-            if (url != null) {
-              EventQueue.invokeLater(new Runnable() {                  
-                  public void run() {
-                    setCursor(handCursor);
+          final URL url = getURLAt(ev.getPoint(), (JTree)ev.getSource());
+          EventQueue.invokeLater(new Runnable() {                  
+              public void run() {
+                if (url != null) {
+                  setCursor(handCursor);
+                } else {
+                  setCursor(Cursor.getDefaultCursor());
+                }
+              }
+            });
+        }
+
+        private URL getURLAt(Point point, JTree tree) {
+          TreePath path = tree.getPathForLocation(point.x, point.y);
+          if (path != null
+              && path.getLastPathComponent() instanceof CatalogPieceOfFurniture) {
+            CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
+            String information = piece.getInformation();
+            if (information != null) {
+              int row = tree.getRowForPath(path);
+              JComponent rendererComponent = (JComponent)tree.getCellRenderer().
+                  getTreeCellRendererComponent(tree, piece, false, false, false, row, false);
+              rendererComponent.doLayout();
+              for (JEditorPane pane : SwingTools.findChildren(rendererComponent, JEditorPane.class)) {
+                Rectangle rowBounds = tree.getRowBounds(row);
+                point.x -= rowBounds.x + pane.getX(); 
+                point.y -= rowBounds.y + pane.getY(); 
+                if (point.x > 0 && point.y > 0) {
+                  // Search in information pane if point is over a HTML link
+                  int position = pane.viewToModel(point);
+                  if (position > 0) {
+                    HTMLDocument hdoc = (HTMLDocument)pane.getDocument();
+                    Element element = hdoc.getCharacterElement(position);
+                    AttributeSet a = element.getAttributes();
+                    AttributeSet anchor = (AttributeSet)a.getAttribute(HTML.Tag.A);
+                    if (anchor != null) {
+                      String href = (String)anchor.getAttribute(HTML.Attribute.HREF);
+                      if (href != null) {
+                        try {
+                          return new URL(href);
+                        } catch (MalformedURLException ex) {
+                          // Ignore malformed URL
+                        }
+                      }
+                    }
                   }
-                });
+                }
+              }
             }
           }
-          setCursor(Cursor.getDefaultCursor());
+          return null;
         }
       };
     addMouseListener(mouseListener);
@@ -374,13 +414,8 @@ public class FurnitureCatalogTree extends JTree implements View {
         this.nameLabel.setFont(piece.isModifiable() 
             ? this.modifiablePieceFont : this.defaultFont);
         
-        String information = piece.getInformation();
-        if (information != null) {
-          this.informationPane.setText(information);
-          this.informationPane.setVisible(true);
-        } else {
-          this.informationPane.setVisible(false);
-        }
+        this.informationPane.setVisible(true);
+        this.informationPane.setText(piece.getInformation());
       }
       return this;
     }
@@ -449,43 +484,6 @@ public class FurnitureCatalogTree extends JTree implements View {
       ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
           RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       super.paintChildren(g);
-    }
-
-    public URL getURLAt(Point point, JTree tree) {
-      TreePath path = tree.getPathForLocation(point.x, point.y);
-      if (path != null
-          && path.getLastPathComponent() instanceof CatalogPieceOfFurniture) {
-        CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
-        String information = piece.getInformation();
-        if (information != null) {
-          int row = tree.getRowForPath(path);
-          getTreeCellRendererComponent(tree, piece, false, false, false, row, false).doLayout();
-          Rectangle rowBounds = tree.getRowBounds(row);
-          point.x -= rowBounds.x + this.informationPane.getX(); 
-          point.y -= rowBounds.y + this.informationPane.getY(); 
-          if (point.x > 0 && point.y > 0) {
-            // Search in information pane if point is over a HTML link
-            int position = this.informationPane.viewToModel(point);
-            if (position > 0) {
-              HTMLDocument hdoc = (HTMLDocument)this.informationPane.getDocument();
-              Element element = hdoc.getCharacterElement(position);
-              AttributeSet a = element.getAttributes();
-              AttributeSet anchor = (AttributeSet)a.getAttribute(HTML.Tag.A);
-              if (anchor != null) {
-                String href = (String)anchor.getAttribute(HTML.Attribute.HREF);
-                if (href != null) {
-                  try {
-                    return new URL(href);
-                  } catch (MalformedURLException ex) {
-                    // Ignore malformed URL
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return null;
     }
   }
   
