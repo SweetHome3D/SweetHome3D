@@ -134,9 +134,12 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       zipOut.closeEntry();
     }
     // Write Content objects in files "0" to "n - 1"
-    int i = 0;
     for (Content content : savedContents) {
-      String entryNameOrDirectory = String.valueOf(i++);
+      String entryNameOrDirectory = objectOut.getContentEntry(content);
+      int slashIndex = entryNameOrDirectory.indexOf('/');
+      if (slashIndex > 0) {
+        entryNameOrDirectory = entryNameOrDirectory.substring(0, slashIndex);
+      }
       if (content instanceof ResourceURLContent) {
         writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
       } else if (content instanceof URLContent
