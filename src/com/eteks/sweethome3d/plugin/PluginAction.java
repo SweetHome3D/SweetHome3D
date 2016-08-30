@@ -96,7 +96,7 @@ public abstract class PluginAction {
    * EXPORT.SHORT_DESCRIPTION=Export home data
    * EXPORT.SMALL_ICON=/com/mycompany/mypackage/resources/export.png
    * EXPORT.MNEMONIC=X
-   * EXPORT.IN_TOOL_BAR=true
+   * EXPORT.TOOL_BAR=true
    * EXPORT.MENU=File</pre>
    * @param resourceBaseName the base name of a resource bundle  
    * @param actionPrefix  prefix used in resource bundle to search action properties
