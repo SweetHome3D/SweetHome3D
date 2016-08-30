@@ -223,6 +223,36 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION,       
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
   
+  /**
+   * Indicator types that may be displayed on selected items.
+   */
+  public static class IndicatorType {
+    // Don't qualify IndicatorType as an enumeration to be able to extend IndicatorType class
+    public static final IndicatorType ROTATE        = new IndicatorType("ROTATE");
+    public static final IndicatorType RESIZE        = new IndicatorType("RESIZE");
+    public static final IndicatorType ELEVATE       = new IndicatorType("ELEVATE");
+    public static final IndicatorType RESIZE_HEIGHT = new IndicatorType("RESIZE_HEIGHT");
+    public static final IndicatorType CHANGE_POWER  = new IndicatorType("CHANGE_POWER");
+    public static final IndicatorType MOVE_TEXT     = new IndicatorType("MOVE_TEXT");
+    public static final IndicatorType ROTATE_TEXT   = new IndicatorType("ROTATE_TEXT");
+    public static final IndicatorType ROTATE_PITCH  = new IndicatorType("ROTATE_PITCH");
+
+    private final String name;
+    
+    protected IndicatorType(String name) {
+      this.name = name;      
+    }
+    
+    public final String name() {
+      return this.name;
+    }
+    
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  };
+
   private static final float    MARGIN = 40;
 
   private final Home            home;
@@ -3044,6 +3074,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       AffineTransform previousTransform = g2D.getTransform();
       float scaleInverse = 1 / planScale;
       float [][] points = item.getPoints();
+      Shape resizeIndicator = getIndicator(item, IndicatorType.RESIZE);
       for (int i = 0; i < points.length; i++) {
         // Draw resize indicator at point
         float [] point = points [i];
@@ -3081,10 +3112,54 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           angle = angleAtEnd;              
         }
         g2D.rotate(angle);
-        g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+        g2D.draw(resizeIndicator);
         g2D.setTransform(previousTransform);
       }
     }
+  }
+  
+  /**
+   * Returns the shape of the given indicator type.
+   */
+  protected Shape getIndicator(Selectable item, IndicatorType indicatorType) {
+    if (IndicatorType.RESIZE.equals(indicatorType)) {
+      if (item instanceof HomePieceOfFurniture) {
+        return FURNITURE_RESIZE_INDICATOR;
+      } else if (item instanceof Compass) {
+        return COMPASS_RESIZE_INDICATOR;
+      } else {
+        return WALL_AND_LINE_RESIZE_INDICATOR;
+      }
+    } else if (IndicatorType.ROTATE.equals(indicatorType)) {
+      if (item instanceof HomePieceOfFurniture) {
+        return FURNITURE_ROTATION_INDICATOR;
+      } else if (item instanceof Compass) {
+        return COMPASS_ROTATION_INDICATOR;
+      } else if (item instanceof Camera) {
+        return CAMERA_YAW_ROTATION_INDICATOR;
+      } 
+    } else if (IndicatorType.ELEVATE.equals(indicatorType)) {
+      if (item instanceof Camera) {
+        return CAMERA_ELEVATION_INDICATOR;
+      } else {
+        return ELEVATION_INDICATOR;
+      }
+    } else if (IndicatorType.RESIZE_HEIGHT.equals(indicatorType)) {
+      if (item instanceof HomePieceOfFurniture) {
+        return FURNITURE_HEIGHT_INDICATOR;
+      }
+    } else if (IndicatorType.CHANGE_POWER.equals(indicatorType)) {
+      if (item instanceof HomeLight) {
+        return LIGHT_POWER_INDICATOR;
+      }
+    } else if (IndicatorType.MOVE_TEXT.equals(indicatorType)) {
+      return TEXT_LOCATION_INDICATOR;
+    } else if (IndicatorType.ROTATE_TEXT.equals(indicatorType)) {
+      return TEXT_ANGLE_INDICATOR;
+    } else if (IndicatorType.ROTATE_PITCH.equals(indicatorType)) {
+      return CAMERA_PITCH_ROTATION_INDICATOR;
+    }
+    return null;
   }
   
   /**
@@ -3139,7 +3214,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (Label.class.isAssignableFrom(selectableClass)) {
         g2D.draw(LABEL_CENTER_INDICATOR);      
       } else {
-        g2D.draw(TEXT_LOCATION_INDICATOR);
+        g2D.draw(getIndicator(null, IndicatorType.MOVE_TEXT));
       }
       if (style == null) {
         style = this.preferences.getDefaultTextStyle(selectableClass);
@@ -3150,7 +3225,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.rotate(angle);
       g2D.translate(0, -fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
       g2D.scale(scaleInverse, scaleInverse);
-      g2D.draw(TEXT_ANGLE_INDICATOR);
+      g2D.draw(getIndicator(null, IndicatorType.ROTATE_TEXT));
       g2D.setTransform(previousTransform);
     }
   }
@@ -3338,7 +3413,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(wall.getXEnd(), wall.getYEnd());
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(indicatorAngle);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.draw(getIndicator(wall, IndicatorType.RESIZE));
       g2D.setTransform(previousTransform);
 
       if (arcExtent != null) {
@@ -3351,7 +3426,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(wall.getXStart(), wall.getYStart());
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(indicatorAngle);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.draw(getIndicator(wall, IndicatorType.RESIZE));
       g2D.setTransform(previousTransform);
     }
   }
@@ -3874,26 +3949,32 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(INDICATOR_STROKE);
       
       AffineTransform previousTransform = g2D.getTransform();
-      // Draw rotation indicator at top left point of the piece
       float [][] piecePoints = piece.getPoints();
       float scaleInverse = 1 / planScale;
       float pieceAngle = piece.getAngle();
-      g2D.translate(piecePoints [0][0], piecePoints [0][1]);
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(pieceAngle);
-      g2D.draw(FURNITURE_ROTATION_INDICATOR);
-      g2D.setTransform(previousTransform);
+      Shape rotationIndicator = getIndicator(piece, IndicatorType.ROTATE);
+      if (rotationIndicator != null) {
+        // Draw rotation indicator at top left point of the piece
+        g2D.translate(piecePoints [0][0], piecePoints [0][1]);
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.rotate(pieceAngle);
+        g2D.draw(rotationIndicator);
+        g2D.setTransform(previousTransform);
+      }
 
-      // Draw elevation indicator at top right point of the piece
-      g2D.translate(piecePoints [1][0], piecePoints [1][1]);
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(pieceAngle);
-      g2D.draw(ELEVATION_POINT_INDICATOR);
-      // Place elevation indicator farther but don't rotate it
-      g2D.translate(6.5f, -6.5f);
-      g2D.rotate(-pieceAngle); 
-      g2D.draw(ELEVATION_INDICATOR);
-      g2D.setTransform(previousTransform);
+      Shape elevationIndicator = getIndicator(piece, IndicatorType.ELEVATE);
+      if (elevationIndicator != null) {
+        // Draw elevation indicator at top right point of the piece
+        g2D.translate(piecePoints [1][0], piecePoints [1][1]);
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.rotate(pieceAngle);
+        g2D.draw(ELEVATION_POINT_INDICATOR);
+        // Place elevation indicator farther but don't rotate it
+        g2D.translate(6.5f, -6.5f);
+        g2D.rotate(-pieceAngle); 
+        g2D.draw(elevationIndicator);
+        g2D.setTransform(previousTransform);
+      }
       
       if (piece.isResizable()) {
         // Draw height indicator at bottom left point of the piece
@@ -3902,26 +3983,35 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.rotate(pieceAngle);
         
         if (piece instanceof HomeLight) {
-          g2D.draw(LIGHT_POWER_POINT_INDICATOR);
-          // Place power indicator farther but don't rotate it
-          g2D.translate(-7.5f, 7.5f);
-          g2D.rotate(-pieceAngle);
-          g2D.draw(LIGHT_POWER_INDICATOR);
+          Shape powerIndicator = getIndicator(piece, IndicatorType.CHANGE_POWER);
+          if (powerIndicator != null) {
+            g2D.draw(LIGHT_POWER_POINT_INDICATOR);
+            // Place power indicator farther but don't rotate it
+            g2D.translate(-7.5f, 7.5f);
+            g2D.rotate(-pieceAngle);
+            g2D.draw(powerIndicator);
+          }
         } else {
-          g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
-          // Place height indicator farther but don't rotate it
-          g2D.translate(-7.5f, 7.5f);
-          g2D.rotate(-pieceAngle);
-          g2D.draw(FURNITURE_HEIGHT_INDICATOR);
+          Shape heightIndicator = getIndicator(piece, IndicatorType.RESIZE_HEIGHT);
+          if (heightIndicator != null) {
+            g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
+            // Place height indicator farther but don't rotate it
+            g2D.translate(-7.5f, 7.5f);
+            g2D.rotate(-pieceAngle);
+            g2D.draw(heightIndicator);
+          }
         }
         g2D.setTransform(previousTransform);
         
-        // Draw resize indicator at top left point of the piece
-        g2D.translate(piecePoints [2][0], piecePoints [2][1]);
-        g2D.scale(scaleInverse, scaleInverse);
-        g2D.rotate(pieceAngle);
-        g2D.draw(FURNITURE_RESIZE_INDICATOR);
-        g2D.setTransform(previousTransform);
+        Shape resizeIndicator = getIndicator(piece, IndicatorType.RESIZE);
+        if (resizeIndicator != null) {
+          // Draw resize indicator at top left point of the piece
+          g2D.translate(piecePoints [2][0], piecePoints [2][1]);
+          g2D.scale(scaleInverse, scaleInverse);
+          g2D.rotate(pieceAngle);
+          g2D.draw(resizeIndicator);
+          g2D.setTransform(previousTransform);
+        }
       }
       
       if (piece.isNameVisible()
@@ -4199,7 +4289,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(0, dimensionLine.getOffset());
       g2D.rotate(Math.PI);
       g2D.scale(scaleInverse, scaleInverse);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      Shape resizeIndicator = getIndicator(dimensionLine, IndicatorType.RESIZE);
+      g2D.draw(resizeIndicator);
       g2D.setTransform(previousTransform);
       
       // Draw resize indicator at the end of dimension line 
@@ -4207,7 +4298,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.rotate(wallAngle);
       g2D.translate(0, dimensionLine.getOffset());
       g2D.scale(scaleInverse, scaleInverse);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.draw(resizeIndicator);
       g2D.setTransform(previousTransform);
 
       // Draw resize indicator at the middle of dimension line
@@ -4219,7 +4310,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           ? Math.PI / 2 
           : -Math.PI / 2);
       g2D.scale(scaleInverse, scaleInverse);
-      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.draw(resizeIndicator);
       g2D.setTransform(previousTransform);
     }
   }
@@ -4268,18 +4359,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               
               if (this.resizeIndicatorVisible 
                   && label.getPitch() != null) {
-                AffineTransform previousTransform = g2D.getTransform();
-                // Draw elevation indicator at middle of label bottom line 
-                g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
-                float scaleInverse = 1 / planScale;
-                g2D.scale(scaleInverse, scaleInverse);
-                g2D.rotate(label.getAngle());
-                g2D.draw(ELEVATION_POINT_INDICATOR);
-                // Place elevation indicator farther but don't rotate it
-                g2D.translate(0, 10f);
-                g2D.rotate(-label.getAngle()); 
-                g2D.draw(ELEVATION_INDICATOR);
-                g2D.setTransform(previousTransform);
+                Shape elevationIndicator = getIndicator(label, IndicatorType.ELEVATE);
+                if (elevationIndicator != null) {
+                  AffineTransform previousTransform = g2D.getTransform();
+                  // Draw elevation indicator at middle of label bottom line 
+                  g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
+                  float scaleInverse = 1 / planScale;
+                  g2D.scale(scaleInverse, scaleInverse);
+                  g2D.rotate(label.getAngle());
+                  g2D.draw(ELEVATION_POINT_INDICATOR);
+                  // Place elevation indicator farther but don't rotate it
+                  g2D.translate(0, 10f);
+                  g2D.rotate(-label.getAngle()); 
+                  g2D.draw(elevationIndicator);
+                  g2D.setTransform(previousTransform);
+                }
               }
             }
           }
@@ -4356,7 +4450,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           (compassPoints [2][1] + compassPoints [3][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(compass.getNorthDirection());
-      g2D.draw(COMPASS_ROTATION_INDICATOR);
+      g2D.draw(getIndicator(compass, IndicatorType.ROTATE));
       g2D.setTransform(previousTransform);
 
       // Draw resize indicator at middle of second and third point of compass
@@ -4364,7 +4458,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           (compassPoints [1][1] + compassPoints [2][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(compass.getNorthDirection());
-      g2D.draw(COMPASS_RESIZE_INDICATOR);
+      g2D.draw(getIndicator(compass, IndicatorType.RESIZE));
       g2D.setTransform(previousTransform);
     }
   }
@@ -4865,7 +4959,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           (cameraPoints [0][1] + cameraPoints [3][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
-      g2D.draw(CAMERA_YAW_ROTATION_INDICATOR);
+      g2D.draw(getIndicator(camera, IndicatorType.ROTATE));
       g2D.setTransform(previousTransform);
 
       // Draw pitch rotation indicator at middle of second and third point of camera 
@@ -4873,17 +4967,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           (cameraPoints [1][1] + cameraPoints [2][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
-      g2D.draw(CAMERA_PITCH_ROTATION_INDICATOR);
+      g2D.draw(getIndicator(camera, IndicatorType.ROTATE_PITCH));
       g2D.setTransform(previousTransform);
 
-      // Draw elevation indicator at middle of first and second point of camera 
-      g2D.translate((cameraPoints [0][0] + cameraPoints [1][0]) / 2, 
-          (cameraPoints [0][1] + cameraPoints [1][1]) / 2);
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.draw(POINT_INDICATOR);
-      g2D.translate(Math.sin(camera.getYaw()) * 8, -Math.cos(camera.getYaw()) * 8);
-      g2D.draw(CAMERA_ELEVATION_INDICATOR);
-      g2D.setTransform(previousTransform);
+      Shape elevationIndicator = getIndicator(camera, IndicatorType.ELEVATE);
+      if (elevationIndicator != null) {
+        // Draw elevation indicator at middle of first and second point of camera 
+        g2D.translate((cameraPoints [0][0] + cameraPoints [1][0]) / 2, 
+            (cameraPoints [0][1] + cameraPoints [1][1]) / 2);
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.draw(POINT_INDICATOR);
+        g2D.translate(Math.sin(camera.getYaw()) * 8, -Math.cos(camera.getYaw()) * 8);
+        g2D.draw(elevationIndicator);
+        g2D.setTransform(previousTransform);
+      }
     }
   }
 
