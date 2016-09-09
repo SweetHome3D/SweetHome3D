@@ -118,8 +118,8 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  private static final int PIXEL_MARGIN           = 4;
-  private static final int INDICATOR_PIXEL_MARGIN = 4;
+  private static final int PIXEL_MARGIN           = 5;
+  private static final int INDICATOR_PIXEL_MARGIN = 5;
   private static final int WALL_ENDS_PIXEL_MARGIN = 2;
 
   private final Home                  home;
@@ -3621,13 +3621,11 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isTopLeftPointAt(x, y, margin)
-          // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > scaleInverse
-          && Math.abs(y - piece.getY()) > scaleInverse) {
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !piece.containsPoint(x, y, 0)) {
         return piece;
       }
     } 
@@ -3644,13 +3642,11 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isTopRightPointAt(x, y, margin)
-          // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > scaleInverse
-          && Math.abs(y - piece.getY()) > scaleInverse) {
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !piece.containsPoint(x, y, 0)) {
         return piece;
       }
     } 
@@ -3667,15 +3663,13 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isResizable()
           && isItemResizable(piece) 
           && piece.isBottomLeftPointAt(x, y, margin)
-          // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > scaleInverse
-          && Math.abs(y - piece.getY()) > scaleInverse) {
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !piece.containsPoint(x, y, 0)) {
         return piece;
       }
     } 
@@ -3693,15 +3687,13 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture
         && isItemResizable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
           && piece.isResizable()
           && isItemResizable(piece) 
           && piece.isBottomRightPointAt(x, y, margin)
-          // Keep a free zone around piece center
-          && Math.abs(x - piece.getX()) > scaleInverse
-          && Math.abs(y - piece.getY()) > scaleInverse) {
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !piece.containsPoint(x, y, 0)) {
         return piece;
       }
     } 
@@ -3717,13 +3709,11 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomeLight) {
       HomeLight light = (HomeLight)selectedItems.get(0);
-      float scaleInverse = 1 / getScale();
-      float margin = INDICATOR_PIXEL_MARGIN * scaleInverse;
+      float margin = INDICATOR_PIXEL_MARGIN * (1 / getScale());
       if (isPieceOfFurnitureVisibleAtSelectedLevel(light)
           && light.isBottomLeftPointAt(x, y, margin)
-          // Keep a free zone around piece center
-          && Math.abs(x - light.getX()) > scaleInverse
-          && Math.abs(y - light.getY()) > scaleInverse) {
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !light.containsPoint(x, y, 0)) {
         return light;
       }
     } 
@@ -3848,13 +3838,15 @@ public class PlanController extends FurnitureController implements Controller {
       float xMiddleFirstAndLastPoint = (cameraPoints [0][0] + cameraPoints [3][0]) / 2; 
       float yMiddleFirstAndLastPoint = (cameraPoints [0][1] + cameraPoints [3][1]) / 2;      
       if (Math.abs(x - xMiddleFirstAndLastPoint) <= margin 
-          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin) {
+          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin
+          // Ignore camera shape to ensure there's always enough space to drag it
+          && !camera.containsPoint(x, y, 0)) {
         return camera;
       }
     } 
     return null;
   }
-
+  
   /**
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera pitch angle.
@@ -3872,7 +3864,9 @@ public class PlanController extends FurnitureController implements Controller {
       float xMiddleFirstAndLastPoint = (cameraPoints [1][0] + cameraPoints [2][0]) / 2; 
       float yMiddleFirstAndLastPoint = (cameraPoints [1][1] + cameraPoints [2][1]) / 2;      
       if (Math.abs(x - xMiddleFirstAndLastPoint) <= margin 
-          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin) {
+          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin
+          // Ignore camera shape to ensure there's always enough space to drag it
+          && !camera.containsPoint(x, y, 0)) {
         return camera;
       }
     } 
@@ -3896,7 +3890,9 @@ public class PlanController extends FurnitureController implements Controller {
       float xMiddleFirstAndSecondPoint = (cameraPoints [0][0] + cameraPoints [1][0]) / 2; 
       float yMiddleFirstAndSecondPoint = (cameraPoints [0][1] + cameraPoints [1][1]) / 2;      
       if (Math.abs(x - xMiddleFirstAndSecondPoint) <= margin 
-          && Math.abs(y - yMiddleFirstAndSecondPoint) <= margin) {
+          && Math.abs(y - yMiddleFirstAndSecondPoint) <= margin
+          // Ignore camera shape to ensure there's always enough space to drag it
+          && !camera.containsPoint(x, y, 0)) {
         return camera;
       }
     } 
@@ -3920,7 +3916,9 @@ public class PlanController extends FurnitureController implements Controller {
       float xMiddleThirdAndFourthPoint = (compassPoints [2][0] + compassPoints [3][0]) / 2; 
       float yMiddleThirdAndFourthPoint = (compassPoints [2][1] + compassPoints [3][1]) / 2;      
       if (Math.abs(x - xMiddleThirdAndFourthPoint) <= margin 
-          && Math.abs(y - yMiddleThirdAndFourthPoint) <= margin) {
+          && Math.abs(y - yMiddleThirdAndFourthPoint) <= margin
+          // Ignore camera shape to ensure there's always enough space to drag it
+          && !compass.containsPoint(x, y, 0)) {
         return compass;
       }
     } 
@@ -3944,7 +3942,9 @@ public class PlanController extends FurnitureController implements Controller {
       float xMiddleSecondAndThirdPoint = (compassPoints [1][0] + compassPoints [2][0]) / 2; 
       float yMiddleSecondAndThirdPoint = (compassPoints [1][1] + compassPoints [2][1]) / 2;      
       if (Math.abs(x - xMiddleSecondAndThirdPoint) <= margin 
-          && Math.abs(y - yMiddleSecondAndThirdPoint) <= margin) {
+          && Math.abs(y - yMiddleSecondAndThirdPoint) <= margin
+          // Ignore camera shape to ensure there's always enough space to drag it
+          && !compass.containsPoint(x, y, 0)) {
         return compass;
       }
     } 
