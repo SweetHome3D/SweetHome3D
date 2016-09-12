@@ -1545,13 +1545,13 @@ public class Home implements Serializable, Cloneable {
   }
   
   /**
-   * Returns the value of the visual property <code>propertyName</code> associated with this home.
+   * Returns the value of the visual property <code>name</code> associated with this home.
    * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)} 
    *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
-  public Object getVisualProperty(String propertyName) {
-    return this.visualProperties.get(propertyName);
+  public Object getVisualProperty(String name) {
+    return this.visualProperties.get(name);
   }
   
   /**
@@ -1560,27 +1560,27 @@ public class Home implements Serializable, Cloneable {
    *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
-  public void setVisualProperty(String propertyName, Object propertyValue) {
-    this.visualProperties.put(propertyName, propertyValue);
+  public void setVisualProperty(String name, Object value) {
+    this.visualProperties.put(name, value);
   }
 
   /**
-   * Returns the value of the property <code>propertyName</code> associated with this home.
+   * Returns the value of the property <code>name</code> associated with this home.
    * @return the value of the property or <code>null</code> if it doesn't exist. 
    * @since 5.2
    */
-  public String getProperty(String propertyName) {
-    return this.properties.get(propertyName);
+  public String getProperty(String name) {
+    return this.properties.get(name);
   }
   
   /**
-   * Returns the numeric value of the property <code>propertyName</code> associated with this home.
+   * Returns the numeric value of the property <code>name</code> associated with this home.
    * @return an instance of {@link Long}, {@link Double} or <code>null</code> if the property 
    * doesn't exist or can't be parsed. 
    * @since 5.2
    */
-  public Number getNumericProperty(String propertyName) {
-    String value = this.properties.get(propertyName);
+  public Number getNumericProperty(String name) {
+    String value = this.properties.get(name);
     if (value != null) {
       try {
         return new Long (value);
@@ -1596,15 +1596,18 @@ public class Home implements Serializable, Cloneable {
   
   /**
    * Sets a property associated with this home.
-   * @param propertyName   the name of the property to set
-   * @param propertyValue  the new value of the property 
+   * @param name   the name of the property to set
+   * @param value  the new value of the property 
    * @since 5.2
    */
-  public void setProperty(String propertyName, String propertyValue) {
-    if (this.properties.containsKey(propertyName) && propertyValue == null) {
-      this.properties.remove(propertyName);
+  public void setProperty(String name, String value) {
+    if (value == null) {
+      if (this.properties.containsKey(name)) {
+        this.properties.remove(name);
+      }
+    } else {
+      this.properties.put(name, value);
     }
-    this.properties.put(propertyName, propertyValue);
   }
   
   /**
