@@ -144,86 +144,99 @@ public class Label3D extends Object3DBranch {
           width = (int)Math.ceil(scale * textWidth);
         }
   
-        // Draw text in an image
-        BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
-        g2D = (Graphics2D)textureImage.getGraphics();
-        g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-        g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-        if (outlineColor != null) {
-          g2D.setColor(new Color(outlineColor));
-          g2D.setStroke(stroke);
-          TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-          g2D.draw(textLayout.getOutline(null));
+        if (width > 0 && height > 0) {
+          // Draw text in an image
+          BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
+          g2D = (Graphics2D)textureImage.getGraphics();
+          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+          g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
+          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
+          if (outlineColor != null) {
+            g2D.setColor(new Color(outlineColor));
+            g2D.setStroke(stroke);
+            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+            g2D.draw(textLayout.getOutline(null));
+          }
+          g2D.setFont(font);
+          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
+          g2D.drawString(text, 0f, 0f);
+          g2D.dispose();
+  
+          Transform3D scaleTransform = new Transform3D();
+          scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
+          // Move to the middle of base line
+          this.baseLineTransform = new Transform3D();
+          this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
+          this.baseLineTransform.mul(scaleTransform);
+          this.texture = new TextureLoader(textureImage).getTexture();
+          this.text = text;
+          this.style = style;
+          this.color = color;
+        } else {
+          clear();
         }
-        g2D.setFont(font);
-        g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
-        g2D.drawString(text, 0f, 0f);
-        g2D.dispose();
-
-        Transform3D scaleTransform = new Transform3D();
-        scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
-        // Move to the middle of base line
-        this.baseLineTransform = new Transform3D();
-        this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
-        this.baseLineTransform.mul(scaleTransform);
-        this.texture = new TextureLoader(textureImage).getTexture();
-        this.text = text;
-        this.style = style;
-        this.color = color;
       }
       
-      if (numChildren() == 0) {
-        BranchGroup group = new BranchGroup();
-        group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-        group.setCapability(BranchGroup.ALLOW_DETACH);
+      if (this.texture != null) {
+        if (numChildren() == 0) {
+          BranchGroup group = new BranchGroup();
+          group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+          group.setCapability(BranchGroup.ALLOW_DETACH);
+          
+          TransformGroup transformGroup = new TransformGroup();
+          // Allow the change of the transformation that sets label size, position and orientation
+          transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+          transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+          group.addChild(transformGroup);
+  
+          Appearance appearance = new Appearance();
+          appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
+          appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
+          appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+          appearance.setTransparencyAttributes(DEFAULT_TRANSPARENCY_ATTRIBUTES);
+          appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+              TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
+          appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+  
+          Box box = new Box(0.5f, 0f, 0.5f, appearance);
+          Shape3D shape = box.getShape(Box.TOP);
+          box.removeChild(shape);
+          transformGroup.addChild(shape);
+          
+          addChild(group);
+        }
         
-        TransformGroup transformGroup = new TransformGroup();
-        // Allow the change of the transformation that sets label size, position and orientation
-        transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-        group.addChild(transformGroup);
-
-        Appearance appearance = new Appearance();
-        appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
-        appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
-        appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-        appearance.setTransparencyAttributes(DEFAULT_TRANSPARENCY_ATTRIBUTES);
-        appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-            TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
-        appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-
-        Box box = new Box(0.5f, 0f, 0.5f, appearance);
-        Shape3D shape = box.getShape(Box.TOP);
-        box.removeChild(shape);
-        transformGroup.addChild(shape);
-        
-        addChild(group);
+        TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
+        // Apply pitch rotation
+        Transform3D pitchRotation = new Transform3D();
+        pitchRotation.rotX(pitch);
+        pitchRotation.mul(this.baseLineTransform);
+        // Apply rotation around vertical axis
+        Transform3D rotationY = new Transform3D();
+        rotationY.rotY(-label.getAngle());
+        rotationY.mul(pitchRotation);
+        Transform3D transform = new Transform3D();
+        transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
+        transform.mul(rotationY);
+        transformGroup.setTransform(transform);
+        ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);
       }
-      
-      TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
-      // Apply pitch rotation
-      Transform3D pitchRotation = new Transform3D();
-      pitchRotation.rotX(pitch);
-      pitchRotation.mul(this.baseLineTransform);
-      // Apply rotation around vertical axis
-      Transform3D rotationY = new Transform3D();
-      rotationY.rotY(-label.getAngle());
-      rotationY.mul(pitchRotation);
-      Transform3D transform = new Transform3D();
-      transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
-      transform.mul(rotationY);
-      transformGroup.setTransform(transform);
-      ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);
     } else {
-      removeAllChildren();
-      this.text  = null;
-      this.style = null;
-      this.color = null;
-      this.texture = null;
-      this.baseLineTransform = null;
+      clear();
     }
+  }
+
+  /**
+   * Removes children and clear fields. 
+   */
+  private void clear() {
+    removeAllChildren();
+    this.text  = null;
+    this.style = null;
+    this.color = null;
+    this.texture = null;
+    this.baseLineTransform = null;
   }
 }
