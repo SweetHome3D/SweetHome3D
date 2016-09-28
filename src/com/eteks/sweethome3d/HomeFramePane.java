@@ -142,26 +142,29 @@ public class HomeFramePane extends JRootPane implements View {
       homePane.setJMenuBar(null);
     }
     
-    // Add listeners to model and frame    
-    addListeners(this.home, this.application, this.controller.getHomeController(), homeFrame);
-    
+    // Add listeners to model and component   
+    addModelListeners(this.home, this.application, homeFrame);
+    addComponentListener(this.home, this.application, this.controller.getHomeController(), homeFrame);
+    homeFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     homeFrame.setVisible(true);
-    // Request the frame to go to front again because closing waiting dialog meanwhile  
-    // could put in front the already opened frame  
     EventQueue.invokeLater(new Runnable() {
         public void run() {
+          // Add listeners to frame once it's visible to avoid some undesired events during first showing    
+          addWindowListeners(home, application, controller.getHomeController(), homeFrame);
+          // Request the frame to go to front again because closing waiting dialog meanwhile  
+          // could put in front the already opened frame  
           homeFrame.toFront();
         }
       });
   }
   
   /**
-   * Adds listeners to <code>frame</code> and model objects.
+   * Adds a component listener to <code>frame</code>.
    */
-  private void addListeners(final Home home,
-                            final HomeApplication application,
-                            final HomeController controller,
-                            final JFrame frame) {
+  private void addComponentListener(final Home home,
+                                    final HomeApplication application,
+                                    final HomeController controller,
+                                    final JFrame frame) {
     // Add a listener that keeps track of window location and size
     final ComponentAdapter componentListener = new ComponentAdapter() {
         @Override
@@ -186,8 +189,25 @@ public class HomeFramePane extends JRootPane implements View {
         }
       };
     frame.addComponentListener(componentListener);
+    application.addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev) {
+          if (ev.getItem() == home
+              && ev.getType() == CollectionEvent.Type.DELETE) {
+            application.removeHomesListener(this);
+            frame.removeComponentListener(componentListener);
+          }
+        };
+      });
+  }
+    
+  /**
+   * Adds window listeners to <code>frame</code>.
+   */
+  private void addWindowListeners(final Home home,
+                                  final HomeApplication application,
+                                  final HomeController controller,
+                                  final JFrame frame) {
     // Control frame closing and activation 
-    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     final WindowAdapter windowListener = new WindowAdapter () {
         private Component mostRecentFocusOwner;
 
@@ -230,9 +250,6 @@ public class HomeFramePane extends JRootPane implements View {
       };
     frame.addWindowListener(windowListener);    
     frame.addWindowStateListener(windowListener);    
-    // Add a listener to preferences to apply component orientation to frame matching current language
-    application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
-        new LanguageChangeListener(frame, this));
     // Dispose window when a home is deleted 
     application.addHomesListener(new CollectionListener<Home>() {
         public void collectionChanged(CollectionEvent<Home> ev) {
@@ -242,10 +259,20 @@ public class HomeFramePane extends JRootPane implements View {
             frame.dispose();
             frame.removeWindowListener(windowListener);
             frame.removeWindowStateListener(windowListener);
-            frame.removeComponentListener(componentListener);
           }
         };
       });
+  }
+    
+  /**
+   * Adds listeners to model objects.
+   */
+  private void addModelListeners(final Home home,
+                                 final HomeApplication application,
+                                 final JFrame frame) {
+    // Add a listener to preferences to apply component orientation to frame matching current language
+    application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(frame, this));
     // Update title when the name or the modified state of home changes
     PropertyChangeListener frameTitleChangeListener = new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -368,8 +395,8 @@ public class HomeFramePane extends JRootPane implements View {
       frame.setSize(Math.min(screenSize.width * 4 / 5, frame.getWidth()), 
               Math.min(screenSize.height * 4 / 5, frame.getHeight()));
       if (OperatingSystem.isMacOSX() 
-          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-        // JFrame#setLocationByPlatform does nothing under Java 7
+          && OperatingSystem.isJavaVersionBetween("1.7", "1.9")) {
+        // JFrame#setLocationByPlatform does nothing under Java 7/8
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
