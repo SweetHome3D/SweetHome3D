@@ -2271,7 +2271,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           return image;
         }
       } finally {
-        contentStream.close();
+        if (contentStream != null) {
+          contentStream.close();
+        }
       }
     } catch (IOException ex) {
       return new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
