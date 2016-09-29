@@ -1944,12 +1944,12 @@ public class HomeController implements Controller {
       environment.setSkyTexture(null);
     }
     BackgroundImage backgroundImage = home.getBackgroundImage();
-    if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+    if (backgroundImage != null && invalidContent.contains(backgroundImage.getImage())) {
       home.setBackgroundImage(null);
     }
     for (Level level : home.getLevels()) {
       backgroundImage = level.getBackgroundImage();
-      if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+      if (backgroundImage != null && invalidContent.contains(backgroundImage.getImage())) {
         level.setBackgroundImage(null);
       }
     }
@@ -2058,12 +2058,12 @@ public class HomeController implements Controller {
       environment.setSkyTexture(getErrorTexture(environment.getSkyTexture()));
     }
     BackgroundImage backgroundImage = home.getBackgroundImage();
-    if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+    if (backgroundImage != null && invalidContent.contains(backgroundImage.getImage())) {
       home.setBackgroundImage(getErrorBackgroundImage(backgroundImage));
     }
     for (Level level : home.getLevels()) {
       backgroundImage = level.getBackgroundImage();
-      if (backgroundImage != null && invalidContent.contains(backgroundImage)) {
+      if (backgroundImage != null && invalidContent.contains(backgroundImage.getImage())) {
         level.setBackgroundImage(getErrorBackgroundImage(backgroundImage));
       }
     }
@@ -2313,6 +2313,7 @@ public class HomeController implements Controller {
       }
       Callable<Void> saveTask = new Callable<Void>() {
             public Void call() throws RecorderException {
+              savedHome.setName(contentManager.getPresentationName(homeName, ContentManager.ContentType.SWEET_HOME_3D));
               // Write home with application recorder
               application.getHomeRecorder(recorderType).writeHome(savedHome, homeName);
               updateSavedHome(homeName, savedHome.getVersion(), postSaveTask);
