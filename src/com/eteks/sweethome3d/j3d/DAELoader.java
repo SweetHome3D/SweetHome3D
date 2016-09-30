@@ -180,7 +180,6 @@ public class DAELoader extends LoaderBase implements Loader {
     try {
       SceneBase scene = new SceneBase();
       SAXParserFactory factory = SAXParserFactory.newInstance();
-      factory.setValidating(false);
       SAXParser saxParser = factory.newSAXParser();
       saxParser.parse(in, new DAEHandler(scene, baseUrl));
       return scene;
@@ -266,7 +265,7 @@ public class DAELoader extends LoaderBase implements Loader {
 
     @Override
     public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
-      buffer.setLength(0);
+      this.buffer.setLength(0);
       String parent = this.parentElements.isEmpty() ? null : this.parentElements.peek();
       if (parent == null && !"COLLADA".equals(name)) {
         throw new SAXException("Expected COLLADA element");
