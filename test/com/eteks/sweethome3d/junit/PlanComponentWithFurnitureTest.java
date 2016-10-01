@@ -131,10 +131,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     
     // 5. Press mouse button at top left point of selected piece 
     tester.actionMousePress(planComponent, 
-        new ComponentLocation(new Point(120, 120)));
+        new ComponentLocation(new Point(119, 120)));
     // Drag mouse to (-depthPixel / 2 - 1, widthPixel / 2) pixels from piece center
     tester.actionMouseMove(planComponent, new ComponentLocation( 
-        new Point(120 + widthPixel / 2 - depthPixel / 2 - 1, 
+        new Point(119 + widthPixel / 2 - depthPixel / 2 - 1, 
                   120 + depthPixel / 2 + widthPixel / 2))); 
     tester.actionMouseRelease(); 
     // Check piece angle is 3 * PI / 2 (=-90°)
@@ -143,11 +143,11 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
 
     // 6. Press mouse button at top left point of selected piece
     tester.actionMousePress(planComponent, new ComponentLocation(
-        new Point(120 + widthPixel / 2 - depthPixel / 2, 
+        new Point(119 + widthPixel / 2 - depthPixel / 2, 
                   120 + depthPixel / 2 + widthPixel / 2)));
     // Drag mouse to the previous position plus 1 pixel along x axis
     tester.actionMouseMove(planComponent, new ComponentLocation(
-        new Point(121, 120))); 
+        new Point(120, 120))); 
     // Check piece angle is 0°
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
     // Toggle magnetism
@@ -236,10 +236,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Drag mouse (4,4) pixels out of piece box with magnetism disabled
     Thread.sleep(1000); // Wait 1s to avoid double click
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
-        pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2)));
+        pieceXPixel + depthPixel / 2 + 1, pieceYPixel - widthPixel / 2)));
     tester.actionKeyPress(TestUtilities.getMagnetismToggleKey());
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
-        pieceXPixel + depthPixel / 2 + 4, pieceYPixel - widthPixel / 2 + 4))); 
+        pieceXPixel + depthPixel / 2 + 5, pieceYPixel - widthPixel / 2 + 4))); 
     tester.actionMouseRelease();
     tester.actionKeyRelease(TestUtilities.getMagnetismToggleKey());
     // Check piece width and depth were resized (caution : piece angle is oriented at 90°)
@@ -270,10 +270,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     //     at elevation point of the piece
     float pieceElevation = piece.getElevation();
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
-        pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2)));
+        pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2 - 1)));
     // Drag mouse (2,-4) pixels 
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
-        pieceXPixel - depthPixel / 2 + 2, pieceYPixel - widthPixel / 2 - 4))); 
+        pieceXPixel - depthPixel / 2 + 2, pieceYPixel - widthPixel / 2 - 5))); 
     tester.actionMouseRelease();
     // Check piece elevation was updated
     assertElevationEqualPiece(pieceElevation + 4 / planComponent.getScale(), piece);

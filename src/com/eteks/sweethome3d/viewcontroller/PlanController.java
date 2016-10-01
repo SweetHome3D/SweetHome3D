@@ -118,7 +118,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  private static final int PIXEL_MARGIN           = 5;
+  private static final int PIXEL_MARGIN           = 4;
   private static final int INDICATOR_PIXEL_MARGIN = 5;
   private static final int WALL_ENDS_PIXEL_MARGIN = 2;
 
@@ -3322,7 +3322,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Polyline
         && isItemResizable(selectedItems.get(0))) {
       Polyline polyline = (Polyline)selectedItems.get(0);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (polyline.isAtLevel(this.home.getSelectedLevel())
           && polyline.getPointIndexAt(x, y, margin) != -1) {
         return polyline;

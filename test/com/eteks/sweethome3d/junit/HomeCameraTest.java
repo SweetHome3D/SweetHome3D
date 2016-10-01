@@ -215,28 +215,28 @@ public class HomeCameraTest extends ComponentTestFixture {
     int xYawIndicator = (int)(((40 + (cameraPoints[0][0] + cameraPoints[3][0]) / 2)) * planComponent.getScale());
     int yYawIndicator = (int)(((40 + (cameraPoints[0][1] + cameraPoints[3][1]) / 2)) * planComponent.getScale());
     tester.actionMousePress(planComponent, new ComponentLocation(
-        new Point(xYawIndicator, yYawIndicator)));
+        new Point(xYawIndicator, yYawIndicator - 1)));
     tester.actionMouseMove(planComponent, new ComponentLocation(
-        new Point(xYawIndicator + 2, yYawIndicator + 2)));
+        new Point(xYawIndicator + 2, yYawIndicator + 1)));
     tester.actionMouseRelease();
     // Check camera yaw angle changed
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(100 + 1 / planComponent.getScale(), 
         100 + 1 / planComponent.getScale(), 170, 
-        2.5156f, (float)Math.PI / 16, home.getCamera());
+        2.5097f, (float)Math.PI / 16, home.getCamera());
 
     // Change observer camera pitch by moving its pitch indicator
     cameraPoints = observerCamera.getPoints();
     int xPitchIndicator = (int)(((40 + (cameraPoints[1][0] + cameraPoints[2][0]) / 2)) * planComponent.getScale());
     int yPitchIndicator = (int)(((40 + (cameraPoints[1][1] + cameraPoints[2][1]) / 2)) * planComponent.getScale());
     tester.actionMousePress(planComponent, new ComponentLocation(
-        new Point(xPitchIndicator, yPitchIndicator)));
+        new Point(xPitchIndicator - 1, yPitchIndicator + 1)));
     tester.actionMouseMove(planComponent, new ComponentLocation(
-        new Point(xPitchIndicator + 2, yPitchIndicator + 2)));
+        new Point(xPitchIndicator + 1, yPitchIndicator + 3)));
     tester.actionMouseRelease();
     // Check camera pitch angle changed
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(100 + 1 / planComponent.getScale(), 
         100 + 1 / planComponent.getScale(), 170, 
-        2.5156f, 0.1639f, home.getCamera());
+        2.5097f, 0.1639f, home.getCamera());
     
     // 9. Change observer camera location with mouse in 3D view
     tester.actionMousePress(component3D, new ComponentLocation(new Point(10, 10)));
@@ -245,24 +245,24 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionKeyRelease(KeyEvent.VK_ALT);
     tester.actionMouseRelease();
     // Check camera location changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
-        2.5156f, 0.1639f, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.716f, 111.42f, 170, 
+        2.5097f, 0.1639f, home.getCamera());
 
     // 10. Change observer camera yaw with mouse in 3D view
     tester.actionMousePress(component3D, new ComponentLocation(new Point(10, 20)));
     tester.actionMouseMove(component3D, new ComponentLocation(new Point(20, 20)));
     tester.actionMouseRelease();
     // Check camera yaw changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
-        2.5656f, 0.1639f, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.716f, 111.42f, 170, 
+        2.5597f, 0.1639f, home.getCamera());
     
     // Change camera pitch with mouse in 3D view
     tester.actionMousePress(component3D, new ComponentLocation(new Point(20, 20)));
     tester.actionMouseMove(component3D, new ComponentLocation(new Point(20, 30)));
     tester.actionMouseRelease();
     // Check camera yaw changed
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.657f, 111.4631f, 170, 
-        2.5656f, 0.2139f, home.getCamera());
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(108.716f, 111.42f, 170, 
+        2.5597f, 0.2139f, home.getCamera());
     
     // 11. Edit 3D view modal dialog box
     JDialog attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
