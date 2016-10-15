@@ -117,12 +117,12 @@
   <target name="jogl-java3d"
           description="Builds jogl-java3d.jar that contains only packages required for Java 3D">
     <mkdir dir="build"/>
-    <zip destfile="build/macosx/java3d-1.6/jogl-java3d.jar">
-      <zipfileset src="lib/macosx/java3d-1.6/jogl-all.jar"  
+    <zip destfile="build/java3d-1.6/jogl-java3d.jar">
+      <zipfileset src="lib/java3d-1.6/jogl-all.jar"  
         excludes="com/jogamp/graph/**, com/jogamp/newt/**, com/jogamp/opengl/swt/**, com/jogamp/opengl/util/**,
                   javax/media/opengl/Debug*, javax/media/opengl/Trace*,
                   jogamp/graph/**, jogamp/newt/**, jogl/util/data/av/**"/>
-      <zipfileset src="lib/macosx/java3d-1.6/jogl-all.jar"  
+      <zipfileset src="lib/java3d-1.6/jogl-all.jar"  
         includes="com/jogamp/opengl/util/GLBuffers.class"/>
     </zip>
   </target>
@@ -198,14 +198,14 @@
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
-      </fileset>
-      <fileset dir="lib">
-        <include name="macosx/**/*.jnilib"/>
-        <include name="macosx/**/*.jar"/>
-        <exclude name="macosx/*/jogl-all.jar"/>
+        <include name="java3d-1.6/*.jar"/>
+      	<exclude name="java3d-1.6/jogl-all.jar"/>
       </fileset>
       <fileset dir="build">
-        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
+        <include name="java3d-1.6/jogl-java3d.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="java3d-1.6/macosx/*.jnilib"/>
       </fileset>
     </jar>
   </target>
@@ -220,16 +220,16 @@
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
+        <include name="java3d-1.6/*.jar"/>
+      	<exclude name="java3d-1.6/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="java3d-1.6/jogl-java3d.jar"/>
       </fileset>
       <fileset dir="lib">
         <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
-        <include name="macosx/**/*.jnilib"/>
-        <include name="macosx/**/*.jar"/>
-        <exclude name="macosx/*/jogl-all.jar"/>
-      </fileset>
-      <fileset dir="build">
-        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
+        <include name="java3d-1.6/macosx/*.jnilib"/>
       </fileset>
     </jar>
   </target>
@@ -449,16 +449,16 @@
       <zipfileset src="build/Help.jar"/>
       <fileset dir="lib">
         <include name="*.jar"/>
+        <include name="java3d-1.6/*.jar"/>
+      	<exclude name="java3d-1.6/jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build">
+        <include name="java3d-1.6/jogl-java3d.jar"/>
       </fileset>
       <fileset dir="lib">
         <include name="windows/**/*.dll"/>
         <include name="linux/**/*.so"/>
-        <include name="macosx/**/*.jnilib"/>
-        <include name="macosx/**/*.jar"/>
-        <exclude name="macosx/*/jogl-all.jar"/>
-      </fileset>
-      <fileset dir="build">
-        <include name="macosx/java3d-1.6/jogl-java3d.jar"/>
+        <include name="java3d-1.6/macosx/*.jnilib"/>
       </fileset>
       <fileset dir="libtest">
         <include name="jnlp.jar"/>
