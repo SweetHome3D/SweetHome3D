@@ -180,7 +180,7 @@ public class ExtensionsClassLoader extends ClassLoader {
             String extensionJarOrDllFileName = extensionPrefix
                 + extensionJarOrDllFileLength + "-"
                 + (extensionJarOrDllFileDate / 1000L) + "-"
-                + extensionJarOrDllFile.substring(lastSlashIndex + 1);
+                + extensionJarOrDllFile.replace('/', '-');
             File cachedFile = new File(cacheFolder, extensionJarOrDllFileName);            
             if (!cachedFile.exists() 
                 || cachedFile.lastModified() < extensionJarOrDllFileDate) {
