@@ -63,18 +63,25 @@ Type: filesandordirs; Name: "{app}\jre6"
 Type: filesandordirs; Name: "{app}\jre1.8.0_51"
 Type: filesandordirs; Name: "{app}\jre1.8.0_60"
 Type: filesandordirs; Name: "{app}\jre1.8.0_66"
+; Remove Java3D 1.5.2 
+Type: files; Name: "{app}\lib\j3d*.dll"
+Type: files; Name: "{app}\lib\j3d*.jar"
+Type: files; Name: "{app}\lib\vecmath.jar"
 
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
 Source: "build\lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\java3d-1.6\*.jar"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion
 Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
 ; Install JRE and DLLs for not 64 bit
 Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "build\lib\java3d-1.6\x86\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "build\jre8\x86\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
 ; Install JRE and DLLs for 64 bit
 Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "build\lib\java3d-1.6\x64\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "build\jre8\x64\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
 
 [Icons]

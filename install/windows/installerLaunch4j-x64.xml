@@ -34,9 +34,11 @@
     <cp>lib/sunflow-0.07.3i.jar</cp>
     <cp>lib/batik-svgpathparser-1.7.jar</cp>
     <cp>lib/jmf.jar</cp>
-    <cp>lib/j3dcore.jar</cp>
-    <cp>lib/j3dutils.jar</cp>
-    <cp>lib/vecmath.jar</cp>
+    <cp>lib/java3d-1.6/j3dcore.jar</cp>
+    <cp>lib/java3d-1.6/j3dutils.jar</cp>
+    <cp>lib/java3d-1.6/vecmath.jar</cp>
+    <cp>lib/java3d-1.6/gluegen.jar</cp>
+    <cp>lib/java3d-1.6/jogl-java3d.jar</cp>
     <cp>jre8/lib/javaws.jar</cp>
   </classPath>
   <jre>
@@ -48,7 +50,7 @@
     <initialHeapSize>0</initialHeapSize>
     <maxHeapSize>2048</maxHeapSize>
     <maxHeapPercent>50</maxHeapPercent>
-    <opt>-Djava.library.path=lib -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
+    <opt>-Djava.library.path=lib/java3d-1.6 -Djogamp.gluegen.UseTempJarCache=false -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
   </jre>
   <versionInfo>
     <fileVersion>5.3.0.0</fileVersion>
