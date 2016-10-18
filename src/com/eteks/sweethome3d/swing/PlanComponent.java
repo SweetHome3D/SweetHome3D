@@ -2804,7 +2804,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (textureImage == null
                   || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
-                if (isTextureManagerAvailable()) {
+                if (isTextureManagerAvailable()
+                    // Don't use images managed by Java3D textures
+                    // to avoid InternalError "Surface not cachable" in Graphics2D#fill call
+                    // See bug at https://bugs.openjdk.java.net/browse/JDK-8072618
+                    && !(OperatingSystem.isLinux()
+                          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7"))) {
                   // Prefer to share textures images with texture manager if it's available
                   TextureManager.getInstance().loadTexture(
                       floorTexture.getImage(), floorTexture.getAngle(), waitForTexture,
@@ -6033,7 +6038,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             // Prefer to share textures images with texture manager if it's available
             TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
                 new TextureManager.TextureObserver() {
-                  public void textureUpdated(Texture texture) {                  
+                  public void textureUpdated(Texture texture) {
                     setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage(), pieceTexture.getAngle());
                   }
                 });
