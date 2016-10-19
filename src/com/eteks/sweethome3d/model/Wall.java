@@ -28,7 +28,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +35,7 @@ import java.util.List;
  * A wall of a home plan.
  * @author Emmanuel Puybaret
  */
-public class Wall implements Serializable, Selectable, Elevatable {
+public class Wall extends HomeObject implements Selectable, Elevatable {
   /**
    * The properties of a wall that may change. <code>PropertyChangeListener</code>s added 
    * to a wall will be notified under a property name equal to the string value of one these properties.
@@ -49,28 +48,28 @@ public class Wall implements Serializable, Selectable, Elevatable {
   
   private static final long serialVersionUID = 1L;
   
-  private float        xStart;
-  private float        yStart;
-  private float        xEnd;
-  private float        yEnd; 
-  private Float        arcExtent; 
-  private Wall         wallAtStart;
-  private Wall         wallAtEnd;
-  private float        thickness;
-  private Float        height;
-  private Float        heightAtEnd;
-  private Integer      leftSideColor;
-  private HomeTexture  leftSideTexture;
-  private float        leftSideShininess;
-  private Baseboard    leftSideBaseboard;
-  private Integer      rightSideColor;
-  private HomeTexture  rightSideTexture;
-  private float        rightSideShininess;
-  private Baseboard    rightSideBaseboard;
-  private boolean      symmetric = true;
-  private TextureImage pattern;  
-  private Integer      topColor;
-  private Level        level;
+  private float               xStart;
+  private float               yStart;
+  private float               xEnd;
+  private float               yEnd; 
+  private Float               arcExtent; 
+  private Wall                wallAtStart;
+  private Wall                wallAtEnd;
+  private float               thickness;
+  private Float               height;
+  private Float               heightAtEnd;
+  private Integer             leftSideColor;
+  private HomeTexture         leftSideTexture;
+  private float               leftSideShininess;
+  private Baseboard           leftSideBaseboard;
+  private Integer             rightSideColor;
+  private HomeTexture         rightSideTexture;
+  private float               rightSideShininess;
+  private Baseboard           rightSideBaseboard;
+  private boolean             symmetric = true;
+  private TextureImage        pattern;  
+  private Integer             topColor;
+  private Level               level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
@@ -984,6 +983,7 @@ public class Wall implements Serializable, Selectable, Elevatable {
         }
       } else {
         // Don't change the way walls were computed in version 3.0 to ensure they exactly look the same
+        // (as symmetric has no API to modify its value, this case may happen  only for unserialized walls) 
         int i = 0;
         for (float angle = this.arcExtent; angleDelta > 0 ? angle >= angleDelta * 0.1f : angle <= -angleDelta * 0.1f; angle -= angleDelta, i++) {
           computeRoundWallShapePoint(wallPoints, startAngle + angle, i, angleDelta, 
@@ -1205,17 +1205,13 @@ public class Wall implements Serializable, Selectable, Elevatable {
    */
   @Override
   public Wall clone() {
-    try {
-      Wall clone = (Wall)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      clone.wallAtStart = null;
-      clone.wallAtEnd = null;
-      clone.level = null;
-      clone.pointsCache = null;
-      clone.pointsIncludingBaseboardsCache = null;
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Wall clone = (Wall)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.wallAtStart = null;
+    clone.wallAtEnd = null;
+    clone.level = null;
+    clone.pointsCache = null;
+    clone.pointsIncludingBaseboardsCache = null;
+    return clone;
   }
 }

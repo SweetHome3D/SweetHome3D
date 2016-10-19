@@ -28,7 +28,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,7 @@ import java.util.List;
  * A room or a polygon in a home plan. 
  * @author Emmanuel Puybaret
  */
-public class Room implements Serializable, Selectable, Elevatable {
+public class Room extends HomeObject implements Selectable, Elevatable {
   /**
    * The properties of a room that may change. <code>PropertyChangeListener</code>s added 
    * to a room will be notified under a property name equal to the string value of one these properties.
@@ -51,26 +50,26 @@ public class Room implements Serializable, Selectable, Elevatable {
   
   private static final double TWICE_PI = 2 * Math.PI;
 
-  private String      name;
-  private float       nameXOffset;
-  private float       nameYOffset;
-  private TextStyle   nameStyle;
-  private float       nameAngle;
-  private float [][]  points;
-  private boolean     areaVisible;
-  private float       areaXOffset;
-  private float       areaYOffset;
-  private TextStyle   areaStyle;
-  private float       areaAngle;
-  private boolean     floorVisible;
-  private Integer     floorColor;
-  private HomeTexture floorTexture;
-  private float       floorShininess;
-  private boolean     ceilingVisible;
-  private Integer     ceilingColor;
-  private HomeTexture ceilingTexture;
-  private float       ceilingShininess;
-  private Level       level;
+  private String              name;
+  private float               nameXOffset;
+  private float               nameYOffset;
+  private TextStyle           nameStyle;
+  private float               nameAngle;
+  private float [][]          points;
+  private boolean             areaVisible;
+  private float               areaXOffset;
+  private float               areaYOffset;
+  private TextStyle           areaStyle;
+  private float               areaAngle;
+  private boolean             floorVisible;
+  private Integer             floorColor;
+  private HomeTexture         floorTexture;
+  private float               floorShininess;
+  private boolean             ceilingVisible;
+  private Integer             ceilingColor;
+  private HomeTexture         ceilingTexture;
+  private float               ceilingShininess;
+  private Level               level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -824,13 +823,9 @@ public class Room implements Serializable, Selectable, Elevatable {
    */
   @Override
   public Room clone() {
-    try {
-      Room clone = (Room)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      clone.level = null;
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Room clone = (Room)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.level = null;
+    return clone;
   }
 }

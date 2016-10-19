@@ -303,7 +303,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
-        height, elevation, 1f, movable, false, staircaseCutOutShape, null, modelRotation, creator, false, resizable, deformable,
+        height, elevation, 1f, movable, false, staircaseCutOutShape, null, modelRotation, false, creator, resizable, deformable,
         texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
   }
   
@@ -349,12 +349,60 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, String creator, 
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
-    this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
-        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, creator, false, resizable, deformable,
-        texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+    this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, height, 
+        elevation, dropOnTopElevation, movable, staircaseCutOutShape, modelRotation, false, 
+        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
   }
   
- /**
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param information additional information associated to the new piece
+   * @param tags tags associated to the new piece
+   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param grade grade of the piece of furniture or <code>null</code>
+   * @param icon content of the icon of the new piece
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param dropOnTopElevation  a percentage of the height at which should be placed 
+   *            an object dropped on the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param backFaceShown <code>true</code> if back face should be shown instead of front faces
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code>
+   * @since 5.3 
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, 
+                                 String information, String [] tags, Long creationDate, Float grade, 
+                                 Content icon, Content planIcon, Content model, 
+                                 float width, float depth, float height, 
+                                 float elevation, float dropOnTopElevation, 
+                                 boolean movable, String staircaseCutOutShape, 
+                                 float [][] modelRotation, boolean backFaceShown, String creator, 
+                                 boolean resizable, boolean deformable, boolean texturable, 
+                                 BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
+    this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
+        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, backFaceShown, 
+        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+  }
+  
+  /**
    * Creates a modifiable catalog piece of furniture with all its values.
    * @param name  the name of the new piece
    * @param icon content of the icon of the new piece
@@ -367,7 +415,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
    * @param color the color of the piece as RGB code or <code>null</code> if piece color is unchanged
    * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
-   * @param backFaceShown <code>true</code> if back face should be shown
+   * @param backFaceShown <code>true</code> if back face should be shown instead of front faces
    * @param iconYaw the yaw angle used to create the piece icon
    * @param proportional if <code>true</code>, size proportions will be kept 
    * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code> 
@@ -432,10 +480,9 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, String staircaseCutOutShape,
                                  Integer color, float [][] modelRotation, 
-                                 boolean backFaceShown,
-                                 float iconYaw, boolean proportional) {
+                                 boolean backFaceShown, float iconYaw, boolean proportional) {
     this(null, name, null, null, new String [0], System.currentTimeMillis(), null, icon, null, model, width, depth, height, elevation, 1f,
-        movable, false, staircaseCutOutShape, color, modelRotation, null, backFaceShown, true, true, true, null, null, null, iconYaw, proportional, true);
+        movable, false, staircaseCutOutShape, color, modelRotation, backFaceShown, null, true, true, true, null, null, null, iconYaw, proportional, true);
   }
   
   private CatalogPieceOfFurniture(String id, String name, String description, 
@@ -444,8 +491,8 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                   float width, float depth, float height, 
                                   float elevation, float dropOnTopElevation, 
                                   boolean movable, boolean doorOrWindow, String staircaseCutOutShape,
-                                  Integer color, float [][] modelRotation, String creator,
-                                  boolean backFaceShown, boolean resizable, boolean deformable, boolean texturable, 
+                                  Integer color, float [][] modelRotation, boolean backFaceShown,
+                                  String creator, boolean resizable, boolean deformable, boolean texturable, 
                                   BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, 
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;

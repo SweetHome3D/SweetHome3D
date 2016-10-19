@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -32,7 +31,7 @@ import java.util.TimeZone;
  * Camera characteristics in home.
  * @author Emmanuel Puybaret
  */
-public class Camera implements Serializable, Cloneable {
+public class Camera extends HomeObject {
   /**
    * The kind of lens that can be used with a camera.
    * @author Emmanuel Puybaret
@@ -48,18 +47,18 @@ public class Camera implements Serializable, Cloneable {
   
   private static final long serialVersionUID = 1L;
   
-  private String         name;
-  private float          x;
-  private float          y;
-  private float          z;
-  private float          yaw;
-  private float          pitch;
-  private float          fieldOfView;
-  private long           time;
-  private transient Lens lens;
+  private String              name;
+  private float               x;
+  private float               y;
+  private float               z;
+  private float               yaw;
+  private float               pitch;
+  private float               fieldOfView;
+  private long                time;
+  private transient Lens      lens;
   // Lens is saved as a string to be able to keep backward compatibility 
   // if new constants are added to Lens enum in future versions
-  private String         lensName;
+  private String              lensName;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -346,10 +345,8 @@ public class Camera implements Serializable, Cloneable {
    */
   @Override
   public Camera clone() {
-    try {
-      return (Camera)super.clone();
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Camera clone = (Camera)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    return clone;
   }
 }

@@ -28,13 +28,12 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 
 /**
  * A dimension line in plan.
  * @author Emmanuel Puybaret
  */
-public class DimensionLine implements Serializable, Selectable, Elevatable {
+public class DimensionLine extends HomeObject implements Selectable, Elevatable {
   /**
    * The properties of a dimension line that may change. <code>PropertyChangeListener</code>s added 
    * to a dimension line will be notified under a property name equal to the string value of one these properties.
@@ -43,13 +42,13 @@ public class DimensionLine implements Serializable, Selectable, Elevatable {
    
   private static final long serialVersionUID = 1L;
   
-  private float     xStart;
-  private float     yStart;
-  private float     xEnd;
-  private float     yEnd;
-  private float     offset;
-  private TextStyle lengthStyle;
-  private Level     level;
+  private float               xStart;
+  private float               yStart;
+  private float               xEnd;
+  private float               yEnd;
+  private float               offset;
+  private TextStyle           lengthStyle;
+  private Level               level;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -375,13 +374,9 @@ public class DimensionLine implements Serializable, Selectable, Elevatable {
    */
   @Override
   public DimensionLine clone() {
-    try {
-      DimensionLine clone = (DimensionLine)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      clone.level = null;
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    DimensionLine clone = (DimensionLine)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.level = null;
+    return clone;
   }
 }

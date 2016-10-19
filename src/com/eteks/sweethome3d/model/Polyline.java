@@ -30,7 +30,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -38,7 +37,7 @@ import java.util.Arrays;
  * @author Emmanuel Puybaret
  * @since 5.0
  */
-public class Polyline implements Serializable, Selectable, Elevatable {
+public class Polyline extends HomeObject implements Selectable, Elevatable {
   private static final long serialVersionUID = 1L;
   
   /**
@@ -79,7 +78,7 @@ public class Polyline implements Serializable, Selectable, Elevatable {
    * Creates a polyline from the given coordinates.
    */
   public Polyline(float [][] points) {
-    this(points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, ArrowStyle.NONE, ArrowStyle.NONE, false, 0);
+    this(points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, ArrowStyle.NONE, ArrowStyle.NONE, false, 0xFF000000);
   }
                   
   /**
@@ -609,12 +608,9 @@ public class Polyline implements Serializable, Selectable, Elevatable {
    */
   @Override
   public Polyline clone() {
-    try {
-      Polyline clone = (Polyline)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Polyline clone = (Polyline)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.level = null;
+    return clone;
   }
 }

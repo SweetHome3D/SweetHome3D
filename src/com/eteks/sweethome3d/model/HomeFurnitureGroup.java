@@ -95,25 +95,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     this.furniture = Collections.unmodifiableList(furniture); 
     
     boolean movable = true;
-    this.resizable = true;
-    this.deformable = true;
-    this.texturable = true;
-    this.doorOrWindow = true;
     boolean visible = false;
-    this.currency = furniture.get(0).getCurrency();
     for (HomePieceOfFurniture piece : furniture) {
       movable &= piece.isMovable();
-      this.resizable &= piece.isResizable();
-      this.deformable &= piece.isDeformable();
-      this.texturable &= piece.isTexturable();
-      this.doorOrWindow &= piece.isDoorOrWindow();
       visible |= piece.isVisible();
-      if (this.currency != null) {
-        if (piece.getCurrency() == null
-            || !piece.getCurrency().equals(this.currency)) {
-          this.currency = null; 
-        }
-      }
     }
     
     setName(name);
@@ -150,6 +135,25 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private void updateLocationAndSize(List<HomePieceOfFurniture> furniture,
                                      float angle,
                                      boolean init) {
+    // Update abilities of the group according to its furniture
+    this.resizable = true;
+    this.deformable = true;
+    this.texturable = true;
+    this.doorOrWindow = true;
+    this.currency = furniture.get(0).getCurrency();
+    for (HomePieceOfFurniture piece : furniture) {
+      this.resizable &= piece.isResizable();
+      this.deformable &= piece.isDeformable();
+      this.texturable &= piece.isTexturable();
+      this.doorOrWindow &= piece.isDoorOrWindow();
+      if (this.currency != null) {
+        if (piece.getCurrency() == null
+            || !piece.getCurrency().equals(this.currency)) {
+          this.currency = null; 
+        }
+      }
+    }
+
     float elevation = Float.MAX_VALUE;
     if (init) {
       // Search the lowest level elevation among grouped furniture

@@ -27,7 +27,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -41,7 +40,7 @@ import java.util.TimeZone;
  * @author Emmanuel Puybaret
  * @author Frédéric Mantegazza (Sun location algorithm)
  */
-public class Compass implements Serializable, Selectable {
+public class Compass extends HomeObject implements Selectable {
   /**
    * The properties of a compass that may change. <code>PropertyChangeListener</code>s added 
    * to a wall will be notified under a property name equal to the string value of one these properties.
@@ -50,14 +49,14 @@ public class Compass implements Serializable, Selectable {
   
   private static final long serialVersionUID = 1L;
 
-  private float    x;
-  private float    y;
-  private float    diameter;
-  private boolean  visible;
-  private float    northDirection;
-  private float    latitude;
-  private float    longitude;
-  private TimeZone timeZone;
+  private float               x;
+  private float               y;
+  private float               diameter;
+  private boolean             visible;
+  private float               northDirection;
+  private float               latitude;
+  private float               longitude;
+  private TimeZone            timeZone;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
@@ -332,13 +331,9 @@ public class Compass implements Serializable, Selectable {
    */
   @Override
   public Compass clone() {
-    try {
-      Compass clone = (Compass)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Compass clone = (Compass)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    return clone;
   }
 
   /**

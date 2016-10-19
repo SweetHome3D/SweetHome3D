@@ -29,7 +29,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Collator;
@@ -42,7 +41,7 @@ import java.util.Map;
  * A piece of furniture in {@linkplain Home home}.
  * @author Emmanuel Puybaret
  */
-public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable, Elevatable {
+public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture, Selectable, Elevatable {
   private static final long serialVersionUID = 1L;
   
   private static final double TWICE_PI = 2 * Math.PI;
@@ -269,7 +268,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float                  angle;
   private boolean                modelMirrored;
   private Level                  level;
-
+  
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
@@ -1222,14 +1221,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   @Override
   public HomePieceOfFurniture clone() {
-    try {
-      HomePieceOfFurniture clone = (HomePieceOfFurniture)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      clone.level = null;
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    HomePieceOfFurniture clone = (HomePieceOfFurniture)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.level = null;
+    return clone;
   }
 
   /**

@@ -23,14 +23,13 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 
 /**
  * A level in a home.
  * @author Emmanuel Puybaret
  * @since 3.4
  */
-public class Level implements Serializable, Cloneable {
+public class Level extends HomeObject {
   private static final long serialVersionUID = 1L;
 
   /**
@@ -39,14 +38,14 @@ public class Level implements Serializable, Cloneable {
    */
   public enum Property {NAME, ELEVATION, HEIGHT, FLOOR_THICKNESS, BACKGROUND_IMAGE, VISIBLE, VIEWABLE, ELEVATION_INDEX};
       
-  private String           name;
-  private float            elevation;
-  private float            floorThickness;
-  private float            height;
-  private BackgroundImage  backgroundImage;
-  private boolean          visible;
-  private boolean          viewable;
-  private int              elevationIndex;
+  private String              name;
+  private float               elevation;
+  private float               floorThickness;
+  private float               height;
+  private BackgroundImage     backgroundImage;
+  private boolean             visible;
+  private boolean             viewable;
+  private int                 elevationIndex;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -260,12 +259,8 @@ public class Level implements Serializable, Cloneable {
    */
   @Override
   public Level clone() {
-    try {
-      Level clone = (Level)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Level clone = (Level)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    return clone;
   }
 }

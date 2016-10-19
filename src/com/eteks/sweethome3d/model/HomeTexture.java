@@ -51,14 +51,25 @@ public class HomeTexture implements TextureImage, Serializable {
    * @since 4.4 
    */
   public HomeTexture(TextureImage texture, float angle) {
+    // Texture is left to right oriented when applied on objects seen from front
+    // added to homes with a version 3.4 and higher
+    this(texture, 0, true);
+  }
+  
+  /**
+   * Creates a home texture from an existing one with customized angle and offset.
+   * @param texture the texture from which data are copied
+   * @param angle   the rotation angle applied to the texture
+   * @param leftToRightOriented orientation used on the texture when applied on objects seen from front
+   * @since 5.3
+   */
+  public HomeTexture(TextureImage texture, float angle, boolean leftToRightOriented) {
     this.name = texture.getName();
     this.image = texture.getImage();
     this.width = texture.getWidth();
     this.height = texture.getHeight();
     this.angle = angle;
-    // Texture is left to right oriented when applied on objects seen from front
-    // added to homes with a version 3.4 and higher
-    this.leftToRightOriented = true; 
+    this.leftToRightOriented = leftToRightOriented; 
     if (texture instanceof HomeTexture) {
       this.catalogId = ((HomeTexture)texture).getCatalogId();
     } else if (texture instanceof CatalogTexture) {

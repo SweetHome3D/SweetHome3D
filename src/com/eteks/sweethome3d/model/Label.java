@@ -24,13 +24,12 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 
 /**
  * A free label.
  * @author Emmanuel Puybaret
  */
-public class Label implements Selectable, Serializable, Elevatable {
+public class Label extends HomeObject implements Selectable, Elevatable {
   private static final long serialVersionUID = 1L;
   
   private static final double TWICE_PI = 2 * Math.PI;
@@ -41,16 +40,16 @@ public class Label implements Selectable, Serializable, Elevatable {
    */
   public enum Property {TEXT, X, Y, ELEVATION, STYLE, COLOR, OUTLINE_COLOR, ANGLE, PITCH, LEVEL};
   
-  private String    text;
-  private float     x;
-  private float     y;
-  private TextStyle style;
-  private Integer   color;
-  private Integer   outlineColor;
-  private float     angle;
-  private Float     pitch;
-  private float     elevation;
-  private Level     level;
+  private String              text;
+  private float               x;
+  private float               y;
+  private TextStyle           style;
+  private Integer             color;
+  private Integer             outlineColor;
+  private float               angle;
+  private Float               pitch;
+  private float               elevation;
+  private Level               level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -362,13 +361,9 @@ public class Label implements Selectable, Serializable, Elevatable {
    */
   @Override
   public Label clone() {
-    try {
-      Label clone = (Label)super.clone();
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      clone.level = null;
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
-    }
+    Label clone = (Label)super.clone();
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    clone.level = null;
+    return clone;
   }
 }
