@@ -381,7 +381,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * &lt;!ELEMENT text (#PCDATA)>
  * </pre>
  * with <code>home</code> as root element. 
- * Attributes named <code>attribute</code> indicate the names of the fields 
+ * Attributes named <code>attribute</code> indicate the names of the object fields 
  * where some elements should be stored.
  * @author Emmanuel Puybaret
  */
@@ -783,7 +783,7 @@ public class HomeXMLHandler extends DefaultHandler {
       environment.setWallsAlpha(wallsAlpha);
     }
     environment.setAllLevelsVisible("true".equals(attributes.get("allLevelsVisible")));
-    environment.setObserverCameraElevationAdjusted(!"false".equals(attributes.get("allLevelsVisible")));
+    environment.setObserverCameraElevationAdjusted(!"false".equals(attributes.get("observerCameraElevationAdjusted")));
     Integer ceillingLightColor = getColor(attributes.get("ceillingLightColor"));
     if (ceillingLightColor != null) {
       environment.setCeillingLightColor(ceillingLightColor);
@@ -820,7 +820,7 @@ public class HomeXMLHandler extends DefaultHandler {
     if (photoQuality != null) {
       environment.setPhotoQuality(photoQuality);
     }
-    Integer videoWidth = getInteger(attributes.get("subpartSizeUnderLight"));
+    Integer videoWidth = getInteger(attributes.get("videoWidth"));
     if (videoWidth != null) {
       environment.setVideoWidth(videoWidth);
     }
@@ -1115,6 +1115,8 @@ public class HomeXMLHandler extends DefaultHandler {
     if (angle != null) {
       piece.setAngle(angle);
     }
+    piece.setVisible(!"false".equals(attributes.get("visible")));
+    piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
     piece.setNameVisible("true".equals(attributes.get("nameVisible")));
     Float nameAngle = getFloat(attributes.get("nameAngle"));
     if (nameAngle != null) {
@@ -1153,6 +1155,7 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Wall} instance initialized from the given <code>attributes</code>.
    */
+  @SuppressWarnings("deprecation")
   private Wall createWall(Map<String, String> attributes) {
     return new Wall(Float.parseFloat(attributes.get("xStart")),
         Float.parseFloat(attributes.get("yStart")),
@@ -1402,7 +1405,7 @@ public class HomeXMLHandler extends DefaultHandler {
             getContent(attributes.get("image")), 
             Float.parseFloat(attributes.get("width")), 
             Float.parseFloat(attributes.get("height")), 
-            attributes.get("creator")),
+            null),
         attributes.get("angle") != null
             ? Float.parseFloat(attributes.get("angle"))
             : 0,
