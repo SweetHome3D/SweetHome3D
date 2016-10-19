@@ -46,9 +46,8 @@ import com.eteks.sweethome3d.model.Wall;
  */
 public class HomeFileRecorderTest extends TestCase {
   public void testWriteReadHome() throws RecorderException {
-    // 1. Create an empty home
+    // Create an empty home with a wall and a piece of furniture
     Home home1 = new Home();
-    // Add to home a wall and a piece of furniture
     Wall wall = new Wall(0, 10, 100, 80, 10, home1.getWallHeight());
     home1.addWall(wall);
     FurnitureCatalog catalog = new DefaultFurnitureCatalog();
@@ -56,25 +55,31 @@ public class HomeFileRecorderTest extends TestCase {
         catalog.getCategories().get(0).getFurniture().get(0));
     home1.addPieceOfFurniture(piece);
     
-    // 2. Record home in a file named test.sh3d in current directory
-    HomeRecorder recorder = new HomeFileRecorder();
+    // Test if home is correctly saved
+    checkSavedHome(home1, new HomeFileRecorder());
+    // Test if home with XML entry is correctly saved
+    checkSavedHome(home1, new HomeFileRecorder(9, false, null, false, true));
+  }
+  
+  private void checkSavedHome(Home home, HomeRecorder recorder) throws RecorderException {
+    // 1. Record home in a file named test.sh3d in current directory
     String testFile = new File("test.sh3d").getAbsolutePath();
-    recorder.writeHome(home1, testFile); 
+    recorder.writeHome(home, testFile); 
     // Check test.sh3d file exists
     assertTrue("File test.sh3d doesn't exist", recorder.exists(testFile));
     
-    // 3. Read test.sh3d file in a new home
-    Home home2 = recorder.readHome(testFile);
+    // 2. Read test.sh3d file in a new home
+    Home readHome = recorder.readHome(testFile);
     // Compare home content
-    assertNotSame("Home not loaded", home1, home2);
+    assertNotSame("Home not loaded", home, readHome);
     assertEquals("Home wall height", 
-        home1.getWallHeight(), home2.getWallHeight());
+        home.getWallHeight(), readHome.getWallHeight());
     assertEquals("Home walls wrong count", 
-        home1.getWalls().size(), home2.getWalls().size());
-    assertEquals(wall, home2.getWalls().iterator().next());
+        home.getWalls().size(), readHome.getWalls().size());
+    assertEquals(home.getWalls().iterator().next(), readHome.getWalls().iterator().next());
     assertEquals("Home furniture wrong count", 
-        home1.getFurniture().size(), home2.getFurniture().size());
-    assertEquals(piece, home2.getFurniture().get(0));
+        home.getFurniture().size(), readHome.getFurniture().size());
+    assertEquals(home.getFurniture().iterator().next(), readHome.getFurniture().get(0));
 
     // Delete file
     if (!new File(testFile).delete()) {
@@ -94,7 +99,7 @@ public class HomeFileRecorderTest extends TestCase {
         HomeControllerTest.class.getResource("resources/damagedHomeInValidZipWithContentDigestsAndNoContent.sh3d").toURI()).getAbsolutePath(), 9);
   }
 
-  public void checkDamagedFileIsRepaired(String testFile, int damagedContentCount) throws RecorderException, IOException {
+  private void checkDamagedFileIsRepaired(String testFile, int damagedContentCount) throws RecorderException, IOException {
     try {
       // Check if opened home isn't repaired if preferences content isn't provided
       HomeRecorder recorder = new HomeFileRecorder(0, false, null, false);
