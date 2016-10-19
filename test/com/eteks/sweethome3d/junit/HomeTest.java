@@ -25,12 +25,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeObject;
 import com.eteks.sweethome3d.model.Wall;
+
+import junit.framework.TestCase;
 
 /**
  * Tests {@link com.eteks.sweethome3d.model.Home Home} class.
@@ -127,6 +128,26 @@ public class HomeTest extends TestCase {
     // Check it was removed and that wall listener received a notification 
     assertWallCollectionContains(home.getWalls(), wall1);
     assertWallCollectionContains(deletedWalls, wall2);
+  }
+  
+  public void testProperties() {
+    // Test properties management on a subclass of HomeObject
+    HomeObject object = new HomeObject() { };
+    object.setProperty("id", "Object1");
+    assertEquals("Wrong count of properties", 1, object.getPropertyNames().size());
+    assertEquals("Wrong property name", "id", object.getPropertyNames().iterator().next());
+    assertEquals("Wrong property value", "Object1", object.getProperty("id"));
+    assertEquals("Wrong property value on clone", "Object1", object.clone().getProperty("id"));
+    // Set a second property that should change internally the way properties are stored
+    object.setProperty("name", "My object");
+    assertEquals("Wrong count of properties", 2, object.getPropertyNames().size());
+    assertEquals("Wrong property value", "Object1", object.getProperty("id"));
+    assertEquals("Wrong property value", "My object", object.getProperty("name"));
+    assertEquals("Wrong properties count on clone", 2, object.clone().getPropertyNames().size());
+    object.setProperty("name", null);
+    object.setProperty("id", null);
+    assertEquals("Wrong count of properties", 0, object.getPropertyNames().size());
+    assertEquals("Wrong properties count on clone", 0, object.clone().getPropertyNames().size());
   }
 
   private void assertWallCollectionContains(Collection<Wall> wallCollection, Wall ... walls) {
