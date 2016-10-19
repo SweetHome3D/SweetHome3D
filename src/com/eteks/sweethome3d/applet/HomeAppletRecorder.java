@@ -159,7 +159,7 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns the filter output stream used to write a home in the output stream in parameter.
    */
   private DefaultHomeOutputStream createHomeOutputStream(OutputStream out) throws IOException {
-    return new DefaultHomeOutputStream(out, 9, this.contentRecording);
+    return new DefaultHomeOutputStream(out, 9, this.contentRecording, true, null);
   }
 
   /**
@@ -178,7 +178,7 @@ public class HomeAppletRecorder implements HomeRecorder {
       connection = new URL(readHomeURL).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
-      in = new DefaultHomeInputStream(connection.getInputStream(), this.contentRecording);
+      in = createHomeInputStream(connection.getInputStream());
       // Read home with HomeInputStream
       Home home = in.readHome();
       return home;
@@ -197,6 +197,13 @@ public class HomeAppletRecorder implements HomeRecorder {
         throw new RecorderException("Can't close file " + name, ex);
       }
     }
+  }
+
+  /**
+   * Returns the filter input stream used to read a home from the input stream in parameter.
+   */
+  private DefaultHomeInputStream createHomeInputStream(InputStream in) throws IOException {
+    return new DefaultHomeInputStream(in, this.contentRecording, null, null, false);
   }
 
   /**

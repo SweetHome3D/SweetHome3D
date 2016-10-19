@@ -47,6 +47,7 @@ public class HomeFileRecorder implements HomeRecorder {
   private final boolean         includeOnlyTemporaryContent;
   private final UserPreferences preferences;
   private final boolean         preferPreferencesContent;
+  private final boolean         preferXmlEntry;
   
   /**
    * Creates a home recorder able to write and read homes in uncompressed files. 
@@ -100,10 +101,38 @@ public class HomeFileRecorder implements HomeRecorder {
                           boolean         includeOnlyTemporaryContent,
                           UserPreferences preferences,
                           boolean         preferPreferencesContent) {
+    this(compressionLevel, includeOnlyTemporaryContent, preferences, preferPreferencesContent, false);
+  }
+
+  /**
+   * Creates a home recorder able to write and read homes in files compressed 
+   * at a level from 0 to 9. 
+   * @param compressionLevel 0-9
+   * @param includeOnlyTemporaryContent if <code>true</code>, content instances of 
+   *            <code>TemporaryURLContent</code> class referenced by the saved home 
+   *            as well as the content previously saved with it will be written. 
+   *            If <code>false</code>, all the content instances 
+   *            referenced by the saved home will be written in the zip stream. 
+   * @param preferences If not <code>null</code>, the furniture and textures contents 
+   *            it references might be used to replace the one of read homes 
+   *            when they are equal.
+   * @param preferPreferencesContent If <code>true</code>, the furniture and textures contents 
+   *            referenced by <code>preferences</code> will replace the one of read homes 
+   *            as often as possible when they are equal. Otherwise, these contents will be 
+   *            used only to replace damaged content that might be found in read home files.
+   * @param preferXmlEntry If <code>true</code>, an additional <code>Home.xml</code> entry 
+   *            will be saved in files and read in priority from saved files.
+   */
+  public HomeFileRecorder(int             compressionLevel, 
+                          boolean         includeOnlyTemporaryContent,
+                          UserPreferences preferences,
+                          boolean         preferPreferencesContent,
+                          boolean         preferXmlEntry) {
     this.compressionLevel = compressionLevel;
     this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
     this.preferences = preferences;
     this.preferPreferencesContent = preferPreferencesContent;
+    this.preferXmlEntry = preferXmlEntry;
   }
 
   /**
@@ -123,7 +152,14 @@ public class HomeFileRecorder implements HomeRecorder {
       // Open a stream on a temporary file 
       tempFile = OperatingSystem.createTemporaryFile("save", ".sweethome3d");
       homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
-          this.compressionLevel, this.includeOnlyTemporaryContent);
+          this.compressionLevel, 
+          this.includeOnlyTemporaryContent  
+              ? ContentRecording.INCLUDE_TEMPORARY_CONTENT
+              : ContentRecording.INCLUDE_ALL_CONTENT,
+          true,
+          this.preferXmlEntry 
+              ? new HomeXMLExporter() 
+              : null);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
     } catch (InterruptedIOException ex) {
@@ -214,7 +250,8 @@ public class HomeFileRecorder implements HomeRecorder {
     DefaultHomeInputStream in = null;
     try {
       // Open a stream on file
-      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT, 
+      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT,
+          this.preferXmlEntry ? new HomeXMLHandler(preferences) : null, 
           this.preferences, this.preferPreferencesContent);
       // Read home with HomeInputStream
       Home home = in.readHome();
