@@ -931,8 +931,9 @@
     <copy todir="install/linux/x86/SweetHome3D-${version}/jre8">
       <fileset dir="jre1.8.0_112">
         <include name="**"/>
-
         <exclude name="lib/ext/sunjce_provider.jar"/>
+        <exclude name="lib/ext/sunec.jar"/>
+        <exclude name="lib/ext/sunpkcs11.jar"/>
         <exclude name="bin/rmid"/>
         <exclude name="bin/rmiregistry"/>
         <exclude name="bin/tnameserv"/>
@@ -940,6 +941,28 @@
         <exclude name="bin/policytool"/>
         <exclude name="bin/orbd"/>
         <exclude name="bin/servertool"/>
+        <exclude name="lib/cmm/PYCC.pf"/>
+        <exclude name="lib/jfr"/>
+        <exclude name="lib/jfr.jar"/>
+        <!-- No need of JavaFX support -->
+        <exclude name="THIRDPARTYLICENSEREADME-JAVAFX.txt"/>
+        <exclude name="lib/javafx.properties"/>
+        <exclude name="lib/i386/libdecora_sse.so"/>
+        <exclude name="lib/i386/libfxplugins.so"/>
+        <exclude name="lib/i386/libglass.so"/>
+        <exclude name="lib/i386/libgstreamer-lite.so"/>
+        <exclude name="lib/i386/libjavafx_font_freetype.so"/>
+        <exclude name="lib/i386/libjavafx_font_pango.so"/>
+        <exclude name="lib/i386/libjavafx_font_t2k.so"/>
+        <exclude name="lib/i386/libjavafx_font.so"/>
+        <exclude name="lib/i386/libjavafx_iio.so"/>
+        <exclude name="lib/i386/libjfxmedia.so"/>
+        <exclude name="lib/i386/libjfxwebkit.so"/>
+        <exclude name="lib/i386/libprism_common.so"/>   
+        <exclude name="lib/i386/libprism_es2.so"/>
+        <exclude name="lib/i386/libprism_sw.so"/>
+        <exclude name="lib/ext/jfxrt.jar"/>
+        <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
 
@@ -1020,8 +1043,9 @@
     <copy todir="install/linux/x64/SweetHome3D-${version}/jre8">
       <fileset dir="jre1.8.0_112/">
         <include name="**"/>
-
         <exclude name="lib/ext/sunjce_provider.jar"/>
+        <exclude name="lib/ext/sunec.jar"/>
+        <exclude name="lib/ext/sunpkcs11.jar"/>
         <exclude name="bin/rmid"/>
         <exclude name="bin/rmiregistry"/>
         <exclude name="bin/tnameserv"/>
@@ -1029,6 +1053,28 @@
         <exclude name="bin/policytool"/>
         <exclude name="bin/orbd"/>
         <exclude name="bin/servertool"/>
+        <exclude name="lib/cmm/PYCC.pf"/>
+        <exclude name="lib/jfr"/>
+        <exclude name="lib/jfr.jar"/>
+        <!-- No need of JavaFX support -->
+        <exclude name="THIRDPARTYLICENSEREADME-JAVAFX.txt"/>
+        <exclude name="lib/javafx.properties"/>
+        <exclude name="lib/amd64/libdecora_sse.so"/>
+        <exclude name="lib/amd64/libprism_common.so"/>   
+        <exclude name="lib/amd64/libprism_es2.so"/>
+        <exclude name="lib/amd64/libprism_sw.so"/>
+        <exclude name="lib/amd64/libfxplugins.so"/>
+        <exclude name="lib/amd64/libglass.so"/>
+        <exclude name="lib/amd64/libgstreamer-lite.so"/>
+        <exclude name="lib/amd64/libjavafx_font_freetype.so"/>
+        <exclude name="lib/amd64/libjavafx_font_pango.so"/>
+        <exclude name="lib/amd64/libjavafx_font_t2k.so"/>
+        <exclude name="lib/amd64/libjavafx_font.so"/>
+        <exclude name="lib/amd64/libjavafx_iio.so"/>
+        <exclude name="lib/amd64/libjfxmedia.so"/>
+        <exclude name="lib/amd64/libjfxwebkit.so"/>
+        <exclude name="lib/ext/jfxrt.jar"/>
+        <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
 
