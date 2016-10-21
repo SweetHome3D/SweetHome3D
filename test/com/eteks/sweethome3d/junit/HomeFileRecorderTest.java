@@ -49,10 +49,13 @@ public class HomeFileRecorderTest extends TestCase {
     // Create an empty home with a wall and a piece of furniture
     Home home1 = new Home();
     Wall wall = new Wall(0, 10, 100, 80, 10, home1.getWallHeight());
+    wall.setProperty("id", "wall1");
     home1.addWall(wall);
     FurnitureCatalog catalog = new DefaultFurnitureCatalog();
     HomePieceOfFurniture piece = new HomePieceOfFurniture(
         catalog.getCategories().get(0).getFurniture().get(0));
+    piece.setProperty("id", "piece1");
+    piece.setProperty("name", "value");
     home1.addPieceOfFurniture(piece);
     
     // Test if home is correctly saved
@@ -145,6 +148,7 @@ public class HomeFileRecorderTest extends TestCase {
       assertFalse("Different wall at end", wall2.getWallAtEnd() == null);
       assertNotSame("Wall at end not loaded", wall1.getWallAtStart(), wall2.getWallAtEnd());
     }
+    assertEquals("Different property id", wall1.getProperty("id"), wall2.getProperty("id"));     
   }
 
   /**
@@ -164,6 +168,8 @@ public class HomeFileRecorderTest extends TestCase {
     assertContentEquals("Different icon content", piece1.getIcon(), piece2.getIcon());     
     assertNotSame("Piece model not loaded", piece1.getModel(), piece2.getModel());
     assertContentEquals("Different model content", piece1.getModel(), piece2.getModel());     
+    assertEquals("Different property id", piece1.getProperty("id"), piece2.getProperty("id"));     
+    assertEquals("Different property name", piece1.getProperty("name"), piece2.getProperty("name"));     
   }
 
   /**
