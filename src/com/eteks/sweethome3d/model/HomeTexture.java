@@ -53,7 +53,7 @@ public class HomeTexture implements TextureImage, Serializable {
   public HomeTexture(TextureImage texture, float angle) {
     // Texture is left to right oriented when applied on objects seen from front
     // added to homes with a version 3.4 and higher
-    this(texture, 0, true);
+    this(texture, angle, true);
   }
   
   /**
