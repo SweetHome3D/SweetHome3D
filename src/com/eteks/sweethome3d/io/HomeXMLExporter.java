@@ -21,7 +21,10 @@ package com.eteks.sweethome3d.io;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
@@ -124,8 +127,10 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
    */
   @Override
   protected void writeChildren(XMLWriter writer, Home home) throws IOException {
-    // Write properties
-    for (String propertyName : home.getPropertyNames()) {
+    // Write properties in the alphabetic order of their names
+    List<String> propertiesNames = new ArrayList<String>(home.getPropertyNames());
+    Collections.sort(propertiesNames);
+    for (String propertyName : propertiesNames) {
       writer.writeStartElement("property");
       writer.writeAttribute("name", propertyName);
       writer.writeAttribute("value", home.getProperty(propertyName));
@@ -736,7 +741,9 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
    * Writes in XML the properties of the <code>HomeObject</code> instance with the given <code>writer</code>.
    */
   private void writeProperties(XMLWriter writer, HomeObject object) throws IOException {
-    for (String propertyName : object.getPropertyNames()) {
+    List<String> propertiesNames = new ArrayList<String>(object.getPropertyNames());
+    Collections.sort(propertiesNames);
+    for (String propertyName : propertiesNames) {
       writer.writeStartElement("property");
       writer.writeAttribute("name", propertyName);
       writer.writeAttribute("value", object.getProperty(propertyName));
