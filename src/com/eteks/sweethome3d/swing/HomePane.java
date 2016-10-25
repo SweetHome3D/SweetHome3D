@@ -564,10 +564,10 @@ public class HomePane extends JRootPane implements HomeView {
                                     Object ... parameters) {
     Action action = createAction(actionType, preferences, controller, method, parameters);
     JToggleButton.ToggleButtonModel toggleButtonModel = new JToggleButton.ToggleButtonModel();
-    toggleButtonModel.setSelected(selected);
     if (group != null) {
       toggleButtonModel.setGroup(group);
     }
+    toggleButtonModel.setSelected(selected);
     action.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, toggleButtonModel);
     return action;
   }
