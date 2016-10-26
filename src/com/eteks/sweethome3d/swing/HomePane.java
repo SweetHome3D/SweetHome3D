@@ -43,6 +43,8 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.FlavorEvent;
+import java.awt.datatransfer.FlavorListener;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
@@ -266,6 +268,7 @@ public class HomePane extends JRootPane implements HomeView {
     addPlanControllerListener(controller.getPlanController());
     addFocusListener();
     updateFocusTraversalPolicy();
+    addClipboardListener();
     JMenuBar homeMenuBar = createMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
@@ -4613,18 +4616,56 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Returns <code>true</code> if clipboard contains data that
+   * Adds a listener to clipboard to follow the changes of its content.
+   */
+  private void addClipboardListener() {
+    if (!OperatingSystem.isMacOSX() || OperatingSystem.isJavaVersionGreaterOrEqual("1.8.0_60")) {
+      try {
+        final FlavorListener flavorListener = new FlavorListener() {
+            public void flavorsChanged(FlavorEvent ev) {
+              checkClipboardContainsHomeItemsOrFiles();
+            }
+          };
+        flavorListener.flavorsChanged(null);
+        // Bind listener after access control check and only 
+        // when needed to avoid permanent link to global clipboard
+        addAncestorListener(new AncestorListener() {
+            public void ancestorAdded(AncestorEvent event) {
+              getToolkit().getSystemClipboard().addFlavorListener(flavorListener);
+            }
+  
+            public void ancestorRemoved(AncestorEvent event) {
+              getToolkit().getSystemClipboard().removeFlavorListener(flavorListener);
+            }
+            
+            public void ancestorMoved(AncestorEvent event) {
+            }
+          });
+      } catch (AccessControlException ex) {
+        // If clipboard can't be accessed, update clipboardEmpty only when explicit copy actions are performed
+      }    
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if clipboard doesn't contain data that
    * components are able to handle.
    */
   public boolean isClipboardEmpty() {
-    try {
-      Clipboard clipboard = getToolkit().getSystemClipboard();
-      return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
-          || clipboard.isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
-    } catch (AccessControlException ex) {
-      // AWT uses a private clipboard that won't be empty as soon as a copy action will be done
-      return this.clipboardEmpty;
-    }    
+    if (OperatingSystem.isMacOSX() && !OperatingSystem.isJavaVersionGreaterOrEqual("1.8.0_60")) {
+      try {
+        checkClipboardContainsHomeItemsOrFiles();
+      } catch (AccessControlException ex) {
+        // If clipboard can't be accessed, update clipboardEmpty only when explicit copy actions are performed
+      }    
+    }
+    return this.clipboardEmpty;
+  }
+
+  private void checkClipboardContainsHomeItemsOrFiles() {
+    Clipboard clipboard = getToolkit().getSystemClipboard();
+    this.clipboardEmpty = !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
+        || clipboard.isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
   }
 
   /**
