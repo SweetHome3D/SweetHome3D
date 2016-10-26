@@ -24,8 +24,14 @@ import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +45,7 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.media.j3d.View;
 import javax.media.j3d.VirtualUniverse;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -206,6 +213,49 @@ public class Component3DManager {
         canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
       } else {
         canvas3D = new Canvas3D(configuration, offscreen);
+      }
+      
+      if (!offscreen
+          && OperatingSystem.isLinux() 
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+        // Add a listener to the parent window once known that will repaint the canvas in 100 ms
+        // when the window is activated / deactivated to avoid keeping an empty canvas 
+        final WindowListener parentActivationListener = new WindowAdapter() {
+            private Timer timer;
+
+            @Override
+            public void windowActivated(WindowEvent ev) {
+              if (this.timer == null) {
+                this.timer = new Timer(100, new ActionListener() {
+                    public void actionPerformed(ActionEvent ev) {
+                      canvas3D.repaint();
+                    }
+                  });
+                this.timer.setRepeats(false);
+              }
+              this.timer.restart();
+            }
+            
+            @Override
+            public void windowDeactivated(WindowEvent ev) {
+              windowActivated(null);
+            }
+          };
+        canvas3D.addHierarchyListener(new HierarchyListener() {
+            private Window parentWindow;
+            
+            public void hierarchyChanged(HierarchyEvent ev) {
+              Window window = SwingUtilities.windowForComponent(canvas3D);
+              if (window != null) {
+                if (this.parentWindow != window) {
+                  window.addWindowListener(parentActivationListener);
+                }
+              } else if (this.parentWindow != null) {
+                this.parentWindow.removeWindowListener(parentActivationListener);
+              }
+              this.parentWindow = window;
+            }
+          });
       }
       
       return canvas3D;
@@ -386,7 +436,7 @@ public class Component3DManager {
       this.renderingObserver = renderingObserver;
       // Under Windows with Java 7 and above, delay the rendering of the canvas 3D when 
       // it's repainted (i.e. it's resized, moved or partially hidden) to avoid it to get grayed
-      this.paintDelayed = OperatingSystem.isWindows() 
+      this.paintDelayed = OperatingSystem.isWindows()  
           && OperatingSystem.isJavaVersionGreaterOrEqual("1.7");
     }
 
