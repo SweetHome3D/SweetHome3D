@@ -928,26 +928,11 @@ public class HomeController implements Controller {
   public void enablePasteAction() {
     HomeView view = getView();
     boolean pasteEnabled = false;
-    boolean pasteToGroupEnabled = false;
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()) {
       Level selectedLevel = this.home.getSelectedLevel();
       pasteEnabled = (selectedLevel == null || selectedLevel.isViewable())
           && !getPlanController().isModificationState() && !view.isClipboardEmpty();
-      
-      if (pasteEnabled) {
-        List<Selectable> selectedItems = this.home.getSelectedItems();
-        if (selectedItems.size() == 1
-            && selectedItems.get(0) instanceof HomeFurnitureGroup) {
-          pasteToGroupEnabled = true;
-          for (Selectable item : view.getClipboardItems()) {
-            if (!(item instanceof HomePieceOfFurniture)) {
-              pasteToGroupEnabled = false;
-              break;
-            }
-          }
-        }
-      }
     }
     view.setEnabled(HomeView.ActionType.PASTE, pasteEnabled);
     enablePasteToGroupAction();
