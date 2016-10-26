@@ -422,7 +422,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }
             });
     }
-    this.component3D.setBackground(Color.LIGHT_GRAY);
+    this.component3D.setBackground(new Color(230, 230, 230));
 
     JPanel canvasPanel = new JPanel(new LayoutManager() {
         public void addLayoutComponent(String name, Component comp) {
