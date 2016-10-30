@@ -1139,9 +1139,18 @@ public class HomeXMLHandler extends DefaultHandler {
       piece.setY(y);
     }
     if (piece.isTexturable()) {
-      piece.setColor(getColor(attributes.get("color")));
-      piece.setTexture(this.textures.get(null));
-      piece.setShininess(getFloat(attributes.get("shininess")));
+      Integer color = getColor(attributes.get("color"));
+      if (color != null) {
+        piece.setColor(color);
+      }
+      HomeTexture texture = this.textures.get(null);
+      if (texture != null) {
+        piece.setTexture(texture);
+      }
+      Float shininess = getFloat(attributes.get("shininess"));
+      if (shininess != null) {
+        piece.setShininess(shininess);
+      }
     }
     
     if (piece instanceof HomeLight
