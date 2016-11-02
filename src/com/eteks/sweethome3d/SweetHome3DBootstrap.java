@@ -103,7 +103,7 @@ public class SweetHome3DBootstrap {
             "java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
             "java3d-1.6/vecmath.jar",
             "java3d-1.6/j3dutils.jar",
-            "java3d-1.6/gluegen.jar", 
+            "java3d-1.6/gluegen-rt.jar", 
             "java3d-1.6/jogl-java3d.jar",
             "java3d-1.6/macosx/libgluegen-rt.jnilib",
             "java3d-1.6/macosx/libjogl_desktop.jnilib",
@@ -137,7 +137,7 @@ public class SweetHome3DBootstrap {
             "java3d-1.6/j3dcore.jar", // Java 3D 1.6 jars
             "java3d-1.6/vecmath.jar",
             "java3d-1.6/j3dutils.jar",
-            "java3d-1.6/gluegen.jar", 
+            "java3d-1.6/gluegen-rt.jar", 
             "java3d-1.6/jogl-java3d.jar"}));
         // Disable JOGL library loader
         System.setProperty("jogamp.gluegen.UseTempJarCache", "false");

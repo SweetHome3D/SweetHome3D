@@ -37,7 +37,7 @@
     <cp>lib/ext/java3d-1.6/j3dcore.jar</cp>
     <cp>lib/ext/java3d-1.6/j3dutils.jar</cp>
     <cp>lib/ext/java3d-1.6/vecmath.jar</cp>
-    <cp>lib/ext/java3d-1.6/gluegen.jar</cp>
+    <cp>lib/ext/java3d-1.6/gluegen-rt.jar</cp>
     <cp>lib/ext/java3d-1.6/jogl-java3d.jar</cp>
     <cp>jre/windows/x64/jre8/lib/javaws.jar</cp>
   </classPath>
