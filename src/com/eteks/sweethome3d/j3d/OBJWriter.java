@@ -32,6 +32,10 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -39,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +52,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Geometry;
@@ -86,6 +93,8 @@ import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * An output stream that writes Java 3D nodes at OBJ + MTL format.
  * <p>Once you wrote nodes, call <code>close</code> method to create the MTL file
@@ -110,6 +119,7 @@ public class OBJWriter extends FilterWriter {
   private Map<ComparableAppearance, String> appearances = 
       new LinkedHashMap<ComparableAppearance, String>();
   private Map<Texture, File> textures = new HashMap<Texture, File>();
+  private List<URL>          copiedTextures = new ArrayList<URL>();
   
   /**
    * Create an OBJ writer for the given file, with no header and default precision.
@@ -404,9 +414,30 @@ public class OBJWriter extends FilterWriter {
               if (texture != null) {
                 File textureFile = this.textures.get(texture);
                 if (textureFile == null) {
+                  String fileExtension = "png";
+                  URL textureUrl = (URL)texture.getUserData();
+                  if (textureUrl instanceof URL) {
+                    InputStream in = null;
+                    try {
+                      // Find the format of the texture image
+                      in = openStream(textureUrl);
+                      ImageInputStream imageIn = ImageIO.createImageInputStream(in);
+                      Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageIn);
+                      if (imageReaders.hasNext()) {
+                        ImageReader reader = (ImageReader)imageReaders.next();
+                        fileExtension = reader.getFormatName().toLowerCase();
+                        // Store the URL to copy its image content directly when appearances are saved 
+                        this.copiedTextures.add(textureUrl);
+                      }
+                    } catch (IOException ex) {
+                      if (in != null) {
+                        in.close();
+                      }
+                    }
+                  }
                   // Store texture
                   textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
-                      + "_" + appearanceName + ".png");
+                      + "_" + appearanceName + "." + fileExtension);
                   this.textures.put(texture, textureFile);
                 }
               }
@@ -432,6 +463,32 @@ public class OBJWriter extends FilterWriter {
         }
       }
     }    
+  }
+  
+  /**
+   * Returns an input stream to read the given URL.
+   */
+  private InputStream openStream(URL url) throws IOException {
+    URLConnection connection = url.openConnection();
+    if (OperatingSystem.isWindows() 
+        && (connection instanceof JarURLConnection)) {
+      JarURLConnection urlConnection = (JarURLConnection)connection;
+      URL jarFileUrl = urlConnection.getJarFileURL();
+      if (jarFileUrl.getProtocol().equalsIgnoreCase("file")) {
+        try {
+          if (new File(jarFileUrl.toURI()).canWrite()) {
+            // Refuse to use caches to be able to delete the writable files accessed with jar protocol under Windows, 
+            // as suggested in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
+            connection.setUseCaches(false);
+          }
+        } catch (URISyntaxException ex) {
+          IOException ex2 = new IOException();
+          ex2.initCause(ex);
+          throw ex2;
+        }
+      }
+    }
+    return connection.getInputStream();
   }
   
   /**
@@ -1306,9 +1363,32 @@ public class OBJWriter extends FilterWriter {
       
       for (Map.Entry<Texture, File> textureEntry : this.textures.entrySet()) {
         Texture texture = textureEntry.getKey();
-        ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
-        RenderedImage image = imageComponent.getRenderedImage();
-        ImageIO.write(image, "png", textureEntry.getValue());        
+        Object textureUrl = texture.getUserData();
+        if (this.copiedTextures.contains(textureUrl)) {
+          // Copy texture image file directly
+          InputStream in = null;
+          OutputStream out = null;
+          try {
+            in = openStream((URL)textureUrl);
+            out = new FileOutputStream(textureEntry.getValue());
+            byte [] buffer = new byte [8192];
+            int size; 
+            while ((size = in.read(buffer)) != -1) {
+              out.write(buffer, 0, size);
+            }
+          } finally {
+            if (in != null) {
+              in.close();
+            }
+            if (out != null) {
+              out.close();
+            }
+          }
+        } else {
+          ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
+          RenderedImage image = imageComponent.getRenderedImage();
+          ImageIO.write(image, "png", textureEntry.getValue());
+        }
       }
     } finally {
       if (writer != null) {
