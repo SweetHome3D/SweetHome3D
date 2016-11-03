@@ -38,9 +38,12 @@ import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
 import javax.vecmath.Color3f;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
 
 /**
@@ -60,6 +63,7 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
+  private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
   
   static {
@@ -136,6 +140,24 @@ public abstract class Object3DBranch extends BranchGroup {
     }
   }
   
+  /**
+   * Returns shared texture attributes matching transformation applied to the given texture.
+   */
+  protected TextureAttributes getTextureAttributes(HomeTexture texture) {
+    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(texture.getAngle());
+    if (textureAttributes == null) {
+      textureAttributes = new TextureAttributes();
+      // Mix texture and color
+      textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      Transform3D transform = new Transform3D();
+      transform.rotZ(texture.getAngle());
+      textureAttributes.setTextureTransform(transform);
+      textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
+      Object3DBranch.textureAttributes.put(texture.getAngle(), textureAttributes);
+    }
+    return textureAttributes;
+  }
+
   /**
    * Returns the list of polygons points matching the given <code>area</code>.
    */

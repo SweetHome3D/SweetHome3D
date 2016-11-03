@@ -35,7 +35,6 @@ import javax.media.j3d.Node;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
-import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
@@ -54,12 +53,6 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of room branch.
  */
 public class Room3D extends Object3DBranch {
-  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
-  
-  static {
-    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
-  }
-  
   private static final int FLOOR_PART  = 0;
   private static final int CEILING_PART = 1;
   
@@ -124,8 +117,7 @@ public class Room3D extends Object3DBranch {
     roomAppearance.setMaterial(DEFAULT_MATERIAL);      
     roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
-    // Mix texture and room color
-    roomAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
     
     return roomShape;
   }
@@ -719,8 +711,9 @@ public class Room3D extends Object3DBranch {
     } else {
       // Update material and texture of room part
       roomPartAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
+      roomPartAppearance.setTextureAttributes(getTextureAttributes(roomPartTexture));
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(roomPartTexture.getImage(), roomPartTexture.getAngle(), waitTextureLoadingEnd,
+      textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 texture = getHomeTextureClone(texture, home);

@@ -33,7 +33,6 @@ import java.util.TreeMap;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
-import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
@@ -75,9 +74,7 @@ public class Ground3D extends Object3DBranch {
     Appearance groundAppearance = new Appearance();
     groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-    TextureAttributes textureAttributes = new TextureAttributes();
-    textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-    groundAppearance.setTextureAttributes(textureAttributes);
+    groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
@@ -121,8 +118,9 @@ public class Ground3D extends Object3DBranch {
       groundAppearance.getTransparencyAttributes().setTransparencyMode(TransparencyAttributes.NONE);      
     } else {
       groundAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
-      final TextureManager imageManager = TextureManager.getInstance();
-      imageManager.loadTexture(groundTexture.getImage(), groundTexture.getAngle(), waitTextureLoadingEnd,
+      groundAppearance.setTextureAttributes(getTextureAttributes(groundTexture));
+      final TextureManager textureManager = TextureManager.getInstance();
+      textureManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 groundAppearance.setTexture(getHomeTextureClone(texture, home));

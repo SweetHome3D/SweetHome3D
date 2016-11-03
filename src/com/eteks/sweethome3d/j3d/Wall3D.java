@@ -43,7 +43,6 @@ import javax.media.j3d.Node;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
-import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -68,14 +67,9 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of wall branch.
  */
 public class Wall3D extends Object3DBranch {
-  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   private static final float LEVEL_ELEVATION_SHIFT = 0.1f;
   private static final Area  FULL_FACE_CUT_OUT_AREA = new Area(new Rectangle2D.Float(-0.5f, 0.5f, 1, 1));
   
-  static {
-    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
-  }
-
   private static final int WALL_LEFT_SIDE  = 0;
   private static final int WALL_RIGHT_SIDE = 1;
   
@@ -153,8 +147,7 @@ public class Wall3D extends Object3DBranch {
       wallAppearance.setMaterial(DEFAULT_MATERIAL);      
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
-      // Mix texture and wall color
-      wallAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
     }
     return wallShape;
   }
@@ -1326,8 +1319,9 @@ public class Wall3D extends Object3DBranch {
     } else {
       // Update material and texture of wall side
       wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
+      wallSideAppearance.setTextureAttributes(getTextureAttributes(wallSideTexture));
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(wallSideTexture.getImage(), wallSideTexture.getAngle(), waitTextureLoadingEnd,
+      textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 wallSideAppearance.setTexture(getHomeTextureClone(texture, home));

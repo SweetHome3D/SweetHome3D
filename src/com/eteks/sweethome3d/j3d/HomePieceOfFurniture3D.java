@@ -85,13 +85,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, false);
   private static final PolygonAttributes      NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, true);
-  private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   private static final Bounds                 DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), 1E7);
 
   private final Home home;
   
   static {
-    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
     DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
     NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
   }
@@ -620,10 +618,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             restoreDefaultMaterialAndTexture(appearance, materialShininess);
           } else {
             // Change material to white then texture
-            appearance.setTexCoordGeneration(getTextureCoordinates(appearance, texture, pieceSize, modelBounds));
+            appearance.setTexCoordGeneration(getTextureCoordinates(texture, pieceSize, modelBounds));
             appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-            appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
-            TextureManager.getInstance().loadTexture(texture.getImage(), texture.getAngle(), 
+            appearance.setTextureAttributes(getTextureAttributes(texture));
+            TextureManager.getInstance().loadTexture(texture.getImage(),  
                 waitTextureLoadingEnd, getTextureObserver(appearance));
           }
         } else if (materialModified) {
@@ -649,12 +647,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                 if (isTexturesCoordinatesDefined(shape)) {
                   restoreDefaultTextureCoordinatesGeneration(appearance);
                 } else {
-                  appearance.setTexCoordGeneration(getTextureCoordinates(appearance, material.getTexture(), pieceSize, modelBounds));
+                  appearance.setTexCoordGeneration(getTextureCoordinates(material.getTexture(), pieceSize, modelBounds));
                 }
                 appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-                appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
                 HomeTexture materialTexture = material.getTexture();
-                TextureManager.getInstance().loadTexture(materialTexture.getImage(), materialTexture.getAngle(), 
+                appearance.setTextureAttributes(getTextureAttributes(materialTexture));
+                TextureManager.getInstance().loadTexture(materialTexture.getImage(),  
                     waitTextureLoadingEnd, getTextureObserver(appearance));
               } else {
                 restoreDefaultMaterialAndTexture(appearance, material.getShininess());
@@ -709,8 +707,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   /**
    * Returns a texture coordinates generator that wraps the given texture on front face.
    */
-  private TexCoordGeneration getTextureCoordinates(Appearance appearance, HomeTexture texture, 
-                                                   Vector3f pieceSize, BoundingBox modelBounds) {
+  private TexCoordGeneration getTextureCoordinates(HomeTexture texture, Vector3f pieceSize, 
+                                                   BoundingBox modelBounds) {
     Point3d lower = new Point3d();
     modelBounds.getLower(lower);
     Point3d upper = new Point3d();
