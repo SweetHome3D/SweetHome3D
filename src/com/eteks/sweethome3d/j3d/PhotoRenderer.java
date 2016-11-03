@@ -69,6 +69,7 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -669,6 +670,7 @@ public class PhotoRenderer {
   
         String appearanceName = null;
         TexCoordGeneration texCoordGeneration = null;
+        Transform3D textureTransform = new Transform3D();
         int cullFace = PolygonAttributes.CULL_BACK;
         boolean backFaceNormalFlip = false;
         if (appearance != null) {
@@ -678,6 +680,10 @@ public class PhotoRenderer {
             backFaceNormalFlip = polygonAttributes.getBackFaceNormalFlip();
           }
           texCoordGeneration = appearance.getTexCoordGeneration();
+          TextureAttributes textureAttributes = appearance.getTextureAttributes();
+          if (textureAttributes != null) {
+            textureAttributes.getTextureTransform(textureTransform);
+          }
           appearanceName = "shader" + uuid;
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
@@ -690,7 +696,7 @@ public class PhotoRenderer {
           String objectNameBase = "object" + uuid + "-" + i;
           // Always ignore normals on walls
           String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
-              cullFace, backFaceNormalFlip, objectNameBase);
+              textureTransform, cullFace, backFaceNormalFlip, objectNameBase);
           if (objectsName != null) {
             for (String objectName : objectsName) {
               if (appearanceName != null) {
@@ -713,6 +719,7 @@ public class PhotoRenderer {
   private String [] exportNodeGeometry(Geometry geometry, 
                                        Transform3D parentTransformations, 
                                        TexCoordGeneration texCoordGeneration, 
+                                       Transform3D textureTransform, 
                                        int cullFace, 
                                        boolean backFaceNormalFlip,
                                        String objectNameBase) {
@@ -820,14 +827,14 @@ public class PhotoRenderer {
                       index < n; index++, i += vertexSize) {
                   TexCoord2f textureCoordinates = generateTextureCoordinates(
                       vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
-                  exportTextureCoordinates(textureCoordinates, index, uvs);
+                  exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
                 }
               }
             } else if (uvs != null) {
               for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
                     index < n; index++, i += vertexSize) {
                 TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
-                exportTextureCoordinates(textureCoordinates, index, uvs);
+                exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
               }
             }
           } else {
@@ -851,14 +858,14 @@ public class PhotoRenderer {
                 for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
                   TexCoord2f textureCoordinates = generateTextureCoordinates(
                       vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
-                  exportTextureCoordinates(textureCoordinates, index, uvs);
+                  exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
                 }
               }
             } else if (uvs != null) {
               float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
               for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
                 TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
-                exportTextureCoordinates(textureCoordinates, index, uvs);
+                exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
               }
             }
           }
@@ -885,14 +892,14 @@ public class PhotoRenderer {
                 geometryArray.getCoordinate(index, vertex);
                 TexCoord2f textureCoordinates = generateTextureCoordinates(
                     vertex.x, vertex.y, vertex.z, planeS, planeT);
-                exportTextureCoordinates(textureCoordinates, index, uvs);
+                exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
               }
             }
           } else if (uvs != null) {
             for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
               TexCoord2f textureCoordinates = new TexCoord2f();
               geometryArray.getTextureCoordinate(0, index, textureCoordinates);
-              exportTextureCoordinates(textureCoordinates, index, uvs);
+              exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
             }
           }
         }
@@ -1191,12 +1198,21 @@ public class PhotoRenderer {
 
   /**
    * Stores <code>textureCoordinates</code> in <code>uvs</code>.  
+   * @param textureTransform TODO
    */
-  private void exportTextureCoordinates(TexCoord2f textureCoordinates, int index,
-                                        float [] uvs) {
+  private void exportTextureCoordinates(TexCoord2f textureCoordinates, 
+                                        Transform3D textureTransform,
+                                        int index, float [] uvs) {
     index *= 2;
-    uvs [index++] = textureCoordinates.x;
-    uvs [index] = textureCoordinates.y;
+    if (textureTransform.getBestType() != Transform3D.IDENTITY) {
+      Point3f transformedCoordinates = new Point3f(textureCoordinates.x, textureCoordinates.y, 0);
+      textureTransform.transform(transformedCoordinates);
+      uvs [index++] = transformedCoordinates.x;
+      uvs [index] = transformedCoordinates.y;
+    } else {
+      uvs [index++] = textureCoordinates.x;
+      uvs [index] = textureCoordinates.y;
+    }
   }
 
   /**

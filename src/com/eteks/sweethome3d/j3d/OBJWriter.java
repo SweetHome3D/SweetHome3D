@@ -73,6 +73,7 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -366,9 +367,14 @@ public class OBJWriter extends FilterWriter {
         this.out.write("g " + objectName + "\n");
         
         TexCoordGeneration texCoordGeneration = null;
+        Transform3D textureTransform = new Transform3D();
         if (this.mtlFileName != null) {
           if (appearance != null) {
             texCoordGeneration = appearance.getTexCoordGeneration();
+            TextureAttributes textureAttributes = appearance.getTextureAttributes();
+            if (textureAttributes != null) {
+              textureAttributes.getTextureTransform(textureTransform);
+            }
             ComparableAppearance comparableAppearance = new ComparableAppearance(appearance);
             String appearanceName = this.appearances.get(comparableAppearance);
             if (appearanceName == null) {
@@ -422,7 +428,7 @@ public class OBJWriter extends FilterWriter {
         // Write object geometries
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           writeNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
-              cullFace, backFaceNormalFlip);
+              textureTransform, cullFace, backFaceNormalFlip);
         }
       }
     }    
@@ -454,6 +460,7 @@ public class OBJWriter extends FilterWriter {
   private void writeNodeGeometry(Geometry geometry, 
                                  Transform3D parentTransformations, 
                                  TexCoordGeneration texCoordGeneration, 
+                                 Transform3D textureTransform, 
                                  int cullFace, 
                                  boolean backFaceNormalFlip) throws IOException {
     if (geometry instanceof GeometryArray) {
@@ -519,14 +526,14 @@ public class OBJWriter extends FilterWriter {
                     index < n; index++, i += vertexSize) {
                 TexCoord2f textureCoordinates = generateTextureCoordinates(
                     vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
-                writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
               }
             }
           } else if (textureCoordinatesDefined) {
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
                   index < n; index++, i += vertexSize) {
               TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
-              writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
             }
           }
           // Write normals
@@ -552,14 +559,14 @@ public class OBJWriter extends FilterWriter {
               for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
                 TexCoord2f textureCoordinates = generateTextureCoordinates(
                     vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
-                writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
               }
             }
           } else if (textureCoordinatesDefined) {
             float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
               TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
-              writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
             }
           }
           // Write normals
@@ -588,14 +595,14 @@ public class OBJWriter extends FilterWriter {
               geometryArray.getCoordinate(index, vertex);
               TexCoord2f textureCoordinates = generateTextureCoordinates(
                   vertex.x, vertex.y, vertex.z, planeS, planeT);
-              writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
             }
           }
         } else if (textureCoordinatesDefined) {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             TexCoord2f textureCoordinates = new TexCoord2f();
             geometryArray.getTextureCoordinate(0, index, textureCoordinates);
-            writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndexSubstitutes);
+            writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
           }
         }
         // Write normals
@@ -845,8 +852,13 @@ public class OBJWriter extends FilterWriter {
    * Writes <code>textureCoordinates</code> in a line vt at OBJ format, 
    * if the texture coordinates wasn't written yet.  
    */
-  private void writeTextureCoordinates(TexCoord2f textureCoordinates, int index,
-                                       int [] textureCoordinatesIndexSubstitutes) throws IOException {
+  private void writeTextureCoordinates(TexCoord2f textureCoordinates, Transform3D textureTransform,
+                                       int index, int [] textureCoordinatesIndexSubstitutes) throws IOException {
+    if (textureTransform.getBestType() != Transform3D.IDENTITY) {
+      Point3f transformedCoordinates = new Point3f(textureCoordinates.x, textureCoordinates.y, 0);
+      textureTransform.transform(transformedCoordinates);
+      textureCoordinates = new TexCoord2f(transformedCoordinates.x, transformedCoordinates.y);
+    }
     Integer textureCoordinatesIndex = this.textureCoordinatesIndices.get(textureCoordinates);
     if (textureCoordinatesIndex == null) {
       textureCoordinatesIndexSubstitutes [index] = this.textureCoordinatesIndices.size() + 1;

@@ -95,6 +95,7 @@ import javax.media.j3d.J3DGraphics2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Link;
 import javax.media.j3d.Node;
+import javax.media.j3d.PointArray;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
@@ -102,6 +103,7 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransformInterpolator;
 import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
+import javax.media.j3d.VirtualUniverse;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
@@ -168,7 +170,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_FAST_UP, ROTATE_CAMERA_PITCH_DOWN, ROTATE_CAMERA_PITCH_FAST_DOWN, 
       ELEVATE_CAMERA_UP, ELEVATE_CAMERA_FAST_UP, ELEVATE_CAMERA_DOWN, ELEVATE_CAMERA_FAST_DOWN}
-  
+
+  private static final boolean JAVA3D_1_5 = VirtualUniverse.getProperties().get("j3d.version") != null 
+      && ((String)VirtualUniverse.getProperties().get("j3d.version")).startsWith("1.5");
+
   private final Home                               home;
   private final boolean                            displayShadowOnFloor;
   private final Object3DFactory                    object3dFactory;
@@ -403,6 +408,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     } else {
       this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration,
           new Component3DManager.RenderingObserver() {        
+              private Shape3D dummyShape;
+         
               public void canvas3DSwapped(Canvas3D canvas3D) {
               }
               
@@ -415,6 +422,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
                 // Render navigation panel upon canvas 3D if it exists
                 if (navigationPanelImage != null) {
+                  if (JAVA3D_1_5) {
+                    // Render trivial transparent shape to reset the possible transformation set on the last rendered texture 
+                    // See https://jogamp.org/bugzilla/show_bug.cgi?id=1006#c1
+                    if (this.dummyShape == null) {
+                      PointArray dummyGeometry = new PointArray(1, PointArray.COORDINATES);
+                      dummyGeometry.setCoordinates(0, new float [] {0, 0, 0});
+                      Appearance appearance = new Appearance();
+                      appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 1));
+                      this.dummyShape = new Shape3D(dummyGeometry, appearance);
+                    }
+                    canvas3D.getGraphicsContext3D().draw(this.dummyShape);
+                  }
                   J3DGraphics2D g2D = canvas3D.getGraphics2D();
                   g2D.drawImage(navigationPanelImage, null, 0, 0);
                   g2D.flush(true);
