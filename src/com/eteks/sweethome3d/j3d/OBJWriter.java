@@ -93,8 +93,6 @@ import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
-import com.eteks.sweethome3d.tools.OperatingSystem;
-
 /**
  * An output stream that writes Java 3D nodes at OBJ + MTL format.
  * <p>Once you wrote nodes, call <code>close</code> method to create the MTL file
@@ -470,7 +468,7 @@ public class OBJWriter extends FilterWriter {
    */
   private InputStream openStream(URL url) throws IOException {
     URLConnection connection = url.openConnection();
-    if (OperatingSystem.isWindows() 
+    if (System.getProperty("os.name").startsWith("Windows")
         && (connection instanceof JarURLConnection)) {
       JarURLConnection urlConnection = (JarURLConnection)connection;
       URL jarFileUrl = urlConnection.getJarFileURL();
