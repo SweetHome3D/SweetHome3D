@@ -682,7 +682,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
             case PathIterator.SEG_CLOSE :
               float [][] pathPoints = 
                   currentPathPoints.toArray(new float [currentPathPoints.size()][]);
-              area += Math.abs(getSignedArea(pathPoints));
+              area += getSignedArea(pathPoints);
               currentPathPoints.clear();
               break;
           }

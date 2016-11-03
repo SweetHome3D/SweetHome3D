@@ -325,6 +325,40 @@ public class RoomTest extends ComponentTestFixture {
       assertEquals("Not same ordinate", points [i][1], roomPoints [i][1]);
     }
   }
+  
+  /**
+   * Tests the computation of the area of various rooms.
+   */
+  public void testRoomArea() {
+    // Flat empty surface
+    Room room0 = new Room(new float [][] {{0, 0}, {1, 0}, {0.5f, 0}});
+    assertTrue("Should be singular", room0.isSingular());
+    assertEquals("Wrong area", 0.f, room0.getArea());
+    // Square
+    Room room1 = new Room(new float [][] {{0, 0}, {1, 0}, {1, 1}, {0, 1}});
+    assertTrue("Should be singular", room1.isSingular());
+    assertEquals("Wrong area", 1.f, room1.getArea());
+    // Same points in reverse order
+    Room room2 = new Room(new float [][] {{0, 0}, {0, 1}, {1, 1}, {1, 0}});
+    assertTrue("Should be singular", room2.isSingular());
+    assertEquals("Wrong area", 1.f, room2.getArea());
+    // Room made of two squares
+    Room room3 = new Room(new float [][] {{0, 0}, {1, 0}, {1, 2}, {2, 2}, {2, 1}, {0, 1}});
+    assertFalse("Shouldn't be singular", room3.isSingular());
+    assertEquals("Wrong area", 2.f, room3.getArea());
+    // Same points in reverse order
+    Room room4 = new Room(new float [][] {{0, 0}, {0, 1}, {2, 1}, {2, 2}, {1, 2}, {1, 0}});
+    assertFalse("Shouldn't be singular", room4.isSingular());
+    assertEquals("Wrong area", 2.f, room4.getArea());
+    // Room with a hole
+    Room room5 = new Room(new float [][] {{0, 0}, {3, 0}, {3, 3}, {0, 3}, {0, 1}, {1, 1}, {1, 2}, {2, 2}, {2, 1}, {0, 1}});
+    assertFalse("Shouldn't be singular", room5.isSingular());
+    assertEquals("Wrong area", 8.f, room5.getArea());
+    // Room with a hole and a part that overlap
+    Room room6 = new Room(new float [][] {{0, 0}, {0, 3}, {3, 3}, {3, 0}, {0.5f, 0}, {0.5f, 1}, {2, 1}, {2, 2}, {1, 2}, {1, 0}});
+    assertFalse("Shouldn't be singular", room6.isSingular());
+    assertEquals("Wrong area", 8.f, room6.getArea());
+  }
 
   public static void main(String [] args) {
     JFrame frame = new RoomTestFrame();
