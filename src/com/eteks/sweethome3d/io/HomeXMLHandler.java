@@ -641,34 +641,36 @@ public class HomeXMLHandler extends DefaultHandler {
       this.materials.add(createMaterial(attributesMap));
     } else if ("point".equals(name)) {
       this.points.add(new float [] {
-          Float.parseFloat(attributesMap.get("x")), 
-          Float.parseFloat(attributesMap.get("y"))});
+          parseFloat(attributesMap, "x"), 
+          parseFloat(attributesMap, "y")});
     } else if ("sash".equals(name)) {
       this.sashes.add(new Sash(
-          Float.parseFloat(attributesMap.get("xAxis")), 
-          Float.parseFloat(attributesMap.get("yAxis")),
-          Float.parseFloat(attributesMap.get("width")),
-          Float.parseFloat(attributesMap.get("startAngle")),
-          Float.parseFloat(attributesMap.get("endAngle"))));
+          parseFloat(attributesMap, "xAxis"), 
+          parseFloat(attributesMap, "yAxis"),
+          parseFloat(attributesMap, "width"),
+          parseFloat(attributesMap, "startAngle"),
+          parseFloat(attributesMap, "endAngle")));
     } else if ("lightSource".equals(name)) {
       this.lightSources.add(new LightSource(
-          Float.parseFloat(attributesMap.get("x")), 
-          Float.parseFloat(attributesMap.get("y")),
-          Float.parseFloat(attributesMap.get("z")),
-          getColor(attributesMap.get("color")),
-          getFloat(attributesMap.get("diameter"))));
+          parseFloat(attributesMap, "x"), 
+          parseFloat(attributesMap, "y"),
+          parseFloat(attributesMap, "z"),
+          parseOptionalColor(attributesMap, "color"),
+          parseOptionalFloat(attributesMap, "diameter")));
     } else if ("backgroundImage".equals(name)) {
-      String xOrigin = attributesMap.get("xOrigin");
-      String yOrigin = attributesMap.get("yOrigin");
       BackgroundImage backgroundImage = new BackgroundImage(
-          getContent(attributesMap.get("image")), 
-          Float.parseFloat(attributesMap.get("scaleDistance")), 
-          Float.parseFloat(attributesMap.get("scaleDistanceXStart")), 
-          Float.parseFloat(attributesMap.get("scaleDistanceYStart")), 
-          Float.parseFloat(attributesMap.get("scaleDistanceXEnd")), 
-          Float.parseFloat(attributesMap.get("scaleDistanceYEnd")), 
-          xOrigin != null ? Float.parseFloat(xOrigin) : 0, 
-          yOrigin != null ? Float.parseFloat(yOrigin) : 0, 
+          parseContent(attributesMap.get("image")), 
+          parseFloat(attributesMap, "scaleDistance"), 
+          parseFloat(attributesMap, "scaleDistanceXStart"), 
+          parseFloat(attributesMap, "scaleDistanceYStart"), 
+          parseFloat(attributesMap, "scaleDistanceXEnd"), 
+          parseFloat(attributesMap, "scaleDistanceYEnd"), 
+          attributesMap.get("xOrigin") != null 
+              ? parseFloat(attributesMap, "xOrigin") 
+              : 0, 
+          attributesMap.get("yOrigin") != null 
+              ? parseFloat(attributesMap, "yOrigin") 
+              : 0, 
           !"false".equals(attributesMap.get("visible")));
       if (this.homeElementName != null && this.homeElementName.equals(parent)) {
         this.homeBackgroundImage = backgroundImage;
@@ -716,10 +718,9 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Home} instance initialized from the given <code>attributes</code>.
    */
-  private Home createHome(Map<String, String> attributes) {
-    String wallHeight = attributes.get("wallHeight");
-    if (wallHeight != null) {
-      return new Home(Float.parseFloat(wallHeight));
+  private Home createHome(Map<String, String> attributes) throws SAXException {
+    if (attributes.get("wallHeight") != null) {
+      return new Home(parseFloat(attributes, "wallHeight"));
     } else {
       return new Home();
     }
@@ -739,7 +740,11 @@ public class HomeXMLHandler extends DefaultHandler {
     this.home.setBackgroundImage(this.homeBackgroundImage);
     String version = attributes.get("version");
     if (version != null) {
-      home.setVersion(Integer.parseInt(version));
+      try {
+        home.setVersion(Integer.parseInt(version));
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for integer attribute version", ex);
+      }
     }
     home.setName(attributes.get("name"));
     String selectedLevelId = attributes.get("selectedLevel");
@@ -766,27 +771,27 @@ public class HomeXMLHandler extends DefaultHandler {
    * If needed, this method should be called from {@link #endElement}.
    */
   private void setEnvironmentAttributes(HomeEnvironment environment, Map<String, String> attributes) throws SAXException {
-    Integer groundColor = getColor(attributes.get("groundColor"));
+    Integer groundColor = parseOptionalColor(attributes, "groundColor");
     if (groundColor != null) {
       environment.setGroundColor(groundColor);
     }
     environment.setGroundTexture(this.textures.get("groundTexture"));
-    Integer skyColor = getColor(attributes.get("skyColor"));
+    Integer skyColor = parseOptionalColor(attributes, "skyColor");
     if (skyColor != null) {
       environment.setSkyColor(skyColor);
     }
     environment.setSkyTexture(this.textures.get("skyTexture"));
-    Integer lightColor = getColor(attributes.get("lightColor"));
+    Integer lightColor = parseOptionalColor(attributes, "lightColor");
     if (lightColor != null) {
       environment.setLightColor(lightColor);
     }
-    Float wallsAlpha = getFloat(attributes.get("wallsAlpha"));
+    Float wallsAlpha = parseOptionalFloat(attributes, "wallsAlpha");
     if (wallsAlpha != null) {
       environment.setWallsAlpha(wallsAlpha);
     }
     environment.setAllLevelsVisible("true".equals(attributes.get("allLevelsVisible")));
     environment.setObserverCameraElevationAdjusted(!"false".equals(attributes.get("observerCameraElevationAdjusted")));
-    Integer ceillingLightColor = getColor(attributes.get("ceillingLightColor"));
+    Integer ceillingLightColor = parseOptionalColor(attributes, "ceillingLightColor");
     if (ceillingLightColor != null) {
       environment.setCeillingLightColor(ceillingLightColor);
     }
@@ -798,15 +803,15 @@ public class HomeXMLHandler extends DefaultHandler {
         // Ignore malformed enum constant 
       }
     }
-    Float subpartSizeUnderLight = getFloat(attributes.get("subpartSizeUnderLight"));
+    Float subpartSizeUnderLight = parseOptionalFloat(attributes, "subpartSizeUnderLight");
     if (subpartSizeUnderLight != null) {
       environment.setSubpartSizeUnderLight(subpartSizeUnderLight);
     }
-    Integer photoWidth = getInteger(attributes.get("photoWidth"));
+    Integer photoWidth = parseOptionalInteger(attributes, "photoWidth");
     if (photoWidth != null) {
       environment.setPhotoWidth(photoWidth);
     }
-    Integer photoHeight = getInteger(attributes.get("photoHeight"));
+    Integer photoHeight = parseOptionalInteger(attributes, "photoHeight");
     if (photoHeight != null) {
       environment.setPhotoHeight(photoHeight);
     }
@@ -818,11 +823,11 @@ public class HomeXMLHandler extends DefaultHandler {
         // Ignore malformed enum constant 
       }
     }
-    Integer photoQuality = getInteger(attributes.get("photoQuality"));
+    Integer photoQuality = parseOptionalInteger(attributes, "photoQuality");
     if (photoQuality != null) {
       environment.setPhotoQuality(photoQuality);
     }
-    Integer videoWidth = getInteger(attributes.get("videoWidth"));
+    Integer videoWidth = parseOptionalInteger(attributes, "videoWidth");
     if (videoWidth != null) {
       environment.setVideoWidth(videoWidth);
     }
@@ -834,11 +839,11 @@ public class HomeXMLHandler extends DefaultHandler {
         // Ignore malformed enum constant 
       }
     }
-    Integer videoQuality = getInteger(attributes.get("videoQuality"));
+    Integer videoQuality = parseOptionalInteger(attributes, "videoQuality");
     if (videoQuality != null) {
       environment.setVideoQuality(videoQuality);
     }
-    Integer videoFrameRate = getInteger(attributes.get("videoFrameRate"));
+    Integer videoFrameRate = parseOptionalInteger(attributes, "videoFrameRate");
     if (videoFrameRate != null) {
       environment.setVideoFrameRate(videoFrameRate);
     }
@@ -847,18 +852,18 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Print} instance initialized from the given <code>attributes</code>.
    */
-  protected HomePrint createPrint(Map<String, String> attributes) {
+  protected HomePrint createPrint(Map<String, String> attributes) throws SAXException {
     return new HomePrint(HomePrint.PaperOrientation.valueOf(attributes.get("paperOrientation")), 
-        Float.parseFloat(attributes.get("paperWidth")), 
-        Float.parseFloat(attributes.get("paperHeight")), 
-        Float.parseFloat(attributes.get("paperTopMargin")), 
-        Float.parseFloat(attributes.get("paperLeftMargin")), 
-        Float.parseFloat(attributes.get("paperBottomMargin")), 
-        Float.parseFloat(attributes.get("paperRightMargin")), 
+        parseFloat(attributes, "paperWidth"), 
+        parseFloat(attributes, "paperHeight"), 
+        parseFloat(attributes, "paperTopMargin"), 
+        parseFloat(attributes, "paperLeftMargin"), 
+        parseFloat(attributes, "paperBottomMargin"), 
+        parseFloat(attributes, "paperRightMargin"), 
         !"false".equals(attributes.get("furniturePrinted")),
         !"false".equals(attributes.get("planPrinted")),
         !"false".equals(attributes.get("view3DPrinted")),
-        getFloat(attributes.get("planScale")), 
+        parseOptionalFloat(attributes, "planScale"), 
         attributes.get("headerFormat"), 
         attributes.get("footerFormat"));
   }
@@ -869,18 +874,18 @@ public class HomeXMLHandler extends DefaultHandler {
    */
   protected void setCompassAttributes(Compass compass, Map<String, String> attributes) throws SAXException {
     setProperties(compass);
-    compass.setX(getFloat(attributes.get("x")));
-    compass.setY(getFloat(attributes.get("y")));
-    compass.setDiameter(getFloat(attributes.get("diameter")));
-    Float northDirection = getFloat(attributes.get("northDirection"));
+    compass.setX(parseOptionalFloat(attributes, "x"));
+    compass.setY(parseOptionalFloat(attributes, "y"));
+    compass.setDiameter(parseOptionalFloat(attributes, "diameter"));
+    Float northDirection = parseOptionalFloat(attributes, "northDirection");
     if (northDirection != null) {
       compass.setNorthDirection(northDirection);
     }
-    Float longitude = getFloat(attributes.get("longitude"));
+    Float longitude = parseOptionalFloat(attributes, "longitude");
     if (longitude != null) {
       compass.setLongitude(longitude);
     }
-    Float latitude = getFloat(attributes.get("latitude"));
+    Float latitude = parseOptionalFloat(attributes, "latitude");
     if (latitude != null) {
       compass.setLatitude(latitude);
     }
@@ -894,21 +899,21 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Camera} instance initialized from the given <code>attributes</code>.
    */
-  private Camera createCamera(String elementName, Map<String, String> attributes) {
+  private Camera createCamera(String elementName, Map<String, String> attributes) throws SAXException {
     if ("observerCamera".equals(elementName)) {
-      return new ObserverCamera(Float.parseFloat(attributes.get("x")),
-          Float.parseFloat(attributes.get("y")),
-          Float.parseFloat(attributes.get("z")),
-          Float.parseFloat(attributes.get("yaw")),
-          Float.parseFloat(attributes.get("pitch")),
-          Float.parseFloat(attributes.get("fieldOfView")));
+      return new ObserverCamera(parseFloat(attributes, "x"),
+          parseFloat(attributes, "y"),
+          parseFloat(attributes, "z"),
+          parseFloat(attributes, "yaw"),
+          parseFloat(attributes, "pitch"),
+          parseFloat(attributes, "fieldOfView"));
     } else {
-      return new Camera(Float.parseFloat(attributes.get("x")),
-          Float.parseFloat(attributes.get("y")),
-          Float.parseFloat(attributes.get("z")),
-          Float.parseFloat(attributes.get("yaw")),
-          Float.parseFloat(attributes.get("pitch")),
-          Float.parseFloat(attributes.get("fieldOfView")));
+      return new Camera(parseFloat(attributes, "x"),
+          parseFloat(attributes, "y"),
+          parseFloat(attributes, "z"),
+          parseFloat(attributes, "yaw"),
+          parseFloat(attributes, "pitch"),
+          parseFloat(attributes, "fieldOfView"));
     }
   }
 
@@ -931,7 +936,11 @@ public class HomeXMLHandler extends DefaultHandler {
     }
     String time = attributes.get("time");
     if (time != null) {
-      camera.setTime(Long.parseLong(time));
+      try {
+        camera.setTime(Long.parseLong(time));
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for long attribute time", ex);
+      }
     }
     
     camera.setName(attributes.get("name"));
@@ -940,11 +949,11 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Level} instance initialized from the given <code>attributes</code>.
    */
-  private Level createLevel(Map<String, String> attributes) {
+  private Level createLevel(Map<String, String> attributes) throws SAXException {
     return new Level(attributes.get("name"),
-        Float.parseFloat(attributes.get("elevation")),
-        Float.parseFloat(attributes.get("floorThickness")),
-        Float.parseFloat(attributes.get("height")));
+        parseFloat(attributes, "elevation"),
+        parseFloat(attributes, "floorThickness"),
+        parseFloat(attributes, "height"));
   }
 
   /**
@@ -954,7 +963,7 @@ public class HomeXMLHandler extends DefaultHandler {
   protected void setLevelAttributes(Level level, Map<String, String> attributes) throws SAXException {
     setProperties(level);
     level.setBackgroundImage(this.backgroundImage);
-    Integer elevationIndex = getInteger(attributes.get("elevationIndex"));
+    Integer elevationIndex = parseOptionalInteger(attributes, "elevationIndex");
     if (elevationIndex != null) {
       level.setElevationIndex(elevationIndex);
     }
@@ -970,24 +979,31 @@ public class HomeXMLHandler extends DefaultHandler {
         ? attributes.get("tags").split(" ")
         : null;
     float elevation = attributes.get("elevation") != null
-        ? Float.parseFloat(attributes.get("elevation"))
+        ? parseFloat(attributes, "elevation")
         : 0;
     float dropOnTopElevation = attributes.get("dropOnTopElevation") != null
-        ? Float.parseFloat(attributes.get("dropOnTopElevation"))
+        ? parseFloat(attributes, "dropOnTopElevation")
         : 1;
     float [][] modelRotation = null;
     if (attributes.get("modelRotation") != null) {
       String [] values = attributes.get("modelRotation").split(" ", 9);
-      modelRotation = new float [][] {
-         {Float.parseFloat(values [0]), 
-          Float.parseFloat(values [1]), 
-          Float.parseFloat(values [2])}, 
-         {Float.parseFloat(values [3]), 
-          Float.parseFloat(values [4]), 
-          Float.parseFloat(values [5])}, 
-         {Float.parseFloat(values [6]), 
-          Float.parseFloat(values [7]), 
-          Float.parseFloat(values [8])}};
+      if (values.length < 9) {
+        throw new SAXException("Missing values for attribute modelRotation");
+      }
+      try {
+        modelRotation = new float [][] {
+            {Float.parseFloat(values [0]), 
+             Float.parseFloat(values [1]), 
+             Float.parseFloat(values [2])}, 
+            {Float.parseFloat(values [3]), 
+             Float.parseFloat(values [4]), 
+             Float.parseFloat(values [5])}, 
+            {Float.parseFloat(values [6]), 
+             Float.parseFloat(values [7]), 
+             Float.parseFloat(values [8])}};
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for attribute modelRotation", ex);
+      }
     }
     BigDecimal price = attributes.get("price") != null
         ? new BigDecimal(attributes.get("price"))
@@ -997,10 +1013,10 @@ public class HomeXMLHandler extends DefaultHandler {
         : null;
     if ("doorOrWindow".equals(elementName)) {
       float wallThickness = attributes.get("wallThickness") != null
-          ? Float.parseFloat(attributes.get("wallThickness"))
+          ? parseFloat(attributes, "wallThickness")
           : 1;
       float wallDistance = attributes.get("wallDistance") != null
-          ? Float.parseFloat(attributes.get("wallDistance"))
+          ? parseFloat(attributes, "wallDistance")
           : 0;
       return new HomeDoorOrWindow(new CatalogDoorOrWindow(
           attributes.get("catalogId"), 
@@ -1008,14 +1024,14 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
-          getLong(attributes.get("creationDate")), 
-          getFloat(attributes.get("grade")), 
-          getContent(attributes.get("icon")),  
-          getContent(attributes.get("planIcon")), 
-          getContent(attributes.get("model")), 
-          Float.parseFloat(attributes.get("width")), 
-          Float.parseFloat(attributes.get("depth")), 
-          Float.parseFloat(attributes.get("height")), 
+          parseOptionalLong(attributes, "creationDate"), 
+          parseOptionalFloat(attributes, "grade"), 
+          parseContent(attributes.get("icon")),  
+          parseContent(attributes.get("planIcon")), 
+          parseContent(attributes.get("model")), 
+          parseFloat(attributes, "width"), 
+          parseFloat(attributes, "depth"), 
+          parseFloat(attributes, "height"), 
           elevation, 
           dropOnTopElevation, 
           !"false".equals(attributes.get("movable")), 
@@ -1039,14 +1055,14 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
-          getLong(attributes.get("creationDate")), 
-          getFloat(attributes.get("grade")), 
-          getContent(attributes.get("icon")),  
-          getContent(attributes.get("planIcon")), 
-          getContent(attributes.get("model")), 
-          Float.parseFloat(attributes.get("width")), 
-          Float.parseFloat(attributes.get("depth")), 
-          Float.parseFloat(attributes.get("height")), 
+          parseOptionalLong(attributes, "creationDate"), 
+          parseOptionalFloat(attributes, "grade"), 
+          parseContent(attributes.get("icon")),  
+          parseContent(attributes.get("planIcon")), 
+          parseContent(attributes.get("model")), 
+          parseFloat(attributes, "width"), 
+          parseFloat(attributes, "depth"), 
+          parseFloat(attributes, "height"), 
           elevation, 
           dropOnTopElevation, 
           !"false".equals(attributes.get("movable")), 
@@ -1068,14 +1084,14 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
-          getLong(attributes.get("creationDate")), 
-          getFloat(attributes.get("grade")), 
-          getContent(attributes.get("icon")),  
-          getContent(attributes.get("planIcon")), 
-          getContent(attributes.get("model")), 
-          Float.parseFloat(attributes.get("width")), 
-          Float.parseFloat(attributes.get("depth")), 
-          Float.parseFloat(attributes.get("height")), 
+          parseOptionalLong(attributes, "creationDate"), 
+          parseOptionalFloat(attributes, "grade"), 
+          parseContent(attributes.get("icon")),  
+          parseContent(attributes.get("planIcon")), 
+          parseContent(attributes.get("model")), 
+          parseFloat(attributes, "width"), 
+          parseFloat(attributes, "depth"), 
+          parseFloat(attributes, "height"), 
           elevation, 
           dropOnTopElevation, 
           !"false".equals(attributes.get("movable")), 
@@ -1096,9 +1112,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link HomeFurnitureGroup} instance initialized from the given <code>attributes</code>.
    */
   private HomeFurnitureGroup createFurnitureGroup(Map<String, String> attributes, 
-                                                  List<HomePieceOfFurniture> furniture) {
+                                                  List<HomePieceOfFurniture> furniture) throws SAXException {
     return new HomeFurnitureGroup(furniture, 
-        attributes.get("angle") != null ? Float.parseFloat(attributes.get("angle")) : 0, 
+        attributes.get("angle") != null ? parseFloat(attributes, "angle") : 0, 
         "true".equals(attributes.get("modelMirrored")), 
         attributes.get("name"));
   }
@@ -1113,35 +1129,35 @@ public class HomeXMLHandler extends DefaultHandler {
     if (this.materials.size() > 0) {
       piece.setModelMaterials(this.materials.toArray(new HomeMaterial [this.materials.size()]));
     }
-    Float angle = getFloat(attributes.get("angle"));
+    Float angle = parseOptionalFloat(attributes, "angle");
     if (angle != null) {
       piece.setAngle(angle);
     }
     piece.setVisible(!"false".equals(attributes.get("visible")));
     piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
     piece.setNameVisible("true".equals(attributes.get("nameVisible")));
-    Float nameAngle = getFloat(attributes.get("nameAngle"));
+    Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
       piece.setNameAngle(nameAngle);
     }
-    Float nameXOffset = getFloat(attributes.get("nameXOffset"));
+    Float nameXOffset = parseOptionalFloat(attributes, "nameXOffset");
     if (nameXOffset != null) {
       piece.setNameXOffset(nameXOffset);
     }
-    Float nameYOffset = getFloat(attributes.get("nameYOffset"));
+    Float nameYOffset = parseOptionalFloat(attributes, "nameYOffset");
     if (nameYOffset != null) {
       piece.setNameYOffset(nameYOffset);
     }
-    Float x = getFloat(attributes.get("x"));
+    Float x = parseOptionalFloat(attributes, "x");
     if (x != null) {
       piece.setX(x);
     }
-    Float y = getFloat(attributes.get("y"));
+    Float y = parseOptionalFloat(attributes, "y");
     if (y != null) {
       piece.setY(y);
     }
     if (piece.isTexturable()) {
-      Integer color = getColor(attributes.get("color"));
+      Integer color = parseOptionalColor(attributes, "color");
       if (color != null) {
         piece.setColor(color);
       }
@@ -1149,7 +1165,7 @@ public class HomeXMLHandler extends DefaultHandler {
       if (texture != null) {
         piece.setTexture(texture);
       }
-      Float shininess = getFloat(attributes.get("shininess"));
+      Float shininess = parseOptionalFloat(attributes, "shininess");
       if (shininess != null) {
         piece.setShininess(shininess);
       }
@@ -1157,7 +1173,7 @@ public class HomeXMLHandler extends DefaultHandler {
     
     if (piece instanceof HomeLight
         && attributes.get("power") != null) {
-      ((HomeLight)piece).setPower(Float.parseFloat(attributes.get("power")));
+      ((HomeLight)piece).setPower(parseFloat(attributes, "power"));
     } else if (piece instanceof HomeDoorOrWindow) {
       ((HomeDoorOrWindow)piece).setBoundToWall(!"false".equals(attributes.get("boundToWall")));
     }
@@ -1167,12 +1183,12 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link Wall} instance initialized from the given <code>attributes</code>.
    */
   @SuppressWarnings("deprecation")
-  private Wall createWall(Map<String, String> attributes) {
-    return new Wall(Float.parseFloat(attributes.get("xStart")),
-        Float.parseFloat(attributes.get("yStart")),
-        Float.parseFloat(attributes.get("xEnd")),
-        Float.parseFloat(attributes.get("yEnd")),
-        Float.parseFloat(attributes.get("thickness")));
+  private Wall createWall(Map<String, String> attributes) throws SAXException {
+    return new Wall(parseFloat(attributes, "xStart"),
+        parseFloat(attributes, "yStart"),
+        parseFloat(attributes, "xEnd"),
+        parseFloat(attributes, "yEnd"),
+        parseFloat(attributes, "thickness"));
   }
 
   /**
@@ -1183,22 +1199,22 @@ public class HomeXMLHandler extends DefaultHandler {
     setProperties(wall);
     wall.setLeftSideBaseboard(this.leftSideBaseboard);
     wall.setRightSideBaseboard(this.rightSideBaseboard);
-    Float height = getFloat(attributes.get("height"));
+    Float height = parseOptionalFloat(attributes, "height");
     if (height != null) {
       wall.setHeight(height);
     }
-    wall.setHeightAtEnd(getFloat(attributes.get("heightAtEnd")));
-    wall.setArcExtent(getFloat(attributes.get("arcExtent")));
-    wall.setTopColor(getColor(attributes.get("topColor")));
-    wall.setLeftSideColor(getColor(attributes.get("leftSideColor")));
+    wall.setHeightAtEnd(parseOptionalFloat(attributes, "heightAtEnd"));
+    wall.setArcExtent(parseOptionalFloat(attributes, "arcExtent"));
+    wall.setTopColor(parseOptionalColor(attributes, "topColor"));
+    wall.setLeftSideColor(parseOptionalColor(attributes, "leftSideColor"));
     wall.setLeftSideTexture(this.textures.get("leftSideTexture"));
-    Float leftSideShininess = getFloat(attributes.get("leftSideShininess"));
+    Float leftSideShininess = parseOptionalFloat(attributes, "leftSideShininess");
     if (leftSideShininess != null) {
       wall.setLeftSideShininess(leftSideShininess);
     }
-    wall.setRightSideColor(getColor(attributes.get("rightSideColor")));
+    wall.setRightSideColor(parseOptionalColor(attributes, "rightSideColor"));
     wall.setRightSideTexture(this.textures.get("rightSideTexture"));
-    Float rightSideShininess = getFloat(attributes.get("rightSideShininess"));
+    Float rightSideShininess = parseOptionalFloat(attributes, "rightSideShininess");
     if (rightSideShininess != null) {
       wall.setRightSideShininess(rightSideShininess);
     }
@@ -1228,42 +1244,42 @@ public class HomeXMLHandler extends DefaultHandler {
     room.setNameStyle(this.textStyles.get("nameStyle"));
     room.setAreaStyle(this.textStyles.get("areaStyle"));
     room.setName(attributes.get("name"));
-    Float nameAngle = getFloat(attributes.get("nameAngle"));
+    Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
       room.setNameAngle(nameAngle);
     }
-    Float nameXOffset = getFloat(attributes.get("nameXOffset"));
+    Float nameXOffset = parseOptionalFloat(attributes, "nameXOffset");
     if (nameXOffset != null) {
       room.setNameXOffset(nameXOffset);
     }
-    Float nameYOffset = getFloat(attributes.get("nameYOffset"));
+    Float nameYOffset = parseOptionalFloat(attributes, "nameYOffset");
     if (nameYOffset != null) {
       room.setNameYOffset(nameYOffset);
     }
     room.setAreaVisible("true".equals(attributes.get("areaVisible")));
-    Float areaAngle = getFloat(attributes.get("areaAngle"));
+    Float areaAngle = parseOptionalFloat(attributes, "areaAngle");
     if (areaAngle != null) {
       room.setAreaAngle(areaAngle);
     }
-    Float areaXOffset = getFloat(attributes.get("areaXOffset"));
+    Float areaXOffset = parseOptionalFloat(attributes, "areaXOffset");
     if (areaXOffset != null) {
       room.setAreaXOffset(areaXOffset);
     }
-    Float areaYOffset = getFloat(attributes.get("areaYOffset"));
+    Float areaYOffset = parseOptionalFloat(attributes, "areaYOffset");
     if (areaYOffset != null) {
       room.setAreaYOffset(areaYOffset);
     }
     room.setFloorVisible(!"false".equals(attributes.get("floorVisible")));
-    room.setFloorColor(getColor(attributes.get("floorColor")));
+    room.setFloorColor(parseOptionalColor(attributes, "floorColor"));
     room.setFloorTexture(this.textures.get("floorTexture"));
-    Float floorShininess = getFloat(attributes.get("floorShininess"));
+    Float floorShininess = parseOptionalFloat(attributes, "floorShininess");
     if (floorShininess != null) {
       room.setFloorShininess(floorShininess);
     }
     room.setCeilingVisible(!"false".equals(attributes.get("ceilingVisible")));
-    room.setCeilingColor(getColor(attributes.get("ceilingColor")));
+    room.setCeilingColor(parseOptionalColor(attributes, "ceilingColor"));
     room.setCeilingTexture(this.textures.get("ceilingTexture"));
-    Float ceilingShininess = getFloat(attributes.get("ceilingShininess"));
+    Float ceilingShininess = parseOptionalFloat(attributes, "ceilingShininess");
     if (ceilingShininess != null) {
       room.setCeilingShininess(ceilingShininess);
     }
@@ -1282,7 +1298,7 @@ public class HomeXMLHandler extends DefaultHandler {
    */
   protected void setPolylineAttributes(Polyline polyline, Map<String, String> attributes) throws SAXException {
     setProperties(polyline);
-    Float thickness = getFloat(attributes.get("thickness"));
+    Float thickness = parseOptionalFloat(attributes, "thickness");
     if (thickness != null) {
       polyline.setThickness(thickness);
     }
@@ -1326,7 +1342,7 @@ public class HomeXMLHandler extends DefaultHandler {
         // Ignore malformed enum constant 
       }
     }
-    Integer color = getColor(attributes.get("color"));
+    Integer color = parseOptionalColor(attributes, "color");
     if (color != null) {
       polyline.setColor(color);
     }
@@ -1336,12 +1352,12 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link DimensionLine} instance initialized from the given <code>attributes</code>.
    */
-  private DimensionLine createDimensionLine(Map<String, String> attributes) {
-    return new DimensionLine(Float.parseFloat(attributes.get("xStart")),
-        Float.parseFloat(attributes.get("yStart")),
-        Float.parseFloat(attributes.get("xEnd")),
-        Float.parseFloat(attributes.get("yEnd")),
-        Float.parseFloat(attributes.get("offset")));
+  private DimensionLine createDimensionLine(Map<String, String> attributes) throws SAXException {
+    return new DimensionLine(parseFloat(attributes, "xStart"),
+        parseFloat(attributes, "yStart"),
+        parseFloat(attributes, "xEnd"),
+        parseFloat(attributes, "yEnd"),
+        parseFloat(attributes, "offset"));
   }
 
   /**
@@ -1357,10 +1373,10 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Label} instance initialized from the given <code>attributes</code>.
    */
-  private Label createLabel(Map<String, String> attributes, String text) {
+  private Label createLabel(Map<String, String> attributes, String text) throws SAXException {
     return new Label(text, 
-        Float.parseFloat(attributes.get("x")),
-        Float.parseFloat(attributes.get("y")));
+        parseFloat(attributes, "x"),
+        parseFloat(attributes, "y"));
   }
 
   /**
@@ -1370,38 +1386,38 @@ public class HomeXMLHandler extends DefaultHandler {
   protected void setLabelAttributes(Label label, Map<String, String> attributes) throws SAXException {
     setProperties(label);
     label.setStyle(this.textStyles.get(null));
-    Float angle = getFloat(attributes.get("angle"));
+    Float angle = parseOptionalFloat(attributes, "angle");
     if (angle != null) {
       label.setAngle(angle);
     }
-    Float elevation = getFloat(attributes.get("elevation"));
+    Float elevation = parseOptionalFloat(attributes, "elevation");
     if (elevation != null) {
       label.setElevation(elevation);
     }
-    Float pitch = getFloat(attributes.get("pitch"));
+    Float pitch = parseOptionalFloat(attributes, "pitch");
     if (pitch != null) {
       label.setPitch(pitch);
     }
-    label.setColor(getColor(attributes.get("color")));
-    label.setOutlineColor(getColor(attributes.get("outlineColor")));
+    label.setColor(parseOptionalColor(attributes, "color"));
+    label.setOutlineColor(parseOptionalColor(attributes, "outlineColor"));
   }
 
   /**
    * Returns a new {@link Baseboard} instance initialized from the given <code>attributes</code>.
    */
-  private Baseboard createBaseboard(Map<String, String> attributes) {
-    return Baseboard.getInstance(Float.parseFloat(attributes.get("thickness")), 
-        Float.parseFloat(attributes.get("height")), 
-        getColor(attributes.get("color")),
+  private Baseboard createBaseboard(Map<String, String> attributes) throws SAXException {
+    return Baseboard.getInstance(parseFloat(attributes, "thickness"), 
+        parseFloat(attributes, "height"), 
+        parseOptionalColor(attributes, "color"),
         this.textures.get(null));
   }
   
   /**
    * Returns a new {@link TextStyle} instance initialized from the given <code>attributes</code>.
    */
-  private TextStyle createTextStyle(Map<String, String> attributes) {
+  private TextStyle createTextStyle(Map<String, String> attributes) throws SAXException {
     return new TextStyle(attributes.get("fontName"),
-        Float.parseFloat(attributes.get("fontSize")),
+        parseFloat(attributes, "fontSize"),
         "true".equals(attributes.get("bold")),
         "true".equals(attributes.get("italic")));
   }
@@ -1413,12 +1429,12 @@ public class HomeXMLHandler extends DefaultHandler {
     return new HomeTexture(new CatalogTexture(
             attributes.get("catalogId"), 
             attributes.get("name"), 
-            getContent(attributes.get("image")), 
-            Float.parseFloat(attributes.get("width")), 
-            Float.parseFloat(attributes.get("height")), 
+            parseContent(attributes.get("image")), 
+            parseFloat(attributes, "width"), 
+            parseFloat(attributes, "height"), 
             null),
         attributes.get("angle") != null
-            ? Float.parseFloat(attributes.get("angle"))
+            ? parseFloat(attributes, "angle")
             : 0,
         !"false".equals(attributes.get("leftToRightOriented")));
   }
@@ -1426,13 +1442,13 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link HomeMaterial} instance initialized from the given <code>attributes</code>.
    */
-  private HomeMaterial createMaterial(Map<String, String> attributes) {
+  private HomeMaterial createMaterial(Map<String, String> attributes) throws SAXException {
     return new HomeMaterial(
         attributes.get("name"), 
         attributes.get("key"), 
-        getColor(attributes.get("color")), 
+        parseOptionalColor(attributes, "color"), 
         this.materialTexture,
-        getFloat(attributes.get("shininess")));
+        parseOptionalFloat(attributes, "shininess"));
   }
 
   /**
@@ -1447,44 +1463,76 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns the color integer from a hexadecimal string.
    */
-  private Integer getColor(String color) {
+  private Integer parseOptionalColor(Map<String, String> attributes, String name) throws SAXException {
+    String color = attributes.get(name);
     if (color != null) {
-      // Need to use parseLong in case parsed number is bigger than 2^31
-      Integer integer = new Integer((int)Long.parseLong(color, 16));
-      return integer;
+      try {
+        // Need to use parseLong in case parsed number is bigger than 2^31
+        return new Integer((int)Long.parseLong(color, 16));
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for color attribute " + name, ex);
+      }
     } else {
       return null;
     }
   }
   
-  private Integer getInteger(String s) {
-    if (s != null) {
-      return Integer.parseInt(s);
+  private Integer parseOptionalInteger(Map<String, String> attributes, String name) throws SAXException {
+    String value = attributes.get(name);
+    if (value != null) {
+      try {
+        return Integer.parseInt(value);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for integer attribute " + name, ex);
+      }
     } else {
       return null;
     }
   }
   
-  private Long getLong(String s) {
-    if (s != null) {
-      return Long.parseLong(s);
+  private Long parseOptionalLong(Map<String, String> attributes, String name) throws SAXException {
+    String value = attributes.get(name);
+    if (value != null) {
+      try {
+        return Long.parseLong(value);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for long attribute " + name, ex);
+      }
     } else {
       return null;
     }
   }
   
-  private Float getFloat(String s) {
-    if (s != null) {
-      return Float.parseFloat(s);
+  private Float parseOptionalFloat(Map<String, String> attributes, String name) throws SAXException {
+    String value = attributes.get(name);
+    if (value != null) {  
+      try {
+        return Float.parseFloat(value);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for float attribute " + name, ex);
+      }
     } else {
       return null;
+    }
+  }
+  
+  private float parseFloat(Map<String, String> attributes, String name) throws SAXException {
+    String value = attributes.get(name);
+    if (value != null) {  
+      try {
+        return Float.parseFloat(value);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for float attribute " + name, ex);
+      }
+    } else {
+      throw new SAXException("Missing float attribute " + name);
     }
   }
   
   /**
    * Returns the content object matching the given string.
    */
-  private Content getContent(String content) throws SAXException {
+  private Content parseContent(String content) throws SAXException {
     if (content != null) {
       try {
         return new ResourceURLContent(new URL(content), content.startsWith("jar:"));
