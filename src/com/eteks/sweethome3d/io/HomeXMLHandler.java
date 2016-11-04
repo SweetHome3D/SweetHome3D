@@ -520,6 +520,9 @@ public class HomeXMLHandler extends DefaultHandler {
       setHomeAttributes(home, attributesMap);
     } else if ("furnitureVisibleProperty".equals(name)) {
       try {
+        if (attributesMap.get("name") == null) {
+          throw new SAXException("Missing name attribute");
+        }
         this.furnitureVisibleProperties.add(HomePieceOfFurniture.SortableProperty.valueOf(attributesMap.get("name")));
       } catch (IllegalArgumentException ex) {
         // Ignore malformed enum constant 
@@ -853,7 +856,16 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link Print} instance initialized from the given <code>attributes</code>.
    */
   protected HomePrint createPrint(Map<String, String> attributes) throws SAXException {
-    return new HomePrint(HomePrint.PaperOrientation.valueOf(attributes.get("paperOrientation")), 
+    HomePrint.PaperOrientation paperOrientation = HomePrint.PaperOrientation.PORTRAIT;
+    try {
+      if (attributes.get("paperOrientation") == null) {
+        throw new SAXException("Missing paperOrientation attribute");
+      }
+      paperOrientation = HomePrint.PaperOrientation.valueOf(attributes.get("paperOrientation"));
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed enum constant 
+    }
+    return new HomePrint(paperOrientation, 
         parseFloat(attributes, "paperWidth"), 
         parseFloat(attributes, "paperHeight"), 
         parseFloat(attributes, "paperTopMargin"), 
@@ -1005,12 +1017,6 @@ public class HomeXMLHandler extends DefaultHandler {
         throw new SAXException("Invalid value for attribute modelRotation", ex);
       }
     }
-    BigDecimal price = attributes.get("price") != null
-        ? new BigDecimal(attributes.get("price"))
-        : null;
-    BigDecimal valueAddedTaxPercentage = attributes.get("valueAddedTaxPercentage") != null
-        ? new BigDecimal(attributes.get("valueAddedTaxPercentage"))
-        : null;
     if ("doorOrWindow".equals(elementName)) {
       float wallThickness = attributes.get("wallThickness") != null
           ? parseFloat(attributes, "wallThickness")
@@ -1045,8 +1051,8 @@ public class HomeXMLHandler extends DefaultHandler {
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
           !"false".equals(attributes.get("texturable")), 
-          price, 
-          valueAddedTaxPercentage, 
+          parseOptionalDecimal(attributes, "price"), 
+          parseOptionalDecimal(attributes, "valueAddedTaxPercentage"), 
           attributes.get("currency")));
     } else if ("light".equals(elementName)) {
       return new HomeLight(new CatalogLight(
@@ -1074,8 +1080,8 @@ public class HomeXMLHandler extends DefaultHandler {
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
           !"false".equals(attributes.get("texturable")), 
-          price, 
-          valueAddedTaxPercentage, 
+          parseOptionalDecimal(attributes, "price"), 
+          parseOptionalDecimal(attributes, "valueAddedTaxPercentage"), 
           attributes.get("currency")));
     } else {
       return new HomePieceOfFurniture(new CatalogPieceOfFurniture(
@@ -1102,8 +1108,8 @@ public class HomeXMLHandler extends DefaultHandler {
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
           !"false".equals(attributes.get("texturable")), 
-          price, 
-          valueAddedTaxPercentage, 
+          parseOptionalDecimal(attributes, "price"), 
+          parseOptionalDecimal(attributes, "valueAddedTaxPercentage"), 
           attributes.get("currency")));
     }
   }
@@ -1497,6 +1503,19 @@ public class HomeXMLHandler extends DefaultHandler {
         return Long.parseLong(value);
       } catch (NumberFormatException ex) {
         throw new SAXException("Invalid value for long attribute " + name, ex);
+      }
+    } else {
+      return null;
+    }
+  }
+  
+  private BigDecimal parseOptionalDecimal(Map<String, String> attributes, String name) throws SAXException {
+    String value = attributes.get(name);
+    if (value != null) {  
+      try {
+        return new BigDecimal(value);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for decimal attribute " + name, ex);
       }
     } else {
       return null;
