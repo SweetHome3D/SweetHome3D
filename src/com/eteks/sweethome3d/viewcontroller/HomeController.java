@@ -1847,11 +1847,12 @@ public class HomeController implements Controller {
               if (ex instanceof DamagedHomeRecorderException) {
                 DamagedHomeRecorderException ex2 = (DamagedHomeRecorderException)ex;
                 openDamagedHome(homeName, ex2.getDamagedHome(), ex2.getInvalidContent());
-              } else if (ex instanceof RecorderException) {
-                String message = preferences.getLocalizedString(HomeController.class, "openError", homeName);
-                getView().showError(message);
               } else {
                 ex.printStackTrace();
+                if (ex instanceof RecorderException) {
+                  String message = preferences.getLocalizedString(HomeController.class, "openError", homeName);
+                  getView().showError(message);
+                } 
               }
             }
           }
