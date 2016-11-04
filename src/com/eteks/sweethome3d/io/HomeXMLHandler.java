@@ -658,6 +658,8 @@ public class HomeXMLHandler extends DefaultHandler {
           getColor(attributesMap.get("color")),
           getFloat(attributesMap.get("diameter"))));
     } else if ("backgroundImage".equals(name)) {
+      String xOrigin = attributesMap.get("xOrigin");
+      String yOrigin = attributesMap.get("yOrigin");
       BackgroundImage backgroundImage = new BackgroundImage(
           getContent(attributesMap.get("image")), 
           Float.parseFloat(attributesMap.get("scaleDistance")), 
@@ -665,8 +667,8 @@ public class HomeXMLHandler extends DefaultHandler {
           Float.parseFloat(attributesMap.get("scaleDistanceYStart")), 
           Float.parseFloat(attributesMap.get("scaleDistanceXEnd")), 
           Float.parseFloat(attributesMap.get("scaleDistanceYEnd")), 
-          Float.parseFloat(attributesMap.get("xOrigin")), 
-          Float.parseFloat(attributesMap.get("yOrigin")), 
+          xOrigin != null ? Float.parseFloat(xOrigin) : 0, 
+          yOrigin != null ? Float.parseFloat(yOrigin) : 0, 
           !"false".equals(attributesMap.get("visible")));
       if (this.homeElementName != null && this.homeElementName.equals(parent)) {
         this.homeBackgroundImage = backgroundImage;
