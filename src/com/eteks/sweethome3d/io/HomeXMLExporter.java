@@ -393,7 +393,9 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
       writer.writeAttribute("information", piece.getInformation(), null);        
       writer.writeBooleanAttribute("movable", piece.isMovable(), true);
       if (!(piece instanceof HomeFurnitureGroup)) {
-        writer.writeBooleanAttribute("doorOrWindow", piece.isDoorOrWindow(), false);
+        if (!(piece instanceof HomeDoorOrWindow)) {
+          writer.writeBooleanAttribute("doorOrWindow", piece.isDoorOrWindow(), false);
+        }
         writer.writeBooleanAttribute("resizable", piece.isResizable(), true);
         writer.writeBooleanAttribute("deformable", piece.isDeformable(), true);
         writer.writeBooleanAttribute("texturable", piece.isTexturable(), true);
