@@ -25,8 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-
-import junit.framework.TestCase;
+import java.net.URL;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -39,6 +38,9 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.tools.URLContent;
+
+import junit.framework.TestCase;
 
 /**
  * Tests {@link HomeFileRecorder} class.
@@ -88,6 +90,28 @@ public class HomeFileRecorderTest extends TestCase {
     if (!new File(testFile).delete()) {
       fail("Couldn't delete file " + testFile);
     }
+  }
+  
+  public void testXMLEntryConsistency() throws URISyntaxException, RecorderException, IOException {
+    HomeRecorder homeEntryRecorder = new HomeFileRecorder(0, false, null, false, false);
+    Home home = homeEntryRecorder.readHome(new File(
+        HomeControllerTest.class.getResource("resources/home1.sh3d").toURI()).getAbsolutePath());
+    assertTrue("Tested home has no walls", home.getWalls().size() > 0);
+    assertTrue("Tested home has no furniture", home.getFurniture().size() > 0);
+    // Save home with an XML entry
+    HomeRecorder homeXmlEntryRecorder = new HomeFileRecorder(0, false, null, false, true);
+    File savedFileWithXmlEntry = File.createTempFile("homeXML", "sh3d");
+    homeXmlEntryRecorder.writeHome(home, savedFileWithXmlEntry.getAbsolutePath());
+    // Read home again using XML entry and save it in an other file
+    home = homeXmlEntryRecorder.readHome(savedFileWithXmlEntry.getAbsolutePath());
+    File savedFileWithXmlEntry2 = File.createTempFile("homeXML", "sh3d");
+    homeXmlEntryRecorder.writeHome(home, savedFileWithXmlEntry2.getAbsolutePath());
+    // Compare the XML entries of the two files
+    assertContentEquals("Home.xml entries different", 
+        new URLContent(new URL("jar:" + savedFileWithXmlEntry.toURI().toURL() + "!/Home.xml")), 
+        new URLContent(new URL("jar:" + savedFileWithXmlEntry2.toURI().toURL() + "!/Home.xml")));
+    savedFileWithXmlEntry.delete();
+    savedFileWithXmlEntry2.delete();
   }
   
   /**
