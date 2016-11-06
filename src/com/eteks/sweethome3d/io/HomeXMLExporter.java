@@ -506,10 +506,18 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
             writer.writeAttribute("level", getId(wall.getLevel()));        
           }
           if (wall.getWallAtStart() != null) {
-            writer.writeAttribute("wallAtStart", getId(wall.getWallAtStart()));
+            String id = getId(wall.getWallAtStart());
+            // Check id isn't null to ensure saved data consistency
+            if (id != null) {
+              writer.writeAttribute("wallAtStart", id);
+            }
           }
           if (wall.getWallAtEnd() != null) {
-            writer.writeAttribute("wallAtEnd", getId(wall.getWallAtEnd()));
+            String id = getId(wall.getWallAtEnd());
+            // Check id isn't null to ensure saved data consistency
+            if (id != null) {
+              writer.writeAttribute("wallAtEnd", id);
+            }
           }
           writer.writeFloatAttribute("xStart", wall.getXStart());
           writer.writeFloatAttribute("yStart", wall.getYStart());
