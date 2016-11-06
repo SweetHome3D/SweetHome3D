@@ -100,11 +100,11 @@ public class HomeFileRecorderTest extends TestCase {
     assertTrue("Tested home has no furniture", home.getFurniture().size() > 0);
     // Save home with an XML entry
     HomeRecorder homeXmlEntryRecorder = new HomeFileRecorder(0, false, null, false, true);
-    File savedFileWithXmlEntry = File.createTempFile("homeXML", "sh3d");
+    File savedFileWithXmlEntry = File.createTempFile("homeXML", ".sh3d");
     homeXmlEntryRecorder.writeHome(home, savedFileWithXmlEntry.getAbsolutePath());
     // Read home again using XML entry and save it in an other file
     home = homeXmlEntryRecorder.readHome(savedFileWithXmlEntry.getAbsolutePath());
-    File savedFileWithXmlEntry2 = File.createTempFile("homeXML", "sh3d");
+    File savedFileWithXmlEntry2 = File.createTempFile("homeXML", ".sh3d");
     homeXmlEntryRecorder.writeHome(home, savedFileWithXmlEntry2.getAbsolutePath());
     // Compare the XML entries of the two files
     assertContentEquals("Home.xml entries different", 
@@ -141,7 +141,7 @@ public class HomeFileRecorderTest extends TestCase {
       Home home = recorder.readHome(testFile);
       assertTrue("Home is not flagged as repaired", home.isRepaired());
       // Check repaired home can be saved
-      File savedFile = File.createTempFile("repaired", "sh3d");
+      File savedFile = File.createTempFile("repaired", ".sh3d");
       recorder.writeHome(home, savedFile.getAbsolutePath());
       savedFile.delete();
     } catch (DamagedHomeRecorderException ex) {
@@ -197,7 +197,7 @@ public class HomeFileRecorderTest extends TestCase {
   }
 
   /**
-   * Asserts <code>content1</code> and <code>content2</code> are equals.
+   * Asserts <code>content1</code> and <code>content2</code> are equal.
    */
   private void assertContentEquals(String message, Content content1, Content content2) {
     InputStream stream1 = null;
