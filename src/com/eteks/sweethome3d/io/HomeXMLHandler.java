@@ -329,7 +329,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       name CDATA #IMPLIED
  *       nameAngle CDATA "0"
  *       nameXOffset CDATA "0"
- *       nameYOffset CDATA "0"
+ *       nameYOffset CDATA "-40"
  *       areaVisible (false | true) "false"
  *       areaAngle CDATA "0"
  *       areaXOffset CDATA "0"
