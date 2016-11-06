@@ -1132,9 +1132,6 @@ public class HomeXMLHandler extends DefaultHandler {
   protected void setPieceOfFurnitureAttributes(HomePieceOfFurniture piece, Map<String, String> attributes) throws SAXException {
     setProperties(piece);
     piece.setNameStyle(this.textStyles.get("nameStyle"));
-    if (this.materials.size() > 0) {
-      piece.setModelMaterials(this.materials.toArray(new HomeMaterial [this.materials.size()]));
-    }
     Float angle = parseOptionalFloat(attributes, "angle");
     if (angle != null) {
       piece.setAngle(angle);
@@ -1162,7 +1159,11 @@ public class HomeXMLHandler extends DefaultHandler {
     if (y != null) {
       piece.setY(y);
     }
-    if (piece.isTexturable()) {
+    if (!(piece instanceof HomeFurnitureGroup)
+        && piece.isTexturable()) {
+      if (this.materials.size() > 0) {
+        piece.setModelMaterials(this.materials.toArray(new HomeMaterial [this.materials.size()]));
+      }
       Integer color = parseOptionalColor(attributes, "color");
       if (color != null) {
         piece.setColor(color);
