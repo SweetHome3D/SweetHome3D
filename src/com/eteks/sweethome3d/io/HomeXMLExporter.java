@@ -131,10 +131,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     List<String> propertiesNames = new ArrayList<String>(home.getPropertyNames());
     Collections.sort(propertiesNames);
     for (String propertyName : propertiesNames) {
-      writer.writeStartElement("property");
-      writer.writeAttribute("name", propertyName);
-      writer.writeAttribute("value", home.getProperty(propertyName));
-      writer.writeEndElement();
+      writeProperty(writer, propertyName, home.getProperty(propertyName));
     }
     // Write furniture visible properties
     for (HomePieceOfFurniture.SortableProperty property : home.getFurnitureVisibleProperties()) {
@@ -746,9 +743,18 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     List<String> propertiesNames = new ArrayList<String>(object.getPropertyNames());
     Collections.sort(propertiesNames);
     for (String propertyName : propertiesNames) {
+      writeProperty(writer, propertyName, object.getProperty(propertyName));
+    }
+  }
+
+  /**
+   * Writes in XML the given property.
+   */
+  private void writeProperty(XMLWriter writer, String propertyName, String propertyValue) throws IOException {
+    if (propertyValue != null) {
       writer.writeStartElement("property");
       writer.writeAttribute("name", propertyName);
-      writer.writeAttribute("value", object.getProperty(propertyName));
+      writer.writeAttribute("value", propertyValue);
       writer.writeEndElement();
     }
   }
