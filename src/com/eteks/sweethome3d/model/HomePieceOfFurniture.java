@@ -340,6 +340,9 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.texturable = true;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     in.defaultReadObject();
+    
+    // Ensure angle is always positive and between 0 and 2 PI
+    this.angle = (float)((this.angle % TWICE_PI + TWICE_PI) % TWICE_PI);
   }
 
   /**
