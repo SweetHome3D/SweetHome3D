@@ -980,7 +980,7 @@ public class HomeXMLHandler extends DefaultHandler {
       level.setElevationIndex(elevationIndex);
     }
     level.setVisible(!"false".equals(attributes.get("visible")));
-    level.setViewable(!"viewable".equals(attributes.get("viewable")));
+    level.setViewable(!"false".equals(attributes.get("viewable")));
   }
 
   /**
