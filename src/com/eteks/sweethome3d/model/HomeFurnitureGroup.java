@@ -191,6 +191,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
             piece.getElevation() + piece.getHeight() * piece.getDropOnTopElevation());
       }
     }
+    height -= elevation;
+    dropOnTopElevation -= elevation;
 
     // Search the size of the furniture group
     AffineTransform rotation = AffineTransform.getRotateInstance(-angle);
@@ -217,13 +219,13 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (this.resizable) {
       super.setWidth((float)unrotatedBoundingRectangle.getWidth());
       super.setDepth((float)unrotatedBoundingRectangle.getHeight());
-      super.setHeight(height - elevation);
+      super.setHeight(height);
     } else {
       this.fixedWidth = (float)unrotatedBoundingRectangle.getWidth();
       this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
-      this.fixedHeight = height - elevation;
+      this.fixedHeight = height;
     }
-    this.dropOnTopElevation = (dropOnTopElevation - elevation) / height;
+    this.dropOnTopElevation = dropOnTopElevation / height;
     super.setX((float)center.getX());
     super.setY((float)center.getY());
     super.setElevation(elevation);
