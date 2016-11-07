@@ -469,11 +469,9 @@ public class HomeXMLHandler extends DefaultHandler {
       this.textStyles.clear();
       this.textures.clear();
       this.materials.clear();
-      if ("doorOrWindow".equals(name)) {
-        this.sashes.clear();
-      } else if ("light".equals(name)) {
-        this.lightSources.clear();
-      } else if ("furnitureGroup".equals(name)) {
+      this.sashes.clear();
+      this.lightSources.clear();
+      if ("furnitureGroup".equals(name)) {
         this.groupsFurniture.push(new ArrayList<HomePieceOfFurniture>());
       }
     } else if ("camera".equals(name)
@@ -517,7 +515,7 @@ public class HomeXMLHandler extends DefaultHandler {
     String parent = this.elements.isEmpty() ? null : this.elements.peek();
     Map<String, String> attributesMap = this.attributes.pop();
     if (this.homeElementName != null && this.homeElementName.equals(name)) {
-      setHomeAttributes(home, attributesMap);
+      setHomeAttributes(home, name, attributesMap);
     } else if ("furnitureVisibleProperty".equals(name)) {
       try {
         if (attributesMap.get("name") == null) {
@@ -528,20 +526,20 @@ public class HomeXMLHandler extends DefaultHandler {
         // Ignore malformed enum constant 
       }
     } else if ("environment".equals(name)) {
-      setEnvironmentAttributes(this.home.getEnvironment(), attributesMap);
+      setEnvironmentAttributes(this.home.getEnvironment(), name, attributesMap);
     } else if ("compass".equals(name)) {
-      setCompassAttributes(this.home.getCompass(), attributesMap);
+      setCompassAttributes(this.home.getCompass(), name, attributesMap);
     } else if ("print".equals(name)) {
       this.home.setPrint(createPrint(attributesMap));
     } else if ("level".equals(name)) {
       Level level = createLevel(attributesMap);
-      setLevelAttributes(level, attributesMap);
+      setLevelAttributes(level, name, attributesMap);
       this.levels.put(attributesMap.get("id"), level);
       this.home.addLevel(level);
     } else if ("camera".equals(name)
         || "observerCamera".equals(name)) {
       Camera camera = createCamera(name, attributesMap);
-      setCameraAttributes(camera, attributesMap);
+      setCameraAttributes(camera, name, attributesMap);
       String attribute = attributesMap.get("attribute");
       if ("cameraPath".equals(attribute)) {
         // Update camera path
@@ -571,7 +569,7 @@ public class HomeXMLHandler extends DefaultHandler {
       HomePieceOfFurniture piece = "furnitureGroup".equals(name)
           ? createFurnitureGroup(attributesMap, this.groupsFurniture.pop())
           : createPieceOfFurniture(name, attributesMap);
-      setPieceOfFurnitureAttributes(piece, attributesMap);
+      setPieceOfFurnitureAttributes(piece, name, attributesMap);
       if (this.homeElementName != null && this.homeElementName.equals(parent)) {
         this.home.addPieceOfFurniture(piece);
         String levelId = attributesMap.get("level");
@@ -585,7 +583,7 @@ public class HomeXMLHandler extends DefaultHandler {
       Wall wall = createWall(attributesMap);
       this.joinedWalls.put(attributesMap.get("id"), 
           new JoinedWall(wall, attributesMap.get("wallAtStart"), attributesMap.get("wallAtEnd")));
-      setWallAttributes(wall, attributesMap);
+      setWallAttributes(wall, name, attributesMap);
       this.home.addWall(wall);
       String levelId = attributesMap.get("level");
       if (levelId != null) {
@@ -600,7 +598,7 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("room".equals(name)) {
       Room room = createRoom(attributesMap, this.points.toArray(new float [this.points.size()][]));
-      setRoomAttributes(room, attributesMap);
+      setRoomAttributes(room, name, attributesMap);
       this.home.addRoom(room);
       String levelId = attributesMap.get("level");
       if (levelId != null) {
@@ -608,7 +606,7 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("polyline".equals(name)) {
       Polyline polyline = createPolyline(attributesMap, this.points.toArray(new float [this.points.size()][]));
-      setPolylineAttributes(polyline, attributesMap);
+      setPolylineAttributes(polyline, name, attributesMap);
       this.home.addPolyline(polyline);
       String levelId = attributesMap.get("level");
       if (levelId != null) {
@@ -616,7 +614,7 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("dimensionLine".equals(name)) {
       DimensionLine dimensionLine = createDimensionLine(attributesMap);
-      setDimensionLineAttributes(dimensionLine, attributesMap);
+      setDimensionLineAttributes(dimensionLine, name, attributesMap);
       this.home.addDimensionLine(dimensionLine);
       String levelId = attributesMap.get("level");
       if (levelId != null) {
@@ -624,7 +622,7 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("label".equals(name)) {
       Label label = createLabel(attributesMap, this.labelText);
-      setLabelAttributes(label, attributesMap);
+      setLabelAttributes(label, name, attributesMap);
       this.home.addLabel(label);
       String levelId = attributesMap.get("level");
       if (levelId != null) {
@@ -733,7 +731,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>home</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setHomeAttributes(Home home, Map<String, String> attributes) throws SAXException {
+  protected void setHomeAttributes(Home home, 
+                                   String elementName, 
+                                   Map<String, String> attributes) throws SAXException {
     for (Map.Entry<String, String> property : this.homeProperties.entrySet()) {
       home.setProperty(property.getKey(), property.getValue());
     }
@@ -773,7 +773,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>environment</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  private void setEnvironmentAttributes(HomeEnvironment environment, Map<String, String> attributes) throws SAXException {
+  private void setEnvironmentAttributes(HomeEnvironment environment, 
+                                        String elementName, 
+                                        Map<String, String> attributes) throws SAXException {
     Integer groundColor = parseOptionalColor(attributes, "groundColor");
     if (groundColor != null) {
       environment.setGroundColor(groundColor);
@@ -884,7 +886,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>compass</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setCompassAttributes(Compass compass, Map<String, String> attributes) throws SAXException {
+  protected void setCompassAttributes(Compass compass, 
+                                      String elementName, 
+                                      Map<String, String> attributes) throws SAXException {
     setProperties(compass);
     compass.setX(parseOptionalFloat(attributes, "x"));
     compass.setY(parseOptionalFloat(attributes, "y"));
@@ -933,7 +937,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>camera</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setCameraAttributes(Camera camera, Map<String, String> attributes) throws SAXException {
+  protected void setCameraAttributes(Camera camera, 
+                                     String elementName, 
+                                     Map<String, String> attributes) throws SAXException {
     setProperties(camera);
     if (camera instanceof ObserverCamera) {
       ((ObserverCamera)camera).setFixedSize("true".equals(attributes.get("fixedSize")));
@@ -972,7 +978,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>level</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setLevelAttributes(Level level, Map<String, String> attributes) throws SAXException {
+  protected void setLevelAttributes(Level level, 
+                                    String elementName, 
+                                    Map<String, String> attributes) throws SAXException {
     setProperties(level);
     level.setBackgroundImage(this.backgroundImage);
     Integer elevationIndex = parseOptionalInteger(attributes, "elevationIndex");
@@ -1017,7 +1025,9 @@ public class HomeXMLHandler extends DefaultHandler {
         throw new SAXException("Invalid value for attribute modelRotation", ex);
       }
     }
-    if ("doorOrWindow".equals(elementName)) {
+    if ("doorOrWindow".equals(elementName)
+        // Replace old HomePieceOfFurniture instances with doorOrWindow attribute set to true by HomeDoorOrWindow instances
+        || "true".equals(attributes.get("doorOrWindow"))) {
       float wallThickness = attributes.get("wallThickness") != null
           ? parseFloat(attributes, "wallThickness")
           : 1;
@@ -1129,7 +1139,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>piece</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setPieceOfFurnitureAttributes(HomePieceOfFurniture piece, Map<String, String> attributes) throws SAXException {
+  protected void setPieceOfFurnitureAttributes(HomePieceOfFurniture piece, 
+                                               String elementName, 
+                                               Map<String, String> attributes) throws SAXException {
     setProperties(piece);
     piece.setNameStyle(this.textStyles.get("nameStyle"));
     Float angle = parseOptionalFloat(attributes, "angle");
@@ -1181,7 +1193,8 @@ public class HomeXMLHandler extends DefaultHandler {
     if (piece instanceof HomeLight
         && attributes.get("power") != null) {
       ((HomeLight)piece).setPower(parseFloat(attributes, "power"));
-    } else if (piece instanceof HomeDoorOrWindow) {
+    } else if (piece instanceof HomeDoorOrWindow
+              && "doorOrWindow".equals(elementName)) {
       ((HomeDoorOrWindow)piece).setBoundToWall(!"false".equals(attributes.get("boundToWall")));
     }
   }
@@ -1202,7 +1215,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>wall</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setWallAttributes(Wall wall, Map<String, String> attributes) throws SAXException {
+  protected void setWallAttributes(Wall wall, 
+                                   String elementName, 
+                                   Map<String, String> attributes) throws SAXException {
     setProperties(wall);
     wall.setLeftSideBaseboard(this.leftSideBaseboard);
     wall.setRightSideBaseboard(this.rightSideBaseboard);
@@ -1246,7 +1261,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>room</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setRoomAttributes(Room room, Map<String, String> attributes) throws SAXException {
+  protected void setRoomAttributes(Room room, 
+                                   String elementName, 
+                                   Map<String, String> attributes) throws SAXException {
     setProperties(room);
     room.setNameStyle(this.textStyles.get("nameStyle"));
     room.setAreaStyle(this.textStyles.get("areaStyle"));
@@ -1303,7 +1320,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>polyline</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setPolylineAttributes(Polyline polyline, Map<String, String> attributes) throws SAXException {
+  protected void setPolylineAttributes(Polyline polyline, 
+                                       String elementName, 
+                                       Map<String, String> attributes) throws SAXException {
     setProperties(polyline);
     Float thickness = parseOptionalFloat(attributes, "thickness");
     if (thickness != null) {
@@ -1372,6 +1391,7 @@ public class HomeXMLHandler extends DefaultHandler {
    * If needed, this method should be called from {@link #endElement}.
    */
   protected void setDimensionLineAttributes(DimensionLine dimensionLine, 
+                                            String elementName, 
                                             Map<String, String> attributes) throws SAXException {
     setProperties(dimensionLine);
     dimensionLine.setLengthStyle(this.textStyles.get("lengthStyle"));
@@ -1390,7 +1410,9 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the attributes of the given <code>label</code>.
    * If needed, this method should be called from {@link #endElement}.
    */
-  protected void setLabelAttributes(Label label, Map<String, String> attributes) throws SAXException {
+  protected void setLabelAttributes(Label label, 
+                                    String elementName, 
+                                    Map<String, String> attributes) throws SAXException {
     setProperties(label);
     label.setStyle(this.textStyles.get(null));
     Float angle = parseOptionalFloat(attributes, "angle");
