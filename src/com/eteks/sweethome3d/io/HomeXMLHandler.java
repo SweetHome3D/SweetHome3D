@@ -695,7 +695,7 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns the trimmed string of last element value. 
    */
   private String getCharacters() {
-    return this.buffer.toString().trim();
+    return this.buffer.toString();
   }
 
   @Override
