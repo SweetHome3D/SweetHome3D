@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -34,9 +35,12 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -93,9 +97,36 @@ public class HomeFileRecorderTest extends TestCase {
   }
   
   public void testXMLEntryConsistency() throws URISyntaxException, RecorderException, IOException {
+    checkXMLEntryConsistency(new File(HomeControllerTest.class.getResource("resources/home1.sh3d").toURI()));
+    
+    // Create a home with properties and text style set on group items
+    Home home = new Home();
+    Level level0 = new Level("Level0", 0, 0.1f, 250f);
+    home.addLevel(level0);
+    Level level1 = new Level("Level1", 252f, 2f, 250f);
+    level1.setViewable(false);
+    home.addLevel(level1);
+    home.setSelectedLevel(level0);
+    home.addWall(new Wall(0, 10, 100, 80, 10, 250));
+    FurnitureCatalog catalog = new DefaultFurnitureCatalog();
+    HomePieceOfFurniture piece1 = new HomePieceOfFurniture(catalog.getCategories().get(0).getFurniture().get(0));
+    piece1.setProperty("id", "piece1");
+    HomePieceOfFurniture piece2 = new HomePieceOfFurniture(catalog.getCategories().get(0).getFurniture().get(1));
+    piece2.setProperty("id", "piece2");
+    piece2.setNameStyle(new TextStyle(12, false, false));
+    HomeFurnitureGroup group = new HomeFurnitureGroup(Arrays.asList(piece1, piece2), "Group");
+    group.setProperty("test", "value");
+    home.addPieceOfFurniture(group);
+    // Save home with Home serialized entry
+    File savedFileWithHomeEntry = File.createTempFile("test", ".sh3d");
+    new HomeFileRecorder(0, false, null, false, false).writeHome(home, savedFileWithHomeEntry.getAbsolutePath());
+    checkXMLEntryConsistency(savedFileWithHomeEntry);
+    savedFileWithHomeEntry.delete();
+  }
+  
+  public void checkXMLEntryConsistency(File homeFile) throws RecorderException, IOException {
     HomeRecorder homeEntryRecorder = new HomeFileRecorder(0, false, null, false, false);
-    Home home = homeEntryRecorder.readHome(new File(
-        HomeControllerTest.class.getResource("resources/home1.sh3d").toURI()).getAbsolutePath());
+    Home home = homeEntryRecorder.readHome(homeFile.getAbsolutePath());
     assertTrue("Tested home has no walls", home.getWalls().size() > 0);
     assertTrue("Tested home has no furniture", home.getFurniture().size() > 0);
     // Save home with an XML entry
