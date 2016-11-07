@@ -107,7 +107,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setNameYOffset(0);
     setNameStyle(null);
     setDescription(null);
-    setMovable(movable);
+    super.setMovable(movable);
     setVisible(visible);
    
     updateLocationAndSize(furniture, angle, true);
@@ -357,7 +357,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
-   * Returns <code>true</code> if all furniture of this group are movable.
+   * Returns <code>true</code> if this group is movable.
    */
   @Override
   public boolean isMovable() {
@@ -365,15 +365,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
-   * Sets whether this piece and its children are movable or not.
+   * Sets whether this group is movable or not.
    * @since 3.1
    */
   @Override
   public void setMovable(boolean movable) {
     super.setMovable(movable);
-    for (HomePieceOfFurniture piece : this.furniture) {
-      piece.setMovable(movable);
-    }
   }
 
   /**

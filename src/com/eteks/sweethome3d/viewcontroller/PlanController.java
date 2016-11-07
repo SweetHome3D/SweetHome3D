@@ -3440,7 +3440,7 @@ public class PlanController extends FurnitureController implements Controller {
     // at highest elevation in case it covers an other piece
     List<HomePieceOfFurniture> foundFurniture = new ArrayList<HomePieceOfFurniture>();
     HomePieceOfFurniture foundPiece = null;
-    for (int i = furniture.size() - 1; i >= 0; i--) {
+    for (int i = furniture.size() - 1; i >= 0 && (foundPiece == null || !stopAtFirstItem); i--) {
       HomePieceOfFurniture piece = furniture.get(i);
       if ((!basePlanLocked 
             || !isItemPartOfBasePlan(piece))
@@ -3461,6 +3461,29 @@ public class PlanController extends FurnitureController implements Controller {
                   piece.getY() + piece.getNameYOffset(), piece.getNameAngle(), x, y, textMargin)) {
             foundFurniture.add(piece);
             foundPiece = piece;
+          }
+        }
+      }
+    }
+    if (foundPiece == null
+        && basePlanLocked) {
+      // Check among the furniture that is already selected if there's a movable piece at the given location
+      for (Selectable item : home.getSelectedItems()) {
+        if (item instanceof HomePieceOfFurniture) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+          if (!isItemPartOfBasePlan(piece)
+              && isPieceOfFurnitureVisibleAtSelectedLevel(piece) 
+              && (piece.containsPoint(x, y, margin)
+                  || piece.getName() != null
+                      && piece.isNameVisible() 
+                      && isItemTextAt(piece, piece.getName(), piece.getNameStyle(), 
+                          piece.getX() + piece.getNameXOffset(), 
+                          piece.getY() + piece.getNameYOffset(), piece.getNameAngle(), x, y, textMargin))) {
+            foundFurniture.add(piece);
+            foundPiece = piece;
+            if (stopAtFirstItem) {
+              break;
+            }
           }
         }
       }
