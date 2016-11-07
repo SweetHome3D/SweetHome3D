@@ -408,7 +408,7 @@ public class FurnitureController implements Controller {
   }
   
   /**
-   * Returns <code>true</code> if the given <code>piece</code> is movable.
+   * Returns <code>true</code> if the given <code>piece</code> isn't movable.
    */
   protected boolean isPieceOfFurniturePartOfBasePlan(HomePieceOfFurniture piece) {
     return !piece.isMovable() || piece.isDoorOrWindow();
@@ -449,7 +449,7 @@ public class FurnitureController implements Controller {
   private List<HomePieceOfFurniture> getFurnitureNotPartOfBasePlan(List<HomePieceOfFurniture> furniture) {
     List<HomePieceOfFurniture> furnitureNotPartOfBasePlan = new ArrayList<HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : furniture) {
-      if (!isPieceOfFurniturePartOfBasePlan(piece)) {
+      if (!isPieceOfFurniturePartOfBasePlan(piece)) {        
         furnitureNotPartOfBasePlan.add(piece);
       }
     }
@@ -620,7 +620,6 @@ public class FurnitureController implements Controller {
       final int [] groupedPiecesIndex = new int [groupedPieces.length];
       final Level [] groupedPiecesLevel = new Level [groupedPieces.length];
       final float [] groupPiecesElevation = new float [groupedPieces.length];
-      final boolean [] groupPiecesMovable = new boolean [groupedPieces.length];
       final boolean [] groupPiecesVisible = new boolean [groupedPieces.length];
       final HomeFurnitureGroup [] groupedPiecesGroups = new HomeFurnitureGroup [groupedPieces.length];
       Level minLevel = this.home.getSelectedLevel();
@@ -632,7 +631,6 @@ public class FurnitureController implements Controller {
           groupedPiecesIndex [i] = pieceEntry.getKey();
           groupedPiecesLevel [i] = piece.getLevel();
           groupPiecesElevation [i] = piece.getElevation();
-          groupPiecesMovable [i] = piece.isMovable();
           groupPiecesVisible [i] = piece.isVisible();
           groupedPiecesGroups [i] = sortedMapEntry.getKey();
           if (groupedPiecesLevel [i] != null) {
@@ -674,7 +672,6 @@ public class FurnitureController implements Controller {
                   groupedPiecesGroups, groupedPiecesIndex, groupedPiecesLevel, basePlanLocked, allLevelsSelection);
               for (int i = 0; i < groupedPieces.length; i++) {
                 groupedPieces [i].setElevation(groupPiecesElevation [i]);
-                groupedPieces [i].setMovable(groupPiecesMovable [i]);
                 groupedPieces [i].setVisible(groupPiecesVisible [i]);
               }
               home.setSelectedItems(oldSelection);
