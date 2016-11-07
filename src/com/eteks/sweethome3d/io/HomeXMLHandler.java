@@ -578,6 +578,9 @@ public class HomeXMLHandler extends DefaultHandler {
         }
       } else if ("furnitureGroup".equals(parent)) {
         this.groupsFurniture.peek().add(piece);
+        // Clear properties and text styles of the group that may be cited after child element
+        this.properties.clear();
+        this.textStyles.clear();
       }
     } else if ("wall".equals(name)) {
       Wall wall = createWall(attributesMap);
