@@ -1034,6 +1034,12 @@ public class HomeXMLHandler extends DefaultHandler {
       float wallDistance = attributes.get("wallDistance") != null
           ? parseFloat(attributes, "wallDistance")
           : 0;
+      String cutOutShape = attributes.get("cutOutShape");
+      if (cutOutShape == null
+          && !"doorOrWindow".equals(elementName)) {
+        // Set default cut out shape set on old HomePieceOfFurniture instances with doorOrWindow attribute set to true
+        cutOutShape = "M0,0 v1 h1 v-1 z";
+      }
       return new HomeDoorOrWindow(new CatalogDoorOrWindow(
           attributes.get("catalogId"), 
           attributes.get("name"), 
@@ -1051,7 +1057,7 @@ public class HomeXMLHandler extends DefaultHandler {
           elevation, 
           dropOnTopElevation, 
           !"false".equals(attributes.get("movable")), 
-          attributes.get("cutOutShape"), 
+          cutOutShape, 
           wallThickness,
           wallDistance,
           this.sashes.toArray(new Sash [this.sashes.size()]),
