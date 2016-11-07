@@ -1155,7 +1155,9 @@ public class HomeXMLHandler extends DefaultHandler {
       piece.setAngle(angle);
     }
     piece.setVisible(!"false".equals(attributes.get("visible")));
-    piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
+    if (piece.isResizable()) {
+      piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
+    }
     piece.setNameVisible("true".equals(attributes.get("nameVisible")));
     Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
