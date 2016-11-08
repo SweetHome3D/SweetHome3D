@@ -1153,14 +1153,6 @@ public class HomeXMLHandler extends DefaultHandler {
                                                Map<String, String> attributes) throws SAXException {
     setProperties(piece);
     piece.setNameStyle(this.textStyles.get("nameStyle"));
-    Float angle = parseOptionalFloat(attributes, "angle");
-    if (angle != null) {
-      piece.setAngle(angle);
-    }
-    piece.setVisible(!"false".equals(attributes.get("visible")));
-    if (piece.isResizable()) {
-      piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
-    }
     piece.setNameVisible("true".equals(attributes.get("nameVisible")));
     Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
@@ -1174,39 +1166,53 @@ public class HomeXMLHandler extends DefaultHandler {
     if (nameYOffset != null) {
       piece.setNameYOffset(nameYOffset);
     }
-    Float x = parseOptionalFloat(attributes, "x");
-    if (x != null) {
-      piece.setX(x);
-    }
-    Float y = parseOptionalFloat(attributes, "y");
-    if (y != null) {
-      piece.setY(y);
-    }
-    if (!(piece instanceof HomeFurnitureGroup)
-        && piece.isTexturable()) {
-      if (this.materials.size() > 0) {
-        piece.setModelMaterials(this.materials.toArray(new HomeMaterial [this.materials.size()]));
-      }
-      Integer color = parseOptionalColor(attributes, "color");
-      if (color != null) {
-        piece.setColor(color);
-      }
-      HomeTexture texture = this.textures.get(null);
-      if (texture != null) {
-        piece.setTexture(texture);
-      }
-      Float shininess = parseOptionalFloat(attributes, "shininess");
-      if (shininess != null) {
-        piece.setShininess(shininess);
-      }
-    }
+    piece.setVisible(!"false".equals(attributes.get("visible")));
     
-    if (piece instanceof HomeLight
-        && attributes.get("power") != null) {
-      ((HomeLight)piece).setPower(parseFloat(attributes, "power"));
-    } else if (piece instanceof HomeDoorOrWindow
-              && "doorOrWindow".equals(elementName)) {
-      ((HomeDoorOrWindow)piece).setBoundToWall(!"false".equals(attributes.get("boundToWall")));
+    if (!(piece instanceof HomeFurnitureGroup)) {
+      // Location is computed for HomeFurnitureGroup instances during their creation
+      Float x = parseOptionalFloat(attributes, "x");
+      if (x != null) {
+        piece.setX(x);
+      }
+      Float y = parseOptionalFloat(attributes, "y");
+      if (y != null) {
+        piece.setY(y);
+      }
+      // Angle is already set for HomeFurnitureGroup instances during creation
+      Float angle = parseOptionalFloat(attributes, "angle");
+      if (angle != null) {
+        piece.setAngle(angle);
+      }
+      if (piece.isResizable()) {
+        // Attribute already set for HomeFurnitureGroup instances during creation
+        piece.setModelMirrored("true".equals(attributes.get("modelMirrored")));
+      }
+      if (piece.isTexturable()) {
+        // Attributes ignored in HomeFurnitureGroup instances
+        if (this.materials.size() > 0) {
+          piece.setModelMaterials(this.materials.toArray(new HomeMaterial [this.materials.size()]));
+        }
+        Integer color = parseOptionalColor(attributes, "color");
+        if (color != null) {
+          piece.setColor(color);
+        }
+        HomeTexture texture = this.textures.get(null);
+        if (texture != null) {
+          piece.setTexture(texture);
+        }
+        Float shininess = parseOptionalFloat(attributes, "shininess");
+        if (shininess != null) {
+          piece.setShininess(shininess);
+        }
+      }
+      
+      if (piece instanceof HomeLight
+          && attributes.get("power") != null) {
+        ((HomeLight)piece).setPower(parseFloat(attributes, "power"));
+      } else if (piece instanceof HomeDoorOrWindow
+                 && "doorOrWindow".equals(elementName)) {
+        ((HomeDoorOrWindow)piece).setBoundToWall(!"false".equals(attributes.get("boundToWall")));
+      }
     }
   }
 
