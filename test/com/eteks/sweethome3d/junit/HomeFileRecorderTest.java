@@ -107,7 +107,7 @@ public class HomeFileRecorderTest extends TestCase {
     level1.setViewable(false);
     home.addLevel(level1);
     home.setSelectedLevel(level0);
-    home.addWall(new Wall(0, 10, 100, 80, 10, 250));
+    home.addWall(new Wall(0, 10, 100, 80, 10, Float.NaN)); // Use NaN to check how it will be written then read
     FurnitureCatalog catalog = new DefaultFurnitureCatalog();
     HomePieceOfFurniture piece1 = new HomePieceOfFurniture(catalog.getCategories().get(0).getFurniture().get(0));
     piece1.setProperty("id", "piece1");
