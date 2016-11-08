@@ -445,8 +445,8 @@ public class Room3D extends Object3DBranch {
     geometryInfo.setStripCounts(stripCounts);
     
     if (texture != null) {
-      float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
-      float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+      float textureWidth = texture.getWidth();
+      float textureHeight = texture.getHeight();
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
       i = 0;
       // Compute room texture coordinates
@@ -515,8 +515,8 @@ public class Room3D extends Object3DBranch {
     geometryInfo.setCoordinates(coords);
     
     if (texture != null) {
-      float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
-      float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+      float textureWidth = texture.getWidth();
+      float textureHeight = texture.getHeight();
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
       i = 0;
       // Compute room border texture coordinates

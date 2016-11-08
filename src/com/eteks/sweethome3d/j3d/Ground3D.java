@@ -351,8 +351,8 @@ public class Ground3D extends Object3DBranch {
       float textureWidth;
       float textureHeight;
       if (groundTexture != null) {
-        textureWidth = TextureManager.getInstance().getRotatedTextureWidth(groundTexture);
-        textureHeight = TextureManager.getInstance().getRotatedTextureHeight(groundTexture);
+        textureWidth = groundTexture.getWidth();
+        textureHeight = groundTexture.getHeight();
       } else {
         textureWidth = 0;
         textureHeight = 0;
@@ -396,8 +396,8 @@ public class Ground3D extends Object3DBranch {
     float textureWidth;
     float textureHeight;
     if (groundTexture != null) {
-      textureWidth = TextureManager.getInstance().getRotatedTextureWidth(groundTexture);
-      textureHeight = TextureManager.getInstance().getRotatedTextureHeight(groundTexture);
+      textureWidth = groundTexture.getWidth();
+      textureHeight = groundTexture.getHeight();
     } else {
       textureWidth = 0;
       textureHeight = 0;

@@ -714,8 +714,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Point3d upper = new Point3d();
     modelBounds.getUpper(upper);
     float minimumSize = ModelManager.getInstance().getMinimumSize();
-    float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
-    float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+    float textureWidth = texture.getWidth();
+    float textureHeight = texture.getHeight();
     float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / textureWidth;
     float sw = texture.isLeftToRightOriented()  
         ? (float)-lower.x * sx  

@@ -770,8 +770,8 @@ public class Wall3D extends Object3DBranch {
         halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
       }
       TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
-      float textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
-      float textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+      float textureWidth = texture.getWidth();
+      float textureHeight = texture.getHeight();
       float minElevationTextureCoords = minElevation / textureHeight;
       TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevationTextureCoords);
       int j = 0;
@@ -1043,8 +1043,8 @@ public class Wall3D extends Object3DBranch {
           if (texture != null) {
             textureCoords = new TexCoord2f [coords.length];
             borderTextureCoords = new ArrayList<TexCoord2f>(4 * vertexCount);
-            textureWidth = TextureManager.getInstance().getRotatedTextureWidth(texture);
-            textureHeight = TextureManager.getInstance().getRotatedTextureHeight(texture);
+            textureWidth = texture.getWidth();
+            textureHeight = texture.getHeight();
           } else {
             textureCoords = null;
             borderTextureCoords = null;
