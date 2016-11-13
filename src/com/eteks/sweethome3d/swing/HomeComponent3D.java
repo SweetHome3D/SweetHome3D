@@ -1619,7 +1619,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     final Background background = new Background(backgroundBranch);
     updateBackgroundColorAndTexture(backgroundAppearance, this.home, waitForLoading);
-    background.setImageScaleMode(Background.SCALE_FIT_ALL);
     background.setApplicationBounds(new BoundingBox(
         new Point3d(-1E7, -1E7, -1E7), 
         new Point3d(1E7, 1E7, 1E7)));    
