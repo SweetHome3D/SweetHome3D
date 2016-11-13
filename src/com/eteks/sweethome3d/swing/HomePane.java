@@ -98,6 +98,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.media.j3d.Node;
+import javax.media.j3d.VirtualUniverse;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -3783,7 +3784,11 @@ public class HomePane extends JRootPane implements HomeView {
     }
     float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
-    String message = String.format(messageFormat, aboutVersion, javaVersion);
+    String java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
+    if (java3dVersion != null) {
+      java3dVersion = java3dVersion.split("\\s") [0];
+    }
+    String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
     JComponent messagePane = createEditorPane(message);
     messagePane.setOpaque(false);
     
