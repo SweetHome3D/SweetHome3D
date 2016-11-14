@@ -1313,7 +1313,7 @@
   <target name="jdepend" depends="build"
           description="Launchs a JDepend graphical UI">
     <!-- Create jdepend.properties file in build directory that specifies ignored Java packages -->
-    <concat destfile="build/jdepend.properties">ignore.java=java.*,javax.swing.*</concat>
+    <concat destfile="build/jdepend.properties">ignore.java=java.*</concat>
 
     <!-- Run JDepend UI -->
     <java classname="jdepend.swingui.JDepend" fork="true">
