@@ -21,7 +21,7 @@ public class PackageDependenciesTest extends TestCase {
    */
   public void testPackageDependencies() throws IOException {
     PackageFilter packageFilter = new PackageFilter();
-    // Ignore Java packages and Swing sub packages
+    // Ignore Java packages 
     packageFilter.addPackage("java.*");
     // Ignore JUnit tests
     packageFilter.addPackage("com.eteks.sweethome3d.junit");
