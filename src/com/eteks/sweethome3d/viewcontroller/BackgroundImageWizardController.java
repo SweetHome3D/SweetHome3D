@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
+import java.util.List;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -58,15 +59,16 @@ public class BackgroundImageWizardController extends WizardController
   private final BackgroundImageWizardStepState imageOriginStepState;
   private View                                 stepsView;
   
-  private Step    step;
-  private Content image;
-  private Float   scaleDistance;
-  private float   scaleDistanceXStart;
-  private float   scaleDistanceYStart;
-  private float   scaleDistanceXEnd;
-  private float   scaleDistanceYEnd;
-  private float   xOrigin;
-  private float   yOrigin;
+  private Step            step;
+  private BackgroundImage referenceBackgroundImage;
+  private Content         image;
+  private Float           scaleDistance;
+  private float           scaleDistanceXStart;
+  private float           scaleDistanceYStart;
+  private float           scaleDistanceXEnd;
+  private float           scaleDistanceYEnd;
+  private float           xOrigin;
+  private float           yOrigin;
   
   public BackgroundImageWizardController(Home home, 
                                          UserPreferences preferences,
@@ -75,7 +77,7 @@ public class BackgroundImageWizardController extends WizardController
                                          UndoableEditSupport undoSupport) {
     super(preferences, viewFactory);
     this.home = home;
-    this.preferences = preferences;
+    this.preferences = preferences; 
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
@@ -87,6 +89,19 @@ public class BackgroundImageWizardController extends WizardController
     this.imageScaleStepState = new ImageScaleStepState();
     this.imageOriginStepState = new ImageOriginStepState();
     setStepState(this.imageChoiceStepState);
+    // Search the background image used as a reference to initialize the edited one
+    Level selectedLevel = this.home.getSelectedLevel();
+    if (selectedLevel != null) {
+      List<Level> levels = this.home.getLevels();
+      int levelIndex = levels.indexOf(selectedLevel);
+      for (int i = levelIndex - 1; i >= 0 && this.referenceBackgroundImage == null; i--) {
+        this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
+      }
+      // If no background image exists on previous level, search in upper levels 
+      for (int i = levelIndex + 1; i < levels.size() && this.referenceBackgroundImage == null; i++) {
+        this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
+      }
+    }
   }
 
   /**
@@ -256,6 +271,15 @@ public class BackgroundImageWizardController extends WizardController
   }
 
   /**
+   * Returns the background image of another level that can be used to initialize 
+   * the scale values of the edited image.
+   * @since 5.3
+   */
+  public BackgroundImage getReferenceBackgroundImage() {
+    return this.referenceBackgroundImage;
+  }
+  
+  /**
    * Sets the image content of the background image.
    */
   public void setImage(Content image) {
@@ -308,7 +332,7 @@ public class BackgroundImageWizardController extends WizardController
       this.scaleDistanceXEnd = scaleDistanceXEnd;
       this.scaleDistanceYEnd = scaleDistanceYEnd;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SCALE_DISTANCE.name(), oldDistancePoints, 
+          Property.SCALE_DISTANCE_POINTS.name(), oldDistancePoints, 
           new float [][] {{scaleDistanceXStart, scaleDistanceYStart},
                           {scaleDistanceXEnd, scaleDistanceYEnd}});
     }

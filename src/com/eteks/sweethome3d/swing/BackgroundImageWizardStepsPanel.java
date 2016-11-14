@@ -218,8 +218,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If scale distance changes updates scale spinner
-            scaleDistanceSpinnerModel.setNullable(controller.getScaleDistance() == null);
-            scaleDistanceSpinnerModel.setLength(controller.getScaleDistance());
+            Float scaleDistance = controller.getScaleDistance();
+            scaleDistanceSpinnerModel.setNullable(scaleDistance == null);
+            scaleDistanceSpinnerModel.setLength(scaleDistance);
           }
         });
     this.scalePreviewComponent = new ScaleImagePreviewComponent(controller);
@@ -527,14 +528,29 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                   controller.setImage(readContent);
                   setImageChangeTexts(preferences);
                   imageChoiceErrorLabel.setVisible(false);
-                  // Initialize distance and origin with default values
-                  controller.setScaleDistance(null);
-                  float scaleDistanceXStart = readImage.getWidth() * 0.1f;
-                  float scaleDistanceYStart = readImage.getHeight() / 2f;
-                  float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
-                  controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
-                      scaleDistanceXEnd, scaleDistanceYStart);
-                  controller.setOrigin(0, 0);
+                  BackgroundImage referenceBackgroundImage = controller.getReferenceBackgroundImage();
+                  if (referenceBackgroundImage != null
+                      && referenceBackgroundImage.getScaleDistanceXStart() < readImage.getWidth()
+                      && referenceBackgroundImage.getScaleDistanceXEnd() < readImage.getWidth()
+                      && referenceBackgroundImage.getScaleDistanceYStart() < readImage.getHeight()
+                      && referenceBackgroundImage.getScaleDistanceYEnd() < readImage.getHeight()) {
+                    // Initialize distance and origin with values of the reference image
+                    controller.setScaleDistance(referenceBackgroundImage.getScaleDistance());
+                    controller.setScaleDistancePoints(referenceBackgroundImage.getScaleDistanceXStart(), 
+                        referenceBackgroundImage.getScaleDistanceYStart(), 
+                        referenceBackgroundImage.getScaleDistanceXEnd(), 
+                        referenceBackgroundImage.getScaleDistanceYEnd());
+                    controller.setOrigin(referenceBackgroundImage.getXOrigin(), referenceBackgroundImage.getYOrigin());
+                  } else {
+                    // Initialize distance and origin with default values
+                    controller.setScaleDistance(null);
+                    float scaleDistanceXStart = readImage.getWidth() * 0.1f;
+                    float scaleDistanceYStart = readImage.getHeight() / 2f;
+                    float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
+                    controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
+                        scaleDistanceXEnd, scaleDistanceYStart);
+                    controller.setOrigin(0, 0);
+                  }
                 } else if (isShowing()){
                   controller.setImage(null);
                   setImageChoiceTexts(preferences);
