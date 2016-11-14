@@ -1197,8 +1197,7 @@ public class PhotoRenderer {
   }
 
   /**
-   * Stores <code>textureCoordinates</code> in <code>uvs</code>.  
-   * @param textureTransform TODO
+   * Stores <code>textureCoordinates</code> in <code>uvs</code>. 
    */
   private void exportTextureCoordinates(TexCoord2f textureCoordinates, 
                                         Transform3D textureTransform,
