@@ -2767,6 +2767,7 @@ public class HomeController implements Controller {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() / 1.5f;
     planController.setScale(newScale);
+    planController.getView().makeSelectionVisible();
   }
 
   /**
@@ -2776,6 +2777,7 @@ public class HomeController implements Controller {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() * 1.5f;
     planController.setScale(newScale);
+    planController.getView().makeSelectionVisible();
   }
 
   /**
