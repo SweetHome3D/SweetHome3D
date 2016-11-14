@@ -19,10 +19,20 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -59,9 +69,12 @@ import javax.jnlp.UnavailableServiceException;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
 
 import com.eteks.sweethome3d.io.AutoRecoveryManager;
 import com.eteks.sweethome3d.io.FileUserPreferences;
@@ -526,6 +539,37 @@ public class SweetHome3D extends HomeApplication {
       // Change default titled borders under Mac OS X 10.5
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         UIManager.put("TitledBorder.border", UIManager.getBorder("TitledBorder.aquaVariant"));
+      }
+      if (OperatingSystem.isMacOSXYosemiteOrSuperior()) {
+        UIManager.put("SplitPaneDivider.border", new Border() {
+            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+              // Set a border that fills the divider with the expected background color (instead of white)
+              // except at the place where the buttons are already drawn 
+              ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+              g.setColor(UIManager.getColor("SplitPane.background"));
+              Shape clip = g.getClip();
+              Area clipArea = new Area(new Rectangle2D.Float(x - 0.5f, y - 0.5f, width + 1f, height + 1f));
+              clipArea.subtract(new Area(new Ellipse2D.Float(x + width / 2f - 3.4f, y + height / 2f - 3.2f, 6.8f, 6.8f)));
+              JSplitPane splitPane = ((BasicSplitPaneDivider)c).getBasicSplitPaneUI().getSplitPane();
+              if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+                clipArea.subtract(new Area(new Polygon(new int [] {x, x + 4, x + 8}, 
+                    new int [] {y + height / 2 + 3, y + height / 2 - 3, y + height / 2 + 3}, 3)));
+                clipArea.subtract(new Area(new Polygon(new int [] {x + 12, x + 15, x + 19}, 
+                    new int [] {y + height / 2 - 2, y + height / 2 + 3, y + height / 2 - 2}, 3)));
+              }
+              g.setClip(clipArea);
+              g.fillRect(x, y + height / 2 - 5, x + width, 11);
+              g.setClip(clip);
+            }
+            
+            public boolean isBorderOpaque() {
+              return true;
+            }
+            
+            public Insets getBorderInsets(Component c) {
+              return new Insets(0, 0, 0, 0);
+            }
+          });
       }
       SwingTools.updateSwingResourceLanguage(getUserPreferences());
     } catch (Exception ex) {
