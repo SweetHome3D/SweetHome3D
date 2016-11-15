@@ -214,15 +214,16 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
               ((NullableSpinner.NullableSpinnerLengthModel)scaleDistanceSpinner.getModel()).getLength());
         }
       });
-    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE,
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            // If scale distance changes updates scale spinner
-            Float scaleDistance = controller.getScaleDistance();
-            scaleDistanceSpinnerModel.setNullable(scaleDistance == null);
-            scaleDistanceSpinnerModel.setLength(scaleDistance);
-          }
-        });
+    PropertyChangeListener scaleDistanceChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          // If scale distance changes updates scale spinner
+          Float scaleDistance = controller.getScaleDistance();
+          scaleDistanceSpinnerModel.setNullable(scaleDistance == null);
+          scaleDistanceSpinnerModel.setLength(scaleDistance);
+        }
+      };
+    scaleDistanceChangeListener.propertyChange(null);
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE, scaleDistanceChangeListener);
     this.scalePreviewComponent = new ScaleImagePreviewComponent(controller);
     
     // Image origin panel components
