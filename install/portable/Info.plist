@@ -52,6 +52,7 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>sh3d</string>
+					<string>sh3x</string>
 				</array>
 			</dict>
 		</dict>

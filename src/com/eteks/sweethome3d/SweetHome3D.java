@@ -363,7 +363,7 @@ public class SweetHome3D extends HomeApplication {
 
   /**
    * Sweet Home 3D entry point.
-   * @param args may contain one .sh3d, .sh3f or .sh3p file to open or install,
+   * @param args may contain one .sh3d, .sh3x, .sh3f, .sh3t, .sh3l or .sh3p file to open or install,
    *          following a <code>-open</code> option.
    */
   public static void main(final String [] args) {

@@ -215,7 +215,7 @@ public class FileContentManager implements ContentManager {
       new FileFilter() {
         @Override
         public boolean accept(File file) {
-          // Accept directories and .sh3d files
+          // Accept directories and .bmp files
           return file.isDirectory()
                  || file.getName().toLowerCase().endsWith(BMP_EXTENSION)
                  || file.getName().toLowerCase().endsWith(WBMP_EXTENSION);
@@ -316,6 +316,7 @@ public class FileContentManager implements ContentManager {
   
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
+  private final String                    sweetHome3DFileExtension2;
   private final String                    languageLibraryFileExtension;
   private final String                    furnitureLibraryFileExtension;
   private final String                    texturesLibraryFileExtension;
@@ -327,6 +328,14 @@ public class FileContentManager implements ContentManager {
   public FileContentManager(final UserPreferences preferences) {  
     this.preferences = preferences;
     this.sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
+    String homeExtension2;
+    try {
+      // Get optional second extension
+      homeExtension2 = preferences.getLocalizedString(FileContentManager.class, "homeExtension2");
+    } catch (IllegalArgumentException ex) {
+      homeExtension2 = null;
+    }
+    this.sweetHome3DFileExtension2 = homeExtension2;
     this.languageLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "languageLibraryExtension");
     this.furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
     this.texturesLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "texturesLibraryExtension");
@@ -348,9 +357,11 @@ public class FileContentManager implements ContentManager {
         new FileFilter() {
           @Override
           public boolean accept(File file) {
-            // Accept directories and .sh3d files
+            // Accept directories, .sh3d and .sh3x files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(sweetHome3DFileExtension);
+                || file.getName().toLowerCase().endsWith(sweetHome3DFileExtension)
+                || (sweetHome3DFileExtension2 != null 
+                     && file.getName().toLowerCase().endsWith(sweetHome3DFileExtension2));
           }
           
           @Override
@@ -436,11 +447,14 @@ public class FileContentManager implements ContentManager {
 
     // Fill file default extension map
     this.fileExtensions = new HashMap<ContentType, String []>();
-    this.fileExtensions.put(ContentType.SWEET_HOME_3D,     new String [] {sweetHome3DFileExtension});
-    this.fileExtensions.put(ContentType.LANGUAGE_LIBRARY,  new String [] {languageLibraryFileExtension});
-    this.fileExtensions.put(ContentType.FURNITURE_LIBRARY, new String [] {furnitureLibraryFileExtension});
-    this.fileExtensions.put(ContentType.TEXTURES_LIBRARY,  new String [] {texturesLibraryFileExtension});
-    this.fileExtensions.put(ContentType.PLUGIN,            new String [] {pluginFileExtension});
+    String [] sweetHome3DFileExtensions = this.sweetHome3DFileExtension2 != null
+        ? new String [] {this.sweetHome3DFileExtension, this.sweetHome3DFileExtension2}
+        : new String [] {this.sweetHome3DFileExtension};
+    this.fileExtensions.put(ContentType.SWEET_HOME_3D,     sweetHome3DFileExtensions);
+    this.fileExtensions.put(ContentType.LANGUAGE_LIBRARY,  new String [] {this.languageLibraryFileExtension});
+    this.fileExtensions.put(ContentType.FURNITURE_LIBRARY, new String [] {this.furnitureLibraryFileExtension});
+    this.fileExtensions.put(ContentType.TEXTURES_LIBRARY,  new String [] {this.texturesLibraryFileExtension});
+    this.fileExtensions.put(ContentType.PLUGIN,            new String [] {this.pluginFileExtension});
     this.fileExtensions.put(ContentType.PNG,               new String [] {PNG_EXTENSION});
     this.fileExtensions.put(ContentType.JPEG,              new String [] {JPEG_EXTENSION});
     this.fileExtensions.put(ContentType.MOV,               new String [] {MOV_EXTENSION});
