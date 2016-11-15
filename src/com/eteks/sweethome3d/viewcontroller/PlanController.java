@@ -80,7 +80,7 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class PlanController extends FurnitureController implements Controller {
-  public enum Property {MODE, MODIFICATION_STATE, SCALE}
+  public enum Property {MODE, MODIFICATION_STATE, BASE_PLAN_MODIFICATION_STATE, SCALE}
 
   /**
    * Selectable modes in controller.
@@ -275,19 +275,25 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected void setState(ControllerState state) {
     boolean oldModificationState = false;
+    boolean oldBasePlanModificationState = false;
     if (this.state != null) {
-      this.state.exit();
       oldModificationState = this.state.isModificationState();
+      oldBasePlanModificationState = this.state.isBasePlanModificationState();
+      this.state.exit();
     }
     
     this.previousState = this.state;
     this.state = state;
+    this.state.enter();
+    
     if (oldModificationState != state.isModificationState()) {
       this.propertyChangeSupport.firePropertyChange(Property.MODIFICATION_STATE.name(), 
           oldModificationState, !oldModificationState);
     }
-    
-    this.state.enter();
+    if (oldBasePlanModificationState != state.isBasePlanModificationState()) {
+      this.propertyChangeSupport.firePropertyChange(Property.BASE_PLAN_MODIFICATION_STATE.name(), 
+          oldBasePlanModificationState, !oldBasePlanModificationState);
+    }
   }
   
   /**
@@ -328,6 +334,14 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public boolean isModificationState() {
     return this.state.isModificationState();
+  }
+
+  /**
+   * Returns <code>true</code> if the interactions in the current mode may modify 
+   * the base plan of a home. 
+   */
+  public boolean isBasePlanModificationState() {
+    return this.state.isBasePlanModificationState();
   }
 
   /**
@@ -6516,6 +6530,10 @@ public class PlanController extends FurnitureController implements Controller {
       return false;
     }
 
+    public boolean isBasePlanModificationState() {
+      return false;
+    }
+
     public void deleteSelection() {
     }
 
@@ -6796,6 +6814,7 @@ public class PlanController extends FurnitureController implements Controller {
     private boolean              magnetismEnabled;
     private boolean              duplicationActivated;
     private boolean              alignmentActivated;
+    private boolean              basePlanModification;
 
     @Override
     public Mode getMode() {
@@ -6807,6 +6826,11 @@ public class PlanController extends FurnitureController implements Controller {
       return true;
     }
     
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.basePlanModification;
+    }
+
     @Override
     public void enter() {
       this.xLastMouseMove = getXLastMousePress();
@@ -6831,10 +6855,15 @@ public class PlanController extends FurnitureController implements Controller {
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress(), false));
       }       
       List<Selectable> selectedItems = home.getSelectedItems();
-      this.movedItems = new ArrayList<Selectable>(selectedItems.size());      
+      this.movedItems = new ArrayList<Selectable>(selectedItems.size());
+      this.basePlanModification = false;
       for (Selectable item : selectedItems) {
         if (isItemMovable(item)) {
           this.movedItems.add(item);
+          if (!this.basePlanModification
+              && isItemPartOfBasePlan(item)) {
+            this.basePlanModification = true;
+          }
         }
       }
       if (this.movedItems.size() == 1
@@ -7324,6 +7353,12 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return this.draggedPieceOfFurniture != null 
+          && isPieceOfFurniturePartOfBasePlan(this.draggedPieceOfFurniture);
+    }
+
+    @Override
     public void enter() {
       this.xLastMouseMove = 0;
       this.yLastMouseMove = 0;
@@ -7578,6 +7613,11 @@ public class PlanController extends FurnitureController implements Controller {
  
     @Override
     public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
       return true;
     }
     
@@ -8118,6 +8158,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       super.enter();
       this.selectedWall = (Wall)home.getSelectedItems().get(0);
@@ -8232,6 +8277,12 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return this.selectedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.selectedPiece);
+    }
+    
+    @Override
     public void enter() {
       this.rotationToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "rotationToolTipFeedback");
@@ -8340,6 +8391,12 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return this.selectedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.selectedPiece);
+    }
+    
+    @Override
     public void enter() {
       this.elevationToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "elevationToolTipFeedback");
@@ -8429,6 +8486,12 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public boolean isModificationState() {
       return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.resizedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.resizedPiece.getPieceOfFurniture());
     }
     
     @Override
@@ -8544,6 +8607,12 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public boolean isModificationState() {
       return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.resizedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.resizedPiece.getPieceOfFurniture());
     }
     
     @Override
@@ -9249,6 +9318,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void setMode(Mode mode) {
       // Escape current creation and change state to matching mode
       escape();
@@ -9584,6 +9658,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
@@ -9825,6 +9904,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.selectedDimensionLine = (DimensionLine)home.getSelectedItems().get(0);
       this.oldOffset = this.selectedDimensionLine.getOffset();
@@ -10052,6 +10136,11 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
       return true;
     }
     
@@ -10521,6 +10610,11 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
       return true;
     }
     
@@ -11108,6 +11202,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void setMode(Mode mode) {
       // Escape current creation and change state to matching mode
       escape();
@@ -11448,6 +11547,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       super.enter();
       this.selectedPolyline = (Polyline)home.getSelectedItems().get(0);
@@ -11584,6 +11688,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.selectedLabel = (Label)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedLabel.getY() - getYLastMousePress(), 
@@ -11668,6 +11777,11 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
       return true;
     }
     
@@ -11766,6 +11880,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.rotationToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "rotationToolTipFeedback");
@@ -11841,6 +11960,11 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
       return true;
     }
     

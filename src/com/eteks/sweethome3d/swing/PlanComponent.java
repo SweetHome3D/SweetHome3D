@@ -284,6 +284,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private List<Selectable>      draggedItemsFeedback;
   private List<DimensionLine>   dimensionLinesFeedback;
   private boolean               selectionScrollUpdated;
+  private boolean               wallsDoorsOrWindowsModification;
   private JToolTip              toolTip;
   private JWindow               toolTipWindow;
   private boolean               resizeIndicatorVisible;
@@ -604,6 +605,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
+      addControllerListener(controller);
       createActions(controller);      
       installDefaultKeyboardActions();
       setFocusable(true);
@@ -1208,6 +1210,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         });
     }
+  }
+  
+  /**
+   * Adds a listener to the controller to follow changes in base plan modification state.
+   */
+  private void addControllerListener(final PlanController controller) {
+    controller.addPropertyChangeListener(PlanController.Property.BASE_PLAN_MODIFICATION_STATE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            boolean wallsDoorsOrWindowsModification = controller.isBasePlanModificationState();
+            if (wallsDoorsOrWindowsModification) {
+              // Limit base plan modification state to walls creation/handling and doors or windows handling
+              if (controller.getMode() != PlanController.Mode.WALL_CREATION) {
+                for (Selectable item : (draggedItemsFeedback != null ? draggedItemsFeedback : home.getSelectedItems())) {
+                  if (!(item instanceof Wall) 
+                      && !(item instanceof HomePieceOfFurniture && ((HomePieceOfFurniture)item).isDoorOrWindow())) {
+                    wallsDoorsOrWindowsModification = false;
+                  }
+                }
+              }
+            }
+            if (PlanComponent.this.wallsDoorsOrWindowsModification != wallsDoorsOrWindowsModification) {
+              PlanComponent.this.wallsDoorsOrWindowsModification = wallsDoorsOrWindowsModification;
+              repaint();
+            }
+          }
+        });
   }
   
   /**
@@ -3254,11 +3283,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float wallPaintScale = paintMode == PaintMode.PRINT 
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale;
+    Composite oldComposite = null;
+    if (this.backgroundPainted 
+        && this.backgroundImageCache != null
+        && this.wallsDoorsOrWindowsModification) {
+      // Paint walls with half transparent paint when a wall or a door/window in the base plan is being handled
+      oldComposite = setTransparency(g2D, 0.5f);
+    }
     for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
       TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
       fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale, 
           getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
               wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor, paintMode);
+    }
+    if (oldComposite != null) {
+      g2D.setComposite(oldComposite);
     }
   }
 
