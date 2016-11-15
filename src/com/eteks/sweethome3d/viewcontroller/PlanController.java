@@ -3440,7 +3440,7 @@ public class PlanController extends FurnitureController implements Controller {
     // at highest elevation in case it covers an other piece
     List<HomePieceOfFurniture> foundFurniture = new ArrayList<HomePieceOfFurniture>();
     HomePieceOfFurniture foundPiece = null;
-    for (int i = furniture.size() - 1; i >= 0 && (foundPiece == null || !stopAtFirstItem); i--) {
+    for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
       if ((!basePlanLocked 
             || !isItemPartOfBasePlan(piece))
