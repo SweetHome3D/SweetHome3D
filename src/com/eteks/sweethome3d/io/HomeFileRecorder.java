@@ -158,7 +158,7 @@ public class HomeFileRecorder implements HomeRecorder {
               : ContentRecording.INCLUDE_ALL_CONTENT,
           true,
           this.preferXmlEntry 
-              ? new HomeXMLExporter() 
+              ? getHomeXMLExporter() 
               : null);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
@@ -240,6 +240,13 @@ public class HomeFileRecorder implements HomeRecorder {
       }
     }
   }
+
+  /**
+   * Returns an exporter able to generate the content of a <code>Home.xml</code> entry.
+   */
+  protected HomeXMLExporter getHomeXMLExporter() {
+    return new HomeXMLExporter();
+  }
   
   /**
    * Returns a home instance read from its file <code>name</code>.
@@ -251,7 +258,7 @@ public class HomeFileRecorder implements HomeRecorder {
     try {
       // Open a stream on file
       in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT,
-          this.preferXmlEntry ? new HomeXMLHandler(preferences) : null, 
+          this.preferXmlEntry ? getHomeXMLHandler() : null, 
           this.preferences, this.preferPreferencesContent);
       // Read home with HomeInputStream
       Home home = in.readHome();
@@ -275,6 +282,14 @@ public class HomeFileRecorder implements HomeRecorder {
     }
   }
 
+  /**
+   * Returns a SAX XML handler able to interpret the information contained in the 
+   * <code>Home.xml</code> entry. 
+   */
+  protected HomeXMLHandler getHomeXMLHandler() {
+    return new HomeXMLHandler(this.preferences);
+  }
+  
   /**
    * Returns <code>true</code> if the file <code>name</code> exists.
    */
