@@ -88,6 +88,7 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage iTextPdf = constraint.addPackage("com.lowagie.text.pdf");
     // FreeHEP Vector Graphics for SVG
     JavaPackage vectorGraphicsUtil = constraint.addPackage("org.freehep.util");
+    JavaPackage vectorGraphics = constraint.addPackage("org.freehep.graphicsio");
     JavaPackage vectorGraphicsSvg = constraint.addPackage("org.freehep.graphicsio.svg");
     // Batik for SVG path parsing
     JavaPackage orgApacheBatikParser = constraint.addPackage("org.apache.batik.parser");
@@ -174,6 +175,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(iText);
     sweetHome3DSwing.dependsUpon(iTextPdf);
     sweetHome3DSwing.dependsUpon(vectorGraphicsUtil);
+    sweetHome3DSwing.dependsUpon(vectorGraphics);
     sweetHome3DSwing.dependsUpon(vectorGraphicsSvg);
     sweetHome3DSwing.dependsUpon(jnlp);
     
