@@ -884,9 +884,11 @@
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/x86/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/x86/SweetHome3D-${version}/lib"/>
-    <!-- Copy SweetHome3D command -->
+    <!-- Copy SweetHome3D commands -->
     <copy todir="install/linux/x86/SweetHome3D-${version}" 
           file="install/linux/SweetHome3D"/>
+    <copy todir="install/linux/x86/SweetHome3D-${version}" 
+          file="install/linux/SweetHome3D-Java3D-1_5_2"/>  	
 
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/linux/x86/SweetHome3D-version/lib -->
@@ -898,16 +900,18 @@
       <fileset dir="lib">
         <include name="*.jar"/>
         <include name="java3d-1.6/*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
       	<exclude name="java3d-1.6/jogl-all.jar"/>
       </fileset>
       <fileset dir="build">
         <include name="java3d-1.6/jogl-java3d.jar"/>
       </fileset>
    	</copy>
-    <copy todir="install/linux/x86/SweetHome3D-${version}/lib/java3d-1.6/" >
+    <copy todir="install/linux/x86/SweetHome3D-${version}/lib" >
+      <fileset dir="lib/linux/i386">
+        <include name="*.so"/>
+      </fileset>
+    </copy>
+    <copy todir="install/linux/x86/SweetHome3D-${version}/lib/java3d-1.6" >
       <fileset dir="lib/java3d-1.6/linux/i586">
         <include name="*.so"/>
       </fileset>
@@ -972,11 +976,13 @@
       <tarfileset dir="install/linux/x86"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
+        <exclude name="SweetHome3D-${version}/SweetHome3D-Java3D-1_5_2"/>
         <exclude name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/x86" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
+        <include name="SweetHome3D-${version}/SweetHome3D-Java3D-1_5_2"/>
         <include name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
     </tar>
@@ -996,9 +1002,11 @@
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/x64/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/x64/SweetHome3D-${version}/lib"/>
-    <!-- Copy SweetHome3D command -->
+    <!-- Copy SweetHome3D commands -->
     <copy todir="install/linux/x64/SweetHome3D-${version}" 
           file="install/linux/SweetHome3D"/>
+    <copy todir="install/linux/x64/SweetHome3D-${version}" 
+          file="install/linux/SweetHome3D-Java3D-1_5_2"/>  	
 
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/linux/x64/SweetHome3D-version/lib -->
@@ -1010,16 +1018,18 @@
       <fileset dir="lib">
         <include name="*.jar"/>
         <include name="java3d-1.6/*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
       	<exclude name="java3d-1.6/jogl-all.jar"/>
       </fileset>
       <fileset dir="build">
         <include name="java3d-1.6/jogl-java3d.jar"/>
       </fileset>
    	</copy>
-    <copy todir="install/linux/x64/SweetHome3D-${version}/lib/java3d-1.6/" >
+    <copy todir="install/linux/x64/SweetHome3D-${version}/lib" >
+      <fileset dir="lib/linux/x64">
+        <include name="*.so"/>
+      </fileset>
+    </copy>
+    <copy todir="install/linux/x64/SweetHome3D-${version}/lib/java3d-1.6" >
       <fileset dir="lib/java3d-1.6/linux/amd64">
         <include name="*.so"/>
       </fileset>
@@ -1084,11 +1094,13 @@
       <tarfileset dir="install/linux/x64"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
+        <exclude name="SweetHome3D-${version}/SweetHome3D-Java3D-1_5_2"/>
         <exclude name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/x64" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
+      	<include name="SweetHome3D-${version}/SweetHome3D-Java3D-1_5_2"/>
         <include name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
     </tar>
