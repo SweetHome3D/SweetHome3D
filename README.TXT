@@ -1,5 +1,5 @@
-SWEET HOME 3D v 5.2a
---------------------
+SWEET HOME 3D v 5.3
+-------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
 Please read http://www.sweethome3d.com/history.html for more information
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command:
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_5_2_A SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_5_3 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -40,7 +40,7 @@ text field the option:
 or -Djava.ext.dirs=lib/linux/x64:lib
 according to your system and its architecture, except under Java 7 / 8 and Mac OS X, 
 where VM arguments should be:
--Djava.ext.dirs=lib/macosx/java3d-1.6:lib -Djava.library.path=lib/macosx/java3d-1.6
+-Djava.ext.dirs=lib/java3d-1.6 -Djava.library.path=lib/java3d-1.6/macosx
 -Djogamp.gluegen.UseTempJarCache=false
 
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
