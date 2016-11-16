@@ -395,7 +395,7 @@ public class FurnitureCatalogTree extends JTree implements View {
         this.defaultFont = this.nameLabel.getFont();
         String bodyRule = "body { font-family: " + this.defaultFont.getFamily() + "; " 
             + "font-size: " + this.defaultFont.getSize() + "pt; " 
-            + "top-margin: 0; }";
+            + "margin: 0; }";
         ((HTMLDocument)this.informationPane.getDocument()).getStyleSheet().addRule(bodyRule);
         this.modifiablePieceFont = 
             new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());        
@@ -427,7 +427,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       if (this.informationPane.isVisible()) {
         Dimension informationPreferredSize = this.informationPane.getPreferredSize();
         this.informationPane.setBounds(namePreferredSize.width + 2, 
-            (namePreferredSize.height - informationPreferredSize.height) / 2,
+            Math.max(0, (namePreferredSize.height - informationPreferredSize.height) / 2),
             informationPreferredSize.width, namePreferredSize.height);
       }
     }
