@@ -503,9 +503,9 @@ public class PhotoRenderer {
       Vector3 up = new Vector3(0, 1, 0);              
       transform = Matrix4.lookAt(eye, target, up);
     } else {
-      // Compute matrix directly when the camera points is at top
+      // Compute matrix directly when the camera points to top or bottom
       transform = new Matrix4((float)-Math.cos(yaw), (float)-Math.sin(yaw), 0, camera.getX(), 
-          0, 0, 1, camera.getZ(), 
+          0, 0, (float)Math.signum(Math.sin(pitch)), camera.getZ(), 
           (float)-Math.sin(yaw), (float)Math.cos(yaw), 0, camera.getY());
     }
     this.sunflow.parameter("transform", transform);
