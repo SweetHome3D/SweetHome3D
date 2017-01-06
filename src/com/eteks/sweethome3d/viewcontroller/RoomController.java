@@ -31,7 +31,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -1130,9 +1129,8 @@ public class RoomController implements Controller {
       Wall firstWall = null;
       Wall secondWall = null;
       ModifiedWall deletedWall = null;
-      for (Iterator<WallSide> it = wallSides.iterator(); 
-          it.hasNext() && splitWallSide == null; ) {
-        WallSide wallSide = (WallSide)it.next();
+      for (int i = 0; i < wallSides.size() && splitWallSide == null; i++) {
+        WallSide wallSide = wallSides.get(i);
         Wall wall = wallSide.getWall();
         Float arcExtent = wall.getArcExtent();
         if (arcExtent == null || arcExtent.floatValue() == 0) { // Ignore round walls
@@ -1229,9 +1227,9 @@ public class RoomController implements Controller {
           deletedWalls.add(deletedWall);
         } else {
           // Remove from newWalls in case it was a wall split twice
-          for (Iterator<Wall> it = newWalls.iterator(); it.hasNext(); ) {
-            if (it.next() == splitWall) {
-              it.remove();
+          for (int i = newWalls.size() - 1; i >= 0; i--) {
+            if (newWalls.get(i) == splitWall) {
+              newWalls.remove(i);
               break;
             }
           }
@@ -1247,10 +1245,10 @@ public class RoomController implements Controller {
         wallSides.add(new WallSide(secondWall, splitWallSide.getSide()));
         // Update any wall side that reference the same wall
         List<WallSide> sameWallSides = new ArrayList<WallSide>(); 
-        for (Iterator<WallSide> it = wallSides.iterator(); it.hasNext(); ) {
-          WallSide wallSide = it.next();
+        for (int i = wallSides.size() - 1;  i >= 0; i--) {
+          WallSide wallSide = wallSides.get(i);
           if (wallSide.getWall() == splitWall) {
-            it.remove();
+            wallSides.remove(i);
             sameWallSides.add(new WallSide(firstWall, wallSide.getSide()));
             sameWallSides.add(new WallSide(secondWall, wallSide.getSide()));
           }

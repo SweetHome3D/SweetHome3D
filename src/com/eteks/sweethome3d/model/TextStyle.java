@@ -24,7 +24,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -82,11 +81,10 @@ public class TextStyle implements Serializable {
    */
   private TextStyle getInstance(String fontName, float fontSize, boolean bold, boolean italic) {
     TextStyle textStyle = new TextStyle(fontName, fontSize, bold, italic, false);
-    for (Iterator<WeakReference<TextStyle>> it = textStylesCache.iterator(); it.hasNext(); ) {
-      WeakReference<TextStyle> ref = it.next();
-      TextStyle cachedTextStyle = ref.get();
+    for (int i = textStylesCache.size() - 1; i >= 0; i--) {
+      TextStyle cachedTextStyle = textStylesCache.get(i).get();
       if (cachedTextStyle == null) {
-        it.remove();
+        textStylesCache.remove(i);
       } else if (cachedTextStyle.equals(textStyle)) {
         return textStyle;
       }

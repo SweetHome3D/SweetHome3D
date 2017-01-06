@@ -39,7 +39,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -2105,10 +2104,10 @@ public class HomeController implements Controller {
   private void updateUserPreferencesRecentHomes(List<String> recentHomes) {
     if (this.application != null) {
       // Check every recent home exists
-      for (Iterator<String> it = recentHomes.iterator(); it.hasNext(); ) {
+      for (int i = recentHomes.size() - 1; i >= 0; i--) {
         try {
-          if (!this.application.getHomeRecorder().exists(it.next())) {
-            it.remove();
+          if (!this.application.getHomeRecorder().exists(recentHomes.get(i))) {
+            recentHomes.remove(i);
           }
         } catch (RecorderException ex) {
           // If homeName can't be checked ignore it
@@ -3073,8 +3072,13 @@ public class HomeController implements Controller {
       String sizeUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "sizeUpdateMessage");
       String downloadUpdateMessage = this.preferences.getLocalizedString(HomeController.class, "downloadUpdateMessage");
       String updatesMessageSeparator = this.preferences.getLocalizedString(HomeController.class, "updatesMessageSeparator");
-      for (Iterator<Map.Entry<Library, List<Update>>> it = updates.entrySet().iterator(); it.hasNext(); ) {
-        Map.Entry<Library, List<Update>> updateEntry = it.next();
+      boolean firstUpdate = true;
+      for (Map.Entry<Library, List<Update>> updateEntry : updates.entrySet()) {
+        if (firstUpdate) {
+          firstUpdate = false;
+        } else {
+          message += updatesMessageSeparator;
+        }
         Library library = updateEntry.getKey();
         if (library == null) {
           // Application itself
@@ -3092,9 +3096,6 @@ public class HomeController implements Controller {
           }
           message += getApplicationOrLibraryUpdateMessage(updateEntry.getValue(), name,
               libraryUpdateMessage, sizeUpdateMessage, downloadUpdateMessage);
-        }
-        if (it.hasNext()) {
-          message += updatesMessageSeparator;
         }
       }
       

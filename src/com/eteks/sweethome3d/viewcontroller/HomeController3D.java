@@ -25,7 +25,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.undo.UndoableEditSupport;
@@ -192,8 +191,8 @@ public class HomeController3D implements Controller {
     ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
     storedCameras.addAll(homeStoredCameras);
     // Don't keep two cameras with the same name or the same location
-    for (Iterator<Camera> it = storedCameras.iterator(); it.hasNext(); ) {
-      Camera storedCamera = it.next();
+    for (int i = storedCameras.size() - 1; i >= 0; i--) {
+      Camera storedCamera = storedCameras.get(i);
       if (name.equals(storedCamera.getName())
           || (camera.getX() == storedCamera.getX()
               && camera.getY() == storedCamera.getY()
@@ -203,7 +202,7 @@ public class HomeController3D implements Controller {
               && camera.getFieldOfView() == storedCamera.getFieldOfView()
               && camera.getTime() == storedCamera.getTime()
               && camera.getLens() == storedCamera.getLens())) {
-        it.remove();
+        storedCameras.remove(i);
       }
     }
     storedCameras.add(0, camera);

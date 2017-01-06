@@ -24,7 +24,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -74,11 +73,10 @@ public class Baseboard implements Serializable {
   public static Baseboard getInstance(float thickness, float height, 
                                       Integer color, HomeTexture texture) {
     Baseboard baseboard = new Baseboard(thickness, height, color, texture, false);
-    for (Iterator<WeakReference<Baseboard>> it = baseboardsCache.iterator(); it.hasNext(); ) {
-      WeakReference<Baseboard> ref = it.next();
-      Baseboard cachedBaseboard = ref.get();
+    for (int i = baseboardsCache.size() - 1; i >= 0; i--) {
+      Baseboard cachedBaseboard = baseboardsCache.get(i).get();
       if (cachedBaseboard == null) {
-        it.remove();
+        baseboardsCache.remove(i);
       } else if (cachedBaseboard.equals(baseboard)) {
         return baseboard;
       }

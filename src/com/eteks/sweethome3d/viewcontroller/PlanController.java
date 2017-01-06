@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -2251,9 +2250,9 @@ public class PlanController extends FurnitureController implements Controller {
             wallEndPointJoinedToPieceRightPoint [1], offset));
       }
     }
-    for (Iterator<DimensionLine> it = dimensionLines.iterator(); it.hasNext(); ) {
-      if (it.next().getLength() < 0.01f) {
-        it.remove();
+    for (int i = dimensionLines.size() - 1; i >= 0; i--) {
+      if (dimensionLines.get(i).getLength() < 0.01f) {
+        dimensionLines.remove(i);
       }
     }
     return dimensionLines;
@@ -7173,9 +7172,9 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
             this.selectedItemsMousePressed.remove(itemUnderCursor);
           } else {
-            for (Iterator<Selectable> it = this.selectedItemsMousePressed.iterator(); it.hasNext();) {
-              // Remove any camera of group of a selected piece from current selection 
-              Selectable item = it.next();
+            for (int i = this.selectedItemsMousePressed.size() - 1; i >= 0; i--) {
+              // Remove any camera or group of a selected piece from current selection 
+              Selectable item = this.selectedItemsMousePressed.get(i);
               if (item instanceof Camera
                   || (itemUnderCursor instanceof HomePieceOfFurniture
                       && item instanceof HomeFurnitureGroup
@@ -7183,7 +7182,7 @@ public class PlanController extends FurnitureController implements Controller {
                   || (itemUnderCursor instanceof HomeFurnitureGroup
                       && item instanceof HomePieceOfFurniture
                       && ((HomeFurnitureGroup)itemUnderCursor).getAllFurniture().contains(item))) {
-                it.remove();
+                this.selectedItemsMousePressed.remove(i);
               }
             }
             // Let the camera belong to selection only if no item are selected
