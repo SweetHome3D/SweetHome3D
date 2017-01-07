@@ -245,7 +245,7 @@ public class CatalogTexture implements TextureImage, CatalogItem, Comparable<Cat
     byte [][] filterCollationKeys = recentFilters.get(filter);
     if (filterCollationKeys == null) {
       // Each substring in filter is a search criterion that must be verified 
-      String [] filterCriteria = filter.split("\\s|\\p{Punct}");
+      String [] filterCriteria = filter.split("\\s|\\p{Punct}|\\|");
       List<byte []> filterCriteriaCollationKeys = new ArrayList<byte []>(filterCriteria.length);
       for (String criterion : filterCriteria) {
         if (criterion.length() > 0) {
@@ -271,14 +271,14 @@ public class CatalogTexture implements TextureImage, CatalogItem, Comparable<Cat
       // (collect the name, category and creator of each texture)
       StringBuilder search = new StringBuilder();
       search.append(getName());
-      search.append('\t');
+      search.append('|');
       if (getCategory() != null) {
         search.append(getCategory().getName());
-        search.append('\t');
+        search.append('|');
       }
       if (getCreator() != null) {
         search.append(getCreator());
-        search.append('\t');
+        search.append('|');
       }
       this.filterCollationKey = COMPARATOR.getCollationKey(search.toString()).toByteArray();
     }
