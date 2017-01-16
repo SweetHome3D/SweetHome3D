@@ -11556,7 +11556,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.selectedPolyline = (Polyline)home.getSelectedItems().get(0);
       this.polylines = new ArrayList<Polyline>(home.getPolylines());
       this.polylines.remove(this.selectedPolyline);
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
       this.polylinePointIndex = this.selectedPolyline.getPointIndexAt( 
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] polylinePoints = this.selectedPolyline.getPoints();
