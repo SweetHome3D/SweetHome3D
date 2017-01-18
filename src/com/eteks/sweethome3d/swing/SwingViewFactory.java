@@ -71,7 +71,7 @@ import com.eteks.sweethome3d.viewcontroller.WizardController;
  * @author Emmanuel Puybaret
  */
 public class SwingViewFactory implements ViewFactory {
-  public SwingViewFactory() {
+  static {
     SwingTools.updateComponentDefaults();
   }
   
