@@ -187,7 +187,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     // Create field of view label and spinner bound to FIELD_OF_VIEW_IN_DEGREES controller property
     this.fieldOfViewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "fieldOfViewLabel.text"));
-    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(10, 10, 120, 1);
+    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(10, 2, 120, 1);
     this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel);
     fieldOfViewSpinnerModel.setValue(controller.getFieldOfViewInDegrees());
     fieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
