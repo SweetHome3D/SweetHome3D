@@ -93,6 +93,7 @@ public class Camera extends HomeObject {
     midday.set(Calendar.HOUR_OF_DAY, 12);
     midday.set(Calendar.MINUTE, 0);
     midday.set(Calendar.SECOND, 0);
+    midday.set(Calendar.MILLISECOND, 0);
     return midday.getTimeInMillis();
   }
   
