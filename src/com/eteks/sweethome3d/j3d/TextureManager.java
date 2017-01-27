@@ -378,7 +378,7 @@ public class TextureManager {
   public float getRotatedTextureWidth(HomeTexture texture) {
     float angle = texture.getAngle();
     if (angle != 0) {
-      return (float)Math.rint(Math.abs(texture.getWidth() * Math.cos(angle)) 
+      return (float)(Math.abs(texture.getWidth() * Math.cos(angle)) 
           + Math.abs(texture.getHeight() * Math.sin(angle)));
     } else {
       return texture.getWidth();
@@ -391,7 +391,7 @@ public class TextureManager {
   public float getRotatedTextureHeight(HomeTexture texture) {
     float angle = texture.getAngle();
     if (angle != 0) {
-      return (float)Math.rint(Math.abs(texture.getWidth() * Math.sin(angle)) 
+      return (float)(Math.abs(texture.getWidth() * Math.sin(angle)) 
           + Math.abs(texture.getHeight() * Math.cos(angle)));
     } else {
       return texture.getHeight();
