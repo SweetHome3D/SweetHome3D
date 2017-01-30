@@ -770,10 +770,7 @@ public class Wall3D extends Object3DBranch {
         halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
       }
       TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
-      float textureWidth = texture.getWidth();
-      float textureHeight = texture.getHeight();
-      float minElevationTextureCoords = minElevation / textureHeight;
-      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevationTextureCoords);
+      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevation);
       int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null 
@@ -792,19 +789,19 @@ public class Wall3D extends Object3DBranch {
             float secondHorizontalTextureCoords;
             if (arcCircleCenter == null) {
               firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  points [index][0], points [index][1]) / textureWidth;
+                  points [index][0], points [index][1]);
               secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  points [nextIndex][0], points [nextIndex][1]) / textureWidth;
+                  points [nextIndex][0], points [nextIndex][1]);
             } else {
               if (pointUCoordinates [index] == null) {
                 float pointAngle = (float)Math.atan2(points [index][1] - arcCircleCenter [1], points [index][0] - arcCircleCenter [0]);
                 pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
-                pointUCoordinates [index] = (pointAngle - referencePointAngle) * arcCircleRadius / textureWidth;
+                pointUCoordinates [index] = (pointAngle - referencePointAngle) * arcCircleRadius;
               }
               if (pointUCoordinates [nextIndex] == null) {
                 float pointAngle = (float)Math.atan2(points [nextIndex][1] - arcCircleCenter [1], points [nextIndex][0] - arcCircleCenter [0]);
                 pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
-                pointUCoordinates [nextIndex] = (pointAngle - referencePointAngle) * arcCircleRadius / textureWidth;
+                pointUCoordinates [nextIndex] = (pointAngle - referencePointAngle) * arcCircleRadius;
               }
               
               firstHorizontalTextureCoords = pointUCoordinates [index];
@@ -815,13 +812,13 @@ public class Wall3D extends Object3DBranch {
               secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
             }
 
-            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevationTextureCoords);
-            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevationTextureCoords);
+            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevation);
+            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevation);
           } else {
             textureCoords1 = firstTextureCoords;
             float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1], 
-                points [nextIndex][0], points [nextIndex][1]) / textureWidth;
-            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevationTextureCoords);
+                points [nextIndex][0], points [nextIndex][1]);
+            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevation);
           }
           
           if (subpartSize > 0) {
@@ -829,17 +826,16 @@ public class Wall3D extends Object3DBranch {
             for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
               textureCoords [j++] = textureCoords1;
               textureCoords [j++] = textureCoords2;
-              float yTextureCoords = y / textureHeight;
-              textureCoords1 = new TexCoord2f(textureCoords1.x, yTextureCoords);
-              textureCoords2 = new TexCoord2f(textureCoords2.x, yTextureCoords);
+              textureCoords1 = new TexCoord2f(textureCoords1.x, y);
+              textureCoords2 = new TexCoord2f(textureCoords2.x, y);
               textureCoords [j++] = textureCoords2;
               textureCoords [j++] = textureCoords1;
             }
           }
           textureCoords [j++] = textureCoords1;
           textureCoords [j++] = textureCoords2;
-          textureCoords [j++] = new TexCoord2f(textureCoords2.x, top [nextIndex].y / textureHeight);
-          textureCoords [j++] = new TexCoord2f(textureCoords1.x, top [index].y / textureHeight);
+          textureCoords [j++] = new TexCoord2f(textureCoords2.x, top [nextIndex].y);
+          textureCoords [j++] = new TexCoord2f(textureCoords1.x, top [index].y);
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
@@ -1038,18 +1034,12 @@ public class Wall3D extends Object3DBranch {
           List<Point3f> slopingTopCoords = new ArrayList<Point3f>();        
           TexCoord2f [] textureCoords;
           List<TexCoord2f> borderTextureCoords;
-          float textureWidth;
-          float textureHeight;
           if (texture != null) {
             textureCoords = new TexCoord2f [coords.length];
             borderTextureCoords = new ArrayList<TexCoord2f>(4 * vertexCount);
-            textureWidth = texture.getWidth();
-            textureHeight = texture.getHeight();
           } else {
             textureCoords = null;
             borderTextureCoords = null;
-            textureWidth = 0;
-            textureHeight = 0;
           }
           int i = 0;
           for (float [][] areaPoints : doorOrWindowSurroundingAreasPoints) {
@@ -1059,11 +1049,11 @@ public class Wall3D extends Object3DBranch {
             if (texture != null) {
               // Compute texture coordinates of wall side according to textureReferencePoint
               float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  point.x, point.z) / textureWidth;
+                  point.x, point.z);
               if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
                 horizontalTextureCoords = -horizontalTextureCoords;
               }
-              textureCoord = new TexCoord2f(horizontalTextureCoords, point.y / textureHeight);
+              textureCoord = new TexCoord2f(horizontalTextureCoords, point.y);
             }
             double distanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
                 areaPoints [0][0], areaPoints [0][1]);
@@ -1099,11 +1089,11 @@ public class Wall3D extends Object3DBranch {
               TexCoord2f nextTextureCoord = null;
               if (texture != null) {
                 float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                    nextPoint.x, nextPoint.z) / textureWidth;
+                    nextPoint.x, nextPoint.z);
                 if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
                   horizontalTextureCoords = -horizontalTextureCoords;
                 }
-                nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y / textureHeight);
+                nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y);
                 if (coordsList == borderCoords) {
                   borderTextureCoords.add(textureCoord);
                   borderTextureCoords.add(textureCoord);
@@ -1319,7 +1309,7 @@ public class Wall3D extends Object3DBranch {
     } else {
       // Update material and texture of wall side
       wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
-      wallSideAppearance.setTextureAttributes(getTextureAttributes(wallSideTexture));
+      wallSideAppearance.setTextureAttributes(getTextureAttributes(wallSideTexture, true));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {

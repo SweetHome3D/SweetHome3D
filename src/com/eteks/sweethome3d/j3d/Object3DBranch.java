@@ -41,6 +41,7 @@ import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Color3f;
+import javax.vecmath.Vector3d;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -63,7 +64,7 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
-  private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
+  private static final Map<TextureKey, TextureAttributes>    textureAttributes = new HashMap<TextureKey, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
   
   static {
@@ -144,18 +145,64 @@ public abstract class Object3DBranch extends BranchGroup {
    * Returns shared texture attributes matching transformation applied to the given texture.
    */
   protected TextureAttributes getTextureAttributes(HomeTexture texture) {
-    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(texture.getAngle());
+    return getTextureAttributes(texture, false);
+  }
+  
+  /**
+   * Returns shared texture attributes matching transformation applied to the given texture 
+   * and scaled if required.
+   */
+  protected TextureAttributes getTextureAttributes(HomeTexture texture, boolean scaled) {
+    TextureKey key = scaled
+        ? new TextureKey(texture.getWidth(), texture.getHeight(), texture.getAngle())
+        : new TextureKey(-1f, -1f, texture.getAngle());
+    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
       // Mix texture and color
       textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      Transform3D rotation = new Transform3D();
+      rotation.rotZ(texture.getAngle());
       Transform3D transform = new Transform3D();
-      transform.rotZ(texture.getAngle());
+      if (scaled) {
+        transform.setScale(new Vector3d(1. / texture.getWidth(), 1. / texture.getHeight(), 1));
+      }
+      transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
       textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
-      Object3DBranch.textureAttributes.put(texture.getAngle(), textureAttributes);
+      Object3DBranch.textureAttributes.put(key, textureAttributes);
     }
     return textureAttributes;
+  }
+
+  /**
+   * Key used to share texture attributes instances.
+   */
+  private static class TextureKey {
+    private final float width;
+    private final float height;
+    private final float angle;
+    
+    public TextureKey(float width, float height, float angle) {
+      this.width = width;
+      this.height = height;
+      this.angle = angle;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      TextureKey key = (TextureKey)obj;
+      return this.width == key.width 
+          && this.height == key.height 
+          && this.angle == key.angle;
+    }
+    
+    @Override
+    public int hashCode() {
+      return Float.floatToIntBits(this.width) * 31 
+          + Float.floatToIntBits(this.height) * 31
+          + Float.floatToIntBits(this.angle);
+    }
   }
 
   /**

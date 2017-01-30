@@ -619,8 +619,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           } else {
             // Change material to white then texture
             appearance.setTexCoordGeneration(getTextureCoordinates(texture, pieceSize, modelBounds));
+            appearance.setTextureAttributes(getTextureAttributes(texture, true));
             appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-            appearance.setTextureAttributes(getTextureAttributes(texture));
             TextureManager.getInstance().loadTexture(texture.getImage(),  
                 waitTextureLoadingEnd, getTextureObserver(appearance));
           }
@@ -644,14 +644,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                 appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
                 appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
               } else if (color == null && material.getTexture() != null) {
+                HomeTexture materialTexture = material.getTexture();
                 if (isTexturesCoordinatesDefined(shape)) {
                   restoreDefaultTextureCoordinatesGeneration(appearance);
+                  appearance.setTextureAttributes(getTextureAttributes(materialTexture));
                 } else {
                   appearance.setTexCoordGeneration(getTextureCoordinates(material.getTexture(), pieceSize, modelBounds));
+                  appearance.setTextureAttributes(getTextureAttributes(materialTexture, true));
                 }
                 appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-                HomeTexture materialTexture = material.getTexture();
-                appearance.setTextureAttributes(getTextureAttributes(materialTexture));
                 TextureManager.getInstance().loadTexture(materialTexture.getImage(),  
                     waitTextureLoadingEnd, getTextureObserver(appearance));
               } else {
@@ -714,14 +715,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Point3d upper = new Point3d();
     modelBounds.getUpper(upper);
     float minimumSize = ModelManager.getInstance().getMinimumSize();
-    float textureWidth = texture.getWidth();
-    float textureHeight = texture.getHeight();
-    float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize) / textureWidth;
+    float sx = pieceSize.x / (float)Math.max(upper.x - lower.x, minimumSize);
     float sw = texture.isLeftToRightOriented()  
         ? (float)-lower.x * sx  
         : 0;
-    float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize) / textureHeight;
-    float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize) / textureHeight;
+    float ty = pieceSize.y / (float)Math.max(upper.y - lower.y, minimumSize);
+    float tz = pieceSize.z / (float)Math.max(upper.z - lower.z, minimumSize);
     float tw = texture.isLeftToRightOriented()  
         ? (float)(-lower.y * ty + upper.z * tz)
         : 0;
