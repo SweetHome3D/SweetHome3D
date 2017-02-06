@@ -86,6 +86,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private static final PolygonAttributes      NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, true);
   private static final Bounds                 DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), 1E7);
+  private static final Object                 DEFAULT_BOX = new Object();
 
   private final Home home;
   
@@ -143,7 +144,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // While loading model use a temporary node that displays a white box  
     final BranchGroup waitBranch = new BranchGroup();
     waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
-    waitBranch.addChild(getModelBox(Color.WHITE));      
+    TransformGroup normalization = new TransformGroup();
+    normalization.addChild(getModelBox(Color.WHITE));
+    waitBranch.addChild(normalization);      
     // Allow appearance change on all children
     setModelCapabilities(waitBranch);
     
@@ -225,21 +228,24 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     Node filledModelNode = getFilledModelNode();
-    if (piece.getColor() != null) {
-      setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
-          null, null, new HashSet<Appearance>());
-    } else if (piece.getTexture() != null) {
-      setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
-          new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(((Group)filledModelNode).getChild(0)),
-          new HashSet<Appearance>());
-    } else if (piece.getModelMaterials() != null) {
-      setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
-          new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(((Group)filledModelNode).getChild(0)), 
-          new HashSet<Appearance>());
-    } else {
-      // Set default material and texture of model
-      setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
-          null, null, new HashSet<Appearance>());
+    Node filledModelChild = ((Group)filledModelNode).getChild(0);
+    if (filledModelChild.getUserData() != DEFAULT_BOX) {
+      if (piece.getColor() != null) {
+        setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
+            null, null, new HashSet<Appearance>());
+      } else if (piece.getTexture() != null) {
+        setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
+            new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild),
+            new HashSet<Appearance>());
+      } else if (piece.getModelMaterials() != null) {
+        setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
+            new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild), 
+            new HashSet<Appearance>());
+      } else {
+        // Set default material and texture of model
+        setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
+            null, null, new HashSet<Appearance>());
+      }
     }
   }
 
@@ -470,7 +476,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     
     Appearance boxAppearance = new Appearance();
     boxAppearance.setMaterial(material);
-    return new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+    Box box = new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+    box.setUserData(DEFAULT_BOX);
+    return box;
   }
 
   /**
