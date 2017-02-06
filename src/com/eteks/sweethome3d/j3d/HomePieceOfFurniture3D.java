@@ -146,6 +146,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
     TransformGroup normalization = new TransformGroup();
     normalization.addChild(getModelBox(Color.WHITE));
+    setModelCapabilities(normalization);
     waitBranch.addChild(normalization);      
     // Allow appearance change on all children
     setModelCapabilities(waitBranch);
