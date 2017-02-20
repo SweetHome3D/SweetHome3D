@@ -95,8 +95,8 @@ public class PackageDependenciesTest extends TestCase {
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
     // Mac OS X specific interfaces
-    JavaPackage eawt = constraint.addPackage("com.applet.eawt");
-    JavaPackage eio = constraint.addPackage("com.applet.eio");
+    JavaPackage eawt = constraint.addPackage("com.apple.eawt");
+    JavaPackage eio = constraint.addPackage("com.apple.eio");
 
     // Describe dependencies : com.eteks.sweethome3d.model don't have any dependency on
     // other packages, IO and View/Controller packages ignore each other
