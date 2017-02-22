@@ -854,7 +854,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       switch (in.readChunkHeader().getID()) {
         case MESH_MATRIX :
           try { 
-            transform = new Transform3D(parseMatrix(in));
+            transform = parseMatrix(in);
             transform.invert();
           } catch (SingularMatrixException ex) {
             transform = null;
@@ -1601,8 +1601,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       int b2 = this.in.read();
       int b3 = this.in.read();
       int b4 = this.in.read();
-      if (b2 == -1 || b3 == -1 || b4 == -1)
+      if (b2 == -1 || b3 == -1 || b4 == -1) {
         throw new IncorrectFormatException("Can't read int");
+      }
       if (incrementReadLength) {
         this.stack.peek().incrementReadLength(4);
       }
