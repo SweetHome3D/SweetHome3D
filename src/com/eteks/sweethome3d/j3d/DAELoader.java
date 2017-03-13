@@ -1085,9 +1085,9 @@ public class DAELoader extends LoaderBase implements Loader {
 
         // Set orientation to Y_UP
         Transform3D axisTransform = new Transform3D();
-        if ("Z_UP".equals(axis)) {
+        if ("Z_UP".equals(this.axis)) {
           axisTransform.rotX(-Math.PI / 2);
-        } else if ("X_UP".equals(axis)) {
+        } else if ("X_UP".equals(this.axis)) {
           axisTransform.rotZ(Math.PI / 2);
         }
         axisTransform.mul(scaleTransform);
