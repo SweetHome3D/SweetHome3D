@@ -25,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -403,8 +402,8 @@ public class HomeXMLHandler extends DefaultHandler {
   private Baseboard rightSideBaseboard;
   private BackgroundImage homeBackgroundImage;
   private BackgroundImage backgroundImage;
-  private final Map<String, String> homeProperties = new LinkedHashMap<String, String>();
-  private final Map<String, String> properties = new LinkedHashMap<String, String>();
+  private final Map<String, String> homeProperties = new HashMap<String, String>();
+  private final Map<String, String> properties = new HashMap<String, String>();
   private final Map<String, TextStyle>    textStyles = new HashMap<String, TextStyle>();
   private final Map<String, HomeTexture>  textures = new HashMap<String, HomeTexture>();
   private final List<HomeMaterial> materials = new ArrayList<HomeMaterial>();
@@ -413,6 +412,8 @@ public class HomeXMLHandler extends DefaultHandler {
   private final List<LightSource>  lightSources = new ArrayList<LightSource>();
   private final List<float[]>      points = new ArrayList<float[]>();
   private final List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+  
+  private static final String UNIQUE_ATTRIBUTE = "@&unique&@";
   
   public HomeXMLHandler() {
     this(null);
@@ -498,7 +499,7 @@ public class HomeXMLHandler extends DefaultHandler {
       this.leftSideBaseboard = null;
       this.rightSideBaseboard = null;
     } else if ("baseboard".equals(name)) {
-      this.textures.remove(null);
+      this.textures.remove(UNIQUE_ATTRIBUTE);
     } else if ("material".equals(name)) {
       this.materialTexture = null;
     }
@@ -634,12 +635,16 @@ public class HomeXMLHandler extends DefaultHandler {
     } else if ("text".equals(name)) {
       this.labelText = getCharacters();
     } else if ("textStyle".equals(name)) {
-      this.textStyles.put(attributesMap.get("attribute"), createTextStyle(attributesMap));
+      String attribute = attributesMap.get("attribute");
+      this.textStyles.put(attribute != null ? attribute : UNIQUE_ATTRIBUTE, 
+          createTextStyle(attributesMap));
     } else if ("texture".equals(name)) {
       if ("material".equals(parent)) {
         this.materialTexture = createTexture(attributesMap); 
       } else {
-        this.textures.put(attributesMap.get("attribute"), createTexture(attributesMap));
+        String attribute = attributesMap.get("attribute");
+        this.textures.put(attribute != null ? attribute : UNIQUE_ATTRIBUTE, 
+            createTexture(attributesMap));
       }
     } else if ("material".equals(name)) {
       this.materials.add(createMaterial(attributesMap));
@@ -1196,7 +1201,7 @@ public class HomeXMLHandler extends DefaultHandler {
         if (color != null) {
           piece.setColor(color);
         }
-        HomeTexture texture = this.textures.get(null);
+        HomeTexture texture = this.textures.get(UNIQUE_ATTRIBUTE);
         if (texture != null) {
           piece.setTexture(texture);
         }
@@ -1431,7 +1436,7 @@ public class HomeXMLHandler extends DefaultHandler {
                                     String elementName, 
                                     Map<String, String> attributes) throws SAXException {
     setProperties(label);
-    label.setStyle(this.textStyles.get(null));
+    label.setStyle(this.textStyles.get(UNIQUE_ATTRIBUTE));
     Float angle = parseOptionalFloat(attributes, "angle");
     if (angle != null) {
       label.setAngle(angle);
@@ -1455,7 +1460,7 @@ public class HomeXMLHandler extends DefaultHandler {
     return Baseboard.getInstance(parseFloat(attributes, "thickness"), 
         parseFloat(attributes, "height"), 
         parseOptionalColor(attributes, "color"),
-        this.textures.get(null));
+        this.textures.get(UNIQUE_ATTRIBUTE));
   }
   
   /**
