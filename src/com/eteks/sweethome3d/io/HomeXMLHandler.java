@@ -1224,7 +1224,6 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns a new {@link Wall} instance initialized from the given <code>attributes</code>.
    */
-  @SuppressWarnings("deprecation")
   private Wall createWall(Map<String, String> attributes) throws SAXException {
     return new Wall(parseFloat(attributes, "xStart"),
         parseFloat(attributes, "yStart"),
@@ -1517,7 +1516,7 @@ public class HomeXMLHandler extends DefaultHandler {
     if (color != null) {
       try {
         // Need to use parseLong in case parsed number is bigger than 2^31
-        return new Integer((int)Long.parseLong(color, 16));
+        return Integer.valueOf((int)Long.parseLong(color, 16));
       } catch (NumberFormatException ex) {
         throw new SAXException("Invalid value for color attribute " + name, ex);
       }
