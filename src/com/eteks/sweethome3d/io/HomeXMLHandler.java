@@ -1230,7 +1230,8 @@ public class HomeXMLHandler extends DefaultHandler {
         parseFloat(attributes, "yStart"),
         parseFloat(attributes, "xEnd"),
         parseFloat(attributes, "yEnd"),
-        parseFloat(attributes, "thickness"));
+        parseFloat(attributes, "thickness"),
+        0);
   }
 
   /**
@@ -1243,10 +1244,7 @@ public class HomeXMLHandler extends DefaultHandler {
     setProperties(wall);
     wall.setLeftSideBaseboard(this.leftSideBaseboard);
     wall.setRightSideBaseboard(this.rightSideBaseboard);
-    Float height = parseOptionalFloat(attributes, "height");
-    if (height != null) {
-      wall.setHeight(height);
-    }
+    wall.setHeight(parseOptionalFloat(attributes, "height"));
     wall.setHeightAtEnd(parseOptionalFloat(attributes, "heightAtEnd"));
     wall.setArcExtent(parseOptionalFloat(attributes, "arcExtent"));
     wall.setTopColor(parseOptionalColor(attributes, "topColor"));
