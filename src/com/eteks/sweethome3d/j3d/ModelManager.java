@@ -1372,7 +1372,7 @@ public class ModelManager {
   }
 
   /**
-   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * Adds to <code>geometryPath</code> the triangle joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3 indices.
    */
   private void addIndexedTriangleToPath(IndexedGeometryArray geometryArray, 
@@ -1385,7 +1385,7 @@ public class ModelManager {
   }
   
   /**
-   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * Adds to <code>geometryPath</code> the quadrilateral joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices.
    */
   private void addIndexedQuadrilateralToPath(IndexedGeometryArray geometryArray, 
@@ -1399,7 +1399,7 @@ public class ModelManager {
   }
   
   /**
-   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * Adds to <code>geometryPath</code> the triangle joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3 indices, 
    * only if the triangle has a positive orientation. 
    */
@@ -1427,7 +1427,7 @@ public class ModelManager {
   }
   
   /**
-   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * Adds to <code>geometryPath</code> the quadrilateral joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices, 
    * only if the quadrilateral has a positive orientation. 
    */
@@ -1569,6 +1569,7 @@ public class ModelManager {
       polygon [++top] = vertices [minMin];
       float [][] surroundingPolygon = new float [top + 1][];
       System.arraycopy(polygon, 0, surroundingPolygon, 0, surroundingPolygon.length);
+      return surroundingPolygon;
     }
 
     // Get the indices of points with max x-coord and min|max y-coord
