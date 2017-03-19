@@ -24,11 +24,12 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Shape3D;
@@ -135,13 +136,8 @@ public class Ground3D extends Object3DBranch {
     
     Area areaRemovedFromGround = new Area();
     // Compute the union of the rooms, the underground walls and furniture areas 
-    Comparator<Level> levelComparator = new Comparator<Level>() {
-        public int compare(Level level1, Level level2) {
-          return -Float.compare(level1.getElevation(), level2.getElevation());
-        }
-      };
-    Map<Level, Area> undergroundAreas = new TreeMap<Level, Area>(levelComparator);
-    Map<Level, Area> roomAreas = new TreeMap<Level, Area>(levelComparator);
+    Map<Level, Area> undergroundAreas = new HashMap<Level, Area>();
+    Map<Level, Area> roomAreas = new HashMap<Level, Area>();
     for (Room room : home.getRooms()) {
       Level roomLevel = room.getLevel();
       if ((roomLevel == null || roomLevel.isViewable())
@@ -187,16 +183,23 @@ public class Ground3D extends Object3DBranch {
       }
     }
     
-    Map<Level, Area> undergroundSideAreas = new TreeMap<Level, Area>(levelComparator);
+    Map<Level, Area> undergroundSideAreas = new HashMap<Level, Area>();
     Map<Level, Area> upperLevelAreas = new HashMap<Level, Area>();
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
+    List<Entry<Level, Area>> undergroundAreasEntries = new ArrayList<Map.Entry<Level,Area>>(undergroundAreas.entrySet());
+    Comparator<Map.Entry<Level,Area>> levelComparator = new Comparator<Map.Entry<Level,Area>>() {
+        public int compare(Map.Entry<Level,Area> level1, Map.Entry<Level,Area> level2) {
+          return -Float.compare(level1.getKey().getElevation(), level2.getKey().getElevation());
+        }
+      };
+    Collections.sort(undergroundAreasEntries, levelComparator);
+    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreasEntries) {
       Level level = undergroundAreaEntry.getKey();
       Area area = undergroundAreaEntry.getValue();
       Area areaAtStart = (Area)area.clone();
       undergroundSideAreas.put(level, (Area)area.clone());
       upperLevelAreas.put(level, new Area());
       // Remove lower levels areas from the area at the current level
-      for (Map.Entry<Level, Area> otherUndergroundAreaEntry : undergroundAreas.entrySet()) {
+      for (Map.Entry<Level, Area> otherUndergroundAreaEntry : undergroundAreasEntries) {
         if (otherUndergroundAreaEntry.getKey().getElevation() < level.getElevation()) {
           for (float [][] points : getAreaPoints(otherUndergroundAreaEntry.getValue())) {
             if (!new Room(points).isClockwise()) {
@@ -222,7 +225,7 @@ public class Ground3D extends Object3DBranch {
       }
     }
     // Remove room areas because they are displayed by Room3D instances
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
+    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreasEntries) {
       Level level = undergroundAreaEntry.getKey();
       Area area = undergroundAreaEntry.getValue();
       Area roomArea = roomAreas.get(level);
@@ -258,7 +261,9 @@ public class Ground3D extends Object3DBranch {
     groundArea.subtract(areaRemovedFromGround);
     undergroundAreas.put(new Level("Ground", 0, 0, 0), groundArea);
     float previousLevelElevation = 0;
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
+    undergroundAreasEntries = new ArrayList<Map.Entry<Level,Area>>(undergroundAreas.entrySet());
+    Collections.sort(undergroundAreasEntries, levelComparator);
+    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreasEntries) {
       Level level = undergroundAreaEntry.getKey();
       float elevation = level.getElevation();
       addAreaGeometry(groundShape, groundTexture, undergroundAreaEntry.getValue(), elevation);
