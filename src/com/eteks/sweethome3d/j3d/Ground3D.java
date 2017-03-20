@@ -188,7 +188,7 @@ public class Ground3D extends Object3DBranch {
     // Consider that walls around a closed area define a hole 
     List<LevelAreas> undergroundAreas = new ArrayList<LevelAreas>(undergroundLevelAreas.values());
     for (LevelAreas levelAreas : undergroundAreas) {
-      for (float [][] points : getAreaPoints(levelAreas.getWallArea())) {
+      for (float [][] points : getPoints(levelAreas.getWallArea())) {
         if (!new Room(points).isClockwise()) {
           levelAreas.getUndergroundArea().add(new Area(getShape(points)));
         }
@@ -207,9 +207,9 @@ public class Ground3D extends Object3DBranch {
       Area areaAtStart = (Area)area.clone();
       levelAreas.getUndergroundSideArea().add((Area)area.clone());
       // Remove lower levels areas from the area at the current level
-      for (LevelAreas otherUndergroundAreaEntry : undergroundAreas) {
-        if (otherUndergroundAreaEntry.getLevel().getElevation() < level.getElevation()) {
-          for (float [][] points : getAreaPoints(otherUndergroundAreaEntry.getUndergroundArea())) {
+      for (LevelAreas otherLevelAreas : undergroundAreas) {
+        if (otherLevelAreas.getLevel().getElevation() < level.getElevation()) {
+          for (float [][] points : getPoints(otherLevelAreas.getUndergroundArea())) {
             if (!new Room(points).isClockwise()) {
               Area pointsArea = new Area(getShape(points));
               area.subtract(pointsArea);
@@ -219,7 +219,7 @@ public class Ground3D extends Object3DBranch {
         }
       }      
       // Add underground area to ground area at ground level
-      for (float [][] points : getAreaPoints(area)) {
+      for (float [][] points : getPoints(area)) {
         if (new Room(points).isClockwise()) {
           // Hole surrounded by a union of rooms that form a polygon  
           Area coveredHole = new Area(getShape(points));
@@ -233,10 +233,10 @@ public class Ground3D extends Object3DBranch {
       }
     }
     // Remove room areas because they are displayed by Room3D instances
-    for (LevelAreas undergroundAreaEntry : undergroundAreas) {
-      Area roomArea = undergroundAreaEntry.getRoomArea();
+    for (LevelAreas levelAreas : undergroundAreas) {
+      Area roomArea = levelAreas.getRoomArea();
       if (roomArea != null) {
-        Area area = undergroundAreaEntry.getUndergroundArea();
+        Area area = levelAreas.getUndergroundArea();
         area.subtract(roomArea);
       }
     }
@@ -269,14 +269,14 @@ public class Ground3D extends Object3DBranch {
     // Add level areas for ground level at index 0 because it's the highest level in the list 
     undergroundAreas.add(0, new LevelAreas(new Level("Ground", 0, 0, 0), groundArea));
     float previousLevelElevation = 0;
-    for (LevelAreas undergroundAreaEntry : undergroundAreas) {
-      float elevation = undergroundAreaEntry.getLevel().getElevation();
-      addAreaGeometry(groundShape, groundTexture, undergroundAreaEntry.getUndergroundArea(), elevation);
+    for (LevelAreas levelAreas : undergroundAreas) {
+      float elevation = levelAreas.getLevel().getElevation();
+      addAreaGeometry(groundShape, groundTexture, levelAreas.getUndergroundArea(), elevation);
       if (previousLevelElevation - elevation > 0) {
-        for (float [][] points : getAreaPoints(undergroundAreaEntry.getUndergroundSideArea())) {
+        for (float [][] points : getPoints(levelAreas.getUndergroundSideArea())) {
           addAreaSidesGeometry(groundShape, groundTexture, points, elevation, previousLevelElevation - elevation);
         }
-        addAreaGeometry(groundShape, groundTexture, undergroundAreaEntry.getUpperLevelArea(), previousLevelElevation);
+        addAreaGeometry(groundShape, groundTexture, levelAreas.getUpperLevelArea(), previousLevelElevation);
       }
       previousLevelElevation = elevation;
     }
@@ -290,7 +290,7 @@ public class Ground3D extends Object3DBranch {
   /**
    * Returns the list of points that defines the given area.
    */
-  private List<float [][]> getAreaPoints(Area area) {
+  private List<float [][]> getPoints(Area area) {
     List<float [][]> areaPoints = new ArrayList<float [][]>();
     List<float []>   areaPartPoints  = new ArrayList<float[]>();
     float [] previousRoomPoint = null;
