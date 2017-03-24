@@ -647,18 +647,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return new CatalogDoorOrWindow(id, name, description, information, tags, creationDate, grade, 
           icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
           doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, sashes,
-          modelRotation, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+          modelRotation, false, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-            lightSources, staircaseCutOutShape, modelRotation, creator, 
+            lightSources, staircaseCutOutShape, modelRotation, false, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-            staircaseCutOutShape, modelRotation, creator, 
+            staircaseCutOutShape, modelRotation, false, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       }
     }
