@@ -869,10 +869,9 @@ public class Wall3D extends Object3DBranch {
     if (arcExtent > 0) {
       if ((referencePointAngle > 0 
           && (pointAngle < 0
-              || referencePointAngle > pointAngle))
+              || pointAngle < referencePointAngle))
         || (referencePointAngle < 0 
-            && pointAngle < 0 
-            && referencePointAngle > pointAngle)) {
+            && pointAngle < referencePointAngle)) {
         pointAngle += 2 * (float)Math.PI;
       }
     } else {
@@ -880,7 +879,6 @@ public class Wall3D extends Object3DBranch {
             && (pointAngle > 0
                 || referencePointAngle < pointAngle))
           || (referencePointAngle > 0 
-              && pointAngle > 0 
               && referencePointAngle < pointAngle)) {
         pointAngle -= 2 * (float)Math.PI;
       }
