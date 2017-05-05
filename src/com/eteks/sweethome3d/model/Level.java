@@ -51,7 +51,7 @@ public class Level extends HomeObject {
 
 
   /**
-   * Creates a home level from an existing level.
+   * Creates a home level.
    * @param name  the name of the level
    * @param elevation the elevation of the bottom of the level
    * @param floorThickness the floor thickness of the level
