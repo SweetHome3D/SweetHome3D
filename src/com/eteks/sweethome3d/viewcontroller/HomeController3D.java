@@ -323,6 +323,16 @@ public class HomeController3D implements Controller {
   }
 
   /**
+   * Modifies home camera field of view of <code>delta</code>.
+   * @param delta  the value in rad that should be added the field of view 
+   *               to get a narrower view (with a negative delta) or a wider view (with a positive delta)
+   * @since 5.5 
+   */
+  public void modifyFieldOfView(float delta) {
+    this.cameraState.modifyFieldOfView(delta);
+  }
+
+  /**
    * Returns the observer camera state.
    */
   protected CameraControllerState getObserverCameraState() {
@@ -629,6 +639,8 @@ public class HomeController3D implements Controller {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
         this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
       } else if (containsVisibleWalls && selectionEmpty) {
+        System.out.println(aerialViewBoundsLowerPoint [0] + " " + aerialViewBoundsUpperPoint [0]);
+        
         // If home contains walls, ensure bounds are always minimum 1 meter wide centered in middle of 3D view
         if (MIN_WIDTH > this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0]) {
           this.aerialViewBoundsLowerPoint [0] = (this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - MIN_WIDTH / 2;
