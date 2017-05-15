@@ -360,6 +360,9 @@ public class HomeController3D implements Controller {
 
     public void rotateCameraPitch(float delta) {
     }
+    
+    public void modifyFieldOfView(float delta) {    
+    }
 
     public void goToCamera(Camera camera) {
     }
@@ -878,9 +881,18 @@ public class HomeController3D implements Controller {
     public void rotateCameraPitch(float delta) {
       float newPitch = this.observerCamera.getPitch() + delta; 
       // Check new angle is between -90° and 90°  
-      newPitch = Math.max(newPitch, -(float)Math.PI / 2);
-      newPitch = Math.min(newPitch, (float)Math.PI / 2);
+      newPitch = Math.min(Math.max(-(float)Math.PI / 2, newPitch), (float)Math.PI / 2);;
       this.observerCamera.setPitch(newPitch); 
+      // Select observer camera for user feedback
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    }
+
+    @Override
+    public void modifyFieldOfView(float delta) {
+      float newFieldOfView = this.observerCamera.getFieldOfView() + delta; 
+      // Check new angle is between 2° and 120°  
+      newFieldOfView = (float)Math.min(Math.max(Math.toRadians(2), newFieldOfView), Math.toRadians(120));
+      this.observerCamera.setFieldOfView(newFieldOfView); 
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
