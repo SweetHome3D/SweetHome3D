@@ -639,8 +639,6 @@ public class HomeController3D implements Controller {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
         this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
       } else if (containsVisibleWalls && selectionEmpty) {
-        System.out.println(aerialViewBoundsLowerPoint [0] + " " + aerialViewBoundsUpperPoint [0]);
-        
         // If home contains walls, ensure bounds are always minimum 1 meter wide centered in middle of 3D view
         if (MIN_WIDTH > this.aerialViewBoundsUpperPoint [0] - this.aerialViewBoundsLowerPoint [0]) {
           this.aerialViewBoundsLowerPoint [0] = (this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - MIN_WIDTH / 2;
