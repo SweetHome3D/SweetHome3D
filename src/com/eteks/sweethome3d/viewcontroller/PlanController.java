@@ -1915,10 +1915,12 @@ public class PlanController extends FurnitureController implements Controller {
       boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2;
       double cosWallAngle = Math.cos(wallAngle);
       double sinWallAngle = Math.sin(wallAngle);
-      double distanceToLeftSide = Line2D.ptLineDist(
-          wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
-      double distanceToRightSide = Line2D.ptLineDist(
-          wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
+      double distanceToLeftSide = wallPoints [0][0] != wallPoints [0][1] || wallPoints [1][0] != wallPoints [1][1] 
+          ? Line2D.ptLineDist(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y)
+          : Point2D.distance(wallPoints [0][0], wallPoints [0][1], x, y);
+      double distanceToRightSide = wallPoints [2][0] != wallPoints [2][1] || wallPoints [3][0] != wallPoints [3][1] 
+          ? Line2D.ptLineDist(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y)
+          : Point2D.distance(wallPoints [2][0], wallPoints [2][1], x, y);
       boolean adjustOrientation = forceOrientation
           || piece.isDoorOrWindow() 
           || referenceWall.containsPoint(x, y, includeBaseboards, PIXEL_MARGIN / getScale());
