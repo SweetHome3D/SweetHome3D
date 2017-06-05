@@ -3587,7 +3587,7 @@ public class HomePane extends JRootPane implements HomeView {
         } catch (MalformedURLException ex) {
           // Document isn't shown
         }
-        if (documentShown) {
+        if (!documentShown) {
           // If the document wasn't shown, display a message 
           // with a copiable URL in a message box 
           JTextArea findMoreExamplesMessageTextArea = new JTextArea(preferences.getLocalizedString(
@@ -3598,7 +3598,8 @@ public class HomePane extends JRootPane implements HomeView {
           findMoreExamplesMessageTextArea.setOpaque(false);
           JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), 
               findMoreExamplesMessageTextArea, findMoreExamplesTitle, JOptionPane.INFORMATION_MESSAGE);
-        }      
+        }    
+        // No break
       default : 
         return null;
     }
