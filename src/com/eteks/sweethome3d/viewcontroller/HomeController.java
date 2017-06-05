@@ -234,6 +234,7 @@ public class HomeController implements Controller {
     boolean applicationExists = this.application != null;
     
     homeView.setEnabled(HomeView.ActionType.NEW_HOME, applicationExists);
+    homeView.setEnabled(HomeView.ActionType.NEW_HOME_FROM_EXAMPLE, applicationExists);
     homeView.setEnabled(HomeView.ActionType.OPEN, applicationExists);
     homeView.setEnabled(HomeView.ActionType.DELETE_RECENT_HOMES, 
         applicationExists && !this.preferences.getRecentHomes().isEmpty());
@@ -1790,6 +1791,40 @@ public class HomeController implements Controller {
       home = new Home(this.preferences.getNewWallHeight());
     }
     this.application.addHome(home);
+  }
+  
+  /**
+   * Creates a new home from an example chosen by the user.
+   */
+  public void newHomeFromExample() {
+    final String exampleName = getView().showNewHomeFromExampleDialog();
+    if (exampleName != null) {
+      // Read home in a threaded task
+      Callable<Void> openTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              // Read home with application recorder
+              Home openedHome = application.getHomeRecorder().readHome(exampleName);
+              openedHome.setName(null);
+              addHomeToApplication(openedHome);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                ex.printStackTrace();
+                if (ex instanceof RecorderException) {
+                  String message = preferences.getLocalizedString(HomeController.class, "openError", exampleName);
+                  getView().showError(message);
+                } 
+              }
+            }
+          };
+      new ThreadedTaskController(openTask, 
+          this.preferences.getLocalizedString(HomeController.class, "openMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
+    }
   }
 
   /**

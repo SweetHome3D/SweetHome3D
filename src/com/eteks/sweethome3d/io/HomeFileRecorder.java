@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 
 import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.Home;
@@ -48,6 +50,7 @@ public class HomeFileRecorder implements HomeRecorder {
   private final UserPreferences preferences;
   private final boolean         preferPreferencesContent;
   private final boolean         preferXmlEntry;
+  private final boolean         acceptUrl;
   
   /**
    * Creates a home recorder able to write and read homes in uncompressed files. 
@@ -128,11 +131,40 @@ public class HomeFileRecorder implements HomeRecorder {
                           UserPreferences preferences,
                           boolean         preferPreferencesContent,
                           boolean         preferXmlEntry) {
+    this(compressionLevel, includeOnlyTemporaryContent, preferences, preferPreferencesContent, preferXmlEntry, false);
+  }
+
+  /**
+   * Creates a home recorder able to write and read homes in files compressed 
+   * at a level from 0 to 9. 
+   * @param compressionLevel 0-9
+   * @param includeOnlyTemporaryContent if <code>true</code>, content instances of 
+   *            <code>TemporaryURLContent</code> class referenced by the saved home 
+   *            as well as the content previously saved with it will be written. 
+   *            If <code>false</code>, all the content instances 
+   *            referenced by the saved home will be written in the zip stream. 
+   * @param preferences If not <code>null</code>, the furniture and textures contents 
+   *            it references might be used to replace the one of read homes 
+   *            when they are equal.
+   * @param preferPreferencesContent If <code>true</code>, the furniture and textures contents 
+   *            referenced by <code>preferences</code> will replace the one of read homes 
+   *            as often as possible when they are equal. Otherwise, these contents will be 
+   *            used only to replace damaged content that might be found in read home files.
+   * @param preferXmlEntry If <code>true</code>, an additional <code>Home.xml</code> entry 
+   *            will be saved in files and read in priority from saved files.
+   */
+  public HomeFileRecorder(int             compressionLevel, 
+                          boolean         includeOnlyTemporaryContent,
+                          UserPreferences preferences,
+                          boolean         preferPreferencesContent,
+                          boolean         preferXmlEntry,
+                          boolean         acceptUrl) {
     this.compressionLevel = compressionLevel;
     this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
     this.preferences = preferences;
     this.preferPreferencesContent = preferPreferencesContent;
     this.preferXmlEntry = preferXmlEntry;
+    this.acceptUrl = acceptUrl;
   }
 
   /**
@@ -249,19 +281,32 @@ public class HomeFileRecorder implements HomeRecorder {
   }
   
   /**
-   * Returns a home instance read from its file <code>name</code>.
+   * Returns a home instance read from its file <code>name</code> or an URL if it can be opened as a file.
    * @throws RecorderException if a problem occurred while reading home, 
-   *   or if file <code>name</code> doesn't exist.
+   *   or if file or URL <code>name</code> doesn't exist.
    */
   public Home readHome(String name) throws RecorderException {
-    DefaultHomeInputStream in = null;
+    DefaultHomeInputStream homeInputStream = null;
     try {
-      // Open a stream on file
-      in = new DefaultHomeInputStream(new FileInputStream(name), ContentRecording.INCLUDE_ALL_CONTENT,
+      InputStream in;
+      try {
+        // Open a stream on file
+        in = new FileInputStream(name);
+      } catch (FileNotFoundException ex) {
+        if (this.acceptUrl) {
+          // Then try to open file as a URL
+          URLConnection connection = new URL(name).openConnection();
+          connection.setUseCaches(false);
+          in = connection.getInputStream();
+        } else {
+          throw ex;
+        }
+      }
+      // Read home with HomeInputStream
+      homeInputStream = new DefaultHomeInputStream(in, ContentRecording.INCLUDE_ALL_CONTENT,
           this.preferXmlEntry ? getHomeXMLHandler() : null, 
           this.preferences, this.preferPreferencesContent);
-      // Read home with HomeInputStream
-      Home home = in.readHome();
+      Home home = homeInputStream.readHome();
       return home;
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Read " + name + " interrupted");
@@ -273,8 +318,8 @@ public class HomeFileRecorder implements HomeRecorder {
       throw new RecorderException("Missing classes to read home from " + name, ex);
     } finally {
       try {
-        if (in != null) {
-          in.close();
+        if (homeInputStream != null) {
+          homeInputStream.close();
         }
       } catch (IOException ex) {
         throw new RecorderException("Can't close file " + name, ex);

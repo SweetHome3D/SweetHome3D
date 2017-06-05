@@ -1,0 +1,491 @@
+<?xml version='1.0'?>
+<home version='5300' name='2BedroomApartment.sh3d' camera='topCamera' wallHeight='250.0' furnitureSortedProperty='NAME'>
+  <property name='Author' value='Véronique PUYBARET / Emmanuel PUYBARET'/>
+  <property name='Copyright' value='Sweet Home 3D, Copyright (c) 2017 Emmanuel PUYBARET / eTeks info@eteks.com'/>
+  <property name='License' value='CC-BY Creative Commons Attribution 3.0 Unported license or GNU General Public License'/>
+  <property name='TotalArea' value='632748'/>
+  <furnitureVisibleProperty name='NAME'/>
+  <furnitureVisibleProperty name='WIDTH'/>
+  <furnitureVisibleProperty name='DEPTH'/>
+  <furnitureVisibleProperty name='HEIGHT'/>
+  <furnitureVisibleProperty name='VISIBLE'/>
+  <environment groundColor='00A8A8A8' skyColor='00CCE4FC' lightColor='00D0D0D0' ceillingLightColor='00D0D0D0' photoWidth='400' photoHeight='300' photoAspectRatio='VIEW_3D_RATIO' photoQuality='0' videoWidth='320' videoAspectRatio='RATIO_4_3' videoQuality='0' videoFrameRate='25'/>
+  <compass x='-133.19861' y='63.832733' diameter='100.0' northDirection='3.9793506' longitude='0.040724345' latitude='0.8528843' timeZone='Europe/Paris'/>
+  <observerCamera attribute='observerCamera' lens='PINHOLE' x='256.22018' y='464.77985' z='168.45142' yaw='4.4392614' pitch='0.14079636' fieldOfView='1.0995575' time='1492171200000'/>
+  <camera attribute='topCamera' lens='PINHOLE' x='579.4502' y='401.99994' z='1291.3918' yaw='3.1415973' pitch='1.5707964' fieldOfView='1.0995575' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Corridor' lens='PINHOLE' x='256.22018' y='464.77985' z='168.45142' yaw='4.4392614' pitch='0.14079636' fieldOfView='1.0995575' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Bathroom' lens='PINHOLE' x='219.75943' y='267.97928' z='150.0576' yaw='-5.6797733' pitch='0.22726646' fieldOfView='1.3089969' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Bedroom #1' lens='PINHOLE' x='377.20322' y='550.298' z='160.57925' yaw='-5.167054' pitch='0.2807963' fieldOfView='1.0995575' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Bedroom #2' lens='PINHOLE' x='468.18185' y='45.50206' z='103.12195' yaw='-5.1220593' pitch='7.9640094E-4' fieldOfView='1.0995575' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Kitchen' lens='PINHOLE' x='746.2043' y='310.10538' z='168.45508' yaw='-3.582061' pitch='0.28579634' fieldOfView='1.0995575' time='1492171200000'/>
+  <observerCamera attribute='storedCamera' name='Living room' lens='PINHOLE' x='790.52563' y='464.61133' z='177.54071' yaw='4.034255' pitch='0.1657964' fieldOfView='1.0995575' time='1492171200000'/>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x123' name='Double small window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x123.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x123.png' x='976.3235' y='1.680001' elevation='94.0' width='156.00008' depth='35.360752' height='126.0' color='FF383838' movable='false' dropOnTopElevation='-0.0074626864' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='1005.88184' y='441.74374' angle='2.3561945' width='40.0' depth='42.000027' height='90.0' color='FF552600' dropOnTopElevation='0.5133333'/>
+  <doorOrWindow catalogId='eTeks#doorFrame' name='Door frame' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doorFrame.obj' icon='com/eteks/sweethome3d/io/resources/doorFrame.png' x='768.36487' y='417.53036' angle='4.712389' width='130.0' depth='10.0' height='210.0' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.7894737' wallDistance='0.10526316' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'/>
+  <doorOrWindow catalogId='eTeks#doubleFrenchWindow126x200' name='Double door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleFrenchWindow126x200.obj' icon='com/eteks/sweethome3d/io/resources/doubleFrenchWindow126x200.png' x='769.4655' y='417.7804' angle='4.712389' width='130.50005' depth='10.200749' height='210.0' movable='false' dropOnTopElevation='-0.004761905' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <light catalogId='eTeks#floorUplight' name='Floor uplight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/floorUplight.obj' icon='com/eteks/sweethome3d/io/resources/floorUplight.png' x='1119.0103' y='37.131104' angle='6.283185' width='33.00001' depth='33.00001' height='181.0' dropOnTopElevation='-0.005524862' power='0.5'>
+    <lightSource x='0.5' y='0.5' z='1.0' color='00BBAF96' diameter='0.121212125'/>
+    <material name='dkgrey' color='FF021D23'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#armchair' name='Armchair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/armchair.obj' icon='com/eteks/sweethome3d/io/resources/armchair.png' x='1078.8108' y='246.63031' angle='2.0943952' width='78.000015' depth='82.50005' height='78.0' color='FF007C9B' shininess='0.0' dropOnTopElevation='0.37356323'/>
+  <pieceOfFurniture catalogId='eTeks#tvUnit' name='TV unit' creator='eTeks' model='com/eteks/sweethome3d/io/resources/tvUnit.obj' icon='com/eteks/sweethome3d/io/resources/tvUnit.png' x='824.9988' y='179.01288' angle='4.7129908' width='95.00004' depth='13.000005' height='93.0' dropOnTopElevation='0.44731182'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Box' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='827.1419' y='178.92673' angle='4.7129908' width='109.00005' depth='25.00001' height='42.0' color='FF552600'/>
+  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='832.7434' y='62.465866' angle='4.712389' width='100.00004' depth='38.00002' height='211.0' dropOnTopElevation='0.4606635'>
+    <material name='flbrown' color='FF552600'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#plant' name='Plant' creator='eTeks' model='com/eteks/sweethome3d/io/resources/plant.obj' icon='com/eteks/sweethome3d/io/resources/plant.png' x='1123.4877' y='416.1762' elevation='80.0' angle='1.5707965' width='35.00001' depth='30.200014' height='65.0' dropOnTopElevation='-0.0121951215'/>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x123' name='Double small window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x123.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x123.png' x='1146.9199' y='372.0928' elevation='94.0' angle='1.5707964' width='156.00008' depth='35.360752' height='126.0' color='FF383838' movable='false' dropOnTopElevation='-0.0074626864' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='1000.063' y='375.68127' angle='0.78539824' width='40.000027' depth='42.0' height='90.0' color='FF552600' dropOnTopElevation='0.5133333'/>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='937.8711' y='371.40936' angle='5.497787' width='40.0' depth='42.000027' height='90.0' color='FF552600' dropOnTopElevation='0.5133333'/>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='931.219' y='445.04376' angle='3.926991' width='40.000027' depth='42.0' height='90.0' color='FF552600' dropOnTopElevation='0.5133333'/>
+  <pieceOfFurniture catalogId='eTeks#chest' name='Chest' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chest.obj' icon='com/eteks/sweethome3d/io/resources/chest.png' x='1115.0875' y='370.58795' angle='1.5707965' width='133.00005' depth='47.00002' height='80.0'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='980.3091' y='168.57379' angle='0.78539824' width='120.00008' depth='125.0' height='0.5' color='FF2B6676' shininess='0.0'/>
+  <pieceOfFurniture catalogId='eTeks#roundTable' name='Round table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/roundTable.obj' icon='com/eteks/sweethome3d/io/resources/roundTable.png' x='966.875' y='410.0979' angle='6.283185' width='105.0' depth='105.0' height='74.0' color='FF552600'/>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Coffee table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='977.95435' y='164.79868' angle='6.212282' width='79.0' depth='49.0' height='22.0'>
+    <material name='flblonde' color='FF552600'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#cornerSofa' name='Corner sofa' creator='eTeks' model='com/eteks/sweethome3d/io/resources/cornerSofa.obj' icon='com/eteks/sweethome3d/io/resources/cornerSofa.png' x='1026.0874' y='97.34143' angle='6.283185' width='225.0' depth='162.2' height='84.0' color='FF007C9B' shininess='0.0' dropOnTopElevation='0.37471262'/>
+  <light catalogId='eTeks#floorUplight' name='Floor uplight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/floorUplight.obj' icon='com/eteks/sweethome3d/io/resources/floorUplight.png' x='1113.6974' y='460.4382' angle='3.1415927' width='33.0' depth='33.0' height='181.0' dropOnTopElevation='-0.005524862' power='0.5'>
+    <lightSource x='0.5' y='0.5' z='1.0' color='00BBAF96' diameter='0.121212125'/>
+    <material name='dkgrey' color='FF021D23'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='176.78375' y='509.05316' width='110.0' depth='54.0' height='210.0'>
+    <material name='white' color='FFA56100'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='65.299995' y='509.05316' width='110.0' depth='54.0' height='210.0' color='FFA56100'/>
+  <pieceOfFurniture catalogId='eTeks#bedsideTable' name='Bedside table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bedsideTable.obj' icon='com/eteks/sweethome3d/io/resources/bedsideTable.png' x='30.300001' y='576.0086' angle='4.712389' width='38.0' depth='38.0' height='50.0' color='FF8B8B8B'/>
+  <pieceOfFurniture catalogId='eTeks#bedsideTable' name='Bedside table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bedsideTable.obj' icon='com/eteks/sweethome3d/io/resources/bedsideTable.png' x='30.300001' y='766.07117' angle='4.712389' width='38.0' depth='38.0' height='50.0'>
+    <material name='amber' color='FF8B8B8B'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='332.5625' y='779.5' angle='3.1415927' width='97.0' depth='29.0' height='211.0' dropOnTopElevation='0.4606635'>
+    <material name='flbrown' color='FF8B8B8B'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='317.50452' y='690.2249' angle='4.712389' width='40.0' depth='42.0' height='90.0' color='FFA56100' dropOnTopElevation='0.5133333'/>
+  <pieceOfFurniture catalogId='eTeks#chair' name='Chair' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chair.obj' icon='com/eteks/sweethome3d/io/resources/chair.png' x='360.0625' y='602.6437' angle='1.5707964' width='40.0' depth='42.0' height='90.0' color='FFA56100' dropOnTopElevation='0.5133333'/>
+  <doorOrWindow catalogId='eTeks#door' name='Door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/door.obj' icon='com/eteks/sweethome3d/io/resources/door.png' x='313.09995' y='530.93115' angle='1.7484555E-7' width='91.5' depth='14.500751' height='208.5' modelMirrored='true' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.51724136' wallDistance='0.06896552' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FFDC8900'/>
+  </doorOrWindow>
+  <light catalogId='eTeks#workLamp' name='Work lamp' creator='eTeks' model='com/eteks/sweethome3d/io/resources/workLamp.obj' icon='com/eteks/sweethome3d/io/resources/workLamp.png' x='33.673576' y='581.8877' elevation='50.0' angle='5.7172465' width='12.0' depth='29.5' height='49.3' dropOnTopElevation='-0.020283977' power='0.5'>
+    <lightSource x='0.5' y='0.09830509' z='0.5983773' color='00463E2E' diameter='0.41666666'/>
+  </light>
+  <light catalogId='eTeks#workLamp' name='Work lamp' creator='eTeks' model='com/eteks/sweethome3d/io/resources/workLamp.obj' icon='com/eteks/sweethome3d/io/resources/workLamp.png' x='32.533123' y='765.5346' elevation='50.0' angle='3.8497396' width='12.0' depth='29.5' height='49.3' dropOnTopElevation='-0.020283977' power='0.5'>
+    <lightSource x='0.5' y='0.09830509' z='0.5983773' color='00463E2E' diameter='0.41666666'/>
+  </light>
+  <light catalogId='eTeks#workLamp' name='Work lamp' creator='eTeks' model='com/eteks/sweethome3d/io/resources/workLamp.obj' icon='com/eteks/sweethome3d/io/resources/workLamp.png' x='363.21472' y='653.74945' elevation='74.0' angle='0.5235988' width='12.0' depth='29.5' height='49.3' dropOnTopElevation='-0.020283977' power='0.5'>
+    <lightSource x='0.5' y='0.09830509' z='0.5983773' color='00463E2E' diameter='0.41666666'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#fittedBath' name='Fitted bath' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fittedBath.obj' icon='com/eteks/sweethome3d/io/resources/fittedBath.png' x='99.299995' y='296.23114' angle='3.1415927' width='178.0' depth='77.0' height='72.0' modelRotation='0 0 -1 0 1 0 1 0 0' movable='false' dropOnTopElevation='0.8680556'/>
+  <pieceOfFurniture catalogId='eTeks#washbasinWithCabinet' name='Washbasin with cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/washbasinWithCabinet.obj' icon='com/eteks/sweethome3d/io/resources/washbasinWithCabinet.png' x='38.8' y='373.867' angle='4.712389' width='66.0' depth='57.0' height='97.0' movable='false' dropOnTopElevation='0.7762887'/>
+  <pieceOfFurniture catalogId='eTeks#washbasinWithCabinet' name='Washbasin with cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/washbasinWithCabinet.obj' icon='com/eteks/sweethome3d/io/resources/washbasinWithCabinet.png' x='38.799995' y='439.867' angle='4.712389' width='66.0' depth='57.0' height='97.0' movable='false' dropOnTopElevation='0.7762887'/>
+  <pieceOfFurniture catalogId='eTeks#clothesWasher' name='Clothes washer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/clothesWasher.obj' icon='com/eteks/sweethome3d/io/resources/clothesWasher.png' x='199.67503' y='442.81174' angle='1.5680112' width='60.0' depth='63.0' height='85.0'/>
+  <pieceOfFurniture catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='209.8' y='288.73114' width='43.0' depth='62.0' height='85.0' movable='false'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='119.712494' y='367.23114' angle='3.1415927' width='98.0' depth='65.0' height='0.5' color='FF6E9A7D' shininess='0.0'/>
+  <doorOrWindow catalogId='eTeks#door' name='Door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/door.obj' icon='com/eteks/sweethome3d/io/resources/door.png' x='238.21446' y='367.01065' angle='4.709604' width='91.5' depth='14.500751' height='208.5' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.51724136' wallDistance='0.06896552' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FFBBFFE2'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='211.94357' y='443.35876' elevation='145.0' angle='1.5707964' width='60.0' depth='40.3' height='86.200005'>
+    <material name='white' color='FF96CEAF'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='19.299988' y='439.22958' elevation='128.0' angle='4.712389' width='66.0' depth='18.0' height='86.200005'>
+    <material name='white' color='FF96CEAF'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='19.299988' y='373.22958' elevation='128.0' angle='4.712389' width='66.0' depth='18.0' height='86.200005' modelMirrored='true'>
+    <material name='white' color='FF96CEAF'/>
+  </pieceOfFurniture>
+  <doorOrWindow catalogId='eTeks#door' name='Door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/door.obj' icon='com/eteks/sweethome3d/io/resources/door.png' x='316.9555' y='292.49356' width='91.5' depth='14.500751' height='208.5' modelMirrored='true' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.51724136' wallDistance='0.06896552' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FFBBFFE2'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#toiletUnit' name='Toilet unit' creator='eTeks' model='com/eteks/sweethome3d/io/resources/toiletUnit.obj' icon='com/eteks/sweethome3d/io/resources/toiletUnit.png' x='279.25' y='222.6113' angle='4.712389' width='40.0' depth='80.0' height='62.0' movable='false' dropOnTopElevation='0.983871'/>
+  <pieceOfFurniture catalogId='eTeks#cornerBunkBed90x190' name='Corner bunk bed' creator='eTeks' model='com/eteks/sweethome3d/io/resources/cornerBunkBed90x190.obj' icon='com/eteks/sweethome3d/io/resources/cornerBunkBed90x190.png' x='115.3' y='146.0' angle='4.712389' width='208.0' depth='208.0' height='155.0' dropOnTopElevation='0.8548387'>
+    <material name='flyellow' color='FF841000'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='299.01913' y='160.48738' angle='3.1415927' width='100.0' depth='46.0' height='165.0'>
+    <material name='white' color='FF841000'/>
+  </pieceOfFurniture>
+  <doorOrWindow catalogId='eTeks#door' name='Door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/door.obj' icon='com/eteks/sweethome3d/io/resources/door.png' x='421.857' y='287.49368' angle='3.1415927' width='91.5' depth='14.500751' height='208.5' modelMirrored='true' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.51724136' wallDistance='0.06896552' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'>
+    <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FF841000'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='78.037506' y='24.73114' width='131.0' depth='31.0' height='211.0' color='FF841000' dropOnTopElevation='0.4606635'/>
+  <pieceOfFurniture catalogId='eTeks#stool' name='Stool' creator='eTeks' model='com/eteks/sweethome3d/io/resources/stool.obj' icon='com/eteks/sweethome3d/io/resources/stool.png' x='425.38745' y='65.88751' angle='1.5707964' width='40.0' depth='40.0' height='46.0'>
+    <material name='amber' color='FF841000'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#stool' name='Stool' creator='eTeks' model='com/eteks/sweethome3d/io/resources/stool.obj' icon='com/eteks/sweethome3d/io/resources/stool.png' x='367.9312' y='63.612488' angle='1.5707964' width='40.0' depth='40.0' height='46.0'>
+    <material name='amber' color='FF841000'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='462.77814' y='171.34688' angle='1.5707964' width='136.0' depth='22.0' height='180.0' color='FF841000' dropOnTopElevation='0.4606635'/>
+  <light catalogId='eTeks#floorUplight' name='Floor uplight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/floorUplight.obj' icon='com/eteks/sweethome3d/io/resources/floorUplight.png' x='457.27814' y='81.26245' angle='1.5707964' width='33.0' depth='33.0' height='181.0' dropOnTopElevation='-0.005524862' power='0.5'>
+    <lightSource x='0.5' y='0.5' z='1.0' color='00BBAF96' diameter='0.121212125'/>
+  </light>
+  <light catalogId='eTeks#spotlight' name='Spotlight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/spotlight.obj' icon='com/eteks/sweethome3d/io/resources/spotlight.png' x='118.30434' y='237.51932' elevation='130.0' angle='3.926991' width='10.0' depth='14.558823' height='19.264706' dropOnTopElevation='-0.07633588' power='0.5'>
+    <lightSource x='0.5' y='0.091185406' z='0.22137405' color='0044371B' diameter='0.65789473'/>
+  </light>
+  <light catalogId='eTeks#spotlight' name='Spotlight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/spotlight.obj' icon='com/eteks/sweethome3d/io/resources/spotlight.png' x='125.89812' y='40.456146' elevation='164.0' angle='2.0943952' width='10.0' depth='14.558823' height='19.264706' dropOnTopElevation='-0.07633588' power='0.5'>
+    <lightSource x='0.5' y='0.091185406' z='0.22137405' color='0044371B' diameter='0.65789473'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='76.8' y='26.5' width='131.0' depth='31.0' height='211.0' color='FF841000' dropOnTopElevation='0.4606635'/>
+  <pieceOfFurniture catalogId='eTeks#cooker' name='Cooker' creator='eTeks' model='com/eteks/sweethome3d/io/resources/cooker.obj' icon='com/eteks/sweethome3d/io/resources/cooker.png' x='572.9075' y='41.25659' width='60.0' depth='62.0' height='85.0'>
+    <material name='flwhite1' color='FF383838'/>
+    <material name='white' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#dishwasher' name='Dishwasher' creator='eTeks' model='com/eteks/sweethome3d/io/resources/dishwasher.obj' icon='com/eteks/sweethome3d/io/resources/dishwasher.png' x='512.3881' y='42.5' width='60.0' depth='65.0' height='85.0'>
+    <material name='white' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#fridgeFreezer' name='Fridge &amp; Freezer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fridgeFreezer.obj' icon='com/eteks/sweethome3d/io/resources/fridgeFreezer.png' x='774.9824' y='44.75659' width='60.0' depth='69.0' height='185.0'>
+    <material name='white' color='FF8B8B8B'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#sink' name='Sink' creator='eTeks' model='com/eteks/sweethome3d/io/resources/sink.obj' icon='com/eteks/sweethome3d/io/resources/sink.png' x='673.37244' y='42.3' width='141.0' depth='64.0' height='106.0' movable='false' dropOnTopElevation='0.8283019'>
+    <material name='white' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Bank' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='543.9531' y='264.99802' angle='3.1415927' width='124.0' depth='20.0' height='44.0'>
+    <material name='flblonde' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Bank' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='543.9531' y='153.46309' width='124.0' depth='20.0' height='44.0'>
+    <material name='flblonde' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#stool' name='Stool' creator='eTeks' model='com/eteks/sweethome3d/io/resources/stool.obj' icon='com/eteks/sweethome3d/io/resources/stool.png' x='607.3062' y='210.82365' angle='1.5707964' width='40.0' depth='40.0' height='46.0'>
+    <material name='amber' color='FF383838'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='783.7398' y='227.28593' angle='1.572587' width='81.0' depth='46.0' height='185.0'>
+    <material name='white' color='FF383838'/>
+  </pieceOfFurniture>
+  <doorOrWindow catalogId='eTeks#openDoor' name='Open door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/openDoor.obj' icon='com/eteks/sweethome3d/io/resources/openDoor.png' x='699.2' y='318.2044' angle='3.141592' width='91.5' depth='68.00075' height='208.5' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.11029412' wallDistance='0.014705882' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'>
+    <sash xAxis='0.05464481' yAxis='0.125' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FF8B8B8B'/>
+  </doorOrWindow>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x123' name='Double small window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x123.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x123.png' x='658.0418' y='1.680001' elevation='95.0' width='132.0' depth='35.360752' height='126.0' color='FF383838' movable='false' dropOnTopElevation='-0.0074626864' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <light catalogId='eTeks#pendantLamp' name='Pendant lamp' creator='eTeks' model='com/eteks/sweethome3d/io/resources/pendantLamp.obj' icon='com/eteks/sweethome3d/io/resources/pendantLamp.png' x='664.6344' y='129.1507' elevation='200.0' width='60.0' depth='60.0' height='50.0' color='FF383838' dropOnTopElevation='-0.0125' power='0.5'>
+    <lightSource x='0.5' y='0.5' z='0.1875' color='00AA9770' diameter='0.16666667'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='501.42813' y='238.49126' elevation='130.0' angle='4.712389' width='80.0' depth='40.3' height='86.200005'>
+    <material name='white' color='FF434343'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='501.42813' y='157.81625' elevation='130.0' angle='4.712389' width='80.0' depth='40.3' height='86.200005' modelMirrored='true'>
+    <material name='white' color='FF434343'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#flowers' name='Flowers' creator='eTeks' model='com/eteks/sweethome3d/io/resources/flowers.obj' icon='com/eteks/sweethome3d/io/resources/flowers.png' x='542.6612' y='206.82196' elevation='75.0' width='24.2' depth='22.1' height='49.3'/>
+  <light catalogId='eTeks#wallUplight' name='Wall uplight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wallUplight.obj' icon='com/eteks/sweethome3d/io/resources/wallUplight.png' x='477.54688' y='478.0' elevation='165.0' angle='3.1415927' width='24.0' depth='12.0' height='26.0' dropOnTopElevation='-0.03846154' power='0.5'>
+    <lightSource x='0.5' y='0.6666667' z='0.7307692' color='00998764' diameter='0.29166666'/>
+  </light>
+  <light catalogId='eTeks#wallUplight' name='Wall uplight' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wallUplight.obj' icon='com/eteks/sweethome3d/io/resources/wallUplight.png' x='245.7523' y='470.33575' elevation='165.0' angle='4.709604' width='24.0' depth='12.0' height='26.0' dropOnTopElevation='-0.03846154' power='0.5'>
+    <lightSource x='0.5' y='0.6666667' z='0.7307692' color='00998764' diameter='0.29166666'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#chest' name='Chest' creator='eTeks' model='com/eteks/sweethome3d/io/resources/chest.obj' icon='com/eteks/sweethome3d/io/resources/chest.png' x='469.15002' y='460.5' angle='3.1415927' width='115.0' depth='45.0' height='80.0'>
+    <material name='amber' color='FFA8A8A8'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture catalogId='eTeks#slidingDoors' name='Sliding doors' creator='eTeks' model='com/eteks/sweethome3d/io/resources/slidingDoors.obj' icon='com/eteks/sweethome3d/io/resources/slidingDoors.png' x='554.27814' y='348.3533' width='146.0' depth='6.8' height='250.0' movable='false'/>
+  <pieceOfFurniture catalogId='eTeks#flowers' name='Flowers' creator='eTeks' model='com/eteks/sweethome3d/io/resources/flowers.obj' icon='com/eteks/sweethome3d/io/resources/flowers.png' x='489.92816' y='466.20557' elevation='80.0' angle='3.1415927' width='24.2' depth='22.1' height='49.3'/>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='348.5625' y='687.1344' angle='1.5707964' width='122.0' depth='65.0' height='74.0' color='FF8B8B8B'/>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='399.27814' y='36.0' width='149.0' depth='52.0' height='74.0' color='FF841000'/>
+  <light catalogId='eTeks#pendantLamp' name='Pendant lamp' creator='eTeks' model='com/eteks/sweethome3d/io/resources/pendantLamp.obj' icon='com/eteks/sweethome3d/io/resources/pendantLamp.png' x='118.512726' y='373.35144' elevation='200.0' width='60.0' depth='60.0' height='50.0' color='FF91CAAC' dropOnTopElevation='-0.0125' power='0.5'>
+    <lightSource x='0.5' y='0.5' z='0.1875' color='00AA9770' diameter='0.16666667'/>
+  </light>
+  <pieceOfFurniture catalogId='eTeks#squareTable' name='Table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='543.9531' y='208.52284' angle='3.1415927' width='124.0' depth='77.0' height='74.0' color='FF383838'/>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x163' name='Double window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x163.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x163.png' x='196.8811' y='802.32' elevation='47.0' angle='3.1415927' width='132.0' depth='35.360752' height='174.0' color='FF383838' movable='false' dropOnTopElevation='-0.0057471264' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x163' name='Double window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x163.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x163.png' x='244.21616' y='1.680001' elevation='47.0' width='132.0' depth='35.360752' height='174.0' color='FF383838' movable='false' dropOnTopElevation='-0.0057471264' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Railing' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='196.64319' y='816.8422' elevation='100.0' width='132.0' depth='3.0' height='3.0' color='FF2C2C2C'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Railing' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='196.64319' y='816.8422' elevation='78.0' width='132.0' depth='3.0' height='3.0' color='FF2C2C2C'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Railing' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='244.64317' y='-12.157776' elevation='100.0' width='132.0' depth='3.0' height='3.0' color='FF2C2C2C'/>
+  <pieceOfFurniture catalogId='eTeks#texturableBox' name='Railing' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='244.64317' y='-12.157776' elevation='78.0' width='132.0' depth='3.0' height='3.0' color='FF2C2C2C'/>
+  <doorOrWindow catalogId='eTeks#frontDoor' name='Front door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/frontDoor.obj' icon='com/eteks/sweethome3d/io/resources/frontDoor.png' x='694.26965' y='489.77777' angle='3.1415927' width='101.5' depth='20.445194' height='208.5' modelMirrored='true' wallThickness='0.7826087' cutOutShape='M0,0 v1 h1 v-1 z'>
+    <sash xAxis='0.049261082' yAxis='0.7826087' width='0.9014778' startAngle='0.0' endAngle='-1.5707964'/>
+    <material name='yellowbrt' color='FF554C43'/>
+  </doorOrWindow>
+  <furnitureGroup name='Bed' x='108.49883' y='671.6395' angle='4.712389' width='144.59998' depth='196.39767' height='79.0'>
+    <pieceOfFurniture catalogId='eTeks#bed' name='Bed' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bed.obj' icon='com/eteks/sweethome3d/io/resources/bed.png' x='110.14763' y='671.6395' angle='4.712389' width='144.6' depth='193.1' height='52.8'>
+      <material name='flgrey' color='FF926F40'/>
+      <material name='flwhite' color='FF868686'/>
+      <material name='ltgrey' color='FF533815' shininess='0.0'/>
+      <material name='sand_stone' color='FF50310D'/>
+    </pieceOfFurniture>
+    <pieceOfFurniture catalogId='eTeks#texturableBox' name='Box' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='11.299999' y='671.4179' elevation='12.0' angle='4.712389' width='140.0' depth='2.0' height='67.0' color='FF926F40'/>
+  </furnitureGroup>
+  <wall id='wall0' wallAtStart='wall27' wallAtEnd='wall28' xStart='1151.6' yStart='-3.0' xEnd='1151.6' yEnd='492.0' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFCFF9FF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall1' wallAtStart='wall9' wallAtEnd='wall10' xStart='389.1' yStart='807.0' xEnd='2.3' yEnd='807.0' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFDC8900'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall2' xStart='884.3876' yStart='3.8373299' xEnd='1001.5' yEnd='-1.4407774' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222'/>
+  <wall id='wall3' wallAtEnd='wall14' xStart='0.2999878' yStart='477.6498' xEnd='236.02264' yEnd='477.6498' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFBBFFE2' rightSideColor='FFDC8900'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF2B6676'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall4' xStart='3.1124878' yStart='253.98114' xEnd='235.5' yEnd='253.98114' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFC4CF' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF2B6676'/>
+  </wall>
+  <wall id='wall5' wallAtEnd='wall37' xStart='477.52814' yStart='290.28668' xEnd='630.9625' yEnd='290.28668' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall6' wallAtEnd='wall7' xStart='391.0625' yStart='528.4312' xEnd='235.92496' yEnd='528.4312' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFDC8900' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall7' wallAtStart='wall6' xStart='235.92496' yStart='528.4312' xEnd='235.92496' yEnd='479.4312' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFDC8900' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall8' wallAtStart='wall29' wallAtEnd='wall9' xStart='389.1' yStart='492.0' xEnd='389.1' yEnd='528.4312' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall9' wallAtStart='wall8' wallAtEnd='wall1' xStart='389.1' yStart='528.4312' xEnd='389.1' yEnd='807.0' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFDC8900'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall10' wallAtStart='wall1' wallAtEnd='wall11' xStart='2.3' yStart='807.0' xEnd='2.3' yEnd='475.5593' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFDC8900'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall11' wallAtStart='wall10' wallAtEnd='wall12' xStart='2.3' yStart='475.5593' xEnd='2.3' yEnd='253.98114' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF2B6676'/>
+  </wall>
+  <wall id='wall12' wallAtStart='wall11' wallAtEnd='wall36' xStart='2.3' yStart='253.98114' xEnd='2.3' yEnd='-3.0' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFFFC4CF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+  </wall>
+  <wall id='wall13' wallAtStart='wall33' wallAtEnd='wall32' xStart='235.5' yStart='188.23738' xEnd='368.7297' yEnd='188.23738' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFC4CF' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0'/>
+  </wall>
+  <wall id='wall14' wallAtStart='wall3' wallAtEnd='wall15' xStart='236.02264' yStart='477.6498' xEnd='235.5' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFBBFFE2' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF2B6676'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall15' wallAtStart='wall14' wallAtEnd='wall33' xStart='235.5' yStart='289.99362' xEnd='235.5' yEnd='253.98114' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFBBFFE2' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF2B6676'/>
+  </wall>
+  <wall id='wall16' wallAtStart='wall34' xStart='368.7297' yStart='289.99362' xEnd='477.52814' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFC4CF' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall17' wallAtEnd='wall18' xStart='477.52814' yStart='3.8373299' xEnd='477.52814' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25' rightSideColor='FFFFC4CF'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+  </wall>
+  <wall id='wall18' wallAtStart='wall17' xStart='477.52814' yStart='289.99362' xEnd='477.52814' yEnd='350.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFE8F4' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall19' wallAtStart='wall23' xStart='768.11554' yStart='290.3' xEnd='810.1345' yEnd='290.3' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+  </wall>
+  <wall id='wall20' wallAtEnd='wall21' xStart='810.0' yStart='-0.71891403' xEnd='810.0' yEnd='290.3' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFCFF9FF' rightSideColor='FFFFFB86' rightSideShininess='0.25'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+  </wall>
+  <wall id='wall21' wallAtStart='wall20' wallAtEnd='wall25' xStart='810.0' yStart='290.3' xEnd='809.8' yEnd='347.19757' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFCFF9FF'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall22' wallAtEnd='wall23' xStart='768.11554' yStart='497.4085' xEnd='768.11554' yEnd='347.19757' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFE8F4' rightSideColor='FFCFF9FF'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall23' wallAtStart='wall22' wallAtEnd='wall19' xStart='768.11554' yStart='347.19757' xEnd='768.11554' yEnd='290.3' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+  </wall>
+  <wall id='wall24' wallAtStart='wall37' wallAtEnd='wall25' xStart='631.0' yStart='347.19766' xEnd='768.11554' yEnd='347.19766' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall25' wallAtStart='wall24' wallAtEnd='wall21' xStart='768.11554' yStart='347.19766' xEnd='809.8' yEnd='347.19757' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFCFF9FF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall26' wallAtStart='wall36' wallAtEnd='wall27' xStart='477.52814' yStart='-3.0' xEnd='809.9996' yEnd='-3.0' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFFFFB86' rightSideShininess='0.25'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+  </wall>
+  <wall id='wall27' wallAtStart='wall26' wallAtEnd='wall0' xStart='809.9996' yStart='-3.0' xEnd='1151.6' yEnd='-3.0' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFCFF9FF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall28' wallAtStart='wall0' wallAtEnd='wall29' xStart='1151.6' yStart='492.0' xEnd='767.3565' yEnd='492.0' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFCFF9FF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF007C9B'/>
+  </wall>
+  <wall id='wall29' wallAtStart='wall28' wallAtEnd='wall8' xStart='767.3565' yStart='492.0' xEnd='389.1' yEnd='492.0' height='250.0' thickness='16.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall30' wallAtStart='wall31' xStart='264.68115' yStart='253.98114' xEnd='235.5' yEnd='253.98114' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0'/>
+  </wall>
+  <wall id='wall31' wallAtStart='wall35' wallAtEnd='wall30' xStart='264.68115' yStart='289.99362' xEnd='264.68115' yEnd='253.98114' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0'/>
+  </wall>
+  <wall id='wall32' wallAtStart='wall13' xStart='368.7297' yStart='188.23738' xEnd='368.7297' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFC4CF' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0'/>
+  </wall>
+  <wall id='wall33' wallAtStart='wall15' wallAtEnd='wall13' xStart='235.5' yStart='253.98114' xEnd='235.5' yEnd='188.23738' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFC4CF' rightSideColor='FFBBFFE2'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0'/>
+  </wall>
+  <wall id='wall34' wallAtEnd='wall16' xStart='264.68115' yStart='289.99362' xEnd='368.7297' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFBBFFE2' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall35' wallAtStart='wall31' xStart='264.68115' yStart='289.99362' xEnd='235.92496' yEnd='289.99362' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <wall id='wall36' wallAtStart='wall12' wallAtEnd='wall26' xStart='2.3' yStart='-3.0' xEnd='477.52814' yEnd='-3.0' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF222222' rightSideColor='FFFFC4CF'>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FFB99FA4'/>
+  </wall>
+  <wall id='wall37' wallAtStart='wall5' wallAtEnd='wall24' xStart='630.9625' yStart='290.28668' xEnd='631.0' yEnd='347.19766' height='250.0' thickness='7.5' pattern='reversedHatchUp' topColor='FF222222' leftSideColor='FFFFFB86' leftSideShininess='0.25' rightSideColor='FFFFE8F4'>
+    <baseboard attribute='leftSideBaseboard' thickness='1.0' height='7.0' color='FFC6C658'/>
+    <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF8B8B8B'/>
+  </wall>
+  <room name='Bedroom #1' nameXOffset='-76.651184' nameYOffset='26.731628' areaVisible='true' areaXOffset='-74.847626' areaYOffset='72.142334' floorColor='FF747474' ceilingColor='FFEEEEEE'>
+    <point x='10.2999935' y='479.3093'/>
+    <point x='10.299988' y='794.0'/>
+    <point x='381.0625' y='794.0'/>
+    <point x='381.0625' y='532.1812'/>
+    <point x='359.45993' y='532.1812'/>
+    <point x='359.45993' y='528.4062'/>
+    <point x='266.73996' y='528.4062'/>
+    <point x='266.73996' y='532.1812'/>
+    <point x='232.20546' y='532.1812'/>
+    <point x='231.7737' y='479.3093'/>
+  </room>
+  <room name='Living room' nameXOffset='-16.463135' nameYOffset='30.556519' areaVisible='true' areaXOffset='-14.111206' areaYOffset='74.08435' floorColor='FF7D9DA1'>
+    <point x='813.7439' y='9.451128'/>
+    <point x='813.5785' y='284.25226'/>
+    <point x='813.54767' y='335.375'/>
+    <point x='813.5039' y='335.3312'/>
+    <point x='771.86554' y='335.33127'/>
+    <point x='771.86554' y='344.46878'/>
+    <point x='768.0905' y='344.46878'/>
+    <point x='768.0905' y='476.20212'/>
+    <point x='768.0905' y='476.8855'/>
+    <point x='771.86554' y='476.8855'/>
+    <point x='771.86554' y='484.0'/>
+    <point x='1138.6' y='484.0'/>
+    <point x='1137.8439' y='485.47885'/>
+    <point x='1138.6' y='10.0'/>
+  </room>
+  <room floorColor='FFEEEEEE' ceilingColor='FFBBFFE2'>
+    <point x='239.25' y='191.98738'/>
+    <point x='239.25' y='250.23114'/>
+    <point x='268.43115' y='250.23114'/>
+    <point x='268.43115' y='286.24362'/>
+    <point x='270.59552' y='286.24362'/>
+    <point x='270.59552' y='290.01862'/>
+    <point x='363.3155' y='290.01862'/>
+    <point x='363.3155' y='286.24362'/>
+    <point x='364.9797' y='286.24362'/>
+    <point x='364.9797' y='191.98738'/>
+  </room>
+  <room name='Bathroom' nameXOffset='-22.544495' nameYOffset='-60.740906' areaVisible='true' areaXOffset='-2.7053528' areaYOffset='82.963684' floorColor='FF2B6676'>
+    <point x='10.299988' y='257.73114'/>
+    <point x='10.299988' y='473.8998'/>
+    <point x='231.72952' y='473.8998'/>
+    <point x='231.72513' y='473.3618'/>
+    <point x='232.26067' y='473.35742'/>
+    <point x='232.09354' y='413.3491'/>
+    <point x='235.86693' y='413.33856'/>
+    <point x='235.60892' y='320.6965'/>
+    <point x='231.83553' y='320.70706'/>
+    <point x='231.75' y='290.0'/>
+    <point x='231.75' y='257.73114'/>
+  </room>
+  <room name='Bedroom #2' nameXOffset='-18.937378' nameYOffset='-32.785828' areaVisible='true' areaXOffset='119.03476' areaYOffset='-32.46399' floorColor='FFA79296' ceilingColor='FFFBFBFB'>
+    <point x='10.300002' y='10.0'/>
+    <point x='10.299988' y='250.23114'/>
+    <point x='231.75' y='250.23114'/>
+    <point x='231.75' y='184.48738'/>
+    <point x='372.4797' y='184.48738'/>
+    <point x='372.4797' y='286.24362'/>
+    <point x='375.497' y='286.24362'/>
+    <point x='375.497' y='290.01862'/>
+    <point x='468.21698' y='290.01862'/>
+    <point x='468.21698' y='286.24362'/>
+    <point x='473.77814' y='286.24362'/>
+    <point x='473.77814' y='10.0'/>
+  </room>
+  <room name='Corridor' nameXOffset='-54.77899' nameYOffset='-1.7580566' areaVisible='true' areaXOffset='69.24896' areaYOffset='-1.0335693' floorColor='FF939393'>
+    <point x='270.59552' y='289.96863'/>
+    <point x='270.59552' y='293.74362'/>
+    <point x='239.26047' y='293.74362'/>
+    <point x='239.33551' y='320.68613'/>
+    <point x='235.5621' y='320.69666'/>
+    <point x='235.82011' y='413.3387'/>
+    <point x='239.59352' y='413.32816'/>
+    <point x='239.7831' y='481.3998'/>
+    <point x='239.29103' y='481.3998'/>
+    <point x='239.64447' y='524.6812'/>
+    <point x='266.73996' y='524.6812'/>
+    <point x='266.73996' y='528.45624'/>
+    <point x='359.45993' y='528.45624'/>
+    <point x='359.45993' y='524.6812'/>
+    <point x='381.0625' y='524.6812'/>
+    <point x='381.0625' y='484.0'/>
+    <point x='643.71356' y='484.0'/>
+    <point x='643.71356' y='487.22696'/>
+    <point x='745.3811' y='487.22696'/>
+    <point x='745.721' y='484.0'/>
+    <point x='764.36554' y='484.0'/>
+    <point x='764.36554' y='481.3998'/>
+    <point x='768.0905' y='481.3998'/>
+    <point x='768.14056' y='352.20212'/>
+    <point x='764.36554' y='352.20212'/>
+    <point x='764.36554' y='350.94766'/>
+    <point x='744.885' y='350.94766'/>
+    <point x='744.885' y='347.8708'/>
+    <point x='652.84' y='347.8708'/>
+    <point x='652.84' y='350.94766'/>
+    <point x='627.25244' y='350.94766'/>
+    <point x='627.2125' y='294.03668'/>
+    <point x='481.27814' y='294.03668'/>
+    <point x='481.27814' y='350.99362'/>
+    <point x='473.77814' y='350.99362'/>
+    <point x='473.77814' y='293.74362'/>
+    <point x='468.21698' y='293.74362'/>
+    <point x='468.21698' y='289.96863'/>
+    <point x='375.497' y='289.96863'/>
+    <point x='375.497' y='293.74362'/>
+    <point x='363.3155' y='293.74362'/>
+    <point x='363.3155' y='289.96863'/>
+  </room>
+  <room name='Kitchen' nameXOffset='44.825684' nameYOffset='16.519287' areaVisible='true' areaXOffset='42.9552' areaYOffset='56.59781' floorColor='FFC6C658'>
+    <point x='481.27814' y='10.0'/>
+    <point x='481.27814' y='286.53668'/>
+    <point x='634.7125' y='286.53668'/>
+    <point x='634.7475' y='343.44766'/>
+    <point x='652.16504' y='343.44766'/>
+    <point x='652.16504' y='347.8708'/>
+    <point x='744.885' y='347.8708'/>
+    <point x='744.885' y='343.44766'/>
+    <point x='764.36554' y='343.44766'/>
+    <point x='764.36554' y='286.55'/>
+    <point x='806.25' y='286.55'/>
+    <point x='806.2435' y='10.0'/>
+  </room>
+  <dimensionLine xStart='9.587524' yStart='12.441162' xEnd='473.58752' yEnd='12.441162' offset='-49.512917'/>
+  <dimensionLine xStart='1139.2808' yStart='11.879639' xEnd='1139.2808' yEnd='485.87964' offset='-45.568848'/>
+  <dimensionLine xStart='14.862503' yStart='478.95996' xEnd='14.862503' yEnd='793.95996' offset='46.46826'/>
+  <dimensionLine xStart='9.90625' yStart='10.703674' xEnd='9.90625' yEnd='249.70367' offset='41.636642'/>
+  <dimensionLine xStart='813.8627' yStart='12.191162' xEnd='1138.8627' yEnd='12.191162' offset='-49.512917'/>
+  <dimensionLine xStart='480.91266' yStart='9.916138' xEnd='805.91266' yEnd='9.916138' offset='-46.812897'/>
+  <dimensionLine xStart='771.7843' yStart='484.1258' xEnd='1138.7843' yEnd='484.1258' offset='36.703125'/>
+  <dimensionLine xStart='11.97673' yStart='257.1958' xEnd='11.97673' yEnd='472.1958' offset='44.0363'/>
+  <dimensionLine xStart='8.612335' yStart='795.3958' xEnd='382.61234' yEnd='795.3958' offset='46.404785'/>
+  <label x='668.8906' y='627.29785' color='FFB21D00'>
+    <textStyle fontSize='30.0'/>
+    <text>Two bedroom apartment</text>
+  </label>
+</home>

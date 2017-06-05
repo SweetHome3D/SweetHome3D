@@ -53,7 +53,7 @@ public abstract class UserPreferences {
                         NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
                         RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
                         AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, 
-                        AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES}
+                        AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -117,8 +117,9 @@ public abstract class UserPreferences {
   private Long             updatesMinimumDate;
   private int              autoSaveDelayForRecovery;
   private Map<String, List<String>>  autoCompletionStrings;
-  private List<Integer>      recentColors;
-  private List<TextureImage> recentTextures;
+  private List<Integer>        recentColors;
+  private List<TextureImage>   recentTextures;
+  private List<HomeDescriptor> homeExamples;
 
   /**
    * Creates user preferences.<br> 
@@ -132,6 +133,7 @@ public abstract class UserPreferences {
     this.recentHomes = Collections.emptyList();
     this.recentColors = Collections.emptyList();
     this.recentTextures = Collections.emptyList();
+    this.homeExamples = Collections.emptyList();
 
     this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();    
@@ -1071,6 +1073,27 @@ public abstract class UserPreferences {
     }
   }
 
+  /**
+   * Sets the home examples available for the user.
+   * @since 5.5
+   */
+  protected void setHomeExamples(List<HomeDescriptor> homeExamples) {
+    if (!homeExamples.equals(this.homeExamples)) {
+      List<HomeDescriptor> oldExamples = this.homeExamples;
+      this.homeExamples = new ArrayList<HomeDescriptor>(homeExamples);
+      this.propertyChangeSupport.firePropertyChange(Property.HOME_EXAMPLES.name(), 
+          oldExamples, getHomeExamples());
+    }
+  }
+
+  /**
+   * Returns the home examples available for the user.
+   * @since 5.5
+   */
+  public List<HomeDescriptor> getHomeExamples() {
+    return Collections.unmodifiableList(this.homeExamples);
+  }
+  
   /**
    * Adds the language library to make the languages it contains available to supported languages.
    * @param languageLibraryLocation  the location where the library can be found. 

@@ -38,7 +38,7 @@ public interface HomeView extends View {
    * The actions proposed by the view to user.
    */
   public enum ActionType {
-      NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, SAVE_AND_COMPRESS,
+      NEW_HOME, NEW_HOME_FROM_EXAMPLE, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, SAVE_AND_COMPRESS,
       PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
       UNDO, REDO, CUT, COPY, PASTE, PASTE_TO_GROUP, PASTE_STYLE, DELETE, SELECT_ALL, SELECT_ALL_AT_ALL_LEVELS,
       ADD_HOME_FURNITURE, ADD_FURNITURE_TO_GROUP, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, 
@@ -118,6 +118,12 @@ public interface HomeView extends View {
                                                                Home damagedHome, 
                                                                List<Content> invalidContent);
 
+  /**
+   * Displays a dialog to let the user choose a home example.
+   * @since 5.5
+   */
+  public abstract String showNewHomeFromExampleDialog();
+  
   /**
    * Displays a content chooser open dialog to choose a language library.
    */

@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 5.4 Copyright 2007-2016 eTeks</string>
+	<string>Sweet Home 3D 5.5 Copyright 2007-2017 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>5.4</string>
+	<string>5.5</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.4</string>
+	<string>5.5</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -231,6 +231,7 @@
 			<string>$APP_PACKAGE/../lib/SweetHome3D.jar</string>
 			<string>$APP_PACKAGE/../lib/Furniture.jar</string>
 			<string>$APP_PACKAGE/../lib/Textures.jar</string>
+			<string>$APP_PACKAGE/../lib/Examples.jar</string>
 			<string>$APP_PACKAGE/../lib/Help.jar</string>
 			<string>$APP_PACKAGE/../lib/freehep-vectorgraphics-svg-2.1.1b.jar</string>
 			<string>$APP_PACKAGE/../lib/sunflow-0.07.3i.jar</string>

@@ -44,6 +44,7 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Compass;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
@@ -62,6 +63,7 @@ import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.TextStyle;
+import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -1593,23 +1595,57 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns the content object matching the given string.
    */
-  private Content parseContent(String content) throws SAXException {
-    if (content != null) {
+  private Content parseContent(String contentFile) throws SAXException {
+    if (contentFile != null) {
       try {
-        return new ResourceURLContent(new URL(content), content.startsWith("jar:"));
+        return new ResourceURLContent(new URL(contentFile), contentFile.startsWith("jar:"));
       } catch (MalformedURLException ex1) {
         if (this.contentContext != null) {
           try {
-            return this.contentContext.lookupContent(content);
+            return this.contentContext.lookupContent(contentFile);
           } catch (IOException ex2) {
-            throw new SAXException("Invalid content " + content, ex2);
+            throw new SAXException("Invalid content " + contentFile, ex2);
           }
         } else {
+          if (this.preferences != null) {
+            // Try to find a resource matching contentFile among catalogs
+            for (FurnitureCategory category : this.preferences.getFurnitureCatalog().getCategories()) {
+              for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+                if (isSameContent(contentFile, piece.getIcon())) {
+                  return piece.getIcon();
+                } else if (isSameContent(contentFile, piece.getPlanIcon())) {
+                  return piece.getPlanIcon();
+                } else if (isSameContent(contentFile, piece.getModel())) {
+                  return piece.getModel();
+                }
+              }
+            }
+            for (TexturesCategory category : this.preferences.getTexturesCatalog().getCategories()) {
+              for (CatalogTexture texture : category.getTextures()) {
+                if (isSameContent(contentFile, texture.getIcon())) {
+                  return texture.getIcon();
+                } 
+              }
+            }
+          }
           throw new SAXException("Missing URL base", ex1);
         }
       }
     } else {
       return null;
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if a content matches a given string.
+   */
+  private boolean isSameContent(String contentFile, Content content) {
+    if (content instanceof ResourceURLContent) {
+      ResourceURLContent resourceContent = (ResourceURLContent)content;
+      return resourceContent.isJAREntry() && resourceContent.getJAREntryName().equals(contentFile)
+          || !resourceContent.isJAREntry() && resourceContent.getURL().toString().endsWith("/" + contentFile);
+    } else {
+      return false;
     }
   }
 

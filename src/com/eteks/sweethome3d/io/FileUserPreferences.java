@@ -109,7 +109,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String RECENT_COLORS                             = "recentColors";
   private static final String RECENT_HOMES                              = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
-
+  
   private static final String FURNITURE_NAME                            = "furnitureName#";
   private static final String FURNITURE_CATEGORY                        = "furnitureCategory#";
   private static final String FURNITURE_ICON                            = "furnitureIcon#";
@@ -357,12 +357,15 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     
+    setHomeExamples(defaultPreferences.getHomeExamples());
+    
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           // Update catalogs with new default locale
           updateFurnitureDefaultCatalog(catalogsLoader, FileUserPreferences.this.updater);
           updateTexturesDefaultCatalog(catalogsLoader, FileUserPreferences.this.updater);
           updateAutoCompletionStrings();
+          setHomeExamples(new DefaultUserPreferences(false, FileUserPreferences.this).getHomeExamples());
         }
       });
     

@@ -102,8 +102,11 @@ import javax.media.j3d.VirtualUniverse;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
@@ -129,6 +132,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -174,6 +178,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDescriptor;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -195,6 +200,7 @@ import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -296,6 +302,7 @@ public class HomePane extends JRootPane implements HomeView {
                              UserPreferences preferences, 
                              final HomeController controller) {
     createAction(ActionType.NEW_HOME, preferences, controller, "newHome");
+    createAction(ActionType.NEW_HOME_FROM_EXAMPLE, preferences, controller, "newHomeFromExample");
     createAction(ActionType.OPEN, preferences, controller, "open");
     createAction(ActionType.DELETE_RECENT_HOMES, preferences, controller, "deleteRecentHomes");
     createAction(ActionType.CLOSE, preferences, controller, "close");
@@ -952,6 +959,9 @@ public class HomePane extends JRootPane implements HomeView {
     // Create File menu
     JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
     addActionToMenu(ActionType.NEW_HOME, fileMenu);
+    if (preferences.getHomeExamples().size() > 0) {
+      addActionToMenu(ActionType.NEW_HOME_FROM_EXAMPLE, fileMenu);
+    }
     addActionToMenu(ActionType.OPEN, fileMenu);
     
     
@@ -3507,6 +3517,91 @@ public class HomePane extends JRootPane implements HomeView {
     return this.controller.getContentManager().showOpenDialog(this, 
         this.preferences.getLocalizedString(HomePane.class, "openHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D);
+  }
+
+  /**
+   * Displays a dialog to let the user choose a home example.
+   */
+  public String showNewHomeFromExampleDialog() {
+    String message = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.message");
+    String title = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.title");
+    final String useSelectedHome = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.useSelectedExample");
+    String findMoreExamples = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.findMoreExamples");
+    String cancel = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.cancel");
+    final JList homeExamplesList = new JList(this.preferences.getHomeExamples().toArray());
+    homeExamplesList.setSelectionModel(new DefaultListSelectionModel() {
+        @Override
+        public void removeSelectionInterval(int index0, int index1) {
+          // Do nothing, to avoid empty selection in case of Ctrl or cmd + click
+        }
+      });
+    homeExamplesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    homeExamplesList.setSelectedIndex(0);
+    homeExamplesList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+    homeExamplesList.setVisibleRowCount(3);
+    final int iconWidth = 192;
+    homeExamplesList.setFixedCellWidth(iconWidth + 4);
+    homeExamplesList.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                      boolean cellHasFocus) {
+          HomeDescriptor home = (HomeDescriptor)value;
+          super.getListCellRendererComponent(list, home.getName(), index, isSelected, cellHasFocus);
+          setIcon(IconManager.getInstance().getIcon(home.getIcon(), iconWidth * 3 / 4, homeExamplesList));
+          setHorizontalAlignment(CENTER);
+          setHorizontalTextPosition(CENTER);
+          setVerticalTextPosition(BOTTOM);
+          setBorder(BorderFactory.createCompoundBorder(getBorder(), BorderFactory.createEmptyBorder(2, 0, 2, 0)));
+          return this;
+        }
+      });
+    homeExamplesList.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent ev) {
+          if (ev.getClickCount() == 2) {
+            ((JOptionPane)SwingUtilities.getAncestorOfClass(JOptionPane.class, ev.getComponent())).setValue(useSelectedHome);
+          }
+        }
+      });
+    
+    JPanel panel = new JPanel(new BorderLayout(5, 5));
+    panel.add(new JLabel(message), BorderLayout.NORTH);
+    panel.add(new JScrollPane(homeExamplesList));
+    
+    int option = JOptionPane.showOptionDialog(this, panel, title, 
+        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+        null, new Object [] {useSelectedHome, findMoreExamples, cancel}, useSelectedHome);
+    switch (option) {
+      // Convert showOptionDialog answer to SaveAnswer enum constants
+      case JOptionPane.YES_OPTION: 
+        Content homeContent = ((HomeDescriptor)homeExamplesList.getSelectedValue()).getContent();
+        return homeContent instanceof URLContent 
+            ? ((URLContent)homeContent).getURL().toString() 
+            : null;
+      case JOptionPane.NO_OPTION: 
+        String findModelsUrl = preferences.getLocalizedString(HomePane.class, "findMoreExamples.url");
+        boolean documentShown = false;
+        try { 
+          // Display Find more demos (gallery) page in browser
+          documentShown = SwingTools.showDocumentInBrowser(new URL(findModelsUrl)); 
+        } catch (MalformedURLException ex) {
+          // Document isn't shown
+        }
+        if (documentShown) {
+          // If the document wasn't shown, display a message 
+          // with a copiable URL in a message box 
+          JTextArea findMoreExamplesMessageTextArea = new JTextArea(preferences.getLocalizedString(
+              HomePane.class, "findMoreExamplesMessage.text"));
+          String findMoreExamplesTitle = preferences.getLocalizedString(
+              HomePane.class, "findMoreExamplesMessage.title");
+          findMoreExamplesMessageTextArea.setEditable(false);
+          findMoreExamplesMessageTextArea.setOpaque(false);
+          JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), 
+              findMoreExamplesMessageTextArea, findMoreExamplesTitle, JOptionPane.INFORMATION_MESSAGE);
+        }      
+      default : 
+        return null;
+    }
   }
 
   /**

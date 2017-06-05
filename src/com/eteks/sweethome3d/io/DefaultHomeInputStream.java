@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -62,7 +64,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   private final UserPreferences    preferences;
   private final boolean            preferPreferencesContent;
   
-  private File file;
+  private File zipFile;
 
   /**
    * Creates a home input stream filter able to read a home and its content
@@ -120,7 +122,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
                                 HomeXMLHandler xmlHandler,
                                 UserPreferences preferences,
                                 boolean preferPreferencesContent) {
-    super(in);
+    super(new PushbackInputStream(in, 2));
     this.contentRecording = contentRecording;
     this.xmlHandler = xmlHandler;
     this.preferences = preferences;
@@ -128,9 +130,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Creates a home input stream filter able to read a home and its content the given <code>file</code>. 
+   * Creates a home input stream filter able to read a home and its content the given file. 
    * The file will be read directly without using a temporary copy except if it contains some invalid entries. 
-   * @param file  the zipped file from which the home will be read
+   * @param zipFile  the zipped file from which the home will be read
    * @param contentRecording  specifies whether content referenced by the read home is included 
    *            or not in the stream.
    * @param xmlHandler  SAX handler used to parse <code>Home.xml</code> entry when present, or 
@@ -145,13 +147,13 @@ public class DefaultHomeInputStream extends FilterInputStream {
    *            contents in preferences when equal. 
    * @throws FileNotFoundException if the given file can't be opened
    */
-  public DefaultHomeInputStream(File file, 
+  public DefaultHomeInputStream(File zipFile, 
                                 ContentRecording contentRecording,
                                 HomeXMLHandler xmlHandler,
                                 UserPreferences preferences,
                                 boolean preferPreferencesContent) throws FileNotFoundException {
-    super(new FileInputStream(file));
-    this.file = file;
+    super(new FileInputStream(zipFile));
+    this.zipFile = zipFile;
     this.contentRecording = contentRecording;
     this.xmlHandler = xmlHandler;
     this.preferences = preferences;
@@ -170,123 +172,167 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
   
   /**
-   * Reads home from a zipped stream. 
+   * Reads home from a zipped stream containing a <code>Home.xml</code> or <code>Home</code> entry,
+   * or if the stream isn't zipped, reads the input stream as a XML input stream.   
    */
   public Home readHome() throws IOException, ClassNotFoundException {
+    boolean zipContent = true;
     boolean validZipFile = true;
+    URL homeUrl = null;
     HomeContentContext contentContext = null;
     if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
-      InputStream homeIn;
-      if (this.file == null) {
-        // Copy home stream in a temporary file  
-        this.file = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
-        OutputStream fileCopyOut = new BufferedOutputStream(new FileOutputStream(this.file));
-        homeIn = new CopiedInputStream(new BufferedInputStream(this.in), fileCopyOut);
+      InputStream homeIn = null;
+      if (this.zipFile == null) {
+        // Check first two bytes are PK
+        byte [] b = new byte [2];
+        int length = this.in.read(b);
+        ((PushbackInputStream)this.in).unread(b, 0, length);
+        if (b [0] == 'P' && b [1] == 'K') {
+          // If it's a zipped content stream, copy home stream in a temporary file  
+          this.zipFile = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
+          OutputStream fileCopyOut = new BufferedOutputStream(new FileOutputStream(this.zipFile));
+          homeIn = new CopiedInputStream(new BufferedInputStream(this.in), fileCopyOut);
+        } else {
+          zipContent = false;
+          validZipFile = false;
+        }
       } else {
         homeIn = this.in;
       }
-      // Check if all entries in the home file can be fully read using a zipped input stream
-      List<ZipEntry> validEntries = new ArrayList<ZipEntry>();
-      validZipFile = isZipFileValidUsingInputStream(homeIn, validEntries) && validEntries.size() > 0;
-      if (!validZipFile) {
-        int validEntriesCount = validEntries.size();
-        validEntries.clear();
-        // Check how many entries can be read using zip dictionary
-        // (some times, this gives a different result from the previous way)
-        // and create a temporary copy with only valid entries
-        isZipFileValidUsingDictionnary(this.file, validEntries);
-        if (validEntries.size() > validEntriesCount) {
-          this.file = createTemporaryFileFromValidEntries(this.file, validEntries);
-        } else {
-          this.file = createTemporaryFileFromValidEntriesCount(this.file, validEntriesCount);
-        }
-      } 
-      contentContext = new HomeContentContext(this.file.toURI().toURL(),
-          this.preferences, this.preferPreferencesContent);
-    }
-    
-    boolean homeEntry = false;
-    boolean homeXmlEntry = false;
-    // Open a zip input from file
-    ZipInputStream zipIn = new ZipInputStream(this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT
-        ? this.in : new FileInputStream(this.file));
-    ZipEntry entry = null;
-    try {
-      // Find whether Home and Home.xml entries exist
-      while ((entry = zipIn.getNextEntry()) != null) {
-        if ("Home".equals(entry.getName())) {
-          homeEntry = true;
-        } else if (this.xmlHandler != null 
-                  && "Home.xml".equals(entry.getName())) {
-          homeXmlEntry = true;
+      
+      if (validZipFile) {
+        // Check if all entries in the home file can be fully read using a zipped input stream
+        List<ZipEntry> validEntries = new ArrayList<ZipEntry>();
+        validZipFile = isZipFileValidUsingInputStream(homeIn, validEntries) && validEntries.size() > 0;
+        if (!validZipFile) {
+          int validEntriesCount = validEntries.size();
+          validEntries.clear();
+          // Check how many entries can be read using zip dictionary
+          // (some times, this gives a different result from the previous way)
+          // and create a temporary copy with only valid entries
+          isZipFileValidUsingDictionnary(this.zipFile, validEntries);
+          if (validEntries.size() > validEntriesCount) {
+            this.zipFile = createTemporaryFileFromValidEntries(this.zipFile, validEntries);
+          } else {
+            this.zipFile = createTemporaryFileFromValidEntriesCount(this.zipFile, validEntriesCount);
+          }
         }
         
-        if (this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT) {
-          // Stop at the first entry from which home can be read
-          if (homeEntry || homeXmlEntry) {
-            break;
-          }
-        } else {
-          // Stop once all entries from which home can be read are found 
-          if (homeEntry && homeXmlEntry) {
-            break;
-          }
-        }
+        homeUrl = this.zipFile.toURI().toURL();
+        contentContext = new HomeContentContext(homeUrl, this.preferences, this.preferPreferencesContent);
       }
-      
-      checkCurrentThreadIsntInterrupted();
-      if (!homeEntry && !homeXmlEntry) {
-        throw new IOException("Missing entry \"Home\" or \"Home.xml\"");
-      }
-
-      if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
-        // Reset stream on the home entry
-        zipIn.close();
-        zipIn = new ZipInputStream(new FileInputStream(this.file));
-        do {
-          entry = zipIn.getNextEntry();
-        } while (homeXmlEntry && !"Home.xml".equals(entry.getName()) 
-            || !homeXmlEntry && !"Home".equals(entry.getName()));
-      }
-      
-      // Read Home entry
-      checkCurrentThreadIsntInterrupted();
+    }
+    
+    InputStream homeObjectIn = null;
+    try {
       Home home;
-      if ("Home".equals(entry.getName())) {
-        // Use an ObjectInputStream that replaces temporary URLs of Content objects 
-        // by URLs relative to file 
-        HomeObjectInputStream objectStream = new HomeObjectInputStream(zipIn, contentContext);
-        home = (Home)objectStream.readObject();
-      } else {
-        try {
-          SAXParserFactory factory = SAXParserFactory.newInstance();
-          SAXParser saxParser = factory.newSAXParser();
-          this.xmlHandler.setContentContext(contentContext);
-          saxParser.parse(zipIn, this.xmlHandler);
-          home = this.xmlHandler.getHome();
-        } catch (ParserConfigurationException ex) {
-          IOException ex2 = new IOException("Can't parse home XML stream");
-          ex2.initCause(ex);
-          throw ex2;
-        } catch (SAXException ex) {
-          IOException ex2 = new IOException("Can't parse home XML stream");
-          ex2.initCause(ex);
-          throw ex2;
+      if (zipContent) {
+        boolean homeEntry = false;
+        boolean homeXmlEntry = false;
+        
+        // Open a zip input from file
+        ZipInputStream zipIn = new ZipInputStream(this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT
+            ? this.in : new FileInputStream(this.zipFile));
+        // Find whether Home and Home.xml entries exist
+        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+          if ("Home".equals(entry.getName())) {
+            homeEntry = true;
+          } else if (this.xmlHandler != null 
+                    && "Home.xml".equals(entry.getName())) {
+            homeXmlEntry = true;
+          }
+          
+          if (this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT) {
+            // Stop at the first entry from which home can be read
+            if (homeEntry || homeXmlEntry) {
+              break;
+            }
+          } else if (homeXmlEntry) {
+            // Give a higher priority to Home.xml entry
+            homeEntry = false;
+            break;
+          }
         }
-      }
-      // Check all content is valid
-      if (contentContext != null && (!validZipFile || contentContext.containsInvalidContents())) {
-        if (contentContext.containsCheckedContents()) { 
-          home.setRepaired(true);
+        
+        checkCurrentThreadIsntInterrupted();
+        if (!homeEntry && !homeXmlEntry) {
+          throw new IOException("Missing entry \"Home\" or \"Home.xml\"");
+        } 
+  
+        if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
+          // Reset stream on the Home.xml or Home entry
+          zipIn.close();
+          zipIn = new ZipInputStream(new FileInputStream(this.zipFile));
+          ZipEntry entry = null; 
+          do {
+            entry = zipIn.getNextEntry();
+          } while (!(homeEntry && "Home".equals(entry.getName()) 
+                     || homeXmlEntry && "Home.xml".equals(entry.getName()))); 
+        }
+        homeObjectIn = zipIn;
+        
+        // Read Home entry
+        checkCurrentThreadIsntInterrupted();
+        if (homeEntry) {
+          home = readHomeObject(homeObjectIn, contentContext);
         } else {
-          throw new DamagedHomeIOException(home, contentContext.getInvalidContents());
+          home = readHomeXML(homeObjectIn, contentContext);
         }
+        
+        // Check all content is valid        
+        if (contentContext != null && (!validZipFile || contentContext.containsInvalidContents())) {
+          if (contentContext.containsCheckedContents()) { 
+            home.setRepaired(true);
+          } else {
+            throw new DamagedHomeIOException(home, contentContext.getInvalidContents());
+          }
+        }
+      } else {
+        // Try to read input stream as an XML file referencing content resources
+        home = readHomeXML(homeObjectIn = this.in, null);
+      }
+      
+      if (home == null) {
+        throw new IOException("No home object in input");
       }
       return home;
     } finally {
-      if (zipIn != null) {
-        zipIn.close();
+      if (homeObjectIn != null) {
+        homeObjectIn.close();
       }
+    }
+  }
+
+  /**
+   * Returns the home read from the given serialized input stream.
+   */
+  private Home readHomeObject(InputStream in, HomeContentContext contentContext) throws IOException, ClassNotFoundException {
+    // Use an ObjectInputStream that replaces temporary URLs of Content objects 
+    // by URLs relative to file 
+    Object object = new HomeObjectInputStream(in, contentContext).readObject();
+    return object instanceof Home
+        ? (Home)object
+        : null;
+  }
+
+  /**
+   * Returns the home read from the given XML input stream.
+   */
+  private Home readHomeXML(InputStream in, HomeContentContext contentContext) throws IOException {
+    try {
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      SAXParser saxParser = factory.newSAXParser();
+      this.xmlHandler.setContentContext(contentContext);
+      saxParser.parse(in, this.xmlHandler);
+      return this.xmlHandler.getHome();
+    } catch (ParserConfigurationException ex) {
+      IOException ex2 = new IOException("Can't parse home XML stream");
+      ex2.initCause(ex);
+      throw ex2;
+    } catch (SAXException ex) {
+      IOException ex2 = new IOException("Can't parse home XML stream");
+      ex2.initCause(ex);
+      throw ex2;
     }
   }
 
