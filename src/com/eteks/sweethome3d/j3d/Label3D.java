@@ -156,8 +156,10 @@ public class Label3D extends Object3DBranch {
           if (outlineColor != null) {
             g2D.setColor(new Color(outlineColor));
             g2D.setStroke(stroke);
-            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-            g2D.draw(textLayout.getOutline(null));
+            if (text.length() > 0) {
+              TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+              g2D.draw(textLayout.getOutline(null));
+            }
           }
           g2D.setFont(font);
           g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
