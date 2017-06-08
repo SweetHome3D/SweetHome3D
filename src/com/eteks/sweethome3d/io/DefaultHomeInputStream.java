@@ -48,6 +48,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -294,6 +296,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
       
       if (home == null) {
         throw new IOException("No home object in input");
+      } else {
+        // Check model sizes are updated
+        checkModelSizes(home.getFurniture());
       }
       return home;
     } finally {
@@ -470,6 +475,28 @@ public class DefaultHomeInputStream extends FilterInputStream {
       zipOut.write(buffer, 0, size);
     }
     zipOut.closeEntry();
+  }
+
+  /**
+   * Checks the model sizes among the given furniture and returns <code>true</code> 
+   * if one of these sizes is already set.
+   */
+  private boolean checkModelSizes(List<HomePieceOfFurniture> furniture) {
+    ContentDigestManager digestManager = ContentDigestManager.getInstance();
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece instanceof HomeFurnitureGroup) {
+        if (checkModelSizes(((HomeFurnitureGroup)piece).getFurniture())) {
+          return true;
+        }
+      } else if (piece.getModelSize() == null) {
+        Long modelSize = digestManager.getContentSize(piece.getModel());
+        // Use -1 if model size can't be retrieved
+        piece.setModelSize(modelSize != null ? modelSize : Long.valueOf(-1));
+      } else {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

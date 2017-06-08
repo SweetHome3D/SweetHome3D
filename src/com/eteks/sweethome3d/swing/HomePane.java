@@ -356,6 +356,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.NAME);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_CREATOR, preferences, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CREATOR);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.WIDTH);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, preferences, 
@@ -372,6 +374,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ANGLE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_LEVEL, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.LEVEL);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_MODEL_SIZE, preferences, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.MODEL_SIZE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.COLOR);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, preferences, 
@@ -396,6 +400,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_NAME, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.NAME);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_CREATOR, preferences, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.CREATOR);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_WIDTH, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.WIDTH);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_DEPTH, preferences, 
@@ -412,6 +418,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ANGLE);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_LEVEL, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.LEVEL);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_MODEL_SIZE, preferences, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.MODEL_SIZE);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.COLOR);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, preferences, 
@@ -1328,6 +1336,8 @@ public class HomePane extends JRootPane implements HomeView {
     }
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_NAME, 
         sortActions, HomePieceOfFurniture.SortableProperty.NAME); 
+    addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_CREATOR, 
+        sortActions, HomePieceOfFurniture.SortableProperty.CREATOR); 
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, 
         sortActions, HomePieceOfFurniture.SortableProperty.WIDTH);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, 
@@ -1344,6 +1354,8 @@ public class HomePane extends JRootPane implements HomeView {
         sortActions, HomePieceOfFurniture.SortableProperty.ANGLE);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_LEVEL, 
         sortActions, HomePieceOfFurniture.SortableProperty.LEVEL);
+    addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_MODEL_SIZE, 
+        sortActions, HomePieceOfFurniture.SortableProperty.MODEL_SIZE); 
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_COLOR, 
         sortActions, HomePieceOfFurniture.SortableProperty.COLOR);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, 
@@ -1431,6 +1443,8 @@ public class HomePane extends JRootPane implements HomeView {
     }
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_NAME, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.NAME); 
+    addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_CREATOR, 
+        displayPropertyActions, HomePieceOfFurniture.SortableProperty.CREATOR);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_WIDTH, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.WIDTH);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_DEPTH, 
@@ -1447,6 +1461,8 @@ public class HomePane extends JRootPane implements HomeView {
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.ANGLE);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_LEVEL, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.LEVEL);
+    addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_MODEL_SIZE, 
+        displayPropertyActions, HomePieceOfFurniture.SortableProperty.MODEL_SIZE);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_COLOR, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.COLOR);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, 

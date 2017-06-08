@@ -132,6 +132,16 @@ public class XMLWriter extends FilterWriter {
   }
   
   /**
+   * Writes the name and the long value of an attribute in the tag of the last started element, 
+   * except if <code>value</code> equals <code>null</code>.
+   */
+  public void writeLongAttribute(String name, Long value) throws IOException {
+    if (value != null) {
+      writeAttribute(name, value.toString());
+    }
+  }
+  
+  /**
    * Writes the attribute of the given <code>name</code> with its float <code>value</code> 
    * in the tag of the last started element.
    */

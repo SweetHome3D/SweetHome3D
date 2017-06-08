@@ -30,10 +30,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import com.eteks.sweethome3d.model.Content;
@@ -54,12 +56,12 @@ public class ContentDigestManager {
   private Map<Content, byte []>  contentDigestsCache;
   
   private Map<URLContent, URL>   zipUrlsCache;
-  private Map<URL, List<String>> zipUrlEntriesCache;
+  private Map<URL, List<ZipEntryData>> zipUrlEntriesCache;
 
   private ContentDigestManager() {
     this.contentDigestsCache = new WeakHashMap<Content, byte[]>();
     this.zipUrlsCache = new WeakHashMap<URLContent, URL>();
-    this.zipUrlEntriesCache = new WeakHashMap<URL, List<String>>();
+    this.zipUrlEntriesCache = new WeakHashMap<URL, List<ZipEntryData>>();
   }
   
   /**
@@ -157,7 +159,8 @@ public class ContentDigestManager {
           // Consider content is a multi part resource only if it's in a subdirectory
           MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
-          for (String zipEntryName : getZipURLEntries(urlContent)) {
+          for (ZipEntryData zipEntry : getZipURLEntries(urlContent)) {
+            String zipEntryName = zipEntry.getName();
             if (zipEntryName.startsWith(entryDirectory) 
                 && !zipEntryName.equals(entryDirectory)
                 && isSignificant(zipEntryName)) {
@@ -208,7 +211,8 @@ public class ContentDigestManager {
       URL zipUrl = urlContent.getJAREntryURL();
       String entryDirectory = entryName.substring(0, slashIndex + 1);
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
-      for (String zipEntryName : getZipURLEntries(urlContent)) {
+      for (ZipEntryData zipEntry : getZipURLEntries(urlContent)) {
+        String zipEntryName = zipEntry.getName();
         if (zipEntryName.startsWith(entryDirectory) 
             && !zipEntryName.equals(entryDirectory)
             && isSignificant(zipEntryName)) {
@@ -229,10 +233,10 @@ public class ContentDigestManager {
   private byte [] getZipContentDigest(URLContent urlContent) throws IOException, NoSuchAlgorithmException {
     MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
     // Open zipped stream that contains urlContent
-    for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
-      if (isSignificant(zipEntryName)) {
+    for (ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+      if (isSignificant(zipEntry.getName())) {
         Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
-            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
+            + URLEncoder.encode(zipEntry.getName(), "UTF-8").replace("+", "%20")));
         updateMessageDigest(messageDigest, siblingContent);
       }
     }
@@ -253,41 +257,70 @@ public class ContentDigestManager {
   /**
    * Returns the list of entries contained in <code>zipUrl</code>.
    */
-  synchronized List<String> getZipURLEntries(URLContent urlContent) throws IOException {
+  synchronized List<ZipEntryData> getZipURLEntries(URLContent urlContent) throws IOException {
     URL zipUrl = this.zipUrlsCache.get(urlContent);
     if (zipUrl != null) {
       return this.zipUrlEntriesCache.get(zipUrl); 
     } else {
       zipUrl = urlContent.getJAREntryURL(); 
-      for (Map.Entry<URL, List<String>> entry : this.zipUrlEntriesCache.entrySet()) {
+      for (Map.Entry<URL, List<ZipEntryData>> entry : this.zipUrlEntriesCache.entrySet()) {
         if (zipUrl.equals(entry.getKey())) {
           this.zipUrlsCache.put(urlContent, entry.getKey());
           return entry.getValue();
         }
       }
-      List<String> zipUrlEntries = new ArrayList<String>();
-      ZipInputStream zipIn = null;
-      try {
-        // Search all entries of zip url
-        zipIn = new ZipInputStream(zipUrl.openStream());
-        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-          zipUrlEntries.add(entry.getName());
+      List<ZipEntryData> zipUrlEntries = new ArrayList<ZipEntryData>();
+      if (zipUrl.getProtocol().equals("file")) {
+        // Prefer to retrieve entries in zip files with ZipFile class because it runs much faster
+        ZipFile zipFile = null;
+        try {
+          zipFile = new ZipFile(new File(zipUrl.toURI()));
+          for (Enumeration<? extends ZipEntry> enumEntries = zipFile.entries(); enumEntries.hasMoreElements(); ) {
+            ZipEntry entry = enumEntries.nextElement();
+            zipUrlEntries.add(new ZipEntryData(entry.getName(), entry.getSize()));
+          }
+        } catch (URISyntaxException ex) {
+          IOException ex2 = new IOException("Can't retrieve zip file");
+          ex2.initCause(ex);
+          throw ex2;
+        } finally {
+          if (zipFile != null) {
+            zipFile.close();
+          }
         }
-        // Sort entries to ensure the files of multi part content are always listed 
-        // in the same order whatever its source
-        Collections.sort(zipUrlEntries);
-        // Store retrieved entries in the map with a URL key  
-        this.zipUrlEntriesCache.put(zipUrl, zipUrlEntries);
-        // Store URL in a map with keys that will be referenced as long as they are needed in the program
-        // This second map allows to use a weak hash map for zipUrlEntriesCache that will be cleaned
-        // only once all the URLContent objects sharing a same URL are not used anymore 
-        this.zipUrlsCache.put(urlContent, zipUrl);
-        return zipUrlEntries;
-      } finally {
-        if (zipIn != null) {
-          zipIn.close();
+      } else {
+        ZipInputStream zipIn = null;
+        try {
+          // Search all entries of zip url
+          zipIn = new ZipInputStream(zipUrl.openStream());
+          for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+            long size = entry.getSize(); 
+            if (size == -1) {
+              size = 0;
+              byte [] bytes = new byte [8192];
+              for (int length; (length = zipIn.read(bytes)) != -1; ) {
+                size += length;
+              }
+            }
+            zipUrlEntries.add(new ZipEntryData(entry.getName(), size));
+          }
+        } finally {
+          if (zipIn != null) {
+            zipIn.close();
+          }
         }
       }
+      
+      // Sort entries to ensure the files of multi part content are always listed 
+      // in the same order whatever its source
+      Collections.sort(zipUrlEntries);
+      // Store retrieved entries in the map with a URL key  
+      this.zipUrlEntriesCache.put(zipUrl, zipUrlEntries);
+      // Store URL in a map with keys that will be referenced as long as they are needed in the program
+      // This second map allows to use a weak hash map for zipUrlEntriesCache that will be cleaned
+      // only once all the URLContent objects sharing a same URL are not used anymore 
+      this.zipUrlsCache.put(urlContent, zipUrl);
+      return zipUrlEntries;
     }
   }
 
@@ -316,6 +349,136 @@ public class ContentDigestManager {
       if (in != null) {
         in.close();
       }
+    }
+  }
+  
+  /**
+   * Returns the size of the given <code>content</code>.
+   */
+  public synchronized Long getContentSize(Content content) {
+    try {
+      if (content instanceof ResourceURLContent) {
+        return getResourceContentSize((ResourceURLContent)content);
+      } else if (content instanceof URLContent) {
+        URLContent urlContent = (URLContent)content;
+        // If content comes from a home stream and isn't a SimpleURLContent instance
+        if (urlContent.isJAREntry()
+            && urlContent instanceof HomeURLContent) {
+          return getHomeContentSize((HomeURLContent)urlContent);            
+        } else {
+          return urlContent.getSize();
+        }
+      } else {
+        return null;
+      }
+    } catch (IOException ex) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the size of a content coming from a resource file.
+   */
+  private long getResourceContentSize(ResourceURLContent urlContent) throws IOException {
+    if (urlContent.isMultiPartResource()) {
+      if (urlContent.isJAREntry()) {
+        String entryName = urlContent.getJAREntryName();
+        int lastSlashIndex = entryName.lastIndexOf('/');
+        List<ZipEntryData> zipEntries = getZipURLEntries(urlContent);
+        if (lastSlashIndex != -1) {
+          // Consider content is a multi part resource only if it's in a subdirectory
+          String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
+          long size = 0;
+          for (ZipEntryData zipEntry : zipEntries) {
+            if (zipEntry.getName().startsWith(entryDirectory)) {
+              size += zipEntry.getSize();    
+            }
+          }
+          return size;
+        } else {
+          // Consider the content as not a multipart resource
+          int index = Collections.binarySearch(zipEntries, new ZipEntryData(urlContent.getJAREntryName()));
+          return zipEntries.get(index).getSize();
+        }
+      } else {
+        // This should be the case only when resource isn't in a JAR file during development
+        try {
+          File contentFile = new File(urlContent.getURL().toURI());
+          File parentFile = new File(contentFile.getParent());
+          File [] siblingFiles = parentFile.listFiles();
+          long size = 0;
+          for (File siblingFile : siblingFiles) {
+            if (!siblingFile.isDirectory()) {
+              size += siblingFile.length();
+            }
+          }
+          return size;
+        } catch (URISyntaxException ex) {
+          IOException ex2 = new IOException();
+          ex2.initCause(ex);
+          throw ex2;
+        }
+      }
+    } else {
+      if (urlContent.isJAREntry()) {
+        List<ZipEntryData> zipEntries = getZipURLEntries(urlContent);
+        int index = Collections.binarySearch(zipEntries, new ZipEntryData(urlContent.getJAREntryName()));
+        return zipEntries.get(index).getSize();
+      } else {
+        return new SimpleURLContent(urlContent.getURL()).getSize();
+      }
+    }
+  }
+
+  /**
+   * Returns the size of a content coming from a home file.
+   */
+  private long getHomeContentSize(HomeURLContent urlContent) throws IOException {
+    String entryName = urlContent.getJAREntryName();
+    List<ZipEntryData> zipEntries = getZipURLEntries(urlContent);
+    int slashIndex = entryName.indexOf('/');
+    // If content comes from a directory of a home file
+    if (slashIndex > 0) {
+      String entryDirectory = entryName.substring(0, slashIndex + 1);
+      long size = 0;
+      for (ZipEntryData zipEntry : getZipURLEntries(urlContent)) {
+        if (zipEntry.getName().startsWith(entryDirectory)) {
+          size += zipEntry.getSize();    
+        }
+      }
+      return size;
+    } else {
+      int index = Collections.binarySearch(zipEntries, new ZipEntryData(urlContent.getJAREntryName()));
+      return zipEntries.get(index).getSize();
+    }
+  }
+  
+  /**
+   * A simplified zip entry.
+   */
+  static class ZipEntryData implements Comparable<ZipEntryData> {
+    private String name;
+    private long   size;
+    
+    private ZipEntryData(String name) {
+      this(name, -1);
+    }
+    
+    private ZipEntryData(String name, long size) {
+      this.name = name;
+      this.size = size;
+    }
+    
+    public String getName() {
+      return this.name;
+    }
+    
+    public long getSize() {
+      return this.size;
+    }
+
+    public int compareTo(ZipEntryData entry) {
+      return this.name.compareTo(entry.name);
     }
   }
 }

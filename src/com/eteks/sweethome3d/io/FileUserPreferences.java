@@ -111,6 +111,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
   
   private static final String FURNITURE_NAME                            = "furnitureName#";
+  private static final String FURNITURE_CREATOR                         = "furnitureCreator#";
   private static final String FURNITURE_CATEGORY                        = "furnitureCategory#";
   private static final String FURNITURE_ICON                            = "furnitureIcon#";
   private static final String FURNITURE_MODEL                           = "furnitureModel#";
@@ -121,6 +122,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_DOOR_OR_WINDOW                  = "furnitureDoorOrWindow#";
   private static final String FURNITURE_ELEVATION                       = "furnitureElevation#";
   private static final String FURNITURE_COLOR                           = "furnitureColor#";
+  private static final String FURNITURE_MODEL_SIZE                      = "furnitureModelSize#";
   private static final String FURNITURE_MODEL_ROTATION                  = "furnitureModelRotation#";
   private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE         = "furnitureStaircaseCutOutShape#"; 
   private static final String FURNITURE_BACK_FACE_SHOWN                 = "furnitureBackFaceShown#";
@@ -140,7 +142,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER     = "furniture";
   private static final String TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER      = "textures";
 
-  private static final Content DUMMY_CONTENT;
+  private static final URLContent DUMMY_CONTENT;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   private List<ClassLoader>          resourceClassLoaders;
@@ -154,7 +156,7 @@ public class FileUserPreferences extends UserPreferences {
   public static final String PLUGIN_LANGUAGE_LIBRARY_FAMILY = "PluginLanguageLibrary";
   
   static {
-    Content dummyURLContent = null;
+    URLContent dummyURLContent = null;
     try {
       dummyURLContent = new URLContent(new URL("file:/dummySweetHome3DContent"));
     } catch (MalformedURLException ex) {
@@ -691,31 +693,35 @@ public class FileUserPreferences extends UserPreferences {
       // Return null if key furnitureName# doesn't exist
       return null;
     }
-    Content icon  = getContent(preferences, FURNITURE_ICON + index, preferencesFolder);
-    Content model = getContent(preferences, FURNITURE_MODEL + index, preferencesFolder);
+    URLContent icon  = getContent(preferences, FURNITURE_ICON + index, preferencesFolder);
+    URLContent model = getContent(preferences, FURNITURE_MODEL + index, preferencesFolder);
     float width = preferences.getFloat(FURNITURE_WIDTH + index, 0.1f);
     float depth = preferences.getFloat(FURNITURE_DEPTH + index, 0.1f);
     float height = preferences.getFloat(FURNITURE_HEIGHT + index, 0.1f);
+    float elevation = preferences.getFloat(FURNITURE_ELEVATION + index, 0);
     boolean movable = preferences.getBoolean(FURNITURE_MOVABLE + index, false);
     boolean doorOrWindow = preferences.getBoolean(FURNITURE_DOOR_OR_WINDOW + index, false);
-    float elevation = preferences.getFloat(FURNITURE_ELEVATION + index, 0);
+    String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + index, null);
     String colorString = preferences.get(FURNITURE_COLOR + index, null);
     Integer color = colorString != null 
         ? Integer.valueOf(colorString) : null; 
     float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + index);
-    String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + index, null);
     boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + index, false);
+    String modelSizeString = preferences.get(FURNITURE_MODEL_SIZE + index, null);
+    Long modelSize = modelSizeString != null
+        ? Long.valueOf(modelSizeString) : model.getSize();
+    String creator = preferences.get(FURNITURE_CREATOR + index, null);
     float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + index, 0);
     boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + index, true);
 
     if (doorOrWindow) {
-      return new CatalogDoorOrWindow(name, icon, model,
+      return new CatalogDoorOrWindow(name, icon, model,  
           width, depth, height, elevation, movable, 1, 0, new Sash [0],
-          color, modelRotation, backFaceShown, iconYaw, proportional);
+          color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
     } else {
-      return new CatalogPieceOfFurniture(name, icon, model,
+      return new CatalogPieceOfFurniture(name, icon, model,  
           width, depth, height, elevation, movable, 
-          staircaseCutOutShape, color, modelRotation, backFaceShown, iconYaw, proportional);
+          staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
     }
   }
 
@@ -764,7 +770,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns a content instance from the resource file value of key.
    */
-  private Content getContent(Preferences preferences, String key, 
+  private URLContent getContent(Preferences preferences, String key, 
                              File preferencesFolder) {
     String content = preferences.get(key, null);
     if (content != null) {
@@ -960,9 +966,12 @@ public class FileUserPreferences extends UserPreferences {
           preferences.putFloat(FURNITURE_WIDTH + i, piece.getWidth());
           preferences.putFloat(FURNITURE_DEPTH + i, piece.getDepth());
           preferences.putFloat(FURNITURE_HEIGHT + i, piece.getHeight());
+          preferences.putFloat(FURNITURE_ELEVATION + i, piece.getElevation());
           preferences.putBoolean(FURNITURE_MOVABLE + i, piece.isMovable());
           preferences.putBoolean(FURNITURE_DOOR_OR_WINDOW + i, piece.isDoorOrWindow());
-          preferences.putFloat(FURNITURE_ELEVATION + i, piece.getElevation());
+          if (piece.getStaircaseCutOutShape() != null) {
+            preferences.put(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, piece.getStaircaseCutOutShape());
+          }
           if (piece.getColor() == null) {
             preferences.remove(FURNITURE_COLOR + i);
           } else {
@@ -973,10 +982,11 @@ public class FileUserPreferences extends UserPreferences {
               floatToString(modelRotation[0][0]) + " " + floatToString(modelRotation[0][1]) + " " + floatToString(modelRotation[0][2]) + " "
               + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
               + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]));
-          if (piece.getStaircaseCutOutShape() != null) {
-            preferences.put(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, piece.getStaircaseCutOutShape());
-          }
           preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown());
+          preferences.putLong(FURNITURE_MODEL_SIZE + i, piece.getModelSize());
+          if (piece.getCreator() != null) {
+            preferences.put(FURNITURE_CREATOR + i, piece.getCreator());
+          }
           preferences.putFloat(FURNITURE_ICON_YAW + i, piece.getIconYaw());
           preferences.putBoolean(FURNITURE_PROPORTIONAL + i, piece.isProportional());
           i++;
@@ -992,13 +1002,15 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_WIDTH + i);
       preferences.remove(FURNITURE_DEPTH + i);
       preferences.remove(FURNITURE_HEIGHT + i);
+      preferences.remove(FURNITURE_ELEVATION + i);
       preferences.remove(FURNITURE_MOVABLE + i);
       preferences.remove(FURNITURE_DOOR_OR_WINDOW + i);
-      preferences.remove(FURNITURE_ELEVATION + i);
+      preferences.remove(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i);
       preferences.remove(FURNITURE_COLOR + i);
       preferences.remove(FURNITURE_MODEL_ROTATION + i);
-      preferences.remove(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i);
       preferences.remove(FURNITURE_BACK_FACE_SHOWN + i);
+      preferences.remove(FURNITURE_MODEL_SIZE + i);
+      preferences.remove(FURNITURE_CREATOR + i);
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
     }

@@ -49,8 +49,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class ImportedFurnitureWizardController extends WizardController 
                                                implements Controller {
-  public enum Property {STEP, NAME, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
-      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_ROTATION, STAIRCASE_CUT_OUT_SHAPE,
+  public enum Property {STEP, NAME, CREATOR, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
+      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_SIZE, MODEL_ROTATION, STAIRCASE_CUT_OUT_SHAPE,
       ICON_YAW, PROPORTIONAL}
 
   public enum Step {MODEL, ROTATION, ATTRIBUTES, ICON};
@@ -72,6 +72,7 @@ public class ImportedFurnitureWizardController extends WizardController
   
   private Step                             step;
   private String                           name;
+  private String                           creator;
   private Content                          model;
   private float                            width;
   private float                            proportionalWidth;
@@ -86,6 +87,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private Integer                          color;
   private FurnitureCategory                category;
   private boolean                          backFaceShown;
+  private long                             modelSize;
   private float [][]                       modelRotation;
   private float                            iconYaw;
   private boolean                          proportional;
@@ -187,16 +189,16 @@ public class ImportedFurnitureWizardController extends WizardController
   public void finish() {
     CatalogPieceOfFurniture newPiece;
     if (isDoorOrWindow()) {
-      newPiece = new CatalogDoorOrWindow(getName(), getIcon(), getModel(), 
+      newPiece = new CatalogDoorOrWindow(getName(), getIcon(), getModel(),  
           getWidth(), getDepth(), getHeight(), getElevation(), 
           isMovable(), 1, 0, new Sash [0], getColor(), 
-          getModelRotation(), isBackFaceShown(), 
+          getModelRotation(), isBackFaceShown(), getModelSize(), getCreator(),
           getIconYaw(), isProportional());
     } else {
-      newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), 
-          getWidth(), getDepth(), getHeight(), getElevation(), 
-          isMovable(), getStaircaseCutOutShape(), 
-          getColor(), getModelRotation(), isBackFaceShown(), 
+      newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), getWidth(), 
+          getDepth(), getHeight(), getElevation(), isMovable(), 
+          getStaircaseCutOutShape(), getColor(), 
+          getModelRotation(), isBackFaceShown(), getModelSize(), getCreator(),
           getIconYaw(), isProportional());
     }
     
@@ -421,6 +423,24 @@ public class ImportedFurnitureWizardController extends WizardController
   }
 
   /**
+   * Returns the model size of the imported piece.
+   */
+  public long getModelSize() {
+    return this.modelSize;
+  }
+  
+  /**
+   * Sets the model size of the content of the imported piece.
+   */
+  public void setModelSize(long modelSize) {
+    if (modelSize != this.modelSize) {
+      long oldModelSize = this.modelSize;
+      this.modelSize = modelSize;
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL_SIZE.name(), oldModelSize, modelSize);
+    }
+  }
+  
+  /**
    * Returns the pitch angle of the imported piece model.
    */
   public float [][] getModelRotation() {
@@ -454,6 +474,26 @@ public class ImportedFurnitureWizardController extends WizardController
       this.name = name;
       if (this.propertyChangeSupport != null) {
         this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
+      }
+    }
+  }
+  
+  /**
+   * Returns the creator of the imported piece.
+   */
+  public String getCreator() {
+    return this.creator;
+  }
+  
+  /**
+   * Sets the creator of the imported piece.
+   */
+  public void setCreator(String creator) {
+    if (creator != this.creator) {
+      String oldCreator = this.creator;
+      this.creator = creator;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange(Property.CREATOR.name(), oldCreator, creator);
       }
     }
   }

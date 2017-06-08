@@ -100,6 +100,12 @@ public interface PieceOfFurniture {
   public abstract Content getModel();
   
   /**
+   * Returns the size of the 3D model of this piece of furniture or <code>null</code> if not known.
+   * @since 5.5 
+   */
+  public abstract Long getModelSize();
+  
+  /**
    * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures 
    * its model is correctly oriented.
    */

@@ -136,6 +136,11 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     MODEL("model"),
     /**
+     * The key for the size of the 3D model of a piece of furniture (optional).
+     * If model content is a file this should contain the file size. 
+     */
+    MODEL_SIZE("modelSize"),
+    /**
      * The key for the SHA-1 digest of the 3D model file of a piece of furniture (optional). 
      * This property is used to compare faster catalog resources with the ones of a read home,
      * and should be encoded in Base64.  
@@ -619,6 +624,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     String staircaseCutOutShape = getOptionalString(resource, PropertyKey.STAIRCASE_CUT_OUT_SHAPE.getKey(index), null);     
     float [][] modelRotation = getModelRotation(resource, PropertyKey.MODEL_ROTATION.getKey(index));
     // By default creator is eTeks
+    String modelSizeString = getOptionalString(resource, PropertyKey.MODEL_SIZE.getKey(index), null);
+    Long modelSize = null;
+    if (modelSizeString != null) {
+      modelSize = Long.parseLong(modelSizeString);
+    } else {
+      // Request model size (this should be avoided when content is stored on a server)
+      modelSize = ContentDigestManager.getInstance().getContentSize(model);
+    }
     String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), null);
     boolean resizable = getOptionalBoolean(resource, PropertyKey.RESIZABLE.getKey(index), true);
     boolean deformable = getOptionalBoolean(resource, PropertyKey.DEFORMABLE.getKey(index), true);
@@ -647,18 +660,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       return new CatalogDoorOrWindow(id, name, description, information, tags, creationDate, grade, 
           icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
           doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, sashes,
-          modelRotation, false, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+          modelRotation, false, modelSize, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
       if (lightSources != null) {
         return new CatalogLight(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-            lightSources, staircaseCutOutShape, modelRotation, false, creator, 
+            lightSources, staircaseCutOutShape, modelRotation, false, modelSize, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-            staircaseCutOutShape, modelRotation, false, creator, 
+            staircaseCutOutShape, modelRotation, false, modelSize, creator, 
             resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
       }
     }

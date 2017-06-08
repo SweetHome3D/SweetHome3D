@@ -223,6 +223,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       planIcon CDATA #IMPLIED
  *       modelRotation CDATA "1 0 0 0 1 0 0 0 1"
  *       backFaceShown (false | true) "false"
+ *       modelSize CDATA #IMPLIED
  *       doorOrWindow (false | true) "false"
  *       resizable (false | true) "true"
  *       deformable (false | true) "true"
@@ -1073,6 +1074,7 @@ public class HomeXMLHandler extends DefaultHandler {
           this.sashes.toArray(new Sash [this.sashes.size()]),
           modelRotation, 
           "true".equals(attributes.get("backFaceShown")),
+          parseOptionalLong(attributes, "modelSize"),
           attributes.get("creator"), 
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
@@ -1102,6 +1104,7 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("staircaseCutOutShape"), 
           modelRotation, 
           "true".equals(attributes.get("backFaceShown")),
+          parseOptionalLong(attributes, "modelSize"),
           attributes.get("creator"), 
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
@@ -1130,6 +1133,7 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("staircaseCutOutShape"), 
           modelRotation, 
           "true".equals(attributes.get("backFaceShown")),
+          parseOptionalLong(attributes, "modelSize"),
           attributes.get("creator"), 
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 

@@ -57,7 +57,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * The properties on which home furniture may be sorted.  
    */
   public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
-                                DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE,
+                                DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_SIZE, CREATOR, 
                                 PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED, LEVEL};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
@@ -168,6 +168,33 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           return HomePieceOfFurniture.compare(piece1.angle, piece2.angle);
         }
       });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.MODEL_SIZE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.modelSize == piece2.modelSize) {
+            return 0; 
+          } else if (piece1.modelSize == null) {
+            return -1;
+          } else if (piece2.modelSize == null) {
+            return 1; 
+          } else {
+            long diff = piece1.modelSize - piece2.modelSize;
+            return diff < 0  ? -1  : (diff > 0  ? 1  : 0);
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.CREATOR, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.creator == piece2.creator) {
+            return 0;
+          } else if (piece1.creator == null) {
+            return -1;
+          } else if (piece2.creator == null) {
+            return 1; 
+          } else {
+            return collator.compare(piece1.creator, piece2.creator);
+          }
+        }
+      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.LEVEL, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           return HomePieceOfFurniture.compare(piece1.getLevel(), piece2.getLevel());
@@ -241,6 +268,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private Content                icon;
   private Content                planIcon;
   private Content                model;
+  private Long                   modelSize;                    
   private float                  width;
   private float                  depth;
   private float                  height;
@@ -283,6 +311,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.icon = piece.getIcon();
     this.planIcon = piece.getPlanIcon();
     this.model = piece.getModel();
+    this.modelSize = piece.getModelSize();
     this.width = piece.getWidth();
     this.depth = piece.getDepth();
     this.height = piece.getHeight();
@@ -678,6 +707,23 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    */
   public Content getModel() {
     return this.model;
+  }
+
+  /**
+   * Sets the size of the 3D model of this piece of furniture.
+   * This method should be called only to update a piece created with an older version.
+   * @since 5.5
+   */
+  public void setModelSize(Long modelSize) {
+    this.modelSize = modelSize;
+  }
+  
+  /**
+   * Returns the size of the 3D model of this piece of furniture.
+   * @since 5.5
+   */
+  public Long getModelSize() {
+    return this.modelSize;
   }
 
   /**

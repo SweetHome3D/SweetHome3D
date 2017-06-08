@@ -241,7 +241,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
           // Consider content is a multi part resource only if it's in a subdirectory
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
           // Write in home stream each zipped stream entry that is stored in the same directory  
-          for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+          for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+            String zipEntryName = zipEntry.getName();
             if (zipEntryName.startsWith(entryDirectory)) {
               Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
                   + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
@@ -290,7 +291,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       URL zipUrl = urlContent.getJAREntryURL();
       String entryDirectory = entryName.substring(0, slashIndex + 1);
       // Write in home stream each zipped stream entry that is stored in the same directory  
-      for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+      for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+        String zipEntryName = zipEntry.getName();
         if (zipEntryName.startsWith(entryDirectory)) {
           Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
               + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
@@ -310,7 +312,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
                                String directory,
                                URLContent urlContent) throws IOException {
     // Write in alphabetic order each zipped stream entry in home stream
-    for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+    for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
+      String zipEntryName = zipEntry.getName();
       Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
           + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
       writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);

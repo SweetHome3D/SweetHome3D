@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.tools;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 /**
@@ -31,5 +33,29 @@ public class SimpleURLContent extends URLContent {
   
   public SimpleURLContent(URL url) {
     super(url);
+  }
+  
+  @Override
+  public long getSize() {
+    long size = 0; 
+    InputStream in = null;
+    try {
+      in = openStream();
+      byte [] bytes = new byte [8192];
+      for (int length; (length = in.read(bytes)) != -1; ) {
+        size += length;
+      }
+    } catch (IOException ex) {
+      return -1;
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (IOException ex) {
+        // Ignore close exception
+      }
+    }
+    return size;
   }
 }

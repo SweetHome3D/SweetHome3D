@@ -26,6 +26,10 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import com.eteks.sweethome3d.model.Content;
 
@@ -113,6 +117,76 @@ public class URLContent implements Content {
     }
     String file = this.url.getFile();
     return file.substring(file.indexOf('!') + 2);
+  }
+  
+  /**
+   * Returns the size of this content.
+   * @return the size of the uncompressed zip file from which this content comes if it's a JAR entry
+   *      or the size of the content itself otherwise
+   *      or -1 if the content couldn't be read
+   */
+  public long getSize() {
+    InputStream in = null;
+    ZipFile zipFile = null;
+    try {
+      if (isJAREntry()) {
+        long size = 0; 
+        URL zipUrl = getJAREntryURL();
+        if (zipUrl.getProtocol().equals("file")) {
+          // Prefer to parse entries in zip files with ZipFile class because it runs much faster
+          try {
+            zipFile = new ZipFile(new File(zipUrl.toURI()));
+            for (Enumeration<? extends ZipEntry> enumEntries = zipFile.entries(); enumEntries.hasMoreElements(); ) {
+              size += enumEntries.nextElement().getSize();
+            }
+            return size;
+          } catch (URISyntaxException ex) {
+            // Try other method
+          }
+        }
+        
+        // Parse entries of the zipped stream
+        ZipInputStream zipIn = new ZipInputStream(zipUrl.openStream());
+        in = zipIn;
+        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+          long entrySize = entry.getSize();
+          if (entrySize != -1) {
+            size += entrySize;
+          } else {
+            size += getSize(zipIn);
+          }
+        }
+        return size;
+      } else {
+        in = openStream();
+        return getSize(in);
+      }
+    } catch (IOException ex) {
+      return -1;
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+        if (zipFile != null) {
+          zipFile.close();
+        }
+      } catch (IOException ex) {
+        // Ignore close exception
+      }
+    }
+  }
+
+  /**
+   * Returns the size of the data in the given input stream.
+   */
+  private long getSize(InputStream in) throws IOException {
+    long size = 0; 
+    byte [] bytes = new byte [8192];
+    for (int length; (length = in.read(bytes)) != -1; ) {
+      size += length;
+    }
+    return size;
   }
   
   /**

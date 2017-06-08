@@ -895,6 +895,10 @@ public class FurnitureTable extends JTable implements View, Printable {
             // Copy piece name
             writer.write(copiedPiece.getName());
             break;
+          case CREATOR :
+            // Copy piece creator
+            writer.write(copiedPiece.getCreator());
+            break;
           case LEVEL :
             // Copy level name
             writer.write(copiedPiece.getLevel() != null 
@@ -931,6 +935,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             writer.write(sizeFormat.format(copiedPiece.getElevation()));
             break;
           case ANGLE :
+          case MODEL_SIZE :
           case PRICE : 
           case VALUE_ADDED_TAX_PERCENTAGE : 
           case VALUE_ADDED_TAX :
@@ -1124,6 +1129,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "catalogIdColumn");
         case NAME :
           return preferences.getLocalizedString(FurnitureTable.class, "nameColumn");
+        case CREATOR :
+          return preferences.getLocalizedString(FurnitureTable.class, "creatorColumn");
         case WIDTH :
           return preferences.getLocalizedString(FurnitureTable.class, "widthColumn");
         case DEPTH :
@@ -1140,6 +1147,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "angleColumn");
         case LEVEL :
           return preferences.getLocalizedString(FurnitureTable.class, "levelColumn");
+        case MODEL_SIZE :
+          return preferences.getLocalizedString(FurnitureTable.class, "modelSizeColumn");
         case COLOR :
           return preferences.getLocalizedString(FurnitureTable.class, "colorColumn");
         case TEXTURE :
@@ -1171,12 +1180,15 @@ public class FurnitureTable extends JTable implements View, Printable {
         case CATALOG_ID :
         case NAME :
           return 120; 
+        case CREATOR :
+          return 80; 
         case WIDTH :
         case DEPTH :
         case HEIGHT : 
         case X : 
         case Y :
         case ELEVATION : 
+        case MODEL_SIZE : 
           return 50;
         case ANGLE :
           return 35;        
@@ -1209,6 +1221,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getCatalogIdRenderer(); 
         case NAME :
           return getNameWithIconRenderer(); 
+        case CREATOR :
+          return getCreatorRenderer(); 
         case WIDTH :
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.WIDTH, preferences);
         case DEPTH :
@@ -1225,6 +1239,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getAngleRenderer();        
         case LEVEL :
           return getLevelRenderer();        
+        case MODEL_SIZE :
+          return getModelSizeRenderer();          
         case COLOR :
           return getColorRenderer();        
         case TEXTURE :
@@ -1290,6 +1306,21 @@ public class FurnitureTable extends JTable implements View, Printable {
       return new TreeTableNameCellRenderer();
     }
 
+    /**
+     * Returns a renderer that displays the creator of a piece of furniture. 
+     */
+    private TableCellRenderer getCreatorRenderer() {
+      return new DefaultTableCellRenderer() { 
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          return super.getTableCellRendererComponent(
+              table, ((HomePieceOfFurniture)value).getCreator(), isSelected, hasFocus, row, column); 
+        }
+      };
+    }
+    
     /**
      * Returns a renderer that converts the displayed <code>property</code> of a piece of furniture 
      * to inch in case preferences unit us equal to INCH. 
@@ -1484,6 +1515,29 @@ public class FurnitureTable extends JTable implements View, Printable {
               : null;
           return this.integerRenderer.getTableCellRendererComponent(
               table, angle, isSelected, hasFocus, row, column); 
+        }
+      };
+    }
+
+    /**
+     * Returns a renderer that displays the model size property of a piece of furniture. 
+     */
+    private TableCellRenderer getModelSizeRenderer() {
+      return new DefaultTableCellRenderer() { 
+        private TableCellRenderer integerRenderer;
+        
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+          if (this.integerRenderer == null) {
+            this.integerRenderer = table.getDefaultRenderer(Integer.class);
+          }
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+          Integer modelSize = piece != null && piece.getModelSize() != null && piece.getModelSize() > 0  
+              ? Math.max(1, (int)Math.round(piece.getModelSize() / 1000.))
+              : null;
+          return this.integerRenderer.getTableCellRendererComponent(
+              table, modelSize, isSelected, hasFocus, row, column); 
         }
       };
     }

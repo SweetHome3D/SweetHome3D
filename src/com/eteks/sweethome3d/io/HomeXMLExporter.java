@@ -386,6 +386,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
         + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
         + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]);
       writer.writeAttribute("modelRotation", modelRotationString, "1 0 0 0 1 0 0 0 1");
+      writer.writeLongAttribute("modelSize", piece.getModelSize());
       writer.writeAttribute("description", piece.getDescription(), null);        
       writer.writeAttribute("information", piece.getInformation(), null);        
       writer.writeBooleanAttribute("movable", piece.isMovable(), true);

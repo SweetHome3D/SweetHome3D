@@ -462,6 +462,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   /**
    * Returns <code>null</code>.
    */
+  @Override
   public Content getPlanIcon() {
     return null;
   }
@@ -469,7 +470,24 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   /**
    * Returns <code>null</code>.
    */
+  @Override
   public Content getModel() {
+    return null;
+  }
+  
+  /**
+   * @throws IllegalStateException
+   */
+  @Override
+  public void setModelSize(Long modelSize) {
+    throw new IllegalStateException("Can't set model size of a group");
+  }
+  
+  /**
+   * Returns <code>null</code>.
+   */
+  @Override
+  public Long getModelSize() {
     return null;
   }
   

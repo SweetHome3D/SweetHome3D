@@ -529,6 +529,7 @@ public class FurnitureController implements Controller {
           Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
               HomePieceOfFurniture.SortableProperty.CATALOG_ID, 
               HomePieceOfFurniture.SortableProperty.NAME, 
+              HomePieceOfFurniture.SortableProperty.CREATOR, 
               HomePieceOfFurniture.SortableProperty.WIDTH,
               HomePieceOfFurniture.SortableProperty.DEPTH,
               HomePieceOfFurniture.SortableProperty.HEIGHT,
@@ -537,6 +538,7 @@ public class FurnitureController implements Controller {
               HomePieceOfFurniture.SortableProperty.ELEVATION,
               HomePieceOfFurniture.SortableProperty.ANGLE,
               HomePieceOfFurniture.SortableProperty.LEVEL,
+              HomePieceOfFurniture.SortableProperty.MODEL_SIZE,
               HomePieceOfFurniture.SortableProperty.COLOR,
               HomePieceOfFurniture.SortableProperty.TEXTURE,
               HomePieceOfFurniture.SortableProperty.MOVABLE,
