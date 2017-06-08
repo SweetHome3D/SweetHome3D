@@ -167,6 +167,7 @@ public class Camera extends HomeObject {
 
   /**
    * Sets the yaw angle in radians of this camera and notifies listeners of this change.
+   * Yaw axis is vertical axis. 
    */
   public void setYaw(float yaw) {
     if (yaw != this.yaw) {
@@ -185,6 +186,7 @@ public class Camera extends HomeObject {
 
   /**
    * Sets the pitch angle in radians of this camera and notifies listeners of this change.
+   * Pitch axis is horizontal transverse axis. 
    */
   public void setPitch(float pitch) {
     if (pitch != this.pitch) {

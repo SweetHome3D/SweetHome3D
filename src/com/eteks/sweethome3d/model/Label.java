@@ -272,6 +272,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
   /**
    * Sets the angle in radians used to rotate this label around horizontal axis in 3D. Once this label is updated, 
    * listeners added to this label will receive a change notification.
+   * Pitch axis is horizontal transverse axis. 
    * @since 5.0 
    */
   public void setPitch(Float pitch) {
