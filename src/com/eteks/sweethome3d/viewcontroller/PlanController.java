@@ -3654,38 +3654,30 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture
-        && isItemMovable(selectedItems.get(0))) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isTopLeftPointAt(x, y, margin)
+      if (selectedPiece.isTopLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
-          && !piece.containsPoint(x, y, 0)) {
-        return piece;
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
       }
     } 
     return null;
   }
-  
+
   /**
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
   private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture
-        && isItemMovable(selectedItems.get(0))) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isTopRightPointAt(x, y, margin)
+      if (selectedPiece.isTopRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
-          && !piece.containsPoint(x, y, 0)) {
-        return piece;
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
       }
     } 
     return null;
@@ -3697,18 +3689,13 @@ public class PlanController extends FurnitureController implements Controller {
    * of the piece.
    */
   private HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isResizable()
-          && isItemResizable(piece) 
-          && piece.isBottomLeftPointAt(x, y, margin)
+      if (selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
-          && !piece.containsPoint(x, y, 0)) {
-        return piece;
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
       }
     } 
     return null;
@@ -3720,21 +3707,55 @@ public class PlanController extends FurnitureController implements Controller {
    * the width and the depth of the piece.
    */
   private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture
-        && isItemResizable(selectedItems.get(0))) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isResizable()
-          && isItemResizable(piece) 
-          && piece.isBottomRightPointAt(x, y, margin)
+      if (selectedPiece.isBottomRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
-          && !piece.containsPoint(x, y, 0)) {
-        return piece;
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
       }
     } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected item if selection contains one selected movable piece of furniture.
+   */
+  private HomePieceOfFurniture getSelectedMovablePieceOfFurniture() {
+    HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
+    if (selectedPiece != null 
+        && isItemMovable(selectedPiece)) {
+      return selectedPiece;
+    }
+    return null;
+  }
+  
+  /**
+   * Returns the selected item if selection contains one selected resizable piece of furniture.
+   */
+  private HomePieceOfFurniture getSelectedResizablePieceOfFurniture() {
+    HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
+    if (selectedPiece != null 
+        && selectedPiece.isResizable()
+        && isItemResizable(selectedPiece)) {
+      return selectedPiece;
+    }
+    return null;
+  }
+  
+  /**
+   * Returns the selected item if selection contains one selected piece of furniture.
+   */
+  private HomePieceOfFurniture getSelectedPieceOfFurniture() {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)) {
+        return piece;
+      }
+    }
     return null;
   }
   
@@ -3743,16 +3764,13 @@ public class PlanController extends FurnitureController implements Controller {
    * that can be used to resize the power of the light.
    */
   private HomeLight getModifiedLightPowerAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomeLight) {
-      HomeLight light = (HomeLight)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
+    if (selectedPiece instanceof HomeLight) {
       float margin = INDICATOR_PIXEL_MARGIN * (1 / getScale());
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(light)
-          && light.isBottomLeftPointAt(x, y, margin)
+      if (selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
-          && !light.containsPoint(x, y, 0)) {
-        return light;
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return (HomeLight)selectedPiece;
       }
     } 
     return null;
@@ -3763,17 +3781,13 @@ public class PlanController extends FurnitureController implements Controller {
    * name center point at (<code>x</code>, <code>y</code>).
    */
   private HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture
-        && isItemMovable(selectedItems.get(0))) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isNameVisible()
-          && piece.getName().trim().length() > 0
-          && piece.isNameCenterPointAt(x, y, margin)) {
-        return piece;
+      if (selectedPiece.isNameVisible()
+          && selectedPiece.getName().trim().length() > 0
+          && selectedPiece.isNameCenterPointAt(x, y, margin)) {
+        return selectedPiece;
       }
     } 
     return null;
@@ -3784,19 +3798,15 @@ public class PlanController extends FurnitureController implements Controller {
    * name angle point at (<code>x</code>, <code>y</code>).
    */
   private HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture
-        && isItemMovable(selectedItems.get(0))) {
-      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)
-          && piece.isNameVisible()
-          && piece.getName().trim().length() > 0
-          && isTextAnglePointAt(piece, piece.getName(), piece.getNameStyle(),
-                piece.getX() + piece.getNameXOffset(), piece.getY() + piece.getNameYOffset(),
-                piece.getNameAngle(), x, y, margin)) {
-        return piece;
+      if (selectedPiece.isNameVisible()
+          && selectedPiece.getName().trim().length() > 0
+          && isTextAnglePointAt(selectedPiece, selectedPiece.getName(), selectedPiece.getNameStyle(),
+                selectedPiece.getX() + selectedPiece.getNameXOffset(), selectedPiece.getY() + selectedPiece.getNameYOffset(),
+                selectedPiece.getNameAngle(), x, y, margin)) {
+        return selectedPiece;
       }
     } 
     return null;
@@ -6627,8 +6637,8 @@ public class PlanController extends FurnitureController implements Controller {
         public void selectionChanged(SelectionEvent selectionEvent) {
           List<Selectable> selectedItems = home.getSelectedItems();
           getView().setResizeIndicatorVisible(selectedItems.size() == 1
-              && (isItemResizable(selectedItems.get(0))
-                  || isItemMovable(selectedItems.get(0))));
+                  && (isItemResizable(selectedItems.get(0))
+                      || isItemMovable(selectedItems.get(0))));
         }
       };
     
