@@ -399,8 +399,8 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean resizable, boolean deformable, boolean texturable, 
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
-        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, backFaceShown, null,  
-        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+        height, elevation, dropOnTopElevation, movable, staircaseCutOutShape, modelRotation, backFaceShown, null,  
+        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
   }
   
   /**

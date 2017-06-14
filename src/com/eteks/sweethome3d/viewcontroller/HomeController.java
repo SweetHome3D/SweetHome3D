@@ -2041,7 +2041,7 @@ public class HomeController implements Controller {
                 piece.getInformation(), new String [0], null, null,
                 REPAIRED_ICON_CONTENT, REPAIRED_IMAGE_CONTENT, REPAIRED_MODEL_CONTENT, 
                 piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 1f,
-                piece.isMovable(), piece.getStaircaseCutOutShape(), null, false, piece.getCreator(), 
+                piece.isMovable(), piece.getStaircaseCutOutShape(), null, false, null, piece.getCreator(), 
                 piece.isResizable(), piece.isDeformable(), piece.isTexturable(), 
                 piece.getPrice(), piece.getValueAddedTaxPercentage(), piece.getCurrency()));
         replacingPiece.setNameVisible(piece.isNameVisible());
