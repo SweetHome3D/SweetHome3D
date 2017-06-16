@@ -94,10 +94,14 @@ import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.J3DGraphics2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Link;
+import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PointArray;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransformInterpolator;
@@ -127,6 +131,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.Ground3D;
@@ -178,7 +183,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final boolean                            displayShadowOnFloor;
   private final Object3DFactory                    object3dFactory;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
-  private Light []                                 defaultLights;
+  private Light []                                 sceneLights;
   private Collection<Selectable>                   homeObjectsToUpdate;
   private Collection<Selectable>                   lightScopeObjectsToUpdate;
   private Component                                component3D;
@@ -187,10 +192,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Listeners bound to home that updates 3D scene objects
   private PropertyChangeListener                   cameraChangeListener;
   private PropertyChangeListener                   homeCameraListener;
-  private PropertyChangeListener                   skyColorListener;
+  private PropertyChangeListener                   backgroundChangeListener;
   private PropertyChangeListener                   groundChangeListener;
+  private PropertyChangeListener                   backgroundLightColorListener;
   private PropertyChangeListener                   lightColorListener;
   private PropertyChangeListener                   subpartSizeListener;
+  private PropertyChangeListener                   elevationChangeListener;
   private PropertyChangeListener                   wallsAlphaListener;
   private PropertyChangeListener                   drawingModeListener;
   private CollectionListener<Level>                levelListener;
@@ -811,15 +818,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void removeHomeListeners() {
     this.home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
-    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
-    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_COLOR, this.backgroundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_TEXTURE, this.backgroundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.backgroundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.backgroundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.backgroundLightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SUBPART_SIZE_UNDER_LIGHT, this.subpartSizeListener);
     this.home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
+    this.home.removePropertyChangeListener(Home.Property.CAMERA, this.elevationChangeListener);
+    this.home.getCamera().removePropertyChangeListener(this.elevationChangeListener);
     this.home.removeLevelsListener(this.levelListener);
     for (Level level : this.home.getLevels()) {
       level.removePropertyChangeListener(this.levelChangeListener);
@@ -1015,7 +1027,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     double frontClipDistance;
     double backClipDistance;
     if (topCamera) {
-      BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
+      BoundingBox approximateHomeBounds = getApproximateHomeBounds();
       if (approximateHomeBounds == null) {
         frontClipDistance = 5;
       } else {
@@ -1041,7 +1053,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       final float minElevation = 125;
       if (camera.getZ() > minElevation) {
         final float intermediateGrowFactor = 1 / 250f;
-        BoundingBox approximateHomeBounds = getApproximateHomeBoundsCache();
+        BoundingBox approximateHomeBounds = getApproximateHomeBounds();
         float highestPoint = 0; 
         if (approximateHomeBounds != null) {
           Point3d upper = new Point3d();
@@ -1073,7 +1085,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns quickly computed bounds of the objects in home.
    */
-  private BoundingBox getApproximateHomeBoundsCache() {
+  private BoundingBox getApproximateHomeBounds() {
     if (this.approximateHomeBoundsCache == null) {
       BoundingBox approximateHomeBounds = null;
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
@@ -1587,12 +1599,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     BranchGroup root = new BranchGroup();
     // Build scene tree
     root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
-    root.addChild(createBackgroundNode(listenToHomeUpdates, waitForLoading));
+    Node backgroundNode = createBackgroundNode(listenToHomeUpdates, waitForLoading);
+    root.addChild(backgroundNode);
     Node groundNode = createGroundNode(-0.5E7f, -0.5E7f, 1E7f, 1E7f, listenToHomeUpdates, waitForLoading);
     root.addChild(groundNode);
 
-    this.defaultLights = createLights(groundNode, listenToHomeUpdates);
-    for (Light light : this.defaultLights) {
+    this.sceneLights = createLights(groundNode, listenToHomeUpdates);
+    for (Light light : this.sceneLights) {
       root.addChild(light);
     }
     
@@ -1603,37 +1616,102 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns a new background node.  
    */
   private Node createBackgroundNode(boolean listenToHomeUpdates, final boolean waitForLoading) {
-    final Appearance backgroundAppearance = new Appearance();
-    ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
-    backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
-    // Allow background color and texture to change
-    backgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-    backgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
-    backgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+    final Appearance skyBackgroundAppearance = new Appearance();
+    ColoringAttributes skyBackgroundColoringAttributes = new ColoringAttributes();
+    skyBackgroundAppearance.setColoringAttributes(skyBackgroundColoringAttributes);
+    // Allow sky color and texture to change
+    skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    skyBackgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
+    skyBackgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
     
-    Geometry halfSphereGeometry = createHalfSphereGeometry(true);   
-    final Shape3D halfSphere = new Shape3D(halfSphereGeometry, backgroundAppearance);
+    Geometry topHalfSphereGeometry = createHalfSphereGeometry(true);   
+    final Shape3D topHalfSphere = new Shape3D(topHalfSphereGeometry, skyBackgroundAppearance);
     BranchGroup backgroundBranch = new BranchGroup();
-    backgroundBranch.addChild(halfSphere);
-    backgroundBranch.addChild(new Shape3D(createHalfSphereGeometry(false)));
+    backgroundBranch.addChild(topHalfSphere);
+    
+    final Appearance bottomAppearance = new Appearance();
+    final RenderingAttributes bottomRenderingAttributes = new RenderingAttributes();
+    bottomRenderingAttributes.setVisible(false);
+    bottomAppearance.setRenderingAttributes(bottomRenderingAttributes);
+    bottomRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+    Shape3D bottomHalfSphere = new Shape3D(createHalfSphereGeometry(false), bottomAppearance);
+    backgroundBranch.addChild(bottomHalfSphere);
 
+    // Add two planes at ground level to complete landscape at the horizon when camera is above horizon 
+    // (one at y = -0.01 to fill the horizon and a lower one to fill the lower part of the scene)  
+    final Appearance groundBackgroundAppearance = new Appearance();
+    TextureAttributes groundBackgroundTextureAttributes = new TextureAttributes();
+    groundBackgroundTextureAttributes.setTextureMode(TextureAttributes.MODULATE);
+    groundBackgroundAppearance.setTextureAttributes(groundBackgroundTextureAttributes);
+    groundBackgroundAppearance.setTexCoordGeneration(
+        new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2, 
+            new Vector4f(1E5f, 0, 0, 0), new Vector4f(0, 0, 1E5f, 0)));
+    final RenderingAttributes groundRenderingAttributes = new RenderingAttributes();
+    groundBackgroundAppearance.setRenderingAttributes(groundRenderingAttributes);
+    // Allow ground color and texture to change
+    groundBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    groundBackgroundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+    groundRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+
+    GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
+    geometryInfo.setCoordinates(new Point3f [] {
+          new Point3f(-1f, -0.01f, -1f),
+          new Point3f(-1f, -0.01f, 1f),
+          new Point3f(1f, -0.01f, 1f),
+          new Point3f(1f, -0.01f, -1f),
+          new Point3f(-1f, -0.1f, -1f),
+          new Point3f(-1f, -0.1f, 1f),
+          new Point3f(1f, -0.1f, 1f),
+          new Point3f(1f, -0.1f, -1f)});
+    geometryInfo.setCoordinateIndices(new int [] {0, 1, 2, 3, 4, 5, 6, 7});
+    geometryInfo.setNormals(new Vector3f [] {new Vector3f(0, 1, 0)});
+    geometryInfo.setNormalIndices(new int [] {0, 0, 0, 0, 0, 0, 0, 0});
+    Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(), groundBackgroundAppearance);
+//    backgroundBranch.addChild(groundBackground);
+    
+    // Add its own lights to background to ensure they have an effect
+    for (Light light : createBackgroundLights(listenToHomeUpdates)) {
+      backgroundBranch.addChild(light);
+    }
+    
     final Background background = new Background(backgroundBranch);
-    updateBackgroundColorAndTexture(backgroundAppearance, this.home, waitForLoading);
+    updateBackgroundColorAndTexture(skyBackgroundAppearance, groundBackgroundAppearance, this.home, waitForLoading);
     background.setApplicationBounds(new BoundingBox(
         new Point3d(-1E7, -1E7, -1E7), 
         new Point3d(1E7, 1E7, 1E7)));    
     
     if (listenToHomeUpdates) {
       // Add a listener on sky color and texture properties change 
-      this.skyColorListener = new PropertyChangeListener() {
+      this.backgroundChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            updateBackgroundColorAndTexture(backgroundAppearance, home, waitForLoading);
+            updateBackgroundColorAndTexture(skyBackgroundAppearance, groundBackgroundAppearance, home, waitForLoading);
           }
         };
       this.home.getEnvironment().addPropertyChangeListener(
-          HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
+          HomeEnvironment.Property.SKY_COLOR, this.backgroundChangeListener);
       this.home.getEnvironment().addPropertyChangeListener(
-          HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
+          HomeEnvironment.Property.SKY_TEXTURE, this.backgroundChangeListener);
+      this.home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.GROUND_COLOR, this.backgroundChangeListener);
+      this.home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.GROUND_TEXTURE, this.backgroundChangeListener);
+      // Make groundBackground invisible and bottom half sphere visible if camera is below the ground
+      this.elevationChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (ev.getSource() == home) {
+              // Move listener to the new camera
+              ((Camera)ev.getOldValue()).removePropertyChangeListener(this);
+              home.getCamera().addPropertyChangeListener(this);
+            }
+            if (ev.getSource() == home
+                || Camera.Property.Z.name().equals(ev.getPropertyName())) {
+              groundRenderingAttributes.setVisible(home.getCamera().getZ() >= 0);
+              bottomRenderingAttributes.setVisible(home.getCamera().getZ() < 0);              
+            }
+          }
+        };
+      this.home.getCamera().addPropertyChangeListener(this.elevationChangeListener);
+      this.home.addPropertyChangeListener(Home.Property.CAMERA, this.elevationChangeListener);
     }
     return background;
   }
@@ -1714,29 +1792,56 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates <code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.
    */
-  private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home, 
+  private void updateBackgroundColorAndTexture(final Appearance skyBackgroundAppearance,
+                                               final Appearance groundBackgroundAppearance,
+                                               Home home, 
                                                boolean waitForLoading) {
     Color3f skyColor = new Color3f(new Color(home.getEnvironment().getSkyColor()));
-    backgroundAppearance.getColoringAttributes().setColor(skyColor);
+    skyBackgroundAppearance.getColoringAttributes().setColor(skyColor);
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (skyTexture != null) {
       TextureManager textureManager = TextureManager.getInstance();
       if (waitForLoading) {
         // Don't share the background texture otherwise if might not be rendered correctly
-        backgroundAppearance.setTexture(textureManager.loadTexture(skyTexture.getImage()));
+        skyBackgroundAppearance.setTexture(textureManager.loadTexture(skyTexture.getImage()));
       } else {
         textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
             new TextureManager.TextureObserver() {
                 public void textureUpdated(Texture texture) {
                   // Use a copy of the texture in case it's used in an other universe
-                  backgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+                  skyBackgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
                 }
               });
       }
     } else {
-      backgroundAppearance.setTexture(null);
+      skyBackgroundAppearance.setTexture(null);
     }
 
+    HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
+    if (groundTexture != null) {
+      groundBackgroundAppearance.setMaterial(new Material(
+          new Color3f(1, 1, 1), new Color3f(), new Color3f(1, 1, 1), new Color3f(0, 0, 0), 1));
+      TextureManager textureManager = TextureManager.getInstance();
+      if (waitForLoading) {
+        groundBackgroundAppearance.setTexture(textureManager.loadTexture(groundTexture.getImage()));
+      } else {
+        textureManager.loadTexture(groundTexture.getImage(), waitForLoading, 
+            new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {
+                  // Use a copy of the texture in case it's used in an other universe
+                  groundBackgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+                }
+              });
+      }
+    } else {
+      int groundColor = home.getEnvironment().getGroundColor();
+      Color3f color = new Color3f(((groundColor >>> 16) & 0xFF) / 255.f,
+                                  ((groundColor >>> 8) & 0xFF) / 255.f,
+                                   (groundColor & 0xFF) / 255.f);
+      groundBackgroundAppearance.setMaterial(new Material(color, new Color3f(), color, new Color3f(0, 0, 0), 1));
+      groundBackgroundAppearance.setTexture(null);
+    }
+    
     clearPrintedImageCache();
   }
   
@@ -1783,6 +1888,43 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     return transformGroup;
   }
   
+  /**
+   * Returns the lights used for the background.
+   */
+  private Light [] createBackgroundLights(boolean listenToHomeUpdates) {
+    final Light [] lights = {
+        // Use just one direct light for background because only one horizontal plane is under light 
+        new DirectionalLight(new Color3f(1.435f, 1.435f, 1.435f), new Vector3f(0f, -1f, 0f)),         
+        new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
+    for (int i = 0; i < lights.length - 1; i++) {
+      // Allow directional lights color and influencing bounds to change
+      lights [i].setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+      // Store default color in user data
+      Color3f defaultColor = new Color3f();
+      lights [i].getColor(defaultColor);
+      lights [i].setUserData(defaultColor);
+      updateLightColor(lights [i]);
+    }
+    
+    final Bounds defaultInfluencingBounds = new BoundingSphere(new Point3d(), 2);
+    for (Light light : lights) {
+      light.setInfluencingBounds(defaultInfluencingBounds);
+    }
+    
+    if (listenToHomeUpdates) {
+      // Add a listener on light color property change to home
+      this.backgroundLightColorListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateLightColor(lights [0]);
+          }
+        };
+      this.home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.LIGHT_COLOR, this.backgroundLightColorListener);
+    }
+    
+    return lights;
+  }
+
   /**
    * Returns the lights of the scene.
    */
@@ -1891,6 +2033,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             }
           }
         };
+        
       this.home.getEnvironment().addPropertyChangeListener(
           HomeEnvironment.Property.SUBPART_SIZE_UNDER_LIGHT, this.subpartSizeListener);
       this.subpartSizeListener.propertyChange(null);
@@ -2526,7 +2669,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                       break;
                     }
                   }
-                  for (Light light : defaultLights) {
+                  for (Light light : sceneLights) {
                     if (light instanceof DirectionalLight) {
                       if (objectInOutsideLightScope && light.indexOfScope(object3D) == -1) {
                         light.addScope(object3D);
