@@ -52,12 +52,12 @@
     <opt>-Djava.library.path=lib/java3d-1.6 -Djogamp.gluegen.UseTempJarCache=false -Dcom.eteks.sweethome3d.applicationId=SweetHome3D#Installer</opt>
   </jre>
   <versionInfo>
-    <fileVersion>5.4.3.0</fileVersion>
-    <txtFileVersion>5.4.3</txtFileVersion>
+    <fileVersion>5.5.0.0</fileVersion>
+    <txtFileVersion>5.5</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2017 eTeks</copyright>
-    <productVersion>5.4.3.0</productVersion>
-    <txtProductVersion>5.4.3</txtProductVersion>
+    <productVersion>5.5.0.0</productVersion>
+    <txtProductVersion>5.5</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
