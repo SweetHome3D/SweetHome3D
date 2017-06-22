@@ -8,6 +8,7 @@
      - application : Builds SweetHome3D.jar file without applet classes in build directory
      - furniture   : Builds Furniture.jar file in build directory
      - textures    : Builds Textures.jar file in build directory
+     - examples    : Builds Examples.jar file in build directory
      - help        : Builds Help.jar file in build directory
 
      - java3dLibraries        : Builds JNLP Java 3D libraries in deploy/lib subdirectories
@@ -30,7 +31,7 @@
 -->
 <project basedir="." default="jarExecutable" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="5.4.3"/>
+  <property name="version" value="5.5"/>
 
   <target name="build"
           description="Builds build/SweetHome3D.jar with all its classes">
@@ -94,6 +95,7 @@
       <include name="com/eteks/sweethome3d/io/resources/**"/>
       <exclude name="com/eteks/sweethome3d/io/resources/textures/**"/>
       <exclude name="com/eteks/sweethome3d/io/resources/patterns/**"/>
+      <exclude name="com/eteks/sweethome3d/io/resources/examples/**"/>
     </zip>
   </target>
 
@@ -103,6 +105,14 @@
     <zip destfile="build/Textures.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*TexturesCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/textures/**"/>
+    </zip>
+  </target>
+
+  <target name="examples"
+          description="Builds build/Examples.jar that contains the examples files">
+    <mkdir dir="build"/>
+    <zip destfile="build/Examples.jar" basedir="src">
+      <include name="com/eteks/sweethome3d/io/resources/examples/**"/>
     </zip>
   </target>
 
@@ -301,7 +311,7 @@
     </jar>
   </target>
 
-  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries,otherLibraries,manifest"
+  <target name="javaWebStart" depends="application,furniture,textures,examples,help,java3dLibraries,otherLibraries,manifest"
           description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
     <!-- Build SweetHome3DJavaWebStart.jar file containing signed JNLP file -->
     <mkdir dir="build/JNLP-INF"/>
@@ -321,6 +331,7 @@
       <zipfileset src="build/SweetHome3D.jar"/>
       <zipfileset src="build/Furniture.jar"/>
       <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Examples.jar"/>
       <zipfileset src="build/Help.jar"/>
     </jar>
 
@@ -447,7 +458,7 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <target name="jarExecutable" depends="application,furniture,textures,help,jogl-java3d"
+  <target name="jarExecutable" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version.jar executable Jar">
     <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
          and other DLLs and jars -->
@@ -458,6 +469,7 @@
       <zipfileset src="build/SweetHome3D.jar"/>
       <zipfileset src="build/Furniture.jar"/>
       <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Examples.jar"/>
       <zipfileset src="build/Help.jar"/>
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -502,7 +514,7 @@
   <!-- Builds Sweet Home 3D Windows launcher in install/windows/build directory.
        CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE,
                  64 bit JRE and launch4j installed in their default location -->
-  <target name="windowsLauncher" depends="application,furniture,textures,help,jogl-java3d"
+  <target name="windowsLauncher" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Windows launcher">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D
          to install/windows/build/lib -->
@@ -510,6 +522,7 @@
     <move file="build/SweetHome3D.jar" todir="install/windows/build/lib" />
     <move file="build/Furniture.jar"   todir="install/windows/build/lib" />
     <move file="build/Textures.jar"    todir="install/windows/build/lib" />
+    <move file="build/Examples.jar"    todir="install/windows/build/lib" />
     <move file="build/Help.jar"        todir="install/windows/build/lib" />
     <copy todir="install/windows/build/lib" >
       <fileset dir="lib">
@@ -762,7 +775,7 @@
   </target>
 
   <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. -->
-  <target name="macosxBundle" depends="application,furniture,textures,help"
+  <target name="macosxBundle" depends="application,furniture,textures,examples,help"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}"/>
@@ -779,6 +792,7 @@
     <move file="build/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
     <move file="build/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
     <move file="build/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="build/Examples.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
     <move file="build/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
@@ -879,7 +893,7 @@
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux 32 bit JRE installed in jre1.8.0_121 -->
-  <target name="linux32Installer" depends="application,furniture,textures,help,jogl-java3d"
+  <target name="linux32Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
          to install/linux/x86/SweetHome3D-version/lib -->
@@ -895,6 +909,7 @@
     <move file="build/SweetHome3D.jar" todir="install/linux/x86/SweetHome3D-${version}/lib" />
     <move file="build/Furniture.jar"   todir="install/linux/x86/SweetHome3D-${version}/lib" />
     <move file="build/Textures.jar"    todir="install/linux/x86/SweetHome3D-${version}/lib" />
+    <move file="build/Examples.jar"    todir="install/linux/x86/SweetHome3D-${version}/lib" />
     <move file="build/Help.jar"        todir="install/linux/x86/SweetHome3D-${version}/lib" />
     <copy todir="install/linux/x86/SweetHome3D-${version}/lib" >
       <fileset dir="lib">
@@ -997,7 +1012,7 @@
   <!-- Builds install/SweetHome3D-version-linux-x64.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux 64 bit JRE installed in jre1.8.0_121 -->
-  <target name="linux64Installer" depends="application,furniture,textures,help,jogl-java3d"
+  <target name="linux64Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x64.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
          to install/linux/x64/SweetHome3D-version/lib -->
@@ -1013,6 +1028,7 @@
     <move file="build/SweetHome3D.jar" todir="install/linux/x64/SweetHome3D-${version}/lib" />
     <move file="build/Furniture.jar"   todir="install/linux/x64/SweetHome3D-${version}/lib" />
     <move file="build/Textures.jar"    todir="install/linux/x64/SweetHome3D-${version}/lib" />
+    <move file="build/Examples.jar"    todir="install/linux/x64/SweetHome3D-${version}/lib" />
     <move file="build/Help.jar"        todir="install/linux/x64/SweetHome3D-${version}/lib" />
     <copy todir="install/linux/x64/SweetHome3D-${version}/lib" >
       <fileset dir="lib">
@@ -1144,7 +1160,7 @@
   </target>
 
   <!-- Builds install/portable/SweetHome3D-version-portable files required for SweetHome3D portable version -->
-  <target name="portableArchive" depends="application,furniture,textures,help,jogl-java3d"
+  <target name="portableArchive" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/portable/SweetHome3D-version-portable files">
     <!-- Copy SweetHome3D JARs and its libs
          to install/portable/SweetHome3D-${version}/lib -->
@@ -1152,6 +1168,7 @@
     <move file="build/SweetHome3D.jar" todir="install/portable/SweetHome3D-${version}-portable/lib" />
     <move file="build/Furniture.jar"   todir="install/portable/SweetHome3D-${version}-portable/lib" />
     <move file="build/Textures.jar"    todir="install/portable/SweetHome3D-${version}-portable/lib" />
+    <move file="build/Examples.jar"    todir="install/portable/SweetHome3D-${version}-portable/lib" />
     <move file="build/Help.jar"        todir="install/portable/SweetHome3D-${version}-portable/lib" />
     <copy todir="install/portable/SweetHome3D-${version}-portable/lib" >
       <fileset dir="lib">
