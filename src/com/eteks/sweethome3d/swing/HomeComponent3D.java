@@ -795,7 +795,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     view.setTransparencySortingPolicy(View.TRANSPARENCY_SORT_GEOMETRY);
     
     // Update field of view from current camera
-    updateView(view, this.home.getCamera(), this.home.getTopCamera() == this.home.getCamera());
+    updateView(view, this.home.getCamera());
     
     // Update point of view from current camera
     updateViewPlatformTransform(viewPlatformTransform, this.home.getCamera(), false);
@@ -934,6 +934,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         view = this.offscreenUniverse.getViewer().getView();
       }
       
+      updateView(view, this.home.getCamera(), width, height);
+      
       // Empty temporarily selection to create the off screen image
       List<Selectable> emptySelection = Collections.emptyList();
       this.home.setSelectedItems(emptySelection);
@@ -996,7 +998,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           // Update view transform later to avoid flickering in case of multiple camera changes 
           EventQueue.invokeLater(new Runnable() {
             public void run() {
-              updateView(view, home.getCamera(), home.getTopCamera() == home.getCamera());
+              updateView(view, home.getCamera());
               updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), true);
             }
           });
@@ -1005,7 +1007,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
     this.homeCameraListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateView(view, home.getCamera(), home.getTopCamera() == home.getCamera());
+          updateView(view, home.getCamera());
           updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), false);
           // Add camera change listener to new active camera
           ((Camera)ev.getOldValue()).removePropertyChangeListener(cameraChangeListener);
@@ -1018,67 +1020,44 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates <code>view</code> from <code>camera</code> field of view.
    */
-  private void updateView(View view, Camera camera, boolean topCamera) {
+  private void updateView(View view, Camera camera) {
+    updateView(view, camera, this.component3D.getWidth(), this.component3D.getHeight());
+  }
+  
+  private void updateView(View view, Camera camera, int width, int height) {
     float fieldOfView = camera.getFieldOfView();
     if (fieldOfView == 0) {
       fieldOfView = (float)(Math.PI * 63 / 180);
     }
     view.setFieldOfView(fieldOfView);
-    double frontClipDistance;
-    double backClipDistance;
-    if (topCamera) {
-      BoundingBox approximateHomeBounds = getApproximateHomeBounds();
-      if (approximateHomeBounds == null) {
-        frontClipDistance = 5;
-      } else {
-        Point3d lower = new Point3d();
-        approximateHomeBounds.getLower(lower);
-        Point3d upper = new Point3d();
-        approximateHomeBounds.getUpper(upper);
-        // Use a variable front clip distance for top camera depending on the distance to home objects center
-        frontClipDistance = 1 + Math.sqrt(Math.pow((lower.x + upper.x) / 2 - camera.getX(), 2) 
-            + Math.pow((lower.y + upper.y) / 2 - camera.getY(), 2) 
-            + Math.pow((lower.z + upper.z) / 2 - camera.getZ(), 2)) / 100;
+    double frontClipDistance = 2.5f;
+    // It's recommended to keep ratio between back and front clip distances under 3000
+    final float frontBackDistanceRatio = 3000;
+    BoundingBox approximateHomeBounds = getApproximateHomeBounds();
+    // If camera is out of home bounds, adjust the front clip distance to the distance to home bounds 
+    if (approximateHomeBounds != null
+        && !approximateHomeBounds.intersect(new Point3d(camera.getX(), camera.getY(), camera.getZ()))) {
+      float distanceToClosestBoxSide = getDistanceToBox(camera.getX(), camera.getY(), camera.getZ(), approximateHomeBounds);
+      if (!Float.isNaN(distanceToClosestBoxSide)) {
+        frontClipDistance = Math.max(frontClipDistance, 0.25f * distanceToClosestBoxSide);
       }
-      // It's recommended to keep ratio between back and front clip distances under 3000
-      backClipDistance = frontClipDistance * 3000;
-    } else {
-      // Use a variable front clip distance for observer camera depending on the elevation 
-      // Caution: check that a white zone doesn't appear at the horizon in off screen images
-      // when camera is at an intermediate elevation
-      
-      // Under 125 cm keep a front clip distance equal to 2.5 cm 
-      frontClipDistance = 2.5;
-      backClipDistance = frontClipDistance * 5000;
-      final float minElevation = 125;
-      if (camera.getZ() > minElevation) {
-        final float intermediateGrowFactor = 1 / 250f;
-        BoundingBox approximateHomeBounds = getApproximateHomeBounds();
-        float highestPoint = 0; 
-        if (approximateHomeBounds != null) {
-          Point3d upper = new Point3d();
-          approximateHomeBounds.getUpper(upper);
-          highestPoint = Math.min((float)upper.z, 10000f);
-        }
-        if (camera.getZ() < highestPoint + minElevation) {
-          // Between 200 cm and the highest point, make front clip distance grow slowly and increase front/back ratio  
-          frontClipDistance += (camera.getZ() - minElevation) * intermediateGrowFactor;
-          backClipDistance  += (frontClipDistance - 2.5) * 25000;
-        } else {
-          // Above, make front clip distance grow faster
-          frontClipDistance += 
-              highestPoint * intermediateGrowFactor 
-            + (camera.getZ() - highestPoint - minElevation) / 50;
-          backClipDistance  += 
-              + (highestPoint * intermediateGrowFactor) * 25000
-              + (frontClipDistance - highestPoint * intermediateGrowFactor - 2.5) * 5000;
+    }
+    if (camera.getZ() > 0 && width != 0 && height != 0) {
+      float halfVerticalFieldOfView = (float)Math.atan(Math.tan(fieldOfView / 2) * height / width);
+      float fieldOfViewBottomAngle = camera.getPitch() + halfVerticalFieldOfView;
+      // If the horizon is above the frustrum bottom, take into account the distance to the ground 
+      if (fieldOfViewBottomAngle > 0) {
+        float distanceToGroundAtFieldOfViewBottomAngle = (float)(camera.getZ() / Math.sin(fieldOfViewBottomAngle));
+        frontClipDistance = Math.min(frontClipDistance, 0.35f * distanceToGroundAtFieldOfViewBottomAngle);
+        if (frontClipDistance * frontBackDistanceRatio < distanceToGroundAtFieldOfViewBottomAngle) {
+          // Ensure the ground is always visible at the back clip distance
+          frontClipDistance = distanceToGroundAtFieldOfViewBottomAngle / frontBackDistanceRatio;
         }
       }
     }
-    
     // Update front and back clip distance 
     view.setFrontClipDistance(frontClipDistance);
-    view.setBackClipDistance(backClipDistance);
+    view.setBackClipDistance(frontClipDistance * frontBackDistanceRatio);
     clearPrintedImageCache();
   }
 
@@ -1092,12 +1071,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         if (piece.isVisible()
             && (piece.getLevel() == null
                 || piece.getLevel().isViewable())) {
-          Point3d pieceLocation = new Point3d(piece.getX(), piece.getY(), piece.getGroundElevation());
+          float halfMaxDimension = Math.max(piece.getWidth(), piece.getDepth()) / 2;
+          float elevation = piece.getGroundElevation();
+          Point3d pieceLocation = new Point3d(
+              piece.getX() - halfMaxDimension, piece.getY() - halfMaxDimension, elevation);
           if (approximateHomeBounds == null) {
             approximateHomeBounds = new BoundingBox(pieceLocation, pieceLocation);
           } else {
             approximateHomeBounds.combine(pieceLocation);
           }
+          approximateHomeBounds.combine(new Point3d(
+              piece.getX() + halfMaxDimension, piece.getY() + halfMaxDimension, elevation + piece.getHeight()));
         }
       }
       for (Wall wall : this.home.getWalls()) {
@@ -1141,6 +1125,145 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       this.approximateHomeBoundsCache = approximateHomeBounds;
     }
     return this.approximateHomeBoundsCache;
+  }
+  
+  /**
+   * Returns the distance between the point at the given coordinates (x,y,z) and the closest side of <code>box</code>.
+   */
+  private float getDistanceToBox(float x, float y, float z, BoundingBox box) {
+    Point3f point = new Point3f(x, y, z);
+    Point3d lower = new Point3d();
+    box.getLower(lower);
+    Point3d upper = new Point3d();
+    box.getUpper(upper);
+    Point3f [] boxVertices = {
+      new Point3f((float)lower.x, (float)lower.y, (float)lower.z),
+      new Point3f((float)upper.x, (float)lower.y, (float)lower.z),
+      new Point3f((float)lower.x, (float)upper.y, (float)lower.z),
+      new Point3f((float)upper.x, (float)upper.y, (float)lower.z),
+      new Point3f((float)lower.x, (float)lower.y, (float)upper.z),
+      new Point3f((float)upper.x, (float)lower.y, (float)upper.z),
+      new Point3f((float)lower.x, (float)upper.y, (float)upper.z),
+      new Point3f((float)upper.x, (float)upper.y, (float)upper.z)};
+    float [] distancesToVertex = new float [boxVertices.length];
+    for (int i = 0; i < distancesToVertex.length; i++) {
+      distancesToVertex [i] = point.distanceSquared(boxVertices [i]); 
+    }
+    float [] distancesToSide = {
+        getDistanceToSide(point, boxVertices, distancesToVertex, 0, 1, 3, 2, 2),
+        getDistanceToSide(point, boxVertices, distancesToVertex, 0, 1, 5, 4, 1),
+        getDistanceToSide(point, boxVertices, distancesToVertex, 0, 2, 6, 4, 0),
+        getDistanceToSide(point, boxVertices, distancesToVertex, 4, 5, 7, 6, 2),
+        getDistanceToSide(point, boxVertices, distancesToVertex, 2, 3, 7, 6, 1),
+        getDistanceToSide(point, boxVertices, distancesToVertex, 1, 3, 7, 5, 0)};
+    float distance = distancesToSide [0];
+    for (int i = 1; i < distancesToSide.length; i++) {
+      distance = Math.min(distance, distancesToSide [i]);
+    }
+    return distance;
+  }
+
+  /**
+   * Returns the distance between the given <code>point</code> and the plane defined by four vertices.
+   */
+  private float getDistanceToSide(Point3f point, Point3f [] boxVertices, float [] distancesSquaredToVertex, 
+                                  int index1, int index2, int index3, int index4, int axis) {
+    switch (axis) {
+      case 0 : // Normal along x axis
+        if (point.y <= boxVertices [index1].y) {
+          if (point.z <= boxVertices [index1].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index1]);
+          } else if (point.z >= boxVertices [index4].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index4]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index1], boxVertices [index4]);
+          }
+        } else if (point.y >= boxVertices [index2].y) {
+          if (point.z <= boxVertices [index2].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index2]);
+          } else if (point.z >= boxVertices [index3].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index3]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index2], boxVertices [index3]);
+          }
+        } else if (point.z <= boxVertices [index1].z) {
+          return getDistanceToLine(point, boxVertices [index1], boxVertices [index2]);
+        } else if (point.z >= boxVertices [index4].z) {
+          return getDistanceToLine(point, boxVertices [index3], boxVertices [index4]);
+        } 
+        break;
+      case 1 : // Normal along y axis
+        if (point.x <= boxVertices [index1].x) {
+          if (point.z <= boxVertices [index1].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index1]);
+          } else if (point.z >= boxVertices [index4].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index4]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index1], boxVertices [index4]);
+          }
+        } else if (point.x >= boxVertices [index2].x) {
+          if (point.z <= boxVertices [index2].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index2]);
+          } else if (point.z >= boxVertices [index3].z) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index3]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index2], boxVertices [index3]);
+          }
+        } else if (point.z <= boxVertices [index1].z) {
+          return getDistanceToLine(point, boxVertices [index1], boxVertices [index2]);
+        } else if (point.z >= boxVertices [index4].z) {
+          return getDistanceToLine(point, boxVertices [index3], boxVertices [index4]);
+        } 
+        break;
+      case 2 : // Normal along z axis
+        if (point.x <= boxVertices [index1].x) {
+          if (point.y <= boxVertices [index1].y) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index1]);
+          } else if (point.y >= boxVertices [index4].y) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index4]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index1], boxVertices [index4]);
+          }
+        } else if (point.x >= boxVertices [index2].x) {
+          if (point.y <= boxVertices [index2].y) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index2]);
+          } else if (point.y >= boxVertices [index3].y) {
+            return (float)Math.sqrt(distancesSquaredToVertex [index3]);
+          } else {
+            return getDistanceToLine(point, boxVertices [index2], boxVertices [index3]);
+          }
+        } else if (point.y <= boxVertices [index1].y) {
+          return getDistanceToLine(point, boxVertices [index1], boxVertices [index2]);
+        } else if (point.y >= boxVertices [index4].y) {
+          return getDistanceToLine(point, boxVertices [index3], boxVertices [index4]);
+        } 
+        break;
+    }
+
+    // Return distance to plane 
+    // from https://fr.wikipedia.org/wiki/Distance_d%27un_point_à_un_plan 
+    Vector3f vector1 = new Vector3f(boxVertices [index2].x - boxVertices [index1].x,
+        boxVertices [index2].y - boxVertices [index1].y, 
+        boxVertices [index2].z - boxVertices [index1].z);
+    Vector3f vector2 = new Vector3f(boxVertices [index3].x - boxVertices [index1].x, 
+        boxVertices [index3].y - boxVertices [index1].y, 
+        boxVertices [index3].z - boxVertices [index1].z);
+    Vector3f normal = new Vector3f();
+    normal.cross(vector1, vector2);
+    return Math.abs(normal.dot(new Vector3f(boxVertices [index1].x - point.x, boxVertices [index1].y - point.y, boxVertices [index1].z - point.z))) /
+        normal.length();
+  }
+
+  /**
+   * Returns the distance between the given <code>point</code> and the line defined by two points.
+   */
+  private float getDistanceToLine(Point3f point, Point3f point1, Point3f point2) {
+    // From https://fr.wikipedia.org/wiki/Distance_d%27un_point_à_une_droite#Dans_l.27espace
+    Vector3f lineDirection = new Vector3f(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z);
+    Vector3f vector = new Vector3f(point.x - point1.x, point.y - point1.y, point.z - point1.z);
+    Vector3f crossProduct = new Vector3f();
+    crossProduct.cross(lineDirection, vector);
+    return crossProduct.length() / lineDirection.length();
   }
 
   /**
@@ -1667,7 +1790,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     geometryInfo.setNormals(new Vector3f [] {new Vector3f(0, 1, 0)});
     geometryInfo.setNormalIndices(new int [] {0, 0, 0, 0, 0, 0, 0, 0});
     Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(), groundBackgroundAppearance);
-//    backgroundBranch.addChild(groundBackground);
+    backgroundBranch.addChild(groundBackground);
     
     // Add its own lights to background to ensure they have an effect
     for (Light light : createBackgroundLights(listenToHomeUpdates)) {
