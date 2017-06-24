@@ -81,6 +81,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -585,7 +586,7 @@ public class SwingTools {
   
   /**
    * Displays the image referenced by <code>imageUrl</code> in an AWT window 
-   * disposed once an other AWT frame is created.
+   * disposed once an instance of <code>JFrame</code> or <code>JDialog</code> is displayed.
    * If the <code>imageUrl</code> is incorrect, nothing happens.
    */
   public static void showSplashScreenWindow(URL imageUrl) {
@@ -607,17 +608,19 @@ public class SwingTools {
             try {
               Thread.sleep(500);
               while (splashScreenWindow.isVisible()) {
-                // If an other frame is showing, dispose splash window
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      for (Frame frame : Frame.getFrames()) {
-                        if (frame.isShowing()) {
+                      // If a JFrame or JDialog is showing, dispose splash window
+                      for (Window window : Window.getWindows()) {
+                        if ((window instanceof JFrame || window instanceof JDialog)
+                            && window.isShowing()) {
                           splashScreenWindow.dispose();
+                          break;
                         }
                       }
                     }
                   });
-                Thread.sleep(300);
+                Thread.sleep(200);
               }
             } catch (InterruptedException ex) {
               EventQueue.invokeLater(new Runnable() {
