@@ -1039,7 +1039,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         && !approximateHomeBounds.intersect(new Point3d(camera.getX(), camera.getY(), camera.getZ()))) {
       float distanceToClosestBoxSide = getDistanceToBox(camera.getX(), camera.getY(), camera.getZ(), approximateHomeBounds);
       if (!Float.isNaN(distanceToClosestBoxSide)) {
-        frontClipDistance = Math.max(frontClipDistance, 0.25f * distanceToClosestBoxSide);
+        frontClipDistance = Math.max(frontClipDistance, 0.2f * distanceToClosestBoxSide);
       }
     }
     if (camera.getZ() > 0 && width != 0 && height != 0) {
