@@ -1049,9 +1049,10 @@ public class RoomController implements Controller {
       HomeTexture ceilingTexture = ceilingPaint == RoomPaint.TEXTURED
           ? getCeilingTextureController().getTexture() : null;
       Float ceilingShininess = getCeilingShininess();
-      Integer wallSidesColor = getWallSidesPaint() == RoomPaint.COLORED 
+      RoomPaint wallSidesPaint = getWallSidesPaint();
+      Integer wallSidesColor = wallSidesPaint == RoomPaint.COLORED 
           ? getWallSidesColor() : null;
-      HomeTexture wallSidesTexture = getWallSidesPaint() == RoomPaint.TEXTURED
+      HomeTexture wallSidesTexture = wallSidesPaint == RoomPaint.TEXTURED
           ? getWallSidesTextureController().getTexture() : null;
       Float wallSidesShininess = getWallSidesShininess();
       Boolean wallSidesBaseboardVisible = getWallSidesBaseboardController().getVisible();
@@ -1092,7 +1093,7 @@ public class RoomController implements Controller {
           floorVisible, floorPaint, floorColor, floorTexture, floorShininess, 
           ceilingVisible, ceilingPaint, ceilingColor, ceilingTexture, ceilingShininess,
           modifiedWallSides, this.preferences.getNewWallBaseboardThickness(), this.preferences.getNewWallBaseboardHeight(),
-          wallSidesColor, wallSidesTexture, wallSidesShininess, 
+          wallSidesPaint, wallSidesColor, wallSidesTexture, wallSidesShininess, 
           wallSidesBaseboardVisible, wallSidesBaseboardThickness, wallSidesBaseboardHeight, 
           wallSidesBaseboardPaint, wallSidesBaseboardColor, wallSidesBaseboardTexture, null, null);
       if (this.undoSupport != null) {
@@ -1101,7 +1102,7 @@ public class RoomController implements Controller {
             floorVisible, floorPaint, floorColor, floorTexture, floorShininess,
             ceilingVisible, ceilingPaint, ceilingColor, ceilingTexture, ceilingShininess,
             modifiedWallSides, this.preferences.getNewWallBaseboardThickness(), this.preferences.getNewWallBaseboardHeight(),
-            wallSidesColor, wallSidesTexture, wallSidesShininess,
+            wallSidesPaint, wallSidesColor, wallSidesTexture, wallSidesShininess,
             wallSidesBaseboardVisible, wallSidesBaseboardThickness, wallSidesBaseboardHeight, 
             wallSidesBaseboardPaint, wallSidesBaseboardColor, wallSidesBaseboardTexture,
             deletedWalls.toArray(new ModifiedWall [deletedWalls.size()]), 
@@ -1317,6 +1318,7 @@ public class RoomController implements Controller {
     private final ModifiedWallSide [] modifiedWallSides;
     private final float               newWallBaseboardHeight;
     private final float               newWallBaseboardThickness;
+    private final RoomPaint           wallSidesPaint;
     private final Integer             wallSidesColor;
     private final HomeTexture         wallSidesTexture;
     private final Float               wallSidesShininess;
@@ -1349,6 +1351,7 @@ public class RoomController implements Controller {
                                           ModifiedWallSide [] modifiedWallSides,
                                           float newWallBaseboardThickness, 
                                           float newWallBaseboardHeight,
+                                          RoomPaint wallSidesPaint,
                                           Integer wallSidesColor,
                                           HomeTexture wallSidesTexture,
                                           Float wallSidesShininess, 
@@ -1380,6 +1383,7 @@ public class RoomController implements Controller {
       this.modifiedWallSides = modifiedWallSides;
       this.newWallBaseboardThickness = newWallBaseboardThickness;
       this.newWallBaseboardHeight = newWallBaseboardHeight;
+      this.wallSidesPaint = wallSidesPaint;
       this.wallSidesColor = wallSidesColor;
       this.wallSidesTexture = wallSidesTexture;
       this.wallSidesShininess = wallSidesShininess;
@@ -1408,7 +1412,7 @@ public class RoomController implements Controller {
           this.floorVisible, this.floorPaint, this.floorColor, this.floorTexture, this.floorShininess, 
           this.ceilingVisible, this.ceilingPaint, this.ceilingColor, this.ceilingTexture, this.ceilingShininess,
           this.modifiedWallSides, newWallBaseboardThickness, this.newWallBaseboardHeight, 
-          this.wallSidesColor, this.wallSidesTexture, this.wallSidesShininess,
+          this.wallSidesPaint, this.wallSidesColor, this.wallSidesTexture, this.wallSidesShininess,
           this.wallSidesBaseboardVisible, this.wallSidesBaseboardThickness, this.wallSidesBaseboardHeight, 
           this.wallSidesBaseboardPaint, this.wallSidesBaseboardColor, this.wallSidesBaseboardTexture,
           this.deletedWalls, this.addedWalls); 
@@ -1430,7 +1434,7 @@ public class RoomController implements Controller {
                                                 Boolean ceilingVisible, RoomPaint ceilingPaint, Integer ceilingColor, HomeTexture ceilingTexture, Float ceilingShininess,
                                                 ModifiedWallSide [] modifiedWallSides, 
                                                 float newWallBaseboardThickness, float newWallBaseboardHeight,
-                                                Integer wallSidesColor, HomeTexture wallSidesTexture, Float wallSidesShininess, 
+                                                RoomPaint wallSidesPaint, Integer wallSidesColor, HomeTexture wallSidesTexture, Float wallSidesShininess, 
                                                 Boolean wallSidesBaseboardVisible, Float wallSidesBaseboardThickness, Float wallSidesBaseboardHeight, 
                                                 BaseboardChoiceController.BaseboardPaint wallSidesBaseboardPaint, Integer wallSidesBaseboardColor, HomeTexture wallSidesBaseboardTexture,
                                                 ModifiedWall [] deletedWalls, 
@@ -1501,30 +1505,48 @@ public class RoomController implements Controller {
     for (ModifiedWallSide modifiedWallSide : modifiedWallSides) {
       WallSide wallSide = modifiedWallSide.getWallSide();
       Wall wall = wallSide.getWall();
-      if (wallSidesColor != null) {
-        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
-          wall.setLeftSideColor(wallSidesColor);
-        } else {
-          wall.setRightSideColor(wallSidesColor);
+      if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+        if (wallSidesPaint != null) {
+          switch (wallSidesPaint) {
+            case DEFAULT :
+              wall.setLeftSideColor(null);
+              wall.setLeftSideTexture(null);
+              break;
+            case COLORED :
+              wall.setLeftSideColor(wallSidesColor);
+              wall.setLeftSideTexture(null);
+              break;
+            case TEXTURED :
+              wall.setLeftSideColor(null);
+              wall.setLeftSideTexture(wallSidesTexture);
+              break;
+          }
         }
-      }
-      
-      if (wallSidesTexture != null || wallSidesColor != null) {
-        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
-          wall.setLeftSideTexture(wallSidesTexture);
-        } else {
-          wall.setRightSideTexture(wallSidesTexture);
-        }
-      }
-
-      if (wallSidesShininess != null) {
-        if (wallSide.getSide() == WallSide.LEFT_SIDE) {
+        if (wallSidesShininess != null) {
           wall.setLeftSideShininess(wallSidesShininess);
-        } else {
+        }
+      } else {
+        if (wallSidesPaint != null) {
+          switch (wallSidesPaint) {
+            case DEFAULT :
+              wall.setRightSideColor(null);
+              wall.setRightSideTexture(null);
+              break;
+            case COLORED :
+              wall.setRightSideColor(wallSidesColor);
+              wall.setRightSideTexture(null);
+              break;
+            case TEXTURED :
+              wall.setRightSideColor(null);
+              wall.setRightSideTexture(wallSidesTexture);
+              break;
+          }
+        }
+        if (wallSidesShininess != null) {
           wall.setRightSideShininess(wallSidesShininess);
         }
       }
-
+      
       if (wallSidesBaseboardVisible == Boolean.FALSE) {
         if (wallSide.getSide() == WallSide.LEFT_SIDE) {
           wall.setLeftSideBaseboard(null);
