@@ -2467,6 +2467,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updateObjects(home.getWalls());
           } else if (containsStaircases(piece)) {
             updateObjects(home.getRooms());
+          } else {
+            approximateHomeBoundsCache = null;
           }
           groundChangeListener.propertyChange(null);
           updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {piece}));
