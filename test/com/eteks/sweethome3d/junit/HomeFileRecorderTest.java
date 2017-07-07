@@ -151,7 +151,7 @@ public class HomeFileRecorderTest extends TestCase {
   public void testRepairedFile() throws URISyntaxException, RecorderException, IOException {
     // Test repair on corrupted file 
     checkDamagedFileIsRepaired(new File(
-        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath(), 7);
+        HomeControllerTest.class.getResource("resources/damagedHomeWithContentDigests.sh3d").toURI()).getAbsolutePath(), 5);
     // Test repair on valid zip file but with missing entries 
     checkDamagedFileIsRepaired(new File(
         HomeControllerTest.class.getResource("resources/damagedHomeInValidZipWithContentDigestsAndNoContent.sh3d").toURI()).getAbsolutePath(), 9);
