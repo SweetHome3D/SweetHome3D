@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -243,13 +244,14 @@ public class Wall3D extends Object3DBranch {
                                     final HomeTexture texture, 
                                     final boolean waitDoorOrWindowModelsLoadingEnd) {
     final Wall wall = (Wall)getUserData();
+    Shape wallShape = getShape(wall.getPoints()); 
     final float [][] wallSidePoints = getWallSidePoints(wallSide);
-    Shape wallShape = getShape(wallSidePoints);
+    Shape wallSideShape = getShape(wallSidePoints);
     final float [][] wallSideOrBaseboardPoints = baseboard == null 
         ? wallSidePoints
         : getWallBaseboardPoints(wallSide);
-    Shape wallOrBaseboardShape = getShape(wallSideOrBaseboardPoints);
-    Area wallOrBaseboardArea = new Area(wallOrBaseboardShape);
+    Shape wallSideOrBaseboardShape = getShape(wallSideOrBaseboardPoints);
+    Area wallSideOrBaseboardArea = new Area(wallSideOrBaseboardShape);
     final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSideOrBaseboardPoints [0].clone()
         : wallSideOrBaseboardPoints [wallSideOrBaseboardPoints.length - 1].clone();
@@ -294,24 +296,39 @@ public class Wall3D extends Object3DBranch {
         Area intersectionArea = new Area(wallShape);
         intersectionArea.intersect(pieceArea);
         if (!intersectionArea.isEmpty()) {
-          if (baseboard != null) {
-            double pieceWallAngle = Math.abs(wallYawAngle - piece.getAngle()) % Math.PI;
-            if (pieceWallAngle < 1E-5 || (Math.PI - pieceWallAngle) < 1E-5) {
+          HomePieceOfFurniture deeperPiece = null;
+          if (piece.isParallelToWall(wall)) {
+            if (baseboard != null) {
               // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
-              HomePieceOfFurniture deeperPiece = piece.clone();
+              deeperPiece = piece.clone();
               deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
-              pieceArea = new Area(getShape(deeperPiece.getPoints()));
             } 
-            intersectionArea = new Area(wallOrBaseboardShape);
-            intersectionArea.intersect(pieceArea);
-            if (intersectionArea.isEmpty()) {
-              continue;
+            if (piece instanceof HomeDoorOrWindow) {
+              HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+              if (doorOrWindow.isWallCutOutOnBothSides()) {
+                if (deeperPiece == null) {
+                  deeperPiece = piece.clone();
+                }
+                // Increase piece depth to ensure the wall will be cut on both sides 
+                deeperPiece.setDepth(deeperPiece.getDepth() + 4 * wall.getThickness());
+              }
             }
           }
-          windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
-          intersectingDoorOrWindows.add(piece);
-          // Remove from wall area the piece shape
-          wallOrBaseboardArea.subtract(pieceArea);
+          // Recompute intersection on wall side shape only
+          if (deeperPiece != null) {
+            pieceArea = new Area(getShape(deeperPiece.getPoints()));
+            intersectionArea = new Area(wallSideOrBaseboardShape);
+            intersectionArea.intersect(pieceArea);
+          } else {
+            intersectionArea = new Area(wallSideShape);
+            intersectionArea.intersect(pieceArea);
+          }
+          if (!intersectionArea.isEmpty()) {
+            windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
+            intersectingDoorOrWindows.add(piece);
+            // Remove from wall area the piece shape
+            wallSideOrBaseboardArea.subtract(pieceArea);
+          }
         }
       }
     }
@@ -346,7 +363,7 @@ public class Wall3D extends Object3DBranch {
     List<float[]> points = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
     float [] previousPoint = null;
-    for (PathIterator it = wallOrBaseboardArea.getPathIterator(null); !it.isDone(); it.next()) {
+    for (PathIterator it = wallSideOrBaseboardArea.getPathIterator(null); !it.isDone(); it.next()) {
       float [] wallPoint = new float[2];
       if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
         if (points.size() > 2) {

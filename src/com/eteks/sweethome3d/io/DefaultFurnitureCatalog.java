@@ -45,6 +45,7 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
@@ -196,6 +197,24 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      * By default, this distance is zero.
      */
     DOOR_OR_WINDOW_WALL_DISTANCE("doorOrWindowWallDistance"),
+    /**
+     * The key for the wall cut out rule of a door or a window (optional, <code>true</code> by default).
+     * By default, a door or a window placed on a wall and parallel to it will cut out the both sides of that wall  
+     * even if its depth is smaller than the wall thickness or if it intersects only one side of the wall.
+     * If the value of this key is <code>false</code>, a door or a window will only dig the wall 
+     * at its intersection, and will cut the both sides of a wall only if it intersects both of them.
+     */
+    DOOR_OR_WINDOW_WALL_CUT_OUT_ON_BOTH_SIDES("wallCutOutOnBothSides"),
+    /**
+     * The key for the width/depth deformability of a door or a window (optional, <code>true</code> by default).
+     * By default, the depth of a door or a window can be changed and adapted to 
+     * the wall thickness where it's placed regardless of its width. To avoid this deformation
+     * in the case of open doors, the value of this key can be set to <code>false</code>. 
+     * Doors and windows with their width/depth deformability set to <code>false</code> 
+     * and their {@link HomeDoorOrWindow#isBoundToWall() bouldToWall} flag set to <code>true</code>
+     * will also make a hole in the wall when they are placed whatever their depth. 
+     */
+    DOOR_OR_WINDOW_WIDTH_DEPTH_DEFORMABLE("doorOrWindowWidthDepthDeformable"),
     /**
      * The key for the sash axis distance(s) of a door or a window along X axis (optional).
      * If a door or a window has more than one sash, the values of each sash should be 
@@ -656,10 +675,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           resource, PropertyKey.DOOR_OR_WINDOW_WALL_THICKNESS.getKey(index), depth) / depth;
       float wallDistancePercentage = getOptionalFloat(
           resource, PropertyKey.DOOR_OR_WINDOW_WALL_DISTANCE.getKey(index), 0) / depth;
+      boolean wallCutOutOnBothSides = getOptionalBoolean(
+          resource, PropertyKey.DOOR_OR_WINDOW_WALL_CUT_OUT_ON_BOTH_SIDES.getKey(index), true);
+      boolean widthDepthDeformable = getOptionalBoolean(
+          resource, PropertyKey.DOOR_OR_WINDOW_WIDTH_DEPTH_DEFORMABLE.getKey(index), true);
       Sash [] sashes = getDoorOrWindowSashes(resource, index, width, depth);
       return new CatalogDoorOrWindow(id, name, description, information, tags, creationDate, grade, 
           icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-          doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, sashes,
+          doorOrWindowCutOutShape, wallThicknessPercentage, wallDistancePercentage, wallCutOutOnBothSides, widthDepthDeformable, sashes,
           modelRotation, false, modelSize, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
     } else {
       LightSource [] lightSources = getLightSources(resource, index, width, depth, height);

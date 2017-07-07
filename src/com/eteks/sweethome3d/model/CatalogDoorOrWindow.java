@@ -29,6 +29,8 @@ import java.math.BigDecimal;
 public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements DoorOrWindow {
   private final float   wallThickness;
   private final float   wallDistance;
+  private final boolean wallCutOutOnBothSides;
+  private final boolean widthDepthDeformable;
   private final Sash [] sashes;
   private final String  cutOutShape;
 
@@ -365,7 +367,7 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, 
         icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-        cutOutShape, wallThickness, wallDistance, sashes,
+        cutOutShape, wallThickness, wallDistance, true, true, sashes,
         modelRotation, backFaceShown, null, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);  
   }
          
@@ -391,6 +393,10 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    * @param cutOutShape the shape used to cut out walls that intersect the new door or window
    * @param wallThickness a value in percentage of the depth of the new door or window
    * @param wallDistance a distance in percentage of the depth of the new door or window
+   * @param wallCutOutOnBothSides  if <code>true</code> the new door or window should cut out 
+   *            the both sides of the walls it intersects
+   * @param widthDepthDeformable if <code>false</code>, the width and depth of the new door or window may 
+   *            not be changed independently from each other
    * @param sashes the sashes attached to the new door or window
    * @param modelRotation the rotation 3 by 3 matrix applied to the door or window model
    * @param backFaceShown <code>true</code> if back face should be shown instead of front faces
@@ -410,7 +416,8 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              String information, String [] tags, Long creationDate, Float grade, 
                              Content icon, Content planIcon, Content model, 
                              float width, float depth, float height, float elevation, float dropOnTopElevation, boolean movable, 
-                             String cutOutShape, float wallThickness, float wallDistance, Sash [] sashes,
+                             String cutOutShape, float wallThickness, float wallDistance, 
+                             boolean wallCutOutOnBothSides, boolean widthDepthDeformable, Sash [] sashes,
                              float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
                              boolean resizable, boolean deformable, boolean texturable, 
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
@@ -421,6 +428,8 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
     this.cutOutShape = cutOutShape;
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;
+    this.wallCutOutOnBothSides = wallCutOutOnBothSides;
+    this.widthDepthDeformable = widthDepthDeformable;
     this.sashes = sashes;
   }
          
@@ -487,6 +496,8 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
         color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;
+    this.wallCutOutOnBothSides = true;
+    this.widthDepthDeformable = true;
     this.sashes = sashes;
     this.cutOutShape = null;
   }
@@ -505,6 +516,24 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
    */
   public float getWallDistance() {
     return this.wallDistance;
+  }
+
+  /**
+   * Returns <code>true</code> if this door or window should cut out the both sides
+   * of the walls it intersects, even if its front or back side are within the wall thickness. 
+   * @since 5.5 
+   */
+  public boolean isWallCutOutOnBothSides() {
+    return this.wallCutOutOnBothSides;
+  }
+
+  /**
+   * Returns <code>false</code> if the width and depth of the new door or window may 
+   * not be changed independently from each other.
+   * @since 5.5
+   */
+  public boolean isWidthDepthDeformable() {
+    return this.widthDepthDeformable;
   }
   
   /**

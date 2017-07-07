@@ -72,6 +72,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private Level               level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+  private transient float []   arcCircleCenterCache;
   private transient float [][] pointsCache;
   private transient float [][] pointsIncludingBaseboardsCache;
 
@@ -151,6 +152,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       float oldXStart = this.xStart;
       this.xStart = xStart;
       clearPointsCache();
+      this.arcCircleCenterCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
     }
   }
@@ -171,6 +173,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       float oldYStart = this.yStart;
       this.yStart = yStart;
       clearPointsCache();
+      this.arcCircleCenterCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
     }
   }
@@ -191,6 +194,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       clearPointsCache();
+      this.arcCircleCenterCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
     }
   }
@@ -211,6 +215,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       clearPointsCache();
+      this.arcCircleCenterCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
     }
   }
@@ -249,6 +254,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       Float oldArcExtent = this.arcExtent;
       this.arcExtent = arcExtent;
       clearPointsCache();
+      this.arcCircleCenterCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.ARC_EXTENT.name(), 
           oldArcExtent, arcExtent);
     }
@@ -292,17 +298,21 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    * Returns the coordinates of the arc circle center of this wall.
    */
   private float [] getArcCircleCenter() {
-    double startToEndPointsDistance = Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
-    double wallToStartPointArcCircleCenterAngle = Math.abs(this.arcExtent) > Math.PI 
-        ? -(Math.PI + this.arcExtent) / 2
-        : (Math.PI - this.arcExtent) / 2;
-    float arcCircleCenterToWallDistance = -(float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
-        * startToEndPointsDistance / 2); 
-    float xMiddlePoint = (this.xStart + this.xEnd) / 2;
-    float yMiddlePoint = (this.yStart + this.yEnd) / 2;
-    double angle = Math.atan2(this.xStart - this.xEnd, this.yEnd - this.yStart);
-    return new float [] {(float)(xMiddlePoint + arcCircleCenterToWallDistance * Math.cos(angle)), 
-                         (float)(yMiddlePoint + arcCircleCenterToWallDistance * Math.sin(angle))};
+    if (this.arcCircleCenterCache == null) {
+      double startToEndPointsDistance = Point2D.distance(this.xStart, this.yStart, this.xEnd, this.yEnd);
+      double wallToStartPointArcCircleCenterAngle = Math.abs(this.arcExtent) > Math.PI 
+          ? -(Math.PI + this.arcExtent) / 2
+          : (Math.PI - this.arcExtent) / 2;
+      float arcCircleCenterToWallDistance = -(float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
+          * startToEndPointsDistance / 2); 
+      float xMiddlePoint = (this.xStart + this.xEnd) / 2;
+      float yMiddlePoint = (this.yStart + this.yEnd) / 2;
+      double angle = Math.atan2(this.xStart - this.xEnd, this.yEnd - this.yStart);
+      this.arcCircleCenterCache = new float [] {
+          (float)(xMiddlePoint + arcCircleCenterToWallDistance * Math.cos(angle)), 
+          (float)(yMiddlePoint + arcCircleCenterToWallDistance * Math.sin(angle))};
+    }
+    return this.arcCircleCenterCache;
   }
   
   /**

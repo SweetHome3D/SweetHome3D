@@ -308,6 +308,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Color                             wallsPatternBackgroundCache;
   private Color                             wallsPatternForegroundCache;
   private Map<Collection<Wall>, Area>       wallAreasCache;
+  private Map<HomeDoorOrWindow, Area>       doorOrWindowWallThicknessAreasCache;
   private Map<RotatedTextureKey, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
@@ -659,6 +660,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                      || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())) {
             sortedLevelFurniture = null;
             repaint();
+          } else if (doorOrWindowWallThicknessAreasCache != null
+                     && doorOrWindowWallThicknessAreasCache.containsKey(ev.getSource())
+                     && (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))) {
+            doorOrWindowWallThicknessAreasCache.remove(ev.getSource());
+            repaint();
           } else {
             revalidate();
           }
@@ -713,6 +724,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               otherLevelsWallsCache = null;
             }
             wallAreasCache = null;
+            doorOrWindowWallThicknessAreasCache = null;
             revalidate();
           } else if (Wall.Property.LEVEL.name().equals(propertyName)
               || Wall.Property.HEIGHT.name().equals(propertyName)
@@ -737,6 +749,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           otherLevelsWallAreaCache = null;
           otherLevelsWallsCache = null;
           wallAreasCache = null;
+          doorOrWindowWallThicknessAreasCache = null;
           revalidate();
         }
       });
@@ -867,6 +880,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             otherLevelsRoomsCache = null;
             otherLevelsRoomAreaCache = null;
             wallAreasCache = null;
+            doorOrWindowWallThicknessAreasCache = null;
             sortedLevelFurniture = null;
             sortedLevelRooms = null;
             repaint();
@@ -939,6 +953,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           otherLevelsRoomsCache = null;
           otherLevelsRoomAreaCache = null;
           wallAreasCache = null;
+          doorOrWindowWallThicknessAreasCache = null;
           sortedLevelRooms = null;
           sortedLevelFurniture = null;
           repaint();
@@ -3601,7 +3616,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
-              pieceShape2D = getDoorOrWindowShapeAtWallIntersection(doorOrWindow);
+              pieceShape2D = getDoorOrWindowWallPartShape(doorOrWindow);
+              if (this.draggedItemsFeedback == null
+                  || !this.draggedItemsFeedback.contains(piece)) {
+                paintDoorOrWindowWallThicknessArea(g2D, doorOrWindow, planScale, backgroundColor, foregroundColor, paintMode);
+              }
               paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor, paintMode);
             } else {
               pieceShape2D = pieceShape;
@@ -3672,12 +3691,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns the shape of a door or a window at wall intersection.
+   * Returns the shape of the wall part of a door or a window.
    */
-  private Shape getDoorOrWindowShapeAtWallIntersection(HomeDoorOrWindow doorOrWindow) {
-    // For doors and windows, compute rectangle at wall intersection 
-    float wallThickness = doorOrWindow.getDepth() * doorOrWindow.getWallThickness(); 
-    float wallDistance  = doorOrWindow.getDepth() * doorOrWindow.getWallDistance();
+  private Shape getDoorOrWindowWallPartShape(HomeDoorOrWindow doorOrWindow) {
+    Rectangle2D doorOrWindowWallPartRectangle = getDoorOrWindowRectangle(doorOrWindow, true);
+    // Apply rotation to the rectangle
+    AffineTransform rotation = AffineTransform.getRotateInstance(
+        doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
+    PathIterator it = doorOrWindowWallPartRectangle.getPathIterator(rotation);
+    GeneralPath doorOrWindowWallPartShape = new GeneralPath();
+    doorOrWindowWallPartShape.append(it, false);
+    return doorOrWindowWallPartShape;
+  }
+
+  /**
+   * Returns the rectangle of a door or a window.
+   */
+  private Rectangle2D getDoorOrWindowRectangle(HomeDoorOrWindow doorOrWindow, boolean onlyWallPart) {
+    float wallThickness = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallThickness() : 1); 
+    float wallDistance  = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallDistance()  : 0);
     String cutOutShape = doorOrWindow.getCutOutShape();
     float width = doorOrWindow.getWidth();
     float x;
@@ -3695,16 +3727,68 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       x = doorOrWindow.getX() - width / 2;
     }
-    Rectangle2D doorOrWindowRectangle = new Rectangle2D.Float(
+    Rectangle2D doorOrWindowWallPartRectangle = new Rectangle2D.Float(
         x, doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
         width, wallThickness);
-    // Apply rotation to the rectangle
-    AffineTransform rotation = AffineTransform.getRotateInstance(
-        doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
-    PathIterator it = doorOrWindowRectangle.getPathIterator(rotation);
-    GeneralPath doorOrWindowShape = new GeneralPath();
-    doorOrWindowShape.append(it, false);
-    return doorOrWindowShape;
+    return doorOrWindowWallPartRectangle;
+  }
+
+  /**
+   * Paints the shape of a door or a window in the thickness of the wall it intersects.
+   */
+  private void paintDoorOrWindowWallThicknessArea(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
+                                                  Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
+    if (doorOrWindow.isWallCutOutOnBothSides()) {
+      Area doorOrWindowWallArea = null;
+      if (this.doorOrWindowWallThicknessAreasCache != null) {
+        doorOrWindowWallArea = this.doorOrWindowWallThicknessAreasCache.get(doorOrWindow);
+      }
+      
+      if (doorOrWindowWallArea == null) {
+        Rectangle2D doorOrWindowRectangle = getDoorOrWindowRectangle(doorOrWindow, false);
+        // Apply rotation to the rectangle
+        AffineTransform rotation = AffineTransform.getRotateInstance(
+            doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
+        PathIterator it = doorOrWindowRectangle.getPathIterator(rotation);
+        GeneralPath doorOrWindowWallPartShape = new GeneralPath();
+        doorOrWindowWallPartShape.append(it, false);
+        Area doorOrWindowWallPartArea = new Area(doorOrWindowWallPartShape);
+        
+        doorOrWindowWallArea = new Area();
+        for (Wall wall : home.getWalls()) {
+          if (wall.isAtLevel(doorOrWindow.getLevel())
+              && doorOrWindow.isParallelToWall(wall)) {
+            Shape wallShape = getShape(wall.getPoints(), true);
+            Area wallArea = new Area(wallShape);
+            wallArea.intersect(doorOrWindowWallPartArea);
+            if (!wallArea.isEmpty()) {
+              Rectangle2D doorOrWindowExtendedRectangle = new Rectangle2D.Float(
+                  (float)doorOrWindowRectangle.getX(), 
+                  (float)doorOrWindowRectangle.getY() - 2 * wall.getThickness(), 
+                  (float)doorOrWindowRectangle.getWidth(), 
+                  (float)doorOrWindowRectangle.getWidth() + 4 * wall.getThickness());
+              it = doorOrWindowExtendedRectangle.getPathIterator(rotation);
+              GeneralPath path = new GeneralPath();
+              path.append(it, false);
+              wallArea = new Area(wallShape);
+              wallArea.intersect(new Area(path));
+              doorOrWindowWallArea.add(wallArea);
+            }
+          }
+        }
+      }
+      
+      if (this.doorOrWindowWallThicknessAreasCache == null) {
+        this.doorOrWindowWallThicknessAreasCache = new WeakHashMap<HomeDoorOrWindow, Area>();
+      }
+      this.doorOrWindowWallThicknessAreasCache.put(doorOrWindow, doorOrWindowWallArea);
+      
+      g2D.setPaint(backgroundColor);
+      g2D.fill(doorOrWindowWallArea);
+      g2D.setPaint(foregroundColor);
+      g2D.setStroke(new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale));
+      g2D.draw(doorOrWindowWallArea);
+    }
   }
 
   /**

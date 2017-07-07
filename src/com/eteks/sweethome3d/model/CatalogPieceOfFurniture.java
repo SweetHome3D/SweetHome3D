@@ -836,6 +836,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   }
   
   /**
+   * Returns <code>true</code> if this piece is deformable.
+   * @since 5.5
+   */
+  public boolean isWidthDepthDeformable() {
+    return isDeformable();
+  }
+
+  /**
    * Returns <code>false</code> if this piece should always keep the same color or texture.
    * @since 3.0
    */

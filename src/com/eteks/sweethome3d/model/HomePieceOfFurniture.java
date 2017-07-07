@@ -45,6 +45,8 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private static final long serialVersionUID = 1L;
   
   private static final double TWICE_PI = 2 * Math.PI;
+  private static final double STRAIGHT_WALL_ANGLE_MARGIN  = Math.toRadians(1);
+  private static final double ROUND_WALL_ANGLE_MARGIN     = Math.toRadians(10);
   
   /**
    * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
@@ -860,6 +862,14 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
+   * Returns <code>true</code> if this piece is deformable.
+   * @since 5.5
+   */
+  public boolean isWidthDepthDeformable() {
+    return isDeformable();
+  }
+  
+  /**
    * Returns <code>false</code> if this piece should always keep the same color or texture.
    * @since 3.0
    */
@@ -1236,6 +1246,33 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && Math.abs(y - getY() - getNameYOffset()) <= margin;
   }
 
+  /**
+   * Returns <code>true</code> if the front side of this piece is parallel to the given <code>wall</code> 
+   * with a margin.
+   * @since 5.5
+   */
+  public boolean isParallelToWall(Wall wall) {
+    if (wall.getArcExtent() == null) {
+      float deltaY = wall.getYEnd() - wall.getYStart();
+      float deltaX = wall.getXEnd() - wall.getXStart();
+      if (deltaX == 0 && deltaY == 0) {
+        return false;
+      } else {
+        // Check parallelism with line joining wall ends  
+        double wallAngle = Math.atan2(deltaY, deltaX); 
+        double pieceWallAngle = Math.abs(wallAngle - getAngle()) % Math.PI;
+        return pieceWallAngle <= STRAIGHT_WALL_ANGLE_MARGIN || (Math.PI - pieceWallAngle) <= STRAIGHT_WALL_ANGLE_MARGIN;
+      }
+    } else {
+      // Tangent angle at piece center
+      double tangentAngle = Math.PI / 2 + Math.atan2(
+          wall.getYArcCircleCenter() - getY(), wall.getXArcCircleCenter() - getX()); 
+      double pieceWallAngle = Math.abs(tangentAngle - getAngle()) % Math.PI;
+      // Be more tolerant for angles along round walls 
+      return pieceWallAngle <= ROUND_WALL_ANGLE_MARGIN || (Math.PI - pieceWallAngle) <= ROUND_WALL_ANGLE_MARGIN;
+    }
+  }
+  
   /**
    * Returns the shape matching this piece.
    */

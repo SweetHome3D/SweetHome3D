@@ -52,4 +52,20 @@ public interface DoorOrWindow extends PieceOfFurniture {
    * @since 4.2
    */
   public abstract String getCutOutShape();
+  
+  /**
+   * Returns <code>true</code> if this door or window should cut out the both sides
+   * of the walls it intersects, even if its front or back side are within the wall thickness. 
+   * @since 5.5 
+   */
+  public abstract boolean isWallCutOutOnBothSides();
+
+  /**
+   * Returns <code>false</code> if the width and depth of the new door or window may 
+   * not be changed independently from each other. When <code>false</code>, this door or window
+   * will also make a hole in the wall when it's placed whatever its depth if its 
+   * {@link #isBoundToWall() bouldToWall} flag is <code>true</code>.
+   * @since 5.5
+   */
+  public abstract boolean isWidthDepthDeformable();
 }

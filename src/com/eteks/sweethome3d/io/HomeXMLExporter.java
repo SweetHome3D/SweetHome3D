@@ -424,6 +424,8 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
         writer.writeFloatAttribute("wallThickness", doorOrWindow.getWallThickness(), 1f);
         writer.writeFloatAttribute("wallDistance", doorOrWindow.getWallDistance(), 0f);
         writer.writeAttribute("cutOutShape", doorOrWindow.getCutOutShape(), null);
+        writer.writeBooleanAttribute("wallCutOutOnBothSides", doorOrWindow.isWallCutOutOnBothSides(), false);
+        writer.writeBooleanAttribute("widthDepthDeformable", doorOrWindow.isWidthDepthDeformable(), true);
         writer.writeBooleanAttribute("boundToWall", doorOrWindow.isBoundToWall(), true);
       } else if (piece instanceof HomeLight) {
         writer.writeFloatAttribute("power", ((HomeLight)piece).getPower());

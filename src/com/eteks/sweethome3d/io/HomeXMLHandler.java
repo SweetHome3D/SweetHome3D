@@ -246,6 +246,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       %pieceOfFurnitureCommonAttributes;
  *       wallThickness CDATA "1"
  *       wallDistance CDATA "0"
+ *       wallCutOutOnBothSides (false | true) "false"
+ *       widthDepthDeformable (false | true) "true"
  *       cutOutShape CDATA #IMPLIED
  *       boundToWall (false | true) "true">
  * 
@@ -1071,6 +1073,8 @@ public class HomeXMLHandler extends DefaultHandler {
           cutOutShape, 
           wallThickness,
           wallDistance,
+          "true".equals(attributes.get("wallCutOutOnBothSides")),
+          !"false".equals(attributes.get("widthDepthDeformable")),
           this.sashes.toArray(new Sash [this.sashes.size()]),
           modelRotation, 
           "true".equals(attributes.get("backFaceShown")),
