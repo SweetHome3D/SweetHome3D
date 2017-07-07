@@ -128,14 +128,10 @@
   <pieceOfFurniture level='level0' catalogId='eTeks#shower' name='Shower' creator='eTeks' model='com/eteks/sweethome3d/io/resources/shower.obj' icon='com/eteks/sweethome3d/io/resources/shower.png' x='850.49994' y='129.40108' angle='3.1415927' width='79.0' depth='79.0' height='211.0' modelSize='21504' movable='false' dropOnTopElevation='0.11848341'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#electricRadiator' name='Electric radiator' creator='eTeks' model='com/eteks/sweethome3d/io/resources/electricRadiator.obj' icon='com/eteks/sweethome3d/io/resources/electricRadiator.png' x='935.87195' y='12.5' elevation='20.0' width='37.0' depth='10.0' height='45.0' modelSize='7415' movable='false'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#electricRadiator' name='Electric radiator' creator='eTeks' model='com/eteks/sweethome3d/io/resources/electricRadiator.obj' icon='com/eteks/sweethome3d/io/resources/electricRadiator.png' x='1327.5' y='315.85193' elevation='20.0' angle='1.5707964' width='37.0' depth='10.0' height='45.0' modelSize='7415' movable='false'/>
-  <pieceOfFurniture level='level0' catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='82.86563' y='31.0' width='143.0' depth='45.0' height='165.0' color='FF3A51FF' modelSize='22284'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#stool' name='Stool' creator='eTeks' model='com/eteks/sweethome3d/io/resources/stool.obj' icon='com/eteks/sweethome3d/io/resources/stool.png' x='432.7079' y='130.54198' angle='1.5707964' width='40.0' depth='40.0' height='46.0' modelSize='19756'>
     <material name='amber' color='FF3A51FF'/>
   </pieceOfFurniture>
   <pieceOfFurniture level='level0' catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='335.53528' y='290.80927' angle='3.1415927' width='95.0' depth='35.0' height='211.0' color='FF272727' modelSize='3516' dropOnTopElevation='0.4606635'/>
-  <pieceOfFurniture level='level0' catalogId='eTeks#bed90x190' name='Bed 90x190' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bed90x190.obj' icon='com/eteks/sweethome3d/io/resources/bed90x190.png' x='112.5' y='164.63171' angle='4.712389' width='108.0' depth='208.0' height='70.0' modelSize='11692' dropOnTopElevation='0.6857143'>
-    <material name='flyellow' color='FF3A51FF'/>
-  </pieceOfFurniture>
   <doorOrWindow level='level0' catalogId='eTeks#door' name='Door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/door.obj' icon='com/eteks/sweethome3d/io/resources/door.png' x='439.12158' y='310.55933' angle='3.1415927' width='91.5' depth='14.500751' height='208.5' color='FF8EA1FF' modelSize='13950' movable='false' dropOnTopElevation='-0.004796163' wallThickness='0.51724136' wallDistance='0.06896552' cutOutShape='M0,0 v1 h1 v-1 z'>
     <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
   </doorOrWindow>
@@ -174,7 +170,7 @@
     <lightSource x='0.5' y='0.09830509' z='0.5983773' color='00463E2E' diameter='0.41666666'/>
   </light>
   <pieceOfFurniture level='level0' catalogId='eTeks#electricRadiator' name='Electric radiator' creator='eTeks' model='com/eteks/sweethome3d/io/resources/electricRadiator.obj' icon='com/eteks/sweethome3d/io/resources/electricRadiator.png' x='257.80237' y='479.0872' elevation='20.0' angle='6.2831345' width='37.0' depth='10.0' height='45.0' modelSize='7415' movable='false'/>
-  <pieceOfFurniture level='level0' catalogId='eTeks#texturableBox' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='192.22491' y='355.77023' width='121.0' depth='76.0' height='0.5' color='FF423173' shininess='0.0' modelSize='1661'/>
+  <pieceOfFurniture level='level0' catalogId='eTeks#texturableBox' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableBox/texturableBox.obj' icon='com/eteks/sweethome3d/io/resources/box.png' x='192.22491' y='355.77023' width='121.0' depth='76.0' height='0.7' color='FF423173' shininess='0.0' modelSize='1661'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='30.000008' y='284.59705' angle='4.712389' width='100.0' depth='45.0' height='165.0' modelSize='22284'>
     <material name='white' color='FFCDBBFF'/>
   </pieceOfFurniture>
@@ -195,7 +191,7 @@
     <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
   </doorOrWindow>
   <pieceOfFurniture level='level0' catalogId='eTeks#sink' name='Sink' creator='eTeks' model='com/eteks/sweethome3d/io/resources/sink.obj' icon='com/eteks/sweethome3d/io/resources/sink.png' x='564.00385' y='506.07455' width='120.0' depth='64.0' height='105.8' modelSize='41015' movable='false' dropOnTopElevation='0.8283019'>
-    <material name='white' color='FF003565' shininess='0.0'/>
+    <material name='white' color='FF003565'/>
   </pieceOfFurniture>
   <pieceOfFurniture level='level0' catalogId='eTeks#fridgeFreezer' name='Fridge &amp; Freezer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fridgeFreezer.obj' icon='com/eteks/sweethome3d/io/resources/fridgeFreezer.png' x='436.03525' y='781.569' angle='4.712389' width='60.0' depth='66.0' height='185.0' modelMirrored='true' modelSize='27608'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='435.03528' y='719.5687' angle='4.712389' width='60.0' depth='64.0' height='85.0' color='FF003565' modelSize='10991' movable='false'/>
@@ -203,8 +199,12 @@
     <material name='flwhite1' color='FF003565'/>
     <material name='white' color='FF003565'/>
   </pieceOfFurniture>
-  <pieceOfFurniture level='level0' catalogId='eTeks#clothesWasher' name='Clothes washer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/clothesWasher.obj' icon='com/eteks/sweethome3d/io/resources/clothesWasher.png' x='713.7984' y='505.56396' angle='6.2831345' width='60.0' depth='63.0' height='85.0' color='FF003565' modelSize='22273'/>
-  <pieceOfFurniture level='level0' catalogId='eTeks#dishwasher' name='Dishwasher' creator='eTeks' model='com/eteks/sweethome3d/io/resources/dishwasher.obj' icon='com/eteks/sweethome3d/io/resources/dishwasher.png' x='654.00385' y='506.56842' width='60.0' depth='65.0' height='85.0' color='FF003565' modelSize='6737'/>
+  <pieceOfFurniture level='level0' catalogId='eTeks#clothesWasher' name='Clothes washer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/clothesWasher.obj' icon='com/eteks/sweethome3d/io/resources/clothesWasher.png' x='713.7984' y='505.56396' angle='6.2831345' width='60.0' depth='63.0' height='85.0' modelSize='22273'>
+    <material name='white' color='FF003565'/>
+  </pieceOfFurniture>
+  <pieceOfFurniture level='level0' catalogId='eTeks#dishwasher' name='Dishwasher' creator='eTeks' model='com/eteks/sweethome3d/io/resources/dishwasher.obj' icon='com/eteks/sweethome3d/io/resources/dishwasher.png' x='654.00385' y='506.56842' width='60.0' depth='65.0' height='85.0' modelSize='6737'>
+    <material name='white' color='FF003565'/>
+  </pieceOfFurniture>
   <pieceOfFurniture level='level0' catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='435.03528' y='609.5687' angle='4.712389' width='40.0' depth='64.0' height='85.0' color='FF003565' modelSize='10991' movable='false'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='435.03528' y='569.5687' angle='4.712389' width='40.0' depth='64.0' height='85.0' modelMirrored='true' color='FF003565' modelSize='10991' movable='false'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='484.00256' y='506.07556' angle='6.2831345' width='40.0' depth='64.0' height='85.0' color='FF003565' modelSize='10991' movable='false'/>
@@ -326,6 +326,10 @@
     <material name='white' color='FF003565'/>
     <material name='yellowbrt' color='FFFDEEDA'/>
   </doorOrWindow>
+  <pieceOfFurniture level='level0' catalogId='eTeks#wardrobe' name='Wardrobe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/wardrobe.obj' icon='com/eteks/sweethome3d/io/resources/wardrobe.png' x='40.12574' y='139.55588' angle='4.712389' width='143.0' depth='45.0' height='128.0' color='FF3A51FF' modelSize='22284'/>
+  <pieceOfFurniture level='level0' catalogId='eTeks#loftBed140x190' name='Loft bed 140x190' creator='eTeks' model='com/eteks/sweethome3d/io/resources/loftBed140x190.obj' icon='com/eteks/sweethome3d/io/resources/loftBed140x190.png' x='91.00002' y='121.309296' angle='3.1415927' width='165.0' depth='208.0' height='180.0' modelSize='14640' dropOnTopElevation='0.89444447'>
+    <material name='flyellow' color='FF3A51FF'/>
+  </pieceOfFurniture>
   <wall id='wall0' level='level0' wallAtStart='wall25' wallAtEnd='wall1' xStart='1345.5' yStart='1165.5' xEnd='905.8' yEnd='1165.5' height='250.0' thickness='26.0' pattern='reversedHatchUp' topColor='FF181818' rightSideColor='FFEEFEFF'>
     <baseboard attribute='rightSideBaseboard' thickness='1.0' height='7.0' color='FF6497C6'/>
   </wall>

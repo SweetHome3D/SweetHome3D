@@ -3,7 +3,7 @@
   <property name='Author' value='Véronique PUYBARET / Emmanuel PUYBARET'/>
   <property name='Copyright' value='Sweet Home 3D, Copyright (c) 2017 Emmanuel PUYBARET / eTeks info@eteks.com'/>
   <property name='License' value='CC-BY Creative Commons Attribution 3.0 Unported license or GNU General Public License'/>
-  <property name='TotalArea' value='273419'/>
+  <property name='TotalArea' value='272682'/>
   <furnitureVisibleProperty name='NAME'/>
   <furnitureVisibleProperty name='WIDTH'/>
   <furnitureVisibleProperty name='DEPTH'/>
@@ -193,10 +193,10 @@
     <point x='221.97505' y='343.22446'/>
     <point x='225.75005' y='343.22446'/>
     <point x='225.75005' y='449.21356'/>
-    <point x='240.69626' y='449.21356'/>
-    <point x='240.69626' y='459.23856'/>
-    <point x='342.70377' y='459.23856'/>
-    <point x='342.70377' y='449.21356'/>
+    <point x='237.25005' y='449.21356'/>
+    <point x='237.25005' y='451.8'/>
+    <point x='338.75006' y='452.26706'/>
+    <point x='338.75006' y='449.21356'/>
     <point x='350.41663' y='449.21356'/>
     <point x='350.41663' y='286.1426'/>
     <point x='350.41663' y='236.25'/>
