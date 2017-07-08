@@ -188,7 +188,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
         // Check first two bytes are PK
         byte [] b = new byte [2];
         int length = this.in.read(b);
-        ((PushbackInputStream)this.in).unread(b, 0, length);
+        if (length != -1) {
+          ((PushbackInputStream)this.in).unread(b, 0, length);
+        }
         if (b [0] == 'P' && b [1] == 'K') {
           // If it's a zipped content stream, copy home stream in a temporary file  
           this.zipFile = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
