@@ -309,7 +309,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Color                             wallsPatternForegroundCache;
   private Map<Collection<Wall>, Area>       wallAreasCache;
   private Map<HomeDoorOrWindow, Area>       doorOrWindowWallThicknessAreasCache;
-  private Map<RotatedTextureKey, BufferedImage> floorTextureImagesCache;
+  private Map<HomeTexture, BufferedImage>   floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
   private static ExecutorService            backgroundImageLoader;
@@ -2835,6 +2835,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (paintMode != PaintMode.CLIPBOARD
           || selectedRoom) {
         g2D.setPaint(defaultFillPaint);
+        float textureAngle = 0;
         if (this.preferences.isRoomFloorColoredOrTextured()
             && room.isFloorVisible()) {
           // Use room floor color or texture image
@@ -2844,12 +2845,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             final HomeTexture floorTexture = room.getFloorTexture();
             if (floorTexture != null) {
               if (this.floorTextureImagesCache == null) {
-                this.floorTextureImagesCache = new WeakHashMap<RotatedTextureKey, BufferedImage>();
+                this.floorTextureImagesCache = new WeakHashMap<HomeTexture, BufferedImage>();
               }
-              double cos = Math.cos(floorTexture.getAngle());
-              double sin = Math.sin(floorTexture.getAngle());
-              final RotatedTextureKey floorRotatedTextureKey = new RotatedTextureKey(floorTexture);
-              BufferedImage textureImage = this.floorTextureImagesCache.get(floorRotatedTextureKey);
+              BufferedImage textureImage = this.floorTextureImagesCache.get(floorTexture);
               if (textureImage == null
                   || textureImage == WAIT_TEXTURE_IMAGE) {
                 final boolean waitForTexture = paintMode != PaintMode.PAINT;
@@ -2860,11 +2858,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                     && !(OperatingSystem.isLinux()
                           && OperatingSystem.isJavaVersionGreaterOrEqual("1.7"))) {
                   // Prefer to share textures images with texture manager if it's available
-                  TextureManager.getInstance().loadTexture(
-                      floorTexture.getImage(), floorTexture.getAngle(), waitForTexture,
+                  TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
                       new TextureManager.TextureObserver() {
                         public void textureUpdated(Texture texture) {
-                          floorTextureImagesCache.put(floorRotatedTextureKey, 
+                          floorTextureImagesCache.put(floorTexture, 
                               ((ImageComponent2D)texture.getImage(0)).getImage());
                           if (!waitForTexture) {
                             repaint();
@@ -2876,55 +2873,45 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(), 
                       waitForTexture ? null : this);
                   if (IconManager.getInstance().isWaitIcon(textureIcon)) {
-                    this.floorTextureImagesCache.put(floorRotatedTextureKey, WAIT_TEXTURE_IMAGE);                    
+                    this.floorTextureImagesCache.put(floorTexture, WAIT_TEXTURE_IMAGE);                    
                   } else if (IconManager.getInstance().isErrorIcon(textureIcon)) {
-                    this.floorTextureImagesCache.put(floorRotatedTextureKey, ERROR_TEXTURE_IMAGE);                    
+                    this.floorTextureImagesCache.put(floorTexture, ERROR_TEXTURE_IMAGE);                    
                   } else {                    
                     BufferedImage textureIconImage = new BufferedImage(
                         textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
                     textureIcon.paintIcon(this, g2DIcon, 0, 0);
                     g2DIcon.dispose();
-                    if (floorTexture.getAngle() != 0) {
-                      BufferedImage rotatedIconImage = new BufferedImage(
-                          (int)Math.round(Math.abs(textureIconImage.getWidth() * cos) + Math.abs(textureIconImage.getHeight() * sin)), 
-                          (int)Math.round(Math.abs(textureIconImage.getWidth() * sin) + Math.abs(textureIconImage.getHeight() * cos)), 
-                          textureIconImage.getType());
-                      g2DIcon = (Graphics2D)rotatedIconImage.getGraphics();
-                      g2DIcon.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                      g2DIcon.setPaint(new TexturePaint(textureIconImage, 
-                                      new Rectangle2D.Float(0, 0, textureIconImage.getWidth(), textureIconImage.getHeight())));
-                      g2DIcon.rotate(floorTexture.getAngle());
-                      float maxDimension = Math.max(rotatedIconImage.getWidth(), rotatedIconImage.getHeight());
-                      g2DIcon.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
-                      g2DIcon.dispose();
-                      textureIconImage = rotatedIconImage;
-                    }
-
-                    this.floorTextureImagesCache.put(floorRotatedTextureKey, textureIconImage);
+                    this.floorTextureImagesCache.put(floorTexture, textureIconImage);
                   } 
                 }
-                textureImage = this.floorTextureImagesCache.get(floorRotatedTextureKey);
+                textureImage = this.floorTextureImagesCache.get(floorTexture);
               }
               
               float textureWidth = floorTexture.getWidth();
               float textureHeight = floorTexture.getHeight();
-              if (floorTexture.getAngle() != 0) {
-                textureWidth = (int)Math.round(Math.abs(floorTexture.getWidth() * cos) + Math.abs(floorTexture.getHeight() * sin)); 
-                textureHeight = (int)Math.round(Math.abs(floorTexture.getWidth() * sin) + Math.abs(floorTexture.getHeight() * cos));
-              }
-              g2D.setPaint(new TexturePaint(textureImage, new Rectangle2D.Float(0, 0, textureWidth, textureHeight)));
+              float textureScale = floorTexture.getScale();
+              g2D.setPaint(new TexturePaint(textureImage, 
+                  new Rectangle2D.Float(0, 0, textureWidth * textureScale, textureHeight * textureScale)));
+              textureAngle = floorTexture.getAngle();
             }
           }          
         }
         
         Composite oldComposite = setTransparency(g2D, 0.75f);
-        Shape roomShape = getShape(room.getPoints(), true);
+        // Rotate graphics to rotate texture with requested angle
+        // and draw shape rotated with the opposite angle
+        g2D.rotate(textureAngle, 0, 0);
+        AffineTransform rotation = textureAngle != 0
+            ? AffineTransform.getRotateInstance(-textureAngle, 0, 0)
+            : null;       
+        Shape roomShape = getShape(room.getPoints(), true, rotation);
         fillShape(g2D, roomShape, paintMode);
         g2D.setComposite(oldComposite);
 
         g2D.setPaint(foregroundColor);
         g2D.draw(roomShape);
+        g2D.rotate(-textureAngle, 0, 0);
       }
     }
   }
@@ -3075,7 +3062,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (isViewableAtSelectedLevel(room)) {
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(room.getPoints(), true));
+        g2D.draw(getShape(room.getPoints(), true, null));
   
         if (indicatorPaint != null) {
           g2D.setPaint(indicatorPaint);         
@@ -3096,7 +3083,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, PaintMode.PAINT) / planScale));
     for (Room room : rooms) { 
       if (isViewableAtSelectedLevel(room)) {
-        g2D.draw(getShape(room.getPoints(), true));
+        g2D.draw(getShape(room.getPoints(), true, null));
       }
     }
 
@@ -3351,7 +3338,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Draw selection border
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(wall.getPoints(), true));
+        g2D.draw(getShape(wall.getPoints(), true, null));
         
         if (indicatorPaint != null) {
           // Draw start point of the wall
@@ -3568,7 +3555,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Area getItemsArea(Collection<? extends Selectable> items) {
     Area itemsArea = new Area();
     for (Selectable item : items) {
-      itemsArea.add(new Area(getShape(item.getPoints(), true)));
+      itemsArea.add(new Area(getShape(item.getPoints(), true, null)));
     }
     return itemsArea;
   }
@@ -3617,7 +3604,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (paintMode != PaintMode.CLIPBOARD
                     || selectedPiece) {
             // In clipboard paint mode, paint piece only if it is selected
-            Shape pieceShape = getShape(piece.getPoints(), true);
+            Shape pieceShape = getShape(piece.getPoints(), true, null);
             Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
@@ -3763,7 +3750,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (Wall wall : home.getWalls()) {
           if (wall.isAtLevel(doorOrWindow.getLevel())
               && doorOrWindow.isParallelToWall(wall)) {
-            Shape wallShape = getShape(wall.getPoints(), true);
+            Shape wallShape = getShape(wall.getPoints(), true, null);
             Area wallArea = new Area(wallShape);
             wallArea.intersect(doorOrWindowWallPartArea);
             if (!wallArea.isEmpty()) {
@@ -3901,12 +3888,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (homePieceOfFurniture != piece) {
           Area groupArea = null;
           if (lastGroup != homePieceOfFurniture) {
-            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true);          
+            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true, null);          
             groupArea = new Area(groupShape);
             // Enlarge group area
             groupArea.add(new Area(furnitureGroupsStroke.createStrokedShape(groupShape)));
           }
-          Area pieceArea = new Area(getShape(piece.getPoints(), true));
+          Area pieceArea = new Area(getShape(piece.getPoints(), true, null));
           if (furnitureGroupsArea == null) {
             furnitureGroupsArea = groupArea;
             furnitureInGroupsArea = pieceArea;
@@ -3934,7 +3921,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     for (HomePieceOfFurniture piece : furniture) {
       float [][] points = piece.getPoints();
-      Shape pieceShape = getShape(points, true);
+      Shape pieceShape = getShape(points, true, null);
       
       // Draw selection border
       g2D.setPaint(selectionOutlinePaint);
@@ -4257,7 +4244,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       return polylineShape;
     } else {
-      return getShape(points, closedPath);
+      return getShape(points, closedPath, null);
     }
   }
 
@@ -4485,7 +4472,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             g2D.setPaint(selectionOutlinePaint);
             g2D.setStroke(selectionOutlineStroke);
             float [][] textBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle);
-            g2D.draw(getShape(textBounds, true));
+            g2D.draw(getShape(textBounds, true, null));
             g2D.setPaint(foregroundColor);
             if (indicatorPaint != null 
                 && selectedItems.size() == 1 
@@ -5136,7 +5123,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the shape matching the coordinates in <code>points</code> array.
    */
-  private Shape getShape(float [][] points, boolean closedPath) {
+  private Shape getShape(float [][] points, boolean closedPath, AffineTransform transform) {
     GeneralPath path = new GeneralPath();
     path.moveTo(points [0][0], points [0][1]);
     for (int i = 1; i < points.length; i++) {
@@ -5144,6 +5131,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     if (closedPath) {
       path.closePath();
+    }
+    if (transform != null) {
+      path.transform(transform);
     }
     return path;
   }
@@ -6034,35 +6024,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       return text;
     }
-  }
-
-  /**
-   * Key used to ensure rotated content uniqueness per texture.
-   */
-  private static class RotatedTextureKey {
-    private HomeTexture texture;
-    
-    public RotatedTextureKey(HomeTexture texture) {
-      this.texture = texture;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      } else if (obj instanceof RotatedTextureKey) {
-        RotatedTextureKey rotatedTextureKey = (RotatedTextureKey)obj;
-        return this.texture.getImage().equals(rotatedTextureKey.texture.getImage())
-            && this.texture.getAngle() == rotatedTextureKey.texture.getAngle();
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return this.texture.getImage().hashCode() 
-          + Float.floatToIntBits(this.texture.getAngle());
-    }    
   }
 
   /**

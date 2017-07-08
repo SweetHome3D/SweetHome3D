@@ -740,6 +740,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
             writer.writeFloatAttribute("width", texture.getWidth());
             writer.writeFloatAttribute("height", texture.getHeight());
             writer.writeFloatAttribute("angle", texture.getAngle(), 0f);
+            writer.writeFloatAttribute("scale", texture.getScale(), 1f);
             writer.writeBooleanAttribute("leftToRightOriented", texture.isLeftToRightOriented(), true); 
             writer.writeAttribute("image", getExportedContentName(texture, texture.getImage()), null);
           }

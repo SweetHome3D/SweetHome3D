@@ -78,6 +78,7 @@ import javax.swing.JTextField;
 import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -207,6 +208,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     private JList                   availableTexturesList;
     private JLabel                  angleLabel;
     private JSpinner                angleSpinner;
+    private JLabel                  scaleLabel;
+    private JSpinner                scaleSpinner;
     private JButton                 importTextureButton;
     private JButton                 modifyTextureButton;
     private JButton                 deleteTextureButton;
@@ -365,18 +368,16 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         final NullableSpinner.NullableSpinnerModuloNumberModel angleSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
             0, 0, 360, 15);
         this.angleSpinner = new NullableSpinner(angleSpinnerModel);
-        final PropertyChangeListener angleChangeListener = new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              Integer newAngle = (Integer)ev.getNewValue();
-              angleSpinnerModel.setNullable(newAngle == null);
-              angleSpinnerModel.setValue(newAngle);
-            }
-          };
         angleSpinnerModel.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
               texturePreviewComponent.repaint();
             }
           });
+
+        this.scaleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
+            "scaleLabel.text"));
+        final SpinnerNumberModel scaleSpinnerModel = new SpinnerNumberModel(100, 1, 10000, 5);
+        this.scaleSpinner = new AutoCommitSpinner(scaleSpinnerModel);
 
         this.importTextureButton = new JButton(importTextureButtonText);
         this.importTextureButton.addActionListener(new ActionListener() {
@@ -428,6 +429,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       setPreviewTexture(texture);
       if (texture instanceof HomeTexture) {
         this.angleSpinner.setValue(Math.round(Math.toDegrees(texture.getAngle())));
+        this.scaleSpinner.setValue(texture.getScale() * 100);
       }
       Insets insets = border.getBorderInsets(this.texturePreviewComponent);
       this.texturePreviewComponent.setPreferredSize(
@@ -594,6 +596,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.angleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             TextureChoiceComponent.class, "angleLabel.mnemonic")).getKeyCode());
         this.angleLabel.setLabelFor(this.angleSpinner);
+        this.scaleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "scaleLabel.mnemonic")).getKeyCode());
+        this.scaleLabel.setLabelFor(this.scaleSpinner);
         if (this.importTextureButton != null) {
           this.importTextureButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
               TextureChoiceComponent.class, "importTextureButton.mnemonic")).getKeyCode());
@@ -653,23 +658,30 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       if (this.controller.isRotationSupported()) {
         rightPanel.add(this.angleLabel, new GridBagConstraints(
             2, 2, 1, 1, 0.1, 0, labelAlignment,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 2), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
         rightPanel.add(this.angleSpinner, new GridBagConstraints(
             3, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
         // Fourth row
+        rightPanel.add(this.scaleLabel, new GridBagConstraints(
+            2, 3, 1, 1, 0.1, 0, labelAlignment,
+            GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        rightPanel.add(this.scaleSpinner, new GridBagConstraints(
+            3, 3, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        // Fifth row
         rightPanel.add(new JSeparator(), new GridBagConstraints(
-            2, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+            2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
       }
-      // Fifth row
+      // Sixth row
       if (this.importTextureButton != null) {
         JPanel buttonsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
         buttonsPanel.add(this.importTextureButton);
         buttonsPanel.add(this.modifyTextureButton);
         buttonsPanel.add(this.deleteTextureButton);
         rightPanel.add(buttonsPanel, new GridBagConstraints(
-            2, 4, 2, 1, 0, 1, GridBagConstraints.NORTH,
+            2, 5, 2, 1, 0, 1, GridBagConstraints.NORTH,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       }
       
@@ -689,6 +701,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       components.add(this.searchTextField);
       if (this.controller.isRotationSupported()) {
         components.add(((JSpinner.DefaultEditor)this.angleSpinner.getEditor()).getTextField());
+        components.add(((JSpinner.DefaultEditor)this.scaleSpinner.getEditor()).getTextField());
       }
       if (this.importTextureButton != null) {
         components.add(this.importTextureButton);
@@ -847,7 +860,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         return null;
       } else {
         float angleInRadians = (float)Math.toRadians(((Number)this.angleSpinner.getValue()).doubleValue());
-        return new HomeTexture(previewTexture, angleInRadians);
+        float scale = ((Number)this.scaleSpinner.getValue()).floatValue() / 100f;
+        return new HomeTexture(previewTexture, angleInRadians, scale, true);
       }
     }
     

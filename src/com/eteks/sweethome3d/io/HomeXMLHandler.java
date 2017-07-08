@@ -289,6 +289,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       width CDATA #REQUIRED
  *       height CDATA #REQUIRED
  *       angle CDATA "0"
+ *       scale CDATA "1"
  *       leftToRightOriented (true | false) "true"
  *       image CDATA #REQUIRED>
  *       
@@ -1484,16 +1485,18 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link HomeTexture} instance initialized from the given <code>attributes</code>.
    */
   private HomeTexture createTexture(Map<String, String> attributes) throws SAXException {
-    return new HomeTexture(new CatalogTexture(
-            attributes.get("catalogId"), 
-            attributes.get("name"), 
-            parseContent(attributes.get("image")), 
-            parseFloat(attributes, "width"), 
-            parseFloat(attributes, "height"), 
-            null),
+    return new HomeTexture(new CatalogTexture(attributes.get("catalogId"), 
+                               attributes.get("name"), 
+                               parseContent(attributes.get("image")), 
+                               parseFloat(attributes, "width"), 
+                               parseFloat(attributes, "height"), 
+                               null),
         attributes.get("angle") != null
             ? parseFloat(attributes, "angle")
             : 0,
+        attributes.get("scale") != null
+            ? parseFloat(attributes, "scale")
+            : 1,
         !"false".equals(attributes.get("leftToRightOriented")));
   }
 

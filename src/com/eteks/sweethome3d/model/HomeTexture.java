@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -34,6 +36,7 @@ public class HomeTexture implements TextureImage, Serializable {
   private final float width;
   private final float height;
   private final float angle;
+  private       float scale; 
   private final boolean leftToRightOriented;
 
   /**
@@ -64,11 +67,24 @@ public class HomeTexture implements TextureImage, Serializable {
    * @since 5.3
    */
   public HomeTexture(TextureImage texture, float angle, boolean leftToRightOriented) {
+    this(texture, angle, 1, leftToRightOriented);
+  }
+  
+  /**
+   * Creates a home texture from an existing one with customized angle and offset.
+   * @param texture the texture from which data are copied
+   * @param angle   the rotation angle applied to the texture
+   * @param scale   the scale applied to the texture
+   * @param leftToRightOriented orientation used on the texture when applied on objects seen from front
+   * @since 5.5
+   */
+  public HomeTexture(TextureImage texture, float angle, float scale, boolean leftToRightOriented) {
     this.name = texture.getName();
     this.image = texture.getImage();
     this.width = texture.getWidth();
     this.height = texture.getHeight();
     this.angle = angle;
+    this.scale = scale;
     this.leftToRightOriented = leftToRightOriented; 
     if (texture instanceof HomeTexture) {
       this.catalogId = ((HomeTexture)texture).getCatalogId();
@@ -79,6 +95,15 @@ public class HomeTexture implements TextureImage, Serializable {
     }
   }
   
+  /**
+   * Initializes new fields  
+   * and reads texture from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.scale = 1f;
+    in.defaultReadObject();
+  }
+
   /**
    * Returns the catalog ID of this texture or <code>null</code> if it doesn't exist.
    * @since 4.4 
@@ -124,6 +149,14 @@ public class HomeTexture implements TextureImage, Serializable {
   }
   
   /**
+   * Returns the scale applied to this texture.
+   * @since 5.5
+   */
+  public float getScale() {
+    return this.scale;
+  }
+  
+  /**
    * Returns <code>true</code> if the objects using this texture should take into account 
    * the orientation of the texture.
    * @since 3.4
@@ -148,7 +181,8 @@ public class HomeTexture implements TextureImage, Serializable {
           && texture.width == this.width
           && texture.height == this.height
           && texture.leftToRightOriented == this.leftToRightOriented
-          && texture.angle == this.angle;
+          && texture.angle == this.angle
+          && texture.scale == this.scale;
     } else {
       return false;
     }
@@ -163,6 +197,7 @@ public class HomeTexture implements TextureImage, Serializable {
         + (this.image != null  ? this.image.hashCode()  : 0)
         + Float.floatToIntBits(this.width)
         + Float.floatToIntBits(this.height)
-        + Float.floatToIntBits(this.angle);
+        + Float.floatToIntBits(this.angle)
+        + Float.floatToIntBits(this.scale);
   }
 }

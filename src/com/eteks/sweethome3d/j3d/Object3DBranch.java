@@ -63,9 +63,9 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
-  private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
-  private static final Map<TextureKey, TextureAttributes>    textureAttributes = new HashMap<TextureKey, TextureAttributes>();
-  private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
+  private static final Map<Long, Material>                materials = new HashMap<Long, Material>();
+  private static final Map<TextureKey, TextureAttributes> textureAttributes = new HashMap<TextureKey, TextureAttributes>();
+  private static final Map<Home, Map<Texture, Texture>>   homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
@@ -156,9 +156,10 @@ public abstract class Object3DBranch extends BranchGroup {
     float textureWidth = texture.getWidth();
     float textureHeight = texture.getHeight();
     float textureAngle = texture.getAngle();
+    float textureScale = 1 / texture.getScale();
     TextureKey key = scaled
-        ? new TextureKey(textureWidth, textureHeight, textureAngle)
-        : new TextureKey(-1f, -1f, textureAngle);
+        ? new TextureKey(textureWidth, textureHeight, textureAngle, textureScale)
+        : new TextureKey(-1f, -1f, textureAngle, textureScale);
     TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
@@ -170,7 +171,9 @@ public abstract class Object3DBranch extends BranchGroup {
       // Change scale if required and if texture width and height are not -1
       // (this may happen for textures retrieved from 3D models)
       if (scaled && (textureWidth != -1 || textureHeight != -1)) {
-        transform.setScale(new Vector3d(1. / textureWidth, 1. / textureHeight, 1));
+        transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
+      } else {
+        transform.setScale(textureScale);
       }
       transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
@@ -187,11 +190,13 @@ public abstract class Object3DBranch extends BranchGroup {
     private final float width;
     private final float height;
     private final float angle;
+    private final float scale;
     
-    public TextureKey(float width, float height, float angle) {
+    public TextureKey(float width, float height, float angle, float scale) {
       this.width = width;
       this.height = height;
       this.angle = angle;
+      this.scale = scale;
     }
     
     @Override
@@ -199,14 +204,16 @@ public abstract class Object3DBranch extends BranchGroup {
       TextureKey key = (TextureKey)obj;
       return this.width == key.width 
           && this.height == key.height 
-          && this.angle == key.angle;
+          && this.angle == key.angle 
+          && this.scale == key.scale;
     }
     
     @Override
     public int hashCode() {
       return Float.floatToIntBits(this.width) * 31 
           + Float.floatToIntBits(this.height) * 31
-          + Float.floatToIntBits(this.angle);
+          + Float.floatToIntBits(this.angle) * 31
+          + Float.floatToIntBits(this.scale);
     }
   }
 
