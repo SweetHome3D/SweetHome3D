@@ -688,7 +688,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       components.add(this.availableTexturesList);
       components.add(this.searchTextField);
       if (this.controller.isRotationSupported()) {
-        components.add(this.angleSpinner);
+        components.add(((JSpinner.DefaultEditor)this.angleSpinner.getEditor()).getTextField());
       }
       if (this.importTextureButton != null) {
         components.add(this.importTextureButton);
