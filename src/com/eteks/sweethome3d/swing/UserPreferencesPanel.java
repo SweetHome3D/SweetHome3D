@@ -40,6 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -99,6 +101,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JLabel           furnitureIconLabel;
   private JRadioButton     catalogIconRadioButton;
   private JRadioButton     topViewRadioButton;
+  private JLabel           iconSizeLabel;
+  private JComboBox        iconSizeComboBox;
   private JLabel           roomRenderingLabel;
   private JRadioButton     monochromeRadioButton;
   private JRadioButton     floorColorOrTextureRadioButton;
@@ -404,9 +408,35 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "topViewRadioButton.text"), 
           controller.isFurnitureViewedFromTop());
+      this.iconSizeLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "iconSizeLabel.text"));
+      Set<Integer> iconSizes = new TreeSet<Integer>(Arrays.asList(128, 256, 512 ,1024));
+      iconSizes.add(controller.getFurnitureModelIconSize());
+      this.iconSizeComboBox = new JComboBox(iconSizes.toArray());
+      this.iconSizeComboBox.setRenderer(new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                        boolean cellHasFocus) {
+            return super.getListCellRendererComponent(list, value + "x" + value, index, isSelected, cellHasFocus);
+          }
+        });
+      this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
+      this.iconSizeComboBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
+            }
+          });
+
       if (no3D) {
         this.catalogIconRadioButton.setEnabled(false);
         this.topViewRadioButton.setEnabled(false);
+        this.iconSizeComboBox.setEnabled(false);
       } else { 
         if (Component3DManager.getInstance().isOffScreenImageSupported()) {
           ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
@@ -424,11 +454,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               new PropertyChangeListener() {
                 public void propertyChange(PropertyChangeEvent ev) {
                   topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
+                  iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
                 }
               });
+          this.iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
         } else {
           this.catalogIconRadioButton.setEnabled(false);
           this.topViewRadioButton.setEnabled(false);
+          this.iconSizeComboBox.setEnabled(false);
         }
       }
     }
@@ -777,6 +810,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
         this.topViewRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "topViewRadioButton.mnemonic")).getKeyCode());
+        String mnemonic = preferences.getLocalizedString(UserPreferencesPanel.class, "iconSizeLabel.mnemonic");
+        if (mnemonic.length() > 0) {
+          this.iconSizeLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(mnemonic).getKeyCode());
+        }
       }
       if (this.roomRenderingLabel != null) {
         this.monochromeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
@@ -859,11 +896,16 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       add(this.furnitureCatalogViewLabel, new GridBagConstraints(
           0, 3, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.treeRadioButton, new GridBagConstraints(
-          1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.listRadioButton, new GridBagConstraints(
-          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+      
+      JPanel furnitureCatalogViewPanel = new JPanel(new GridBagLayout());
+      furnitureCatalogViewPanel.add(this.treeRadioButton, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+      furnitureCatalogViewPanel.add(this.listRadioButton, new GridBagConstraints(
+          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(furnitureCatalogViewPanel, new GridBagConstraints(
+          1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.navigationPanelLabel != null) {
@@ -930,75 +972,91 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.furnitureIconLabel != null) {
-      // Eleventh row
+      // Eleventh and twelfth row
       add(this.furnitureIconLabel, new GridBagConstraints(
           0, 10, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.catalogIconRadioButton, new GridBagConstraints(
           1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.topViewRadioButton, new GridBagConstraints(
-          2, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+      
+      JPanel topViewPanel = new JPanel(new GridBagLayout());
+      topViewPanel.add(this.topViewRadioButton, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+      topViewPanel.add(this.iconSizeLabel, new GridBagConstraints(
+          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+      topViewPanel.add(this.iconSizeComboBox, new GridBagConstraints(
+          2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(topViewPanel, new GridBagConstraints(
+          1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsetsWithSpace, 0, 0));
     }
     if (this.roomRenderingLabel != null) {
-      // Twelfth row
-      add(this.roomRenderingLabel, new GridBagConstraints(
-          0, 11, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.monochromeRadioButton, new GridBagConstraints(
-          1, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
-          2, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    }
-    if (this.newWallPatternLabel != null) {
       // Thirteenth row
-      add(this.newWallPatternLabel, new GridBagConstraints(
+      add(this.roomRenderingLabel, new GridBagConstraints(
           0, 12, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newWallPatternComboBox, new GridBagConstraints(
+      
+      JPanel roomRenderingPanel = new JPanel(new GridBagLayout());
+      roomRenderingPanel.add(this.monochromeRadioButton, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+      roomRenderingPanel.add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(roomRenderingPanel, new GridBagConstraints(
           1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
+    if (this.newWallPatternLabel != null) {
+      // Fourteenth row
+      add(this.newWallPatternLabel, new GridBagConstraints(
+          0, 13, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newWallPatternComboBox, new GridBagConstraints(
+          1, 13, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     } else if (this.wallPatternLabel != null) {
       add(this.wallPatternLabel, new GridBagConstraints(
-          0, 12, 1, 1, 0, 0, labelAlignment, 
+          0, 13, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.wallPatternComboBox, new GridBagConstraints(
-          1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 13, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     } 
     if (this.newWallThicknessLabel != null) {
-      // Fourteenth row
-      add(this.newWallThicknessLabel, new GridBagConstraints(
-          0, 13, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newWallThicknessSpinner, new GridBagConstraints(
-          1, 13, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    }
-    if (this.newWallHeightLabel != null) {
       // Fifteenth row
-      add(this.newWallHeightLabel, new GridBagConstraints(
+      add(this.newWallThicknessLabel, new GridBagConstraints(
           0, 14, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newWallHeightSpinner, new GridBagConstraints(
+      add(this.newWallThicknessSpinner, new GridBagConstraints(
           1, 14, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
-    if (this.newFloorThicknessLabel != null) {
+    if (this.newWallHeightLabel != null) {
       // Sixteenth row
-      add(this.newFloorThicknessLabel, new GridBagConstraints(
+      add(this.newWallHeightLabel, new GridBagConstraints(
           0, 15, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.newFloorThicknessSpinner, new GridBagConstraints(
+      add(this.newWallHeightSpinner, new GridBagConstraints(
           1, 15, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
+    if (this.newFloorThicknessLabel != null) {
+      // Seventeenth row
+      add(this.newFloorThicknessLabel, new GridBagConstraints(
+          0, 16, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newFloorThicknessSpinner, new GridBagConstraints(
+          1, 16, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.checkUpdatesCheckBox != null
         || this.autoSaveDelayForRecoveryCheckBox != null) {
-      // Seventeenth row
+      // Eighteenth row
       JPanel updatesAndAutoSaveDelayForRecoveryPanel = new JPanel(new GridBagLayout());
       if (this.checkUpdatesCheckBox != null) {
         updatesAndAutoSaveDelayForRecoveryPanel.add(this.checkUpdatesCheckBox,
@@ -1025,7 +1083,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                 GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       }
       add(updatesAndAutoSaveDelayForRecoveryPanel, new GridBagConstraints(
-          0, 16, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+          0, 17, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     // Last row
@@ -1033,7 +1091,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 17, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 18, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }

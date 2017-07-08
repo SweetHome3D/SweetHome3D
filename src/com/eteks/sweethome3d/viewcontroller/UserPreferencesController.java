@@ -35,7 +35,7 @@ public class UserPreferencesController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
-      FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
+      FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
       NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
       NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
       CHECK_UPDATES_ENABLED, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
@@ -56,6 +56,7 @@ public class UserPreferencesController implements Controller {
   private boolean                       gridVisible;
   private String                        defaultFontName;
   private boolean                       furnitureViewedFromTop;
+  private int                           furnitureModelIconSize;
   private boolean                       roomFloorColoredOrTextured;
   private TextureImage                  wallPattern;
   private TextureImage                  newWallPattern;
@@ -136,6 +137,7 @@ public class UserPreferencesController implements Controller {
     setGridVisible(this.preferences.isGridVisible());
     setDefaultFontName(this.preferences.getDefaultFontName());
     setFurnitureViewedFromTop(this.preferences.isFurnitureViewedFromTop());
+    setFurnitureModelIconSize(this.preferences.getFurnitureModelIconSize());
     setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
     setWallPattern(this.preferences.getWallPattern());
     setNewWallPattern(this.preferences.getNewWallPattern());
@@ -345,6 +347,26 @@ public class UserPreferencesController implements Controller {
    */
   public boolean isFurnitureViewedFromTop() {
     return this.furnitureViewedFromTop;
+  }
+
+  /**
+   * Sets the size used to generate icons of furniture viewed from top.
+   * @since 5.5
+   */
+  public void setFurnitureModelIconSize(int furnitureModelIconSize) {
+    if (furnitureModelIconSize != this.furnitureModelIconSize) {
+      int oldSize = this.furnitureModelIconSize;
+      this.furnitureModelIconSize = furnitureModelIconSize;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_MODEL_ICON_SIZE.name(), oldSize, furnitureModelIconSize);
+    }
+  }
+
+  /**
+   * Returns the size used to generate icons of furniture viewed from top.
+   * @since 5.5
+   */
+  public int getFurnitureModelIconSize() {
+    return this.furnitureModelIconSize;
   }
 
   /**
@@ -565,6 +587,7 @@ public class UserPreferencesController implements Controller {
     this.preferences.setGridVisible(isGridVisible());
     this.preferences.setDefaultFontName(getDefaultFontName());
     this.preferences.setFurnitureViewedFromTop(isFurnitureViewedFromTop());
+    this.preferences.setFurnitureModelIconSize(getFurnitureModelIconSize());
     this.preferences.setFloorColoredOrTextured(isRoomFloorColoredOrTextured());
     this.preferences.setWallPattern(getWallPattern());
     this.preferences.setNewWallPattern(getNewWallPattern());

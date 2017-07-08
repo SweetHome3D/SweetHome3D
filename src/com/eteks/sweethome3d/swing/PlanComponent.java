@@ -969,6 +969,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
         new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE, 
+        new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, 
@@ -1038,6 +1040,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 && !preferences.isFurnitureViewedFromTop()) {
               planComponent.furnitureTopViewIconsCache = null;
             }
+            break;
+          case FURNITURE_MODEL_ICON_SIZE :
+            planComponent.furnitureTopViewIconsCache = null;
             break;
           default:
             break;
@@ -4037,7 +4042,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (piece.getPlanIcon() != null) {
         icon = new PieceOfFurniturePlanIcon(piece, waitingComponent);
       } else {
-        icon = new PieceOfFurnitureModelIcon(piece, waitingComponent);
+        icon = new PieceOfFurnitureModelIcon(piece, waitingComponent, this.preferences.getFurnitureModelIconSize());
       }
       this.furnitureTopViewIconsCache.put(piece, icon);
     }
@@ -6213,56 +6218,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * A proxy for the furniture top view icon generated from its 3D model. 
    */
   private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
-    private static Canvas3D        canvas3D;
     private static BranchGroup     sceneRoot;
     private static ExecutorService iconsCreationExecutor;
-    
-    static {
-      // Create the universe used to compute top view icons 
-      canvas3D = Component3DManager.getInstance().getOffScreenCanvas3D(128, 128);
-      SimpleUniverse universe = new SimpleUniverse(canvas3D);
-      ViewingPlatform viewingPlatform = universe.getViewingPlatform();
-      // View model from top
-      TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
-      Transform3D rotation = new Transform3D();
-      rotation.rotX(-Math.PI / 2);
-      Transform3D transform = new Transform3D();
-      transform.setTranslation(new Vector3f(0, 5, 0));
-      transform.mul(rotation);
-      viewPlatformTransform.setTransform(transform);
-      // Use parallel projection
-      Viewer viewer = viewingPlatform.getViewers() [0];      
-      javax.media.j3d.View view = viewer.getView();
-      view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
-      sceneRoot = new BranchGroup();
-      // Prepare scene root
-      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
-      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
-      Background background = new Background(1.1f, 1.1f, 1.1f);
-      background.setCapability(Background.ALLOW_COLOR_WRITE);
-      background.setApplicationBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
-      sceneRoot.addChild(background);
-      Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
-                         new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
-                         new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
-                         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
-      for (Light light : lights) {
-        light.setInfluencingBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
-        sceneRoot.addChild(light);
-      }
-      universe.addBranchGraph(sceneRoot);
-      iconsCreationExecutor = Executors.newSingleThreadExecutor();
-    }
     
     /**
      * Creates a top view icon proxy for a <code>piece</code> of furniture.
      * @param piece an object containing a 3D content
      * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
      *            be read immediately in the current thread.
+     * @param iconSize the size in pixels of the generated icon 
      */
     public PieceOfFurnitureModelIcon(final HomePieceOfFurniture piece, 
-                                     final Component waitingComponent) {
+                                     final Component waitingComponent,
+                                     final int iconSize) {
       super(IconManager.getInstance().getWaitIcon());
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
@@ -6283,16 +6251,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               final float pieceHeight = normalizedPiece.getHeight();
               if (waitingComponent != null) {
                 // Generate icons in an other thread to avoid blocking EDT during offscreen rendering
+                if (iconsCreationExecutor == null) {
+                  iconsCreationExecutor = Executors.newSingleThreadExecutor();
+                }
                 iconsCreationExecutor.execute(new Runnable() {
                     public void run() {
                       setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
-                          pieceWidth, pieceDepth, pieceHeight));
+                          pieceWidth, pieceDepth, pieceHeight, iconSize));
                       waitingComponent.repaint();
                     }
                   });
               } else {
                 setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
-                    pieceWidth, pieceDepth, pieceHeight));
+                    pieceWidth, pieceDepth, pieceHeight, iconSize));
               }
             }
         
@@ -6307,10 +6278,62 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     
     /**
+     * Returns the branch group bound to a universe and a canvas for the given resolution.
+     */
+    private BranchGroup getSceneRoot(int iconSize) {
+      if (sceneRoot == null) {
+        // Create the universe used to compute top view icons 
+        Canvas3D canvas3D = Component3DManager.getInstance().getOffScreenCanvas3D(iconSize, iconSize);
+        SimpleUniverse universe = new SimpleUniverse(canvas3D);
+        ViewingPlatform viewingPlatform = universe.getViewingPlatform();
+        // View model from top
+        TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
+        Transform3D rotation = new Transform3D();
+        rotation.rotX(-Math.PI / 2);
+        Transform3D transform = new Transform3D();
+        transform.setTranslation(new Vector3f(0, 5, 0));
+        transform.mul(rotation);
+        viewPlatformTransform.setTransform(transform);
+        // Use parallel projection
+        Viewer viewer = viewingPlatform.getViewers() [0];      
+        javax.media.j3d.View view = viewer.getView();
+        view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
+        sceneRoot = new BranchGroup();
+        // Prepare scene root
+        sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+        sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+        sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+        Background background = new Background(1.1f, 1.1f, 1.1f);
+        background.setCapability(Background.ALLOW_COLOR_WRITE);
+        background.setApplicationBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
+        sceneRoot.addChild(background);
+        Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
+                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
+                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
+                           new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
+        for (Light light : lights) {
+          light.setInfluencingBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
+          sceneRoot.addChild(light);
+        }
+        universe.addBranchGraph(sceneRoot);
+      } else {
+        SimpleUniverse universe = (SimpleUniverse)sceneRoot.getLocale().getVirtualUniverse();
+        Canvas3D canvas3D = universe.getCanvas();
+        if (canvas3D.getWidth() != iconSize) {
+          universe.cleanup();
+          sceneRoot = null;
+          return getSceneRoot(iconSize);
+        }
+      }
+      return sceneRoot;
+    }
+
+    /**
      * Returns an icon created and scaled from piece model content.
      */
     private Icon createIcon(BranchGroup modelNode,  
-                            float pieceWidth, float pieceDepth, float pieceHeight) {
+                            float pieceWidth, float pieceDepth, float pieceHeight, 
+                            int iconSize) {
       // Add piece model scene to a normalized transform group
       Transform3D scaleTransform = new Transform3D();
       scaleTransform.setScale(new Vector3d(2 / pieceWidth, 2 / pieceHeight, 2 / pieceDepth));
@@ -6324,11 +6347,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       BranchGroup model = new BranchGroup();
       model.setCapability(BranchGroup.ALLOW_DETACH);
       model.addChild(modelTransformGroup);
+      BranchGroup sceneRoot = getSceneRoot(iconSize);
       sceneRoot.addChild(model);
       
       // Render scene with a white background
       Background background = (Background)sceneRoot.getChild(0);        
       background.setColor(1, 1, 1);
+      Canvas3D canvas3D = ((SimpleUniverse)sceneRoot.getLocale().getVirtualUniverse()).getCanvas();
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
       BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();

@@ -49,7 +49,7 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
-                        FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
+                        FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
                         RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
                         AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, 
@@ -104,6 +104,7 @@ public abstract class UserPreferences {
   private boolean          gridVisible         = true;
   private String           defaultFontName;
   private boolean          furnitureViewedFromTop;
+  private int              furnitureModelIconSize = 128;
   private boolean          roomFloorColoredOrTextured;
   private TextureImage     wallPattern;
   private TextureImage     newWallPattern;
@@ -655,6 +656,26 @@ public abstract class UserPreferences {
       this.furnitureViewedFromTop = furnitureViewedFromTop;
       this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_VIEWED_FROM_TOP.name(), 
           !furnitureViewedFromTop, furnitureViewedFromTop);
+    }
+  }
+
+  /**
+   * Returns the size used to generate icons of furniture viewed from top.
+   * @since 5.5
+   */
+  public int getFurnitureModelIconSize() {
+    return this.furnitureModelIconSize;
+  }
+
+  /**
+   * Sets the name of the font that should be used by default.
+   * @since 5.5
+   */
+  public void setFurnitureModelIconSize(int furnitureModelIconSize) {
+    if (furnitureModelIconSize != this.furnitureModelIconSize) {
+      int oldSize = this.furnitureModelIconSize;
+      this.furnitureModelIconSize = furnitureModelIconSize;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_MODEL_ICON_SIZE.name(), oldSize, furnitureModelIconSize);
     }
   }
 

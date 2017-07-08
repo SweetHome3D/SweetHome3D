@@ -93,6 +93,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String GRID_VISIBLE                              = "gridVisible";
   private static final String DEFAULT_FONT_NAME                         = "defaultFontName";
   private static final String FURNITURE_VIEWED_FROM_TOP                 = "furnitureViewedFromTop";
+  private static final String FURNITURE_MODEL_ICON_SIZE                 = "furnitureModelIconSize";
   private static final String ROOM_FLOOR_COLORED_OR_TEXTURED            = "roomFloorColoredOrTextured";
   private static final String WALL_PATTERN                              = "wallPattern";
   private static final String NEW_WALL_PATTERN                          = "newWallPattern";
@@ -282,6 +283,7 @@ public class FileUserPreferences extends UserPreferences {
     setDefaultFontName(preferences.get(DEFAULT_FONT_NAME,  defaultPreferences.getDefaultFontName()));
     setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
         defaultPreferences.isFurnitureViewedFromTop()));
+    setFurnitureModelIconSize(preferences.getInt(FURNITURE_MODEL_ICON_SIZE, defaultPreferences.getFurnitureModelIconSize()));
     setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
         defaultPreferences.isRoomFloorColoredOrTextured()));
     try {

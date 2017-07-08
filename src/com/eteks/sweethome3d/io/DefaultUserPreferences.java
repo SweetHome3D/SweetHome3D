@@ -96,6 +96,7 @@ public class DefaultUserPreferences extends UserPreferences {
     String osName = System.getProperty("os.name");
     setFurnitureViewedFromTop(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "furnitureViewedFromTop." + osName, 
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop"))));
+    setFurnitureModelIconSize(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "furnitureModelIconSize", "128")));
     setFloorColoredOrTextured(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "roomFloorColoredOrTextured." + osName,
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured"))));
     setWallPattern(patternsCatalog.getPattern(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
