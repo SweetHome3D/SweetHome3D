@@ -417,7 +417,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           @Override
           public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                         boolean cellHasFocus) {
-            return super.getListCellRendererComponent(list, value + "x" + value, index, isSelected, cellHasFocus);
+            return super.getListCellRendererComponent(list, value + "\u00d7" + value, index, isSelected, cellHasFocus);
           }
         });
       this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
