@@ -204,7 +204,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      * If the value of this key is <code>false</code>, a door or a window will only dig the wall 
      * at its intersection, and will cut the both sides of a wall only if it intersects both of them.
      */
-    DOOR_OR_WINDOW_WALL_CUT_OUT_ON_BOTH_SIDES("wallCutOutOnBothSides"),
+    DOOR_OR_WINDOW_WALL_CUT_OUT_ON_BOTH_SIDES("doorOrWindowWallCutOutOnBothSides"),
     /**
      * The key for the width/depth deformability of a door or a window (optional, <code>true</code> by default).
      * By default, the depth of a door or a window can be changed and adapted to 
