@@ -7919,14 +7919,65 @@ public class PlanController extends FurnitureController implements Controller {
 
         // Create walls joining points of largerRoomPoints
         Wall lastWall = null;
+        Area wallsArea = getWallsArea(false);
+        BasicStroke thinStroke = new BasicStroke(0.01f);
         for (int i = 0; i < largerRoomPoints.length; i++) {
-          float [] point     = largerRoomPoints [i];
-          float [] nextPoint = largerRoomPoints [(i + 1) % roomPoints.length];
-          Wall wall = createWall(point [0], point [1], nextPoint [0], nextPoint [1], null, lastWall);
-          this.newWalls.add(wall);
-          lastWall = wall;
+          final float [] sidePoint = largerRoomPoints [i];
+          float [] nextSidePoint   = largerRoomPoints [(i + 1) % roomPoints.length];
+          // Remove from wall line the intersection with existing walls
+          Area lineArea = new Area(thinStroke.createStrokedShape(new Line2D.Float(sidePoint [0], sidePoint [1], nextSidePoint [0], nextSidePoint [1])));
+          lineArea.subtract(wallsArea);
+          List<GeneralPath> newWallPaths = getAreaPaths(lineArea);
+          List<Wall> roomSideWalls = new ArrayList<Wall>();
+          for (int j = 0; j < newWallPaths.size(); j++) {
+            float [][] newWallPoints = getPathPoints(newWallPaths.get(j), true);
+            if (newWallPoints.length == 4) {
+              // Search the two ends of the line
+              float [] point1;
+              float [] point2;
+              if (Point2D.distanceSq(newWallPoints [0][0], newWallPoints [0][1], newWallPoints [1][0], newWallPoints [1][1])
+                  < Point2D.distanceSq(newWallPoints [0][0], newWallPoints [0][1], newWallPoints [3][0], newWallPoints [3][1])) {
+                point1 = new float [] {(newWallPoints [0][0] + newWallPoints [1][0]) / 2, (newWallPoints [0][1] + newWallPoints [1][1]) / 2};
+                point2 = new float [] {(newWallPoints [2][0] + newWallPoints [3][0]) / 2, (newWallPoints [2][1] + newWallPoints [3][1]) / 2};
+              } else {
+                point1 = new float [] {(newWallPoints [0][0] + newWallPoints [3][0]) / 2, (newWallPoints [0][1] + newWallPoints [3][1]) / 2};
+                point2 = new float [] {(newWallPoints [1][0] + newWallPoints [2][0]) / 2, (newWallPoints [1][1] + newWallPoints [2][1]) / 2};
+              }
+              float [] startPoint;
+              float [] endPoint;
+              if (Point2D.distanceSq(point1 [0], point1 [1], sidePoint [0], sidePoint [1])
+                  < Point2D.distanceSq(point2 [0], point2 [1], sidePoint [0], sidePoint [1])) {
+                startPoint = point1;
+                endPoint = point2;
+              } else {
+                startPoint = point2;
+                endPoint = point1;
+              }
+              roomSideWalls.add(createWall(startPoint [0], startPoint [1], endPoint [0], endPoint [1], null, 
+                  lastWall != null && Point2D.distanceSq(lastWall.getXEnd(), lastWall.getYEnd(), startPoint [0], startPoint [1]) < 1E-2 ? lastWall : null));
+            }
+          }
+          if (newWallPaths.size() > 0 && roomSideWalls.isEmpty()) {
+            // Ensure at least a wall is created for each room side that doesn't exist
+            roomSideWalls.add(createWall(sidePoint [0], sidePoint [1], nextSidePoint [0], nextSidePoint [1], null, lastWall));
+          }
+          if (roomSideWalls.size() > 0) {
+            // Order walls from the closest to first point to the farthest one  
+            Collections.sort(roomSideWalls, new Comparator<Wall>() {
+                public int compare(Wall wall1, Wall wall2) {
+                  return Double.compare(Point2D.distanceSq(wall1.getXStart(), wall1.getYStart(), sidePoint [0], sidePoint [1]),
+                      Point2D.distanceSq(wall2.getXStart(), wall2.getYStart(), sidePoint [0], sidePoint [1]));
+                }
+              });
+            this.newWalls.addAll(roomSideWalls);
+            lastWall = roomSideWalls.get(roomSideWalls.size() - 1);
+          } else {
+            lastWall = null;
+          }
         }
-        joinNewWallEndToWall(lastWall, this.newWalls.get(0), null);
+        if (lastWall != null && Point2D.distanceSq(lastWall.getXEnd(), lastWall.getYEnd(), this.newWalls.get(0).getXStart(), this.newWalls.get(0).getYStart()) < 1E-2) {
+          joinNewWallEndToWall(lastWall, this.newWalls.get(0), null);
+        }
       }      
     }
 
