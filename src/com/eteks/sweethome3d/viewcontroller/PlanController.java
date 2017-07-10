@@ -933,14 +933,212 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Controls how selected walls are joined.
+   * @since 5.5
+   */
+  public void joinSelectedWalls() {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
+    final Wall [] walls = {null, null};
+    for (Wall wall : selectedWalls) {
+      if ((wall.getArcExtent() == null
+              || wall.getArcExtent() == 0f)
+          && (wall.getWallAtStart() == null
+              || wall.getWallAtEnd() == null)) {
+        if (walls [0] == null) {
+          walls [0] = wall;
+        } else {
+          walls [1] = wall;
+          break;
+        }
+      }
+    }
+    if (walls [1] == null) {
+      Collections.sort(selectedWalls, new Comparator<Wall>() {
+          public int compare(Wall wall1, Wall wall2) {
+            float[] intersection1 = computeIntersection(wall1.getXStart(), wall1.getYStart(), wall1.getXEnd(), wall1.getYEnd(),
+                walls [0].getXStart(), walls [0].getYStart(), walls [0].getXEnd(), walls [0].getYEnd());
+            float[] intersection2 = computeIntersection(wall2.getXStart(), wall2.getYStart(), wall2.getXEnd(), wall2.getYEnd(),
+                walls [0].getXStart(), walls [0].getYStart(), walls [0].getXEnd(), walls [0].getYEnd());
+            double closestPoint1 = Math.min(Point2D.distanceSq(walls [0].getXStart(), walls [0].getYStart(), intersection1 [0], intersection1 [1]),
+                Point2D.distanceSq(walls [0].getXEnd(), walls [0].getYEnd(), intersection1 [0], intersection1 [1]));
+            double closestPoint2 = Math.min(Point2D.distanceSq(walls [0].getXStart(), walls [0].getYStart(), intersection2 [0], intersection2 [1]),
+                Point2D.distanceSq(walls [0].getXEnd(), walls [0].getYEnd(), intersection2 [0], intersection2 [1]));
+            return Double.compare(closestPoint1, closestPoint2);
+          }
+        });
+      if (walls [0] != selectedWalls.get(1)) {
+        walls [1] = selectedWalls.get(1);
+      }
+    }
+    if (walls [1] != null) {
+      // Check parallelism 1 deg close  
+      double firstWallAngle = Math.atan2(walls [0].getYEnd() - walls [0].getYStart(), 
+            walls [0].getXEnd() - walls [0].getXStart()); 
+      double secondWallAngle = Math.atan2(walls [1].getYEnd() - walls [1].getYStart(), 
+          walls [1].getXEnd() - walls [1].getXStart()); 
+      double wallsAngle = Math.abs(firstWallAngle - secondWallAngle) % Math.PI;
+      boolean parallel = wallsAngle <= Math.PI / 360 || (Math.PI - wallsAngle) <= Math.PI / 360;
+      float[] joinPoint = null;
+      if (!parallel) {
+        joinPoint = computeIntersection(walls [0].getXStart(), walls [0].getYStart(), walls [0].getXEnd(), walls [0].getYEnd(), 
+            walls [1].getXStart(), walls [1].getYStart(), walls [1].getXEnd(), walls [1].getYEnd());
+      } else if (Line2D.ptLineDistSq(walls [1].getXStart(), walls [1].getYStart(), walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXStart(), walls [0].getYStart()) < 1E-2
+                 && Line2D.ptLineDistSq(walls [1].getXStart(), walls [1].getYStart(), walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXEnd(), walls [0].getYEnd()) < 1E-2) {
+        // Search join point for walls in the same row
+        if (walls [1].getWallAtStart() == null
+            ^ walls [1].getWallAtEnd() == null) {
+          // If second wall has only one free end, join the first wall to this free end
+          if (walls [1].getWallAtStart() == null) {
+            joinPoint = new float [] {walls [1].getXStart(), walls [1].getYStart()};
+          } else {
+            joinPoint = new float [] {walls [1].getXEnd(), walls [1].getYEnd()};
+          }
+        } else if (walls [1].getWallAtStart() == null
+                   && walls [1].getWallAtEnd() == null) {
+          double wallStartDistanceToSegment = Line2D.ptSegDistSq(walls [1].getXStart(), walls [1].getYStart(), walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXStart(), walls [0].getYStart());
+          double wallEndDistanceToSegment = Line2D.ptSegDistSq(walls [1].getXStart(), walls [1].getYStart(), walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXEnd(), walls [0].getYEnd());
+          if (wallStartDistanceToSegment > 1E-2 
+              && wallEndDistanceToSegment > 1E-2) {
+            // If walls don't overlap, connect first wall to the closest point
+            if (walls [0].getWallAtEnd() != null
+                || walls [0].getWallAtStart() == null
+                   && wallStartDistanceToSegment <= wallEndDistanceToSegment) {
+              if (Point2D.distanceSq(walls [1].getXStart(), walls [1].getYStart(), walls [0].getXStart(), walls [0].getYStart()) 
+                  < Point2D.distanceSq(walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXStart(), walls [0].getYStart())) {
+                joinPoint = new float [] {walls [1].getXStart(), walls [1].getYStart()};
+              } else {
+                joinPoint = new float [] {walls [1].getXEnd(), walls [1].getYEnd()};
+              }
+            } else {
+              if (Point2D.distanceSq(walls [1].getXStart(), walls [1].getYStart(), walls [0].getXEnd(), walls [0].getYEnd()) 
+                  < Point2D.distanceSq(walls [1].getXEnd(), walls [1].getYEnd(), walls [0].getXEnd(), walls [0].getYEnd())) {
+                joinPoint = new float [] {walls [1].getXStart(), walls [1].getYStart()};
+              } else {
+                joinPoint = new float [] {walls [1].getXEnd(), walls [1].getYEnd()};
+              }
+            }
+          }          
+        } 
+      }
+      if (joinPoint != null) {
+        JoinedWall [] joinedWalls = JoinedWall.getJoinedWalls(Arrays.asList(walls [0], walls [1]));
+        doJoinWalls(joinedWalls, joinPoint);
+        postJoinSelectedWalls(joinedWalls, joinPoint, selectedItems);
+      }
+    }
+  }
+
+  /**
+   * Posts an undoable join wall operation about <code>walls</code>.
+   */
+  private void postJoinSelectedWalls(final JoinedWall [] joinedWalls, 
+                                     final float [] joinPoint,
+                                     List<Selectable> oldSelection) {
+    final boolean allLevelsSelection = home.isAllLevelsSelection();
+    final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        for (JoinedWall joinedWall : joinedWalls) {
+          Wall wall = joinedWall.getWall();
+          wall.setWallAtStart(joinedWall.getWallAtStart());
+          if (joinedWall.getWallAtStart() != null) {
+            if (joinedWall.isJoinedAtEndOfWallAtStart()) {
+              joinedWall.getWallAtStart().setWallAtEnd(wall);
+            } else {
+              joinedWall.getWallAtStart().setWallAtStart(wall);
+            }
+          }
+          wall.setWallAtEnd(joinedWall.getWallAtEnd());
+          if (joinedWall.getWallAtEnd() != null) {
+            if (joinedWall.isJoinedAtStartOfWallAtEnd()) {
+              joinedWall.getWallAtEnd().setWallAtStart(wall);
+            } else {
+              joinedWall.getWallAtEnd().setWallAtEnd(wall);
+            }
+          }
+          wall.setXStart(joinedWall.getXStart());
+          wall.setYStart(joinedWall.getYStart());
+          wall.setXEnd(joinedWall.getXEnd());
+          wall.setYEnd(joinedWall.getYEnd());
+        }
+        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doJoinWalls(joinedWalls, joinPoint);
+      }      
+
+      @Override
+      public String getPresentationName() {
+        return preferences.getLocalizedString(PlanController.class, "undoJoinWallsName");
+      }      
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Joins two walls at the given point.
+   */
+  private void doJoinWalls(final JoinedWall [] joinedWalls, 
+                           float [] joinPoint) {
+    Wall [] walls = {joinedWalls [0].getWall(), joinedWalls [1].getWall()};
+    // Ignore parallel walls
+    boolean connected = false;
+    for (int i = 0; i < 2; i++) {
+      boolean joinAtEnd   = walls [i].getWallAtEnd() == null;
+      boolean joinAtStart = walls [i].getWallAtStart() == null;
+      if (joinAtStart && joinAtEnd) {
+        // Join at the point closest to intersection
+        if (Point2D.distanceSq(walls [i].getXStart(), walls [i].getYStart(), joinPoint [0], joinPoint [1])
+            < Point2D.distanceSq(walls [i].getXEnd(), walls [i].getYEnd(), joinPoint [0], joinPoint [1])) {
+          joinAtEnd = false;
+        } else {
+          joinAtStart = false;
+        }
+      }
+      if (joinAtEnd) {
+        walls [i].setXEnd(joinPoint [0]);
+        walls [i].setYEnd(joinPoint [1]);
+      } else if (joinAtStart) {
+        walls [i].setXStart(joinPoint [0]);
+        walls [i].setYStart(joinPoint [1]);
+      }
+      if (connected
+          || walls [(i + 1) % 2].getWallAtStart() == null 
+          || walls [(i + 1) % 2].getWallAtEnd() == null) {
+        if (joinAtEnd) {
+          walls [i].setWallAtEnd(walls [(i + 1) % 2]);
+          connected = true;
+        } else if (joinAtStart) {
+          walls [i].setWallAtStart(walls [(i + 1) % 2]);
+          connected = true;
+        }
+      }
+    }
+    if (connected) {
+      this.home.setSelectedItems(Arrays.asList(walls [0], walls [1]));
+    } else {
+      this.home.setSelectedItems(Arrays.asList(walls [0]));
+    }
+  }
+  
+  /**
    * Controls the direction reverse of selected walls.
    */
   public void reverseSelectedWallsDirection() {
-    List<Wall> selectedWalls = Home.getWallsSubList(this.home.getSelectedItems());
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
     if (!selectedWalls.isEmpty()) {
       Wall [] reversedWalls = selectedWalls.toArray(new Wall [selectedWalls.size()]);
       doReverseWallsDirection(reversedWalls);
-      postReverseSelectedWallsDirection(reversedWalls, this.home.getSelectedItems());
+      selectAndShowItems(Arrays.asList(reversedWalls), false);
+      postReverseSelectedWallsDirection(reversedWalls, selectedItems);
     }
   }
   
@@ -964,7 +1162,7 @@ public class PlanController extends FurnitureController implements Controller {
       public void redo() throws CannotRedoException {
         super.redo();
         doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
+        selectAndShowItems(Arrays.asList(walls), false);
       }      
 
       @Override
@@ -6096,6 +6294,10 @@ public class PlanController extends FurnitureController implements Controller {
   private static final class JoinedWall {
     private final Wall    wall;
     private final Level   level;
+    private final float   xStart;
+    private final float   yStart;
+    private final float   xEnd;
+    private final float   yEnd; 
     private final Wall    wallAtStart;
     private final Wall    wallAtEnd;
     private final boolean joinedAtEndOfWallAtStart;
@@ -6104,6 +6306,10 @@ public class PlanController extends FurnitureController implements Controller {
     public JoinedWall(Wall wall) {
       this.wall = wall;
       this.level = wall.getLevel();
+      this.xStart = wall.getXStart();
+      this.xEnd = wall.getXEnd();
+      this.yStart = wall.getYStart();
+      this.yEnd = wall.getYEnd();
       this.wallAtStart = wall.getWallAtStart();
       this.joinedAtEndOfWallAtStart =
           this.wallAtStart != null
@@ -6120,6 +6326,22 @@ public class PlanController extends FurnitureController implements Controller {
 
     public Level getLevel() {
       return this.level;
+    }
+
+    public float getXStart() {
+      return this.xStart;
+    }
+
+    public float getYStart() {
+      return this.yStart;
+    }
+
+    public float getXEnd() {
+      return this.xEnd;
+    }
+
+    public float getYEnd() {
+      return this.yEnd;
     }
 
     public Wall getWallAtEnd() {

@@ -736,9 +736,10 @@ public class HomeController implements Controller {
         && selectedItems.get(0) instanceof HomeFurnitureGroup;
     boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
+    boolean homeSelectionContainsOneWall = false;
+    boolean homeSelectionContainsOneOrTwoWallsWithOneFreeEnd = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsPolylines = false;
-    boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOnlyOneRoom = false;
     boolean homeSelectionContainsOnlyOneRoomWithFourPointsOrMore = false;
     boolean homeSelectionContainsLabels = false;
@@ -797,6 +798,33 @@ public class HomeController implements Controller {
       List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
       homeSelectionContainsWalls = !selectedWalls.isEmpty();
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
+      if (selectedWalls.size() >= 2) {
+        Wall [] wallsWithFreeEnd = {null, null, null};
+        for (Wall wall : selectedWalls) {
+          if ((wall.getArcExtent() == null
+                  || wall.getArcExtent() == 0f)
+              && (wall.getWallAtStart() == null
+                  || wall.getWallAtEnd() == null)) {
+            for (int i = 0; i < wallsWithFreeEnd.length; i++) {
+              if (wallsWithFreeEnd [i] == null) {
+                wallsWithFreeEnd [i] = wall;
+                break;
+              }
+            }
+            if (wallsWithFreeEnd [2] != null) {
+              break;
+            }
+          }
+        }
+        homeSelectionContainsOneOrTwoWallsWithOneFreeEnd = 
+            wallsWithFreeEnd [2] == null
+            && wallsWithFreeEnd [0] != null 
+            && (wallsWithFreeEnd [1] == null
+                  && !selectedWalls.contains(wallsWithFreeEnd [0].getWallAtStart())
+                  && !selectedWalls.contains(wallsWithFreeEnd [0].getWallAtEnd())
+               || wallsWithFreeEnd [0].getWallAtEnd() != wallsWithFreeEnd [1]
+                   && wallsWithFreeEnd [0].getWallAtStart() != wallsWithFreeEnd [1]);
+      }
       List<Room> selectedRooms = Home.getRoomsSubList(selectedItems);
       homeSelectionContainsRooms = !selectedRooms.isEmpty();
       homeSelectionContainsOnlyOneRoom = selectedItems.size() == 1 
@@ -871,6 +899,8 @@ public class HomeController implements Controller {
                  || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomeView.ActionType.MODIFY_WALL,
         homeSelectionContainsWalls);
+    view.setEnabled(HomeView.ActionType.JOIN_WALLS, 
+        homeSelectionContainsOneOrTwoWallsWithOneFreeEnd);
     view.setEnabled(HomeView.ActionType.REVERSE_WALL_DIRECTION,
         homeSelectionContainsWalls);
     view.setEnabled(HomeView.ActionType.SPLIT_WALL,

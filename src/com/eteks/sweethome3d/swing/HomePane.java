@@ -477,6 +477,7 @@ public class HomePane extends JRootPane implements HomeView {
       toggleBoldAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createBoldStyleToggleModel(home, preferences));
       Action toggleItalicAction = createAction(ActionType.TOGGLE_ITALIC_STYLE, preferences, planController, "toggleItalicStyle");
       toggleItalicAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createItalicStyleToggleModel(home, preferences));
+      createAction(ActionType.JOIN_WALLS, preferences, planController, "joinSelectedWalls");
       createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, planController, "reverseSelectedWallsDirection");
       createAction(ActionType.SPLIT_WALL, preferences, planController, "splitSelectedWall");
       createAction(ActionType.IMPORT_BACKGROUND_IMAGE, preferences, controller, "importBackgroundImage");
@@ -1072,6 +1073,7 @@ public class HomePane extends JRootPane implements HomeView {
     }
     addActionToMenu(ActionType.MODIFY_COMPASS, planMenu);
     addActionToMenu(ActionType.MODIFY_WALL, planMenu);
+    addActionToMenu(ActionType.JOIN_WALLS, planMenu);
     addActionToMenu(ActionType.REVERSE_WALL_DIRECTION, planMenu);
     addActionToMenu(ActionType.SPLIT_WALL, planMenu);
     addActionToMenu(ActionType.MODIFY_ROOM, planMenu);
@@ -2757,6 +2759,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.RESET_FURNITURE_ELEVATION, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_COMPASS, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
+      addActionToPopupMenu(ActionType.JOIN_WALLS, planViewPopup);
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
       addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_ROOM, planViewPopup);
