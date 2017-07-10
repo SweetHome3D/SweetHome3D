@@ -155,6 +155,12 @@ public abstract class Object3DBranch extends BranchGroup {
   protected TextureAttributes getTextureAttributes(HomeTexture texture, boolean scaled) {
     float textureWidth = texture.getWidth();
     float textureHeight = texture.getHeight();
+    if (textureWidth == -1 || textureHeight == -1) {
+      // Set a default value of 1m for textures with width and height equal to -1
+      // (this may happen for textures retrieved from 3D models)
+      textureWidth = 100;
+      textureHeight = 100;
+    }
     float textureAngle = texture.getAngle();
     float textureScale = 1 / texture.getScale();
     TextureKey key = scaled
@@ -168,9 +174,8 @@ public abstract class Object3DBranch extends BranchGroup {
       Transform3D rotation = new Transform3D();
       rotation.rotZ(textureAngle);
       Transform3D transform = new Transform3D();
-      // Change scale if required and if texture width and height are not -1
-      // (this may happen for textures retrieved from 3D models)
-      if (scaled && (textureWidth != -1 || textureHeight != -1)) {
+      // Change scale if required
+      if (scaled) {
         transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
       } else {
         transform.setScale(textureScale);
