@@ -2890,6 +2890,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               
               float textureWidth = floorTexture.getWidth();
               float textureHeight = floorTexture.getHeight();
+              if (textureWidth == -1 || textureHeight == -1) {
+                textureWidth = 100;
+                textureHeight = 100;
+              }
               float textureScale = floorTexture.getScale();
               g2D.setPaint(new TexturePaint(textureImage, 
                   new Rectangle2D.Float(0, 0, textureWidth * textureScale, textureHeight * textureScale)));
