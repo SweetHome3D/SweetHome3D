@@ -37,6 +37,7 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 
 /**
  * Home furniture transfer handler.
@@ -47,7 +48,7 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
   private final ContentManager       contentManager;
   private final HomeController       homeController;
   private List<HomePieceOfFurniture> copiedFurniture;
-  private String                     copiedCSV;
+  private Object                     copiedCSV;
 
   /**
    * Creates a handler able to transfer home furniture.
@@ -76,9 +77,19 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
   protected Transferable createTransferable(JComponent source) {
     this.copiedFurniture = Home.getFurnitureSubList(this.home.getSelectedItems());
     final Transferable transferable = new HomeTransferableList(this.copiedFurniture);
-    if (source instanceof FurnitureTable) {
-      // Create a text that describes furniture in CSV format
-      this.copiedCSV = ((FurnitureTable)source).getClipboardCSV();
+    if (source instanceof TransferableView) {
+      this.copiedCSV = null;
+      // Retrieve the text that describes selected furniture in CSV format
+      this.homeController.createTransferData(new TransferableView.TransferObserver() {
+            public void dataReady(Object [] data) {
+              for (Object transferedData : data) {
+                if (transferedData instanceof String) {
+                  copiedCSV = transferedData;
+                  break;
+                }
+              }
+            }
+          }, TransferableView.DataType.FURNITURE_LIST);
       // Create a transferable that contains copied furniture and its CSV description 
       return new Transferable () {
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {

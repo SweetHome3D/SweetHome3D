@@ -79,6 +79,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.EditableProperty;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -456,6 +457,13 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
       };
     this.planComponent.addFocusListener(componentFocusListener);
     this.multipleLevelsTabbedPane.addFocusListener(componentFocusListener);
+  }
+  
+  /**
+   * Returns an image of the plan for transfer purpose.
+   */
+  public Object createTransferData(TransferableView.DataType dataType) {
+    return this.planComponent.createTransferData(dataType);
   }
   
   /**

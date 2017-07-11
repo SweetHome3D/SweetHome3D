@@ -29,7 +29,7 @@ import com.eteks.sweethome3d.model.TextStyle;
  * The view that displays the plan of a home.
  * @author Emmanuel Puybaret
  */
-public interface PlanView extends View {
+public interface PlanView extends TransferableView {
   /**
    * The cursor types available in plan view.
    */

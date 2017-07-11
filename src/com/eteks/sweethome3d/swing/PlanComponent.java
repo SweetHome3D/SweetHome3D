@@ -200,6 +200,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -2096,6 +2097,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Returns an image of selected items in plan for transfer purpose.
+   */
+  public Object createTransferData(TransferableView.DataType dataType) {
+    if (dataType == DataType.PLAN_IMAGE) {
+      return getClipboardImage();
+    } else {
+      return null;
+    }
+  }
+  
+  /**
    * Returns an image of the selected items displayed by this component 
    * (camera excepted) with no outline at scale 1/1 (1 pixel = 1cm).
    */
@@ -2124,6 +2136,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         paintContent(g2D, clipboardScale, PaintMode.CLIPBOARD);
       } catch (InterruptedIOException ex) {
         // Ignore exception because it may happen only in EXPORT paint mode 
+        return null;
       }   
       g2D.dispose();
       return image;

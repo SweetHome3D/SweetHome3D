@@ -116,13 +116,13 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 
 /**
  * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable implements View, Printable {
+public class FurnitureTable extends JTable implements TransferableView, Printable {
   private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
 
   private UserPreferences        preferences;
@@ -975,7 +975,18 @@ public class FurnitureTable extends JTable implements View, Printable {
   }
   
   /**
-   * Returns a CSV formatted text describing the selected pieces of <code>furniture</code>.  
+   * Returns a CSV formatted text describing the selected pieces for transfer purpose.
+   */
+  public Object createTransferData(DataType dataType) {
+    if (dataType == DataType.FURNITURE_LIST) {
+      return getClipboardCSV();
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Returns a CSV formatted text describing the selected pieces of furniture.  
    */
   public String getClipboardCSV() {
     StringWriter writer = new StringWriter();

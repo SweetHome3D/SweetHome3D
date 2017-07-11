@@ -117,6 +117,7 @@ public class HomeController implements Controller {
   private final UndoableEditSupport   undoSupport;
   private final UndoManager           undoManager;
   private HomeView                    homeView;
+  private List<Controller>            childControllers;
   private FurnitureCatalogController  furnitureCatalogController;
   private FurnitureController         furnitureController;
   private PlanController              planController;
@@ -193,6 +194,7 @@ public class HomeController implements Controller {
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.application = application;
+    
     this.undoSupport = new UndoableEditSupport() {
         @Override
         protected void _postEdit(UndoableEdit edit) {
@@ -205,6 +207,7 @@ public class HomeController implements Controller {
       };
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
+    this.childControllers = new ArrayList<Controller>();
     
     // Update recent homes list
     if (home.getName() != null) {
@@ -380,6 +383,7 @@ public class HomeController implements Controller {
     if (this.furnitureCatalogController == null) {
       this.furnitureCatalogController = new FurnitureCatalogController(
           this.preferences.getFurnitureCatalog(), this.preferences, this.viewFactory, this.contentManager);
+      this.childControllers.add(this.furnitureCatalogController);
     }
     return this.furnitureCatalogController;
   }
@@ -392,6 +396,7 @@ public class HomeController implements Controller {
     if (this.furnitureController == null) {
       this.furnitureController = new FurnitureController(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
+      this.childControllers.add(this.furnitureController);
     }
     return this.furnitureController;
   }
@@ -404,6 +409,7 @@ public class HomeController implements Controller {
     if (this.planController == null) {
       this.planController = new PlanController(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
+      this.childControllers.add(this.planController);
     }
     return this.planController;
   }
@@ -416,6 +422,7 @@ public class HomeController implements Controller {
     if (this.homeController3D == null) {
       this.homeController3D = new HomeController3D(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
+      this.childControllers.add(this.homeController3D);
     }
     return this.homeController3D;
   }
@@ -1775,6 +1782,22 @@ public class HomeController implements Controller {
     undoSupport.endUpdate();
   }
   
+  /**
+   * Returns the transfer data matching the requested types.
+   */
+   public void createTransferData(final TransferableView.TransferObserver observer, 
+                                  final TransferableView.DataType ... dataTypes) {
+     final List<Object> data = new ArrayList<Object>();
+     for (int i = 0; i < dataTypes.length; i++) {
+       for (Controller childController : childControllers) {
+         if (childController.getView() instanceof TransferableView) {
+           data.add(((TransferableView)childController.getView()).createTransferData(dataTypes [i]));
+         }
+       }
+     }
+     observer.dataReady(data.toArray());
+   }
+
   /**
    * Deletes the selection in the focused component.
    */

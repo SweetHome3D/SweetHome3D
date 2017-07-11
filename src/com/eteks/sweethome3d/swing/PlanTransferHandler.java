@@ -42,6 +42,8 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -53,7 +55,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private final ContentManager contentManager;
   private final HomeController homeController;
   private List<Selectable>     copiedItems;
-  private BufferedImage        copiedImage;
+  private Object               copiedImage;
   private boolean              isDragging;
   private WindowAdapter        windowDeactivationListener;
   
@@ -83,9 +85,19 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   protected Transferable createTransferable(final JComponent source) {
     this.copiedItems = this.home.getSelectedItems();
     final Transferable transferable = new HomeTransferableList(this.copiedItems);
-    if (source instanceof PlanComponent) {
+    if (source instanceof TransferableView) {
       // Create an image that contains only selected items
-      this.copiedImage = ((PlanComponent)source).getClipboardImage();
+      this.copiedImage = null;
+      this.homeController.createTransferData(new TransferableView.TransferObserver() {
+            public void dataReady(Object [] data) {
+              for (Object transferedData : data) {
+                if (transferedData instanceof BufferedImage) {
+                  copiedImage = transferedData;
+                  break;
+                }
+              }
+            }
+          }, TransferableView.DataType.PLAN_IMAGE);
       // Create a transferable that contains copied items and an image
       return new Transferable () {
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
@@ -148,7 +160,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   @Override
   protected void dragEntered(final JComponent destination, Transferable transferable, int dragAction) {
     if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
-        && destination instanceof PlanComponent
+        && destination instanceof PlanView
         && this.homeController.getPlanController() != null) {
       try {
         List<Selectable> transferedItems = 
@@ -182,7 +194,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   @Override
   protected void dragMoved(JComponent destination, Transferable transferable, int dragAction) {
     if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
-        && destination instanceof PlanComponent
+        && destination instanceof PlanView
         && this.homeController.getPlanController() != null) {
         Point2D dropLocation = getDropModelLocation(destination);
       this.homeController.getPlanController().moveMouse( 
@@ -268,10 +280,10 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private Point2D getDropModelLocation(JComponent destination) {
     float x = 0;
     float y = 0;
-    if (destination instanceof PlanComponent) {
-      PlanComponent planView = (PlanComponent)destination;
+    if (destination instanceof PlanView) {
+      PlanView planView = (PlanView)destination;
       Point dropLocation = getDropLocation(); 
-      SwingUtilities.convertPointFromScreen(dropLocation, planView);
+      SwingUtilities.convertPointFromScreen(dropLocation, destination);
       x = planView.convertXPixelToModel(dropLocation.x);
       y = planView.convertYPixelToModel(dropLocation.y);
     }
