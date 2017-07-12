@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.prefs.AbstractPreferences;
@@ -108,6 +110,10 @@ public class FileUserPreferences extends UserPreferences {
   private static final String AUTO_COMPLETION_PROPERTY                  = "autoCompletionProperty#";
   private static final String AUTO_COMPLETION_STRINGS                   = "autoCompletionStrings#";
   private static final String RECENT_COLORS                             = "recentColors";
+  private static final String RECENT_TEXTURE_NAME                       = "recentTextureName#";
+  private static final String RECENT_TEXTURE_IMAGE                      = "recentTextureImage#";
+  private static final String RECENT_TEXTURE_WIDTH                      = "recentTextureWidth#";
+  private static final String RECENT_TEXTURE_HEIGHT                     = "recentTextureHeight#";
   private static final String RECENT_HOMES                              = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
   
@@ -143,7 +149,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_LIBRARIES_PLUGIN_SUB_FOLDER     = "furniture";
   private static final String TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER      = "textures";
 
-  private static final URLContent DUMMY_CONTENT;
+  private static final PreferencesURLContent MISSING_CONTENT;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   private List<ClassLoader>          resourceClassLoaders;
@@ -154,15 +160,17 @@ public class FileUserPreferences extends UserPreferences {
   private Executor                   updater;
   private List<Library>              libraries;
   
+  private Map<Content, PreferencesURLContent> copiedContentsCache = new WeakHashMap<Content, PreferencesURLContent>();
+  
   public static final String PLUGIN_LANGUAGE_LIBRARY_FAMILY = "PluginLanguageLibrary";
   
   static {
-    URLContent dummyURLContent = null;
+    PreferencesURLContent dummyURLContent = null;
     try {
-      dummyURLContent = new URLContent(new URL("file:/dummySweetHome3DContent"));
+      dummyURLContent = new PreferencesURLContent(new URL("file:/missingSweetHome3DContent"));
     } catch (MalformedURLException ex) {
     }
-    DUMMY_CONTENT = dummyURLContent;
+    MISSING_CONTENT = dummyURLContent;
   }
  
   /**
@@ -328,6 +336,7 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     setRecentColors(recentColorsList);
+    readRecentTextures(preferences);
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= getRecentHomesMaxCount(); i++) {
@@ -380,7 +389,7 @@ public class FileUserPreferences extends UserPreferences {
       this.preferences = preferences;
     }
   }
-  
+
   /**
    * Updates the default supported languages with languages available in plugin folder. 
    */
@@ -661,6 +670,33 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
+   * Read recent textures from preferences.
+   */
+  private void readRecentTextures(Preferences preferences) {
+    File preferencesFolder;
+    try {
+      preferencesFolder = getPreferencesFolder();
+    } catch (IOException ex) {
+      return;
+    }
+    List<TextureImage> recentTextures = new ArrayList<TextureImage>();
+    for (int index = 1; true; index++) {
+      String textureName = preferences.get(RECENT_TEXTURE_NAME + index, null);
+      if (textureName == null) {
+        break;
+      } else {
+        Content image = getContent(preferences, RECENT_TEXTURE_IMAGE + index, preferencesFolder);
+        if (image != MISSING_CONTENT) {
+          float width = preferences.getFloat(RECENT_TEXTURE_WIDTH + index, -1);
+          float height = preferences.getFloat(RECENT_TEXTURE_HEIGHT + index, -1);
+          recentTextures.add(new CatalogTexture(textureName, image, width, height));
+        }
+      }
+    }
+    setRecentTextures(recentTextures);
+  }
+  
+  /**
    * Read modifiable furniture catalog from preferences.
    */
   private void readModifiableFurnitureCatalog(Preferences preferences) {
@@ -673,8 +709,11 @@ public class FileUserPreferences extends UserPreferences {
     }
     CatalogPieceOfFurniture piece;
     for (int i = 1; (piece = readModifiablePieceOfFurniture(preferences, i, preferencesFolder)) != null; i++) {
-      FurnitureCategory pieceCategory = readModifiableFurnitureCategory(preferences, i);
-      getFurnitureCatalog().add(pieceCategory, piece);
+      if (piece.getIcon() != MISSING_CONTENT
+          && piece.getModel() != MISSING_CONTENT) {
+        FurnitureCategory pieceCategory = readModifiableFurnitureCategory(preferences, i);
+        getFurnitureCatalog().add(pieceCategory, piece);
+      }
     }
   }  
 
@@ -772,23 +811,39 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns a content instance from the resource file value of key.
    */
-  private URLContent getContent(Preferences preferences, String key, 
-                             File preferencesFolder) {
+  private PreferencesURLContent getContent(Preferences preferences, String key, 
+                                           File preferencesFolder) {
     String content = preferences.get(key, null);
     if (content != null) {
       try {
         String preferencesFolderUrl = preferencesFolder.toURI().toURL().toString();
+        URL url;
         if (content.startsWith(preferencesFolderUrl)
             || content.startsWith("jar:" + preferencesFolderUrl)) {
-          return new URLContent(new URL(content));
+          url = new URL(content);
         } else {
-          return new URLContent(new URL(content.replace("file:", preferencesFolderUrl)));
+          url = new URL(content.replace("file:", preferencesFolderUrl));
         }
+        PreferencesURLContent urlContent =  new PreferencesURLContent(url);
+        // Check if a local file exists
+        if (urlContent.isJAREntry()) {
+          URL jarEntryURL = urlContent.getJAREntryURL();
+          if ("file".equals(jarEntryURL.getProtocol()) 
+              && !new File(jarEntryURL.toURI()).exists()) {
+            return MISSING_CONTENT;
+          }
+        } else if ("file".equals(url.getProtocol())
+                   && !new File(url.toURI()).exists()) {
+          return MISSING_CONTENT;
+        }
+        return urlContent;
       } catch (IOException ex) {
-        // Return DUMMY_CONTENT for incorrect URL
+        // Return MISSING_CONTENT for incorrect URL and content
+      } catch (URISyntaxException ex) {
+        // Return MISSING_CONTENT for incorrect content
       } 
     }
-    return DUMMY_CONTENT;
+    return MISSING_CONTENT;
   }
   
   /**
@@ -804,8 +859,10 @@ public class FileUserPreferences extends UserPreferences {
     }
     CatalogTexture texture;
     for (int i = 1; (texture = readModifiableTexture(preferences, i, preferencesFolder)) != null; i++) {
-      TexturesCategory textureCategory = readModifiableTextureCategory(preferences, i);
-      getTexturesCatalog().add(textureCategory, texture);
+      if (texture.getImage() != MISSING_CONTENT) {
+        TexturesCategory textureCategory = readModifiableTextureCategory(preferences, i);
+        getTexturesCatalog().add(textureCategory, texture);
+      }
     }
   }  
 
@@ -851,7 +908,7 @@ public class FileUserPreferences extends UserPreferences {
   public void write() throws RecorderException {
     Preferences preferences = getPreferences();
     writeModifiableFurnitureCatalog(preferences);
-    writeModifiableTexturesCatalog(preferences);
+    writeRecentAndModifiableTexturesCatalog(preferences);
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
@@ -1036,11 +1093,38 @@ public class FileUserPreferences extends UserPreferences {
   }
     
   /**
-   * Writes modifiable textures catalog in <code>preferences</code>.
+   * Writes recent textures and modifiable textures catalog in <code>preferences</code>.
    */
-  private void writeModifiableTexturesCatalog(Preferences preferences) throws RecorderException {
+  private void writeRecentAndModifiableTexturesCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> texturesContentURLs = new HashSet<URL>();
+    // Save recent textures
     int i = 1;
+    for (TextureImage texture : getRecentTextures()) {
+      preferences.put(RECENT_TEXTURE_NAME + i, texture.getName());
+      putContent(preferences, RECENT_TEXTURE_IMAGE + i, texture.getImage(), 
+          TEXTURE_CONTENT_PREFIX, texturesContentURLs);
+      if (texture.getWidth() != -1) {
+        preferences.putFloat(RECENT_TEXTURE_WIDTH + i, texture.getWidth());
+      } else {
+        preferences.remove(RECENT_TEXTURE_WIDTH + i);
+      }
+      if (texture.getHeight() != -1) {
+        preferences.putFloat(RECENT_TEXTURE_HEIGHT + i, texture.getHeight());
+      } else {
+        preferences.remove(RECENT_TEXTURE_HEIGHT + i);
+      }
+      i++;
+    }
+    // Remove obsolete keys
+    for ( ; preferences.get(RECENT_TEXTURE_NAME + i, null) != null; i++) {
+      preferences.remove(RECENT_TEXTURE_NAME + i);
+      preferences.remove(RECENT_TEXTURE_IMAGE + i);
+      preferences.remove(RECENT_TEXTURE_HEIGHT + i);
+      preferences.remove(RECENT_TEXTURE_WIDTH + i);
+    }
+    
+    // Save modifiable textures
+    i = 1;
     for (TexturesCategory category : getTexturesCatalog().getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         if (texture.isModifiable()) {
@@ -1062,6 +1146,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(TEXTURE_WIDTH + i);
       preferences.remove(TEXTURE_HEIGHT + i);
     }
+    
     deleteObsoleteContent(texturesContentURLs, TEXTURE_CONTENT_PREFIX);
   }
 
@@ -1070,41 +1155,44 @@ public class FileUserPreferences extends UserPreferences {
    */
   private void putContent(Preferences preferences, String key, 
                           Content content, String contentPrefix,
-                          Set<URL> furnitureContentURLs) throws RecorderException {
-    if (content instanceof TemporaryURLContent) {
-      URLContent urlContent = (URLContent)content;
-      URLContent copiedContent;
-      if (urlContent.isJAREntry()) {
-        try {
-          // If content is a JAR entry copy the content of its URL and rebuild a new URL content from 
-          // this copy and the entry name
-          copiedContent = copyToPreferencesURLContent(new URLContent(urlContent.getJAREntryURL()), contentPrefix);
-          copiedContent = new URLContent(new URL("jar:" + copiedContent.getURL() + "!/" + urlContent.getJAREntryName()));
-        } catch (MalformedURLException ex) {
-          // Shouldn't happen
-          throw new RecorderException("Can't build URL", ex);
-        }
-      } else {
-        copiedContent = copyToPreferencesURLContent(urlContent, contentPrefix);
-      }
-      putContent(preferences, key, copiedContent, contentPrefix, furnitureContentURLs);
-    } else if (content instanceof URLContent) {
-      URLContent urlContent = (URLContent)content;
+                          Set<URL> savedContentURLs) throws RecorderException {
+    if (content instanceof PreferencesURLContent) {
+      PreferencesURLContent preferencesContent = (PreferencesURLContent)content;
       try {
-        preferences.put(key, urlContent.getURL().toString()
+        preferences.put(key, preferencesContent.getURL().toString()
             .replace(getPreferencesFolder().toURI().toURL().toString(), "file:"));
       } catch (IOException ex) {
         throw new RecorderException("Can't save content", ex);
       }
       // Add to furnitureContentURLs the URL to the application file
-      if (urlContent.isJAREntry()) {
-        furnitureContentURLs.add(urlContent.getJAREntryURL());
+      if (preferencesContent.isJAREntry()) {
+        savedContentURLs.add(preferencesContent.getJAREntryURL());
       } else {
-        furnitureContentURLs.add(urlContent.getURL());
+        savedContentURLs.add(preferencesContent.getURL());
       }
     } else {
-      putContent(preferences, key, copyToPreferencesURLContent(content, contentPrefix), 
-          contentPrefix, furnitureContentURLs);
+      PreferencesURLContent preferencesContent = this.copiedContentsCache.get(content);
+      if (preferencesContent == null) {
+        if (content instanceof TemporaryURLContent
+            && ((TemporaryURLContent)content).isJAREntry()) {
+          URLContent urlContent = (URLContent)content;
+          try {
+            // If content is a JAR entry copy the content of its URL and rebuild a new URL content from 
+            // this copy and the entry name
+            PreferencesURLContent copiedContent = copyToPreferencesURLContent(new URLContent(urlContent.getJAREntryURL()), contentPrefix);
+            preferencesContent = new PreferencesURLContent(new URL("jar:" + copiedContent.getURL() + "!/" + urlContent.getJAREntryName()));
+          } catch (MalformedURLException ex) {
+            // Shouldn't happen
+            throw new RecorderException("Can't build URL", ex);
+          }
+        } else {
+          preferencesContent = copyToPreferencesURLContent(content, contentPrefix);
+        }
+        // Store the copied content in cache to avoid copying it again the next time preferences are written
+        this.copiedContentsCache.put(content, preferencesContent);
+      }
+      
+      putContent(preferences, key, preferencesContent, contentPrefix, savedContentURLs);
     }
   }
 
@@ -1112,8 +1200,8 @@ public class FileUserPreferences extends UserPreferences {
    * Returns a content object that references a copy of <code>content</code> in 
    * user preferences folder.
    */
-  private URLContent copyToPreferencesURLContent(Content content, 
-                                                 String contentPrefix) throws RecorderException {
+  private PreferencesURLContent copyToPreferencesURLContent(Content content, 
+                                                            String contentPrefix) throws RecorderException {
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {
@@ -1125,7 +1213,7 @@ public class FileUserPreferences extends UserPreferences {
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
       }
-      return new URLContent(preferencesFile.toURI().toURL());
+      return new PreferencesURLContent(preferencesFile.toURI().toURL());
     } catch (IOException ex) {
       throw new RecorderException("Can't save content", ex);
     } finally {
@@ -1537,11 +1625,21 @@ public class FileUserPreferences extends UserPreferences {
   public boolean isLibraryDeletable(Library library) {
     return new File(library.getLocation()).canWrite();    
   }
+
+  
+  /**
+   * A content stored in preferences. 
+   */
+  private static class PreferencesURLContent extends URLContent {
+    public PreferencesURLContent(URL url) {
+      super(url);
+    }
+  }
+  
   
   /**
    * Preferences based on the <code>preferences.xml</code> file
-   * stored in a preferences folder.  
-   * @author Emmanuel Puybaret
+   * stored in a preferences folder.
    */
   private class PortablePreferences extends AbstractPreferences {
     private static final String PREFERENCES_FILE = "preferences.xml"; 
