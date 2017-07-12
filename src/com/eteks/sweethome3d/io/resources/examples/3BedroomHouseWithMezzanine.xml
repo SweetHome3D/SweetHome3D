@@ -94,7 +94,7 @@
   <doorOrWindow level='level0' catalogId='eTeks#sliderWindow126x200' name='Slider window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/sliderWindow126x200.obj' icon='com/eteks/sweethome3d/io/resources/sliderWindow126x200.png' x='1156.5421' y='1109.3391' elevation='10.0' angle='1.7484555E-7' width='255.0' depth='32.76075' height='220.0' modelSize='7637' movable='false' dropOnTopElevation='-0.004761905' wallThickness='0.7936508' cutOutShape='M0,0 v1 h1 v-1 z'>
     <material name='white' color='FF97877C'/>
   </doorOrWindow>
-  <doorOrWindow level='level1' catalogId='eTeks#fixedWindow85x123' name='Fixed window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fixedWindow85x123.obj' icon='com/eteks/sweethome3d/io/resources/fixedWindow85x123.png' x='328.7' y='700.76764' elevation='160.0' angle='4.712389' width='444.0' depth='26.00075' height='60.0' modelSize='2198' movable='false' dropOnTopElevation='-0.0074626864' cutOutShape='M0,0 v1 h1 v-1 z'>
+  <doorOrWindow level='level1' catalogId='eTeks#fixedWindow85x123' name='Fixed window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fixedWindow85x123.obj' icon='com/eteks/sweethome3d/io/resources/fixedWindow85x123.png' x='328.7' y='700.76764' elevation='160.0' angle='4.712389' width='444.0' depth='26.05' height='60.0' modelSize='2198' movable='false' dropOnTopElevation='-0.0074626864' cutOutShape='M0,0 v1 h1 v-1 z' boundToWall='false'>
     <material name='white' color='FF97877C'/>
   </doorOrWindow>
   <doorOrWindow level='level1' catalogId='eTeks#fixedWindow85x123' name='Fixed window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fixedWindow85x123.obj' icon='com/eteks/sweethome3d/io/resources/fixedWindow85x123.png' x='606.8767' y='554.7729' elevation='10.0' angle='4.712389' width='287.0' depth='3.00075' height='80.0' modelSize='2198' movable='false' dropOnTopElevation='-0.0074626864' cutOutShape='M0,0 v1 h1 v-1 z'>
@@ -226,7 +226,7 @@
     <lightSource x='0.5' y='0.5' z='1.0' color='00BBAF96' diameter='0.121212125'/>
   </light>
   <pieceOfFurniture level='level0' catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='1362.457' y='545.059' angle='1.5707964' width='102.0' depth='40.0' height='211.0' color='FF97877C' modelSize='3516' dropOnTopElevation='0.4606635'/>
-  <pieceOfFurniture level='level0' catalogId='eTeks#texturableCylinder' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='1156.7546' y='654.5849' width='209.0' depth='184.0' height='0.5' shininess='0.0' modelSize='8783'/>
+  <pieceOfFurniture level='level0' catalogId='eTeks#texturableCylinder' name='Carpet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='1156.7546' y='654.5849' width='209.0' depth='184.0' height='0.7' shininess='0.0' modelSize='8783'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='931.1401' y='836.9757' angle='4.712389' width='102.0' depth='40.0' height='211.0' color='FF97877C' modelSize='3516' dropOnTopElevation='0.4606635'/>
   <pieceOfFurniture level='level0' catalogId='eTeks#squareTable' name='Coffee table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='1231.2632' y='692.54535' elevation='0.1' angle='1.7484555E-7' width='115.0' depth='115.0' height='26.0' modelSize='3045'>
     <material name='flblonde' color='FF97877C'/>
@@ -909,7 +909,7 @@
     <point x='945.14935' y='994.21686'/>
     <point x='945.1251' y='887.7958'/>
   </room>
-  <room level='level1' areaVisible='true' floorColor='FF600F0C'>
+  <room level='level1' name='Bedrom #3' areaVisible='true' floorColor='FF600F0C'>
     <point x='11.700012' y='10.974945'/>
     <point x='11.700012' y='395.22488'/>
     <point x='406.47845' y='394.99997'/>
@@ -958,10 +958,6 @@
   <dimensionLine level='level1' xStart='7.028427' yStart='11.257996' xEnd='7.028427' yEnd='395.258' offset='45.25325'/>
   <dimensionLine level='level1' xStart='-8.9183655' yStart='-14.567017' xEnd='-8.9183655' yEnd='993.433' offset='60.38565'/>
   <dimensionLine level='level1' xStart='314.07635' yStart='1332.9785' xEnd='1313.0764' yEnd='1332.9785' offset='57.650513'/>
-  <label level='level1' x='305.28577' y='155.8161'>
-    <textStyle fontSize='22.0'/>
-    <text>Bedroom #3</text>
-  </label>
   <label level='level1' x='706.7937' y='-119.69198' color='FF710707'>
     <textStyle fontSize='30.0'/>
     <text>2nd floor</text>
