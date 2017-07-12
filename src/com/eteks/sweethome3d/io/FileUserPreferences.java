@@ -869,6 +869,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.put(DEFAULT_FONT_NAME, defaultFontName);
     }
     preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
+    preferences.putInt(FURNITURE_MODEL_ICON_SIZE, getFurnitureModelIconSize());
     preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
     preferences.put(WALL_PATTERN, getWallPattern().getName());
     TextureImage newWallPattern = getNewWallPattern();
