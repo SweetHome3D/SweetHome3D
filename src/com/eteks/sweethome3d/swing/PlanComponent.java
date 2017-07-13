@@ -100,6 +100,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
@@ -200,7 +201,6 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.TransferableView;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
@@ -2099,7 +2099,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns an image of selected items in plan for transfer purpose.
    */
-  public Object createTransferData(TransferableView.DataType dataType) {
+  public Object createTransferData(DataType dataType) {
     if (dataType == DataType.PLAN_IMAGE) {
       return getClipboardImage();
     } else {
@@ -2144,10 +2144,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Returns <code>true</code> if the given format is SVG.
+   */
+  public boolean isFormatTypeSupported(FormatType formatType) {
+    return formatType == FormatType.SVG;
+  }
+  
+  /**
+   * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format if this is the requested format.
+   */
+  public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
+    if  (formatType == FormatType.SVG) {
+      exportToSVG(out);
+    } else {
+      throw new UnsupportedOperationException("Unsupported format " + formatType);
+    }
+  }
+  
+  /**
    * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format.
    */
-  public void exportToSVG(OutputStream outputStream) throws IOException {
-    SVGSupport.exportToSVG(outputStream, this);   
+  public void exportToSVG(OutputStream out) throws IOException {
+    SVGSupport.exportToSVG(out, this);   
   }
   
   /**
@@ -2155,7 +2173,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * in case the application doesn't use export to SVG format. 
    */
   private static class SVGSupport {
-    public static void exportToSVG(OutputStream outputStream, 
+    public static void exportToSVG(OutputStream out, 
                                    PlanComponent planComponent) throws IOException {
       List<Selectable> homeItems = planComponent.getPaintedItems();
       Rectangle2D svgItemBounds = planComponent.getItemsBounds(null, homeItems);
@@ -2168,7 +2186,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
           (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
       
-      SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize) {
+      SVGGraphics2D exportG2D = new SVGGraphics2D(out, imageSize) {
           @Override
           public void writeHeader() throws IOException {
             // Use English locale to avoid wrong encoding when localized dates contain accentuated letters 

@@ -68,14 +68,11 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -202,6 +199,7 @@ import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.ExportableView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
@@ -4306,28 +4304,29 @@ public class HomePane extends JRootPane implements HomeView {
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToCSV(String csvFile) throws RecorderException {
-    View furnitureView = this.controller.getFurnitureController().getView();
-    FurnitureTable furnitureTable;
-    if (furnitureView instanceof FurnitureTable) {
-      furnitureTable = (FurnitureTable)furnitureView;
+    View view = this.controller.getFurnitureController().getView();
+    ExportableView furnitureView;
+    if (view instanceof ExportableView
+        && ((ExportableView)view).isFormatTypeSupported(ExportableView.FormatType.CSV)) {
+      furnitureView = (ExportableView)view;
     } else {
-      furnitureTable = new FurnitureTable(this.home, this.preferences);
+      furnitureView = new FurnitureTable(this.home, this.preferences);
     }    
     
-    Writer writer = null;
+    OutputStream out = null;
     boolean exportInterrupted = false;
     try {
-      writer = new BufferedWriter(new FileWriter(csvFile));
-      furnitureTable.exportToCSV(writer, '\t');
+      out = new BufferedOutputStream(new FileOutputStream(csvFile));
+      furnitureView.exportData(out, ExportableView.FormatType.CSV, null);
     } catch (InterruptedIOException ex) {
       exportInterrupted = true;
       throw new InterruptedRecorderException("Export to " + csvFile + " interrupted");
     } catch (IOException ex) {
       throw new RecorderException("Couldn't export to CSV in " + csvFile, ex);
     } finally {
-      if (writer != null) {
+      if (out != null) {
         try {
-          writer.close();
+          out.close();
           // Delete the file if exporting is interrupted
           if (exportInterrupted) {
             new File(csvFile).delete();
@@ -4353,19 +4352,20 @@ public class HomePane extends JRootPane implements HomeView {
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToSVG(String svgFile) throws RecorderException {
-    View planView = this.controller.getPlanController().getView();
-    final PlanComponent planComponent;
-    if (planView instanceof PlanComponent) {
-      planComponent = (PlanComponent)planView;
+    View view = this.controller.getPlanController().getView();
+    final ExportableView planView;
+    if (view instanceof ExportableView
+        && ((ExportableView)view).isFormatTypeSupported(ExportableView.FormatType.SVG)) {
+      planView = (ExportableView)view;
     } else {
-      planComponent = new PlanComponent(cloneHomeInEventDispatchThread(this.home), this.preferences, null);
+      planView = new PlanComponent(cloneHomeInEventDispatchThread(this.home), this.preferences, null);
     }    
     
     OutputStream outputStream = null;
     boolean exportInterrupted = false;
     try {
       outputStream = new BufferedOutputStream(new FileOutputStream(svgFile));
-      planComponent.exportToSVG(outputStream);
+      planView.exportData(outputStream, ExportableView.FormatType.SVG, null);
     } catch (InterruptedIOException ex) {
       exportInterrupted = true;
       throw new InterruptedRecorderException("Export to " + svgFile + " interrupted");

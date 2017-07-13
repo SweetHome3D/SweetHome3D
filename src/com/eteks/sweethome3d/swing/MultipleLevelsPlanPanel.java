@@ -49,9 +49,12 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -79,7 +82,6 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.EditableProperty;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.TransferableView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -462,10 +464,24 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   /**
    * Returns an image of the plan for transfer purpose.
    */
-  public Object createTransferData(TransferableView.DataType dataType) {
+  public Object createTransferData(DataType dataType) {
     return this.planComponent.createTransferData(dataType);
   }
   
+  /**
+   * Returns <code>true</code> if the plan component supports the given format type.
+   */
+  public boolean isFormatTypeSupported(FormatType formatType) {
+    return this.planComponent.isFormatTypeSupported(formatType);
+  }
+  
+  /**
+   * Writes the plan in the given output stream at SVG (Scalable Vector Graphics) format if this is the requested format.
+   */
+  public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
+    this.planComponent.exportData(out, formatType, settings);
+  }
+
   /**
    * Sets rectangle selection feedback coordinates. 
    */

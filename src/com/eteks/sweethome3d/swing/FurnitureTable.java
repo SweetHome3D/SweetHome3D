@@ -39,6 +39,8 @@ import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
@@ -57,6 +59,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -115,6 +118,7 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.ExportableView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.TransferableView;
 
@@ -122,7 +126,7 @@ import com.eteks.sweethome3d.viewcontroller.TransferableView;
  * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable implements TransferableView, Printable {
+public class FurnitureTable extends JTable implements TransferableView, ExportableView, Printable {
   private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
 
   private UserPreferences        preferences;
@@ -841,6 +845,26 @@ public class FurnitureTable extends JTable implements TransferableView, Printabl
           throw (Error)ex.getCause();
         }
       }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given format is CSV.
+   */
+  public boolean isFormatTypeSupported(FormatType formatType) {
+    return formatType == FormatType.CSV;
+  }
+  
+  /**
+   * Writes in the given stream the content of the table at CSV format if this is the requested format.
+   */
+  public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
+    if  (formatType == FormatType.CSV) {
+      OutputStreamWriter writer = new OutputStreamWriter(out);
+      exportToCSV(writer, settings.getProperty("fieldSeparator", "\t").charAt(0));
+      writer.flush();
+    } else {
+      throw new UnsupportedOperationException("Unsupported format " + formatType);
     }
   }
   
