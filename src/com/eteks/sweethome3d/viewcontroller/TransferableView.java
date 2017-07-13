@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 /**
  * A view able to transfer data.
  * @author Emmanuel Puybaret
+ * @since 5.5
  */
 public interface TransferableView extends View {
   /**
@@ -56,7 +57,7 @@ public interface TransferableView extends View {
   }
 
   /**
-   * Returns an image of the plan for transfer purpose.
+   * Returns data at given types for transfer purpose.
    * Caution : this method can be called from a separate thread.
    */
   public abstract Object createTransferData(DataType dataType);
