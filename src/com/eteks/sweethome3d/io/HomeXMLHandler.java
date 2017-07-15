@@ -674,7 +674,7 @@ public class HomeXMLHandler extends DefaultHandler {
           parseOptionalFloat(attributesMap, "diameter")));
     } else if ("backgroundImage".equals(name)) {
       BackgroundImage backgroundImage = new BackgroundImage(
-          parseContent(attributesMap.get("image")), 
+          parseContent(attributesMap.get("image"), null), 
           parseFloat(attributesMap, "scaleDistance"), 
           parseFloat(attributesMap, "scaleDistanceXStart"), 
           parseFloat(attributesMap, "scaleDistanceYStart"), 
@@ -1009,6 +1009,7 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link HomePieceOfFurniture} instance initialized from the given <code>attributes</code>.
    */
   private HomePieceOfFurniture createPieceOfFurniture(String elementName, Map<String, String> attributes) throws SAXException {
+    String catalogId = attributes.get("catalogId");
     String [] tags = attributes.get("tags") != null 
         ? attributes.get("tags").split(" ")
         : null;
@@ -1055,16 +1056,16 @@ public class HomeXMLHandler extends DefaultHandler {
         cutOutShape = "M0,0 v1 h1 v-1 z";
       }
       return new HomeDoorOrWindow(new CatalogDoorOrWindow(
-          attributes.get("catalogId"), 
+          catalogId, 
           attributes.get("name"), 
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
           parseOptionalLong(attributes, "creationDate"), 
           parseOptionalFloat(attributes, "grade"), 
-          parseContent(attributes.get("icon")),  
-          parseContent(attributes.get("planIcon")), 
-          parseContent(attributes.get("model")), 
+          parseContent(attributes.get("icon"), catalogId),  
+          parseContent(attributes.get("planIcon"), catalogId), 
+          parseContent(attributes.get("model"), catalogId), 
           parseFloat(attributes, "width"), 
           parseFloat(attributes, "depth"), 
           parseFloat(attributes, "height"), 
@@ -1089,16 +1090,16 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("currency")));
     } else if ("light".equals(elementName)) {
       return new HomeLight(new CatalogLight(
-          attributes.get("catalogId"), 
+          catalogId, 
           attributes.get("name"), 
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
           parseOptionalLong(attributes, "creationDate"), 
           parseOptionalFloat(attributes, "grade"), 
-          parseContent(attributes.get("icon")),  
-          parseContent(attributes.get("planIcon")), 
-          parseContent(attributes.get("model")), 
+          parseContent(attributes.get("icon"), catalogId),  
+          parseContent(attributes.get("planIcon"), catalogId), 
+          parseContent(attributes.get("model"), catalogId), 
           parseFloat(attributes, "width"), 
           parseFloat(attributes, "depth"), 
           parseFloat(attributes, "height"), 
@@ -1119,16 +1120,16 @@ public class HomeXMLHandler extends DefaultHandler {
           attributes.get("currency")));
     } else {
       return new HomePieceOfFurniture(new CatalogPieceOfFurniture(
-          attributes.get("catalogId"), 
+          catalogId, 
           attributes.get("name"), 
           attributes.get("description"), 
           attributes.get("information"), 
           tags, 
           parseOptionalLong(attributes, "creationDate"), 
           parseOptionalFloat(attributes, "grade"), 
-          parseContent(attributes.get("icon")),  
-          parseContent(attributes.get("planIcon")), 
-          parseContent(attributes.get("model")), 
+          parseContent(attributes.get("icon"), catalogId),  
+          parseContent(attributes.get("planIcon"), catalogId), 
+          parseContent(attributes.get("model"), catalogId), 
           parseFloat(attributes, "width"), 
           parseFloat(attributes, "depth"), 
           parseFloat(attributes, "height"), 
@@ -1485,9 +1486,10 @@ public class HomeXMLHandler extends DefaultHandler {
    * Returns a new {@link HomeTexture} instance initialized from the given <code>attributes</code>.
    */
   private HomeTexture createTexture(Map<String, String> attributes) throws SAXException {
-    return new HomeTexture(new CatalogTexture(attributes.get("catalogId"), 
+    String catalogId = attributes.get("catalogId");
+    return new HomeTexture(new CatalogTexture(catalogId, 
                                attributes.get("name"), 
-                               parseContent(attributes.get("image")), 
+                               parseContent(attributes.get("image"), catalogId), 
                                parseFloat(attributes, "width"), 
                                parseFloat(attributes, "height"), 
                                null),
@@ -1606,7 +1608,7 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns the content object matching the given string.
    */
-  private Content parseContent(String contentFile) throws SAXException {
+  private Content parseContent(String contentFile, String catalogId) throws SAXException {
     if (contentFile != null) {
       try {
         return new ResourceURLContent(new URL(contentFile), contentFile.startsWith("jar:"));
@@ -1617,11 +1619,11 @@ public class HomeXMLHandler extends DefaultHandler {
           } catch (IOException ex2) {
             throw new SAXException("Invalid content " + contentFile, ex2);
           }
-        } else {
-          if (this.preferences != null) {
-            // Try to find a resource matching contentFile among catalogs
-            for (FurnitureCategory category : this.preferences.getFurnitureCatalog().getCategories()) {
-              for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        } else if (catalogId != null && this.preferences != null) {
+          // Try to find a resource matching contentFile among catalogs
+          for (FurnitureCategory category : this.preferences.getFurnitureCatalog().getCategories()) {
+            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+              if (catalogId.equals(piece.getId())) {
                 if (isSameContent(contentFile, piece.getIcon())) {
                   return piece.getIcon();
                 } else if (isSameContent(contentFile, piece.getPlanIcon())) {
@@ -1631,16 +1633,17 @@ public class HomeXMLHandler extends DefaultHandler {
                 }
               }
             }
-            for (TexturesCategory category : this.preferences.getTexturesCatalog().getCategories()) {
-              for (CatalogTexture texture : category.getTextures()) {
-                if (isSameContent(contentFile, texture.getIcon())) {
-                  return texture.getIcon();
-                } 
-              }
+          }
+          for (TexturesCategory category : this.preferences.getTexturesCatalog().getCategories()) {
+            for (CatalogTexture texture : category.getTextures()) {
+              if (catalogId.equals(texture.getId()) 
+                  && isSameContent(contentFile, texture.getIcon())) {
+                return texture.getIcon();
+              } 
             }
           }
-          throw new SAXException("Missing URL base", ex1);
         }
+        throw new SAXException("Missing URL base", ex1);
       }
     } else {
       return null;
