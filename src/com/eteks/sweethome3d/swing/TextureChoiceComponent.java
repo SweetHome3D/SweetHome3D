@@ -366,7 +366,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         this.angleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
             "angleLabel.text"));
         final NullableSpinner.NullableSpinnerModuloNumberModel angleSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
-            0, 0, 360, 15);
+            0f, 0f, 360f, 15f);
         this.angleSpinner = new NullableSpinner(angleSpinnerModel);
         angleSpinnerModel.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent ev) {
@@ -376,7 +376,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
         this.scaleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
             "scaleLabel.text"));
-        final SpinnerNumberModel scaleSpinnerModel = new SpinnerNumberModel(100, 1, 10000, 5);
+        final SpinnerNumberModel scaleSpinnerModel = new SpinnerNumberModel(100f, 1f, 10000f, 5f);
         this.scaleSpinner = new AutoCommitSpinner(scaleSpinnerModel);
 
         this.importTextureButton = new JButton(importTextureButtonText);
@@ -428,7 +428,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       HomeTexture texture = controller.getTexture();
       setPreviewTexture(texture);
       if (texture instanceof HomeTexture) {
-        this.angleSpinner.setValue(Math.round(Math.toDegrees(texture.getAngle())));
+        this.angleSpinner.setValue(Math.toDegrees(texture.getAngle()));
         this.scaleSpinner.setValue(texture.getScale() * 100);
       }
       Insets insets = border.getBorderInsets(this.texturePreviewComponent);

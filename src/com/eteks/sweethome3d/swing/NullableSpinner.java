@@ -19,7 +19,9 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.text.DecimalFormat;
 import java.text.Format;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -46,10 +48,7 @@ public class NullableSpinner extends AutoCommitSpinner {
    * Creates a nullable spinner from <code>model</code>. 
    */
   public NullableSpinner(NullableSpinnerNumberModel model) {
-    super(model, 
-          model instanceof NullableSpinnerLengthModel 
-             ? ((NullableSpinnerLengthModel)model).getLengthUnit().getFormat()  
-             : null);
+    super(model, model.getFormat());
     final JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
     final JFormattedTextField.AbstractFormatter defaultFormatter = textField.getFormatter();
     // Change formatted text field formatter to enable the edition of empty values
@@ -315,34 +314,77 @@ public class NullableSpinner extends AutoCommitSpinner {
         setValue(getMinimum());
       }
     }
+
+    /**
+     * Returns the format used by this model.
+     */
+    Format getFormat() {
+      return NumberFormat.getNumberInstance();
+    }
   }
   
   /**
    * A nullable spinner number model that will reset to minimum when maximum is reached. 
    */
   public static class NullableSpinnerModuloNumberModel extends NullableSpinnerNumberModel {
+    private Class numberClass;
+    
     public NullableSpinnerModuloNumberModel(int value, int minimum, int maximum, int stepSize) {
       super(value, minimum, maximum, stepSize);
+      this.numberClass = int.class;
+    }
+    
+    public NullableSpinnerModuloNumberModel(float value, float minimum, float maximum, float stepSize) {
+      super(value, minimum, maximum, stepSize);
+      this.numberClass = float.class;
     }
     
     @Override
     public Object getNextValue() {
-      if (getValue() == null
-          || getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
-        return ((Number)super.getNextValue()).intValue();
+      if (this.numberClass == int.class) {
+        if (getValue() == null
+            || getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
+          return ((Number)super.getNextValue()).intValue();
+        } else {
+          return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
+        }
       } else {
-        return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
+        if (getValue() == null
+            || getNumber().floatValue() + getStepSize().floatValue() < ((Number)getMaximum()).floatValue()) {
+          return ((Number)super.getNextValue()).floatValue();
+        } else {
+          return getNumber().floatValue() + getStepSize().floatValue() - ((Number)getMaximum()).floatValue() + ((Number)getMinimum()).floatValue();
+        }
       }
     }
     
     @Override
     public Object getPreviousValue() {
-      if (getValue() == null
-          || getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
-        return ((Number)super.getPreviousValue()).intValue();
+      if (this.numberClass == int.class) {
+        if (getValue() == null
+            || getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
+          return ((Number)super.getPreviousValue()).intValue();
+        } else {
+          return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
+        }
       } else {
-        return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
+        if (getValue() == null
+            || getNumber().floatValue() - getStepSize().floatValue() >= ((Number)getMinimum()).floatValue()) {
+          return ((Number)super.getPreviousValue()).floatValue();
+        } else {
+          return getNumber().floatValue() - getStepSize().floatValue() - ((Number)getMinimum()).floatValue() + ((Number)getMaximum()).floatValue();
+        }
       }
+    }
+
+    /**
+     * Returns the format used by this model.
+     */
+    @Override
+    Format getFormat() {
+      return this.numberClass == int.class 
+          ? NumberFormat.getIntegerInstance()
+          : new DecimalFormat("0.##");
     }
   }
   
@@ -396,10 +438,11 @@ public class NullableSpinner extends AutoCommitSpinner {
     }
     
     /**
-     * Returns the length unit used by this model.
+     * Returns the format used by this model.
      */
-    private LengthUnit getLengthUnit() {
-      return this.preferences.getLengthUnit();
+    @Override
+    Format getFormat() {
+      return this.preferences.getLengthUnit().getFormat();
     }
   }
 }
