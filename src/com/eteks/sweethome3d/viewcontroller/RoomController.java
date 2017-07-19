@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.BasicStroke;
-import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -663,9 +661,7 @@ public class RoomController implements Controller {
    * intersects room area.
    */
   private boolean isRoomItersectingWallSide(float [][] wallPoints, int wallSide, Area roomArea) {
-    BasicStroke lineStroke = new BasicStroke(2);
-    Shape wallSideShape = getWallSideShape(wallPoints, wallSide);
-    Area wallSideTestArea = new Area(lineStroke.createStrokedShape(wallSideShape));
+    Area wallSideTestArea = getWallSideArea(wallPoints, wallSide);
     float wallSideTestAreaSurface = getSurface(wallSideTestArea);
     wallSideTestArea.intersect(roomArea);
     if (!wallSideTestArea.isEmpty()) {
@@ -679,20 +675,41 @@ public class RoomController implements Controller {
   }
 
   /**
-   * Returns the shape of the side of the given <code>wall</code>. 
+   * Returns the area of the side of the given <code>wall</code>. 
    */
-  private Shape getWallSideShape(float [][] wallPoints, int wallSide) {
+  private Area getWallSideArea(float [][] wallPoints, int wallSide) {
+    final float thickness = 2f;
+    // Build an area of the given thickness using walls instances
     if (wallPoints.length == 4) {
       if (wallSide == WallSide.LEFT_SIDE) {
-        return new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1]);
+        return new Area(getPath(new Wall(
+            wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], thickness, 0).getPoints(), true));
       } else {
-        return new Line2D.Float(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1]);
+        return new Area(getPath(new Wall(
+            wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], thickness, 0).getPoints(), true));
       }
     } else {
       float [][] wallSidePoints = new float [wallPoints.length / 2][];
       System.arraycopy(wallPoints, wallSide == WallSide.LEFT_SIDE ? 0 : wallSidePoints.length, 
           wallSidePoints, 0, wallSidePoints.length);
-      return getPath(wallSidePoints, false);
+      Wall [] wallSideWalls = new Wall [wallSidePoints.length - 1];
+      for (int i = 0; i < wallSideWalls.length; i++) {
+        wallSideWalls [i] = new Wall(wallSidePoints [i][0], wallSidePoints [i][1], wallSidePoints [i + 1][0], wallSidePoints [i + 1][1], thickness, 0);
+        if (i > 0) {
+          wallSideWalls [i].setWallAtStart(wallSideWalls [i - 1]);
+          wallSideWalls [i - 1].setWallAtEnd(wallSideWalls [i]);
+        }
+      }
+      wallSidePoints = new float [wallPoints.length][];
+      float [][] wallSideWallPoints = null;
+      for (int i = 0; i < wallSideWalls.length; i++) {
+        wallSideWallPoints = wallSideWalls [i].getPoints();
+        wallSidePoints [i] = wallSideWallPoints [0];
+        wallSidePoints [wallSidePoints.length - i - 1] = wallSideWallPoints [3];
+      }
+      wallSidePoints [wallSidePoints.length / 2 - 1] = wallSideWallPoints [1];
+      wallSidePoints [wallSidePoints.length / 2] = wallSideWallPoints [2];
+      return new Area(getPath(wallSidePoints, true));
     }
   }
   
