@@ -1031,11 +1031,13 @@ public class FileUserPreferences extends UserPreferences {
           preferences.putBoolean(FURNITURE_DOOR_OR_WINDOW + i, piece.isDoorOrWindow());
           if (piece.getStaircaseCutOutShape() != null) {
             preferences.put(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i, piece.getStaircaseCutOutShape());
-          }
-          if (piece.getColor() == null) {
-            preferences.remove(FURNITURE_COLOR + i);
           } else {
+            preferences.remove(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i);
+          }
+          if (piece.getColor() != null) {
             preferences.put(FURNITURE_COLOR + i, String.valueOf(piece.getColor()));
+          } else {
+            preferences.remove(FURNITURE_COLOR + i);
           }
           float [][] modelRotation = piece.getModelRotation();
           preferences.put(FURNITURE_MODEL_ROTATION + i, 
@@ -1043,9 +1045,15 @@ public class FileUserPreferences extends UserPreferences {
               + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
               + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]));
           preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown());
-          preferences.putLong(FURNITURE_MODEL_SIZE + i, piece.getModelSize());
+          if (piece.getModelSize() != null) {
+            preferences.putLong(FURNITURE_MODEL_SIZE + i, piece.getModelSize());
+          } else {
+            preferences.remove(FURNITURE_MODEL_SIZE + i);
+          }
           if (piece.getCreator() != null) {
             preferences.put(FURNITURE_CREATOR + i, piece.getCreator());
+          } else {
+            preferences.remove(FURNITURE_CREATOR + i);
           }
           preferences.putFloat(FURNITURE_ICON_YAW + i, piece.getIconYaw());
           preferences.putBoolean(FURNITURE_PROPORTIONAL + i, piece.isProportional());
