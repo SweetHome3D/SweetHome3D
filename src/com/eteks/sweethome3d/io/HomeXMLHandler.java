@@ -1216,13 +1216,15 @@ public class HomeXMLHandler extends DefaultHandler {
       if (angle != null) {
         piece.setAngle(angle);
       }
-      Float pitch = parseOptionalFloat(attributes, "pitch");
-      if (pitch != null) {
-        piece.setPitch(pitch);
-      }
-      Float roll = parseOptionalFloat(attributes, "roll");
-      if (roll != null) {
-        piece.setRoll(roll);
+      if (piece.isHorizontallyRotatable()) {
+        Float pitch = parseOptionalFloat(attributes, "pitch");
+        if (pitch != null) {
+          piece.setPitch(pitch);
+        }
+        Float roll = parseOptionalFloat(attributes, "roll");
+        if (roll != null) {
+          piece.setRoll(roll);
+        }
       }
       Float widthInPlan = parseOptionalFloat(attributes, "widthInPlan");
       if (widthInPlan != null) {

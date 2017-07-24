@@ -547,6 +547,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   
   /**
    * Returns <code>null</code>.
+   * @since 5.5
    */
   @Override
   public Long getModelSize() {
@@ -563,12 +564,31 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   
   /**
    * Returns <code>true</code>.
+   * @since 5.5
    */
   @Override
   public boolean isModelCenteredAtOrigin() {
     return true;
   }
 
+  /**
+   * Returns 0.
+   * @since 5.5
+   */
+  @Override
+  public float getPitch() {
+    return 0;
+  }
+  
+  /**
+   * Returns 0.
+   * @since 5.5
+   */
+  @Override
+  public float getRoll() {
+    return 0;
+  }
+  
   /**
    * Returns <code>null</code>.
    * @since 3.5

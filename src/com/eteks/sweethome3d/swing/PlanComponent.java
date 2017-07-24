@@ -4246,7 +4246,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (rollIndicator != null) {
           g2D.draw(rollIndicator);
         }
-      } else if (piece.isResizable()) {
+      } else if (piece.isResizable()
+                 && !piece.isHorizontallyRotated()) {
         Shape heightIndicator = getIndicator(piece, IndicatorType.RESIZE_HEIGHT);
         if (heightIndicator != null) {
           g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
