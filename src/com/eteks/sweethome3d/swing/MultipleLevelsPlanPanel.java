@@ -74,6 +74,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.TextStyle;
@@ -666,6 +667,13 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
     JViewport viewport = this.planScrollPane.getViewport();
     Point point = SwingUtilities.convertPoint(this, x, y, viewport);
     return viewport.contains(point);
+  }
+
+  /**
+   * Returns the size of the given piece of furniture in the horizontal plan.
+   */
+  public float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece) {
+    return this.planComponent.getPieceOfFurnitureSizeInPlan(piece);
   }
 
   /**

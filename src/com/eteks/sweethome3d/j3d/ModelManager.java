@@ -151,6 +151,8 @@ public class ModelManager {
   private Map<Content, BranchGroup> loadedModelNodes;
   // Map storing model nodes being loaded
   private Map<Content, List<ModelObserver>> loadingModelObservers;
+  // Map storing the bounds of transformed model nodes
+  private Map<Content, Map<Transform3D, BoundingBox>> transformedModelNodeBounds;
   // Executor used to load models
   private ExecutorService           modelsLoader;
   // List of additional loader classes
@@ -162,6 +164,7 @@ public class ModelManager {
     // This class is a singleton
     this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
+    this.transformedModelNodeBounds = new WeakHashMap<Content, Map<Transform3D, BoundingBox>>();
     this.parsedShapes = new WeakHashMap<String, Shape>();
     // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
@@ -322,29 +325,61 @@ public class ModelManager {
   }
 
   private void computeBounds(Node node, BoundingBox bounds, 
-                             Transform3D parentTransformations, boolean transformShapeGeometry) {
+                             Transform3D parentTransformation, boolean transformShapeGeometry) {
     if (node instanceof Group) {
+      Map<Transform3D, BoundingBox> modelBounds = null;
+      BoundingBox transformationModelBounds = null; 
       if (node instanceof TransformGroup) {
-        parentTransformations = new Transform3D(parentTransformations);
+        parentTransformation = new Transform3D(parentTransformation);
         Transform3D transform = new Transform3D();
         ((TransformGroup)node).getTransform(transform);
-        parentTransformations.mul(transform);
+        parentTransformation.mul(transform);
+      } else if (transformShapeGeometry 
+                 && node instanceof BranchGroup
+                 && node.getUserData() instanceof Content) {
+        // Check if it's the node of a model 
+        modelBounds = transformedModelNodeBounds.get(node.getUserData());
+        if (modelBounds != null) {
+          // Retrieve the bounds that may have been previously computed for the requested transformation 
+          transformationModelBounds = modelBounds.get(parentTransformation);
+        }
       }
-      // Compute the bounds of all the node children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren();
-      while (enumeration.hasMoreElements ()) {
-        computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations, transformShapeGeometry);
+      
+      if (transformationModelBounds == null) {
+        BoundingBox combinedBounds;
+        if (modelBounds != null) {
+          combinedBounds = new BoundingBox(
+              new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
+              new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+         } else {
+           combinedBounds = bounds;
+         }
+        
+        // Compute the bounds of all the node children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasMoreElements ()) {
+          computeBounds((Node)enumeration.nextElement(), combinedBounds, parentTransformation, transformShapeGeometry);
+        }
+        
+        if (modelBounds != null) {
+          // Store the computed bounds of the model
+          modelBounds.put(parentTransformation, transformationModelBounds = combinedBounds);
+        }
+      }
+      
+      if (transformationModelBounds != null) {
+        bounds.combine(transformationModelBounds);
       }
     } else if (node instanceof Link) {
-      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations, transformShapeGeometry);
+      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformation, transformShapeGeometry);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Bounds shapeBounds;
       if (transformShapeGeometry) {
-        shapeBounds = computeTransformedGeometryBounds(shape, parentTransformations);
+        shapeBounds = computeTransformedGeometryBounds(shape, parentTransformation);
       } else {
         shapeBounds = shape.getBounds();
-        shapeBounds.transform(parentTransformations);
+        shapeBounds.transform(parentTransformation);
       }
       bounds.combine(shapeBounds);
     }
@@ -421,11 +456,26 @@ public class ModelManager {
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
    * @param modelRotation the rotation applied to the model before normalization 
-   *                 or <code>null</code> if no transformation should be applied to node.
+   *                 or <code>null</code> if no transformation should be applied to node
    * @param width    the width of the box
    */
   public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
-    return new TransformGroup(getNormalizedTransform(node, modelRotation, width));
+    return new TransformGroup(getNormalizedTransform(node, modelRotation, width, true));
+  }
+  
+  /**
+   * Returns a transform group that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model before normalization 
+   *                 or <code>null</code> if no transformation should be applied to node
+   * @param width    the width of the box
+   * @param modelCenteredAtOrigin if <code>true</code> center will be moved to match the origin 
+   *                 after the model rotation is applied
+   */
+  public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width, 
+                                                    boolean modelCenteredAtOrigin) {
+    return new TransformGroup(getNormalizedTransform(node, modelRotation, width, modelCenteredAtOrigin));
   }
   
   /**
@@ -433,10 +483,25 @@ public class ModelManager {
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
    * @param modelRotation the rotation applied to the model before normalization 
-   *                 or <code>null</code> if no transformation should be applied to node.
+   *                 or <code>null</code> if no transformation should be applied to node
    * @param width    the width of the box
    */
   public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width) {
+    return getNormalizedTransform(node, modelRotation, width, true);
+  }
+  
+ /**
+   * Returns a transform that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model before normalization 
+   *                 or <code>null</code> if no transformation should be applied to node
+   * @param width    the width of the box
+   * @param modelCenteredAtOrigin if <code>true</code> center will be moved to match the origin 
+   *                 after the model rotation is applied
+   */
+  private Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width, 
+                                             boolean modelCenteredAtOrigin) {
     // Get model bounding box size 
     BoundingBox modelBounds = getBounds(node);
     Point3d lower = new Point3d();
@@ -453,11 +518,20 @@ public class ModelManager {
     Transform3D modelTransform;
     if (modelRotation != null) {
       // Get model bounding box size with model rotation
-      modelTransform = getRotationTransformation(modelRotation);
-      modelTransform.mul(translation);
-      BoundingBox rotatedModelBounds = getBounds(node, modelTransform);
+      Transform3D rotationTransform = getRotationTransformation(modelRotation);
+      rotationTransform.mul(translation);
+      BoundingBox rotatedModelBounds = getBounds(node, rotationTransform);
       rotatedModelBounds.getLower(lower);
       rotatedModelBounds.getUpper(upper);
+      modelTransform = new Transform3D();
+      if (modelCenteredAtOrigin) {
+        // Move model back to its new center
+        modelTransform.setTranslation(
+            new Vector3d(-(lower.x + (upper.x - lower.x) / 2), 
+                -(lower.y + (upper.y - lower.y) / 2), 
+                -(lower.z + (upper.z - lower.z) / 2)));
+      }
+      modelTransform.mul(rotationTransform);
     } else {
       modelTransform = translation;
     }
@@ -487,8 +561,11 @@ public class ModelManager {
   /**
    * Returns a transformation able to place in the scene the normalized model 
    * of the given <code>piece</code>.
+   * @param piece a piece of furniture
+   * @param normalizedModelNode the node matching the normalized model of the piece. 
+   *            This parameter is required only if the piece is rotated horizontally.  
    */
-  Transform3D getPieceOFFurnitureNormalizedModelTransformation(HomePieceOfFurniture piece) {
+  Transform3D getPieceOfFurnitureNormalizedModelTransformation(HomePieceOfFurniture piece, Node normalizedModelNode) {
     // Set piece size
     Transform3D scale = new Transform3D();
     float pieceWidth = piece.getWidth();
@@ -497,18 +574,50 @@ public class ModelManager {
       pieceWidth *= -1;
     }
     scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
-    // Change its angle around y axis
-    Transform3D orientation = new Transform3D();
-    orientation.rotY(-piece.getAngle());
-    orientation.mul(scale);
+    
+    Transform3D horizontalRotationAndScale = new Transform3D();
+    // Change its angle around horizontal axis
+    if (piece.getPitch() != 0) {
+      horizontalRotationAndScale.rotX(-piece.getPitch());
+    } else {
+      horizontalRotationAndScale.rotZ(-piece.getRoll());
+    }
+    horizontalRotationAndScale.mul(scale);
+    
+    Point3f centerLocation;
+    if (piece.isHorizontallyRotated() && normalizedModelNode != null) {
+      // Compute center location when the piece is rotated around an horizontal axis
+      BoundingBox rotatedModelBounds = getBounds(normalizedModelNode, horizontalRotationAndScale);
+      Point3d lower = new Point3d();
+      rotatedModelBounds.getLower(lower);
+      Point3d upper = new Point3d();
+      rotatedModelBounds.getUpper(upper);
+      centerLocation = new Point3f(
+          -(float)lower.x / Math.max(getMinimumSize(), (float)(upper.x - lower.x)),
+          -(float)lower.y / Math.max(getMinimumSize(), (float)(upper.y - lower.y)),
+          -(float)lower.z / Math.max(getMinimumSize(), (float)(upper.z - lower.z)));
+    } else {
+      centerLocation = new Point3f(0.5f, 0.5f, 0.5f);
+    }
+
+    // Change its angle around vertical axis
+    Transform3D verticalOrientation = new Transform3D();
+    verticalOrientation.rotY(-piece.getAngle());
+    verticalOrientation.mul(horizontalRotationAndScale);
+    
     // Translate it to its location
     Transform3D pieceTransform = new Transform3D();
-    float z = piece.getElevation() + piece.getHeight() / 2;
+    float levelElevation;
     if (piece.getLevel() != null) {
-      z += piece.getLevel().getElevation();
+      levelElevation = piece.getLevel().getElevation();
+    } else {
+      levelElevation = 0;
     }
-    pieceTransform.setTranslation(new Vector3f(piece.getX(), z, piece.getY()));      
-    pieceTransform.mul(orientation);
+    pieceTransform.setTranslation(new Vector3f(
+        piece.getX() + (centerLocation.x - 0.5f) * piece.getWidthInPlan(), 
+        piece.getElevation() + centerLocation.y * piece.getHeightInPlan() + levelElevation,
+        piece.getY() + (centerLocation.z - 0.5f) * piece.getDepthInPlan()));      
+    pieceTransform.mul(verticalOrientation);
     return pieceTransform;
   }
 
@@ -553,6 +662,7 @@ public class ModelManager {
         synchronized (this.loadedModelNodes) {
           // Store in cache model node for future copies 
           this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
+          this.transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
         }
         modelObserver.modelUpdated((BranchGroup)cloneNode(modelRoot));
       } catch (IOException ex) {
@@ -583,6 +693,7 @@ public class ModelManager {
               synchronized (loadedModelNodes) {
                 // Update loaded models cache and notify registered observers
                 loadedModelNodes.put(content, loadedModel);
+                transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
@@ -789,6 +900,7 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
         checkAppearancesName(modelNode);
+        modelNode.setUserData(content);
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;

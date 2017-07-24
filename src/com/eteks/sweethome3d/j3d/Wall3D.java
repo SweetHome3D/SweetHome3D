@@ -986,7 +986,7 @@ public class Wall3D extends Object3DBranch {
       float depthTranslation = frontOrBackSide * (0.5f - position * frontSideToWallDistance / doorOrWindowDepth);
       
       // Compute surrounding part transformation matrix
-      Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOFFurnitureNormalizedModelTransformation(doorOrWindow);       
+      Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOfFurnitureNormalizedModelTransformation(doorOrWindow, null);       
       Transform3D frontAreaTranslation = new Transform3D();
       frontAreaTranslation.setTranslation(new Vector3f(0, 0, depthTranslation));
       frontAreaTransform.mul(frontAreaTranslation);

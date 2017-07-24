@@ -305,7 +305,7 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, 
         icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, lightSources, 
-        staircaseCutOutShape, modelRotation, backFaceShown, null, creator, resizable, deformable, texturable, 
+        staircaseCutOutShape, modelRotation, backFaceShown, null, creator, resizable, deformable, texturable, true,
         price, valueAddedTaxPercentage, currency);
   }
          
@@ -338,7 +338,9 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
    * @param resizable if <code>true</code>, the size of the new light may be edited
    * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
    *            change independently from each other
-   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture
+   * @param horizontallyRotatable if <code>false</code> this piece 
+   *            should not rotate around an horizontal axis
    * @param price the price of the new light, or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new light or <code>null</code> 
@@ -351,11 +353,12 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                       float width, float depth, float height, float elevation, float dropOnTopElevation, 
                       boolean movable, LightSource [] lightSources, String staircaseCutOutShape, 
                       float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
-                      boolean resizable, boolean deformable, boolean texturable, 
+                      boolean resizable, boolean deformable, boolean texturable, boolean horizontallyRotatable,
                       BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     super(id, name, description, information, tags, creationDate, grade, 
         icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-        staircaseCutOutShape, modelRotation, backFaceShown, modelSize, creator, resizable, deformable, texturable, 
+        staircaseCutOutShape, modelRotation, backFaceShown, modelSize, creator, 
+        resizable, deformable, texturable, horizontallyRotatable, 
         price, valueAddedTaxPercentage, currency);
     this.lightSources = lightSources;
   }

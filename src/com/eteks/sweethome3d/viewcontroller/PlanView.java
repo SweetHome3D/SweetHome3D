@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.TextStyle;
 
@@ -179,4 +180,9 @@ public interface PlanView extends TransferableView, ExportableView {
    * Returns <code>true</code> if this plan accepts to import dragged items at the given coordinates.
    */
   public abstract boolean canImportDraggedItems(List<Selectable> items, int x, int y);
+
+  /**
+   * Returns the size of the given piece of furniture in the horizontal plan.
+   */
+  public abstract float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece);
 }

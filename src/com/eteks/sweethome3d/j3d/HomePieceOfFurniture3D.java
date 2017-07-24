@@ -163,16 +163,18 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           public void modelUpdated(BranchGroup modelRoot) {
             float [][] modelRotation = piece.getModelRotation();
             // Add piece model scene to a normalized transform group
-            TransformGroup modelTransformGroup = 
-                ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
+            TransformGroup modelTransformGroup = ModelManager.getInstance().
+                getNormalizedTransformGroup(modelRoot, modelRotation, 1, piece.isModelCenteredAtOrigin());
             
             cloneHomeTextures(modelRoot);
-            updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
+            updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, 
+                ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
           
           public void modelError(Exception ex) {
             // In case of problem use a default red box
-            updatePieceOfFurnitureModelNode(getModelBox(Color.RED), new TransformGroup(), ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
+            updatePieceOfFurnitureModelNode(getModelBox(Color.RED), new TransformGroup(), 
+                ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
           
           /**
@@ -217,10 +219,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * its location, its angle and its size.
    */
   private void updatePieceOfFurnitureTransform() {
-    Transform3D pieceTransform = ModelManager.getInstance().
-        getPieceOFFurnitureNormalizedModelTransformation((HomePieceOfFurniture)getUserData());
+    TransformGroup transformGroup = (TransformGroup)getChild(0);
+    Transform3D pieceTransform = ModelManager.getInstance().getPieceOfFurnitureNormalizedModelTransformation(
+        (HomePieceOfFurniture)getUserData(), transformGroup.getChild(0));
     // Change model transformation      
-    ((TransformGroup)getChild(0)).setTransform(pieceTransform);
+    transformGroup.setTransform(pieceTransform);
   }
 
   /**
@@ -408,8 +411,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     transformGroup.removeAllChildren();
     // Add model branch to live scene
     transformGroup.addChild(modelBranch);
-
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    if (piece.isHorizontallyRotated()) {
+      // Update piece transformation to ensure its center is correctly placed
+      updatePieceOfFurnitureTransform();
+    }
+
     if (piece instanceof HomeLight) {
       BranchGroup lightBranch = new BranchGroup();
       lightBranch.setCapability(ALLOW_CHILDREN_READ);

@@ -167,8 +167,9 @@ import org.freehep.graphicsio.svg.SVGGraphics2D;
 import org.freehep.util.UserProperties;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
-import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.j3d.Object3DBranch;
+import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
@@ -199,6 +200,7 @@ import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -237,6 +239,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public static final IndicatorType MOVE_TEXT     = new IndicatorType("MOVE_TEXT");
     public static final IndicatorType ROTATE_TEXT   = new IndicatorType("ROTATE_TEXT");
     public static final IndicatorType ROTATE_PITCH  = new IndicatorType("ROTATE_PITCH");
+    public static final IndicatorType ROTATE_ROLL   = new IndicatorType("ROTATE_ROLL");
 
     private final String name;
     
@@ -258,6 +261,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   private final Home            home;
   private final UserPreferences preferences;
+  private final Object3DFactory object3dFactory;
   private float                 scale = 0.5f * SwingTools.getResolutionScale();
   private boolean               selectedItemsOutlinePainted = true;
   private boolean               backgroundPainted = true;
@@ -300,6 +304,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   private Rectangle2D                       planBoundsCache;  
   private boolean                           planBoundsCacheValid = false;  
+  private Rectangle2D                       invalidPlanBounds;
   private BufferedImage                     backgroundImageCache;
   private Map<TextureImage, BufferedImage>  patternImagesCache;
   private List<Wall>                        otherLevelsWallsCache;
@@ -313,10 +318,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<HomeTexture, BufferedImage>   floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
+
   private static ExecutorService            backgroundImageLoader;
   
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
+  private static final GeneralPath FURNITURE_PITCH_ROTATION_INDICATOR;
+  private static final Shape       FURNITURE_ROLL_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
   private static final GeneralPath ELEVATION_INDICATOR;
   private static final Shape       ELEVATION_POINT_INDICATOR;
@@ -328,7 +336,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       WALL_POINT;
   private static final GeneralPath WALL_AND_LINE_RESIZE_INDICATOR;
   private static final Shape       CAMERA_YAW_ROTATION_INDICATOR;
-  private static final GeneralPath CAMERA_PITCH_ROTATION_INDICATOR;
+  private static final Shape       CAMERA_PITCH_ROTATION_INDICATOR;
   private static final GeneralPath CAMERA_ELEVATION_INDICATOR;
   private static final Shape       CAMERA_BODY;
   private static final Shape       CAMERA_HEAD;  
@@ -352,6 +360,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final BufferedImage ERROR_TEXTURE_IMAGE;
   private static final BufferedImage WAIT_TEXTURE_IMAGE;
 
+
   static {
     POINT_INDICATOR = new Ellipse2D.Float(-1.5f, -1.5f, 3, 3);
     
@@ -363,7 +372,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_ROTATION_INDICATOR.moveTo(2.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(4f, -8.3f);
+
+    // Create a path used as pitch rotation indicator 
+    // at bottom left of a piece of furniture rotated around pitch
+    FURNITURE_PITCH_ROTATION_INDICATOR = new GeneralPath();
+    FURNITURE_PITCH_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
+    FURNITURE_PITCH_ROTATION_INDICATOR.moveTo(-4.5f, 0);
+    FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-5.2f, 0);
+    FURNITURE_PITCH_ROTATION_INDICATOR.moveTo(-9f, 0);
+    FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-10, 0);
+    FURNITURE_PITCH_ROTATION_INDICATOR.append(new Arc2D.Float(-12, -8, 5, 16, 200, 320, Arc2D.OPEN), false);
+    FURNITURE_PITCH_ROTATION_INDICATOR.moveTo(-10f, -4.5f);
+    FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-12.3f, -2f);
+    FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-12.8f, -5.8f);
     
+    // Create a path used as pitch rotation indicator 
+    // at bottom left of a piece of furniture rotated around roll axis
+    AffineTransform transform = AffineTransform.getRotateInstance(-Math.PI / 2);
+    FURNITURE_ROLL_ROTATION_INDICATOR = FURNITURE_PITCH_ROTATION_INDICATOR.createTransformedShape(transform);
+
     ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
     
     // Create a path that draws a line with one arrow as an elevation indicator
@@ -451,20 +478,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     WALL_AND_LINE_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
     
     // Create a path used as yaw rotation indicator for the camera
-    AffineTransform transform = AffineTransform.getRotateInstance(-Math.PI / 4);
+    transform = AffineTransform.getRotateInstance(-Math.PI / 4);
     CAMERA_YAW_ROTATION_INDICATOR = FURNITURE_ROTATION_INDICATOR.createTransformedShape(transform);
     
     // Create a path used as pitch rotation indicator for the camera
-    CAMERA_PITCH_ROTATION_INDICATOR = new GeneralPath();
-    CAMERA_PITCH_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
-    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(4.5f, 0);
-    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(5.2f, 0);
-    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(9f, 0);
-    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(10, 0);
-    CAMERA_PITCH_ROTATION_INDICATOR.append(new Arc2D.Float(7, -8, 5, 16, 20, 320, Arc2D.OPEN), false);
-    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(10f, 4.5f);
-    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.3f, 2f);
-    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.8f, 5.8f);
+    transform = AffineTransform.getRotateInstance(Math.PI);
+    CAMERA_PITCH_ROTATION_INDICATOR = FURNITURE_PITCH_ROTATION_INDICATOR.createTransformedShape(transform);
     
     // Create a path that draws a line with one arrow as an elevation indicator
     // at the back of the camera
@@ -590,15 +609,37 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g.drawLine(0, 0, 0, 0);
     g.dispose();
   }
-
+  
   /**
    * Creates a new plan that displays <code>home</code>.
+   * @param home the home to display
+   * @param preferences user preferences to retrieve used unit, grid visibility...
+   * @param object3dFactory a factory able to create 3D objects from <code>home</code> furniture.
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
+   * @param controller the optional controller used to manage home items modification
    */
   public PlanComponent(Home home, 
                        UserPreferences preferences,
                        PlanController controller) {
+    this(home, preferences, null, controller);
+  }
+  
+  /**
+   * Creates a new plan that displays <code>home</code>.
+   * @param home the home to display
+   * @param preferences user preferences to retrieve used unit, grid visibility...
+   * @param controller the optional controller used to manage home items modification
+   */
+  public PlanComponent(Home home, 
+                       UserPreferences preferences,
+                       Object3DFactory  object3dFactory,
+                       PlanController controller) {
     this.home = home;
     this.preferences = preferences;
+    this.object3dFactory = object3dFactory == null && !Boolean.getBoolean("com.eteks.sweethome3d.no3D")
+        ? new Object3DBranchFactory()
+        : object3dFactory;
     // Set JComponent default properties
     setOpaque(true);
     // Add listeners
@@ -642,23 +683,36 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                  final PlanController controller) {
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
+        public void propertyChange(final PropertyChangeEvent ev) {
           if (furnitureTopViewIconsCache != null
+              && (HomePieceOfFurniture.Property.ROLL.name().equals(ev.getPropertyName())
+                  || HomePieceOfFurniture.Property.PITCH.name().equals(ev.getPropertyName())
+                  || (HomePieceOfFurniture.Property.WIDTH_IN_PLAN.name().equals(ev.getPropertyName())
+                      || HomePieceOfFurniture.Property.DEPTH_IN_PLAN.name().equals(ev.getPropertyName())
+                      || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName()))
+                     && (((HomePieceOfFurniture)ev.getSource()).isHorizontallyRotated()
+                         || ((HomePieceOfFurniture)ev.getSource()).getTexture() != null))) {
+            if (controller == null || !controller.isModificationState()) {
+              invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
+            } else {
+              // Delay computing of new top view icon
+              controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
+                  public void propertyChange(PropertyChangeEvent ev2) {
+                    invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
+                    controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
+                  }
+                });
+            }
+            revalidate();
+          } else if (furnitureTopViewIconsCache != null
               && (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(ev.getPropertyName())
-                  || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName())
-                  || (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
-                      || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
-                      || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName()))
-                     && ((HomePieceOfFurniture)ev.getSource()).getTexture() != null)) {
-            for (HomePieceOfFurniture piece : getFurnitureWithoutGroups((HomePieceOfFurniture)ev.getSource())) {
-              furnitureTopViewIconsCache.remove(piece);
-            }
-            repaint();
+                  || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName()))) {
+            invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
           } else if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
                      || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName())
-                     || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+                     || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
             sortedLevelFurniture = null;
             repaint();
           } else if (doorOrWindowWallThicknessAreasCache != null
@@ -670,7 +724,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                          || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))) {
             doorOrWindowWallThicknessAreasCache.remove(ev.getSource());
-            repaint();
+            revalidate();
           } else {
             revalidate();
           }
@@ -979,6 +1033,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * Remove the top view icon of the given piece from cache and repaints this plan.
+   */
+  private void invalidateFurnitureTopViewIcon(HomePieceOfFurniture updatedPiece) {
+    for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(updatedPiece)) {
+      furnitureTopViewIconsCache.remove(piece);
+    }
+    repaint();
+  }
+
+  /**
    * Returns all the pieces depending on the given <code>piece</code> that are not groups.  
    */
   private List<HomePieceOfFurniture> getFurnitureWithoutGroups(HomePieceOfFurniture piece) {
@@ -1058,46 +1122,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   @Override
   public void revalidate() {
-    revalidate(true);
-  }
-  
-  /**
-   * Revalidates this component after invalidating plan bounds cache if <code>invalidatePlanBoundsCache</code> is <code>true</code>
-   * and updates viewport position if this component is displayed in a scrolled pane.
-   */
-  private void revalidate(boolean invalidatePlanBoundsCache) {
-    boolean planBoundsCacheWereValid = this.planBoundsCacheValid;
-    final float planBoundsMinX = (float)getPlanBounds().getMinX();
-    final float planBoundsMinY = (float)getPlanBounds().getMinY();
-    if (invalidatePlanBoundsCache
-        && planBoundsCacheWereValid) {      
-      this.planBoundsCacheValid = false;
-    }
-    
     // Revalidate and repaint
     super.revalidate();
     repaint();
-
-    if (invalidatePlanBoundsCache
-        && getParent() instanceof JViewport) {
-      float planBoundsNewMinX = (float)getPlanBounds().getMinX();
-      float planBoundsNewMinY = (float)getPlanBounds().getMinY();
-      // If plan bounds upper left corner diminished
-      if (planBoundsNewMinX < planBoundsMinX
-          || planBoundsNewMinY < planBoundsMinY) {
-        JViewport parent = (JViewport)getParent();
-        final Point viewPosition = parent.getViewPosition();
-        Dimension extentSize = parent.getExtentSize();
-        Dimension viewSize = parent.getViewSize();
-        // Update view position when scroll bars are visible
-        if (extentSize.width < viewSize.width
-            || extentSize.height < viewSize.height) {
-          int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
-          int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
-          parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
-        }
-      }
-    }
 
     if (this.horizontalRuler != null) {
       this.horizontalRuler.revalidate();
@@ -1107,6 +1134,58 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.verticalRuler.revalidate();
       this.verticalRuler.repaint();
     }
+  }
+  
+  /**
+   * Invalidates this component voiding plan bounds cache if <code>invalidatePlanBoundsCache</code> is <code>true</code>.
+   */
+  private void invalidate(boolean invalidatePlanBoundsCache) {
+    if (isValid()) {
+      if (invalidatePlanBoundsCache) {      
+        boolean planBoundsCacheWereValid = this.planBoundsCacheValid;
+        if (this.invalidPlanBounds == null) {
+          this.invalidPlanBounds = getPlanBounds().getBounds2D();
+        }
+        if (planBoundsCacheWereValid) {
+          this.planBoundsCacheValid = false;
+        }
+      }
+      super.invalidate();
+    }
+  }
+  
+  @Override
+  public void invalidate() {
+    invalidate(true);
+  }
+  
+  /**
+   * Validates this component and updates viewport position if it's displayed in a scrolled pane.
+   */
+  @Override
+  public void validate() {
+    super.validate();
+    if (this.invalidPlanBounds != null
+        && getParent() instanceof JViewport) {
+      float planBoundsNewMinX = (float)getPlanBounds().getMinX();
+      float planBoundsNewMinY = (float)getPlanBounds().getMinY();
+      // If plan bounds upper left corner diminished
+      if (planBoundsNewMinX < this.invalidPlanBounds.getMinX()
+          || planBoundsNewMinY < this.invalidPlanBounds.getMinY()) {
+        JViewport parent = (JViewport)getParent();
+        final Point viewPosition = parent.getViewPosition();
+        Dimension extentSize = parent.getExtentSize();
+        Dimension viewSize = parent.getViewSize();
+        // Update view position when scroll bars are visible
+        if (extentSize.width < viewSize.width
+            || extentSize.height < viewSize.height) {
+          int deltaX = Math.round(((float)this.invalidPlanBounds.getMinX() - planBoundsNewMinX) * getScale());
+          int deltaY = Math.round(((float)this.invalidPlanBounds.getMinY() - planBoundsNewMinY) * getScale());
+          parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+        }
+      }
+    }
+    this.invalidPlanBounds = null;
   }
   
   /**
@@ -3235,7 +3314,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else if (IndicatorType.ROTATE_TEXT.equals(indicatorType)) {
       return TEXT_ANGLE_INDICATOR;
     } else if (IndicatorType.ROTATE_PITCH.equals(indicatorType)) {
-      return CAMERA_PITCH_ROTATION_INDICATOR;
+      if (item instanceof HomePieceOfFurniture) {
+        return FURNITURE_PITCH_ROTATION_INDICATOR;
+      } else if (item instanceof Camera) {
+        return CAMERA_PITCH_ROTATION_INDICATOR;
+      }
+    } else if (IndicatorType.ROTATE_ROLL.equals(indicatorType)) {
+      if (item instanceof HomePieceOfFurniture) {
+        return FURNITURE_ROLL_ROTATION_INDICATOR;
+      } 
     }
     return null;
   }
@@ -3735,6 +3822,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the rectangle of a door or a window.
    */
   private Rectangle2D getDoorOrWindowRectangle(HomeDoorOrWindow doorOrWindow, boolean onlyWallPart) {
+    // Doors and windows can't be rotated along horizontal axes
     float wallThickness = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallThickness() : 1); 
     float wallDistance  = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallDistance()  : 0);
     String cutOutShape = doorOrWindow.getCutOutShape();
@@ -3836,6 +3924,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private GeneralPath getDoorOrWindowSashShape(HomeDoorOrWindow doorOrWindow, 
                                                Sash sash) {
+    // Doors and windows can't be rotated along horizontal axes
     float modelMirroredSign = doorOrWindow.isModelMirrored() ? -1 : 1;
     float xAxis = modelMirroredSign * sash.getXAxis() * doorOrWindow.getWidth();
     float yAxis = sash.getYAxis() * doorOrWindow.getDepth();
@@ -4024,12 +4113,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Translate to piece center
     final Rectangle bounds = pieceShape2D.getBounds();
     g2D.translate(bounds.getCenterX(), bounds.getCenterY());
-    float pieceDepth = piece.getDepth();
+    float pieceDepth = piece.getDepthInPlan();
     if (piece instanceof HomeDoorOrWindow) {
       pieceDepth *= ((HomeDoorOrWindow)piece).getWallThickness(); 
     } 
     // Scale icon to fit in its area
-    float minDimension = Math.min(piece.getWidth(), pieceDepth);
+    float minDimension = Math.min(piece.getWidthInPlan(), pieceDepth);
     float iconScale = Math.min(1 / planScale, minDimension / icon.getIconHeight());
     // If piece model is mirrored, inverse x scale
     if (piece.isModelMirrored()) {
@@ -4064,7 +4153,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (piece.getPlanIcon() != null) {
         icon = new PieceOfFurniturePlanIcon(piece, waitingComponent);
       } else {
-        icon = new PieceOfFurnitureModelIcon(piece, waitingComponent, this.preferences.getFurnitureModelIconSize());
+        icon = new PieceOfFurnitureModelIcon(piece, this.object3dFactory, waitingComponent, this.preferences.getFurnitureModelIconSize());
       }
       this.furnitureTopViewIconsCache.put(piece, icon);
     }
@@ -4080,13 +4169,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       final Rectangle bounds = pieceShape2D.getBounds();
       g2D.translate(bounds.getCenterX(), bounds.getCenterY());
       g2D.rotate(piece.getAngle());
-      float pieceDepth = piece.getDepth();
+      float pieceDepth = piece.getDepthInPlan();
       // Scale icon to fit in its area
       if (piece.isModelMirrored()) {
         // If piece model is mirrored, inverse x scale
-        g2D.scale(-piece.getWidth() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
+        g2D.scale(-piece.getWidthInPlan() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
       } else {
-        g2D.scale(piece.getWidth() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
+        g2D.scale(piece.getWidthInPlan() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
       }
       // Paint piece icon
       icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
@@ -4134,33 +4223,42 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setTransform(previousTransform);
       }
       
-      if (piece.isResizable()) {
-        // Draw height indicator at bottom left point of the piece
-        g2D.translate(piecePoints [3][0], piecePoints [3][1]);
-        g2D.scale(scaleInverse, scaleInverse);
-        g2D.rotate(pieceAngle);
-        
-        if (piece instanceof HomeLight) {
-          Shape powerIndicator = getIndicator(piece, IndicatorType.CHANGE_POWER);
-          if (powerIndicator != null) {
-            g2D.draw(LIGHT_POWER_POINT_INDICATOR);
-            // Place power indicator farther but don't rotate it
-            g2D.translate(-7.5f, 7.5f);
-            g2D.rotate(-pieceAngle);
-            g2D.draw(powerIndicator);
-          }
-        } else {
-          Shape heightIndicator = getIndicator(piece, IndicatorType.RESIZE_HEIGHT);
-          if (heightIndicator != null) {
-            g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
-            // Place height indicator farther but don't rotate it
-            g2D.translate(-7.5f, 7.5f);
-            g2D.rotate(-pieceAngle);
-            g2D.draw(heightIndicator);
-          }
+      // Draw light, pitch, roll or height indicator at bottom left point of the piece
+      g2D.translate(piecePoints [3][0], piecePoints [3][1]);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(pieceAngle);
+      if (piece instanceof HomeLight) {
+        Shape powerIndicator = getIndicator(piece, IndicatorType.CHANGE_POWER);
+        if (powerIndicator != null) {
+          g2D.draw(LIGHT_POWER_POINT_INDICATOR);
+          // Place power indicator farther but don't rotate it
+          g2D.translate(-7.5f, 7.5f);
+          g2D.rotate(-pieceAngle);
+          g2D.draw(powerIndicator);
         }
-        g2D.setTransform(previousTransform);
+      } else if (piece.getPitch() != 0) {
+        Shape pitchIndicator = getIndicator(piece, IndicatorType.ROTATE_PITCH);
+        if (pitchIndicator != null) {
+          g2D.draw(pitchIndicator);
+        }
+      } else if (piece.getRoll() != 0) {
+        Shape rollIndicator = getIndicator(piece, IndicatorType.ROTATE_ROLL);
+        if (rollIndicator != null) {
+          g2D.draw(rollIndicator);
+        }
+      } else if (piece.isResizable()) {
+        Shape heightIndicator = getIndicator(piece, IndicatorType.RESIZE_HEIGHT);
+        if (heightIndicator != null) {
+          g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
+          // Place height indicator farther but don't rotate it
+          g2D.translate(-7.5f, 7.5f);
+          g2D.rotate(-pieceAngle);
+          g2D.draw(heightIndicator);
+        }
+      }
+      g2D.setTransform(previousTransform);
         
+      if (piece.isResizable()) {
         Shape resizeIndicator = getIndicator(piece, IndicatorType.RESIZE);
         if (resizeIndicator != null) {
           // Draw resize indicator at top left point of the piece
@@ -5269,7 +5367,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       
       this.scale = scale;
-      revalidate(false);
+      // Revalidate plan without computing again unchanged plan bounds
+      invalidate(false);
+      revalidate();
 
       if (parent instanceof JViewport) {
         Dimension viewSize = parent.getViewSize();
@@ -5731,6 +5831,47 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public boolean canImportDraggedItems(List<Selectable> items, int x, int y) {
     return true;
+  }
+
+  /**
+   * Returns the size of the given piece of furniture in the horizontal plan.
+   */
+  public float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece) {
+    if (piece.getRoll() == 0 && piece.getPitch() == 0
+        || Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+      return new float [] {piece.getWidth(), piece.getDepth(), piece.getHeight()};
+    } else {
+      Transform3D horizontalRotation = new Transform3D();
+      if (piece.getPitch() != 0) {
+        horizontalRotation.rotX(-piece.getPitch());
+      } else {
+        horizontalRotation.rotZ(-piece.getRoll());
+      }
+      // Compute bounds of a piece centered at the origin and rotated around the target horizontal angle
+      piece = piece.clone();
+      piece.setX(0);
+      piece.setY(0);
+      piece.setElevation(-piece.getHeight() / 2);
+      piece.setLevel(null);
+      piece.setAngle(0);
+      piece.setRoll(0);
+      piece.setPitch(0);
+      piece.setWidthInPlan(piece.getWidth());
+      piece.setDepthInPlan(piece.getDepth());
+      piece.setHeightInPlan(piece.getHeight());
+      BoundingBox bounds = ModelManager.getInstance().getBounds(
+          (Object3DBranch)object3dFactory.createObject3D(null, piece, true), horizontalRotation);
+      Point3d lower = new Point3d();
+      bounds.getLower(lower);
+      Point3d upper = new Point3d();
+      bounds.getUpper(upper);
+      float widthInPlan = Math.max(0.001f, (float)(upper.x - lower.x));
+      float depthInPlan = Math.max(0.001f, (float)(upper.z - lower.z));
+      float heightInPlan = Math.max(0.001f, (float)(upper.y - lower.y));
+      return new float [] {widthInPlan, 
+                           depthInPlan, 
+                           heightInPlan};
+    }
   }
 
   // Scrollable implementation
@@ -6224,7 +6365,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
      *            be read immediately in the current thread.
      * @param iconSize the size in pixels of the generated icon 
      */
-    public PieceOfFurnitureModelIcon(final HomePieceOfFurniture piece, 
+    public PieceOfFurnitureModelIcon(final HomePieceOfFurniture piece,
+                                     final Object3DFactory object3dFactory,
                                      final Component waitingComponent,
                                      final int iconSize) {
       super(IconManager.getInstance().getWaitIcon());
@@ -6238,13 +6380,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (normalizedPiece.isResizable()) {
                 normalizedPiece.setModelMirrored(false);
               }
+              final float pieceWidth = normalizedPiece.getWidthInPlan();
+              final float pieceDepth = normalizedPiece.getDepthInPlan();
+              final float pieceHeight = normalizedPiece.getHeightInPlan();
               normalizedPiece.setX(0);
               normalizedPiece.setY(0);
-              normalizedPiece.setElevation(-normalizedPiece.getHeight() / 2);
+              normalizedPiece.setElevation(-pieceHeight / 2);
+              normalizedPiece.setLevel(null);
               normalizedPiece.setAngle(0);
-              final float pieceWidth = normalizedPiece.getWidth();
-              final float pieceDepth = normalizedPiece.getDepth();
-              final float pieceHeight = normalizedPiece.getHeight();
               if (waitingComponent != null) {
                 // Generate icons in an other thread to avoid blocking EDT during offscreen rendering
                 if (iconsCreationExecutor == null) {
@@ -6252,13 +6395,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 }
                 iconsCreationExecutor.execute(new Runnable() {
                     public void run() {
-                      setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
+                      setIcon(createIcon((Object3DBranch)object3dFactory.createObject3D(null, normalizedPiece, true),
                           pieceWidth, pieceDepth, pieceHeight, iconSize));
                       waitingComponent.repaint();
                     }
                   });
               } else {
-                setIcon(createIcon(new HomePieceOfFurniture3D(normalizedPiece, null, true, true),
+                setIcon(createIcon((Object3DBranch)object3dFactory.createObject3D(null, normalizedPiece, true),
                     pieceWidth, pieceDepth, pieceHeight, iconSize));
               }
             }
@@ -6327,7 +6470,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     /**
      * Returns an icon created and scaled from piece model content.
      */
-    private Icon createIcon(BranchGroup modelNode,  
+    private Icon createIcon(Object3DBranch pieceNode,  
                             float pieceWidth, float pieceDepth, float pieceHeight, 
                             int iconSize) {
       // Add piece model scene to a normalized transform group
@@ -6335,10 +6478,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       scaleTransform.setScale(new Vector3d(2 / pieceWidth, 2 / pieceHeight, 2 / pieceDepth));
       TransformGroup modelTransformGroup = new TransformGroup();
       modelTransformGroup.setTransform(scaleTransform);
-      modelTransformGroup.addChild(modelNode);
+      modelTransformGroup.addChild(pieceNode);
       // Replace model textures by clones because Java 3D doesn't accept all the time 
       // to share textures between offscreen and onscreen environments 
-      cloneTexture(modelNode, new IdentityHashMap<Texture, Texture>());
+      cloneTexture(pieceNode, new IdentityHashMap<Texture, Texture>());
 
       BranchGroup model = new BranchGroup();
       model.setCapability(BranchGroup.ALLOW_DETACH);

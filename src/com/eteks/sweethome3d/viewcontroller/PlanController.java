@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.BasicStroke;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
@@ -130,6 +129,7 @@ public class PlanController extends FurnitureController implements Controller {
   private PlanView                    planView;
   private SelectionListener           selectionListener;
   private PropertyChangeListener      wallChangeListener;
+  private PropertyChangeListener      furnitureSizeChangeListener;
   // Possibles states
   private final ControllerState       selectionState;
   private final ControllerState       rectangleSelectionState;
@@ -140,6 +140,8 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       wallDrawingState;
   private final ControllerState       wallResizeState;
   private final ControllerState       pieceOfFurnitureRotationState;
+  private final ControllerState       pieceOfFurniturePitchRotationState;
+  private final ControllerState       pieceOfFurnitureRollRotationState;
   private final ControllerState       pieceOfFurnitureElevationState;
   private final ControllerState       pieceOfFurnitureHeightState;
   private final ControllerState       pieceOfFurnitureResizeState;
@@ -218,6 +220,8 @@ public class PlanController extends FurnitureController implements Controller {
     this.wallDrawingState = new WallDrawingState();
     this.wallResizeState = new WallResizeState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
+    this.pieceOfFurniturePitchRotationState = new PieceOfFurniturePitchRotationState();
+    this.pieceOfFurnitureRollRotationState = new PieceOfFurnitureRollRotationState();
     this.pieceOfFurnitureElevationState = new PieceOfFurnitureElevationState();
     this.pieceOfFurnitureHeightState = new PieceOfFurnitureHeightState();
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
@@ -516,6 +520,20 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getPieceOfFurnitureRotationState() {
     return this.pieceOfFurnitureRotationState;
+  }
+
+  /**
+   * Returns the piece pitch rotation state.
+   */
+  protected ControllerState getPieceOfFurniturePitchRotationState() {
+    return this.pieceOfFurniturePitchRotationState;
+  }
+
+  /**
+   * Returns the piece roll rotation state.
+   */
+  protected ControllerState getPieceOfFurnitureRollRotationState() {
+    return this.pieceOfFurnitureRollRotationState;
   }
 
   /**
@@ -1934,22 +1952,60 @@ public class PlanController extends FurnitureController implements Controller {
           String propertyName = ev.getPropertyName();
           if (HomePieceOfFurniture.Property.X.name().equals(propertyName)
               || HomePieceOfFurniture.Property.Y.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
+              || HomePieceOfFurniture.Property.WIDTH_IN_PLAN.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.DEPTH_IN_PLAN.name().equals(propertyName)) {
             furnitureSidesCache.remove((HomePieceOfFurniture)ev.getSource());
+          } 
+        }
+      };
+    this.furnitureSizeChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
+          if (piece.isHorizontallyRotatable()) {
+            String propertyName = ev.getPropertyName();
+            if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+                || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
+                || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
+                || HomePieceOfFurniture.Property.ROLL.name().equals(propertyName)
+                || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)) {
+              // Update piece size in plan
+              float [] size = getView().getPieceOfFurnitureSizeInPlan(piece);
+              piece.setWidthInPlan(size [0]);
+              piece.setDepthInPlan(size [1]);
+              piece.setHeightInPlan(size [2]);
+            }
           }
         }
       };
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       piece.addPropertyChangeListener(furnitureChangeListener);
+      piece.addPropertyChangeListener(furnitureSizeChangeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.addPropertyChangeListener(furnitureSizeChangeListener);
+        }
+      }
     }
     this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture> () {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+            piece.addPropertyChangeListener(furnitureChangeListener);
+            piece.addPropertyChangeListener(furnitureSizeChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.addPropertyChangeListener(furnitureSizeChangeListener);
+              }
+            }
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
-            furnitureSidesCache.remove(ev.getItem());
+            piece.removePropertyChangeListener(furnitureChangeListener);
+            furnitureSidesCache.remove(piece);
+            piece.removePropertyChangeListener(furnitureSizeChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.removePropertyChangeListener(furnitureSizeChangeListener);
+              }
+            }
           }
         }
       });
@@ -1984,9 +2040,13 @@ public class PlanController extends FurnitureController implements Controller {
     if (this.preferences.isMagnetismEnabled()) {
       for (HomePieceOfFurniture piece : Home.getFurnitureSubList(draggedItems)) {
         if (piece.isResizable()) {
+          // Roll and pitch angles of dragged items is always 0
           piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
+          piece.setWidthInPlan(piece.getWidth());
           piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+          piece.setDepthInPlan(piece.getDepth());
           piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
+          piece.setHeightInPlan(piece.getHeight());
         }
         piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
       }
@@ -2075,8 +2135,8 @@ public class PlanController extends FurnitureController implements Controller {
     if (referenceWall == null) {
       // Search if the border of a wall at floor level intersects with the given piece
       Area pieceAreaWithMargin = new Area(getRotatedRectangle(
-          piece.getX() - piece.getWidth() / 2 - margin, piece.getY() - piece.getDepth() / 2 - margin, 
-          piece.getWidth() + 2 * margin, piece.getDepth() + 2 * margin, piece.getAngle()));
+          piece.getX() - piece.getWidthInPlan() / 2 - margin, piece.getY() - piece.getDepthInPlan() / 2 - margin, 
+          piece.getWidthInPlan() + 2 * margin, piece.getDepthInPlan() + 2 * margin, piece.getAngle()));
       float intersectionWithReferenceWallSurface = 0;
       for (Wall wall : walls) {
         if (wall.isAtLevel(selectedLevel) 
@@ -2107,8 +2167,8 @@ public class PlanController extends FurnitureController implements Controller {
       float xPiece = x;
       float yPiece = y;
       float pieceAngle = piece.getAngle();      
-      float halfWidth = piece.getWidth() / 2;
-      float halfDepth = piece.getDepth() / 2;
+      float halfWidth = piece.getWidthInPlan() / 2;
+      float halfDepth = piece.getDepthInPlan() / 2;
       double wallAngle = Math.atan2(referenceWall.getYEnd() - referenceWall.getYStart(), 
           referenceWall.getXEnd() - referenceWall.getXStart());
       float [][] wallPoints = referenceWall.getPoints(includeBaseboards);
@@ -2149,6 +2209,8 @@ public class PlanController extends FurnitureController implements Controller {
                   && doorOrWindow.isWidthDepthDeformable()) {
                 piece.setDepth(thicknessEpsilon 
                     + referenceWall.getThickness() / doorOrWindow.getWallThickness());
+                // Doors and windows can't be rotated around horizontal axes
+                piece.setDepthInPlan(piece.getDepth());
                 halfDepth = piece.getDepth() / 2;
                 wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();
               } else {
@@ -2205,7 +2267,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Search the distance required to align piece on the left or right side of the reference wall
         Line2D centerLine = new Line2D.Float(referenceWall.getXStart(), referenceWall.getYStart(), 
             referenceWall.getXEnd(), referenceWall.getYEnd());
-        Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), (float)(pieceAngle - wallAngle));
+        Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidthInPlan(), piece.getDepthInPlan(), (float)(pieceAngle - wallAngle));
         double rotatedBoundingBoxDepth = pieceBoundingBox.getBounds2D().getHeight();
         float relativeCCWToPieceCenterSignum = Math.signum(centerLine.relativeCCW(piece.getX(), piece.getY()));
         float relativeCCWToPointSignum = Math.signum(centerLine.relativeCCW(x, y));
@@ -2241,7 +2303,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Search if piece intersects some other walls and avoid it intersects the closest one 
         Area wallsAreaIntersection = new Area(wallsArea);
         Area adjustedPieceArea = new Area(getRotatedRectangle(xPiece - halfWidth, 
-                yPiece - halfDepth, piece.getWidth(), piece.getDepth(), pieceAngle));
+                yPiece - halfDepth, piece.getWidthInPlan(), piece.getDepthInPlan(), pieceAngle));
         wallsAreaIntersection.subtract(new Area(getPath(wallPoints)));
         wallsAreaIntersection.intersect(adjustedPieceArea);
         if (!wallsAreaIntersection.isEmpty()) {
@@ -2536,8 +2598,12 @@ public class PlanController extends FurnitureController implements Controller {
       // Search if another piece at floor level contains the given piece to elevate it at its height
       HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece);
       if (highestSurroundingPiece != null) {
-        float elevation = highestSurroundingPiece.getElevation() 
-                + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation();
+        float elevation = highestSurroundingPiece.getElevation();
+        if (highestSurroundingPiece.isHorizontallyRotated()) {
+          elevation += highestSurroundingPiece.getHeightInPlan();
+        } else {
+          elevation += highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation();
+        }
         if (highestSurroundingPiece.getLevel() != null) {
           elevation += highestSurroundingPiece.getLevel().getElevation() 
               - (piece.getLevel() != null 
@@ -2567,7 +2633,6 @@ public class PlanController extends FurnitureController implements Controller {
     // Search if the border of another piece at floor level intersects with the given piece
     float pieceElevation = piece.getGroundElevation();
     float margin = 2 * PIXEL_MARGIN / getScale();
-    BasicStroke stroke = new BasicStroke(margin);
     HomePieceOfFurniture referencePiece = null;
     Area intersectionWithReferencePieceArea = null;
     float intersectionWithReferencePieceSurface = 0;
@@ -2581,17 +2646,35 @@ public class PlanController extends FurnitureController implements Controller {
           && (!doorOrWindowBoundToWall // Ignore other furniture for doors and windows bound to a wall
               || homePiece.isDoorOrWindow())) {
         float [][] points = homePiece.getPoints();
-        GeneralPath path = getPath(points);
         Area marginArea;
         if (doorOrWindowBoundToWall && homePiece.isDoorOrWindow()) {
-          marginArea = new Area(stroke.createStrokedShape(new Line2D.Float(
-              points [1][0], points [1][1], points [2][0], points [2][1])));
-          marginArea.add(new Area(stroke.createStrokedShape(new Line2D.Float(
-              points [3][0], points [3][1], points [0][0], points [0][1]))));
+          marginArea = new Area(getPath(new Wall(
+              points [1][0], points [1][1], points [2][0], points [2][1], margin, 0).getPoints())); 
+          marginArea.add(new Area(getPath(new Wall(
+              points [3][0], points [3][1], points [0][0], points [0][1], margin, 0).getPoints())));
         } else {
+          // Build an area matching piece contour with a thickness equal to margin using walls instances 
           marginArea = this.furnitureSidesCache.get(homePiece);
           if (marginArea == null) {
-            marginArea = new Area(stroke.createStrokedShape(path));
+            Wall [] pieceSideWalls = new Wall [points.length];
+            for (int i = 0; i < pieceSideWalls.length; i++) {
+              pieceSideWalls [i] = new Wall(points [i][0], points [i][1], 
+                  points [(i + 1) % pieceSideWalls.length][0], points [(i + 1) % pieceSideWalls.length][1], margin, 0);
+            }
+            for (int i = 0; i < pieceSideWalls.length; i++) {
+              pieceSideWalls [(i + 1) % pieceSideWalls.length].setWallAtStart(pieceSideWalls [i]);
+              pieceSideWalls [i].setWallAtEnd(pieceSideWalls [(i + 1) % pieceSideWalls.length]);
+            }
+            float [][] pieceSidePoints = new float [pieceSideWalls.length * 2 + 2][];
+            float [][] pieceSideWallPoints = null;
+            for (int i = 0; i < pieceSideWalls.length; i++) {
+              pieceSideWallPoints = pieceSideWalls [i].getPoints();
+              pieceSidePoints [i] = pieceSideWallPoints [0];
+              pieceSidePoints [pieceSidePoints.length - i - 1] = pieceSideWallPoints [3];
+            }
+            pieceSidePoints [pieceSidePoints.length / 2 - 1] = pieceSideWallPoints [1];
+            pieceSidePoints [pieceSidePoints.length / 2] = pieceSideWallPoints [2];
+            marginArea = new Area(getPath(pieceSidePoints));
             this.furnitureSidesCache.put(homePiece, marginArea);
           }
         }
@@ -2601,7 +2684,7 @@ public class PlanController extends FurnitureController implements Controller {
           Area exclusiveOr = new Area(pieceArea);
           exclusiveOr.exclusiveOr(intersection);
           if (exclusiveOr.isSingular()) {
-            Area insideArea = new Area(path);
+            Area insideArea = new Area(getPath(points));
             insideArea.subtract(marginArea);
             insideArea.intersect(pieceArea);
             if (insideArea.isEmpty()) {
@@ -2623,8 +2706,8 @@ public class PlanController extends FurnitureController implements Controller {
       if (doorOrWindowBoundToWall && referencePiece.isDoorOrWindow()) {
         alignedOnReferencePieceFrontOrBackSide = false;
       } else {
-        GeneralPath referencePieceLargerBoundingBox = getRotatedRectangle(referencePiece.getX() - referencePiece.getWidth(), 
-            referencePiece.getY() - referencePiece.getDepth(), referencePiece.getWidth() * 2, referencePiece.getDepth() * 2, 
+        GeneralPath referencePieceLargerBoundingBox = getRotatedRectangle(referencePiece.getX() - referencePiece.getWidthInPlan(), 
+            referencePiece.getY() - referencePiece.getDepthInPlan(), referencePiece.getWidthInPlan() * 2, referencePiece.getDepthInPlan() * 2, 
             referencePiece.getAngle());
         float [][] pathPoints = getPathPoints(referencePieceLargerBoundingBox, false);
         alignedOnReferencePieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, pathPoints);
@@ -2632,7 +2715,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (forceOrientation) {  
         piece.setAngle(referencePiece.getAngle());
       }
-      Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidth(), piece.getDepth(), piece.getAngle() - referencePiece.getAngle());
+      Shape pieceBoundingBox = getRotatedRectangle(0, 0, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getAngle() - referencePiece.getAngle());
       float deltaX = 0;
       float deltaY = 0;
       if (!alignedOnReferencePieceFrontOrBackSide) {
@@ -2641,7 +2724,7 @@ public class PlanController extends FurnitureController implements Controller {
             (referencePiecePoints [0][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [0][1] + referencePiecePoints [1][1]) / 2);
         double rotatedBoundingBoxWidth = pieceBoundingBox.getBounds2D().getWidth();
         double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
-            * (-referencePiece.getWidth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
+            * (-referencePiece.getWidthInPlan() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
         deltaX = (float)(distance * Math.cos(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.sin(referencePiece.getAngle()));
       } else {
@@ -2650,7 +2733,7 @@ public class PlanController extends FurnitureController implements Controller {
             (referencePiecePoints [2][0] + referencePiecePoints [1][0]) / 2, (referencePiecePoints [2][1] + referencePiecePoints [1][1]) / 2);
         double rotatedBoundingBoxDepth = pieceBoundingBox.getBounds2D().getHeight();
         double distance = centerLine.relativeCCW(piece.getX(), piece.getY()) 
-            * (-referencePiece.getDepth() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);      
+            * (-referencePiece.getDepthInPlan() / 2 + centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxDepth / 2);      
         deltaX = (float)(-distance * Math.sin(referencePiece.getAngle()));
         deltaY = (float)(distance * Math.cos(referencePiece.getAngle()));
         if (!isIntersectionEmpty(piece, magnetWall, deltaX, deltaY)) {
@@ -2668,7 +2751,7 @@ public class PlanController extends FurnitureController implements Controller {
           piecePoints = piece.getPoints();
         }
         boolean alignedOnPieceFrontOrBackSide = isAreaLargerOnFrontOrBackSide(intersectionWithReferencePieceArea, piecePoints);        
-        Shape referencePieceBoundingBox = getRotatedRectangle(0, 0, referencePiece.getWidth(), referencePiece.getDepth(), 
+        Shape referencePieceBoundingBox = getRotatedRectangle(0, 0, referencePiece.getWidthInPlan(), referencePiece.getDepthInPlan(), 
             referencePiece.getAngle() - piece.getAngle());        
         if (!alignedOnPieceFrontOrBackSide) {
           // Search the distance required to align piece on its left or right side 
@@ -2676,7 +2759,7 @@ public class PlanController extends FurnitureController implements Controller {
               (piecePoints [0][0] + piecePoints [1][0]) / 2, (piecePoints [0][1] + piecePoints [1][1]) / 2);
           double rotatedBoundingBoxWidth = referencePieceBoundingBox.getBounds2D().getWidth();
           double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
-              * (-piece.getWidth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxWidth / 2);      
+              * (-piece.getWidthInPlan() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxWidth / 2);      
           deltaX = -(float)(distance * Math.cos(piece.getAngle()));
           deltaY = -(float)(distance * Math.sin(piece.getAngle()));
         } else {
@@ -2685,7 +2768,7 @@ public class PlanController extends FurnitureController implements Controller {
               (piecePoints [2][0] + piecePoints [1][0]) / 2, (piecePoints [2][1] + piecePoints [1][1]) / 2);
           double rotatedBoundingBoxDepth = referencePieceBoundingBox.getBounds2D().getHeight();
           double distance = centerLine.relativeCCW(referencePiece.getX(), referencePiece.getY()) 
-              * (-piece.getDepth() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxDepth / 2);      
+              * (-piece.getDepthInPlan() / 2 + centerLine.ptLineDist(referencePiece.getX(), referencePiece.getY()) - rotatedBoundingBoxDepth / 2);      
           deltaX = -(float)(-distance * Math.sin(piece.getAngle()));
           deltaY = -(float)(distance * Math.cos(piece.getAngle()));
           if (!isIntersectionEmpty(piece, magnetWall, deltaX, deltaY)) {
@@ -2751,12 +2834,12 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private boolean isIntersectionEmpty(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2,
                                       float deltaX, float deltaY) {
-    Area intersection = new Area(getRotatedRectangle(piece1.getX() - piece1.getWidth() / 2 + deltaX, 
-        piece1.getY() - piece1.getDepth() / 2 + deltaY, piece1.getWidth(), piece1.getDepth(), piece1.getAngle()));
+    Area intersection = new Area(getRotatedRectangle(piece1.getX() - piece1.getWidthInPlan() / 2 + deltaX, 
+        piece1.getY() - piece1.getDepthInPlan() / 2 + deltaY, piece1.getWidthInPlan(), piece1.getDepth(), piece1.getAngle()));
     float epsilon = 0.01f;
-    intersection.intersect(new Area(getRotatedRectangle(piece2.getX() - piece2.getWidth() / 2 - epsilon, 
-        piece2.getY() - piece2.getDepth() / 2 - epsilon, 
-        piece2.getWidth() + 2 * epsilon, piece2.getDepth() + 2 * epsilon, piece2.getAngle())));
+    intersection.intersect(new Area(getRotatedRectangle(piece2.getX() - piece2.getWidthInPlan() / 2 - epsilon, 
+        piece2.getY() - piece2.getDepthInPlan() / 2 - epsilon, 
+        piece2.getWidthInPlan() + 2 * epsilon, piece2.getDepthInPlan() + 2 * epsilon, piece2.getAngle())));
     return intersection.isEmpty();
   }
   
@@ -2768,8 +2851,8 @@ public class PlanController extends FurnitureController implements Controller {
                                       float deltaX, float deltaY) {
     if (wall != null) {
       Area wallAreaIntersection = new Area(getPath(wall.getPoints()));
-      wallAreaIntersection.intersect(new Area(getRotatedRectangle(piece.getX() - piece.getWidth() / 2 + deltaX, 
-          piece.getY() - piece.getDepth() / 2 + deltaY, piece.getWidth(), piece.getDepth(), piece.getAngle())));
+      wallAreaIntersection.intersect(new Area(getRotatedRectangle(piece.getX() - piece.getWidthInPlan() / 2 + deltaX, 
+          piece.getY() - piece.getDepthInPlan() / 2 + deltaY, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getAngle())));
       return getArea(wallAreaIntersection) < 1E-4f;
     }
     return true;
@@ -3908,7 +3991,8 @@ public class PlanController extends FurnitureController implements Controller {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
-      if (selectedPiece.isBottomLeftPointAt(x, y, margin)
+      if (!selectedPiece.isHorizontallyRotated()
+          && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
         return selectedPiece;
@@ -3916,7 +4000,45 @@ public class PlanController extends FurnitureController implements Controller {
     } 
     return null;
   }
-  
+
+  /**
+   * Returns the selected piece of furniture with a point 
+   * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
+   * around the pitch axis.
+   */
+  private HomePieceOfFurniture getPitchRotatedPieceOfFurnitureAt(float x, float y) {
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (selectedPiece.getPitch() != 0
+          && selectedPiece.isBottomLeftPointAt(x, y, margin)
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
+      }
+    } 
+    return null;
+  }
+
+  /**
+   * Returns the selected piece of furniture with a point 
+   * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
+   * around the roll axis.
+   */
+  private HomePieceOfFurniture getRollRotatedPieceOfFurnitureAt(float x, float y) {
+    HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
+    if (selectedPiece != null) {
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (selectedPiece.getRoll() != 0
+          && selectedPiece.isBottomLeftPointAt(x, y, margin)
+          // Ignore piece shape to ensure there's always enough space to drag it
+          && !selectedPiece.containsPoint(x, y, 0)) {
+        return selectedPiece;
+      }
+    } 
+    return null;
+  }
+
   /**
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to resize 
@@ -5290,7 +5412,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Posts an undoable operation of a (<code>dx</code>, <code>dy</code>) move 
-   * of <code>movedPieceOfFurniture</code>.
+   * of the given <code>piece</code>.
    */
   private void postPieceOfFurnitureMove(final HomePieceOfFurniture piece, 
                                         final float dx, final float dy,
@@ -5311,9 +5433,12 @@ public class PlanController extends FurnitureController implements Controller {
           super.undo();
           piece.move(-dx, -dy);
           piece.setAngle(oldAngle);
-          if (piece.isResizable()
+          if (piece instanceof HomeDoorOrWindow
+              && piece.isResizable()
               && isItemResizable(piece)) {
+            // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
             piece.setDepth(oldDepth);
+            piece.setDepthInPlan(oldDepth);
           }
           piece.setElevation(oldElevation);
           if (piece instanceof HomeDoorOrWindow) {
@@ -5327,9 +5452,12 @@ public class PlanController extends FurnitureController implements Controller {
           super.redo();
           piece.move(dx, dy);
           piece.setAngle(newAngle);
-          if (piece.isResizable()
+          if (piece instanceof HomeDoorOrWindow
+              && piece.isResizable()
               && isItemResizable(piece)) {
+            // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
             piece.setDepth(newDepth);
+            piece.setDepthInPlan(newDepth);
           }
           piece.setElevation(newElevation);
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
@@ -5643,6 +5771,70 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Post to undo support a pitch change on <code>piece</code>. 
+   */
+  private void postPieceOfFurniturePitchRotation(final HomePieceOfFurniture piece, 
+                                                 final float oldPitch) {
+    final float newPitch = piece.getPitch();
+    if (newPitch != oldPitch) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          piece.setPitch(oldPitch);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          piece.setPitch(newPitch);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Post to undo support a roll change on <code>piece</code>. 
+   */
+  private void postPieceOfFurnitureRollRotation(final HomePieceOfFurniture piece, 
+                                                final float oldRoll) {
+    final float newRoll = piece.getRoll();
+    if (newRoll != oldRoll) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          piece.setRoll(oldRoll);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          piece.setRoll(newRoll);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureRotationName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Post to undo support an elevation change on <code>piece</code>. 
    */
   private void postPieceOfFurnitureElevation(final HomePieceOfFurniture piece, final float oldElevation) {
@@ -5712,7 +5904,7 @@ public class PlanController extends FurnitureController implements Controller {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        resizedPiece.reset();
+        resetPieceOfFurnitureSize(resizedPiece);
         selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {resizedPiece.getPieceOfFurniture()}));
       }
       
@@ -5722,9 +5914,7 @@ public class PlanController extends FurnitureController implements Controller {
         HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
         piece.setX(newX);
         piece.setY(newY);
-        piece.setWidth(newWidth);
-        piece.setDepth(newDepth);
-        piece.setHeight(newHeight);
+        setPieceOfFurnitureSize(resizedPiece, newWidth, newDepth, newHeight);
         if (piece instanceof HomeDoorOrWindow) {
           ((HomeDoorOrWindow)piece).setBoundToWall(doorOrWindowBoundToWall);
         }
@@ -5738,6 +5928,47 @@ public class PlanController extends FurnitureController implements Controller {
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Sets the size of the given piece of furniture.
+   */
+  private void setPieceOfFurnitureSize(ResizedPieceOfFurniture resizedPiece, 
+                                       float width, float depth, float height) {
+    HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+        childPiece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+      }
+    }
+    ResizedPieceOfFurniture.setPieceOfFurnitureSize(piece, width, depth, height);
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+        childPiece.addPropertyChangeListener(this.furnitureSizeChangeListener);
+      }
+    }
+  }
+
+  /**
+   * Resets the size of the given piece of furniture.
+   */
+  private void resetPieceOfFurnitureSize(ResizedPieceOfFurniture resizedPiece) {
+    HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+        childPiece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+      }
+    }
+    resizedPiece.reset();
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+        childPiece.addPropertyChangeListener(this.furnitureSizeChangeListener);
+      }
+    }
   }
 
   /**
@@ -6264,9 +6495,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void reset() {
       this.piece.setX(this.x);
       this.piece.setY(this.y);
-      this.piece.setWidth(this.width);
-      this.piece.setDepth(this.depth);
-      this.piece.setHeight(this.height);
+      setPieceOfFurnitureSize(this.piece, this.width, this.depth, this.height);
       if (this.piece instanceof HomeDoorOrWindow) {
         ((HomeDoorOrWindow)this.piece).setBoundToWall(this.doorOrWindowBoundToWall);
       }
@@ -6278,10 +6507,38 @@ public class PlanController extends FurnitureController implements Controller {
             // Restore group furniture location and size because resizing a group isn't reversible 
             groupPiece.setX(this.groupFurnitureX [i]);
             groupPiece.setY(this.groupFurnitureY [i]);
-            groupPiece.setWidth(this.groupFurnitureWidth [i]);
-            groupPiece.setDepth(this.groupFurnitureDepth [i]);
-            groupPiece.setHeight(this.groupFurnitureHeight [i]);
+            setPieceOfFurnitureSize(groupPiece, 
+                this.groupFurnitureWidth [i], this.groupFurnitureDepth [i], this.groupFurnitureHeight [i]);
           }
+        }
+      }
+    }
+
+    public static void setPieceOfFurnitureSize(HomePieceOfFurniture piece, 
+                                               float width, float depth, float height) {
+      if (piece.isHorizontallyRotated()) {
+        // Furniture rotated around horizontal axes are always changed proportionally
+        float scale = width / piece.getWidth();
+        piece.scale(scale);
+        piece.setWidthInPlan(scale * piece.getWidthInPlan());
+        piece.setDepthInPlan(scale * piece.getDepthInPlan());
+        piece.setHeightInPlan(scale * piece.getHeightInPlan());
+      } else {
+        float widthInPlan = piece.getWidthInPlan() * width / piece.getWidth();
+        piece.setWidth(width);
+        piece.setWidthInPlan(widthInPlan);
+        float depthInPlan = piece.getDepthInPlan() * depth / piece.getDepth();
+        piece.setDepth(depth);
+        piece.setDepthInPlan(depthInPlan);
+        float heightInPlan = piece.getHeightInPlan() * height / piece.getHeight();
+        piece.setHeight(height);
+        piece.setHeightInPlan(heightInPlan);
+      }
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+          childPiece.setWidthInPlan(childPiece.getWidth());
+          childPiece.setDepthInPlan(childPiece.getDepth());
+          childPiece.setHeightInPlan(childPiece.getHeight());
         }
       }
     }
@@ -6933,7 +7190,9 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (getOffsetDimensionLineAt(x, y) != null
           || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.HEIGHT);
-      } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
+      } else if (getRotatedPieceOfFurnitureAt(x, y) != null
+          || getPitchRotatedPieceOfFurnitureAt(x, y) != null
+          || getRollRotatedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ELEVATION);
@@ -6995,6 +7254,10 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getLightPowerModificationState());
         } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureHeightState());
+        } else if (getPitchRotatedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurniturePitchRotationState());
+        } else if (getRollRotatedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureRollRotationState());
         } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureRotationState());
         } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
@@ -7646,7 +7909,9 @@ public class PlanController extends FurnitureController implements Controller {
         this.draggedPieceOfFurniture.setY(this.yDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.setAngle(this.angleDraggedPieceOfFurniture);
         if (this.draggedPieceOfFurniture.isResizable()) {
+          // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
           this.draggedPieceOfFurniture.setDepth(this.depthDraggedPieceOfFurniture);
+          this.draggedPieceOfFurniture.setDepthInPlan(this.depthDraggedPieceOfFurniture);
         }
         this.draggedPieceOfFurniture.setElevation(this.elevationDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.move(x, y);
@@ -8142,12 +8407,13 @@ public class PlanController extends FurnitureController implements Controller {
         // Create walls joining points of largerRoomPoints
         Wall lastWall = null;
         Area wallsArea = getWallsArea(false);
-        BasicStroke thinStroke = new BasicStroke(0.05f);
+        float thinThickness = 0.05f;
         for (int i = 0; i < largerRoomPoints.length; i++) {
           final float [] sidePoint = largerRoomPoints [i];
           float [] nextSidePoint   = largerRoomPoints [(i + 1) % roomPoints.length];
           // Remove from wall line the intersection with existing walls
-          Area lineArea = new Area(thinStroke.createStrokedShape(new Line2D.Float(sidePoint [0], sidePoint [1], nextSidePoint [0], nextSidePoint [1])));
+          Area lineArea = new Area(getPath(new Wall(
+              sidePoint [0], sidePoint [1], nextSidePoint [0], nextSidePoint [1], thinThickness, 0).getPoints())); 
           lineArea.subtract(wallsArea);
           List<GeneralPath> newWallPaths = getAreaPaths(lineArea);
           List<Wall> roomSideWalls = new ArrayList<Wall>();
@@ -8589,7 +8855,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Furniture rotation state. This states manages the rotation of a piece of furniture.
+   * Furniture rotation state. This states manages the rotation of a piece of furniture around the vertical axis.
    */
   private class PieceOfFurnitureRotationState extends ControllerState {
     private static final int     STEP_COUNT = 24;
@@ -8700,8 +8966,155 @@ public class PlanController extends FurnitureController implements Controller {
     }  
 
     private String getToolTipFeedbackText(float angle) {
-      return String.format(this.rotationToolTipFeedback, 
-          (Math.round(Math.toDegrees(angle)) + 360) % 360);
+      return String.format(this.rotationToolTipFeedback, (Math.round(Math.toDegrees(angle)) + 360) % 360);
+    }
+  }
+
+  /**
+   * Furniture pitch rotation state. This states manages the rotation of a piece of furniture 
+   * around the horizontal pitch (transversal) axis.
+   */
+  private class PieceOfFurniturePitchRotationState extends ControllerState {
+    private HomePieceOfFurniture selectedPiece;
+    private float                oldPitch;
+    private String               pitchRotationToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.selectedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.selectedPiece);
+    }
+    
+    @Override
+    public void enter() {
+      this.pitchRotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "pitchRotationToolTipFeedback");
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      this.oldPitch = this.selectedPiece.getPitch();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldPitch), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new pitch angle of the piece
+      float newPitch = (float)(this.oldPitch 
+          - (y - getYLastMousePress()) * Math.cos(this.selectedPiece.getAngle()) * Math.PI / 360
+          + (x - getXLastMousePress()) * Math.sin(this.selectedPiece.getAngle()) * Math.PI / 360);
+      
+      // Update pitch angle
+      this.selectedPiece.setPitch(newPitch);
+      getView().setToolTipFeedback(getToolTipFeedbackText(newPitch), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPieceOfFurniturePitchRotation(this.selectedPiece, this.oldPitch);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedPiece.setPitch(this.oldPitch);
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedPiece = null;
+    }  
+
+    private String getToolTipFeedbackText(float pitch) {
+      return String.format(this.pitchRotationToolTipFeedback, (Math.round(Math.toDegrees(pitch)) + 360) % 360);
+    }
+  }
+
+  /**
+   * Furniture roll rotation state. This states manages the rotation of a piece of furniture 
+   * around the horizontal roll axis.
+   */
+  private class PieceOfFurnitureRollRotationState extends ControllerState {
+    private HomePieceOfFurniture selectedPiece;
+    private float                oldRoll;
+    private String               rollRotationToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.selectedPiece != null
+          && isPieceOfFurniturePartOfBasePlan(this.selectedPiece);
+    }
+    
+    @Override
+    public void enter() {
+      this.rollRotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "rollRotationToolTipFeedback");
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      this.oldRoll = this.selectedPiece.getRoll();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldRoll), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new roll angle of the piece
+      float newRoll = (float)(this.oldRoll 
+          + (y - getYLastMousePress()) * Math.sin(this.selectedPiece.getAngle()) * Math.PI / 360
+          + (x - getXLastMousePress()) * Math.cos(this.selectedPiece.getAngle()) * Math.PI / 360);
+      
+      // Update roll angle
+      this.selectedPiece.setRoll(newRoll);
+      getView().setToolTipFeedback(getToolTipFeedbackText(newRoll), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPieceOfFurnitureRollRotation(this.selectedPiece, this.oldRoll);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedPiece.setRoll(this.oldRoll);
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedPiece = null;
+    }  
+
+    private String getToolTipFeedbackText(float roll) {
+      return String.format(this.rollRotationToolTipFeedback, (Math.round(Math.toDegrees(roll)) + 360) % 360);
     }
   }
 
@@ -8804,6 +9217,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Furniture height state. This states manages the height resizing of a piece of furniture.
+   * Caution: Do not use for furniture with a roll or pitch angle different from 0 
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
     private boolean                 magnetismEnabled;
@@ -8861,14 +9275,15 @@ public class PlanController extends FurnitureController implements Controller {
       newHeight = Math.min(Math.max(newHeight, preferences.getLengthUnit().getMinimumLength()), 
           preferences.getLengthUnit().getMaximumLength());
 
-      // Update piece new dimension
-      selectedPiece.setHeight(newHeight);
-
-      // Manage proportional constraint 
-      if (!selectedPiece.isDeformable()) {
-        float ratio = newHeight / this.resizedPiece.getHeight();
-        float newWidth = this.resizedPiece.getWidth() * ratio;
-        float newDepth = this.resizedPiece.getDepth() * ratio;
+      if (selectedPiece.isDeformable()) {
+        // Update piece new dimension
+        setPieceOfFurnitureSize(this.resizedPiece,
+            this.resizedPiece.getWidth(), this.resizedPiece.getDepth(), newHeight);
+      } else {
+        // Manage proportional constraint 
+        float scale = newHeight / this.resizedPiece.getHeight();
+        float newWidth = this.resizedPiece.getWidth() * scale;
+        float newDepth = this.resizedPiece.getDepth() * scale;
         // Update piece new location
         float angle = selectedPiece.getAngle();
         double cos = Math.cos(angle); 
@@ -8877,8 +9292,7 @@ public class PlanController extends FurnitureController implements Controller {
         float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
         selectedPiece.setX(newX);
         selectedPiece.setY(newY);
-        selectedPiece.setWidth(newWidth);
-        selectedPiece.setDepth(newDepth);
+        setPieceOfFurnitureSize(this.resizedPiece, newWidth, newDepth, newHeight);
       }
       
       // Ensure point at (x,y) is visible
@@ -8903,7 +9317,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      this.resizedPiece.reset();
+      resetPieceOfFurnitureSize(this.resizedPiece);
       setState(getSelectionState());
     }
 
@@ -8930,9 +9344,11 @@ public class PlanController extends FurnitureController implements Controller {
     private float                   deltaXToResizePoint;
     private float                   deltaYToResizePoint;
     private ResizedPieceOfFurniture resizedPiece;
+    private float                   resizedPieceWidthInPlan;
     private float []                topLeftPoint;
     private String                  widthResizeToolTipFeedback;
     private String                  depthResizeToolTipFeedback;
+    private String                  heightResizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -8956,8 +9372,11 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "widthResizeToolTipFeedback");
       this.depthResizeToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "depthResizeToolTipFeedback");
+      this.heightResizeToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "heightResizeToolTipFeedback");
       HomePieceOfFurniture selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.resizedPiece = new ResizedPieceOfFurniture(selectedPiece);
+      this.resizedPieceWidthInPlan = selectedPiece.getWidthInPlan();
       float [][] resizedPiecePoints = selectedPiece.getPoints();
       float [] resizePoint = resizedPiecePoints [2];
       this.deltaXToResizePoint = getXLastMousePress() - resizePoint [0];
@@ -8968,7 +9387,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
-      planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth()), 
+      planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth(), selectedPiece.getHeight()), 
           getXLastMousePress(), getYLastMousePress());
     }
     
@@ -8990,12 +9409,21 @@ public class PlanController extends FurnitureController implements Controller {
       newWidth = Math.min(Math.max(newWidth, preferences.getLengthUnit().getMinimumLength()), 
           preferences.getLengthUnit().getMaximumLength());
       
-      float depth = this.resizedPiece.getDepth();
-      float newDepth;
-      if (!this.resizedPiece.isDoorOrWindowBoundToWall()
-          || !selectedPiece.isDeformable()
-          || this.alignmentActivated
-          || !this.magnetismEnabled) {
+      float newDepth = this.resizedPiece.getDepth();
+      float newHeight = this.resizedPiece.getHeight();
+      boolean doorOrWindowBoundToWall = this.resizedPiece.isDoorOrWindowBoundToWall();
+      // Manage constraints
+      if (isProprortionallyResized(selectedPiece)) {
+        // Use resizing scale based on width in plan
+        float scale = newWidth / this.resizedPieceWidthInPlan;
+        newWidth = this.resizedPiece.getWidth() * scale;
+        newDepth = this.resizedPiece.getDepth() * scale;
+        newHeight = this.resizedPiece.getHeight() * scale;
+        doorOrWindowBoundToWall = newDepth == this.resizedPiece.getDepth();
+      } else if (!selectedPiece.isWidthDepthDeformable()) {
+        newDepth = this.resizedPiece.getDepth() * newWidth / this.resizedPiece.getWidth();
+      } else if (!this.resizedPiece.isDoorOrWindowBoundToWall()
+                 || !this.magnetismEnabled) {
         // Update piece depth if it's not a door a window 
         // or if it's a a door a window unbound to a wall when magnetism is enabled
         newDepth = (float)(deltaY * cos - deltaX * sin);
@@ -9004,38 +9432,34 @@ public class PlanController extends FurnitureController implements Controller {
         }
         newDepth = Math.min(Math.max(newDepth, preferences.getLengthUnit().getMinimumLength()), 
             preferences.getLengthUnit().getMaximumLength());
-      } else {
-        newDepth = depth;
+        doorOrWindowBoundToWall = newDepth == this.resizedPiece.getDepth();
       }
       
-      // Manage proportional constraint 
-      float newHeight = this.resizedPiece.getHeight();
-      if (!selectedPiece.isDeformable()
-          || this.alignmentActivated) {
-        float ratio = newWidth / this.resizedPiece.getWidth();
-        newDepth = depth * ratio;
-        newHeight = this.resizedPiece.getHeight() * ratio;
-      } else if (!selectedPiece.isWidthDepthDeformable()) {
-        newDepth = depth * newWidth / this.resizedPiece.getWidth();
-      }
-      
-      // Update piece new location
-      float newX = (float)(this.topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
-      float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
-      selectedPiece.setX(newX);
-      selectedPiece.setY(newY);
       // Update piece size
-      selectedPiece.setWidth(newWidth);
-      selectedPiece.setDepth(newDepth);
-      selectedPiece.setHeight(newHeight);
+      setPieceOfFurnitureSize(this.resizedPiece, newWidth, newDepth, newHeight);
       if (this.resizedPiece.isDoorOrWindowBoundToWall()) {
         // Maintain boundToWall flag
-        ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled && newDepth == depth);
+        ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled && doorOrWindowBoundToWall);
       }
+
+      // Update piece new location
+      float newX = (float)(this.topLeftPoint [0] + (selectedPiece.getWidthInPlan() * cos - selectedPiece.getDepthInPlan() * sin) / 2f);
+      float newY = (float)(this.topLeftPoint [1] + (selectedPiece.getWidthInPlan() * sin + selectedPiece.getDepthInPlan() * cos) / 2f);
+      selectedPiece.setX(newX);
+      selectedPiece.setY(newY);
 
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
-      planView.setToolTipFeedback(getToolTipFeedbackText(newWidth, newDepth), x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newWidth, newDepth, newHeight), x, y);
+    }
+
+    /**
+     * Returns <code>true</code> if the <code>piece</code> should be proportionally resized.
+     */
+    private boolean isProprortionallyResized(HomePieceOfFurniture piece) {
+      return !piece.isDeformable()
+          || piece.isHorizontallyRotated()
+          || this.alignmentActivated;
     }
 
     @Override
@@ -9061,7 +9485,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void escape() {
-      this.resizedPiece.reset();
+      resetPieceOfFurnitureSize(this.resizedPiece);
       setState(getSelectionState());
     }
 
@@ -9073,13 +9497,18 @@ public class PlanController extends FurnitureController implements Controller {
       this.resizedPiece = null;
     }  
     
-    private String getToolTipFeedbackText(float width, float depth) {
+    private String getToolTipFeedbackText(float width, float depth, float height) {
       String toolTipFeedbackText = "<html>" + String.format(this.widthResizeToolTipFeedback,  
           preferences.getLengthUnit().getFormatWithUnit().format(width));
       if (!(this.resizedPiece.getPieceOfFurniture() instanceof HomeDoorOrWindow) 
-          || !((HomeDoorOrWindow)this.resizedPiece.getPieceOfFurniture()).isBoundToWall()) {
+          || !((HomeDoorOrWindow)this.resizedPiece.getPieceOfFurniture()).isBoundToWall()
+          || isProprortionallyResized(this.resizedPiece.getPieceOfFurniture())) {
         toolTipFeedbackText += "<br>" + String.format(this.depthResizeToolTipFeedback,
             preferences.getLengthUnit().getFormatWithUnit().format(depth));
+      }
+      if (isProprortionallyResized(this.resizedPiece.getPieceOfFurniture())) {
+        toolTipFeedbackText += "<br>" + String.format(this.heightResizeToolTipFeedback,
+            preferences.getLengthUnit().getFormatWithUnit().format(height));
       }
       return toolTipFeedbackText;
     }
@@ -10690,7 +11119,8 @@ public class PlanController extends FurnitureController implements Controller {
                     intersectionArea.intersect(doorArea);
                     if (!intersectionArea.isEmpty()) {
                       HomePieceOfFurniture deeperDoor = door.clone();
-                      // Increase piece depth to ensure the wall will be cut on both sides 
+                      // Increase door depth to ensure the wall will be cut on both sides 
+                      // (doors and windows can't be rotated around horizontal axes)
                       deeperDoor.setDepth(deeperDoor.getDepth() + 4 * wall.getThickness());
                       intersectionArea = new Area(wallPath);
                       intersectionArea.intersect(new Area(getPath(deeperDoor.getPoints())));

@@ -63,6 +63,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private final boolean           resizable;
   private final boolean           deformable;
   private final boolean           texturable;
+  private final boolean           horizontallyRotatable;
   private final BigDecimal        price;
   private final BigDecimal        valueAddedTaxPercentage;
   private final String            currency;
@@ -305,7 +306,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
         height, elevation, 1f, movable, false, staircaseCutOutShape, null, modelRotation, false, null, creator, resizable, deformable,
-        texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+        texturable, true, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
   }
   
   /**
@@ -400,7 +401,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
         height, elevation, dropOnTopElevation, movable, staircaseCutOutShape, modelRotation, backFaceShown, null,  
-        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+        creator, resizable, deformable, texturable, true, price, valueAddedTaxPercentage, currency);
   }
   
   /**
@@ -431,7 +432,9 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param resizable if <code>true</code>, the size of the new piece may be edited
    * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
    *            change independently from each other
-   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture
+   * @param horizontallyRotatable if <code>false</code> this piece 
+   *            should not rotate around an horizontal axis
    * @param price the price of the new piece or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new piece or <code>null</code> 
@@ -445,11 +448,12 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float elevation, float dropOnTopElevation, 
                                  boolean movable, String staircaseCutOutShape, 
                                  float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
-                                 boolean resizable, boolean deformable, boolean texturable, 
+                                 boolean resizable, boolean deformable, boolean texturable, boolean horizontallyRotatable,
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
-        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, backFaceShown, modelSize, 
-        creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+        height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, backFaceShown, 
+        modelSize, creator, resizable, deformable, texturable, horizontallyRotatable, 
+        price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
   }
   
   /**
@@ -562,7 +566,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  Integer color, float [][] modelRotation, boolean backFaceShown, Long modelSize, 
                                  String creator, float iconYaw, boolean proportional) {
     this(null, name, null, null, new String [0], System.currentTimeMillis(), null, icon, null, model, width, depth, height, elevation, 1f,
-        movable, false, staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, true, true, true, null, null, null, iconYaw, proportional, true);
+        movable, false, staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, true, true, true, true, null, null, null, iconYaw, proportional, true);
   }
   
   private CatalogPieceOfFurniture(String id, String name, String description, 
@@ -571,8 +575,9 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                   float width, float depth, float height, 
                                   float elevation, float dropOnTopElevation, 
                                   boolean movable, boolean doorOrWindow, String staircaseCutOutShape,
-                                  Integer color, float [][] modelRotation, boolean backFaceShown, Long modelSize, 
-                                  String creator, boolean resizable, boolean deformable, boolean texturable, 
+                                  Integer color, float [][] modelRotation, boolean backFaceShown, 
+                                  Long modelSize, String creator, boolean resizable, 
+                                  boolean deformable, boolean texturable, boolean horizontallyRotatable,
                                   BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, 
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;
@@ -595,6 +600,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.color = color;
     this.staircaseCutOutShape = staircaseCutOutShape;
     this.creator = creator;
+    this.horizontallyRotatable = horizontallyRotatable;
     this.price = price;
     this.valueAddedTaxPercentage = valueAddedTaxPercentage;
     this.currency = currency;
@@ -849,6 +855,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public boolean isTexturable() {
     return this.texturable;
+  }
+  
+  /**
+   * Returns <code>false</code> if this piece should not rotate around an horizontal axis.
+   * @since 5.5
+   */
+  public boolean isHorizontallyRotatable() {
+    return this.horizontallyRotatable;
   }
   
   /**

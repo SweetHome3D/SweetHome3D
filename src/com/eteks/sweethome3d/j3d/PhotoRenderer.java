@@ -307,9 +307,6 @@ public class PhotoRenderer {
           && lightPower > 0f
           && (level == null
               || level.isViewableAndVisible())) {
-        float angle = light.getAngle();
-        float cos = (float)Math.cos(angle);
-        float sin = (float)Math.sin(angle);
         for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
           float lightRadius = lightSource.getDiameter() != null 
                   ? lightSource.getDiameter() * light.getWidth() / 2 
@@ -320,13 +317,25 @@ public class PhotoRenderer {
               power * (lightColor >> 16) * (this.homeLightColor >> 16),
               power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
               power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
-          float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
-          float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
-          float lightElevation = light.getGroundElevation();
+          Point3f lightSourceLocationInLight = new Point3f((lightSource.getX() - 0.5f) * light.getWidth(), 
+              (lightSource.getZ() - 0.5f) * light.getHeight(), 
+              (0.5f - lightSource.getY()) * light.getDepth());
+          Transform3D horizontalRotation = new Transform3D();
+          // Change angle around horizontal axis
+          if (light.getPitch() != 0) {
+            horizontalRotation.rotX(-light.getPitch());
+          } else {
+            horizontalRotation.rotZ(-light.getRoll());
+          }
+          // Change angle around vertical axis
+          Transform3D transform = new Transform3D();
+          transform.rotY(-light.getAngle());
+          transform.mul(horizontalRotation);
+          transform.transform(lightSourceLocationInLight);
           this.sunflow.parameter("center",
-              new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
-                  lightElevation + (lightSource.getZ() * light.getHeight()),
-                  light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos));                    
+              new Point3(light.getX() + lightSourceLocationInLight.getX(),
+                  light.getGroundElevation() + light.getHeight() / 2 + lightSourceLocationInLight.getY(),
+                  light.getY() + lightSourceLocationInLight.getZ()));                    
           this.sunflow.parameter("radius", lightRadius);
           this.sunflow.parameter("samples", 4);
           this.sunflow.light(UUID.randomUUID().toString(), "sphere");

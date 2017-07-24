@@ -423,7 +423,7 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     super(id, name, description, information, tags, creationDate, grade, 
         icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
-        null, modelRotation, backFaceShown, modelSize, creator, resizable, deformable, texturable, 
+        null, modelRotation, backFaceShown, modelSize, creator, resizable, deformable, texturable, false,
         price, valueAddedTaxPercentage, currency);
     this.cutOutShape = cutOutShape;
     this.wallThickness = wallThickness;

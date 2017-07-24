@@ -53,7 +53,8 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
-      DESCRIPTION, PRICE, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED, MOVABLE, LEVEL};
+      DESCRIPTION, PRICE, WIDTH, WIDTH_IN_PLAN, DEPTH, DEPTH_IN_PLAN, HEIGHT, HEIGHT_IN_PLAN, 
+      COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, PITCH, ROLL, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -272,8 +273,11 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private Content                model;
   private Long                   modelSize;                    
   private float                  width;
+  private float                  widthInPlan;
   private float                  depth;
+  private float                  depthInPlan;
   private float                  height;
+  private float                  heightInPlan;
   private float                  elevation;
   private float                  dropOnTopElevation;
   private boolean                movable;
@@ -283,12 +287,14 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private HomeTexture            texture;
   private Float                  shininess;
   private float [][]             modelRotation;
+  private boolean                modelCenteredAtOrigin;
   private String                 staircaseCutOutShape;
   private String                 creator;
   private boolean                backFaceShown;
   private boolean                resizable;
   private boolean                deformable;
   private boolean                texturable;
+  private boolean                horizontallyRotatable;
   private BigDecimal             price;
   private BigDecimal             valueAddedTaxPercentage;
   private String                 currency;
@@ -296,11 +302,14 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private float                  x;
   private float                  y;
   private float                  angle;
+  private float                  pitch;
+  private float                  roll;
   private boolean                modelMirrored;
   private Level                  level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
+
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -329,12 +338,12 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.resizable = piece.isResizable();
     this.deformable = piece.isDeformable();
     this.texturable = piece.isTexturable();
+    this.horizontallyRotatable = piece.isHorizontallyRotatable();
     this.price = piece.getPrice();
     this.valueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
     this.currency = piece.getCurrency();
     if (piece instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture homePiece = 
-          (HomePieceOfFurniture)piece;
+      HomePieceOfFurniture homePiece = (HomePieceOfFurniture)piece;
       this.catalogId = homePiece.getCatalogId();
       this.nameVisible = homePiece.isNameVisible();
       this.nameXOffset = homePiece.getNameXOffset();
@@ -342,7 +351,13 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       this.nameAngle = homePiece.getNameAngle();
       this.nameStyle = homePiece.getNameStyle();
       this.visible = homePiece.isVisible();
+      this.widthInPlan = homePiece.getWidthInPlan();
+      this.depthInPlan = homePiece.getDepthInPlan();
+      this.heightInPlan = homePiece.getHeightInPlan();
+      this.modelCenteredAtOrigin = homePiece.isModelCenteredAtOrigin();
       this.angle = homePiece.getAngle();
+      this.pitch = homePiece.getPitch();
+      this.roll = homePiece.getRoll();
       this.x = homePiece.getX();
       this.y = homePiece.getY();
       this.modelMirrored = homePiece.isModelMirrored();
@@ -354,6 +369,10 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         this.catalogId = ((CatalogPieceOfFurniture)piece).getId();
       }      
       this.visible = true;
+      this.widthInPlan = this.width;
+      this.depthInPlan = this.depth;
+      this.heightInPlan = this.height;
+      this.modelCenteredAtOrigin = true; // false by default for version < 5.5
       this.x = this.width / 2;
       this.y = this.depth / 2;
     }
@@ -369,11 +388,29 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.resizable = true;
     this.deformable = true;
     this.texturable = true;
+    this.horizontallyRotatable = true;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.widthInPlan =
+    this.depthInPlan =
+    this.heightInPlan = Float.NEGATIVE_INFINITY;
     in.defaultReadObject();
     
     // Ensure angle is always positive and between 0 and 2 PI
     this.angle = (float)((this.angle % TWICE_PI + TWICE_PI) % TWICE_PI);
+    // Update new fields used to store dimensions of a piece in plan after pitch or roll is applied to it
+    if (this.widthInPlan == Float.NEGATIVE_INFINITY
+        || this.depthInPlan == Float.NEGATIVE_INFINITY
+        || this.heightInPlan == Float.NEGATIVE_INFINITY) {
+      this.widthInPlan = this.width;
+      this.depthInPlan = this.depth;
+      this.heightInPlan = this.height;
+      this.pitch = 0;
+      this.roll = 0;
+    }
+    if (!this.modelCenteredAtOrigin) {
+      // Keep default value to false only if model rotation matrix isn't identity
+      this.modelCenteredAtOrigin = Arrays.deepEquals(IDENTITY, this.modelRotation);
+    }
   }
 
   /**
@@ -571,6 +608,28 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
+   * Returns the depth of this piece of furniture in the horizontal plan (after pitch or roll is applied to it). 
+   * @since 5.5
+   */
+  public float getDepthInPlan() {
+    return this.depthInPlan;
+  }
+
+  /**
+   * Sets the depth of this piece of furniture in the horizontal plan (after pitch or roll is applied to it). 
+   * listeners added to this piece will receive a change notification.
+   * @since 5.5
+   */
+  public void setDepthInPlan(float depthInPlan) {
+    if (depthInPlan != this.depthInPlan) {
+      float oldDepth = this.depthInPlan;
+      this.depthInPlan = depthInPlan;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH_IN_PLAN.name(), oldDepth, depthInPlan);
+    }
+  }
+
+  /**
    * Returns the height of this piece of furniture.
    */
   public float getHeight() {
@@ -591,6 +650,27 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
+    }
+  }
+
+  /**
+   * Returns the height of this piece of furniture from the horizontal plan (after pitch or roll is applied to it). 
+   * @since 5.5
+   */
+  public float getHeightInPlan() {
+    return this.heightInPlan;
+  }
+
+  /**
+   * Sets the height of this piece of furniture from the horizontal plan (after pitch or roll is applied to it). 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 5.5
+   */
+  public void setHeightInPlan(float heightInPlan) {
+    if (heightInPlan != this.heightInPlan) {
+      float oldHeight = this.heightInPlan;
+      this.heightInPlan = heightInPlan;
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_IN_PLAN.name(), oldHeight, heightInPlan);
     }
   }
 
@@ -619,6 +699,39 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     }
   }
 
+  /**
+   * Returns the width of this piece of furniture in the horizontal plan (after pitch or roll is applied to it). 
+   * @since 5.5
+   */
+  public float getWidthInPlan() {
+    return this.widthInPlan;
+  }
+
+  /**
+   * Sets the width of this piece of furniture in the horizontal plan (after pitch or roll is applied to it). 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 5.5
+   */
+  public void setWidthInPlan(float widthInPlan) {
+    if (widthInPlan != this.widthInPlan) {
+      float oldWidth = this.widthInPlan;
+      this.widthInPlan = widthInPlan;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH_IN_PLAN.name(), oldWidth, widthInPlan);
+    }
+  }
+
+  /**
+   * Scales this piece of furniture with the given <code>scale</code>.
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 5.5
+   */
+  public void scale(float scale) {
+    setWidth(getWidth() * scale);
+    setDepth(getDepth() * scale);
+    setHeight(getHeight() * scale);
+  }
+  
   /**
    * Returns the elevation of the bottom of this piece of furniture on its level. 
    */
@@ -878,6 +991,14 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
+   * Returns <code>false</code> if this piece should not rotate around an horizontal axis.
+   * @since 5.5
+   */
+  public boolean isHorizontallyRotatable() {
+    return this.horizontallyRotatable;
+  }
+  
+  /**
    * Returns the price of this piece of furniture or <code>null</code>. 
    */
   public BigDecimal getPrice() {
@@ -996,7 +1117,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
-   * Returns the angle in radians of this piece of furniture around vertical axis. 
+   * Returns the angle in radians of this piece around vertical axis. 
    */
   public float getAngle() {
     return this.angle;
@@ -1015,6 +1136,70 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       this.shapeCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
     }
+  }
+
+  /**
+   * Returns the pitch angle in radians of this piece of furniture.
+   * @since 5.5
+   */
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  /**
+   * Sets the pitch angle in radians of this piece and notifies listeners of this change.
+   * Pitch axis is horizontal lateral (or transverse) axis. 
+   * @since 5.5
+   */
+  public void setPitch(float pitch) {
+    if (isHorizontallyRotatable()) {
+      // Ensure pitch is always positive and between 0 and 2 PI
+      pitch = (float)((pitch % TWICE_PI + TWICE_PI) % TWICE_PI);
+      if (pitch != this.pitch) {
+        float oldPitch = this.pitch;
+        this.pitch = pitch;
+        this.shapeCache = null;
+        this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
+      }
+    } else {
+      throw new IllegalStateException("Piece can't be rotated around an horizontal axis");
+    }
+  }
+
+  /**
+   * Returns the roll angle in radians of this piece of furniture.
+   * @since 5.5
+   */
+  public float getRoll() {
+    return this.roll;
+  }
+
+  /**
+   * Sets the roll angle in radians of this piece and notifies listeners of this change.
+   * Roll axis is horizontal longitudinal axis. 
+   * @since 5.5
+   */
+  public void setRoll(float roll) {
+    if (isHorizontallyRotatable()) {
+      // Ensure roll is always positive and between 0 and 2 PI
+      roll = (float)((roll % TWICE_PI + TWICE_PI) % TWICE_PI);
+      if (roll != this.roll) {
+        float oldRoll = this.roll;
+        this.roll = roll;
+        this.shapeCache = null;
+        this.propertyChangeSupport.firePropertyChange(Property.ROLL.name(), oldRoll, roll);
+      }
+    } else {
+      throw new IllegalStateException("Piece can't be rotated around an horizontal axis");
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the pitch or roll angle of this piece is different from 0. 
+   * @since 5.5
+   */
+  public boolean isHorizontallyRotated() {
+    return this.roll != 0 || this.pitch != 0;
   }
 
   /**
@@ -1052,6 +1237,27 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
                            {this.modelRotation[2][0], this.modelRotation[2][1], this.modelRotation[2][2]}};
   }
 
+  /**
+   * Sets whether model center should be always centered at the origin
+   * when model rotation isn't <code>null</code>.
+   * This method should be called only to keep unchanged the (wrong) location 
+   * of a rotated model created with version < 5.5.  
+   * @since 5.5  
+   */
+  public void setModelCenteredAtOrigin(boolean modelCenteredAtOrigin) {
+    this.modelCenteredAtOrigin = modelCenteredAtOrigin;
+  }
+  
+  /**
+   * Returns <code>true</code> if model center should be always centered at the origin
+   * when model rotation isn't <code>null</code>.
+   * @return <code>false</code> by default if version < 5.5
+   * @since 5.5  
+   */
+  public boolean isModelCenteredAtOrigin() {
+    return this.modelCenteredAtOrigin;
+  }
+  
   /**
    * Returns the shape used to cut out upper levels when they intersect with the piece   
    * like a staircase.
@@ -1274,15 +1480,15 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
   
   /**
-   * Returns the shape matching this piece.
+   * Returns the shape matching this piece in the horizontal plan.
    */
   private Shape getShape() {
     if (this.shapeCache == null) {
       // Create the rectangle that matches piece bounds
       Rectangle2D pieceRectangle = new Rectangle2D.Float(
-          getX() - getWidth() / 2,
-          getY() - getDepth() / 2,
-          getWidth(), getDepth());
+          getX() - getWidthInPlan() / 2,
+          getY() - getDepthInPlan() / 2,
+          getWidthInPlan(), getDepthInPlan());
       // Apply rotation to the rectangle
       AffineTransform rotation = AffineTransform.getRotateInstance(getAngle(), getX(), getY());
       PathIterator it = pieceRectangle.getPathIterator(rotation);

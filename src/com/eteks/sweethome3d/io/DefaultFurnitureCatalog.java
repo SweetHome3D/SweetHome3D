@@ -312,6 +312,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     TEXTURABLE("texturable"),
     /**
+     * The key for the ability of a piece of furniture to rotate around a horizontal axis (optional, <code>true</code> by default).
+     * If the value of this key is <code>false</code>, the piece of furniture
+     * will be considered as a piece that can't be horizontally rotated. 
+     */
+    HORIZONTALLY_ROTATABLE("horizontallyRotatable"),
+    /**
      * The key for the price of a piece of furniture (optional).
      */
     PRICE("price"),
@@ -655,6 +661,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     boolean resizable = getOptionalBoolean(resource, PropertyKey.RESIZABLE.getKey(index), true);
     boolean deformable = getOptionalBoolean(resource, PropertyKey.DEFORMABLE.getKey(index), true);
     boolean texturable = getOptionalBoolean(resource, PropertyKey.TEXTURABLE.getKey(index), true);
+    boolean horizontallyRotatable = getOptionalBoolean(resource, PropertyKey.HORIZONTALLY_ROTATABLE.getKey(index), true);
     BigDecimal price = null;
     try {
       price = new BigDecimal(resource.getString(PropertyKey.PRICE.getKey(index)));
@@ -690,12 +697,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         return new CatalogLight(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
             lightSources, staircaseCutOutShape, modelRotation, false, modelSize, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+            resizable, deformable, texturable, horizontallyRotatable, price, valueAddedTaxPercentage, currency);
       } else {
         return new CatalogPieceOfFurniture(id, name, description, information, tags, creationDate, grade, 
             icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
             staircaseCutOutShape, modelRotation, false, modelSize, creator, 
-            resizable, deformable, texturable, price, valueAddedTaxPercentage, currency);
+            resizable, deformable, texturable, horizontallyRotatable, price, valueAddedTaxPercentage, currency);
       }
     }
   }

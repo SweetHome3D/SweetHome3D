@@ -222,6 +222,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       icon CDATA #IMPLIED
  *       planIcon CDATA #IMPLIED
  *       modelRotation CDATA "1 0 0 0 1 0 0 0 1"
+ *       modelCenteredAtOrigin CDATA #IMPLIED
  *       backFaceShown (false | true) "false"
  *       modelSize CDATA #IMPLIED
  *       doorOrWindow (false | true) "false"
@@ -234,11 +235,20 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       creator CDATA #IMPLIED
  *       valueAddedTaxPercentage CDATA #IMPLIED
  *       currency CDATA #IMPLIED'>
+ *
+ * &lt;!ENTITY % pieceOfFurnitureHorizontalRotationAttributes
+ *      'horizontallyRotatable (false | true) "true"
+ *       pitch CDATA "0"
+ *       roll CDATA "0"
+ *       widthInPlan CDATA #IMPLIED
+ *       depthInPlan CDATA #IMPLIED
+ *       heightInPlan CDATA #IMPLIED'>
  * 
  * &lt;!ELEMENT pieceOfFurniture (property*, textStyle?, texture?, material*)>
  * &lt;!ATTLIST pieceOfFurniture 
  *       %furnitureCommonAttributes;
- *       %pieceOfFurnitureCommonAttributes;>
+ *       %pieceOfFurnitureCommonAttributes;
+ *       %pieceOfFurnitureHorizontalRotationAttributes;>
  * 
  * &lt;!ELEMENT doorOrWindow (sash*, property*, textStyle?, texture?, material*)>
  * &lt;!ATTLIST doorOrWindow 
@@ -263,6 +273,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * &lt;!ATTLIST light 
  *       %furnitureCommonAttributes;
  *       %pieceOfFurnitureCommonAttributes;
+ *       %pieceOfFurnitureHorizontalRotationAttributes;
  *       power CDATA "0.5">
  * 
  * &lt;!ELEMENT lightSource EMPTY>
@@ -732,13 +743,24 @@ public class HomeXMLHandler extends DefaultHandler {
   
   /**
    * Returns a new {@link Home} instance initialized from the given <code>attributes</code>.
+   * @return a home instance with its version set. 
    */
   private Home createHome(Map<String, String> attributes) throws SAXException {
+    Home home;
     if (attributes.get("wallHeight") != null) {
-      return new Home(parseFloat(attributes, "wallHeight"));
+      home = new Home(parseFloat(attributes, "wallHeight"));
     } else {
-      return new Home();
+      home = new Home();
     }
+    String version = attributes.get("version");
+    if (version != null) {
+      try {
+        home.setVersion(Integer.parseInt(version));
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for integer attribute version", ex);
+      }
+    }
+    return home;
   }
   
   /**
@@ -755,14 +777,6 @@ public class HomeXMLHandler extends DefaultHandler {
       this.home.setFurnitureVisibleProperties(this.furnitureVisibleProperties);
     }
     this.home.setBackgroundImage(this.homeBackgroundImage);
-    String version = attributes.get("version");
-    if (version != null) {
-      try {
-        home.setVersion(Integer.parseInt(version));
-      } catch (NumberFormatException ex) {
-        throw new SAXException("Invalid value for integer attribute version", ex);
-      }
-    }
     home.setName(attributes.get("name"));
     String selectedLevelId = attributes.get("selectedLevel");
     if (selectedLevelId != null) {
@@ -1115,6 +1129,7 @@ public class HomeXMLHandler extends DefaultHandler {
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
           !"false".equals(attributes.get("texturable")), 
+          !"false".equals(attributes.get("horizontallyRotatable")),
           parseOptionalDecimal(attributes, "price"), 
           parseOptionalDecimal(attributes, "valueAddedTaxPercentage"), 
           attributes.get("currency")));
@@ -1144,6 +1159,7 @@ public class HomeXMLHandler extends DefaultHandler {
           !"false".equals(attributes.get("resizable")), 
           !"false".equals(attributes.get("deformable")), 
           !"false".equals(attributes.get("texturable")), 
+          !"false".equals(attributes.get("horizontallyRotatable")),
           parseOptionalDecimal(attributes, "price"), 
           parseOptionalDecimal(attributes, "valueAddedTaxPercentage"), 
           attributes.get("currency")));
@@ -1199,6 +1215,30 @@ public class HomeXMLHandler extends DefaultHandler {
       Float angle = parseOptionalFloat(attributes, "angle");
       if (angle != null) {
         piece.setAngle(angle);
+      }
+      Float pitch = parseOptionalFloat(attributes, "pitch");
+      if (pitch != null) {
+        piece.setPitch(pitch);
+      }
+      Float roll = parseOptionalFloat(attributes, "roll");
+      if (roll != null) {
+        piece.setRoll(roll);
+      }
+      Float widthInPlan = parseOptionalFloat(attributes, "widthInPlan");
+      if (widthInPlan != null) {
+        piece.setWidthInPlan(widthInPlan);
+      }
+      Float depthInPlan = parseOptionalFloat(attributes, "depthInPlan");
+      if (depthInPlan != null) {
+        piece.setDepthInPlan(depthInPlan);
+      }
+      Float heightInPlan = parseOptionalFloat(attributes, "heightInPlan");
+      if (heightInPlan != null) {
+        piece.setHeightInPlan(heightInPlan);
+      }
+      if (this.home.getVersion() < 5500 || "false".equals(attributes.get("modelCenteredAtOrigin"))) {
+        // Set value to false only if model rotation matrix is defined
+        piece.setModelCenteredAtOrigin(attributes.get("modelRotation") == null);
       }
       if (piece.isResizable()) {
         // Attribute already set for HomeFurnitureGroup instances during creation

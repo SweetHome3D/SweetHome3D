@@ -146,7 +146,6 @@ public interface PieceOfFurniture {
    * @since 3.0
    */
   public abstract boolean isDeformable();
-
   
   /**
    * Returns <code>true</code> if the width and depth of this piece may 
@@ -160,6 +159,12 @@ public interface PieceOfFurniture {
    * @since 3.0
    */
   public abstract boolean isTexturable();
+
+  /**
+   * Returns <code>false</code> if this piece should not rotate around an horizontal axis.
+   * @since 5.5
+   */
+ boolean isHorizontallyRotatable();
   
   /**
    * Returns the price of this piece of furniture or <code>null</code>. 

@@ -185,10 +185,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     float height = 0;
     float dropOnTopElevation = -1;
     for (HomePieceOfFurniture piece : furniture) {
-      height = Math.max(height, piece.getElevation() + piece.getHeight());
+      height = Math.max(height, piece.getElevation() + piece.getHeightInPlan());
       if (piece.getDropOnTopElevation() >= 0) {
         dropOnTopElevation = Math.max(dropOnTopElevation, 
-            piece.getElevation() + piece.getHeight() * piece.getDropOnTopElevation());
+            piece.getElevation() + piece.getHeightInPlan() * piece.getDropOnTopElevation());
       }
     }
     height -= elevation;
@@ -217,9 +217,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     rotation.transform(center, center);
 
     if (this.resizable) {
-      super.setWidth((float)unrotatedBoundingRectangle.getWidth());
-      super.setDepth((float)unrotatedBoundingRectangle.getHeight());
+      float width = (float)unrotatedBoundingRectangle.getWidth();
+      super.setWidth(width);
+      super.setWidthInPlan(width);
+      float depth = (float)unrotatedBoundingRectangle.getHeight();
+      super.setDepth(depth);
+      super.setDepthInPlan(depth);
       super.setHeight(height);
+      super.setHeightInPlan(height);
     } else {
       this.fixedWidth = (float)unrotatedBoundingRectangle.getWidth();
       this.fixedDepth = (float)unrotatedBoundingRectangle.getHeight();
@@ -263,9 +268,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
           || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
           || HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
           || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
-          || HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
-          || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
-          || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+          || HomePieceOfFurniture.Property.WIDTH_IN_PLAN.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.DEPTH_IN_PLAN.name().equals(ev.getPropertyName())
+          || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
         group.updateLocationAndSize(group.getFurniture(), group.getAngle(), false);
       }
     }
@@ -408,6 +413,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns <code>false</code>.
+   * @since 5.5
+   */
+  @Override
+  public boolean isHorizontallyRotatable() {
+    return false;
+  }
+  
+  /**
    * Returns the width of this group.
    */
   @Override
@@ -419,6 +433,16 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
   }
   
+  /**
+   * Returns the width of this group. As a group can't be rotated around an horizontal axis, 
+   * its width in the horizontal plan is equal to its width.
+   * @since 5.5
+   */
+  @Override
+  public float getWidthInPlan() {
+    return getWidth();
+  }
+
   /**
    * Returns the depth of this group.
    */
@@ -432,6 +456,16 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns the depth of this group. As a group can't be rotated around an horizontal axis, 
+   * its depth in the horizontal plan is equal to its depth.
+   * @since 5.5
+   */
+  @Override
+  public float getDepthInPlan() {
+    return getDepth();
+  }
+  
+  /**
    * Returns the height of this group.
    */
   @Override
@@ -442,7 +476,35 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       return super.getHeight();
     }
   }
-  
+
+  /**
+   * Returns the height of this group. As a group can't be rotated around an horizontal axis, 
+   * its height in the horizontal plan is equal to its height.
+   * @since 5.5
+   */
+  @Override
+  public float getHeightInPlan() {
+    return getHeight();
+  }
+
+  /**
+   * Returns <code>true</code> if this piece or a child of this group is rotated around an horizontal axis.
+   * @since 5.5
+   */
+  @Override
+  public boolean isHorizontallyRotated() {
+    if (super.isHorizontallyRotated()) {
+      return true;
+    } else {
+      for (HomePieceOfFurniture childPiece : getFurniture()) {
+        if (childPiece.isHorizontallyRotated()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   /**
    * Returns the elevation at which should be placed an object dropped on this group.
    * @since 4.4 
@@ -497,6 +559,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   @Override
   public float [][] getModelRotation() {
     return IDENTITY;
+  }
+  
+  /**
+   * Returns <code>true</code>.
+   */
+  @Override
+  public boolean isModelCenteredAtOrigin() {
+    return true;
   }
 
   /**
@@ -769,6 +839,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Sets the <code>width</code> of this group, then moves and resizes its furniture accordingly.
+   * This method shouldn't be called on a group that contain furniture rotated around an horizontal axis.
    */
   @Override
   public void setWidth(float width) {
@@ -797,9 +868,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setWidth(width);
     }
   }
-
+  
   /**
    * Sets the <code>depth</code> of this group, then moves and resizes its furniture accordingly.
+   * This method shouldn't be called on a group that contain furniture rotated around an horizontal axis.
    */
   @Override
   public void setDepth(float depth) {
@@ -831,6 +903,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Sets the <code>height</code> of this group, then moves and resizes its furniture accordingly.
+   * This method shouldn't be called on a group that contain furniture rotated around an horizontal axis.
    */
   @Override
   public void setHeight(float height) {
@@ -845,6 +918,37 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       }
       super.setHeight(height);
     }
+  }
+
+  /**
+   * Scales this group and its children with the given <code>ratio</code>.
+   * @since 5.5
+   */
+  @Override
+  public void scale(float scale) {
+    float angle = getAngle();
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.removePropertyChangeListener(this.furnitureListener);
+      piece.setWidth(piece.getWidth() * scale);
+      piece.setDepth(piece.getDepth() * scale);
+      piece.setHeight(piece.getHeight() * scale);
+      // Rotate piece to angle 0
+      double cosAngle = Math.cos(angle);
+      double sinAngle = Math.sin(angle);
+      float newX = getX() + (float)((piece.getX() - getX()) * cosAngle + (piece.getY() - getY()) * sinAngle);
+      float newY = getY() + (float)((piece.getX() - getX()) * -sinAngle + (piece.getY() - getY()) * cosAngle);
+      // Update its coordinates
+      newX = getX() + (newX - getX()) * scale; 
+      newY = getY() + (newY - getY()) * scale;
+      // Rotate piece back to its angle
+      piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
+      piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
+      piece.setElevation(getElevation() + (piece.getElevation() - getElevation()) * scale);
+      piece.addPropertyChangeListener(this.furnitureListener);
+    }
+    super.setWidth(getWidth() * scale);
+    super.setDepth(getDepth() * scale);
+    super.setHeight(getHeight() * scale);
   }
 
   /**

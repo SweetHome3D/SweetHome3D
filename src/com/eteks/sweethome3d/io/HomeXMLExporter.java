@@ -370,9 +370,14 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
       writer.writeFloatAttribute("y", piece.getY());
       writer.writeFloatAttribute("elevation", piece.getElevation(), 0f);
       writer.writeFloatAttribute("angle", piece.getAngle(), 0f);
+      writer.writeFloatAttribute("pitch", piece.getPitch(), 0f);
+      writer.writeFloatAttribute("roll", piece.getRoll(), 0f);
       writer.writeFloatAttribute("width", piece.getWidth());
+      writer.writeFloatAttribute("widthInPlan", piece.getWidthInPlan(), piece.getWidth());
       writer.writeFloatAttribute("depth", piece.getDepth());
+      writer.writeFloatAttribute("depthInPlan", piece.getDepthInPlan(), piece.getDepth());
       writer.writeFloatAttribute("height", piece.getHeight());
+      writer.writeFloatAttribute("heightInPlan", piece.getHeightInPlan(), piece.getHeight());
       writer.writeBooleanAttribute("backFaceShown", piece.isBackFaceShown(), false);
       writer.writeBooleanAttribute("modelMirrored", piece.isModelMirrored(), false);
       writer.writeBooleanAttribute("visible", piece.isVisible(), true);
@@ -386,6 +391,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
         + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
         + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]);
       writer.writeAttribute("modelRotation", modelRotationString, "1 0 0 0 1 0 0 0 1");
+      writer.writeBooleanAttribute("modelCenteredAtOrigin", piece.isModelCenteredAtOrigin(), true);
       writer.writeLongAttribute("modelSize", piece.getModelSize());
       writer.writeAttribute("description", piece.getDescription(), null);        
       writer.writeAttribute("information", piece.getInformation(), null);        
@@ -393,6 +399,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
       if (!(piece instanceof HomeFurnitureGroup)) {
         if (!(piece instanceof HomeDoorOrWindow)) {
           writer.writeBooleanAttribute("doorOrWindow", piece.isDoorOrWindow(), false);
+          writer.writeBooleanAttribute("horizontallyRotatable", piece.isHorizontallyRotatable(), true);
         }
         writer.writeBooleanAttribute("resizable", piece.isResizable(), true);
         writer.writeBooleanAttribute("deformable", piece.isDeformable(), true);
