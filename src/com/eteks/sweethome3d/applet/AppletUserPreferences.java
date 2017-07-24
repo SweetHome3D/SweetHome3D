@@ -67,6 +67,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
   private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
   private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
+  private static final String OBSERVER_CAMERA_SELECTED_AT_CHANGE        = "observerCameraSelectedAtChange";
   private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
   private static final String RULERS_VISIBLE                            = "rulersVisible";
   private static final String GRID_VISIBLE                              = "gridVisible";
@@ -229,6 +230,8 @@ public class AppletUserPreferences extends UserPreferences {
         String.valueOf(defaultPreferences.isNavigationPanelVisible()))));
     setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(properties.getProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
         String.valueOf(defaultPreferences.isAerialViewCenteredOnSelectionEnabled()))));
+    setObserverCameraSelectedAtChange(Boolean.parseBoolean(properties.getProperty(OBSERVER_CAMERA_SELECTED_AT_CHANGE, 
+        String.valueOf(defaultPreferences.isObserverCameraSelectedAtChange()))));
     setMagnetismEnabled(Boolean.parseBoolean(properties.getProperty(MAGNETISM_ENABLED, "true")));
     setRulersVisible(Boolean.parseBoolean(properties.getProperty(RULERS_VISIBLE, 
         String.valueOf(defaultPreferences.isMagnetismEnabled()))));
@@ -300,6 +303,7 @@ public class AppletUserPreferences extends UserPreferences {
         Property.FURNITURE_CATALOG_VIEWED_IN_TREE,
         Property.NAVIGATION_PANEL_VISIBLE,
         Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
+        Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE,
         Property.MAGNETISM_ENABLED,
         Property.RULERS_VISIBLE,
         Property.GRID_VISIBLE,
@@ -392,6 +396,7 @@ public class AppletUserPreferences extends UserPreferences {
       properties.setProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, String.valueOf(isFurnitureCatalogViewedInTree()));
       properties.setProperty(NAVIGATION_PANEL_VISIBLE, String.valueOf(isNavigationPanelVisible()));    
       properties.setProperty(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, String.valueOf(isAerialViewCenteredOnSelectionEnabled()));    
+      properties.setProperty(OBSERVER_CAMERA_SELECTED_AT_CHANGE, String.valueOf(isObserverCameraSelectedAtChange()));    
       properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
       properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
       properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));

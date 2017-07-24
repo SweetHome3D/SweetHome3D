@@ -52,8 +52,8 @@ public abstract class UserPreferences {
                         FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
                         RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
-                        AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, CHECK_UPDATES_ENABLED, UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, 
-                        AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES}
+                        AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE, CHECK_UPDATES_ENABLED, 
+                        UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES}
   
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -98,6 +98,7 @@ public abstract class UserPreferences {
   private LengthUnit       unit;
   private boolean          furnitureCatalogViewedInTree = true;
   private boolean          aerialViewCenteredOnSelectionEnabled;
+  private boolean          observerCameraSelectedAtChange = true;
   private boolean          navigationPanelVisible = true;
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
@@ -546,6 +547,26 @@ public abstract class UserPreferences {
    */
   public boolean isAerialViewCenteredOnSelectionEnabled() {
     return this.aerialViewCenteredOnSelectionEnabled;
+  }
+
+  /**
+   * Sets whether the observer camera should be selected at each change.
+   * @since 5.5
+   */
+  public void setObserverCameraSelectedAtChange(boolean observerCameraSelectedAtChange) {
+    if (observerCameraSelectedAtChange != this.observerCameraSelectedAtChange) {
+      this.observerCameraSelectedAtChange = observerCameraSelectedAtChange;
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE.name(), 
+          !observerCameraSelectedAtChange, observerCameraSelectedAtChange);
+    }
+  }
+  
+  /**
+   * Returns whether the observer camera should be selected at each change.
+   * @since 5.5
+   */
+  public boolean isObserverCameraSelectedAtChange() {
+    return this.observerCameraSelectedAtChange;
   }
 
   /**
