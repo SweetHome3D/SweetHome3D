@@ -1961,19 +1961,17 @@ public class PlanController extends FurnitureController implements Controller {
     this.furnitureSizeChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
-          if (piece.isHorizontallyRotatable()) {
-            String propertyName = ev.getPropertyName();
-            if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
-                || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
-                || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
-                || HomePieceOfFurniture.Property.ROLL.name().equals(propertyName)
-                || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)) {
-              // Update piece size in plan
-              float [] size = getView().getPieceOfFurnitureSizeInPlan(piece);
-              piece.setWidthInPlan(size [0]);
-              piece.setDepthInPlan(size [1]);
-              piece.setHeightInPlan(size [2]);
-            }
+          String propertyName = ev.getPropertyName();
+          if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.ROLL.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)) {
+            // Update piece size in plan
+            float [] size = getView().getPieceOfFurnitureSizeInPlan(piece);
+            piece.setWidthInPlan(size [0]);
+            piece.setDepthInPlan(size [1]);
+            piece.setHeightInPlan(size [2]);
           }
         }
       };
@@ -2207,9 +2205,10 @@ public class PlanController extends FurnitureController implements Controller {
               if (piece.isResizable()
                   && isItemResizable(piece)
                   && doorOrWindow.isWidthDepthDeformable()) {
+                // Doors and windows can't be rotated around horizontal axes
                 piece.setDepth(thicknessEpsilon 
                     + referenceWall.getThickness() / doorOrWindow.getWallThickness());
-                // Doors and windows can't be rotated around horizontal axes
+                // Need to set depth in plan because piece isn't added to home during initial drop
                 piece.setDepthInPlan(piece.getDepth());
                 halfDepth = piece.getDepth() / 2;
                 wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();
@@ -5438,7 +5437,6 @@ public class PlanController extends FurnitureController implements Controller {
               && isItemResizable(piece)) {
             // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
             piece.setDepth(oldDepth);
-            piece.setDepthInPlan(oldDepth);
           }
           piece.setElevation(oldElevation);
           if (piece instanceof HomeDoorOrWindow) {
@@ -5457,7 +5455,6 @@ public class PlanController extends FurnitureController implements Controller {
               && isItemResizable(piece)) {
             // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
             piece.setDepth(newDepth);
-            piece.setDepthInPlan(newDepth);
           }
           piece.setElevation(newElevation);
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
@@ -7433,7 +7430,6 @@ public class PlanController extends FurnitureController implements Controller {
             && this.movedPieceOfFurniture.isResizable()
             && isItemResizable(this.movedPieceOfFurniture)) {
           this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
-          this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
         }
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
@@ -7530,7 +7526,6 @@ public class PlanController extends FurnitureController implements Controller {
                 && this.movedPieceOfFurniture.isResizable()
                 && isItemResizable(this.movedPieceOfFurniture)) {
               this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
-              this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
             }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
             if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
@@ -7603,7 +7598,6 @@ public class PlanController extends FurnitureController implements Controller {
                 && this.movedPieceOfFurniture.isResizable()
                 && isItemResizable(this.movedPieceOfFurniture)) {
               this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
-              this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
             }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
