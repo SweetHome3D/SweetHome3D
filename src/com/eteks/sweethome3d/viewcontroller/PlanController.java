@@ -7429,9 +7429,11 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-        if (this.movedPieceOfFurniture.isResizable()
+        if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow
+            && this.movedPieceOfFurniture.isResizable()
             && isItemResizable(this.movedPieceOfFurniture)) {
           this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
         }
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
@@ -7524,9 +7526,11 @@ public class PlanController extends FurnitureController implements Controller {
             this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-            if (this.movedPieceOfFurniture.isResizable()
+            if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow
+                && this.movedPieceOfFurniture.isResizable()
                 && isItemResizable(this.movedPieceOfFurniture)) {
               this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+              this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
             }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
             if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
@@ -7595,9 +7599,11 @@ public class PlanController extends FurnitureController implements Controller {
             this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-            if (this.movedPieceOfFurniture.isResizable()
+            if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow
+                && this.movedPieceOfFurniture.isResizable()
                 && isItemResizable(this.movedPieceOfFurniture)) {
               this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+              this.movedPieceOfFurniture.setDepthInPlan(this.depthMovedPieceOfFurniture);
             }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
@@ -11132,7 +11138,7 @@ public class PlanController extends FurnitureController implements Controller {
                       HomePieceOfFurniture deeperDoor = door.clone();
                       // Increase door depth to ensure the wall will be cut on both sides 
                       // (doors and windows can't be rotated around horizontal axes)
-                      deeperDoor.setDepth(deeperDoor.getDepth() + 4 * wall.getThickness());
+                      deeperDoor.setDepthInPlan(deeperDoor.getDepth() + 4 * wall.getThickness());
                       intersectionArea = new Area(wallPath);
                       intersectionArea.intersect(new Area(getPath(deeperDoor.getPoints())));
                       wallsDoorIntersection.add(intersectionArea);

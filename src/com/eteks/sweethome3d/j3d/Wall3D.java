@@ -301,7 +301,7 @@ public class Wall3D extends Object3DBranch {
             if (baseboard != null) {
               // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
               deeperPiece = piece.clone();
-              deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
+              deeperPiece.setDepthInPlan(deeperPiece.getDepth() + 2 * baseboard.getThickness());
             } 
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
@@ -310,7 +310,7 @@ public class Wall3D extends Object3DBranch {
                   deeperPiece = piece.clone();
                 }
                 // Increase piece depth to ensure the wall will be cut on both sides 
-                deeperPiece.setDepth(deeperPiece.getDepth() + 4 * wall.getThickness());
+                deeperPiece.setDepthInPlan(deeperPiece.getDepth() + 4 * wall.getThickness());
               }
             }
           }
