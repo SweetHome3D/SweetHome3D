@@ -389,6 +389,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Create a path used as pitch rotation indicator 
     // at bottom left of a piece of furniture rotated around roll axis
     AffineTransform transform = AffineTransform.getRotateInstance(-Math.PI / 2);
+    transform.concatenate(AffineTransform.getScaleInstance(1, -1));
     FURNITURE_ROLL_ROTATION_INDICATOR = FURNITURE_PITCH_ROTATION_INDICATOR.createTransformedShape(transform);
 
     ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
