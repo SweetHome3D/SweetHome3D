@@ -6523,6 +6523,13 @@ public class PlanController extends FurnitureController implements Controller {
         piece.setWidthInPlan(scale * piece.getWidthInPlan());
         piece.setDepthInPlan(scale * piece.getDepthInPlan());
         piece.setHeightInPlan(scale * piece.getHeightInPlan());
+        if (piece instanceof HomeFurnitureGroup) {
+          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+            childPiece.setWidthInPlan(scale * childPiece.getWidthInPlan());
+            childPiece.setDepthInPlan(scale * childPiece.getDepthInPlan());
+            childPiece.setHeightInPlan(scale * childPiece.getHeightInPlan());
+          }
+        }
       } else {
         float widthInPlan = piece.getWidthInPlan() * width / piece.getWidth();
         piece.setWidth(width);
@@ -6533,12 +6540,12 @@ public class PlanController extends FurnitureController implements Controller {
         float heightInPlan = piece.getHeightInPlan() * height / piece.getHeight();
         piece.setHeight(height);
         piece.setHeightInPlan(heightInPlan);
-      }
-      if (piece instanceof HomeFurnitureGroup) {
-        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-          childPiece.setWidthInPlan(childPiece.getWidth());
-          childPiece.setDepthInPlan(childPiece.getDepth());
-          childPiece.setHeightInPlan(childPiece.getHeight());
+        if (piece instanceof HomeFurnitureGroup) {
+          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+            childPiece.setWidthInPlan(childPiece.getWidth());
+            childPiece.setDepthInPlan(childPiece.getDepth());
+            childPiece.setHeightInPlan(childPiece.getHeight());
+          }
         }
       }
     }
