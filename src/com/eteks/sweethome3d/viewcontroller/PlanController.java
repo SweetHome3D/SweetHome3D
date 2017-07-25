@@ -9020,7 +9020,9 @@ public class PlanController extends FurnitureController implements Controller {
       float newPitch = (float)(this.oldPitch 
           - (y - getYLastMousePress()) * Math.cos(this.selectedPiece.getAngle()) * Math.PI / 360
           + (x - getXLastMousePress()) * Math.sin(this.selectedPiece.getAngle()) * Math.PI / 360);
-      
+      if (Math.abs(newPitch) < 1E-8) {
+        newPitch = 0;
+      }
       // Update pitch angle
       this.selectedPiece.setPitch(newPitch);
       getView().setToolTipFeedback(getToolTipFeedbackText(newPitch), x, y);
@@ -9094,7 +9096,9 @@ public class PlanController extends FurnitureController implements Controller {
       float newRoll = (float)(this.oldRoll 
           + (y - getYLastMousePress()) * Math.sin(this.selectedPiece.getAngle()) * Math.PI / 360
           + (x - getXLastMousePress()) * Math.cos(this.selectedPiece.getAngle()) * Math.PI / 360);
-      
+      if (Math.abs(newRoll) < 1E-8) {
+        newRoll = 0;
+      }
       // Update roll angle
       this.selectedPiece.setRoll(newRoll);
       getView().setToolTipFeedback(getToolTipFeedbackText(newRoll), x, y);
