@@ -152,12 +152,12 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     // Create yaw label and spinner bound to YAW controller property
     this.yawLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "yawLabel.text"));
-    final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(0., -10000., 10000., 5.);
+    final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-10000), new Float(10000), new Float(5));
     this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel, new DecimalFormat("0.##"));
     yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
     yawSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setYaw((float)Math.toRadians(((Number)yawSpinnerModel.getValue()).doubleValue()));
+          controller.setYaw((float)Math.toRadians(((Number)yawSpinnerModel.getValue()).floatValue()));
         }
       });
     controller.addPropertyChangeListener(ObserverCameraController.Property.YAW, 
@@ -170,12 +170,12 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     // Create pitch label and spinner bound to SPIN controller property
     this.pitchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "pitchLabel.text"));
-    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(0., -90., 90., 5.);
+    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-90), new Float(90), new Float(5));
     this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel, new DecimalFormat("0.##"));
     pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
     pitchSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setPitch((float)Math.toRadians(((Number)pitchSpinnerModel.getValue()).doubleValue()));
+          controller.setPitch((float)Math.toRadians(((Number)pitchSpinnerModel.getValue()).floatValue()));
         }
       });
     controller.addPropertyChangeListener(ObserverCameraController.Property.PITCH, 
@@ -188,12 +188,12 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     // Create field of view label and spinner bound to FIELD_OF_VIEW controller property
     this.fieldOfViewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "fieldOfViewLabel.text"));
-    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(10., 2., 120., 1.);
+    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(new Float(10), new Float(2), new Float(120), new Float(1));
     this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel, new DecimalFormat("0.##"));
     fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
     fieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setFieldOfView((float)Math.toRadians(((Number)fieldOfViewSpinnerModel.getValue()).doubleValue()));
+          controller.setFieldOfView((float)Math.toRadians(((Number)fieldOfViewSpinnerModel.getValue()).floatValue()));
         }
       });
     controller.addPropertyChangeListener(ObserverCameraController.Property.FIELD_OF_VIEW, 
