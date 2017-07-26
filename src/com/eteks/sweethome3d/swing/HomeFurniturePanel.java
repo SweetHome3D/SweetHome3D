@@ -76,10 +76,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private NullableCheckBox        basePlanItemCheckBox;
   private JLabel                  angleLabel;
   private JSpinner                angleSpinner;
-  private JRadioButton            pitchRadioButton;
-  private JSpinner                pitchSpinner;
   private JRadioButton            rollRadioButton;
   private JSpinner                rollSpinner;
+  private JRadioButton            pitchRadioButton;
+  private JSpinner                pitchSpinner;
   private JLabel                  widthLabel;
   private JSpinner                widthSpinner;
   private JLabel                  depthLabel;
@@ -356,48 +356,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     
     if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
-      if (controller.isPropertyEditable(HomeFurnitureController.Property.PITCH)) {
-        // Create pitch label and its spinner bound to PITCH_IN_DEGREES controller property
-        this.pitchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
-            "pitchRadioButton.text"));
-        this.pitchRadioButton.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent ev) {
-              if (pitchRadioButton.isSelected()) {
-                controller.setHorizontalAxis(HomeFurnitureController.FurnitureHorizontalAxis.PITCH);
-              }
-            }
-          });
-        
-        final NullableSpinner.NullableSpinnerNumberModel pitchSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
-            0f, 0f, 360f, 1f);
-        this.pitchSpinner = new NullableSpinner(pitchSpinnerModel);
-        Float pitch = controller.getPitch();
-        pitchSpinnerModel.setNullable(pitch == null);
-        pitchSpinnerModel.setValue(pitch != null ? Math.toDegrees(pitch) : null);
-        final PropertyChangeListener pitchChangeListener = new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              Float newPitch = (Float)ev.getNewValue();
-              pitchSpinnerModel.setNullable(newPitch == null);
-              pitchSpinnerModel.setValue(newPitch != null ? Math.toDegrees(newPitch) : null);
-            }
-          };
-        controller.addPropertyChangeListener(HomeFurnitureController.Property.PITCH, pitchChangeListener);
-        pitchSpinnerModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent ev) {
-              controller.removePropertyChangeListener(HomeFurnitureController.Property.PITCH,
-                  pitchChangeListener);
-              Number value = (Number)pitchSpinnerModel.getValue();
-              if (value == null) {
-                controller.setPitch(null);
-              } else {
-                controller.setPitch((float)Math.toRadians(value.floatValue()));
-              }
-              controller.setHorizontalAxis(HomeFurnitureController.FurnitureHorizontalAxis.PITCH);
-              controller.addPropertyChangeListener(HomeFurnitureController.Property.PITCH, pitchChangeListener);
-            }
-          });
-      }
-      
       if (controller.isPropertyEditable(HomeFurnitureController.Property.ROLL)) {
         // Create roll label and its spinner bound to ROLL_IN_DEGREES controller property
         this.rollRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
@@ -440,10 +398,52 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           });
       }
       
-      if (this.pitchRadioButton != null && this.rollRadioButton != null) {
+      if (controller.isPropertyEditable(HomeFurnitureController.Property.PITCH)) {
+        // Create pitch label and its spinner bound to PITCH_IN_DEGREES controller property
+        this.pitchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
+            "pitchRadioButton.text"));
+        this.pitchRadioButton.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent ev) {
+              if (pitchRadioButton.isSelected()) {
+                controller.setHorizontalAxis(HomeFurnitureController.FurnitureHorizontalAxis.PITCH);
+              }
+            }
+          });
+        
+        final NullableSpinner.NullableSpinnerNumberModel pitchSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
+            0f, 0f, 360f, 1f);
+        this.pitchSpinner = new NullableSpinner(pitchSpinnerModel);
+        Float pitch = controller.getPitch();
+        pitchSpinnerModel.setNullable(pitch == null);
+        pitchSpinnerModel.setValue(pitch != null ? Math.toDegrees(pitch) : null);
+        final PropertyChangeListener pitchChangeListener = new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              Float newPitch = (Float)ev.getNewValue();
+              pitchSpinnerModel.setNullable(newPitch == null);
+              pitchSpinnerModel.setValue(newPitch != null ? Math.toDegrees(newPitch) : null);
+            }
+          };
+        controller.addPropertyChangeListener(HomeFurnitureController.Property.PITCH, pitchChangeListener);
+        pitchSpinnerModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent ev) {
+              controller.removePropertyChangeListener(HomeFurnitureController.Property.PITCH,
+                  pitchChangeListener);
+              Number value = (Number)pitchSpinnerModel.getValue();
+              if (value == null) {
+                controller.setPitch(null);
+              } else {
+                controller.setPitch((float)Math.toRadians(value.floatValue()));
+              }
+              controller.setHorizontalAxis(HomeFurnitureController.FurnitureHorizontalAxis.PITCH);
+              controller.addPropertyChangeListener(HomeFurnitureController.Property.PITCH, pitchChangeListener);
+            }
+          });
+      }
+      
+      if (this.rollRadioButton != null && this.pitchRadioButton != null) {
         ButtonGroup group = new ButtonGroup();
-        group.add(this.pitchRadioButton);
         group.add(this.rollRadioButton);
+        group.add(this.pitchRadioButton);
         updateHorizontalAxisRadioButtons(controller);
         controller.addPropertyChangeListener(HomeFurnitureController.Property.HORIZONTAL_AXIS, new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -1142,19 +1142,19 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     }
-    if (this.pitchRadioButton != null) {
-      orientationPanel.add(this.pitchRadioButton, new GridBagConstraints(
-          0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+    if (this.rollRadioButton != null) {
+      orientationPanel.add(this.rollRadioButton, new GridBagConstraints(
+          0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, OperatingSystem.isMacOSX() ? 5 : 1, 5), 0, 0));
-      orientationPanel.add(this.pitchSpinner, new GridBagConstraints(
+      orientationPanel.add(this.rollSpinner, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     }
-    if (this.rollRadioButton != null) {
-      orientationPanel.add(this.rollRadioButton, new GridBagConstraints(
-          0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+    if (this.pitchRadioButton != null) {
+      orientationPanel.add(this.pitchRadioButton, new GridBagConstraints(
+          0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, OperatingSystem.isMacOSX() ? 5 : 1, 5), 0, 0));
-      orientationPanel.add(this.rollSpinner, new GridBagConstraints(
+      orientationPanel.add(this.pitchSpinner, new GridBagConstraints(
           1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     }
