@@ -322,7 +322,7 @@ public class ObserverCameraController implements Controller {
       this.pitch = pitch;
       this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
       if (updatePitchInDegrees) {
-        setPitchInDegrees((int)(Math.round(Math.toDegrees(pitch)) + 360) % 360, false);
+        setPitchInDegrees((int)(Math.round(Math.toDegrees(pitch))), false);
       }
     }
   }
@@ -375,7 +375,7 @@ public class ObserverCameraController implements Controller {
       this.fieldOfView = fieldOfView;
       this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.name(), oldFieldOfView, fieldOfView);
       if (updateFieldOfViewInDegrees) {
-        setFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(fieldOfView)) + 360) % 360, false);
+        setFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(fieldOfView))), false);
       }
     }
   }
