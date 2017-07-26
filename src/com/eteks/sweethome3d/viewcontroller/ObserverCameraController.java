@@ -38,7 +38,7 @@ public class ObserverCameraController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {X, Y, ELEVATION, MINIMUM_ELEVATION,
-      YAW_IN_DEGREES, PITCH_IN_DEGREES, FIELD_OF_VIEW_IN_DEGREES, 
+      YAW_IN_DEGREES, YAW, PITCH_IN_DEGREES, PITCH, FIELD_OF_VIEW_IN_DEGREES, FIELD_OF_VIEW, 
       OBSERVER_CAMERA_ELEVATION_ADJUSTED}
   
   private final Home                  home;
@@ -52,8 +52,11 @@ public class ObserverCameraController implements Controller {
   private float             elevation;
   private float             minimumElevation;
   private int               yawInDegrees;
+  private float             yaw;
   private int               pitchInDegrees;
+  private float             pitch;
   private int               fieldOfViewInDegrees;
+  private float             fieldOfView;
   private boolean           elevationAdjusted;
 
   /**
@@ -114,10 +117,9 @@ public class ObserverCameraController implements Controller {
         ? 10  
         : 10 + levels.get(0).getElevation());
     setElevation(observerCamera.getZ());
-    setYawInDegrees((int)(Math.round(Math.toDegrees(observerCamera.getYaw()))));
-    setPitchInDegrees((int)(Math.round(Math.toDegrees(observerCamera.getPitch()))));
-    setFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(
-        observerCamera.getFieldOfView())) + 360) % 360);
+    setYaw(observerCamera.getYaw());
+    setPitch(observerCamera.getPitch());
+    setFieldOfView(observerCamera.getFieldOfView());
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
     setElevationAdjusted(homeEnvironment.isObserverCameraElevationAdjusted());
   }
@@ -233,10 +235,17 @@ public class ObserverCameraController implements Controller {
    * Sets the edited yaw in degrees.
    */
   public void setYawInDegrees(int yawInDegrees) {
+    setYawInDegrees(yawInDegrees, true);
+  }
+
+  private void setYawInDegrees(int yawInDegrees, boolean updateYaw) {
     if (yawInDegrees != this.yawInDegrees) {
       int oldYawInDegrees = this.yawInDegrees;
       this.yawInDegrees = yawInDegrees;
       this.propertyChangeSupport.firePropertyChange(Property.YAW_IN_DEGREES.name(), oldYawInDegrees, yawInDegrees);
+      if (updateYaw) {
+        setYaw((float)Math.toRadians(yawInDegrees), false);
+      }
     }
   }
 
@@ -248,16 +257,50 @@ public class ObserverCameraController implements Controller {
   }
 
   /**
+   * Sets the edited yaw in radians.
+   * @since 5.5
+   */
+  public void setYaw(float yaw) {
+    setYaw(yaw, true);
+  }
+
+  private void setYaw(float yaw, boolean updateYawInDegrees) {
+    if (yaw != this.yaw) {
+      float oldYaw = this.yaw;
+      this.yaw = yaw;
+      this.propertyChangeSupport.firePropertyChange(Property.YAW.name(), oldYaw, yaw);
+      if (updateYawInDegrees) {
+        setYawInDegrees((int)Math.round(Math.toDegrees(yaw)), false);
+      }
+    }
+  }
+
+  /**
+   * Returns the edited yaw in radians.
+   * @since 5.5
+   */
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  /**
    * Sets the edited pitch in degrees.
    */
   public void setPitchInDegrees(int pitchInDegrees) {
+    setPitchInDegrees(pitchInDegrees, true);
+  }
+
+  private void setPitchInDegrees(int pitchInDegrees, boolean updatePitch) {
     if (pitchInDegrees != this.pitchInDegrees) {
       int oldPitchInDegrees = this.pitchInDegrees;
       this.pitchInDegrees = pitchInDegrees;
       this.propertyChangeSupport.firePropertyChange(Property.PITCH_IN_DEGREES.name(), oldPitchInDegrees, pitchInDegrees);
+      if (updatePitch) {
+        setPitch((float)Math.toRadians(pitchInDegrees), false);
+      }
     }
   }
-
+  
   /**
    * Returns the edited pitch in degrees.
    */
@@ -266,14 +309,48 @@ public class ObserverCameraController implements Controller {
   }
 
   /**
+   * Sets the edited pitch in radians.
+   * @since 5.5
+   */
+  public void setPitch(float pitch) {
+    setPitch(pitch, true);
+  }
+
+  private void setPitch(float pitch, boolean updatePitchInDegrees) {
+    if (pitch != this.pitch) {
+      float oldPitch = this.pitch;
+      this.pitch = pitch;
+      this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
+      if (updatePitchInDegrees) {
+        setPitchInDegrees((int)(Math.round(Math.toDegrees(pitch)) + 360) % 360, false);
+      }
+    }
+  }
+
+  /**
+   * Returns the edited pitch in radians.
+   * @since 5.5
+   */
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  /**
    * Sets the edited observer field of view in degrees.
    */
-  public void setFieldOfViewInDegrees(int observerFieldOfViewInDegrees) {
-    if (observerFieldOfViewInDegrees != this.fieldOfViewInDegrees) {
-      int oldObserverFieldOfViewInDegrees = this.fieldOfViewInDegrees;
-      this.fieldOfViewInDegrees = observerFieldOfViewInDegrees;
+  public void setFieldOfViewInDegrees(int fieldOfViewInDegrees) {
+    setFieldOfViewInDegrees(fieldOfViewInDegrees, true);
+  }
+  
+  public void setFieldOfViewInDegrees(int fieldOfViewInDegrees, boolean updateFieldOfView) {
+    if (fieldOfViewInDegrees != this.fieldOfViewInDegrees) {
+      int oldFieldOfViewInDegrees = this.fieldOfViewInDegrees;
+      this.fieldOfViewInDegrees = fieldOfViewInDegrees;
       this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW_IN_DEGREES.name(), 
-          oldObserverFieldOfViewInDegrees, observerFieldOfViewInDegrees);
+          oldFieldOfViewInDegrees, fieldOfViewInDegrees);
+      if (updateFieldOfView) {
+        setFieldOfView((float)Math.toRadians(fieldOfViewInDegrees), false);
+      }
     }
   }
 
@@ -282,6 +359,33 @@ public class ObserverCameraController implements Controller {
    */
   public int getFieldOfViewInDegrees() {
     return this.fieldOfViewInDegrees;
+  }
+
+  /**
+   * Sets the edited observer field of view in radians.
+   * @since 5.5
+   */
+  public void setFieldOfView(float fieldOfView) {
+    setFieldOfView(fieldOfView, true);
+  }
+
+  private void setFieldOfView(float fieldOfView, boolean updateFieldOfViewInDegrees) {
+    if (fieldOfView != this.fieldOfView) {
+      float oldFieldOfView = this.fieldOfView;
+      this.fieldOfView = fieldOfView;
+      this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.name(), oldFieldOfView, fieldOfView);
+      if (updateFieldOfViewInDegrees) {
+        setFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(fieldOfView)) + 360) % 360, false);
+      }
+    }
+  }
+
+  /**
+   * Returns the edited observer field of view in radians.
+   * @since 5.5
+   */
+  public float getFieldOfView() {
+    return this.fieldOfView;
   }
 
   /**
@@ -298,9 +402,9 @@ public class ObserverCameraController implements Controller {
       List<Level> levels = this.home.getLevels();
       z = Math.max(z, levels.size() == 0  ? 10  : 10 + levels.get(0).getElevation());
     }
-    float yaw = (float)Math.toRadians(getYawInDegrees());
-    float pitch = (float)Math.toRadians(getPitchInDegrees());
-    float fieldOfView = (float)Math.toRadians(getFieldOfViewInDegrees());
+    float yaw = getYaw();
+    float pitch = getPitch();
+    float fieldOfView = getFieldOfView();
 
     // Apply modification with no undo
     ObserverCamera observerCamera = this.home.getObserverCamera();

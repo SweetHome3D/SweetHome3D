@@ -26,6 +26,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.text.DecimalFormat;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -148,57 +149,57 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
       };
     controller.addPropertyChangeListener(ObserverCameraController.Property.ELEVATION, elevationChangeListener);
     
-    // Create yaw label and spinner bound to YAW_IN_DEGREES controller property
+    // Create yaw label and spinner bound to YAW controller property
     this.yawLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "yawLabel.text"));
-    final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(0, -10000, 10000, 5);
-    this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel);
-    yawSpinnerModel.setValue(controller.getYawInDegrees());
+    final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(0., -10000., 10000., 5.);
+    this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel, new DecimalFormat("0.##"));
+    yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
     yawSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setYawInDegrees(((Number)yawSpinnerModel.getValue()).intValue());
+          controller.setYaw((float)Math.toRadians(((Number)yawSpinnerModel.getValue()).doubleValue()));
         }
       });
-    controller.addPropertyChangeListener(ObserverCameraController.Property.YAW_IN_DEGREES, 
+    controller.addPropertyChangeListener(ObserverCameraController.Property.YAW, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            yawSpinnerModel.setValue(controller.getYawInDegrees());
+            yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
           }
         });
     
-    // Create pitch label and spinner bound to SPIN_IN_DEGREES controller property
+    // Create pitch label and spinner bound to SPIN controller property
     this.pitchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "pitchLabel.text"));
-    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(0, -90, 90, 5);
-    this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel);
-    pitchSpinnerModel.setValue(controller.getPitchInDegrees());
+    final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(0., -90., 90., 5.);
+    this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel, new DecimalFormat("0.##"));
+    pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
     pitchSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setPitchInDegrees(((Number)pitchSpinnerModel.getValue()).intValue());
+          controller.setPitch((float)Math.toRadians(((Number)pitchSpinnerModel.getValue()).doubleValue()));
         }
       });
-    controller.addPropertyChangeListener(ObserverCameraController.Property.PITCH_IN_DEGREES, 
+    controller.addPropertyChangeListener(ObserverCameraController.Property.PITCH, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            pitchSpinnerModel.setValue(controller.getPitchInDegrees());
+            pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
           }
         });
     
-    // Create field of view label and spinner bound to FIELD_OF_VIEW_IN_DEGREES controller property
+    // Create field of view label and spinner bound to FIELD_OF_VIEW controller property
     this.fieldOfViewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "fieldOfViewLabel.text"));
-    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(10, 2, 120, 1);
-    this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel);
-    fieldOfViewSpinnerModel.setValue(controller.getFieldOfViewInDegrees());
+    final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(10., 2., 120., 1.);
+    this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel, new DecimalFormat("0.##"));
+    fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
     fieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.setFieldOfViewInDegrees(((Number)fieldOfViewSpinnerModel.getValue()).intValue());
+          controller.setFieldOfView((float)Math.toRadians(((Number)fieldOfViewSpinnerModel.getValue()).doubleValue()));
         }
       });
-    controller.addPropertyChangeListener(ObserverCameraController.Property.FIELD_OF_VIEW_IN_DEGREES, 
+    controller.addPropertyChangeListener(ObserverCameraController.Property.FIELD_OF_VIEW, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            fieldOfViewSpinnerModel.setValue(controller.getFieldOfViewInDegrees());
+            fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
           }
         });
     

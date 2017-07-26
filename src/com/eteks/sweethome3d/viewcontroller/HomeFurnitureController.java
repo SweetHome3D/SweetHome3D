@@ -835,18 +835,24 @@ public class HomeFurnitureController implements Controller {
    * Sets the edited angle in degrees.
    */
   public void setAngleInDegrees(Integer angleInDegrees) {
+    setAngleInDegrees(angleInDegrees, true);
+  }
+
+  private void setAngleInDegrees(Integer angleInDegrees, boolean updateAngle) {
     if (angleInDegrees != this.angleInDegrees) {
       Integer oldAngleInDegrees = this.angleInDegrees;
       this.angleInDegrees = angleInDegrees;
-      if (this.angleInDegrees == null) {
-        this.angle = null;
-      } else {
-        this.angle = new Float(Math.toRadians(this.angleInDegrees));
-      }
       this.propertyChangeSupport.firePropertyChange(Property.ANGLE_IN_DEGREES.name(), oldAngleInDegrees, angleInDegrees);
+      if (updateAngle) {
+        if (this.angleInDegrees == null) {
+          setAngle(null, false);
+        } else {
+          setAngle(new Float(Math.toRadians(this.angleInDegrees)), false);
+        }
+      }
     }
   }
-
+  
   /**
    * Returns the edited angle in degrees.
    */
@@ -859,15 +865,21 @@ public class HomeFurnitureController implements Controller {
    * @since 3.6
    */
   public void setAngle(Float angle) {
+    setAngle(angle, true);
+  }
+
+  public void setAngle(Float angle, boolean updateAngleInDegrees) {
     if (angle != this.angle) {
       Float oldAngle = this.angle;
-      if (angle == null) {
-        setAngleInDegrees(null);
-      } else {
-        setAngleInDegrees((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
-      }      
       this.angle = angle;
       this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
+      if (updateAngleInDegrees) {
+        if (angle == null) {
+          setAngleInDegrees(null, false);
+        } else {
+          setAngleInDegrees((int)(Math.round(Math.toDegrees(angle)) + 360) % 360, false);
+        }
+      }
     }
   }
 

@@ -322,8 +322,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     
     if (controller.isPropertyEditable(HomeFurnitureController.Property.ANGLE_IN_DEGREES)
-        && controller.isPropertyEditable(HomeFurnitureController.Property.ANGLE)) {
-      // Create angle label and its spinner bound to ANGLE_IN_DEGREES controller property
+        || controller.isPropertyEditable(HomeFurnitureController.Property.ANGLE)) {
+      // Create angle label and its spinner bound to ANGLE controller property
       this.angleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
           "angleLabel.text"));
       final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = new NullableSpinner.NullableSpinnerModuloNumberModel(
@@ -339,18 +339,18 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             angleSpinnerModel.setValue(newAngle != null ? Math.toDegrees(newAngle) : null);
           }
         };
-      controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES, angleChangeListener);
+      controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE, angleChangeListener);
       angleSpinnerModel.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
-            controller.removePropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES,
+            controller.removePropertyChangeListener(HomeFurnitureController.Property.ANGLE,
                 angleChangeListener);
             Number value = (Number)angleSpinnerModel.getValue();
             if (value == null) {
               controller.setAngle(null);
             } else {
-              controller.setAngle((float)Math.toRadians(value.floatValue()));
+              controller.setAngle((float)Math.toRadians(value.doubleValue()));
             }
-            controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES, angleChangeListener);
+            controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE, angleChangeListener);
           }
         });
     }
