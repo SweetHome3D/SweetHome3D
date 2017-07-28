@@ -584,25 +584,30 @@ public class ModelManager {
     }
     horizontalRotationAndScale.mul(scale);
     
+    // Change its angle around vertical axis
+    Transform3D verticalOrientation = new Transform3D();
+    verticalOrientation.rotY(-piece.getAngle());
+    
     Point3f centerLocation;
     if (piece.isHorizontallyRotated() && normalizedModelNode != null) {
       // Compute center location when the piece is rotated around an horizontal axis
+      // Don't include rotation around vertical axis in transformation 
+      // to reuse transformedModelNodeBounds cache as often as possible
       BoundingBox rotatedModelBounds = getBounds(normalizedModelNode, horizontalRotationAndScale);
       Point3d lower = new Point3d();
       rotatedModelBounds.getLower(lower);
       Point3d upper = new Point3d();
       rotatedModelBounds.getUpper(upper);
       centerLocation = new Point3f(
-          -(float)lower.x / Math.max(getMinimumSize(), (float)(upper.x - lower.x)),
-          -(float)lower.y / Math.max(getMinimumSize(), (float)(upper.y - lower.y)),
-          -(float)lower.z / Math.max(getMinimumSize(), (float)(upper.z - lower.z)));
+          -0.5f - (float)lower.x / Math.max(getMinimumSize(), (float)(upper.x - lower.x)),
+          -0.5f - (float)lower.y / Math.max(getMinimumSize(), (float)(upper.y - lower.y)),
+          -0.5f - (float)lower.z / Math.max(getMinimumSize(), (float)(upper.z - lower.z)));
+      
+      verticalOrientation.transform(centerLocation);
     } else {
-      centerLocation = new Point3f(0.5f, 0.5f, 0.5f);
+      centerLocation = new Point3f();
     }
 
-    // Change its angle around vertical axis
-    Transform3D verticalOrientation = new Transform3D();
-    verticalOrientation.rotY(-piece.getAngle());
     verticalOrientation.mul(horizontalRotationAndScale);
     
     // Translate it to its location
@@ -614,9 +619,9 @@ public class ModelManager {
       levelElevation = 0;
     }
     pieceTransform.setTranslation(new Vector3f(
-        piece.getX() + (centerLocation.x - 0.5f) * piece.getWidthInPlan(), 
-        piece.getElevation() + centerLocation.y * piece.getHeightInPlan() + levelElevation,
-        piece.getY() + (centerLocation.z - 0.5f) * piece.getDepthInPlan()));      
+        piece.getX() + centerLocation.x * piece.getWidthInPlan(), 
+        piece.getElevation() + (centerLocation.y + 0.5f) * piece.getHeightInPlan() + levelElevation,
+        piece.getY() + centerLocation.z * piece.getDepthInPlan()));      
     pieceTransform.mul(verticalOrientation);
     return pieceTransform;
   }
