@@ -1,0 +1,42 @@
+# texturableCylinder.mtl
+#
+# Sweet Home 3D, Copyright (c) 2006-2017 Emmanuel PUYBARET / eTeks <info@eteks.com>
+#
+# This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
+# available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
+# as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
+#
+newmtl bottom
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+    
+newmtl slope
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl left
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl back
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
+
+newmtl front
+Ka 0.4 0.4 0.4
+Kd 1.0 1.0 1.0
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
