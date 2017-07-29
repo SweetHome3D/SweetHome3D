@@ -509,12 +509,12 @@ public class ModelManager {
     Point3d upper = new Point3d();
     modelBounds.getUpper(upper);
     // Translate model to its center
-    Transform3D translation = new Transform3D();
-    translation.setTranslation(
-        new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-            -lower.y - (upper.y - lower.y) / 2, 
-            -lower.z - (upper.z - lower.z) / 2));
-    
+    Transform3D translation = new Transform3D(); 
+    translation.setTranslation(new Vector3d(
+        -lower.x - (upper.x - lower.x) / 2, 
+        -lower.y - (upper.y - lower.y) / 2, 
+        -lower.z - (upper.z - lower.z) / 2));
+
     Transform3D modelTransform;
     if (modelRotation != null) {
       // Get model bounding box size with model rotation
@@ -526,10 +526,10 @@ public class ModelManager {
       modelTransform = new Transform3D();
       if (modelCenteredAtOrigin) {
         // Move model back to its new center
-        modelTransform.setTranslation(
-            new Vector3d(-(lower.x + (upper.x - lower.x) / 2), 
-                -(lower.y + (upper.y - lower.y) / 2), 
-                -(lower.z + (upper.z - lower.z) / 2)));
+        modelTransform.setTranslation(new Vector3d(
+            -lower.x - (upper.x - lower.x) / 2, 
+            -lower.y - (upper.y - lower.y) / 2, 
+            -lower.z - (upper.z - lower.z) / 2));
       }
       modelTransform.mul(rotationTransform);
     } else {
@@ -575,40 +575,40 @@ public class ModelManager {
     }
     scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
     
-    Transform3D horizontalRotationAndScale = new Transform3D();
-    // Change its angle around horizontal axis
-    if (piece.getPitch() != 0) {
-      horizontalRotationAndScale.rotX(-piece.getPitch());
-    } else {
-      horizontalRotationAndScale.rotZ(-piece.getRoll());
-    }
-    horizontalRotationAndScale.mul(scale);
-    
-    // Change its angle around vertical axis
-    Transform3D verticalOrientation = new Transform3D();
-    verticalOrientation.rotY(-piece.getAngle());
-    
-    Point3f centerLocation;
+    Transform3D modelTransform;
+    float height;
     if (piece.isHorizontallyRotated() && normalizedModelNode != null) {
-      // Compute center location when the piece is rotated around an horizontal axis
-      // Don't include rotation around vertical axis in transformation 
-      // to reuse transformedModelNodeBounds cache as often as possible
+      Transform3D horizontalRotationAndScale = new Transform3D();
+      // Change its angle around horizontal axis
+      if (piece.getPitch() != 0) {
+        horizontalRotationAndScale.rotX(-piece.getPitch());
+      } else {
+        horizontalRotationAndScale.rotZ(-piece.getRoll());
+      }
+      horizontalRotationAndScale.mul(scale);
+
+      // Compute center location when the piece is rotated around horizontal axis
       BoundingBox rotatedModelBounds = getBounds(normalizedModelNode, horizontalRotationAndScale);
       Point3d lower = new Point3d();
       rotatedModelBounds.getLower(lower);
       Point3d upper = new Point3d();
       rotatedModelBounds.getUpper(upper);
-      centerLocation = new Point3f(
-          -0.5f - (float)lower.x / Math.max(getMinimumSize(), (float)(upper.x - lower.x)),
-          -0.5f - (float)lower.y / Math.max(getMinimumSize(), (float)(upper.y - lower.y)),
-          -0.5f - (float)lower.z / Math.max(getMinimumSize(), (float)(upper.z - lower.z)));
-      
-      verticalOrientation.transform(centerLocation);
+      modelTransform = new Transform3D();
+      modelTransform.setTranslation(new Vector3d(
+          -lower.x - (upper.x - lower.x) / 2,
+          -lower.y - (upper.y - lower.y) / 2,
+          -lower.z - (upper.z - lower.z) / 2));      
+      modelTransform.mul(horizontalRotationAndScale);
+      height = (float)Math.max(getMinimumSize(), upper.y - lower.y);
     } else {
-      centerLocation = new Point3f();
+      modelTransform = scale;
+      height = piece.getHeight();
     }
 
-    verticalOrientation.mul(horizontalRotationAndScale);
+    // Change its angle around vertical axis
+    Transform3D verticalRotation = new Transform3D();
+    verticalRotation.rotY(-piece.getAngle());
+    verticalRotation.mul(modelTransform);
     
     // Translate it to its location
     Transform3D pieceTransform = new Transform3D();
@@ -619,10 +619,10 @@ public class ModelManager {
       levelElevation = 0;
     }
     pieceTransform.setTranslation(new Vector3f(
-        piece.getX() + centerLocation.x * piece.getWidthInPlan(), 
-        piece.getElevation() + (centerLocation.y + 0.5f) * piece.getHeightInPlan() + levelElevation,
-        piece.getY() + centerLocation.z * piece.getDepthInPlan()));      
-    pieceTransform.mul(verticalOrientation);
+        piece.getX(), 
+        piece.getElevation() + height / 2 + levelElevation,
+        piece.getY()));      
+    pieceTransform.mul(verticalRotation);
     return pieceTransform;
   }
 
