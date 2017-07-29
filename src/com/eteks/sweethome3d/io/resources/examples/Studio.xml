@@ -47,7 +47,7 @@
   <pieceOfFurniture catalogId='eTeks#kitchenUpperCabinet' name='Kitchen upper cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenUpperCabinet.png' x='130.2134' y='434.7187' elevation='128.0' angle='3.141537' width='60.0' depth='29.0' height='86.200005' modelSize='11464'>
     <material name='white' color='FFFCFCFF'/>
   </pieceOfFurniture>
-  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='212.85005' y='443.71384' angle='1.5707964' width='9.0' depth='9.0' height='250.0' modelSize='8783'/>
+  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='212.85005' y='443.71384' angle='1.5707964' width='9.0' depth='9.0' height='250.0' modelSize='6600'/>
   <pieceOfFurniture catalogId='eTeks#fridgeFreezer' name='Fridge &amp; Freezer' creator='eTeks' model='com/eteks/sweethome3d/io/resources/fridgeFreezer.obj' icon='com/eteks/sweethome3d/io/resources/fridgeFreezer.png' x='43.83334' y='44.025173' width='60.0' depth='66.0' height='185.0' modelMirrored='true' modelSize='27608'/>
   <pieceOfFurniture catalogId='eTeks#kitchenCabinet' name='Kitchen cabinet' creator='eTeks' model='com/eteks/sweethome3d/io/resources/kitchenCabinet.obj' icon='com/eteks/sweethome3d/io/resources/kitchenCabinet.png' x='106.75932' y='42.52761' angle='6.283121' width='60.0' depth='64.0' height='85.0' modelSize='10991' movable='false'>
     <material name='white' color='FF010101' shininess='0.0'/>
@@ -84,8 +84,8 @@
     <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
     <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
   </doorOrWindow>
-  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='392.53125' y='13.500962' angle='1.5707964' width='6.0' depth='6.0' height='250.0' modelSize='8783'/>
-  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='385.7316' y='13.601234' angle='1.5707964' width='6.0' depth='6.0' height='250.0' modelSize='8783'/>
+  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='392.53125' y='13.500962' angle='1.5707964' width='6.0' depth='6.0' height='250.0' modelSize='6600'/>
+  <pieceOfFurniture catalogId='eTeks#texturableCylinder' name='Pipe' creator='eTeks' model='com/eteks/sweethome3d/io/resources/texturableCylinder/texturableCylinder.obj' icon='com/eteks/sweethome3d/io/resources/cylinder.png' x='385.7316' y='13.601234' angle='1.5707964' width='6.0' depth='6.0' height='250.0' modelSize='6600'/>
   <pieceOfFurniture catalogId='eTeks#squareTable' name='Table' creator='eTeks' model='com/eteks/sweethome3d/io/resources/squareTable.obj' icon='com/eteks/sweethome3d/io/resources/squareTable.png' x='150.62553' y='195.25' angle='3.1415927' width='155.0' depth='80.0' height='74.0' modelSize='3045'>
     <material name='flblonde' color='FF8D0700'/>
   </pieceOfFurniture>
