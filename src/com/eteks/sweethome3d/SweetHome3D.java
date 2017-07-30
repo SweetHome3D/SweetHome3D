@@ -570,7 +570,14 @@ public class SweetHome3D extends HomeApplication {
               return new Insets(0, 0, 0, 0);
             }
           });
+      } 
+      if (OperatingSystem.isWindows()
+          && OperatingSystem.compareVersions(System.getProperty("os.version"), "10.0") >= 0
+          && !OperatingSystem.isJavaVersionGreaterOrEqual("1.8.0_141")) {
+        // Workaround for bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=8179014 under Windows 10 Creator update
+        UIManager.put("FileChooser.useSystemExtensionHiding", false);
       }
+
       SwingTools.updateSwingResourceLanguage(getUserPreferences());
     } catch (Exception ex) {
       // Too bad keep current look and feel
