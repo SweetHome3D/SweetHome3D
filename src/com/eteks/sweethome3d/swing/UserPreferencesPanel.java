@@ -1044,8 +1044,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
       roomRenderingPanel.add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
-          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+          1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
       add(roomRenderingPanel, new GridBagConstraints(
           1, 13, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, checkBoxInsets, 0, 0));
