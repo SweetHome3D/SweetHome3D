@@ -1864,8 +1864,9 @@ public class HomeController implements Controller {
               Home openedHome = application.getHomeRecorder().readHome(exampleName);
               // Reset furniture names to their catalog one to simulate translation
               final Map<String, String> furnitureNames = getCatalogFurnitureNames(preferences.getFurnitureCatalog());
+              String groupName = preferences.getLocalizedString(HomeController.class, "defaultGroupName");
               for (HomePieceOfFurniture piece : openedHome.getFurniture()) {
-                renameToCatalogName(piece, furnitureNames);
+                renameToCatalogName(piece, furnitureNames, groupName);
               }
               openedHome.setName(null);
               addHomeToApplication(openedHome);
@@ -1909,10 +1910,12 @@ public class HomeController implements Controller {
    * Renames the given <code>piece</code> from the piece name with the same id in <code>furnitureNames</code>. 
    */
   private void renameToCatalogName(HomePieceOfFurniture piece, 
-                                   Map<String, String> furnitureNames) {
+                                   Map<String, String> furnitureNames,
+                                   String groupName) {
     if (piece instanceof HomeFurnitureGroup) {
+      piece.setName(groupName);
       for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-        renameToCatalogName(groupPiece, furnitureNames);
+        renameToCatalogName(groupPiece, furnitureNames, groupName);
       }
     } else { 
       String id = piece.getCatalogId();
