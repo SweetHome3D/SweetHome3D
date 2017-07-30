@@ -3557,7 +3557,7 @@ public class HomePane extends JRootPane implements HomeView {
     homeExamplesList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
     homeExamplesList.setVisibleRowCount(3);
     final int iconWidth = 192;
-    homeExamplesList.setFixedCellWidth(iconWidth + 4);
+    homeExamplesList.setFixedCellWidth(iconWidth + 8);
     homeExamplesList.setCellRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
@@ -3581,9 +3581,13 @@ public class HomePane extends JRootPane implements HomeView {
         }
       });
     
-    JPanel panel = new JPanel(new BorderLayout(5, 5));
-    panel.add(new JLabel(message), BorderLayout.NORTH);
-    panel.add(new JScrollPane(homeExamplesList));
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(new JLabel(message), new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    panel.add(new JScrollPane(homeExamplesList), new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     
     int option = JOptionPane.showOptionDialog(this, panel, title, 
         JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
