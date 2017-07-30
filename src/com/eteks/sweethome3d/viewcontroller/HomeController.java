@@ -76,6 +76,7 @@ import com.eteks.sweethome3d.model.DamagedHomeRecorderException;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
@@ -1861,6 +1862,11 @@ public class HomeController implements Controller {
             public Void call() throws RecorderException {
               // Read home with application recorder
               Home openedHome = application.getHomeRecorder().readHome(exampleName);
+              // Reset furniture names to their catalog one to simulate translation
+              final Map<String, String> furnitureNames = getCatalogFurnitureNames(preferences.getFurnitureCatalog());
+              for (HomePieceOfFurniture piece : openedHome.getFurniture()) {
+                renameToCatalogName(piece, furnitureNames);
+              }
               openedHome.setName(null);
               addHomeToApplication(openedHome);
               return null;
@@ -1884,6 +1890,38 @@ public class HomeController implements Controller {
     }
   }
 
+  /**
+   * Returns a map with entries containing furniture name associated to their id.
+   */
+  private Map<String, String> getCatalogFurnitureNames(FurnitureCatalog catalog) {
+    Map<String, String> furnitureNames = new HashMap<String, String>();
+    for (FurnitureCategory category : catalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        if (piece.getId() != null) {
+          furnitureNames.put(piece.getId(), piece.getName());
+        }
+      }
+    }
+    return furnitureNames;
+  }
+ 
+  /**
+   * Renames the given <code>piece</code> from the piece name with the same id in <code>furnitureNames</code>. 
+   */
+  private void renameToCatalogName(HomePieceOfFurniture piece, 
+                                   Map<String, String> furnitureNames) {
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        renameToCatalogName(groupPiece, furnitureNames);
+      }
+    } else { 
+      String id = piece.getCatalogId();
+      if (id != null) {
+        piece.setName(furnitureNames.get(id));
+      }
+    }
+  }
+  
   /**
    * Opens a home. This method displays an {@link HomeView#showOpenDialog() open dialog} 
    * in view, reads the home from the chosen name and adds it to application home list.
