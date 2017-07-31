@@ -384,7 +384,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     Format getFormat() {
       return this.numberClass == int.class 
           ? NumberFormat.getIntegerInstance()
-          : new DecimalFormat("0.##");
+          : new DecimalFormat("0.#");
     }
   }
   

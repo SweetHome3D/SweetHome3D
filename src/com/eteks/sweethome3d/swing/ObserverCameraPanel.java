@@ -153,7 +153,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     this.yawLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "yawLabel.text"));
     final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-10000), new Float(10000), new Float(5));
-    this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel, new DecimalFormat("0.##"));
+    this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel, new DecimalFormat("0.#"));
     yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
     yawSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -171,7 +171,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     this.pitchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "pitchLabel.text"));
     final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-90), new Float(90), new Float(5));
-    this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel, new DecimalFormat("0.##"));
+    this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel, new DecimalFormat("0.#"));
     pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
     pitchSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -189,7 +189,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     this.fieldOfViewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ObserverCameraPanel.class, "fieldOfViewLabel.text"));
     final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(new Float(10), new Float(2), new Float(120), new Float(1));
-    this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel, new DecimalFormat("0.##"));
+    this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel, new DecimalFormat("0.#"));
     fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
     fieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
