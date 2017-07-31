@@ -554,6 +554,18 @@ public class FileContentManager implements ContentManager {
   }
   
   /**
+   * Returns <code>true</code> is <code>FileDialog</code> should be rather used.
+   */
+  private boolean isFileDialogPreferred() {
+    return OperatingSystem.isMacOSX()
+        // Workaround for bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=8179014 under Windows 10 Creator update
+        || OperatingSystem.isWindows()
+            && UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())
+            && OperatingSystem.compareVersions(System.getProperty("os.version"), "10.0") >= 0
+            && !OperatingSystem.isJavaVersionGreaterOrEqual("1.8.0_141");
+  }
+  
+  /**
    * Returns <code>true</code> if the given content type is for directories.
    */
   protected boolean isDirectory(ContentType contentType) {
@@ -568,7 +580,7 @@ public class FileContentManager implements ContentManager {
                                String      dialogTitle,
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
-    if (OperatingSystem.isMacOSX()
+    if (isFileDialogPreferred()
         && !isDirectory(contentType)) {
       return showFileDialog(parentView, dialogTitle, contentType, null, false);
     } else {
@@ -600,7 +612,7 @@ public class FileContentManager implements ContentManager {
     
     String savedPath;
     // Use native file dialog under Mac OS X    
-    if (OperatingSystem.isMacOSX()
+    if (isFileDialogPreferred()
         && !isDirectory(contentType)) {
       savedPath = showFileDialog(parentView, dialogTitle, contentType, path, true);
     } else {
