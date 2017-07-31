@@ -12,7 +12,7 @@
   <environment groundColor='00A8A8A8' skyColor='00CCE4FC' lightColor='00D0D0D0' ceillingLightColor='00D0D0D0' photoWidth='400' photoHeight='300' photoAspectRatio='VIEW_3D_RATIO' photoQuality='0' videoWidth='320' videoAspectRatio='RATIO_4_3' videoQuality='0' videoFrameRate='25'/>
   <compass x='-229.85315' y='70.26842' diameter='100.0' northDirection='1.5882496' longitude='0.040724345' latitude='0.8528843' timeZone='Europe/Paris'/>
   <observerCamera attribute='observerCamera' lens='PINHOLE' x='503.40448' y='979.14246' z='109.16528' yaw='53.09609' pitch='0.060801033' fieldOfView='1.0995575' time='1492344000000'/>
-  <camera attribute='topCamera' lens='PINHOLE' x='540.48846' y='848.78577' z='1729.5846' yaw='34.56667' pitch='1.3557969' fieldOfView='1.0995575' time='1492344000000'/>
+  <camera attribute='topCamera' lens='PINHOLE' x='543.7016' y='506.36188' z='1717.3771' yaw='34.556656' pitch='1.5657964' fieldOfView='1.0995575' time='1492344000000'/>
   <observerCamera attribute='storedCamera' name='Hall' lens='PINHOLE' x='503.40448' y='979.14246' z='109.16528' yaw='53.09609' pitch='0.060801033' fieldOfView='1.0995575' time='1492344000000'/>
   <observerCamera attribute='storedCamera' name='Dining room and kitchen' lens='PINHOLE' x='390.3502' y='874.70447' z='160.64844' yaw='54.84107' pitch='0.21580102' fieldOfView='1.0995575' time='1492344000000'/>
   <observerCamera attribute='storedCamera' name='Bedroom #2' lens='PINHOLE' x='443.60098' y='313.055' z='160.64844' yaw='54.30607' pitch='0.260801' fieldOfView='1.0995575' time='1492344000000'/>

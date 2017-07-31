@@ -12,7 +12,7 @@
   <environment groundColor='00A8A8A8' skyColor='00CCE4FC' lightColor='00D0D0D0' ceillingLightColor='00D0D0D0' photoWidth='400' photoHeight='233' photoAspectRatio='VIEW_3D_RATIO' photoQuality='2' videoWidth='320' videoAspectRatio='RATIO_4_3' videoQuality='0' videoFrameRate='25'/>
   <compass x='-137.8389' y='-28.975006' diameter='100.0' northDirection='2.9146998' longitude='0.040724345' latitude='0.8528843' timeZone='Europe/Paris'/>
   <observerCamera attribute='observerCamera' lens='PINHOLE' x='268.3578' y='444.17062' z='152.75717' yaw='-2.9197562' pitch='0.1793462' fieldOfView='1.5707964' time='1491480000000'/>
-  <camera attribute='topCamera' lens='PINHOLE' x='371.34174' y='341.3973' z='1018.38336' yaw='-3.141094' pitch='1.4407977' fieldOfView='1.0995575' time='1491480000000'/>
+  <camera attribute='topCamera' lens='PINHOLE' x='371.32166' y='378.60944' z='947.96436' yaw='-3.141084' pitch='1.3857963' fieldOfView='1.0995575' time='1491480000000'/>
   <observerCamera attribute='storedCamera' name='Entrance' lens='PINHOLE' x='268.3578' y='444.17062' z='152.75717' yaw='-2.9197562' pitch='0.1793462' fieldOfView='1.5707964' time='1491480000000'/>
   <observerCamera attribute='storedCamera' name='Bedroom' lens='PINHOLE' x='703.0733' y='376.37454' z='141.53201' yaw='-4.367793' pitch='0.10420284' fieldOfView='1.0995575' time='1491480000000'/>
   <observerCamera attribute='storedCamera' name='Kitchen' lens='PINHOLE' x='39.134613' y='85.340546' z='135.98453' yaw='-7.5327983' pitch='0.014202765' fieldOfView='1.0995575' time='1491480000000'/>
