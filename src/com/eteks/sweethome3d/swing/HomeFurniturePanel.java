@@ -1165,7 +1165,9 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (this.rollRadioButton != null
-        && this.pitchRadioButton != null) {
+        && this.pitchRadioButton != null
+        && controller.isTexturable()) { 
+      // Do not display orientation label information for not texturable furniture to keep a balanced dialog box 
       orientationPanel.add(new JLabel(new ImageIcon(getClass().getResource("resources/furnitureOrientation.png"))), new GridBagConstraints(
           0, 4, 2, 1, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(10, 0, 5, 0), 0, 0));
