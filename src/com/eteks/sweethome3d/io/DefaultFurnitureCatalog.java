@@ -567,22 +567,41 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                              URL furnitureCatalogUrl,
                              URL furnitureResourcesUrlBase,
                              List<String> identifiedFurniture) {
-    CatalogPieceOfFurniture piece;
-    for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl, furnitureResourcesUrlBase)) != null; i++) {
-      if (piece.getId() != null) {
-        // Take into account only furniture that have an ID
-        if (identifiedFurniture.contains(piece.getId())) {
-          continue;
-        } else {
-          // Add id to identifiedFurniture to be sure that two pieces with a same ID
-          // won't be added twice to furniture catalog (in case they are cited twice
-          // in different furniture properties files)
-          identifiedFurniture.add(piece.getId());
-        }
+    int index = 0;
+    while (true) {
+      // Ignore furniture with a key ignored# set at true
+      String ignored;
+      try {
+        ignored = resource.getString("ignored#" + (++index));
+      } catch (MissingResourceException ex) {
+        // Not ignored
+        ignored = null;
       }
-      FurnitureCategory pieceCategory = readFurnitureCategory(resource, i);
-      add(pieceCategory, piece);
-    }
+      
+      if (ignored == null || !Boolean.parseBoolean(ignored)) {
+        CatalogPieceOfFurniture piece = ignored == null
+            ? readPieceOfFurniture(resource, index, furnitureCatalogUrl, furnitureResourcesUrlBase)
+            : null;
+        if (piece == null) {
+          // Read furniture until no data is found at current index
+          break;
+        } else {
+          if (piece.getId() != null) {
+            // Take into account only furniture that have an ID
+            if (identifiedFurniture.contains(piece.getId())) {
+              continue;
+            } else {
+              // Add id to identifiedFurniture to be sure that two pieces with a same ID
+              // won't be added twice to furniture catalog (in case they are cited twice
+              // in different furniture properties files)
+              identifiedFurniture.add(piece.getId());
+            }
+          } 
+          FurnitureCategory pieceCategory = readFurnitureCategory(resource, index);
+          add(pieceCategory, piece);
+        }
+      } 
+    } 
   }
 
   /**
