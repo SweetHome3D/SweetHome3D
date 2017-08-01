@@ -1026,12 +1026,12 @@ public class FurnitureController implements Controller {
     
     int leadPieceIndex = furnitureSortedAlongBackLine.indexOf(leadPiece);    
     Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
-    float sideDistance = leadPiece.getWidth() / 2;
+    float sideDistance = leadPiece.getWidthInPlan() / 2;
     for (int i = leadPieceIndex + 1; i < furnitureSortedAlongBackLine.size(); i++) {
       sideDistance += alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
           leadPiece, backLine, false, centerLine, sideDistance);
     }
-    sideDistance = -leadPiece.getWidth() / 2;
+    sideDistance = -leadPiece.getWidthInPlan() / 2;
     for (int i = leadPieceIndex - 1; i >= 0; i--) {
       sideDistance -= alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
           leadPiece, backLine, false, centerLine, sideDistance);
@@ -1115,16 +1115,16 @@ public class FurnitureController implements Controller {
    * Returns the bounding box width of the given piece when it's rotated of an additional angle.  
    */
   private double getPieceBoundingRectangleWidth(HomePieceOfFurniture piece, float additionalAngle) {
-    return Math.abs(piece.getWidth() * Math.cos(additionalAngle + piece.getAngle())) 
-        + Math.abs(piece.getDepth() * Math.sin(additionalAngle + piece.getAngle()));
+    return Math.abs(piece.getWidthInPlan() * Math.cos(additionalAngle + piece.getAngle())) 
+        + Math.abs(piece.getDepthInPlan() * Math.sin(additionalAngle + piece.getAngle()));
   }
 
   /**
    * Returns the bounding box height of the given piece when it's rotated of an additional angle.  
    */
   private double getPieceBoundingRectangleHeight(HomePieceOfFurniture piece, float additionalAngle) {
-    return Math.abs(piece.getWidth() * Math.sin(additionalAngle + piece.getAngle())) 
-        + Math.abs(piece.getDepth() * Math.cos(additionalAngle + piece.getAngle()));
+    return Math.abs(piece.getWidthInPlan() * Math.sin(additionalAngle + piece.getAngle())) 
+        + Math.abs(piece.getDepthInPlan() * Math.cos(additionalAngle + piece.getAngle()));
   }
 
   /**
@@ -1365,7 +1365,7 @@ public class FurnitureController implements Controller {
       HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece, selectedFurniture);
       if (highestSurroundingPiece != null) {
         float elevation = highestSurroundingPiece.getElevation() 
-            + highestSurroundingPiece.getHeight() * highestSurroundingPiece.getDropOnTopElevation();
+            + highestSurroundingPiece.getHeightInPlan() * highestSurroundingPiece.getDropOnTopElevation();
         if (highestSurroundingPiece.getLevel() != null) {
           elevation += highestSurroundingPiece.getLevel().getElevation() - piece.getLevel().getElevation();
         }
@@ -1389,7 +1389,7 @@ public class FurnitureController implements Controller {
   private HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece,
                                                                      List<HomePieceOfFurniture> ignoredFurniture) {
     float [][] piecePoints = piece.getPoints();
-    float margin = Math.min(piece.getWidth(), piece.getDepth()) * 0.05f;
+    float margin = Math.min(piece.getWidthInPlan(), piece.getDepthInPlan()) * 0.05f;
     HomePieceOfFurniture highestSurroundingPiece = null;
     float highestElevation = Float.MIN_VALUE;
     for (HomePieceOfFurniture homePiece : getFurnitureInSameGroup(piece)) {
@@ -1406,7 +1406,7 @@ public class FurnitureController implements Controller {
         }
         if (surroundingPieceContainsPiece) {
           float elevation = homePiece.getElevation() 
-              + homePiece.getHeight() * homePiece.getDropOnTopElevation();
+              + homePiece.getHeightInPlan() * homePiece.getDropOnTopElevation();
           if (elevation > highestElevation) {
             highestElevation = elevation;
             highestSurroundingPiece = homePiece;
