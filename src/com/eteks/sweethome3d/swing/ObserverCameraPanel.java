@@ -154,7 +154,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
         ObserverCameraPanel.class, "yawLabel.text"));
     final SpinnerNumberModel yawSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-10000), new Float(10000), new Float(5));
     this.yawSpinner = new AutoCommitSpinner(yawSpinnerModel, new DecimalFormat("0.#"));
-    yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
+    yawSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getYaw())));
     yawSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.setYaw((float)Math.toRadians(((Number)yawSpinnerModel.getValue()).floatValue()));
@@ -163,7 +163,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(ObserverCameraController.Property.YAW, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            yawSpinnerModel.setValue(Math.toDegrees(controller.getYaw()));
+            yawSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getYaw())));
           }
         });
     
@@ -172,7 +172,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
         ObserverCameraPanel.class, "pitchLabel.text"));
     final SpinnerNumberModel pitchSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-90), new Float(90), new Float(5));
     this.pitchSpinner = new AutoCommitSpinner(pitchSpinnerModel, new DecimalFormat("0.#"));
-    pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
+    pitchSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getPitch())));
     pitchSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.setPitch((float)Math.toRadians(((Number)pitchSpinnerModel.getValue()).floatValue()));
@@ -181,7 +181,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(ObserverCameraController.Property.PITCH, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            pitchSpinnerModel.setValue(Math.toDegrees(controller.getPitch()));
+            pitchSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getPitch())));
           }
         });
     
@@ -190,7 +190,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
         ObserverCameraPanel.class, "fieldOfViewLabel.text"));
     final SpinnerNumberModel fieldOfViewSpinnerModel = new SpinnerNumberModel(new Float(10), new Float(2), new Float(120), new Float(1));
     this.fieldOfViewSpinner = new AutoCommitSpinner(fieldOfViewSpinnerModel, new DecimalFormat("0.#"));
-    fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
+    fieldOfViewSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getFieldOfView())));
     fieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.setFieldOfView((float)Math.toRadians(((Number)fieldOfViewSpinnerModel.getValue()).floatValue()));
@@ -199,7 +199,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(ObserverCameraController.Property.FIELD_OF_VIEW, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            fieldOfViewSpinnerModel.setValue(Math.toDegrees(controller.getFieldOfView()));
+            fieldOfViewSpinnerModel.setValue(new Float((float)Math.toDegrees(controller.getFieldOfView())));
           }
         });
     

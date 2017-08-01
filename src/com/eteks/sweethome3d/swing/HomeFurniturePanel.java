@@ -231,7 +231,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       final PropertyChangeListener priceChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             priceSpinnerModel.setNullable(ev.getNewValue() == null);
-            priceSpinnerModel.setValue(((Number)ev.getNewValue()).floatValue());
+            priceSpinnerModel.setValue(ev.getNewValue() != null ? ((Number)ev.getNewValue()).floatValue() : null);
           }
         };
       controller.addPropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
@@ -331,12 +331,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.angleSpinner = new NullableSpinner(angleSpinnerModel);
       Float angle = controller.getAngle();
       angleSpinnerModel.setNullable(angle == null);
-      angleSpinnerModel.setValue(angle != null ? Math.toDegrees(angle) : null);
+      angleSpinnerModel.setValue(angle != null ? new Float((float)Math.toDegrees(angle)) : null);
       final PropertyChangeListener angleChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             Float newAngle = (Float)ev.getNewValue();
             angleSpinnerModel.setNullable(newAngle == null);
-            angleSpinnerModel.setValue(newAngle != null ? Math.toDegrees(newAngle) : null);
+            angleSpinnerModel.setValue(newAngle != null ? new Float((float)Math.toDegrees(newAngle)) : null);
           }
         };
       controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE, angleChangeListener);
@@ -373,12 +373,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         this.rollSpinner = new NullableSpinner(rollSpinnerModel);
         Float roll = controller.getRoll();
         rollSpinnerModel.setNullable(roll == null);
-        rollSpinnerModel.setValue(roll != null ? Math.toDegrees(roll) : null);
+        rollSpinnerModel.setValue(roll != null ? new Float((float)Math.toDegrees(roll)) : null);
         final PropertyChangeListener rollChangeListener = new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               Float newRoll = (Float)ev.getNewValue();
               rollSpinnerModel.setNullable(newRoll == null);
-              rollSpinnerModel.setValue(newRoll != null ? Math.toDegrees(newRoll) : null);
+              rollSpinnerModel.setValue(newRoll != null ? new Float((float)Math.toDegrees(newRoll)) : null);
             }
           };
         controller.addPropertyChangeListener(HomeFurnitureController.Property.ROLL, rollChangeListener);
@@ -415,12 +415,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         this.pitchSpinner = new NullableSpinner(pitchSpinnerModel);
         Float pitch = controller.getPitch();
         pitchSpinnerModel.setNullable(pitch == null);
-        pitchSpinnerModel.setValue(pitch != null ? Math.toDegrees(pitch) : null);
+        pitchSpinnerModel.setValue(pitch != null ? new Float((float)Math.toDegrees(pitch)) : null);
         final PropertyChangeListener pitchChangeListener = new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               Float newPitch = (Float)ev.getNewValue();
               pitchSpinnerModel.setNullable(newPitch == null);
-              pitchSpinnerModel.setValue(newPitch != null ? Math.toDegrees(newPitch) : null);
+              pitchSpinnerModel.setValue(newPitch != null ? new Float((float)Math.toDegrees(newPitch)) : null);
             }
           };
         controller.addPropertyChangeListener(HomeFurnitureController.Property.PITCH, pitchChangeListener);
@@ -804,7 +804,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             Float lightPower = (Float) ev.getNewValue();
             lightPowerSpinnerModel.setNullable(lightPower == null);
             lightPowerSpinnerModel.setValue(lightPower != null
-                ? Math.round((Float) ev.getNewValue() * 100)
+                ? Math.round((Float)ev.getNewValue() * 100)
                 : null);
           }
         };

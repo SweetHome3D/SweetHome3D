@@ -428,8 +428,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       HomeTexture texture = controller.getTexture();
       setPreviewTexture(texture);
       if (texture instanceof HomeTexture) {
-        this.angleSpinner.setValue(Math.toDegrees(texture.getAngle()));
-        this.scaleSpinner.setValue(texture.getScale() * 100);
+        this.angleSpinner.setValue((float)Math.toDegrees(texture.getAngle()));
+        this.scaleSpinner.setValue(texture.getScale() * 100f);
       }
       Insets insets = border.getBorderInsets(this.texturePreviewComponent);
       this.texturePreviewComponent.setPreferredSize(
