@@ -376,7 +376,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
         this.scaleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, TextureChoiceComponent.class,
             "scaleLabel.text"));
-        final SpinnerNumberModel scaleSpinnerModel = new SpinnerNumberModel(100f, 1f, 10000f, 5f);
+        final SpinnerNumberModel scaleSpinnerModel = new SpinnerNumberModel(new Float(100f), new Float(1f), new Float(10000f), new Float(5f));
         this.scaleSpinner = new AutoCommitSpinner(scaleSpinnerModel);
 
         this.importTextureButton = new JButton(importTextureButtonText);
@@ -428,8 +428,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       HomeTexture texture = controller.getTexture();
       setPreviewTexture(texture);
       if (texture instanceof HomeTexture) {
-        this.angleSpinner.setValue((float)Math.toDegrees(texture.getAngle()));
-        this.scaleSpinner.setValue(texture.getScale() * 100f);
+        this.angleSpinner.setValue(new Float((float)Math.toDegrees(texture.getAngle())));
+        this.scaleSpinner.setValue(new Float(texture.getScale() * 100f));
       }
       Insets insets = border.getBorderInsets(this.texturePreviewComponent);
       this.texturePreviewComponent.setPreferredSize(
