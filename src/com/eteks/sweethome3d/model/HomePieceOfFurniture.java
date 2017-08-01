@@ -173,15 +173,33 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.MODEL_SIZE, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.modelSize == piece2.modelSize) {
+          Long piece1ModelSize = getModelSize(piece1);
+          Long piece2ModelSize = getModelSize(piece2);
+          if (piece1ModelSize == piece2ModelSize) {
             return 0; 
-          } else if (piece1.modelSize == null) {
+          } else if (piece1ModelSize == null) {
             return -1;
-          } else if (piece2.modelSize == null) {
+          } else if (piece2ModelSize == null) {
             return 1; 
           } else {
-            long diff = piece1.modelSize - piece2.modelSize;
-            return diff < 0  ? -1  : (diff > 0  ? 1  : 0);
+            return Long.compare(piece1ModelSize, piece2ModelSize);
+          }
+        }
+        
+        private Long getModelSize(HomePieceOfFurniture piece) {
+          if (piece instanceof HomeFurnitureGroup) {
+            Long biggestModelSize = null;
+            for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+              Long modelSize = getModelSize(childPiece);
+              if (modelSize != null
+                  && (biggestModelSize == null
+                      || biggestModelSize.longValue() < modelSize.longValue())) {
+                biggestModelSize = modelSize;
+              }
+            }
+            return biggestModelSize;
+          } else {
+            return piece.modelSize;
           }
         }
       });
