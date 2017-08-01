@@ -586,10 +586,10 @@ public class HomeController3D implements Controller {
           float maxZ;
           if (selectionEmpty) {
             minZ = Math.max(0, piece.getGroundElevation());
-            maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeight());
+            maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeightInPlan());
           } else {
             minZ = piece.getGroundElevation();
-            maxZ = piece.getGroundElevation() + piece.getHeight();
+            maxZ = piece.getGroundElevation() + piece.getHeightInPlan();
           }
           for (float [] point : piece.getPoints()) {
             updateAerialViewBounds(point [0], point [1], minZ, maxZ);

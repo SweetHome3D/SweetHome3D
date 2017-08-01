@@ -1071,7 +1071,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         if (piece.isVisible()
             && (piece.getLevel() == null
                 || piece.getLevel().isViewable())) {
-          float halfMaxDimension = Math.max(piece.getWidth(), piece.getDepth()) / 2;
+          float halfMaxDimension = Math.max(piece.getWidthInPlan(), piece.getDepthInPlan()) / 2;
           float elevation = piece.getGroundElevation();
           Point3d pieceLocation = new Point3d(
               piece.getX() - halfMaxDimension, piece.getY() - halfMaxDimension, elevation);
@@ -1081,7 +1081,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             approximateHomeBounds.combine(pieceLocation);
           }
           approximateHomeBounds.combine(new Point3d(
-              piece.getX() + halfMaxDimension, piece.getY() + halfMaxDimension, elevation + piece.getHeight()));
+              piece.getX() + halfMaxDimension, piece.getY() + halfMaxDimension, elevation + piece.getHeightInPlan()));
         }
       }
       for (Wall wall : this.home.getWalls()) {
@@ -2396,7 +2396,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updatePieceOfFurnitureGeometry(updatedPiece);
             updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
               || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
