@@ -3545,7 +3545,16 @@ public class HomePane extends JRootPane implements HomeView {
     final String useSelectedHome = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.useSelectedExample");
     String findMoreExamples = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.findMoreExamples");
     String cancel = this.preferences.getLocalizedString(HomePane.class, "newHomeFromExample.cancel");
-    final JList homeExamplesList = new JList(this.preferences.getHomeExamples().toArray());
+    final JList homeExamplesList = new JList(this.preferences.getHomeExamples().toArray()) {
+        @Override
+        public String getToolTipText(MouseEvent ev) {
+          int index = locationToIndex(ev.getPoint());
+          // Display full name in tool tip in case label renderer is too short 
+          return index != -1 
+              ? ((HomeDescriptor)getModel().getElementAt(index)).getName()
+              : null;
+        }
+      };
     homeExamplesList.setSelectionModel(new DefaultListSelectionModel() {
         @Override
         public void removeSelectionInterval(int index0, int index1) {
