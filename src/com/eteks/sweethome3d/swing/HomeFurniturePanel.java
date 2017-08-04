@@ -1127,64 +1127,81 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           0, 100, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
       add(locationPanel, new GridBagConstraints(
-          0, 1, 1, 1, 1, 0, labelAlignment, GridBagConstraints.BOTH, new Insets(
+          0, 1, 1, 1, 1, 1, labelAlignment, GridBagConstraints.BOTH, new Insets(
           0, 0, rowGap, 0), 0, 0));
     }
-    // Orientation panel 
-    JPanel orientationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
-        HomeFurniturePanel.class, "orientationPanel.title"));
     if (orientationPanelDisplayed) {
-      orientationPanel.add(this.angleLabel, new GridBagConstraints(
-          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, 
-          new Insets(0, new JRadioButton().getPreferredSize().width, OperatingSystem.isMacOSX() ? 5 : 2, 5), 0, 0));
-      orientationPanel.add(this.angleSpinner, new GridBagConstraints(
-          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
-    }
-    if (this.rollRadioButton != null) {
-      orientationPanel.add(this.rollRadioButton, new GridBagConstraints(
-          0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, OperatingSystem.isMacOSX() ? 5 : 1, 5), 0, 0));
-      orientationPanel.add(this.rollSpinner, new GridBagConstraints(
-          1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
-    }
-    if (this.pitchRadioButton != null) {
-      orientationPanel.add(this.pitchRadioButton, new GridBagConstraints(
-          0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, OperatingSystem.isMacOSX() ? 5 : 1, 5), 0, 0));
-      orientationPanel.add(this.pitchSpinner, new GridBagConstraints(
-          1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
-    }
-    if (this.mirroredModelCheckBox != null
-        && orientationPanelDisplayed) {
-      orientationPanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
-          0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    }
-    if (this.rollRadioButton != null
-        && this.pitchRadioButton != null
-        && controller.isTexturable()) { 
-      // Do not display orientation label information for not texturable furniture to keep a balanced dialog box 
-      orientationPanel.add(new JLabel(new ImageIcon(getClass().getResource("resources/furnitureOrientation.png"))), new GridBagConstraints(
-          0, 4, 2, 1, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(10, 0, 5, 0), 0, 0));
-      JLabel orientationLabel = new JLabel(preferences.getLocalizedString(HomeFurniturePanel.class, "orientationLabel.text"));
-      // Use same font for label as tooltips
-      orientationLabel.setFont(UIManager.getFont("ToolTip.font"));
-      orientationPanel.add(orientationLabel, new GridBagConstraints(
-          0, 5, 2, 1, 1, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    }
-    if (orientationPanel.getComponentCount() > 0) {
-      orientationPanel.add(new JLabel(), new GridBagConstraints(
-          0, 100, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
-          GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
-      add(orientationPanel, new GridBagConstraints(
-          1, 1, 1, 2, 1, 0, labelAlignment, GridBagConstraints.BOTH, new Insets(
-          0, 0, rowGap, 0), 0, 0));
+      // Orientation panel 
+      JPanel orientationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "orientationPanel.title"));      
+      JLabel verticalRotationLabel = new JLabel(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "verticalRotationLabel.text"));
+      JLabel horizontalRotationLabel = new JLabel(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "horizontalRotationLabel.text"));
+      JLabel orientationLabel = new JLabel(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "orientationLabel.text"));
+      // There are two possible layout depending whether horizontal and vertical rotation label are defined or not
+      boolean layoutWithHorizontalVerticalLabels = verticalRotationLabel.getText().length() > 0 
+          && horizontalRotationLabel.getText().length() > 0;
+      if (this.angleLabel != null) {
+        // Row 0 may contain verticalRotationLabel
+        orientationPanel.add(this.angleLabel, new GridBagConstraints(
+            0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, new Insets(0, new JRadioButton().getPreferredSize().width, OperatingSystem.isMacOSX() || layoutWithHorizontalVerticalLabels ? 5 : 2, 5), 0, 0));
+        orientationPanel.add(this.angleSpinner, new GridBagConstraints(
+            1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
+      }
+      Insets secondRadioButtonInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : (OperatingSystem.isMacOSX() ? 5 : 1), 5);
+      Insets secondSpinnerInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : 5, 0);
+      Insets thirdRadioButtonInsets = new Insets(0, 0, 0, 5);
+      Insets thirdSpinnerinsets = new Insets(0, 0, 0, 0);
+      if (this.pitchRadioButton != null) {
+        // Row 2 may contain horizontalRotationLabel
+        orientationPanel.add(this.pitchRadioButton, new GridBagConstraints(
+            0, layoutWithHorizontalVerticalLabels ? 3 : 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, layoutWithHorizontalVerticalLabels ? secondRadioButtonInsets : thirdRadioButtonInsets, 0, 0));
+        orientationPanel.add(this.pitchSpinner, new GridBagConstraints(
+            1, layoutWithHorizontalVerticalLabels ? 3 : 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.HORIZONTAL, layoutWithHorizontalVerticalLabels ? secondSpinnerInsets : thirdSpinnerinsets, 10, 0));
+      }
+      if (this.rollRadioButton != null) {
+        orientationPanel.add(this.rollRadioButton, new GridBagConstraints(
+            0, layoutWithHorizontalVerticalLabels ? 4 : 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, layoutWithHorizontalVerticalLabels ? thirdRadioButtonInsets : secondRadioButtonInsets, 0, 0));
+        orientationPanel.add(this.rollSpinner, new GridBagConstraints(
+            1, layoutWithHorizontalVerticalLabels ? 4 : 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.HORIZONTAL, layoutWithHorizontalVerticalLabels ? thirdSpinnerinsets : secondSpinnerInsets, 10, 0));
+      }
+      if (this.rollRadioButton != null
+          && this.pitchRadioButton != null) { 
+        if (controller.isTexturable()) {
+          // Do not display orientation label information for not texturable furniture to keep a balanced dialog box 
+          orientationPanel.add(new JLabel(new ImageIcon(getClass().getResource("resources/furnitureOrientation.png"))), new GridBagConstraints(
+              0, 6, 2, 1, 1, layoutWithHorizontalVerticalLabels ? 1 : 0, GridBagConstraints.CENTER,
+              GridBagConstraints.BOTH, new Insets(10, 0, 5, 0), 0, 0));
+        }
+        if (layoutWithHorizontalVerticalLabels) {
+          // Add information labels about axes adjusting insets to align with components in other panels
+          orientationPanel.add(verticalRotationLabel, new GridBagConstraints(
+              0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+              GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 5 : 3, 0, OperatingSystem.isMacOSX() ? 10 : 8, 0), 0, 0));
+          orientationPanel.add(horizontalRotationLabel, new GridBagConstraints(
+              0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+              GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 5 : 3, 0, OperatingSystem.isMacOSX() ? 9 : 8, 0), 0, 0));
+        } else {
+          // Use same font for label as tooltips
+          orientationLabel.setFont(UIManager.getFont("ToolTip.font"));
+          orientationPanel.add(orientationLabel, new GridBagConstraints(
+              0, 7, 2, 1, 1, 1, GridBagConstraints.NORTH,
+              GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
+        }
+      }
+      if (orientationPanel.getComponentCount() > 0) {
+        add(orientationPanel, new GridBagConstraints(
+            1, 1, 1, 2, 1, 0, labelAlignment, GridBagConstraints.BOTH, new Insets(
+            0, 0, rowGap, 0), 0, 0));
+      }
     }
     // Size panel
     JPanel sizePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
@@ -1215,18 +1232,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     if (this.keepProportionsCheckBox != null) {
       sizePanel.add(this.keepProportionsCheckBox, new GridBagConstraints(
-          0, 3, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+          0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, OperatingSystem.isMacOSX() ? 5 : 2, 0), 0, 0));
     }
-    if (this.mirroredModelCheckBox != null
-        && !orientationPanelDisplayed) {
+    if (this.mirroredModelCheckBox != null) {
       sizePanel.add(this.mirroredModelCheckBox, new GridBagConstraints(
           0, 4, 2, 1, 0, 1, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (sizePanel.getComponentCount() > 0) {
       add(sizePanel, new GridBagConstraints(
-          orientationPanelDisplayed ? 2 : 1, 1, 2, 1, 1, 0, labelAlignment, 
+          orientationPanelDisplayed ? 2 : 1, 1, 2, 1, 1, 1, labelAlignment, 
           GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
     }
     final JPanel paintPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
