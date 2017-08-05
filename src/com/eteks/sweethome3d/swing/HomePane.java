@@ -3598,9 +3598,12 @@ public class HomePane extends JRootPane implements HomeView {
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     
+    Object [] options = findMoreExamples.length() > 0
+        ? new Object [] {useSelectedHome, findMoreExamples, cancel}
+        : new Object [] {useSelectedHome, cancel};
     int option = JOptionPane.showOptionDialog(this, panel, title, 
-        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
-        null, new Object [] {useSelectedHome, findMoreExamples, cancel}, useSelectedHome);
+        findMoreExamples.length() > 0 ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+        null, options, useSelectedHome);
     switch (option) {
       // Convert showOptionDialog answer to SaveAnswer enum constants
       case JOptionPane.YES_OPTION: 
