@@ -429,7 +429,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "topViewRadioButton.text"), 
           controller.isFurnitureViewedFromTop());
-      this.iconSizeLabel = new JLabel(preferences.getLocalizedString(
+      this.iconSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           UserPreferencesPanel.class, "iconSizeLabel.text"));
       Set<Integer> iconSizes = new TreeSet<Integer>(Arrays.asList(128, 256, 512 ,1024));
       iconSizes.add(controller.getFurnitureModelIconSize());
