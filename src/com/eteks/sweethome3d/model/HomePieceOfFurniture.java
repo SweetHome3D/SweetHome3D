@@ -173,8 +173,8 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.MODEL_SIZE, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          Long piece1ModelSize = getModelSize(piece1);
-          Long piece2ModelSize = getModelSize(piece2);
+          Long piece1ModelSize = HomePieceOfFurniture.getComparableModelSize(piece1);
+          Long piece2ModelSize = HomePieceOfFurniture.getComparableModelSize(piece2);
           if (piece1ModelSize == piece2ModelSize) {
             return 0; 
           } else if (piece1ModelSize == null) {
@@ -183,23 +183,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
             return 1; 
           } else {
             return Long.compare(piece1ModelSize, piece2ModelSize);
-          }
-        }
-        
-        private Long getModelSize(HomePieceOfFurniture piece) {
-          if (piece instanceof HomeFurnitureGroup) {
-            Long biggestModelSize = null;
-            for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-              Long modelSize = getModelSize(childPiece);
-              if (modelSize != null
-                  && (biggestModelSize == null
-                      || biggestModelSize.longValue() < modelSize.longValue())) {
-                biggestModelSize = modelSize;
-              }
-            }
-            return biggestModelSize;
-          } else {
-            return piece.modelSize;
           }
         }
       });
@@ -274,6 +257,23 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       return 1; 
     } else {
       return Float.compare(level1.getElevation(), level2.getElevation());
+    }
+  }
+  
+  private static Long getComparableModelSize(HomePieceOfFurniture piece) {
+    if (piece instanceof HomeFurnitureGroup) {
+      Long biggestModelSize = null;
+      for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        Long modelSize = getComparableModelSize(childPiece);
+        if (modelSize != null
+            && (biggestModelSize == null
+                || biggestModelSize.longValue() < modelSize.longValue())) {
+          biggestModelSize = modelSize;
+        }
+      }
+      return biggestModelSize;
+    } else {
+      return piece.modelSize;
     }
   }
   
