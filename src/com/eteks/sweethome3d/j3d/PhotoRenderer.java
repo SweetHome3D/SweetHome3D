@@ -409,9 +409,11 @@ public class PhotoRenderer {
     
     if (this.sunSkyLightName != null) {
       this.sunflow.remove(this.sunSkyLightName);
+      this.sunSkyLightName = null;
     }
     if (this.sunLightName != null) {
       this.sunflow.remove(this.sunLightName);
+      this.sunLightName = null;
     }
     // Possible values: default, path
     String globalIllumination = getRenderingParameterValue("globalIllumination");
