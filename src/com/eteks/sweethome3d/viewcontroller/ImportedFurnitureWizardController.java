@@ -480,6 +480,7 @@ public class ImportedFurnitureWizardController extends WizardController
   
   /**
    * Returns the creator of the imported piece.
+   * @since 5.5
    */
   public String getCreator() {
     return this.creator;
@@ -487,6 +488,7 @@ public class ImportedFurnitureWizardController extends WizardController
   
   /**
    * Sets the creator of the imported piece.
+   * @since 5.5
    */
   public void setCreator(String creator) {
     if (creator != this.creator) {
