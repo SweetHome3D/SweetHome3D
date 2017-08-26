@@ -45,6 +45,7 @@ public class ModelMaterialsController implements Controller {
   private TextureChoiceController     textureController;
 
   private Content                     model;
+  private String                      modelCreator;
   private float                       modelWidth;
   private float                       modelDepth;
   private float                       modelHeight;
@@ -107,6 +108,20 @@ public class ModelMaterialsController implements Controller {
     return this.model;
   }
 
+  /**
+   * Sets the creator of the 3D model displayed by the view.
+   */
+  public void setModelCreator(String modelCreator) {
+    this.modelCreator = modelCreator;
+  }
+
+  /**
+   * Returns the creator of the 3D model displayed by the view.
+   */
+  public String getModelCreator() {
+    return this.modelCreator;
+  }
+  
   /**
    * Sets the rotation of the 3D model used to preview materials change.
    */

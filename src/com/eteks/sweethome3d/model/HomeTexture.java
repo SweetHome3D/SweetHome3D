@@ -32,6 +32,7 @@ public class HomeTexture implements TextureImage, Serializable {
   
   private final String catalogId;
   private final String name;
+  private final String creator;
   private final Content image;
   private final float width;
   private final float height;
@@ -80,6 +81,7 @@ public class HomeTexture implements TextureImage, Serializable {
    */
   public HomeTexture(TextureImage texture, float angle, float scale, boolean leftToRightOriented) {
     this.name = texture.getName();
+    this.creator = texture.getCreator();
     this.image = texture.getImage();
     this.width = texture.getWidth();
     this.height = texture.getHeight();
@@ -119,6 +121,14 @@ public class HomeTexture implements TextureImage, Serializable {
     return this.name;
   }
   
+  /**
+   * Returns the creator of this texture.
+   * @since 5.5
+   */
+  public String getCreator() {
+    return this.creator;
+  }
+
   /**
    * Returns the content of the image used for this texture. 
    */

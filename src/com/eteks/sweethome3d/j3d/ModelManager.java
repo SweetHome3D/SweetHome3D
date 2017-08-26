@@ -1082,6 +1082,14 @@ public class ModelManager {
    * Returns the materials used by the children shapes of the given <code>node</code>.
    */
   public HomeMaterial [] getMaterials(Node node) {
+    return getMaterials(node, null);
+  }
+  
+  /** 
+   * Returns the materials used by the children shapes of the given <code>node</code>,
+   * attributing their <code>creator</code> to them.
+   */
+  public HomeMaterial [] getMaterials(Node node, String creator) {
     // Search appearances used by node shapes 
     Set<Appearance> appearances = new HashSet<Appearance>(); 
     searchAppearances(node, appearances);
@@ -1128,7 +1136,7 @@ public class ModelManager {
           if (lastPoint != -1) {
             textureImageName = textureImageName.substring(0, lastPoint);
           }
-          texture = new HomeTexture(new CatalogTexture(textureImageName, textureImage, -1, -1));
+          texture = new HomeTexture(new CatalogTexture(null, textureImageName, textureImage, -1, -1, creator));
         }
       }
       try {

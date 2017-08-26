@@ -108,6 +108,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.LengthUnit;
@@ -920,8 +921,12 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
             writer.write(copiedPiece.getName());
             break;
           case CREATOR :
-            // Copy piece creator
-            writer.write(copiedPiece.getCreator());
+            // Copy piece creators
+            String creators = ((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                this, copiedPiece, false, false, rowIndex, columnIndex)).getText();
+            if (creators != null) {
+              writer.write(creators);
+            }
             break;
           case LEVEL :
             // Copy level name
@@ -1342,7 +1347,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
     }
 
     /**
-     * Returns a renderer that displays the creator of a piece of furniture. 
+     * Returns a renderer that displays the creator of a piece of furniture and its textures if any. 
      */
     private TableCellRenderer getCreatorRenderer() {
       return new DefaultTableCellRenderer() { 
@@ -1350,8 +1355,38 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+          String creator = piece.getCreator();
+          if (creator != null) {
+            HomeTexture texture = piece.getTexture();
+            if (texture != null) {
+              String textureCreator = texture.getCreator();
+              if (textureCreator != null
+                  && !creator.equals(textureCreator)) {
+                creator += ", " + textureCreator;
+              }
+            } else {
+              String modelCreator = creator; 
+              HomeMaterial [] materials = piece.getModelMaterials();
+              if (materials != null) {
+                for (HomeMaterial material : materials) {
+                  if (material != null) {
+                    HomeTexture materialTexture = material.getTexture();
+                    if (materialTexture != null) {
+                      String textureCreator = materialTexture.getCreator();
+                      if (textureCreator != null
+                          && !modelCreator.equals(textureCreator)
+                          && creator.indexOf(", " + textureCreator) == -1) {
+                        creator += ", " + textureCreator;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
           return super.getTableCellRendererComponent(
-              table, ((HomePieceOfFurniture)value).getCreator(), isSelected, hasFocus, row, column); 
+              table, creator, isSelected, hasFocus, row, column); 
         }
       };
     }

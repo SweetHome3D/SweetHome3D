@@ -301,6 +301,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       height CDATA #REQUIRED
  *       angle CDATA "0"
  *       scale CDATA "1"
+ *       creator CDATA #IMPLIED
  *       leftToRightOriented (true | false) "true"
  *       image CDATA #REQUIRED>
  *       
@@ -1534,7 +1535,7 @@ public class HomeXMLHandler extends DefaultHandler {
                                parseContent(attributes.get("image"), catalogId), 
                                parseFloat(attributes, "width"), 
                                parseFloat(attributes, "height"), 
-                               null),
+                               attributes.get("creator")),
         attributes.get("angle") != null
             ? parseFloat(attributes, "angle")
             : 0,

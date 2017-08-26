@@ -743,6 +743,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           protected void writeAttributes(XMLWriter writer, HomeTexture texture) throws IOException {
             writer.writeAttribute("attribute", attributeName, null);
             writer.writeAttribute("name", texture.getName(), null);
+            writer.writeAttribute("creator", texture.getCreator(), null);
             writer.writeAttribute("catalogId", texture.getCatalogId(), null);
             writer.writeFloatAttribute("width", texture.getWidth());
             writer.writeFloatAttribute("height", texture.getHeight());

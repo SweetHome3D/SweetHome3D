@@ -56,6 +56,10 @@ class DefaultPatternTexture implements TextureImage {
   public String getName() {
     return this.name;
   }
+  
+  public String getCreator() {
+    return null;
+  }
 
   public Content getImage() {
     return this.image;

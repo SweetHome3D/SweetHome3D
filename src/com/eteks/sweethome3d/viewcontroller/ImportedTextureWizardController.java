@@ -36,7 +36,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class ImportedTextureWizardController extends WizardController 
                                              implements Controller {
-  public enum Property {STEP, IMAGE, NAME, CATEGORY, WIDTH, HEIGHT}
+  public enum Property {STEP, IMAGE, NAME, CATEGORY, CREATOR, WIDTH, HEIGHT}
 
   public enum Step {IMAGE, ATTRIBUTES};
   
@@ -55,6 +55,7 @@ public class ImportedTextureWizardController extends WizardController
   private Content           image;
   private String            name;
   private TexturesCategory  category;
+  private String            creator;
   private float             width;
   private float             height;
 
@@ -115,8 +116,8 @@ public class ImportedTextureWizardController extends WizardController
    */
   @Override
   public void finish() {
-    CatalogTexture newTexture = new CatalogTexture(getName(), getImage(), 
-        getWidth(), getHeight(), true);
+    CatalogTexture newTexture = new CatalogTexture(null, getName(), getImage(), 
+        getWidth(), getHeight(), getCreator(), true);
     // Remove the edited texture from catalog
     TexturesCatalog catalog = this.preferences.getTexturesCatalog();
     if (this.texture != null) {
@@ -251,6 +252,28 @@ public class ImportedTextureWizardController extends WizardController
       TexturesCategory oldCategory = this.category;
       this.category = category;
       this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.name(), oldCategory, category);
+    }
+  }
+  
+  /**
+   * Returns the creator of the imported piece.
+   * @since 5.5
+   */
+  public String getCreator() {
+    return this.creator;
+  }
+  
+  /**
+   * Sets the creator of the imported piece.
+   * @since 5.5
+   */
+  public void setCreator(String creator) {
+    if (creator != this.creator) {
+      String oldCreator = this.creator;
+      this.creator = creator;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange(Property.CREATOR.name(), oldCreator, creator);
+      }
     }
   }
   

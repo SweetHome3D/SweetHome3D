@@ -94,6 +94,15 @@ public class CatalogTexture implements TextureImage, CatalogItem, Comparable<Cat
     this(null, name, image, width, height, null, modifiable);
   }
   
+  /**
+   * Creates a catalog texture.
+   * @param id the ID of this texture 
+   * @param name the name of this texture 
+   * @param image the content of the image used for this texture
+   * @param width the width of the texture in centimeters
+   * @param height the height of the texture in centimeters
+   * @param modifiable <code>true</code> if this texture can be modified
+   */
   public CatalogTexture(String id, 
                         String name, Content image, 
                         float width, float height,

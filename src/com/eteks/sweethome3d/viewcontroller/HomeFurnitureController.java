@@ -265,6 +265,7 @@ public class HomeFurnitureController implements Controller {
       if (modelMaterialsController != null) {
         modelMaterialsController.setMaterials(null);
         modelMaterialsController.setModel(null);
+        modelMaterialsController.setModelCreator(null);
       }
       setPaint(null);
       setShininess(null);
@@ -485,6 +486,7 @@ public class HomeFurnitureController implements Controller {
      
       HomeMaterial [] modelMaterials = firstPieceExceptGroup.getModelMaterials();
       Content model = firstPieceExceptGroup.getModel();
+      String creator = firstPieceExceptGroup.getCreator();
       if (model != null) {
         for (int i = 1; i < selectedFurnitureWithoutGroups.size(); i++) {
           HomePieceOfFurniture piece = selectedFurnitureWithoutGroups.get(i);
@@ -492,6 +494,7 @@ public class HomeFurnitureController implements Controller {
               || model != piece.getModel()) {
             modelMaterials = null;
             model = null;
+            creator = null;
             break;
           }
         }
@@ -500,6 +503,7 @@ public class HomeFurnitureController implements Controller {
         // Materials management available since version 4.0 only
         modelMaterialsController.setMaterials(modelMaterials);
         modelMaterialsController.setModel(model);
+        modelMaterialsController.setModelCreator(creator);
         // Set a default size from the first piece before checking whether the selected pieces have the same size  
         modelMaterialsController.setModelSize(firstPieceExceptGroup.getWidth(), firstPieceExceptGroup.getDepth(), firstPieceExceptGroup.getHeight());
         modelMaterialsController.setModelRotation(firstPieceExceptGroup.getModelRotation());

@@ -111,6 +111,8 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private JTextField                      nameTextField;
   private JLabel                          categoryLabel;
   private JComboBox                       categoryComboBox;
+  private JLabel                          creatorLabel;
+  private JTextField                      creatorTextField;
   private JLabel                          widthLabel;
   private JSpinner                        widthSpinner;
   private JLabel                          heightLabel;
@@ -352,6 +354,38 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           }
         });
 
+    this.creatorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        ImportedTextureWizardStepsPanel.class, "creatorLabel.text"));
+    this.creatorTextField = new JTextField(10);
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      SwingTools.addAutoSelectionOnFocusGain(this.creatorTextField);
+    }
+    DocumentListener creatorListener = new DocumentListener() {
+        public void changedUpdate(DocumentEvent ev) {
+          creatorTextField.getDocument().removeDocumentListener(this);
+          controller.setCreator(creatorTextField.getText().trim());
+          creatorTextField.getDocument().addDocumentListener(this);
+        }
+  
+        public void insertUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+  
+        public void removeUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+      };
+    this.creatorTextField.getDocument().addDocumentListener(creatorListener);
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.CREATOR,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If creator changes update creator text field
+            if (!creatorTextField.getText().trim().equals(controller.getCreator())) {
+              creatorTextField.setText(controller.getCreator());
+            }
+          }
+        });
+
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     float minimumLength = preferences.getLengthUnit().getMinimumLength();
@@ -423,6 +457,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
       this.categoryLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedTextureWizardStepsPanel.class, "categoryLabel.mnemonic")).getKeyCode());
       this.categoryLabel.setLabelFor(this.categoryComboBox);
+      this.creatorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedTextureWizardStepsPanel.class, "creatorLabel.mnemonic")).getKeyCode());
+      this.creatorLabel.setLabelFor(this.creatorTextField);
       this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           ImportedTextureWizardStepsPanel.class, "widthLabel.mnemonic")).getKeyCode());
       this.widthLabel.setLabelFor(this.widthSpinner);
@@ -471,35 +508,41 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
         GridBagConstraints.NONE, new Insets(5, 0, 10, 0), 0, 0));
     this.attributesPreviewComponent.setPreferredSize(new Dimension(IMAGE_PREFERRED_SIZE, IMAGE_PREFERRED_SIZE));
     attributesPanel.add(this.attributesPreviewComponent, new GridBagConstraints(
-        0, 1, 1, 5, 1, 0, GridBagConstraints.NORTH, 
+        0, 1, 1, 6, 1, 0, GridBagConstraints.NORTH, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     attributesPanel.add(this.nameLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     attributesPanel.add(this.nameTextField, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     attributesPanel.add(this.categoryLabel, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     attributesPanel.add(this.categoryComboBox, new GridBagConstraints(
         2, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    attributesPanel.add(this.widthLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+    attributesPanel.add(this.creatorLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
-    attributesPanel.add(this.widthSpinner, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    attributesPanel.add(this.creatorTextField, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    attributesPanel.add(this.heightLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+    attributesPanel.add(this.widthLabel, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    attributesPanel.add(this.heightSpinner, new GridBagConstraints(
+    attributesPanel.add(this.widthSpinner, new GridBagConstraints(
         2, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+    attributesPanel.add(this.heightLabel, new GridBagConstraints(
+        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    attributesPanel.add(this.heightSpinner, new GridBagConstraints(
+        2, 5, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Add a dummy label to force components to be at top of panel
     attributesPanel.add(new JLabel(), new GridBagConstraints(
-        1, 5, 2, 1, 1, 1, GridBagConstraints.CENTER, 
+        1, 6, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     add(imageChoicePanel, ImportedTextureWizardController.Step.IMAGE.name());
@@ -549,6 +592,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
                     controller.setImage(catalogTexture.getImage());
                     controller.setName(catalogTexture.getName());
                     controller.setCategory(catalogTexture.getCategory());
+                    controller.setCreator(catalogTexture.getCreator());
                     controller.setWidth(catalogTexture.getWidth());
                     controller.setHeight(catalogTexture.getHeight());
                   } else {
@@ -634,6 +678,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
                     }
                   }
                   controller.setCategory(userCategory);
+                  controller.setCreator(null);
                   float defaultWidth = 20;
                   LengthUnit lengthUnit = preferences.getLengthUnit();
                   if (lengthUnit == LengthUnit.INCH

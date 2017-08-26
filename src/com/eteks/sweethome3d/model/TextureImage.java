@@ -32,6 +32,12 @@ public interface TextureImage extends Serializable {
   public abstract String getName();
 
   /**
+   * Returns the creator of this texture.
+   * @since 5.5
+   */
+  public String getCreator();
+
+  /**
    * Returns the content of the image used for this texture. 
    */
   public abstract Content getImage();

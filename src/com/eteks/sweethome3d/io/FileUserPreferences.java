@@ -112,6 +112,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String AUTO_COMPLETION_STRINGS                   = "autoCompletionStrings#";
   private static final String RECENT_COLORS                             = "recentColors";
   private static final String RECENT_TEXTURE_NAME                       = "recentTextureName#";
+  private static final String RECENT_TEXTURE_CREATOR                    = "recentTextureCreator#";
   private static final String RECENT_TEXTURE_IMAGE                      = "recentTextureImage#";
   private static final String RECENT_TEXTURE_WIDTH                      = "recentTextureWidth#";
   private static final String RECENT_TEXTURE_HEIGHT                     = "recentTextureHeight#";
@@ -138,6 +139,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_PROPORTIONAL                    = "furnitureProportional#";
 
   private static final String TEXTURE_NAME                              = "textureName#";
+  private static final String TEXTURE_CREATOR                           = "textureCreator#";
   private static final String TEXTURE_CATEGORY                          = "textureCategory#";
   private static final String TEXTURE_IMAGE                             = "textureImage#";
   private static final String TEXTURE_WIDTH                             = "textureWidth#";
@@ -692,7 +694,8 @@ public class FileUserPreferences extends UserPreferences {
         if (image != MISSING_CONTENT) {
           float width = preferences.getFloat(RECENT_TEXTURE_WIDTH + index, -1);
           float height = preferences.getFloat(RECENT_TEXTURE_HEIGHT + index, -1);
-          recentTextures.add(new CatalogTexture(textureName, image, width, height));
+          String creator = preferences.get(RECENT_TEXTURE_CREATOR + index, null);
+          recentTextures.add(new CatalogTexture(null, textureName, image, width, height, creator));
         }
       }
     }
@@ -888,7 +891,8 @@ public class FileUserPreferences extends UserPreferences {
     Content image = getContent(preferences, TEXTURE_IMAGE + index, preferencesFolder);
     float width = preferences.getFloat(TEXTURE_WIDTH + index, 0.1f);
     float height = preferences.getFloat(TEXTURE_HEIGHT + index, 0.1f);
-    return new CatalogTexture(name, image, width, height, true);
+    String creator = preferences.get(TEXTURE_CREATOR + index, null);
+    return new CatalogTexture(null, name, image, width, height, creator, true);
   }
 
   /**
@@ -1125,14 +1129,20 @@ public class FileUserPreferences extends UserPreferences {
       } else {
         preferences.remove(RECENT_TEXTURE_HEIGHT + i);
       }
+      if (texture.getCreator() != null) {
+        preferences.put(RECENT_TEXTURE_CREATOR + i, texture.getCreator());
+      } else {
+        preferences.remove(RECENT_TEXTURE_CREATOR + i);
+      }
       i++;
     }
     // Remove obsolete keys
     for ( ; preferences.get(RECENT_TEXTURE_NAME + i, null) != null; i++) {
       preferences.remove(RECENT_TEXTURE_NAME + i);
       preferences.remove(RECENT_TEXTURE_IMAGE + i);
-      preferences.remove(RECENT_TEXTURE_HEIGHT + i);
       preferences.remove(RECENT_TEXTURE_WIDTH + i);
+      preferences.remove(RECENT_TEXTURE_HEIGHT + i);
+      preferences.remove(RECENT_TEXTURE_CREATOR + i);
     }
     
     // Save modifiable textures
@@ -1146,6 +1156,11 @@ public class FileUserPreferences extends UserPreferences {
               TEXTURE_CONTENT_PREFIX, texturesContentURLs);
           preferences.putFloat(TEXTURE_WIDTH + i, texture.getWidth());
           preferences.putFloat(TEXTURE_HEIGHT + i, texture.getHeight());
+          if (texture.getCreator() != null) {
+            preferences.put(TEXTURE_CREATOR + i, texture.getCreator());
+          } else {
+            preferences.remove(TEXTURE_CREATOR + i);
+          }
           i++;
         }
       }
@@ -1157,6 +1172,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(TEXTURE_IMAGE + i);
       preferences.remove(TEXTURE_WIDTH + i);
       preferences.remove(TEXTURE_HEIGHT + i);
+      preferences.remove(TEXTURE_CREATOR + i);
     }
     
     deleteObsoleteContent(texturesContentURLs, TEXTURE_CONTENT_PREFIX);

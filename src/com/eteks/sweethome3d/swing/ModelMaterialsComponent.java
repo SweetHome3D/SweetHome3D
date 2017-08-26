@@ -654,12 +654,12 @@ public class ModelMaterialsComponent extends JButton implements View {
       private HomeMaterial [] defaultMaterials;
       private HomeMaterial [] materials;
 
-      public MaterialsListModel(ModelMaterialsController controller) {
+      public MaterialsListModel(final ModelMaterialsController controller) {
         this.materials = controller.getMaterials();
         ModelManager.getInstance().loadModel(controller.getModel(), 
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelRoot) {
-              defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot);
+              defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot, controller.getModelCreator());
               if (materials != null) {
                 // Keep only materials that are defined in default materials set
                 // (the list can be different if the model loader interprets differently a 3D model file 
