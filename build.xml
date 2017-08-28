@@ -862,6 +862,7 @@
     <input message="Enter certificate name:" addproperty="certificateName"/>
     <!-- Sign Sweet Home 3D application bundle -->
     <exec executable="codesign" failonerror="yes">
+      <arg value="-f"/>
       <arg value="-s"/>
       <arg value="${certificateName}"/>
       <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app"/>
@@ -1063,7 +1064,7 @@
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="src/com/eteks/sweethome3d/swing/resources/aboutIcon.png"
         tofile="install/linux/x64/SweetHome3D-${version}/SweetHome3DIcon.png"/>
-  	
+  
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x64/SweetHome3D-${version}/jre8">
@@ -1103,7 +1104,7 @@
         <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
-  	
+  
     <!-- Create SweetHome3D-version-linux-x64.tgz archive -->
     <tar destfile="install/SweetHome3D-${version}-linux-x64.tgz"
          compression="gzip">
@@ -1120,14 +1121,14 @@
         <include name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
     </tar>
-  	
+  
     <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/linux/x64"/>
-  	
+  
     <echo message="install/SweetHome3D-${version}-linux-x64.tgz ready for ftp"/>
   </target>
-	
+
   <!-- Builds Sweet Home 3D Windows signed portable launchers in install/portable/SweetHome3D-version-portable directory.
        CAUTION : May be run only under Windows and requires launch4j and SignTool
                  included in Windows platform SDK installed in their default location -->
