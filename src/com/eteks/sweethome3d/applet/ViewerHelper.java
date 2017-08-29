@@ -382,9 +382,9 @@ public final class ViewerHelper {
           }
           List<Camera> selectableCamerasList = new ArrayList<Camera>();
           for (String selectableCamera : selectableCameras) {
-            Camera level = getStoredCamera(home, selectableCamera);
-            if (level != null) {
-              selectableCamerasList.add(level);
+            Camera camera = getStoredCamera(home, selectableCamera);
+            if (camera != null) {
+              selectableCamerasList.add(camera);
             }
           }
           if (!selectableLevelsList.isEmpty()
