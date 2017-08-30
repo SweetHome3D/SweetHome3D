@@ -528,13 +528,21 @@
       <fileset dir="lib">
         <include name="*.jar"/>
         <include name="java3d-1.6/*.jar"/>
-        <exclude name="j3dcore.jar"/>
-        <exclude name="j3dutils.jar"/>
-        <exclude name="vecmath.jar"/>
         <exclude name="java3d-1.6/jogl-all.jar"/>
       </fileset>
       <fileset dir="build">
         <include name="java3d-1.6/jogl-java3d.jar"/>
+      </fileset>
+    </copy>
+    <copy todir="install/windows/build/lib/x86" >
+      <fileset dir="lib/windows/i386">
+        <include name="*.dll"/>
+      </fileset>
+    </copy>
+    <mkdir dir="install/windows/build/lib/x64"/>
+    <copy todir="install/windows/build/lib/x64" >
+      <fileset dir="lib/windows/x64">
+        <include name="*.dll"/>
       </fileset>
     </copy>
     <copy todir="install/windows/build/lib/java3d-1.6/x86" >
@@ -566,7 +574,7 @@
     <!-- Copy 32 bit JRE to install/windows/build/jre/x86... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x86">
-      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_51">
+      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_144">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -632,7 +640,7 @@
     <!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x64">
-      <fileset dir="C:\Program Files\Java\jre1.8.0_51">
+      <fileset dir="C:\Program Files\Java\jre1.8.0_144">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -697,6 +705,12 @@
 
     <!-- Create SweetHome3D-x86.exe and SweetHome3D-x64.exe with launch4j -->
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
+      <arg value="${basedir}\install\windows\installerLaunch4j-java3d-1.5.2-x86.xml"/>
+    </exec>
+    <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
+      <arg value="${basedir}\install\windows\installerLaunch4j-java3d-1.5.2-x64.xml"/>
+    </exec>
+    <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerLaunch4j-x86.xml"/>
     </exec>
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
@@ -704,20 +718,20 @@
     </exec>
 
     <!-- Pack largest jars -->
-    <exec executable="C:\Program Files\Java\jre1.8.0_51\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.pack.gz"/>
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_51\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_51\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.jar"/>
@@ -735,7 +749,13 @@
     <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>
-
+  	
+  	<move todir="${basedir}\install">
+      <fileset dir="${basedir}\install\windows">
+      	<include name="SweetHome3D*.exe"/>
+      </fileset>
+  	</move>	
+  	
     <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/windows/build"/>
@@ -758,6 +778,8 @@
       <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x86.exe"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x64.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-x86.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-x64.exe"/>
     </exec>
@@ -766,6 +788,12 @@
       <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
       <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
     </exec>
+
+  	<move todir="${basedir}\install">
+      <fileset dir="${basedir}\install\windows">
+      	<include name="SweetHome3D*.exe"/>
+      </fileset>
+  	</move>	
 
     <!-- Clean build directories -->
     <delete dir="build"/>

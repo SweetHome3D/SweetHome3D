@@ -24,7 +24,7 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-5.5-windows
+OutputBaseFilename=SweetHome3D-5.5-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
@@ -48,7 +48,7 @@ ArchitecturesInstallIn64BitMode=x64
 SignTool=SignToolPgm /d $qSweet Home 3D Installer$q /du $qhttp://www.sweethome3d.com/$q $f
 SignedUninstaller=yes
 
-[Languages]  
+[Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
@@ -75,24 +75,46 @@ Type: filesandordirs; Name: "{app}\jre6"
 Type: filesandordirs; Name: "{app}\jre1.8.0_51"
 Type: filesandordirs; Name: "{app}\jre1.8.0_60"
 Type: filesandordirs; Name: "{app}\jre1.8.0_66"
-; Remove Java3D 1.5.2
-Type: files; Name: "{app}\lib\j3d*.dll"
-Type: files; Name: "{app}\lib\j3d*.jar"
-Type: files; Name: "{app}\lib\vecmath.jar"
+; Remove Java3D 1.5.2 if not used
+Type: files; Name: "{app}\lib\vecmath.jar"; Check: not IsJava3D152Installed
+Type: files; Name: "{app}\lib\j3d*.jar"; Check: not IsJava3D152Installed
+Type: files; Name: "{app}\lib\j3d*.dll"; Check: not IsJava3D152Installed
+; Remove other Java3D if Java3D 1.5.2 used
+Type: filesandordirs; Name: "{app}\lib\java3d-1.6"; Check: IsJava3D152Installed
 
 [Files]
 Source: "build\*.TXT"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "build\lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
-Source: "build\lib\*.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
-Source: "build\lib\java3d-1.6\*.jar"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion
-; Install JRE and DLLs for not 64 bit
-Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "build\lib\java3d-1.6\x86\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "build\jre8\x86\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstallMode
-; Install JRE and DLLs for 64 bit
-Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "build\lib\java3d-1.6\x64\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "build\jre8\x64\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstallMode
+Source: "build\lib\SweetHome3D.pack.gz"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\Furniture.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\Textures.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\Examples.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\Help.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\batik-svgpathparser-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\sunflow-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\freehep-vectorgraphics-svg-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\iText-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\jmf.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+; Install Java 3D 1.5.2 Jars
+Source: "build\lib\j3d*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: IsJava3D152Installed
+Source: "build\lib\vecmath.jar"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: IsJava3D152Installed
+; Install Java 3D not 1.5.2 Jars
+Source: "build\lib\java3d-1.6\*.jar"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: not IsJava3D152Installed
+; Install JRE and Java 3D for not 64 bit
+Source: "build\jre8\x86\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not Is64BitInstalled
+Source: "build\lib\x86\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: not Is64BitInstalled and IsJava3D152Installed
+Source: "build\lib\java3d-1.6\x86\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: not Is64BitInstalled and not IsJava3D152Installed
+; Install JRE and Java 3D for 64 bit
+Source: "build\jre8\x64\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: Is64BitInstalled
+Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstalled and IsJava3D152Installed
+Source: "build\lib\java3d-1.6\x64\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: Is64BitInstalled and not IsJava3D152Installed
+; Install program for not 64 bit and Java 3D 1.5.2
+Source: "build\SweetHome3D-java3d-1.5.2-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and IsJava3D152Installed
+; Install program for not 64 bit and not Java 3D 1.5.2
+Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and not IsJava3D152Installed
+; Install program for 64 bit and Java 3D 1.5.2
+Source: "build\SweetHome3D-java3d-1.5.2-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstalled and IsJava3D152Installed
+; Install program for 64 bit and not Java 3D 1.5.2
+Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstalled and not IsJava3D152Installed
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
@@ -151,3 +173,42 @@ Root: HKCR; Subkey: ".sh3p"; ValueType: string; ValueName: ""; ValueData: "eTeks
 Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"
 Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""
+
+[Code]
+function IsJava3D152Installed: Boolean;
+var
+  windowsVersion : TWindowsVersion;
+  requiredJava3DVersion : String;
+  i : Integer;
+begin
+  (* Uses by default Java 3D 1.5.2 under Windows 7 included *)
+  GetWindowsVersionEx(windowsVersion);
+  Result := (windowsVersion.major < 6) or 
+      (windowsVersion.major = 6) and (windowsVersion.major < 2);
+  (* Search required Java 3D version in j3d.version custom param *)
+  for i := 1 to ParamCount do
+    if Pos('/j3d.version=', ParamStr(i)) = 1 then
+      begin
+        requiredJava3DVersion := Copy(ParamStr(i), Length('/j3d.version=') + 1, Length(ParamStr(i)));        
+        Result := requiredJava3DVersion = '1.5.2';
+        break;
+      end;
+end; 
+
+function Is64BitInstalled: Boolean;
+var
+  windowsVersion : TWindowsVersion;
+  requiredArchitecture : String;
+  i : Integer;
+begin
+  Result := Is64BitInstallMode;
+  if Result then 
+    (* Search if required architecture in os.arch custom param isn't 64 *)
+    for i := 1 to ParamCount do
+      if Pos('/os.arch=', ParamStr(i)) = 1 then
+        begin
+          requiredArchitecture := Copy(ParamStr(i), Length('/os.arch=') + 1, Length(ParamStr(i)));
+          Result := Pos('64', requiredArchitecture) > 0;      
+          break;
+        end;
+end; 
