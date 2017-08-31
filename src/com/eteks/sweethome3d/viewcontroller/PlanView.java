@@ -185,4 +185,9 @@ public interface PlanView extends TransferableView, ExportableView {
    * Returns the size of the given piece of furniture in the horizontal plan.
    */
   public abstract float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece);
+  
+  /**
+   * Returns <code>true</code> if the view is able to compute the size of horizontally rotated furniture.
+   */
+  public abstract boolean isFurnitureSizeInPlanSupported();
 }

@@ -301,7 +301,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       }
     }
 
-    if (controller.isPropertyEditable(UserPreferencesController.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED)) {
+    if (controller.isPropertyEditable(UserPreferencesController.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED)
+        && !no3D) {
       // Create aerialViewCenteredOnSelection label and check box bound to controller AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED property
       this.aerialViewCenteredOnSelectionLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "aerialViewCenteredOnSelectionLabel.text"));
@@ -320,7 +321,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
 
-    if (controller.isPropertyEditable(UserPreferencesController.Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE)) {
+    if (controller.isPropertyEditable(UserPreferencesController.Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE)
+        && !no3D) {
       // Create observerCameraSelectedAtChangeLabel label and check box bound to controller OBSERVER_CAMERA_SELECTED_AT_CHANGE property
       this.observerCameraSelectedAtChangeLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "observerCameraSelectedAtChangeLabel.text"));
@@ -429,35 +431,36 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
           UserPreferencesPanel.class, "topViewRadioButton.text"), 
           controller.isFurnitureViewedFromTop());
-      this.iconSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
-          UserPreferencesPanel.class, "iconSizeLabel.text"));
-      Set<Integer> iconSizes = new TreeSet<Integer>(Arrays.asList(128, 256, 512 ,1024));
-      iconSizes.add(controller.getFurnitureModelIconSize());
-      this.iconSizeComboBox = new JComboBox(iconSizes.toArray());
-      this.iconSizeComboBox.setRenderer(new DefaultListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                                                        boolean cellHasFocus) {
-            return super.getListCellRendererComponent(list, value + "\u00d7" + value, index, isSelected, cellHasFocus);
-          }
-        });
-      this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
-      this.iconSizeComboBox.addItemListener(new ItemListener() {
-          public void itemStateChanged(ItemEvent ev) {
-            controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
-          }
-        });
-      controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
+      if (!no3D) {
+        this.iconSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+            UserPreferencesPanel.class, "iconSizeLabel.text"));
+        Set<Integer> iconSizes = new TreeSet<Integer>(Arrays.asList(128, 256, 512 ,1024));
+        iconSizes.add(controller.getFurnitureModelIconSize());
+        this.iconSizeComboBox = new JComboBox(iconSizes.toArray());
+        this.iconSizeComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                          boolean cellHasFocus) {
+              return super.getListCellRendererComponent(list, value + "\u00d7" + value, index, isSelected, cellHasFocus);
             }
           });
+        this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
+        this.iconSizeComboBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+              controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
+            }
+          });
+        controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE, 
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
+              }
+            });
+      }
 
       if (no3D) {
         this.catalogIconRadioButton.setEnabled(false);
         this.topViewRadioButton.setEnabled(false);
-        this.iconSizeComboBox.setEnabled(false);
       } else { 
         if (Component3DManager.getInstance().isOffScreenImageSupported()) {
           ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
@@ -482,7 +485,6 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         } else {
           this.catalogIconRadioButton.setEnabled(false);
           this.topViewRadioButton.setEnabled(false);
-          this.iconSizeComboBox.setEnabled(false);
         }
       }
     }
@@ -837,6 +839,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
         this.topViewRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "topViewRadioButton.mnemonic")).getKeyCode());
+      }
+      if (this.iconSizeLabel != null) {
         String mnemonic = preferences.getLocalizedString(UserPreferencesPanel.class, "iconSizeLabel.mnemonic");
         if (mnemonic.length() > 0) {
           this.iconSizeLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(mnemonic).getKeyCode());
@@ -1023,12 +1027,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       topViewPanel.add(this.topViewRadioButton, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
-      topViewPanel.add(this.iconSizeLabel, new GridBagConstraints(
-          1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-      topViewPanel.add(this.iconSizeComboBox, new GridBagConstraints(
-          2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      if (iconSizeLabel != null) {
+        topViewPanel.add(this.iconSizeLabel, new GridBagConstraints(
+            1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        topViewPanel.add(this.iconSizeComboBox, new GridBagConstraints(
+            2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      }
       add(topViewPanel, new GridBagConstraints(
           1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsetsWithSpace, 0, 0));

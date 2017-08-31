@@ -1969,9 +1969,18 @@ public class PlanController extends FurnitureController implements Controller {
               || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)) {
             // Update piece size in plan
             float [] size = getView().getPieceOfFurnitureSizeInPlan(piece);
-            piece.setWidthInPlan(size [0]);
-            piece.setDepthInPlan(size [1]);
-            piece.setHeightInPlan(size [2]);
+            if (size != null) { 
+              piece.setWidthInPlan(size [0]);
+              piece.setDepthInPlan(size [1]);
+              piece.setHeightInPlan(size [2]);
+            } else if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)) {
+              // If the 2D view is unable to send the new piece size in the plan
+              // the size change is considered to be applied proportionally  
+              float scale = piece.getWidth() / ((Number)ev.getOldValue()).floatValue();
+              piece.setWidthInPlan(scale * piece.getWidthInPlan());
+              piece.setDepthInPlan(scale * piece.getDepthInPlan());
+              piece.setHeightInPlan(scale * piece.getHeightInPlan());
+            }
           }
         }
       };
@@ -4007,7 +4016,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private HomePieceOfFurniture getPitchRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
-    if (selectedPiece != null) {
+    if (selectedPiece != null
+        && this.getView().isFurnitureSizeInPlanSupported()) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (selectedPiece.getPitch() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
@@ -4026,7 +4036,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private HomePieceOfFurniture getRollRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
-    if (selectedPiece != null) {
+    if (selectedPiece != null
+        && this.getView().isFurnitureSizeInPlanSupported()) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
       if (selectedPiece.getRoll() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
@@ -9286,7 +9297,8 @@ public class PlanController extends FurnitureController implements Controller {
       newHeight = Math.min(Math.max(newHeight, preferences.getLengthUnit().getMinimumLength()), 
           preferences.getLengthUnit().getMaximumLength());
 
-      if (selectedPiece.isDeformable()) {
+      if (selectedPiece.isDeformable()
+          && !selectedPiece.isHorizontallyRotated()) {
         // Update piece new dimension
         setPieceOfFurnitureSize(this.resizedPiece,
             this.resizedPiece.getWidth(), this.resizedPiece.getDepth(), newHeight);

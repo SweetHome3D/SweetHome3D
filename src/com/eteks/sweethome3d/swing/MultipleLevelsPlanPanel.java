@@ -677,6 +677,13 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   }
 
   /**
+   * Returns <code>true</code> if this component is able to compute the size of horizontally rotated furniture.
+   */
+  public boolean isFurnitureSizeInPlanSupported() {
+    return this.planComponent.isFurnitureSizeInPlanSupported();
+  }
+  
+  /**
    * Returns the component used as an horizontal ruler for the plan displayed by this component.
    */
   public View getHorizontalRuler() {
