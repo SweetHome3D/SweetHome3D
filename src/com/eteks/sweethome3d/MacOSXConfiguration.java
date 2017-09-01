@@ -110,17 +110,19 @@ class MacOSXConfiguration {
     final JMenuBar defaultMenuBar = defaultHomeView.getJMenuBar();
     
     JFrame frame = null;
-    try {
-      if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
-        // Application#setDefaultMenuBar does nothing under Java 7 < 1.7.0_60
+    if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) { 
+      try {
+        if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
+          // Application#setDefaultMenuBar does nothing under Java 7 < 1.7.0_60
+          frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
+        } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
+          macosxApplication.setDefaultMenuBar(defaultMenuBar);
+          addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
+        }
+      } catch (NoSuchMethodError ex) {
+        // Create default frame if setDefaultMenuBar isn't available
         frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
-      } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
-        macosxApplication.setDefaultMenuBar(defaultMenuBar);
-        addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
       }
-    } catch (NoSuchMethodError ex) {
-      // Create default frame if setDefaultMenuBar isn't available
-      frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
     } 
 
     final JFrame defaultFrame = frame;
@@ -323,12 +325,14 @@ class MacOSXConfiguration {
             homeFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent ev) {
-                  List<Home> homes = homeApplication.getHomes();
-                  defaultFrame.setVisible(false);
-                  defaultFrame.setVisible(true);
-                  if (homes.size() > 0) {
-                    homeApplication.getHomeFrame(homes.get(0)).toFront();
+                  if (defaultFrame != null) {
+                    List<Home> homes = homeApplication.getHomes();
                     defaultFrame.setVisible(false);
+                    defaultFrame.setVisible(true);
+                    if (homes.size() > 0) {
+                      homeApplication.getHomeFrame(homes.get(0)).toFront();
+                      defaultFrame.setVisible(false);
+                    }
                   }
                 }
               });

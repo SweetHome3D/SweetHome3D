@@ -445,7 +445,9 @@ public class SweetHome3D extends HomeApplication {
             homeFrameControllers.remove(ev.getItem());
 
             // If application has no more home
-            if (getHomes().isEmpty() && !OperatingSystem.isMacOSX()) {
+            if (getHomes().isEmpty() 
+                && (!OperatingSystem.isMacOSX()
+                    || !Boolean.getBoolean("apple.laf.useScreenMenuBar"))) {
               // If SingleInstanceService is available, remove the listener that was added on it
               if (singleInstanceService != null) {
                 singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
@@ -514,8 +516,10 @@ public class SweetHome3D extends HomeApplication {
       String applicationName = resource.getString("SweetHome3D.applicationName");
       System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
       System.setProperty("apple.awt.application.name", applicationName);
-      // Use Mac OS X screen menu bar for frames menu bar
-      System.setProperty("apple.laf.useScreenMenuBar", "true");
+      if (System.getProperty("apple.laf.useScreenMenuBar") == null) {
+        // Use Mac OS X screen menu bar for frames menu bar
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
+      }
       // Force the use of Quartz under Mac OS X for better Java 2D rendering performance
       System.setProperty("apple.awt.graphics.UseQuartz", "true");
       if (System.getProperty("com.eteks.sweethome3d.dragAndDropWithoutTransferHandler") == null

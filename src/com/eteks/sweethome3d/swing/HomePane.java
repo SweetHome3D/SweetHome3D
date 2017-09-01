@@ -1000,11 +1000,14 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.PAGE_SETUP, fileMenu);
     addActionToMenu(ActionType.PRINT_PREVIEW, fileMenu);
     addActionToMenu(ActionType.PRINT, fileMenu);
-    // Don't add PRINT_TO_PDF, PREFERENCES and EXIT menu items under Mac OS X, 
+    // Don't add PRINT_TO_PDF, PREFERENCES and EXIT menu items under Mac OS X when screen menu bar is used, 
     // because PREFERENCES and EXIT items are displayed in application menu
     // and PRINT_TO_PDF is available in standard Mac OS X Print dialog
     if (!OperatingSystem.isMacOSX()) {
       addActionToMenu(ActionType.PRINT_TO_PDF, fileMenu);
+    }
+    if (!OperatingSystem.isMacOSX()
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {      
       fileMenu.addSeparator();
       addActionToMenu(ActionType.PREFERENCES, fileMenu);
     }
@@ -1132,7 +1135,8 @@ public class HomePane extends JRootPane implements HomeView {
     // Create Help menu
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
     addActionToMenu(ActionType.HELP, helpMenu);      
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSX()
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       addActionToMenu(ActionType.ABOUT, helpMenu);      
     }
     
@@ -1174,7 +1178,8 @@ public class HomePane extends JRootPane implements HomeView {
     }
 
     // Add EXIT action at end to ensure it's the last item of file menu
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSX()
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       fileMenu.addSeparator();
       addActionToMenu(ActionType.EXIT, fileMenu);
     }
