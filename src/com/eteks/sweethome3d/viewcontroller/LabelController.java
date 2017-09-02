@@ -373,11 +373,23 @@ public class LabelController implements Controller {
       boolean allLevelsSelection = this.home.isAllLevelsSelection();
       Label label = new Label(text, x, y);
       String fontName = getFontName();
-      if (fontName != null) {
-        label.setStyle(this.preferences.getDefaultTextStyle(Label.class).deriveStyle(fontName));
-      } else if (getPitch() != null) {
-        label.setStyle(this.preferences.getDefaultTextStyle(Label.class));
+      Float fontSize = getFontSize();
+      if (fontName != null 
+          || fontSize != null
+          || getPitch() != null) {
+        TextStyle style = this.preferences.getDefaultTextStyle(Label.class);
+        if (fontName != null) {
+          style = style.deriveStyle(fontName);
+        } 
+        if (fontSize != null) {
+          style = style.deriveStyle(fontSize);
+        }
+        label.setStyle(style);
       }
+      if (color != null) {
+        label.setColor(color);
+      }
+
       label.setColor(getColor());
       label.setPitch(getPitch());
       label.setElevation(getElevation());

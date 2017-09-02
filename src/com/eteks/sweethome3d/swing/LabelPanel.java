@@ -188,7 +188,7 @@ public class LabelPanel extends JPanel implements DialogView {
     }
     this.colorButton.setColorDialogTitle(preferences
         .getLocalizedString(LabelPanel.class, "colorDialog.title"));
-    this.colorButton.setColor(controller.getColor());
+    this.colorButton.setColor(controller.getColor() != null ? controller.getColor() : getForeground().getRGB());
     this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           controller.setColor(colorButton.getColor());
