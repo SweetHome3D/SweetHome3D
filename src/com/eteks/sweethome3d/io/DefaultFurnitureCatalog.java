@@ -260,7 +260,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
      */
     LIGHT_SOURCE_COLOR("lightSourceColor"),
     /**
-     * The key for the color(s) of light sources in a light (optional).
+     * The key for the diameter(s) of light sources in a light (optional).
      */
     LIGHT_SOURCE_DIAMETER("lightSourceDiameter"),
     /**
