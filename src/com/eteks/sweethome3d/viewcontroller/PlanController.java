@@ -7200,14 +7200,15 @@ public class PlanController extends FurnitureController implements Controller {
           || getResizedPolylineAt(x, y) != null
           || getResizedRoomAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
+      } else if (getPitchRotatedPieceOfFurnitureAt(x, y) != null
+          || getRollRotatedPieceOfFurnitureAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getModifiedLightPowerAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.POWER);
       } else if (getOffsetDimensionLineAt(x, y) != null
           || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.HEIGHT);
-      } else if (getRotatedPieceOfFurnitureAt(x, y) != null
-          || getPitchRotatedPieceOfFurnitureAt(x, y) != null
-          || getRollRotatedPieceOfFurnitureAt(x, y) != null) {
+      } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
       } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ELEVATION);
@@ -7265,14 +7266,14 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getDimensionLineOffsetState());
         } else if (getResizedPolylineAt(x, y) != null) {
           setState(getPolylineResizeState());
-        } else if (getModifiedLightPowerAt(x, y) != null) {
-          setState(getLightPowerModificationState());
-        } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
-          setState(getPieceOfFurnitureHeightState());
         } else if (getPitchRotatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurniturePitchRotationState());
         } else if (getRollRotatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureRollRotationState());
+        } else if (getModifiedLightPowerAt(x, y) != null) {
+          setState(getLightPowerModificationState());
+        } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureHeightState());
         } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureRotationState());
         } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {

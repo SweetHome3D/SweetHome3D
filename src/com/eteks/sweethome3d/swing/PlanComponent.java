@@ -4224,11 +4224,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setTransform(previousTransform);
       }
       
-      // Draw light, pitch, roll or height indicator at bottom left point of the piece
+      // Draw pitch, roll, light or height indicator at bottom left point of the piece
       g2D.translate(piecePoints [3][0], piecePoints [3][1]);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(pieceAngle);
-      if (piece instanceof HomeLight) {
+      if (piece.getPitch() != 0
+          && isFurnitureSizeInPlanSupported()) {
+        Shape pitchIndicator = getIndicator(piece, IndicatorType.ROTATE_PITCH);
+        if (pitchIndicator != null) {
+          g2D.draw(pitchIndicator);
+        }
+      } else if (piece.getRoll() != 0
+                && isFurnitureSizeInPlanSupported()) {
+        Shape rollIndicator = getIndicator(piece, IndicatorType.ROTATE_ROLL);
+        if (rollIndicator != null) {
+          g2D.draw(rollIndicator);
+        }
+      } else if (piece instanceof HomeLight) {
         Shape powerIndicator = getIndicator(piece, IndicatorType.CHANGE_POWER);
         if (powerIndicator != null) {
           g2D.draw(LIGHT_POWER_POINT_INDICATOR);
@@ -4236,18 +4248,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           g2D.translate(-7.5f, 7.5f);
           g2D.rotate(-pieceAngle);
           g2D.draw(powerIndicator);
-        }
-      } else if (piece.getPitch() != 0
-                 && isFurnitureSizeInPlanSupported()) {
-        Shape pitchIndicator = getIndicator(piece, IndicatorType.ROTATE_PITCH);
-        if (pitchIndicator != null) {
-          g2D.draw(pitchIndicator);
-        }
-      } else if (piece.getRoll() != 0
-                 && isFurnitureSizeInPlanSupported()) {
-        Shape rollIndicator = getIndicator(piece, IndicatorType.ROTATE_ROLL);
-        if (rollIndicator != null) {
-          g2D.draw(rollIndicator);
         }
       } else if (piece.isResizable()
                  && !piece.isHorizontallyRotated()) {
