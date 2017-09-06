@@ -611,11 +611,22 @@ public class SwingTools {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       // If a JFrame or JDialog is showing, dispose splash window
-                      for (Window window : Window.getWindows()) {
-                        if ((window instanceof JFrame || window instanceof JDialog)
-                            && window.isShowing()) {
-                          splashScreenWindow.dispose();
-                          break;
+                      try {
+                        for (Window window : (Window[])Window.class.getMethod("getWindows").invoke(null)) {
+                          if ((window instanceof JFrame || window instanceof JDialog)
+                              && window.isShowing()) {
+                            splashScreenWindow.dispose();
+                            break;
+                          }
+                        }
+                      } catch (Exception ex) {
+                        // Even if splash screen will be disappear quicker,
+                        // use Frame#getFrames under Java 1.5 where Window#getWindows doesn't exist
+                        for (Frame frame : Frame.getFrames()) {
+                          if (frame.isShowing()) {
+                            splashScreenWindow.dispose();
+                            break;
+                          }
                         }
                       }
                     }
