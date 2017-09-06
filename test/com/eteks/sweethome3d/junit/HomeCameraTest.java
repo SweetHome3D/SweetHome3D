@@ -389,7 +389,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         (JSpinner)TestUtilities.getField(observerCameraPanel, "fieldOfViewSpinner");
     JSpinner elevationSpinner = 
         (JSpinner)TestUtilities.getField(observerCameraPanel, "elevationSpinner");
-    assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(observerCamera.getFieldOfView())), 
+    assertEquals("Wrong field of view", (float)Math.toDegrees(observerCamera.getFieldOfView()), 
         fieldOfViewSpinner.getValue());
     assertEquals("Wrong elevation", (float)Math.round(observerCamera.getZ() * 100) / 100, 
         elevationSpinner.getValue());
