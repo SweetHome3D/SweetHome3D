@@ -620,7 +620,7 @@ public class SwingTools {
                           }
                         }
                       } catch (Exception ex) {
-                        // Even if splash screen will be disappear quicker,
+                        // Even if splash screen will disappear quicker,
                         // use Frame#getFrames under Java 1.5 where Window#getWindows doesn't exist
                         for (Frame frame : Frame.getFrames()) {
                           if (frame.isShowing()) {
