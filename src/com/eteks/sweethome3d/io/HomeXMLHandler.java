@@ -884,7 +884,7 @@ public class HomeXMLHandler extends DefaultHandler {
   }
 
   /**
-   * Returns a new {@link Print} instance initialized from the given <code>attributes</code>.
+   * Returns a new {@link HomePrint} instance initialized from the given <code>attributes</code>.
    */
   protected HomePrint createPrint(Map<String, String> attributes) throws SAXException {
     HomePrint.PaperOrientation paperOrientation = HomePrint.PaperOrientation.PORTRAIT;

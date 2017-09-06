@@ -615,9 +615,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Creates a new plan that displays <code>home</code>.
    * @param home the home to display
    * @param preferences user preferences to retrieve used unit, grid visibility...
-   * @param object3dFactory a factory able to create 3D objects from <code>home</code> furniture.
-   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
-   *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
    * @param controller the optional controller used to manage home items modification
    */
   public PlanComponent(Home home, 
@@ -630,6 +627,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Creates a new plan that displays <code>home</code>.
    * @param home the home to display
    * @param preferences user preferences to retrieve used unit, grid visibility...
+   * @param object3dFactory a factory able to create 3D objects from <code>home</code> furniture.
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
    * @param controller the optional controller used to manage home items modification
    */
   public PlanComponent(Home home, 
