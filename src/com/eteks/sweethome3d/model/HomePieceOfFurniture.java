@@ -182,7 +182,9 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           } else if (piece2ModelSize == null) {
             return 1; 
           } else {
-            return Long.compare(piece1ModelSize, piece2ModelSize);
+            return piece1ModelSize < piece2ModelSize 
+                ? -1 
+                : (piece1ModelSize == piece2ModelSize ? 0 : 1);
           }
         }
       });
