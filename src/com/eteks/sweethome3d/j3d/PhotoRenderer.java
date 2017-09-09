@@ -193,8 +193,8 @@ public class PhotoRenderer {
             Node node = (Node)object3dFactory.createObject3D(home, piece, true);
             if (node != null) {
               this.homeItemsNames.put(piece, exportNode(node, false, silk));
-              if (item instanceof HomeLight) {
-                lights.add((HomeLight)item);
+              if (piece instanceof HomeLight) {
+                lights.add((HomeLight)piece);
               }
             }
           }
