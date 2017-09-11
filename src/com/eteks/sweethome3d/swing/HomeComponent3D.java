@@ -1021,7 +1021,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Updates <code>view</code> from <code>camera</code> field of view.
    */
   private void updateView(View view, Camera camera) {
-    updateView(view, camera, this.component3D.getWidth(), this.component3D.getHeight());
+    if (this.component3D != null) {
+      updateView(view, camera, this.component3D.getWidth(), this.component3D.getHeight());
+    } else {
+      updateView(view, camera, 0, 0);
+    }
   }
   
   private void updateView(View view, Camera camera, int width, int height) {
