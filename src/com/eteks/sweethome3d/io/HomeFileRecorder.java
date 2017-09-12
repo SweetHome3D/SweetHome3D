@@ -152,6 +152,8 @@ public class HomeFileRecorder implements HomeRecorder {
    *            used only to replace damaged content that might be found in read home files.
    * @param preferXmlEntry If <code>true</code>, an additional <code>Home.xml</code> entry 
    *            will be saved in files and read in priority from saved files.
+   * @param acceptUrl If <code>true</code>, this recorder will try to read a home from a URL
+   *            if the path passed as parameter to {@link #readHome(String) readHome} isn't a file.
    */
   public HomeFileRecorder(int             compressionLevel, 
                           boolean         includeOnlyTemporaryContent,
