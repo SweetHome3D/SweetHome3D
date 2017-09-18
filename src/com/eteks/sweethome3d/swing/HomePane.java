@@ -899,12 +899,17 @@ public class HomePane extends JRootPane implements HomeView {
           // This listener manages accelerator keys that may require the use of shift key 
           // depending on keyboard layout (like + - or ?) 
           ActionMap actionMap = getActionMap();
-          Action [] specialKeyActions = {actionMap.get(ActionType.PREFERENCES), 
-                                         actionMap.get(ActionType.ZOOM_IN), 
-                                         actionMap.get(ActionType.ZOOM_OUT), 
-                                         actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
-                                         actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
-                                         actionMap.get(ActionType.HELP)};
+          List<Action> specialKeyActions = Arrays.asList(actionMap.get(ActionType.ZOOM_IN), 
+              actionMap.get(ActionType.ZOOM_OUT), 
+              actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
+              actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
+              actionMap.get(ActionType.HELP));
+          if (!Boolean.getBoolean("apple.laf.useScreenMenuBar")
+              && Boolean.getBoolean("sweethome3d.bundle")) {
+            // Manage preferences accelerator only for bundle applications without screen menu bar
+            specialKeyActions = new ArrayList<Action>(specialKeyActions);
+            specialKeyActions.add(actionMap.get(ActionType.PREFERENCES)); 
+          }
           int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
           for (Action specialKeyAction : specialKeyActions) {
             KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
