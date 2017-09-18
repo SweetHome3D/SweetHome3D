@@ -562,4 +562,12 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
   public boolean isDoorOrWindow() {
     return true;
   }
+  
+  /**
+   * Returns always <code>false</code>.
+   */
+  @Override
+  public boolean isHorizontallyRotatable() {
+    return false;
+  }
 }
