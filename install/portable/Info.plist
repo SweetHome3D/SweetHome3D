@@ -28,6 +28,8 @@
 	<string>true</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.6</string>
 
 	<key>UTExportedTypeDeclarations</key>
 	<array>
@@ -217,11 +219,11 @@
 		</dict>
 	</array>
 
-	<!-- JavaApplicationStub arguments for Java 5 & 6 -->
+	<!-- JavaApplicationStub arguments for Java 6 -->
 	<key>Java</key>
 	<dict>
 		<key>JVMVersion</key>
-		<string>1.5*</string>
+		<string>1.6*</string>
 		<key>MainClass</key>
 		<string>com.eteks.sweethome3d.SweetHome3D</string>
 		<key>VMOptions</key>
@@ -240,7 +242,11 @@
 		<key>Properties</key>
 		<dict>
 			<key>java.ext.dirs</key>
-			<string>$APP_PACKAGE/../lib/ext:$APP_PACKAGE/../lib/ext/macosx:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home/lib/ext</string>
+			<string>$APP_PACKAGE/../lib/ext:$APP_PACKAGE/../lib/ext/java3d-1.6:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/lib/ext:/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home/lib/ext</string>
+			<key>java.library.path</key>
+			<string>$APP_PACKAGE/../lib/ext/java3d-1.6/macosx</string>
+			<key>jogamp.gluegen.UseTempJarCache</key>
+			<string>false</string>
 			<key>apple.awt.graphics.UseQuartz</key>
 			<string>true</string>
 			<key>sweethome3d.bundle</key>

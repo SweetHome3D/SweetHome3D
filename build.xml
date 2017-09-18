@@ -803,7 +803,7 @@
   </target>
 
   <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. -->
-  <target name="macosxBundle" depends="application,furniture,textures,examples,help"
+  <target name="macosxBundle" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}"/>
@@ -839,12 +839,15 @@
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext" >
       <fileset dir="lib">
         <include name="jmf.jar"/>
-        <include name="j3dcore.jar"/>
-        <include name="j3dutils.jar"/>
-        <include name="vecmath.jar"/>
       </fileset>
-      <fileset dir="lib/macosx">
-        <include name="*.jar"/>
+      <fileset dir="lib/java3d-1.6">
+      	<include name="*.jar"/>
+        <exclude name="jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build/java3d-1.6">
+        <include name="jogl-java3d.jar"/>
+      </fileset>
+      <fileset dir="lib/java3d-1.6/macosx">
         <include name="*.jnilib"/>
       </fileset>
     </copy>
@@ -1214,13 +1217,10 @@
     <copy todir="install/portable/SweetHome3D-${version}-portable/lib/ext">
       <fileset dir="lib">
         <include name="jmf.jar"/>
-        <include name="j3dcore.jar"/>
-        <include name="j3dutils.jar"/>
-        <include name="vecmath.jar"/>
-        <include name="macosx/*"/>
         <include name="java3d-1.6/*.jar"/>
         <include name="java3d-1.6/windows/**"/>
         <include name="java3d-1.6/linux/**"/>
+        <include name="java3d-1.6/macosx/**"/>
         <exclude name="java3d-1.6/jogl-all.jar"/>
       </fileset>
       <fileset dir="build">
