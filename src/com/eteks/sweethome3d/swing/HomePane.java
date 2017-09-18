@@ -899,7 +899,8 @@ public class HomePane extends JRootPane implements HomeView {
           // This listener manages accelerator keys that may require the use of shift key 
           // depending on keyboard layout (like + - or ?) 
           ActionMap actionMap = getActionMap();
-          Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
+          Action [] specialKeyActions = {actionMap.get(ActionType.PREFERENCES), 
+                                         actionMap.get(ActionType.ZOOM_IN), 
                                          actionMap.get(ActionType.ZOOM_OUT), 
                                          actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
                                          actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
