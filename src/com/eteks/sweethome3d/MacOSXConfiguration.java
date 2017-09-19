@@ -98,6 +98,14 @@ class MacOSXConfiguration {
   }
   
   /**
+   * Returns <code>true</code> if the screen menu bar is supported.
+   */
+  public static boolean isScreenMenuBarSupported() {
+    // By default, About menu item is available 
+    return Application.getApplication().isAboutMenuItemPresent();
+  }
+  
+  /**
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
   public static void bindToApplicationMenu(final SweetHome3D homeApplication) {

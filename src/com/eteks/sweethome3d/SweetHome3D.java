@@ -521,7 +521,7 @@ public class SweetHome3D extends HomeApplication {
         // except for bundles under macOS 10.13
         System.setProperty("apple.laf.useScreenMenuBar", 
             String.valueOf(OperatingSystem.compareVersions(System.getProperty("os.version"), "10.13") < 0
-                || !Boolean.getBoolean("sweethome3d.bundle")));
+                || MacOSXConfiguration.isScreenMenuBarSupported()));
       }
       // Force the use of Quartz under Mac OS X for better Java 2D rendering performance
       System.setProperty("apple.awt.graphics.UseQuartz", "true");
