@@ -5846,36 +5846,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return new float [] {piece.getWidth(), piece.getDepth(), piece.getHeight()};
     } else if (!isFurnitureSizeInPlanSupported()) {
       return null;
-    }
-    
-    Transform3D horizontalRotation = new Transform3D();
-    if (piece.getPitch() != 0) {
-      horizontalRotation.rotX(-piece.getPitch());
     } else {
-      horizontalRotation.rotZ(-piece.getRoll());
+      return PieceOfFurnitureModelIcon.computePieceOfFurnitureSizeInPlan(piece, this.object3dFactory);
     }
-    // Compute bounds of a piece centered at the origin and rotated around the target horizontal angle
-    piece = piece.clone();
-    piece.setX(0);
-    piece.setY(0);
-    piece.setElevation(-piece.getHeight() / 2);
-    piece.setLevel(null);
-    piece.setAngle(0);
-    piece.setRoll(0);
-    piece.setPitch(0);
-    piece.setWidthInPlan(piece.getWidth());
-    piece.setDepthInPlan(piece.getDepth());
-    piece.setHeightInPlan(piece.getHeight());
-    BoundingBox bounds = ModelManager.getInstance().getBounds(
-        (Object3DBranch)object3dFactory.createObject3D(null, piece, true), horizontalRotation);
-    Point3d lower = new Point3d();
-    bounds.getLower(lower);
-    Point3d upper = new Point3d();
-    bounds.getUpper(upper);
-    return new float [] {
-        Math.max(0.001f, (float)(upper.x - lower.x)), // width in plan
-        Math.max(0.001f, (float)(upper.z - lower.z)), // depth in plan
-        Math.max(0.001f, (float)(upper.y - lower.y))}; // height in plan
   }
 
   /**
@@ -6578,5 +6551,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             0, image.getWidth());
       }
     }
+
+    /**
+     * Returns the size of the given piece computed from its vertices.
+     */
+    private static float [] computePieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece,
+                                                              Object3DFactory object3dFactory) {
+      Transform3D horizontalRotation = new Transform3D();
+      if (piece.getPitch() != 0) {
+        horizontalRotation.rotX(-piece.getPitch());
+      } else {
+        horizontalRotation.rotZ(-piece.getRoll());
+      }
+      // Compute bounds of a piece centered at the origin and rotated around the target horizontal angle
+      piece = piece.clone();
+      piece.setX(0);
+      piece.setY(0);
+      piece.setElevation(-piece.getHeight() / 2);
+      piece.setLevel(null);
+      piece.setAngle(0);
+      piece.setRoll(0);
+      piece.setPitch(0);
+      piece.setWidthInPlan(piece.getWidth());
+      piece.setDepthInPlan(piece.getDepth());
+      piece.setHeightInPlan(piece.getHeight());
+      BoundingBox bounds = ModelManager.getInstance().getBounds(
+          (Object3DBranch)object3dFactory.createObject3D(null, piece, true), horizontalRotation);
+      Point3d lower = new Point3d();
+      bounds.getLower(lower);
+      Point3d upper = new Point3d();
+      bounds.getUpper(upper);
+      return new float [] {
+          Math.max(0.001f, (float)(upper.x - lower.x)), // width in plan
+          Math.max(0.001f, (float)(upper.z - lower.z)), // depth in plan
+          Math.max(0.001f, (float)(upper.y - lower.y))}; // height in plan
+    } 
   }
 }
