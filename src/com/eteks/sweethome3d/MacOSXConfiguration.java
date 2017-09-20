@@ -101,8 +101,21 @@ class MacOSXConfiguration {
    * Returns <code>true</code> if the screen menu bar is supported.
    */
   public static boolean isScreenMenuBarSupported() {
-    // By default, About menu item is available 
-    return Application.getApplication().isAboutMenuItemPresent();
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+      try {
+        // Call Desktop.isSupported(Desktop.Action.APP_ABOUT)
+        Class<?> desktopClass = Class.forName("java.awt.Desktop");
+        Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+        Class<?> desktopActionEnum = Class.forName("java.awt.Desktop$Action");
+        return (Boolean)desktopClass.getMethod("isSupported", desktopActionEnum).invoke(
+            desktopInstance, desktopActionEnum.getField("APP_ABOUT").get(null));
+      } catch (Throwable ex) {
+        return false;
+      }
+    } else {
+      // By default, About menu item is available 
+      return Application.getApplication().isAboutMenuItemPresent();
+    }
   }
   
   /**
@@ -119,153 +132,106 @@ class MacOSXConfiguration {
     
     JFrame frame = null;
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) { 
-      try {
-        if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
-          // Application#setDefaultMenuBar does nothing under Java 7 < 1.7.0_60
-          frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
-        } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
-          macosxApplication.setDefaultMenuBar(defaultMenuBar);
-          addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
-        }
-      } catch (NoSuchMethodError ex) {
-        // Create default frame if setDefaultMenuBar isn't available
+      if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
+        // Application#setDefaultMenuBar does nothing under Java 7 < 1.7.0_60
         frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
+      } else if (UIManager.getLookAndFeel().getClass().getName().equals(UIManager.getSystemLookAndFeelClassName())) {
+        try {
+          if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+            // Call Desktop.setDefaultMenuBar(defaultMenuBar)
+            Class desktopClass = Class.forName("java.awt.Desktop");
+            Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+            desktopClass.getMethod("setDefaultMenuBar", JMenuBar.class).invoke(desktopInstance, defaultMenuBar);
+          } else {
+            macosxApplication.setDefaultMenuBar(defaultMenuBar);
+          }
+          addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
+        } catch (Throwable ex) {
+          // Create default frame if setDefaultMenuBar isn't available
+          frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
+        }
       }
     } 
 
     final JFrame defaultFrame = frame;
-    // Add a listener to Mac OS X application that will call
-    // controller methods of the active frame
-    macosxApplication.addApplicationListener(new ApplicationAdapter() {      
-      @Override
-      public void handleQuit(ApplicationEvent ev) { 
-        Home modifiedHome = null;
-        int modifiedHomesCount = 0;
-        for (Home home : homeApplication.getHomes()) {
-          if (home.isModified()) {
-            modifiedHome = home;
-            modifiedHomesCount++;
+    try {
+      // Add a listener to Mac OS X application that will call
+      // controller methods of the active frame
+      macosxApplication.addApplicationListener(new ApplicationAdapter() {      
+          @Override
+          public void handleQuit(ApplicationEvent ev) { 
+            MacOSXConfiguration.handleQuit(homeApplication, defaultController, defaultFrame);
           }
-        }
-        
-        if (modifiedHomesCount == 1) {
-          // If only one home is modified, close it and exit if it was successfully closed
-          homeApplication.getHomeFrame(modifiedHome).toFront();
-          homeApplication.getHomeFrameController(modifiedHome).getHomeController().close(
-              new Runnable() {
-                public void run() {
-                  for (Home home : homeApplication.getHomes()) {
-                    if (home.isModified()) {
-                      return;
-                    }
-                  }
-                  System.exit(0);
-                }
-              });
-        } else {
-          handleAction(new Runnable() {
-              public void run() {
-                getHomeController().exit();
-              }
-            });
-          if (homeApplication.getHomes().isEmpty()) {
-            System.exit(0);
+          
+          @Override
+          public void handleAbout(ApplicationEvent ev) {
+            MacOSXConfiguration.handleAbout(homeApplication, defaultController, defaultFrame);
+            ev.setHandled(true);
           }
-        }
-      }
-      
-      @Override
-      public void handleAbout(ApplicationEvent ev) {
-        handleAction(new Runnable() {
-            public void run() {
-              getHomeController().about();
+    
+          @Override
+          public void handlePreferences(ApplicationEvent ev) {
+            MacOSXConfiguration.handlePreferences(homeApplication, defaultController, defaultFrame);
+          }
+          
+          @Override
+          public void handleOpenFile(ApplicationEvent ev) {
+            // handleOpenFile is called when user opens a document
+            // associated with a Java Web Start application
+            // Just call main with -open file arguments as JNLP specifies 
+            MacOSXConfiguration.handleOpenFile(homeApplication, ev.getFilename());
+          }
+          
+          @Override
+          public void handleReOpenApplication(ApplicationEvent ev) {
+            // handleReOpenApplication is called when user launches 
+            // the application when it's already open
+            MacOSXConfiguration.handleReOpenApplication(homeApplication);
+          }
+        });
+      macosxApplication.setEnabledAboutMenu(true);
+      macosxApplication.setEnabledPreferencesMenu(true);
+    } catch (NoSuchMethodError er) {
+      // Probably running under Java 9 where previous methods were removed
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+        // Use the new handlers of Java 9 once compiling with Java 9 library is enabled
+        /*
+        java.awt.Desktop.getDesktop().setQuitHandler(new java.awt.desktop.QuitHandler() {
+            public void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer) {
+              MacOSXConfiguration.handleQuit(homeApplication, defaultController, defaultFrame);
             }
           });
-        ev.setHandled(true);
-      }
-
-      @Override
-      public void handlePreferences(ApplicationEvent ev) {
-        handleAction(new Runnable() {
-            public void run() {
-              getHomeController().editPreferences();
+        java.awt.Desktop.getDesktop().setAboutHandler(new java.awt.desktop.AboutHandler() {
+            public void handleAbout(java.awt.desktop.AboutEvent ev) {
+              MacOSXConfiguration.handleAbout(homeApplication, defaultController, defaultFrame);
             }
           });
-      }
-      
-      private HomeController getHomeController() {
-        if (defaultFrame != null) {
-          Frame activeFrame = getActiveFrame();
-          if (activeFrame != null) {
-            for (Home home : homeApplication.getHomes()) {
-              if (homeApplication.getHomeFrame(home) == activeFrame) {
-                return homeApplication.getHomeFrameController(home).getHomeController();
+        java.awt.Desktop.getDesktop().setPreferencesHandler(new java.awt.desktop.PreferencesHandler() {
+            public void handlePreferences(java.awt.desktop.PreferencesEvent ev) {
+              MacOSXConfiguration.handlePreferences(homeApplication, defaultController, defaultFrame);
+            }
+          });
+        java.awt.Desktop.getDesktop().setOpenFileHandler(new java.awt.desktop.OpenFilesHandler() {
+            public void openFiles(java.awt.desktop.OpenFilesEvent ev) {
+              for (java.io.File file : ev.getFiles()) {
+                MacOSXConfiguration.handleOpenFile(homeApplication, file.getAbsolutePath());
               }
             }
-          }
-        }
-        return defaultController;
-      }
-      
-      private Frame getActiveFrame() {
-        Frame activeFrame = null;
-        for (Frame frame : Frame.getFrames()) {
-          if (frame != defaultFrame && frame.isActive()) {
-            activeFrame = frame;
-            break;
-          }
-        }
-        return activeFrame;
-      }
-
-      private void handleAction(Runnable runnable) {
-        Frame activeFrame = getActiveFrame();        
-        if (defaultFrame != null && activeFrame == null) {
-          // Move default frame to center to display dialogs at center
-          defaultFrame.setLocationRelativeTo(null);
-          defaultFrame.toFront();
-          defaultFrame.setAlwaysOnTop(true);
-        }
-        
-        // Disable About and Preferences menu items 
-        macosxApplication.setEnabledAboutMenu(false);
-        macosxApplication.setEnabledPreferencesMenu(false);
-        
-        runnable.run();
-
-        // Enable About and Preferences menu items again
-        macosxApplication.setEnabledAboutMenu(true);
-        macosxApplication.setEnabledPreferencesMenu(true);
-
-        // Activate previous frame again
-        if (activeFrame != null) {
-          activeFrame.toFront();
-        }
-        if (defaultFrame != null && activeFrame == null) {
-          defaultFrame.setAlwaysOnTop(false);
-          // Move default frame out of user view
-          defaultFrame.toBack();
-          defaultFrame.setLocation(-10, 0);
+          });
+        */
+        try {
+          // Call Desktop.getDesktop().setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS)
+          // to prevent default call to System#exit 
+          Class<?> desktopClass = Class.forName("java.awt.Desktop");
+          Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+          Class<?> quitStrategyEnum = Class.forName("java.awt.desktop.QuitStrategy");
+          desktopClass.getMethod("setQuitStrategy", quitStrategyEnum).invoke(
+              desktopInstance, quitStrategyEnum.getField("CLOSE_ALL_WINDOWS").get(null));
+        } catch (Exception ex) {
+          ex.printStackTrace();
         }
       }
-
-      @Override
-      public void handleOpenFile(ApplicationEvent ev) {
-        // handleOpenFile is called when user opens a document
-        // associated with a Java Web Start application
-        // Just call main with -open file arguments as JNLP specifies 
-        homeApplication.start(new String [] {"-open", ev.getFilename()});
-      }
-      
-      @Override
-      public void handleReOpenApplication(ApplicationEvent ev) {
-        // handleReOpenApplication is called when user launches 
-        // the application when it's already open
-        homeApplication.start(new String [0]);
-      }
-    });
-    macosxApplication.setEnabledAboutMenu(true);
-    macosxApplication.setEnabledPreferencesMenu(true);
+    }
     
     homeApplication.addHomesListener(new CollectionListener<Home>() {
       public void collectionChanged(CollectionEvent<Home> ev) {
@@ -371,6 +337,161 @@ class MacOSXConfiguration {
       } catch (IOException ex) {
       }
     }
+  }
+
+  /**
+   * Handles quit action.
+   */
+  private static void handleQuit(final SweetHome3D homeApplication,
+                                 final HomeController defaultController,
+                                 final JFrame defaultFrame) {
+    Home modifiedHome = null;
+    int modifiedHomesCount = 0;
+    for (Home home : homeApplication.getHomes()) {
+      if (home.isModified()) {
+        modifiedHome = home;
+        modifiedHomesCount++;
+      }
+    }
+    
+    if (modifiedHomesCount == 1) {
+      // If only one home is modified, close it and exit if it was successfully closed
+      homeApplication.getHomeFrame(modifiedHome).toFront();
+      homeApplication.getHomeFrameController(modifiedHome).getHomeController().close(
+          new Runnable() {
+            public void run() {
+              for (Home home : homeApplication.getHomes()) {
+                if (home.isModified()) {
+                  return;
+                }
+              }
+              System.exit(0);
+            }
+          });
+    } else {
+      handleApplicationMenuAction(new Runnable() {
+          public void run() {
+            getActiveHomeController(homeApplication, defaultController, defaultFrame).exit();
+          }
+        }, defaultFrame);
+      if (homeApplication.getHomes().isEmpty()) {
+        System.exit(0);
+      }
+    }
+  }
+  
+  /**
+   * Handles how about pane is displayed.
+   */
+  protected static void handleAbout(final SweetHome3D homeApplication,
+                                    final HomeController defaultController,
+                                    final JFrame defaultFrame) {
+      handleApplicationMenuAction(new Runnable() {
+          public void run() {
+            getActiveHomeController(homeApplication, defaultController, defaultFrame).about();
+          }
+        }, defaultFrame); 
+  }
+
+  /**
+   * Handles how preferences pane is displayed.
+   */
+  private static void handlePreferences(final SweetHome3D homeApplication, 
+                                        final HomeController defaultController, 
+                                        final JFrame defaultFrame) {
+    handleApplicationMenuAction(new Runnable() {
+        public void run() {
+          getActiveHomeController(homeApplication, defaultController, defaultFrame).editPreferences();
+        }
+      }, defaultFrame);
+  }
+
+  /**
+   * Handles the opening of a document.
+   */
+  private static void handleOpenFile(final SweetHome3D homeApplication, String fileName) {
+    homeApplication.start(new String [] {"-open", fileName});
+  }
+  
+  /**
+   * Handles application when it's reopened.
+   */
+  private static void handleReOpenApplication(SweetHome3D homeApplication) {
+    homeApplication.start(new String [0]);
+  }
+
+  /**
+   * Handles actions launched from the application menu.
+   */
+  private static void handleApplicationMenuAction(Runnable runnable, JFrame defaultFrame) {
+    final Application macosxApplication = Application.getApplication();
+    Frame activeFrame = getActiveFrame(defaultFrame);        
+    if (defaultFrame != null && activeFrame == null) {
+      // Move default frame to center to display dialogs at center
+      defaultFrame.setLocationRelativeTo(null);
+      defaultFrame.toFront();
+      defaultFrame.setAlwaysOnTop(true);
+    }
+    
+    try {
+      // Disable About and Preferences menu items if possible 
+      macosxApplication.setEnabledAboutMenu(false);
+      macosxApplication.setEnabledPreferencesMenu(false);
+    } catch (NoSuchMethodError ex) {
+    }
+    
+    runnable.run();
+
+    try {
+      // Enable About and Preferences menu items again
+      macosxApplication.setEnabledAboutMenu(true);
+      macosxApplication.setEnabledPreferencesMenu(true);
+    } catch (NoSuchMethodError ex) {
+    }
+
+    // Activate previous frame again
+    if (activeFrame != null) {
+      activeFrame.toFront();
+    }
+    if (defaultFrame != null && activeFrame == null) {
+      defaultFrame.setAlwaysOnTop(false);
+      // Move default frame out of user view
+      defaultFrame.toBack();
+      defaultFrame.setLocation(-10, 0);
+    }
+  }
+
+  /**
+   * Returns the home controller that manages the active frame.
+   */
+  private static HomeController getActiveHomeController(SweetHome3D homeApplication,
+                                                        HomeController defaultController,
+                                                        JFrame defaultFrame) {
+    if (defaultFrame != null) {
+      Frame activeFrame = getActiveFrame(defaultFrame);
+      if (activeFrame != null) {
+        for (Home home : homeApplication.getHomes()) {
+          if (homeApplication.getHomeFrame(home) == activeFrame) {
+            return homeApplication.getHomeFrameController(home).getHomeController();
+          }
+        }
+      }
+    }
+    return defaultController;
+  }
+  
+  /**
+   * Returns the active frame.
+   */
+  private static Frame getActiveFrame(JFrame defaultFrame) {
+    Frame activeFrame = null;
+    for (Frame frame : Frame.getFrames()) {
+      if (frame != defaultFrame && frame.isActive()) {
+        activeFrame = frame;
+        break;
+      }
+    }
+    return activeFrame;
   }
 
   /**
