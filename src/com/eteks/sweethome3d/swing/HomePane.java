@@ -1013,7 +1013,8 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToMenu(ActionType.PRINT_TO_PDF, fileMenu);
     }
     if (!OperatingSystem.isMacOSX()
-        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {      
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
+        || OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {      
       fileMenu.addSeparator();
       addActionToMenu(ActionType.PREFERENCES, fileMenu);
     }
@@ -1142,7 +1143,8 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
     addActionToMenu(ActionType.HELP, helpMenu);      
     if (!OperatingSystem.isMacOSX()
-        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
+        || OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
       addActionToMenu(ActionType.ABOUT, helpMenu);      
     }
     
@@ -3926,9 +3928,15 @@ public class HomePane extends JRootPane implements HomeView {
     }
     float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
-    String java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
-    if (java3dVersion != null) {
-      java3dVersion = java3dVersion.split("\\s") [0];
+    String java3dVersion;
+    try {
+      java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
+      if (java3dVersion != null) {
+        java3dVersion = java3dVersion.split("\\s") [0];
+      }
+    } catch (Throwable ex) {
+      // No Java 3D libraries
+      java3dVersion = "<i>not available</i>";
     }
     String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
     JComponent messagePane = createEditorPane(message);
