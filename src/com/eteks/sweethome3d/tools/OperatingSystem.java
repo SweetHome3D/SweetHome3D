@@ -171,8 +171,8 @@ public class OperatingSystem {
    * and a positive number if <code>version1</code> &gt; <code>version2</code>.
    * Version strings are first split into parts, each subpart ending at each punctuation, space 
    * or when a character of a different type is encountered (letter vs digit). Then each numeric 
-   * or string subparts are compared to each other, strings being considered greater than numbers
-   * except for pre release strings (i.e. alpha, beta, rc). Examples:<pre>
+   * or string subparts are compared to each other, strings being considered greater than null numbers
+   * and pre release strings (i.e. alpha, beta, rc). Examples:<pre>
    * "" < "1"
    * "0" < "1.0"
    * "1.2beta" < "1.2"
@@ -186,7 +186,9 @@ public class OperatingSystem {
    * "1.2rc" < "1.2"
    * "1.2rc" < "1.2a"
    * "1.2" < "1.2a"
+   * "1.2.0" < "1.2a"
    * "1.2a" < "1.2b"
+   * "1.2a" < "1.2.1"
    * "1.7.0_11" < "1.7.0_12"
    * "1.7.0_11rc1" < "1.7.0_11rc2"
    * "1.7.0_11rc" < "1.7.0_11"
@@ -218,11 +220,11 @@ public class OperatingSystem {
           return comparison;
         }
       } else if (version1Part instanceof String) {
-        // An integer subpart is smaller than a string (except for pre release strings)
-        return 1;
+        // An integer subpart < 0 is smaller than a string (except for pre release strings)
+        return ((BigInteger)version2Part).signum() > 0 ? -1 : 1;
       } else {
-        // A string subpart is greater than an integer 
-        return -1;
+        // A string subpart is greater than an integer >= 0
+        return ((BigInteger)version1Part).signum() > 0 ? 1 : -1;
       }
     }
     return 0;

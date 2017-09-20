@@ -45,7 +45,13 @@ public class OperatingSystemTest extends TestCase {
     assertVersionIsSmaller("1.2rc", "1.2");
     assertVersionIsSmaller("1.2rc", "1.2a");
     assertVersionIsSmaller("1.2", "1.2a");
+    assertVersionIsSmaller("1.2.0", "1.2a");
+    assertVersionIsSmaller("1.2.0.0", "1.2a");
+    assertVersionIsSmaller("1.2a", "1.2.1");
+    assertVersionIsSmaller("1.2a", "1.2.1.0");
     assertVersionIsSmaller("1.2a", "1.2b");
+    assertVersionIsSmaller("1.7", "1.7.0_12");
+    assertVersionIsSmaller("1.7.0", "1.7.0_12");
     assertVersionIsSmaller("1.7.0_11", "1.7.0_12");
     assertVersionIsSmaller("1.7.0_11rc1", "1.7.0_11rc2");
     assertVersionIsSmaller("1.7.0_11rc", "1.7.0_11");
