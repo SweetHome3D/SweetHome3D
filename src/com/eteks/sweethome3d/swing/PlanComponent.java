@@ -3038,7 +3038,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (paintMode == PaintMode.PRINT
         && g2D.getPaint() instanceof TexturePaint
         && OperatingSystem.isMacOSX()
-        && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+        && OperatingSystem.isJavaVersionBetween("1.7", "1.8.0_152")) {
       Shape clip = g2D.getClip();
       g2D.setClip(shape);
       TexturePaint paint = (TexturePaint)g2D.getPaint();
