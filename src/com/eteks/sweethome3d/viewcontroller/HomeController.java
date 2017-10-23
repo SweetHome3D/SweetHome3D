@@ -1566,11 +1566,14 @@ public class HomeController implements Controller {
       for (HomePieceOfFurniture piece : furniture) {
         if (piece.isResizable()) {
           piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
+          piece.setWidthInPlan(piece.getWidth());
           // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
           if (!(piece instanceof HomeDoorOrWindow) || !keepDoorsAndWindowDepth) {
             piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+            piece.setDepthInPlan(piece.getDepth());
           }
           piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
+          piece.setHeightInPlan(piece.getHeight());
         }
         piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
       }
