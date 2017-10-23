@@ -23,6 +23,7 @@ package com.eteks.sweethome3d.junit;
 import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -33,9 +34,13 @@ import javax.swing.undo.UndoableEditSupport;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -213,6 +218,90 @@ public class PlanControllerTest extends TestCase {
     assertHomeContains(home, wall1, wall2, wall3, wall4);
     // Check the second and the third wall are selected
     assertSelectionContains(home, wall2, wall3);
+  }
+  
+  /**
+   * Tests how the children of a group and a subgroup are resized.
+   */
+  public void testFurnitureGroupResizing() {
+    Home home = new Home();
+    Locale.setDefault(Locale.ENGLISH);
+    UserPreferences preferences = new DefaultUserPreferences();
+    ViewFactory viewFactory = new SwingViewFactory();
+    UndoableEditSupport undoSupport = new UndoableEditSupport();
+    UndoManager undoManager = new UndoManager();
+    undoSupport.addUndoableEditListener(undoManager);
+    PlanController planController = 
+        new PlanController(home, preferences, viewFactory, null, undoSupport);
+    
+    CatalogPieceOfFurniture box = null;
+    for (FurnitureCategory category : preferences.getFurnitureCatalog().getCategories()) {
+      if ("Miscellaneous".equals(category.getName())) {
+        for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+          if ("Box".equals(piece.getName())) {
+            box = piece;
+            break;
+          }
+        }
+      }
+    }
+    assertNotNull("Couldn't find box", box);
+    // 1. Add two boxes to plan
+    HomePieceOfFurniture box1 = new HomePieceOfFurniture(box);
+    home.addPieceOfFurniture(box1);
+    box1.setX(50);
+    box1.setY(50);
+    HomePieceOfFurniture box2 = new HomePieceOfFurniture(box);
+    home.addPieceOfFurniture(box2);
+    box2.setX(200);    
+    box2.setY(50);
+    box2.setWidth(200);
+    // Check plan controller updates box size in plan 
+    assertEquals("Box width in plan incorrect", 200f, box2.getWidthInPlan());
+    
+    // 2. Group them
+    home.setSelectedItems(Arrays.asList(box1, box2));
+    planController.groupSelectedFurniture();
+    List<HomePieceOfFurniture> furniture = home.getFurniture();
+    assertEquals("Wrong count of pieces", 1, furniture.size());
+    HomePieceOfFurniture group1 = furniture.get(0);
+    assertTrue("Group not created", group1 instanceof HomeFurnitureGroup);
+    assertEquals("Wrong X", 150f, group1.getX());
+    
+    // 3. Group the subgroup with an other box
+    HomePieceOfFurniture box3 = new HomePieceOfFurniture(box);
+    home.addPieceOfFurniture(box3);
+    box3.setX(150);
+    box3.setWidth(300);
+    box3.setY(250);
+    home.setSelectedItems(Arrays.asList(group1, box3));
+    planController.groupSelectedFurniture();
+    furniture = home.getFurniture();
+    HomePieceOfFurniture mainGroup = furniture.get(0);
+    assertTrue("Group not created", mainGroup instanceof HomeFurnitureGroup);
+    assertEquals("Wrong X", 150f, mainGroup.getX());
+    assertEquals("Wrong Y", 150f, mainGroup.getY());
+    
+    // 4. Resize group with mouse
+    planController.moveMouse(300, 300);
+    planController.pressMouse(300, 300, 1, false, false);
+    planController.moveMouse(600, 600);
+    planController.releaseMouse(600, 600);
+    assertEquals("Wrong X", 300f, mainGroup.getX());
+    assertEquals("Wrong Y", 300f, mainGroup.getY());
+    assertEquals("Wrong width in plan", 600f, group1.getWidthInPlan());
+    assertEquals("Wrong depth in plan", 200f, group1.getDepthInPlan());
+    assertEquals("Wrong width", 400f, box2.getWidth());
+    assertEquals("Wrong width in plan", 400f, box2.getWidthInPlan());
+    assertEquals("Wrong depth in plan", 200f, box2.getDepthInPlan());
+
+    // 5. Resize group directly
+    mainGroup.setWidth(150);
+    assertEquals("Wrong width in plan", 150f, mainGroup.getWidthInPlan());
+    assertEquals("Wrong width", 150f, group1.getWidth());
+    assertEquals("Wrong width in plan", 150f, group1.getWidthInPlan());
+    assertEquals("Wrong width", 100f, box2.getWidth());
+    assertEquals("Wrong width in plan", 100f, box2.getWidthInPlan());
   }
 
   /**
