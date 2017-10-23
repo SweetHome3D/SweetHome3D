@@ -6532,7 +6532,7 @@ public class PlanController extends FurnitureController implements Controller {
         piece.setDepthInPlan(scale * piece.getDepthInPlan());
         piece.setHeightInPlan(scale * piece.getHeightInPlan());
         if (piece instanceof HomeFurnitureGroup) {
-          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
             childPiece.setWidthInPlan(scale * childPiece.getWidthInPlan());
             childPiece.setDepthInPlan(scale * childPiece.getDepthInPlan());
             childPiece.setHeightInPlan(scale * childPiece.getHeightInPlan());
@@ -6549,7 +6549,7 @@ public class PlanController extends FurnitureController implements Controller {
         piece.setHeight(height);
         piece.setHeightInPlan(heightInPlan);
         if (piece instanceof HomeFurnitureGroup) {
-          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+          for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
             childPiece.setWidthInPlan(childPiece.getWidth());
             childPiece.setDepthInPlan(childPiece.getDepth());
             childPiece.setHeightInPlan(childPiece.getHeight());
