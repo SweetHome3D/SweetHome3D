@@ -11177,9 +11177,13 @@ public class PlanController extends FurnitureController implements Controller {
                                  intersectionPoints [i + 1][1] - epsilon / 2, epsilon, epsilon)) {
                           outPoint2 = (i + 2) % 4;
                           outPoint1 = (i + 3) % 4;
-                        } else {
+                        } else if (roomPath.intersects(intersectionPoints [(i + 3) % 4][0] - epsilon / 2, 
+                            intersectionPoints [(i + 3) % 4][1] - epsilon / 2, epsilon, epsilon)) {
                           outPoint1 = (i + 1) % 4;
                           outPoint2 = (i + 2) % 4;
+                        } else {
+                          // May happen if door intersects room path at only one point when door is larger that room side
+                          break;
                         }
                         if (Point2D.distanceSq(intersectionPoints [inPoint1][0], intersectionPoints [inPoint1][1], 
                                 doorMiddlePoints [0], doorMiddlePoints [1]) 
