@@ -574,7 +574,7 @@
     <!-- Copy 32 bit JRE to install/windows/build/jre/x86... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x86">
-      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_144">
+      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_152">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -640,7 +640,7 @@
     <!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x64">
-      <fileset dir="C:\Program Files\Java\jre1.8.0_144">
+      <fileset dir="C:\Program Files\Java\jre1.8.0_152">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -718,20 +718,20 @@
     </exec>
 
     <!-- Pack largest jars -->
-    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_152\bin\pack200.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.pack.gz"/>
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_152\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_144\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_152\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.jar"/>
@@ -924,7 +924,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 32 bit JRE installed in jre1.8.0_144 -->
+       CAUTION : Requires a Linux 32 bit JRE installed in jre1.8.0_152 -->
   <target name="linux32Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
@@ -980,7 +980,7 @@
     <!-- Copy JRE to install/linux/x86/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x86/SweetHome3D-${version}/jre8">
-      <fileset dir="jre1.8.0_144">
+      <fileset dir="jre1.8.0_152">
         <include name="**"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="lib/ext/sunec.jar"/>
@@ -1043,7 +1043,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x64.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 64 bit JRE installed in jre1.8.0_144 -->
+       CAUTION : Requires a Linux 64 bit JRE installed in jre1.8.0_152 -->
   <target name="linux64Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x64.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
@@ -1099,7 +1099,7 @@
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x64/SweetHome3D-${version}/jre8">
-      <fileset dir="jre1.8.0_144/">
+      <fileset dir="jre1.8.0_152/">
         <include name="**"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="lib/ext/sunec.jar"/>
