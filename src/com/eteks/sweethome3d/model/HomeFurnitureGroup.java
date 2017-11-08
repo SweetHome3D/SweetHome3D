@@ -93,6 +93,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
                             String name) {
     super(furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture); 
+    this.resizable = true;
+    this.deformable = true;
+    this.texturable = true;
     
     boolean movable = true;
     boolean visible = false;
@@ -108,11 +111,11 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setNameStyle(null);
     setDescription(null);
     super.setMovable(movable);
+    super.setAngle(angle);
+    super.setModelMirrored(modelMirrored);
     setVisible(visible);
    
     updateLocationAndSize(furniture, angle, true);
-    super.setAngle(angle);
-    super.setModelMirrored(modelMirrored);
 
     addFurnitureListener();
   }
