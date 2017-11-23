@@ -22,10 +22,12 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -38,10 +40,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -50,6 +56,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -545,8 +553,9 @@ public class FileContentManager implements ContentManager {
    */
   public boolean isAcceptable(String contentPath, 
                               ContentType contentType) {
+    File file = new File(contentPath);
     for (FileFilter filter : getFileFilter(contentType)) {
-      if (filter.accept(new File(contentPath))) {
+      if (filter.accept(file)) {
         return true;
       }
     }
@@ -744,7 +753,78 @@ public class FileContentManager implements ContentManager {
       fileChooser = new DirectoryChooser(this.preferences);
     } else {
       fileChooser = new JFileChooser();
+      if (!save
+          && contentType == ContentType.IMAGE) {
+        // Add a preview component when the file chooser is used to select an image
+        final ScaledImageComponent previewLabel = new ScaledImageComponent();
+        final ExecutorService previewImageLoader = Executors.newSingleThreadExecutor();
+        final AtomicReference<File> selectedImageFile = new AtomicReference<File>();
+        fileChooser.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, 
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                final File file = (File)ev.getNewValue();
+                previewLabel.setImage(null);
+                if (file != null
+                    && !file.isDirectory()
+                    && isAcceptable(file.getPath(), ContentType.IMAGE)) {
+                  fileChooser.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                  selectedImageFile.set(file);
+                  previewImageLoader.execute(new Runnable() {
+                      public void run() {
+                        BufferedImage image = null;
+                        try {
+                          // Check the file is the selected image file  
+                          if (selectedImageFile.get() == file) {
+                            image = ImageIO.read(file);
+                          }
+                        } catch (IOException ex) {
+                          // Image couldn't be loaded
+                        } finally {
+                          final BufferedImage previewedImage = image;
+                          EventQueue.invokeLater(new Runnable() {
+                              public void run() {
+                                if (selectedImageFile.get() == file) {
+                                  previewLabel.setImage(previewedImage);
+                                  fileChooser.setCursor(Cursor.getDefaultCursor());
+                                }
+                              }
+                            });
+                        }
+                      }
+                    });
+                } else {
+                  selectedImageFile.set(null);
+                  fileChooser.setCursor(Cursor.getDefaultCursor());
+                }
+              }
+            });
+        fileChooser.addPropertyChangeListener(JFileChooser.DIRECTORY_CHANGED_PROPERTY, 
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                previewLabel.setImage(null);
+                selectedImageFile.set(null);
+                fileChooser.setCursor(Cursor.getDefaultCursor());
+              }
+            });
+        previewLabel.addAncestorListener(new AncestorListener() {
+            public void ancestorRemoved(AncestorEvent event) {
+              previewImageLoader.shutdownNow(); 
+            }
+            
+            public void ancestorAdded(AncestorEvent event) {
+            }
+  
+            public void ancestorMoved(AncestorEvent event) {
+            }
+          });
+        previewLabel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(0, OperatingSystem.isMacOSX() ? 0 : 5, 0, OperatingSystem.isMacOSX() ? 5 : 0), 
+            BorderFactory.createLineBorder(Color.GRAY)));
+        previewLabel.setPreferredSize(new Dimension(128 + 12, 128 + 2));   
+        fileChooser.setAccessory(previewLabel);
+      }
     }
+    
     if (dialogTitle == null) {
       dialogTitle = getFileDialogTitle(save);
     }
