@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.model;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * A door or a window of the catalog.
@@ -421,10 +422,69 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
                              float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
                              boolean resizable, boolean deformable, boolean texturable, 
                              BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
+    this(id, name, description, information, tags, creationDate, grade, 
+        icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
+        cutOutShape, wallThickness, wallDistance, wallCutOutOnBothSides, widthDepthDeformable, sashes,
+        modelRotation, backFaceShown, modelSize, creator, resizable, deformable, texturable, price, valueAddedTaxPercentage, currency, 
+        null);  
+  }
+         
+  /**
+   * Creates an unmodifiable catalog door or window of the default catalog.
+   * @param id    the id of the new door or window, or <code>null</code>
+   * @param name  the name of the new door or window
+   * @param description the description of the new door or window 
+   * @param information additional information associated to the new door or window
+   * @param tags tags associated to the new door or window
+   * @param creationDate creation date of the new door or window in milliseconds since the epoch 
+   * @param grade grade of the new door or window or <code>null</code>
+   * @param icon content of the icon of the new door or window
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new door or window
+   * @param width  the width in centimeters of the new door or window
+   * @param depth  the depth in centimeters of the new door or window
+   * @param height  the height in centimeters of the new door or window
+   * @param elevation  the elevation in centimeters of the new door or window
+   * @param dropOnTopElevation a percentage of the height at which should be placed 
+   *            an object dropped on the new piece
+   * @param movable if <code>true</code>, the new door or window is movable
+   * @param cutOutShape the shape used to cut out walls that intersect the new door or window
+   * @param wallThickness a value in percentage of the depth of the new door or window
+   * @param wallDistance a distance in percentage of the depth of the new door or window
+   * @param wallCutOutOnBothSides  if <code>true</code> the new door or window should cut out 
+   *            the both sides of the walls it intersects
+   * @param widthDepthDeformable if <code>false</code>, the width and depth of the new door or window may 
+   *            not be changed independently from each other
+   * @param sashes the sashes attached to the new door or window
+   * @param modelRotation the rotation 3 by 3 matrix applied to the door or window model
+   * @param backFaceShown <code>true</code> if back face should be shown instead of front faces
+   * @param modelSize size of the 3D model of the new light
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new door or window may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture.
+   * @param price the price of the new door or window, or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new door or window or <code>null</code>
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code> 
+   * @param properties additional properties associating a key to a value or <code>null</code>
+   * @since 5.7
+   */
+  public CatalogDoorOrWindow(String id, String name, String description, 
+                             String information, String [] tags, Long creationDate, Float grade, 
+                             Content icon, Content planIcon, Content model, 
+                             float width, float depth, float height, float elevation, float dropOnTopElevation, boolean movable, 
+                             String cutOutShape, float wallThickness, float wallDistance, 
+                             boolean wallCutOutOnBothSides, boolean widthDepthDeformable, Sash [] sashes,
+                             float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
+                             boolean resizable, boolean deformable, boolean texturable, 
+                             BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency,
+                             Map<String, String> properties) {
     super(id, name, description, information, tags, creationDate, grade, 
         icon, planIcon, model, width, depth, height, elevation, dropOnTopElevation, movable, 
         null, modelRotation, backFaceShown, modelSize, creator, resizable, deformable, texturable, false,
-        price, valueAddedTaxPercentage, currency);
+        price, valueAddedTaxPercentage, currency, properties);
     this.cutOutShape = cutOutShape;
     this.wallThickness = wallThickness;
     this.wallDistance = wallDistance;

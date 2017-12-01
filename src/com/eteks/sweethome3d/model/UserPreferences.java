@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -462,6 +463,33 @@ public abstract class UserPreferences {
       return localizedString;
     } catch (MissingResourceException ex) {
       throw new IllegalArgumentException("Unknown key " + resourceKey);
+    }
+  }
+
+  /**
+   * Returns the keys of the localized property strings of the given resource family.
+   * <code>resourceFamily</code> should match the absolute path of a .properties resource family,
+   * shouldn't start by a slash and may contain dots '.' or slash '/' as folder separators. 
+   * @since 5.7
+   */
+  public Iterator<String> getLocalizedStringKeys(String resourceFamily) {
+    try {      
+      final Enumeration<String> keys = getResourceBundle(resourceFamily).getKeys();
+      return new Iterator<String>() {
+          public boolean hasNext() {
+            return keys.hasMoreElements();
+          }
+  
+          public String next() {
+            return keys.nextElement();
+          }
+          
+          public void remove() {
+            throw new UnsupportedOperationException("Enumeration not modifiable");
+          }
+        };
+    } catch (IOException ex) {
+      return Collections.emptyIterator();
     }
   }
 

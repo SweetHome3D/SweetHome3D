@@ -22,6 +22,9 @@ package com.eteks.sweethome3d.model;
 import java.math.BigDecimal;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -31,45 +34,46 @@ import java.util.WeakHashMap;
  * @author Emmanuel Puybaret
  */
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture, CatalogItem {
-  private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-  private static final byte [][]  EMPTY_CRITERIA     = new byte [0][];
+  private static final float [] []  INDENTITY_ROTATION = new float [] [] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+  private static final byte [] []   EMPTY_CRITERIA     = new byte [0] [];
 
-  private final String            id;
-  private final String            name;
-  private final String            description;
-  private final String            information;
-  private final String []         tags;
-  private final Long              creationDate;
-  private final Float             grade;
-  private final Content           icon;
-  private final Content           planIcon;
-  private final Content           model;
-  private final float             width;
-  private final float             depth;
-  private final float             height;
-  private final boolean           proportional;
-  private final float             elevation;
-  private final float             dropOnTopElevation;
-  private final boolean           movable;
-  private final boolean           doorOrWindow;
-  private final String            staircaseCutOutShape;
-  private final float [][]        modelRotation;
-  private final Long              modelSize;
-  private final String            creator;
-  private final boolean           backFaceShown;
-  private final Integer           color;
-  private final float             iconYaw;
-  private final boolean           modifiable;
-  private final boolean           resizable;
-  private final boolean           deformable;
-  private final boolean           texturable;
-  private final boolean           horizontallyRotatable;
-  private final BigDecimal        price;
-  private final BigDecimal        valueAddedTaxPercentage;
-  private final String            currency;
+  private final String              id;
+  private final String              name;
+  private final String              description;
+  private final String              information;
+  private final String []           tags;
+  private final Long                creationDate;
+  private final Float               grade;
+  private final Content             icon;
+  private final Content             planIcon;
+  private final Content             model;
+  private final float               width;
+  private final float               depth;
+  private final float               height;
+  private final boolean             proportional;
+  private final float               elevation;
+  private final float               dropOnTopElevation;
+  private final boolean             movable;
+  private final boolean             doorOrWindow;
+  private final String              staircaseCutOutShape;
+  private final float [] []         modelRotation;
+  private final Long                modelSize;
+  private final String              creator;
+  private final boolean             backFaceShown;
+  private final Integer             color;
+  private final float               iconYaw;
+  private final boolean             modifiable;
+  private final boolean             resizable;
+  private final boolean             deformable;
+  private final boolean             texturable;
+  private final boolean             horizontallyRotatable;
+  private final BigDecimal          price;
+  private final BigDecimal          valueAddedTaxPercentage;
+  private final String              currency;
+  private final Map<String, String> properties;
 
-  private FurnitureCategory       category;
-  private byte []                 filterCollationKey;
+  private FurnitureCategory         category;
+  private byte []                   filterCollationKey;
 
   private static final Collator               COMPARATOR;
   private static final Map<String, byte [][]> recentFilters;
@@ -306,7 +310,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
         height, elevation, 1f, movable, false, staircaseCutOutShape, null, modelRotation, false, null, creator, resizable, deformable,
-        texturable, true, price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+        texturable, true, price, valueAddedTaxPercentage, currency, null, (float)Math.PI / 8, true, false);
   }
   
   /**
@@ -451,11 +455,64 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean resizable, boolean deformable, boolean texturable, boolean horizontallyRotatable,
                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency) {
     this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
+        height, elevation, dropOnTopElevation, movable, staircaseCutOutShape, modelRotation, backFaceShown, modelSize,  
+        creator, resizable, deformable, texturable, true, price, valueAddedTaxPercentage, currency, null);
+  }
+
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param information additional information associated to the new piece
+   * @param tags tags associated to the new piece
+   * @param creationDate creation date of the new piece in milliseconds since the epoch 
+   * @param grade grade of the piece of furniture or <code>null</code>
+   * @param icon content of the icon of the new piece
+   * @param planIcon content of the icon of the new piece displayed in plan
+   * @param model content of the 3D model of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param dropOnTopElevation  a percentage of the height at which should be placed 
+   *            an object dropped on the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param staircaseCutOutShape the shape used to cut out upper levels when they intersect 
+   *            with the piece like a staircase
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param backFaceShown <code>true</code> if back face should be shown instead of front faces
+   * @param modelSize size of the 3D model of the new piece
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param deformable if <code>true</code>, the width, depth and height of the new piece may 
+   *            change independently from each other
+   * @param texturable if <code>false</code> this piece should always keep the same color or texture
+   * @param horizontallyRotatable if <code>false</code> this piece 
+   *            should not rotate around an horizontal axis
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @param currency the price currency, noted with ISO 4217 code, or <code>null</code>
+   * @param properties additional properties associating a key to a value or <code>null</code>
+   * @since 5.5 
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, 
+                                 String information, String [] tags, Long creationDate, Float grade, 
+                                 Content icon, Content planIcon, Content model, 
+                                 float width, float depth, float height, 
+                                 float elevation, float dropOnTopElevation, 
+                                 boolean movable, String staircaseCutOutShape, 
+                                 float [][] modelRotation, boolean backFaceShown, Long modelSize, String creator, 
+                                 boolean resizable, boolean deformable, boolean texturable, boolean horizontallyRotatable,
+                                 BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency,
+                                 Map<String, String> properties) {
+    this(id, name, description, information, tags, creationDate, grade, icon, planIcon, model, width, depth, 
         height, elevation, dropOnTopElevation, movable, false, staircaseCutOutShape, null, modelRotation, backFaceShown, 
         modelSize, creator, resizable, deformable, texturable, horizontallyRotatable, 
-        price, valueAddedTaxPercentage, currency, (float)Math.PI / 8, true, false);
+        price, valueAddedTaxPercentage, currency, properties, (float)Math.PI / 8, true, false);
   }
-  
+
   /**
    * Creates a modifiable catalog piece of furniture with all its values.
    * @param name  the name of the new piece
@@ -566,7 +623,8 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  Integer color, float [][] modelRotation, boolean backFaceShown, Long modelSize, 
                                  String creator, float iconYaw, boolean proportional) {
     this(null, name, null, null, new String [0], System.currentTimeMillis(), null, icon, null, model, width, depth, height, elevation, 1f,
-        movable, false, staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, true, true, true, true, null, null, null, iconYaw, proportional, true);
+        movable, false, staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, true, true, true, true, null, null, null, 
+        null, iconYaw, proportional, true);
   }
   
   private CatalogPieceOfFurniture(String id, String name, String description, 
@@ -578,7 +636,8 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                   Integer color, float [][] modelRotation, boolean backFaceShown, 
                                   Long modelSize, String creator, boolean resizable, 
                                   boolean deformable, boolean texturable, boolean horizontallyRotatable,
-                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency, 
+                                  BigDecimal price, BigDecimal valueAddedTaxPercentage, String currency,
+                                  Map<String, String> properties, 
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;
     this.name = name;
@@ -604,6 +663,11 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.price = price;
     this.valueAddedTaxPercentage = valueAddedTaxPercentage;
     this.currency = currency;
+    this.properties = properties == null || properties.size() == 0
+        ? Collections.<String, String>emptyMap()
+        : (properties.size() == 1
+            ? Collections.singletonMap(properties.keySet().iterator().next(), properties.values().iterator().next())
+            : new HashMap<String, String>(properties));
     if (modelRotation == null) {
       this.modelRotation = INDENTITY_ROTATION;
     } else {
@@ -886,6 +950,22 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public String getCurrency() {
     return this.currency;
+  }
+  
+  /**
+   * Returns the value of an additional property <code>name</code> of this piece.
+   * @return the value of the property or <code>null</code> if it doesn't exist. 
+   */
+  public String getProperty(String name) {
+    return this.properties.get(name);
+  }
+  
+  /**
+   * Returns the names of the additional properties of this piece.
+   * @return a collection of all the names of the properties 
+   */
+  public Collection<String> getPropertyNames() {
+    return this.properties.keySet();
   }
 
   /**
