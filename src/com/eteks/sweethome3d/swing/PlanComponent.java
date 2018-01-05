@@ -693,6 +693,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName()))
                      && (((HomePieceOfFurniture)ev.getSource()).isHorizontallyRotated()
                          || ((HomePieceOfFurniture)ev.getSource()).getTexture() != null))) {
+            if (HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
+              sortedLevelFurniture = null;
+            } 
             if (controller == null || !controller.isModificationState()) {
               invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
             } else {

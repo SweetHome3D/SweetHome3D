@@ -1349,7 +1349,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * Returns <code>true</code> if the top of this piece is visible at the given level.
    */
   private boolean isTopAtLevel(Level level) {
-    float topElevation = this.level.getElevation() + this.elevation + this.height;
+    float topElevation = this.level.getElevation() + this.elevation + this.heightInPlan;
     if (this.staircaseCutOutShape != null) {
       // Consider the top of stair cases is at the given level if their elevation is higher or equal
       return topElevation >= level.getElevation();
