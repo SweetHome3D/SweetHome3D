@@ -72,7 +72,7 @@ public class OBJMaterial extends Material {
     if (this.illuminationModel != null) {
       return this.illuminationModel;
     } else {
-      throw new IllegalStateException("Optical density not set");
+      throw new IllegalStateException("Illumination model not set");
     }
   }
   
