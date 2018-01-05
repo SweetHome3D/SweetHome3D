@@ -29,6 +29,8 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
@@ -296,6 +298,18 @@ public class WizardPane extends JOptionPane implements DialogView {
             dialog.setResizable(controller.isResizable());
           }
         });
+    
+    if (OperatingSystem.isMacOSXLionOrSuperior()
+        && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      // Add a listener that brings dialog to front when it is shown
+      this.dialog.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentShown(ComponentEvent ev) {
+            dialog.toFront();
+            dialog.removeComponentListener(this);
+          }
+        });
+    }
     
     // Pack again because resize decorations may have changed dialog preferred size
     this.dialog.pack();
