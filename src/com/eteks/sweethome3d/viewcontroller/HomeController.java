@@ -2150,8 +2150,10 @@ public class HomeController implements Controller {
         replacingPiece.setX(piece.getX());
         replacingPiece.setY(piece.getY());
         home.addPieceOfFurniture(replacingPiece, i);
-        replacingPiece.setPitch(piece.getPitch());
-        replacingPiece.setRoll(piece.getRoll());
+        if (replacingPiece.isHorizontallyRotatable()) {
+          replacingPiece.setPitch(piece.getPitch());
+          replacingPiece.setRoll(piece.getRoll());
+        }
         replacingPiece.setLevel(piece.getLevel());
         home.deletePieceOfFurniture(piece);
       } else {      
