@@ -619,39 +619,44 @@ class MacOSXConfiguration {
             }
           }));
     
+    // Prepare window menu items and their action
+    // It would be nicer to dynamically add these menu items when the Window menu is selected 
+    // but a regression in Java 8u152 prevented to listen to dynamic menu items 
+    final int alwaysVisibleItemsCount = windowMenu.getMenuComponentCount();
+    windowMenu.addSeparator();
+    for (int i = 0; i < 100; i++) {
+      final int index = i;
+      JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(
+          new AbstractAction() {
+            public void actionPerformed(ActionEvent ev) {
+              homeApplication.getHomeFrame(homeApplication.getHomes().get(index)).toFront();
+            }
+          });
+      windowMenu.add(menuItem);
+    }
+
     windowMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
-          boolean firstMenuItem = true;
-          // Fill menu dynamically with a menu item for the frame of each application home
-          for (Home home : homeApplication.getHomes()) {
-            final JFrame applicationFrame = homeApplication.getHomeFrame(home);
-            JCheckBoxMenuItem windowMenuItem = new JCheckBoxMenuItem(
-                new AbstractAction(applicationFrame.getTitle()) {
-                    public void actionPerformed(ActionEvent ev) {
-                      applicationFrame.toFront();
-                    }
-                  });
-              
-            if (frame == applicationFrame) {
-              windowMenuItem.setSelected(true);
+          // Update menu dynamically with a visible menu item for the frame of each application home
+          List<Home> homes = homeApplication.getHomes();
+          // Show separator and menu items with home names 
+          windowMenu.getMenuComponent(alwaysVisibleItemsCount).setVisible(homes.size() > 0);
+          for (int i = alwaysVisibleItemsCount + 1, index = 0; i < windowMenu.getMenuComponentCount(); i++, index++) {
+            JCheckBoxMenuItem windowMenuItem =  (JCheckBoxMenuItem)windowMenu.getMenuComponent(i);
+            windowMenuItem.setVisible(index < homes.size());
+            if (windowMenuItem.isVisible()) {
+              Home home = homes.get(index);
+              final JFrame applicationFrame = homeApplication.getHomeFrame(home);
+              windowMenuItem.setText(applicationFrame.getTitle());
+              windowMenuItem.setSelected(frame == applicationFrame);
             }
-            if (firstMenuItem) {
-              windowMenu.addSeparator();
-              firstMenuItem = false;
-            }
-            windowMenu.add(windowMenuItem);
           }
         }
 
         public void menuDeselected(MenuEvent ev) {
-          // Remove dynamically filled part of menu
-          for (int i = windowMenu.getMenuComponentCount() - 1; i >= 4; i--) {
-            windowMenu.remove(i);
-          }
         }
 
         public void menuCanceled(MenuEvent ev) {
-          menuDeselected(ev);
         }
       });
   }
