@@ -145,7 +145,7 @@ class MacOSXConfiguration {
           } else {
             macosxApplication.setDefaultMenuBar(defaultMenuBar);
           }
-          addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, true);
+          addWindowMenu(null, defaultMenuBar, homeApplication, defaultHomeView, null);
         } catch (Throwable ex) {
           // Create default frame if setDefaultMenuBar isn't available
           frame = createDummyFrameWithDefaultMenuBar(homeApplication, defaultHomeView, defaultMenuBar);
@@ -292,7 +292,7 @@ class MacOSXConfiguration {
           }
           // Add Mac OS X Window menu on new homes
           MacOSXConfiguration.addWindowMenu(
-              homeFrame, homeFrame.getJMenuBar(), homeApplication, defaultHomeView, false);
+              homeFrame, homeFrame.getJMenuBar(), homeApplication, defaultHomeView, ev.getItem());
           
           if (OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
             // Help system to understand it should display the main menu of one of the remaining windows when a window is closed
@@ -545,7 +545,7 @@ class MacOSXConfiguration {
           frame.setVisible(true);
           frame.setJMenuBar(defaultMenuBar);
           frame.setContentPane(defaultHomeView);
-          addWindowMenu(frame, defaultMenuBar, homeApplication, defaultHomeView, true);
+          addWindowMenu(frame, defaultMenuBar, homeApplication, defaultHomeView, null);
         }
       });
     homeApplication.addHomesListener(new CollectionListener<Home>() {
@@ -575,21 +575,22 @@ class MacOSXConfiguration {
                                     final JMenuBar menuBar, 
                                     final SweetHome3D homeApplication,
                                     final HomePane defaultHomeView, 
-                                    boolean defaultFrame) {
+                                    final Home home) {
     UserPreferences preferences = homeApplication.getUserPreferences();
     final JMenu windowMenu = new JMenu(
         new ResourceAction(preferences, MacOSXConfiguration.class, "WINDOW_MENU", true));
+    final boolean enabledMenuItem = home != null;
     // Add Window menu before Help menu
     menuBar.add(windowMenu, menuBar.getComponentCount() - 1);
     windowMenu.add(new JMenuItem(
-        new ResourceAction(preferences, MacOSXConfiguration.class, "MINIMIZE", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "MINIMIZE", enabledMenuItem) {
             @Override
             public void actionPerformed(ActionEvent ev) {
               frame.setState(JFrame.ICONIFIED);
             }
           }));
     windowMenu.add(new JMenuItem(
-        new ResourceAction(preferences, MacOSXConfiguration.class, "ZOOM", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "ZOOM", enabledMenuItem) {
             @Override
             public void actionPerformed(ActionEvent ev) {
               if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0) {
@@ -601,7 +602,7 @@ class MacOSXConfiguration {
           }));
     windowMenu.addSeparator();
     windowMenu.add(new JMenuItem(
-        new ResourceAction(preferences, MacOSXConfiguration.class, "BRING_ALL_TO_FRONT", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "BRING_ALL_TO_FRONT", enabledMenuItem) {
             @Override
             public void actionPerformed(ActionEvent ev) {
               // Avoid blinking while bringing other windows to front
@@ -624,16 +625,25 @@ class MacOSXConfiguration {
     // but a regression in Java 8u152 prevented to listen to dynamic menu items 
     final int alwaysVisibleItemsCount = windowMenu.getMenuComponentCount();
     windowMenu.addSeparator();
-    for (int i = 0; i < 100; i++) {
-      final int index = i;
-      JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(
-          new AbstractAction() {
-            public void actionPerformed(ActionEvent ev) {
-              homeApplication.getHomeFrame(homeApplication.getHomes().get(index)).toFront();
-            }
-          });
-      windowMenu.add(menuItem);
+    List<Home> homes = homeApplication.getHomes();
+    for (int i = 0; i < homes.size(); i++) {
+      windowMenu.add(createWindowCheckBoxMenuItem(homeApplication, i));
     }
+    homeApplication.addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev) {
+          switch (ev.getType()) {
+            case ADD :
+              windowMenu.add(createWindowCheckBoxMenuItem(homeApplication, homeApplication.getHomes().size() - 1));
+              break;
+            case DELETE :
+              windowMenu.remove(windowMenu.getMenuComponentCount() - 1);
+              if (home == ev.getItem()) {
+                homeApplication.removeHomesListener(this);
+              }
+              break;
+          } 
+        }
+      });
 
     windowMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
@@ -643,13 +653,9 @@ class MacOSXConfiguration {
           windowMenu.getMenuComponent(alwaysVisibleItemsCount).setVisible(homes.size() > 0);
           for (int i = alwaysVisibleItemsCount + 1, index = 0; i < windowMenu.getMenuComponentCount(); i++, index++) {
             JCheckBoxMenuItem windowMenuItem =  (JCheckBoxMenuItem)windowMenu.getMenuComponent(i);
-            windowMenuItem.setVisible(index < homes.size());
-            if (windowMenuItem.isVisible()) {
-              Home home = homes.get(index);
-              final JFrame applicationFrame = homeApplication.getHomeFrame(home);
-              windowMenuItem.setText(applicationFrame.getTitle());
-              windowMenuItem.setSelected(frame == applicationFrame);
-            }
+            JFrame applicationFrame = homeApplication.getHomeFrame(homes.get(index));
+            windowMenuItem.setText(applicationFrame.getTitle());
+            windowMenuItem.setSelected(frame == applicationFrame);
           }
         }
 
@@ -657,6 +663,17 @@ class MacOSXConfiguration {
         }
 
         public void menuCanceled(MenuEvent ev) {
+        }
+      });
+  }
+
+  /**
+   * Returns a check box menu item which action will bring to front the home at the given <code>index</code>.
+   */
+  private static JCheckBoxMenuItem createWindowCheckBoxMenuItem(final SweetHome3D homeApplication, final int index) {
+    return new JCheckBoxMenuItem(new AbstractAction() {
+        public void actionPerformed(ActionEvent ev) {
+          homeApplication.getHomeFrame(homeApplication.getHomes().get(index)).toFront();
         }
       });
   }
