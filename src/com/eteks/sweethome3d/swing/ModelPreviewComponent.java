@@ -646,11 +646,9 @@ public class ModelPreviewComponent extends JComponent {
 
   /**
    * Sets the 3D model content displayed by this component. 
-   * The model is shown at its default orientation if <code>modelRotation</code> is <code>null</code> 
-   * and in a box 1 unit wide if <code>width</code> is equal to -1.
    */
-  protected void setModel(final Content model, final boolean backFaceShown, final float [][] modelRotation,
-                          final float width, final float depth, final float height) {
+  void setModel(final Content model, final boolean backFaceShown, final float [][] modelRotation,
+                final float width, final float depth, final float height) {
     final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
     this.previewedPiece = null;
