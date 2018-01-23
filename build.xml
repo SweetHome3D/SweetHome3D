@@ -339,8 +339,9 @@
     <delete dir="build"/>
 
     <input message="Enter Passphrase for keystore:" addproperty="password"/>
+    <input message="Enter URL of timestamp authority:" addproperty="timestampAuthorityURL" defaultvalue="http://time.certum.pl/"/>
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" alias="sweethome3d" storepass="${password}" storetype="pkcs12">
+    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" tsaurl="${timestampAuthorityURL}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -373,8 +374,9 @@
     <delete dir="build"/>
 
     <input message="Enter Passphrase for keystore:" addproperty="password"/>
+    <input message="Enter URL of timestamp authority:" addproperty="timestampAuthorityURL" defaultvalue="http://time.certum.pl/"/>
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
+    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" tsaurl="${timestampAuthorityURL}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -448,8 +450,9 @@
     <delete dir="build"/>
 
     <input message="Enter Passphrase for keystore:" addproperty="password"/>
+    <input message="Enter URL of timestamp authority:" addproperty="timestampAuthorityURL" defaultvalue="http://time.certum.pl/"/>
     <!-- Sign jar files in deploy/lib dir -->
-    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" storetype="pkcs12">
+    <signjar keystore="keys.p12" alias="SweetHome3D" storepass="${password}" tsaurl="${timestampAuthorityURL}" storetype="pkcs12">
       <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
@@ -749,13 +752,13 @@
     <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>
-  	
-  	<move todir="${basedir}\install">
+
+    <move todir="${basedir}\install">
       <fileset dir="${basedir}\install\windows">
-      	<include name="SweetHome3D*.exe"/>
+        <include name="SweetHome3D*.exe"/>
       </fileset>
-  	</move>	
-  	
+    </move>
+
     <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/windows/build"/>
@@ -771,6 +774,7 @@
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
     <input message="Enter signature password:" addproperty="password"/>
+    <input message="Enter URL of timestamp authority:" addproperty="timestampAuthorityURL" defaultvalue="http://time.certum.pl/"/>
     <!-- Sign Sweet Home 3D launchers -->
     <exec executable="C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe" failonerror="yes">
       <arg value="sign"/>
@@ -778,6 +782,8 @@
       <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
+      <arg value="/t"/>
+      <arg value="${timestampAuthorityURL}"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x86.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x64.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-x86.exe"/>
@@ -785,15 +791,15 @@
     </exec>
     <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
-      <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
+      <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} /t ${timestampAuthorityURL} $p"/>
       <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
     </exec>
 
-  	<move todir="${basedir}\install">
+    <move todir="${basedir}\install">
       <fileset dir="${basedir}\install\windows">
-      	<include name="SweetHome3D*.exe"/>
+        <include name="SweetHome3D*.exe"/>
       </fileset>
-  	</move>	
+    </move>
 
     <!-- Clean build directories -->
     <delete dir="build"/>
@@ -841,7 +847,7 @@
         <include name="jmf.jar"/>
       </fileset>
       <fileset dir="lib/java3d-1.6">
-      	<include name="*.jar"/>
+        <include name="*.jar"/>
         <exclude name="jogl-all.jar"/>
       </fileset>
       <fileset dir="build/java3d-1.6">
@@ -1095,7 +1101,7 @@
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="src/com/eteks/sweethome3d/swing/resources/aboutIcon.png"
         tofile="install/linux/x64/SweetHome3D-${version}/SweetHome3DIcon.png"/>
-  
+
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x64/SweetHome3D-${version}/jre8">
@@ -1135,7 +1141,7 @@
         <exclude name="lib/ext/nashorn.jar"/>
       </fileset>
     </copy>
-  
+
     <!-- Create SweetHome3D-version-linux-x64.tgz archive -->
     <tar destfile="install/SweetHome3D-${version}-linux-x64.tgz"
          compression="gzip">
@@ -1152,11 +1158,11 @@
         <include name="SweetHome3D-${version}/jre8/bin/java"/>
       </tarfileset>
     </tar>
-  
+
     <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/linux/x64"/>
-  
+
     <echo message="install/SweetHome3D-${version}-linux-x64.tgz ready for ftp"/>
   </target>
 
@@ -1173,8 +1179,8 @@
       <arg value="${basedir}\install\portable\SweetHome3D-windows-x64.xml"/>
     </exec>
 
-    <input message="Enter signature password:"
-           addproperty="password"/>
+    <input message="Enter signature password:" addproperty="password"/>
+    <input message="Enter URL of timestamp authority:" addproperty="timestampAuthorityURL" defaultvalue="http://time.certum.pl/"/>
     <!-- Sign launchers -->
     <exec executable="C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe" failonerror="yes">
       <arg value="sign"/>
@@ -1182,6 +1188,8 @@
       <arg value="${basedir}\keys.p12"/>
       <arg value="/p"/>
       <arg value="${password}"/>
+      <arg value="/t"/>
+      <arg value="${timestampAuthorityURL}"/>
       <arg value="${basedir}\install\portable\SweetHome3D-windows-x86.exe"/>
       <arg value="${basedir}\install\portable\SweetHome3D-windows-x64.exe"/>
     </exec>
