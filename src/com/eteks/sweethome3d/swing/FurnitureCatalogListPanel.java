@@ -35,6 +35,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -521,16 +523,24 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     }
     // Last row
-    JScrollPane listScrollPane = new JScrollPane(this.catalogFurnitureList);
+    final JScrollPane listScrollPane = SwingTools.createScrollPane(this.catalogFurnitureList);
     listScrollPane.getVerticalScrollBar().addAdjustmentListener(
         SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(listScrollPane));
+    if (OperatingSystem.isMacOSXHighSierraOrSuperior()
+        && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      // Add missing repaint calls on viewport when scroll bar is moved 
+      listScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+          public void adjustmentValueChanged(AdjustmentEvent ev) {
+            listScrollPane.getViewport().repaint();
+          }
+        });
+    }
     listScrollPane.setPreferredSize(new Dimension(250, 250));
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     add(listScrollPane, 
         new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    SwingTools.installFocusBorder(this.catalogFurnitureList);
     
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {

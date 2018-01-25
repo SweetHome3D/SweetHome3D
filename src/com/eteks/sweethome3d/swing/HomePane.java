@@ -49,6 +49,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -2637,6 +2639,16 @@ public class HomePane extends JRootPane implements HomeView {
             }
           });
         ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
+        
+        if (OperatingSystem.isMacOSXHighSierraOrSuperior()
+            && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+          // Add missing repaint calls on viewport when scroll bar is moved 
+          furnitureScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+              public void adjustmentValueChanged(AdjustmentEvent ev) {
+                viewport.repaint();
+              }
+            });
+        }
         furnitureView = furnitureScrollPane;
       }
     }
