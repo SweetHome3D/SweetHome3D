@@ -2,7 +2,7 @@
 ;
 ; Sweet Home 3D, Copyright (c) 2007-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
-; SweetHome3D-5.6-windows.exe setup program creator
+; SweetHome3D-5.7-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -13,9 +13,9 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVersion=5.6
+AppVersion=5.7
 AppCopyright=Copyright (c) 2007-2018 eTeks
-AppVerName=Sweet Home 3D version 5.6
+AppVerName=Sweet Home 3D version 5.7
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -24,12 +24,12 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=SweetHome3D-5.6-windows
+OutputBaseFilename=SweetHome3D-5.7-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=5.6.0.0
-VersionInfoTextVersion=5.6
+VersionInfoVersion=5.7.0.0
+VersionInfoTextVersion=5.7
 VersionInfoDescription=Sweet Home 3D Setup
 VersionInfoCopyright=Copyright (c) 2007-2018 eTeks
 VersionInfoCompany=eTeks
