@@ -867,10 +867,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           this.colorRadioButton.setSelected(true);
           break;
         case TEXTURED :
-          this.textureRadioButton.setSelected(true);
+            this.textureRadioButton.setSelected(true);
           break;
         case MODEL_MATERIALS :
-          this.modelMaterialsRadioButton.setSelected(true);
+          if (this.modelMaterialsRadioButton != null) {
+            this.modelMaterialsRadioButton.setSelected(true);
+          }
           break;
       } 
       updateShininessRadioButtons(controller);
