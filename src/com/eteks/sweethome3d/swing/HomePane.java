@@ -3940,15 +3940,16 @@ public class HomePane extends JRootPane implements HomeView {
     }
     float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
-    String java3dVersion;
+    String java3dVersion = "<i>not available</i>";
     try {
-      java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
-      if (java3dVersion != null) {
-        java3dVersion = java3dVersion.split("\\s") [0];
+      if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+        java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
+        if (java3dVersion != null) {
+          java3dVersion = java3dVersion.split("\\s") [0];
+        }
       }
     } catch (Throwable ex) {
       // No Java 3D libraries
-      java3dVersion = "<i>not available</i>";
     }
     String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
     JComponent messagePane = createEditorPane(message);
