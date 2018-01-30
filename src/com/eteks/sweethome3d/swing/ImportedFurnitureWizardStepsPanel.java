@@ -52,7 +52,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1188,16 +1187,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             final Vector3f  modelSize = ModelManager.getInstance().getSize(model);
             // Copy model to a temporary OBJ content with materials and textures
             final Content copiedContent = copyToTemporaryOBJContent(model, modelName);
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Load copied content using cache to make it accessible by preview components
-                  ModelManager.getInstance().loadModel(copiedContent, new ModelManager.ModelObserver() {
-                      public void modelUpdated(BranchGroup modelRoot) {
+            // Load copied content using cache to make it accessible by preview components without waiting in EDT
+            ModelManager.getInstance().loadModel(copiedContent, true, new ModelManager.ModelObserver() {
+                public void modelUpdated(BranchGroup modelRoot) {
+                  EventQueue.invokeLater(new Runnable() {
+                      public void run() {
                         setDefaultStateAndInitializeReadModel(copiedContent, modelName, defaultCategory, 
                             modelSize, preferences, contentManager);
                       }
+                    });
+                }
                       
-                      public void modelError(Exception ex) {
+                public void modelError(Exception ex) {
+                  EventQueue.invokeLater(new Runnable() {
+                      public void run() {
                         setDefaultStateAndShowModelChoiceError(modelName, preferences, !ignoreException);
                       }
                     });
@@ -1247,28 +1250,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                       + URLEncoder.encode(entryName, "UTF-8").replace("+", "%20").replace("%2F", "/"));
                   final Content entryContent = new TemporaryURLContent(entryUrl);
                   final AtomicReference<Vector3f> modelSize = new AtomicReference<Vector3f>();
-                  final CountDownLatch latch = new CountDownLatch(1);
-                  EventQueue.invokeAndWait(new Runnable() {
-                      public void run() {
-                        // Load content using cache to make it accessible by preview components
-                        ModelManager.getInstance().loadModel(entryContent, new ModelManager.ModelObserver() {
-                            public void modelUpdated(BranchGroup modelRoot) {
-                              try {
-                                modelSize.set(ModelManager.getInstance().getSize(modelRoot));
-                              } catch (IllegalArgumentException ex) {
-                                // Thrown by getSize if model is empty                              
-                              }
-                              latch.countDown();
-                            }
-                            
-                            public void modelError(Exception ex) {
-                              latch.countDown();
-                            }
-                          });
+                  // Load content using cache to make it accessible by preview components without waiting in EDT
+                  ModelManager.getInstance().loadModel(entryContent, true, new ModelManager.ModelObserver() {
+                      public void modelUpdated(BranchGroup modelRoot) {
+                        try {
+                          modelSize.set(ModelManager.getInstance().getSize(modelRoot));
+                        } catch (IllegalArgumentException ex) {
+                          // Thrown by getSize if model is empty                              
+                        }
+                      }
+                      
+                      public void modelError(Exception ex) {
                       }
                     });
                   
-                  latch.await();
                   if (modelSize.get() != null) {
                     // Check if all remaining entries in the ZIP file can be read, to be able to save edited home with them
                     do {
