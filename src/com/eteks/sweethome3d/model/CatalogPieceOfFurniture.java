@@ -1119,7 +1119,9 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   @Override
   public CatalogPieceOfFurniture clone() {
     try {
-      return (CatalogPieceOfFurniture)super.clone();
+      CatalogPieceOfFurniture clone = (CatalogPieceOfFurniture)super.clone();
+      clone.category = null;
+      return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable"); 
     }
