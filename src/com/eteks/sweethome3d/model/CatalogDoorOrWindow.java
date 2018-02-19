@@ -558,7 +558,9 @@ public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements Door
     this.wallDistance = wallDistance;
     this.wallCutOutOnBothSides = true;
     this.widthDepthDeformable = true;
-    this.sashes = sashes;
+    this.sashes = sashes.length > 0
+        ? sashes.clone()
+        : sashes;
     this.cutOutShape = null;
   }
 
