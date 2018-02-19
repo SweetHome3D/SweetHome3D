@@ -1114,6 +1114,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   /**
    * Returns a clone of this piece.
+   * @since 5.8
    */
   @Override
   public CatalogPieceOfFurniture clone() {
