@@ -33,9 +33,9 @@ import java.util.WeakHashMap;
  * A catalog piece of furniture.
  * @author Emmanuel Puybaret
  */
-public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture, CatalogItem {
-  private static final float [] []  INDENTITY_ROTATION = new float [] [] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-  private static final byte [] []   EMPTY_CRITERIA     = new byte [0] [];
+public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture, CatalogItem, Cloneable {
+  private static final float [][]   INDENTITY_ROTATION = new float [] [] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+  private static final byte [][]    EMPTY_CRITERIA     = new byte [0] [];
 
   private final String              id;
   private final String              name;
@@ -56,7 +56,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private final boolean             movable;
   private final boolean             doorOrWindow;
   private final String              staircaseCutOutShape;
-  private final float [] []         modelRotation;
+  private final float [][]          modelRotation;
   private final Long                modelSize;
   private final String              creator;
   private final boolean             backFaceShown;
@@ -1110,5 +1110,17 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
       }
     }
     return false;
+  }
+
+  /**
+   * Returns a clone of this piece.
+   */
+  @Override
+  public CatalogPieceOfFurniture clone() {
+    try {
+      return (CatalogPieceOfFurniture)super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
   }
 }

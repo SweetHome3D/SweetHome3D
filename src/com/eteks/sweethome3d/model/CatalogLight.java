@@ -415,7 +415,9 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
         staircaseCutOutShape, modelRotation, backFaceShown, modelSize, creator, 
         resizable, deformable, texturable, horizontallyRotatable, 
         price, valueAddedTaxPercentage, currency, properties);
-    this.lightSources = lightSources;
+    this.lightSources = lightSources.length > 0
+        ? lightSources.clone()
+        : lightSources;
   }
       
   /**
