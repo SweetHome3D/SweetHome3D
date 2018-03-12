@@ -877,7 +877,7 @@ public class ModelManager {
         // Return the first scene that can be loaded from model URL content
         Scene scene;
         if (loadSynchronously) {
-          synchronized (this.modelsLoader) {
+          synchronized (this) {
             URLConnection connection = urlContent.getURL().openConnection();
             try {
               connection.setDefaultUseCaches(useCaches);
