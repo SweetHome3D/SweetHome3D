@@ -118,7 +118,6 @@
     <sash xAxis='0.05464481' yAxis='0.5862069' width='0.89071035' startAngle='0.0' endAngle='-1.5707964'/>
     <material name='yellowbrt' color='FF841000'/>
   </doorOrWindow>
-  <pieceOfFurniture catalogId='eTeks#bookcase' name='Bookcase' creator='eTeks' model='com/eteks/sweethome3d/io/resources/bookcase.obj' icon='com/eteks/sweethome3d/io/resources/bookcase.png' x='78.037506' y='24.73114' width='131.0' depth='31.0' height='211.0' color='FF841000' modelSize='3516' dropOnTopElevation='0.4606635'/>
   <pieceOfFurniture catalogId='eTeks#stool' name='Stool' creator='eTeks' model='com/eteks/sweethome3d/io/resources/stool.obj' icon='com/eteks/sweethome3d/io/resources/stool.png' x='425.38745' y='65.88751' angle='1.5707964' width='40.0' depth='40.0' height='46.0' modelSize='19756'>
     <material name='amber' color='FF841000'/>
   </pieceOfFurniture>
