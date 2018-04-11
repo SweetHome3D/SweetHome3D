@@ -47,7 +47,7 @@ public class Home implements Serializable, Cloneable {
    * this number is increased.
    */
   public static final long CURRENT_VERSION = 5500;
-  
+
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
 
   private static final Comparator<Level> LEVEL_ELEVATION_COMPARATOR = new Comparator<Level>() {
@@ -62,14 +62,14 @@ public class Home implements Serializable, Cloneable {
     };
 
   /**
-   * The properties of a home that may change. <code>PropertyChangeListener</code>s added 
+   * The properties of a home that may change. <code>PropertyChangeListener</code>s added
    * to a home will be notified under a property name equal to the name value of one these properties.
    */
   public enum Property {NAME, MODIFIED,
-    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED, REPAIRED, 
+    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED, STORED_CAMERAS, RECOVERED, REPAIRED,
     SELECTED_LEVEL, ALL_LEVELS_SELECTION};
-  
+
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
   private transient List<Selectable>                  selectedItems;
@@ -97,7 +97,7 @@ public class Home implements Serializable, Cloneable {
   private BackgroundImage                             backgroundImage;
   private ObserverCamera                              observerCamera;
   private Camera                                      topCamera;
-  private List<Camera>                                storedCameras;  
+  private List<Camera>                                storedCameras;
   private HomeEnvironment                             environment;
   private HomePrint                                   print;
   private String                                      furnitureSortedPropertyName;
@@ -107,7 +107,7 @@ public class Home implements Serializable, Cloneable {
   private Map<String, String>                         properties;
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
-  private boolean                                     basePlanLocked; 
+  private boolean                                     basePlanLocked;
   private Compass                                     compass;
   // The 5 following environment fields are still declared for compatibility reasons
   private int                                         skyColor;
@@ -115,7 +115,7 @@ public class Home implements Serializable, Cloneable {
   private HomeTexture                                 groundTexture;
   private int                                         lightColor;
   private float                                       wallsAlpha;
-  // The two following fields aren't transient for backward compatibility reasons 
+  // The two following fields aren't transient for backward compatibility reasons
   private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
   // The following field is a temporary copy of furniture containing HomeDoorOrWindow instances
@@ -126,7 +126,7 @@ public class Home implements Serializable, Cloneable {
   private List<HomePieceOfFurniture>                  furnitureWithGroups;
 
   /**
-   * Creates a home with no furniture, no walls, 
+   * Creates a home with no furniture, no walls,
    * and a height equal to 250 cm.
    */
   public Home() {
@@ -142,7 +142,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Creates a home with the given <code>furniture</code>, 
+   * Creates a home with the given <code>furniture</code>,
    * no walls and a height equal to 250 cm.
    */
   public Home(List<HomePieceOfFurniture> furniture) {
@@ -174,24 +174,24 @@ public class Home implements Serializable, Cloneable {
     copyHomeData(home, this);
     initListenersSupport(this);
     addModelListeners();
-  }    
+  }
 
   /**
-   * Initializes new and transient home fields to their default values 
+   * Initializes new and transient home fields to their default values
    * and reads home from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     init(false);
     in.defaultReadObject();
-    
+
     if (KEEP_BACKWARD_COMPATIBLITY) {
       // Restore furnitureSortedProperty from furnitureSortedPropertyName
       if (this.furnitureSortedPropertyName != null) {
         try {
-          this.furnitureSortedProperty = 
+          this.furnitureSortedProperty =
               HomePieceOfFurniture.SortableProperty.valueOf(this.furnitureSortedPropertyName);
         } catch (IllegalArgumentException ex) {
-          // Ignore malformed enum constant 
+          // Ignore malformed enum constant
         }
         this.furnitureSortedPropertyName = null;
       }
@@ -203,49 +203,49 @@ public class Home implements Serializable, Cloneable {
             this.furnitureVisibleProperties.add(
                 HomePieceOfFurniture.SortableProperty.valueOf(furnitureVisiblePropertyName));
           } catch (IllegalArgumentException ex) {
-            // Ignore malformed enum constants 
+            // Ignore malformed enum constants
           }
         }
         this.furnitureVisiblePropertyNames = null;
       }
-  
+
       // Ensure all wall have an height
       for (Wall wall : this.walls) {
         if (wall.getHeight() == null) {
           wall.setHeight(this.wallHeight);
         }
       }
-      
-      // Restore referenced HomeDoorOrWindow instances stored in a separate field 
+
+      // Restore referenced HomeDoorOrWindow instances stored in a separate field
       // for backward compatibility reasons
       if (this.furnitureWithDoorsAndWindows != null) {
         this.furniture = this.furnitureWithDoorsAndWindows;
         this.furnitureWithDoorsAndWindows = null;
       }
 
-      // Restore referenced HomeFurnitureGroup instances stored in a separate field 
+      // Restore referenced HomeFurnitureGroup instances stored in a separate field
       // for backward compatibility reasons
       if (this.furnitureWithGroups != null) {
         this.furniture = this.furnitureWithGroups;
         this.furnitureWithGroups = null;
       }
-      
+
       // Restore environment fields from home fields for compatibility reasons
       this.environment.setGroundColor(this.groundColor);
       this.environment.setGroundTexture(this.groundTexture);
       this.environment.setSkyColor(this.skyColor);
       this.environment.setLightColor(this.lightColor);
       this.environment.setWallsAlpha(this.wallsAlpha);
-      
+
       if (this.version <= 3400) {
         // Automatically adjust ground color to a darker color
         int groundColor = this.environment.getGroundColor();
-        this.environment.setGroundColor(  
+        this.environment.setGroundColor(
               ((((groundColor >> 16) & 0xFF) * 3 / 4) << 16)
             | ((((groundColor >> 8) & 0xFF) * 3 / 4) << 8)
             | ((groundColor & 0xFF) * 3 / 4));
       }
-      
+
       // Assign level elevation index from current order if index is equal to -1
       if (this.levels.size() > 0) {
         Level previousLevel = this.levels.get(0);
@@ -264,7 +264,7 @@ public class Home implements Serializable, Cloneable {
           previousLevel = level;
         }
       }
-      
+
       // Move known visual properties to string properties
       moveVisualProperty("com.eteks.sweethome3d.swing.PhotoPanel.PhotoDialogX");
       moveVisualProperty("com.eteks.sweethome3d.swing.PhotoPanel.PhotoDialogY");
@@ -305,14 +305,14 @@ public class Home implements Serializable, Cloneable {
       this.visualProperties.remove(visualPropertyName);
     }
   }
-  
+
   private void init(boolean newHome) {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
     initListenersSupport(this);
 
     if (this.furnitureVisibleProperties == null) {
-      // Set the furniture properties that were visible before version 0.19 
+      // Set the furniture properties that were visible before version 0.19
       this.furnitureVisibleProperties = Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
           HomePieceOfFurniture.SortableProperty.NAME,
           HomePieceOfFurniture.SortableProperty.WIDTH,
@@ -323,14 +323,14 @@ public class Home implements Serializable, Cloneable {
           HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW,
           HomePieceOfFurniture.SortableProperty.VISIBLE});
     }
-    // Create a default top camera that matches default point of view 
-    this.topCamera = new Camera(50, 1050, 1010, 
+    // Create a default top camera that matches default point of view
+    this.topCamera = new Camera(50, 1050, 1010,
         (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
     // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
-    this.observerCamera = new ObserverCamera(50, 50, 170, 
+    this.observerCamera = new ObserverCamera(50, 50, 170,
         7 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     this.storedCameras = Collections.emptyList();
-    // Initialize new fields 
+    // Initialize new fields
     this.environment = new HomeEnvironment();
     this.rooms = new ArrayList<Room>();
     this.polylines = new ArrayList<Polyline>();
@@ -342,7 +342,7 @@ public class Home implements Serializable, Cloneable {
     this.compass.setVisible(newHome);
     this.visualProperties = new HashMap<String, Object>();
     this.properties = new HashMap<String, String>();
-    
+
     this.version = CURRENT_VERSION;
   }
 
@@ -367,8 +367,8 @@ public class Home implements Serializable, Cloneable {
         public void propertyChange(PropertyChangeEvent ev) {
           if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
               || Level.Property.ELEVATION_INDEX.name().equals(ev.getPropertyName())) {
-            levels = new ArrayList<Level>(levels);
-            Collections.sort(levels, LEVEL_ELEVATION_COMPARATOR);
+            Home.this.levels = new ArrayList<Level>(Home.this.levels);
+            Collections.sort(Home.this.levels, LEVEL_ELEVATION_COMPARATOR);
           }
         }
       };
@@ -391,11 +391,11 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Sets the version of this home and writes it to <code>out</code> stream
-   * with default writing method. 
+   * with default writing method.
    */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     this.version = CURRENT_VERSION;
-        
+
     if (KEEP_BACKWARD_COMPATIBLITY) {
       HomePieceOfFurniture.SortableProperty homeFurnitureSortedProperty = this.furnitureSortedProperty;
       List<HomePieceOfFurniture.SortableProperty> homeFurnitureVisibleProperties = this.furnitureVisibleProperties;
@@ -408,7 +408,7 @@ public class Home implements Serializable, Cloneable {
             this.furnitureSortedProperty = null;
           }
         }
-        
+
         this.furnitureVisiblePropertyNames = new ArrayList<String>();
         // Store in furnitureVisibleProperties only backward compatible properties
         this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
@@ -418,11 +418,11 @@ public class Home implements Serializable, Cloneable {
             this.furnitureVisibleProperties.add(visibleProperty);
           }
         }
-      
-        // Store referenced HomeFurnitureGroup instances in a separate field 
+
+        // Store referenced HomeFurnitureGroup instances in a separate field
         // for backward compatibility reasons (version < 2.3)
         this.furnitureWithGroups = this.furniture;
-        // Serialize a furnitureWithDoorsAndWindows field that contains only 
+        // Serialize a furnitureWithDoorsAndWindows field that contains only
         // HomePieceOfFurniture, HomeDoorOrWindow and HomeLight instances
         // for backward compatibility reasons (version < 1.7)
         this.furnitureWithDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
@@ -434,7 +434,7 @@ public class Home implements Serializable, Cloneable {
             this.furniture.add(piece);
           } else {
             if (piece.getClass() == HomeFurnitureGroup.class) {
-              // Add the ungrouped pieces to furniture and furnitureWithDoorsAndWindows list 
+              // Add the ungrouped pieces to furniture and furnitureWithDoorsAndWindows list
               for (HomePieceOfFurniture groupPiece : getGroupFurniture((HomeFurnitureGroup)piece)) {
                 this.furnitureWithDoorsAndWindows.add(groupPiece);
                 if (groupPiece.getClass() == HomePieceOfFurniture.class) {
@@ -443,7 +443,7 @@ public class Home implements Serializable, Cloneable {
                   // Create backward compatible instances
                   this.furniture.add(new HomePieceOfFurniture(groupPiece));
                 }
-              }            
+              }
             } else {
               this.furnitureWithDoorsAndWindows.add(piece);
               // Create backward compatible instances
@@ -451,21 +451,21 @@ public class Home implements Serializable, Cloneable {
             }
           }
         }
-        
+
         // Store environment fields in home fields for compatibility reasons
         this.groundColor = this.environment.getGroundColor();
         this.groundTexture = this.environment.getGroundTexture();
         this.skyColor = this.environment.getSkyColor();
         this.lightColor = this.environment.getLightColor();
         this.wallsAlpha = this.environment.getWallsAlpha();
-  
+
         out.defaultWriteObject();
       } finally {
         // Restore home values
         this.furniture = homeFurniture;
         this.furnitureWithDoorsAndWindows = null;
         this.furnitureWithGroups = null;
-      
+
         this.furnitureSortedProperty = homeFurnitureSortedProperty;
         this.furnitureVisibleProperties = homeFurnitureVisibleProperties;
         // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
@@ -477,15 +477,15 @@ public class Home implements Serializable, Cloneable {
       out.defaultWriteObject();
     }
   }
-  
+
   /**
-   * Returns <code>true</code> if the given <code>property</code> is compatible 
+   * Returns <code>true</code> if the given <code>property</code> is compatible
    * with the first set of sortable properties that existed in <code>HomePieceOfFurniture</code> class.
    */
   private boolean isFurnitureSortedPropertyBackwardCompatible(HomePieceOfFurniture.SortableProperty property) {
     switch (property) {
-      case NAME : 
-      case WIDTH : 
+      case NAME :
+      case WIDTH :
       case DEPTH :
       case HEIGHT :
       case MOVABLE :
@@ -503,7 +503,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Returns all the pieces of the given <code>furnitureGroup</code>.  
+   * Returns all the pieces of the given <code>furnitureGroup</code>.
    */
   private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
     List<HomePieceOfFurniture> groupFurniture = new ArrayList<HomePieceOfFurniture>();
@@ -516,7 +516,7 @@ public class Home implements Serializable, Cloneable {
     }
     return groupFurniture;
   }
-  
+
   /**
    * Adds the level <code>listener</code> in parameter to this home.
    * @param listener the listener to add
@@ -525,7 +525,7 @@ public class Home implements Serializable, Cloneable {
   public void addLevelsListener(CollectionListener<Level> listener) {
     this.levelsChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the level <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
@@ -533,7 +533,7 @@ public class Home implements Serializable, Cloneable {
    */
   public void removeLevelsListener(CollectionListener<Level> listener) {
     this.levelsChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the levels of this home.
@@ -547,8 +547,8 @@ public class Home implements Serializable, Cloneable {
    * Adds the given <code>level</code> to the list of levels of this home.
    * Once the <code>level</code> is added, level listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param level  the level to add
    * @since 3.4
    */
@@ -571,7 +571,7 @@ public class Home implements Serializable, Cloneable {
     int index = Collections.binarySearch(this.levels, level, LEVEL_ELEVATION_COMPARATOR);
     int levelIndex;
     if (index >= 0) {
-      levelIndex = index; 
+      levelIndex = index;
     } else {
       levelIndex = -(index + 1);
     }
@@ -580,11 +580,11 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Removes the given <code>level</code> from the set of levels of this home 
+   * Removes the given <code>level</code> from the set of levels of this home
    * and all the furniture, walls, rooms, dimension lines and labels that belong to this level.
    * Once the <code>level</code> is removed, level listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * @param level  the level to remove
    * @since 3.4
@@ -636,7 +636,7 @@ public class Home implements Serializable, Cloneable {
       this.levelsChangeSupport.fireCollectionChanged(level, index, CollectionEvent.Type.DELETE);
     }
   }
-  
+
   /**
    * Returns the selected level in home or <code>null</code> if home has no level.
    * @since 3.4
@@ -644,10 +644,10 @@ public class Home implements Serializable, Cloneable {
   public Level getSelectedLevel() {
     return this.selectedLevel;
   }
-  
+
   /**
    * Sets the selected level in home and notifies listeners of the change.
-   * @param level  the level to select
+   * @param selectedLevel  the level to select
    * @since 3.4
    */
   public void setSelectedLevel(Level selectedLevel) {
@@ -657,7 +657,7 @@ public class Home implements Serializable, Cloneable {
       this.propertyChangeSupport.firePropertyChange(Property.SELECTED_LEVEL.name(), oldSelectedLevel, selectedLevel);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if the selected items in this home are from all levels.
    * @since 4.4
@@ -665,7 +665,7 @@ public class Home implements Serializable, Cloneable {
   public boolean isAllLevelsSelection() {
     return this.allLevelsSelection;
   }
-  
+
   /**
    * Sets whether the selected items in this home are from all levels, and notifies listeners of the change.
    * @since 4.4
@@ -676,7 +676,7 @@ public class Home implements Serializable, Cloneable {
       this.propertyChangeSupport.firePropertyChange(Property.ALL_LEVELS_SELECTION.name(), !selectionAtAllLevels, selectionAtAllLevels);
     }
   }
-  
+
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    * @param listener the listener to add
@@ -694,8 +694,8 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Returns an unmodifiable list of the furniture managed by this home. 
-   * This furniture in this list is always sorted in the index order they were added to home. 
+   * Returns an unmodifiable list of the furniture managed by this home.
+   * This furniture in this list is always sorted in the index order they were added to home.
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
@@ -747,7 +747,7 @@ public class Home implements Serializable, Cloneable {
    * Deletes the <code>piece</code> in parameter from this home.
    * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification. If the removed <code>piece</code> belongs to a group, the 
+   * notification. If the removed <code>piece</code> belongs to a group, the
    * {@link CollectionEvent#getIndex() index} of the event will be -1.
    * @param piece  the piece to remove
    */
@@ -774,17 +774,17 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Returns the furniture group that contains the given <code>piece</code> or <code>null</code> 
+   * Returns the furniture group that contains the given <code>piece</code> or <code>null</code>
    * if it can't be found.
    */
-  private HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece, 
-                                                      HomeFurnitureGroup furnitureGroup, 
+  private HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece,
+                                                      HomeFurnitureGroup furnitureGroup,
                                                       List<HomePieceOfFurniture> furniture) {
     for (HomePieceOfFurniture homePiece : furniture) {
       if (homePiece.equals(piece)) {
         return furnitureGroup;
       } else if (homePiece instanceof HomeFurnitureGroup) {
-        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece, 
+        HomeFurnitureGroup group = getPieceOfFurnitureGroup(piece,
             (HomeFurnitureGroup)homePiece, ((HomeFurnitureGroup)homePiece).getFurniture());
         if (group != null) {
           return group;
@@ -816,7 +816,7 @@ public class Home implements Serializable, Cloneable {
   public List<Selectable> getSelectedItems() {
     return Collections.unmodifiableList(this.selectedItems);
   }
-  
+
   /**
    * Sets the selected items in home and notifies listeners selection change.
    * @param selectedItems the list of selected items
@@ -826,7 +826,7 @@ public class Home implements Serializable, Cloneable {
     this.selectedItems = new ArrayList<Selectable>(selectedItems);
     if (!this.selectionListeners.isEmpty()) {
       SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedItems());
-      // Work on a copy of selectionListeners to ensure a listener 
+      // Work on a copy of selectionListeners to ensure a listener
       // can modify safely listeners list
       SelectionListener [] listeners = this.selectionListeners.
         toArray(new SelectionListener [this.selectionListeners.size()]);
@@ -857,14 +857,14 @@ public class Home implements Serializable, Cloneable {
   public void addRoomsListener(CollectionListener<Room> listener) {
     this.roomsChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the room <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
    */
   public void removeRoomsListener(CollectionListener<Room> listener) {
     this.roomsChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the rooms of this home.
@@ -877,8 +877,8 @@ public class Home implements Serializable, Cloneable {
    * Adds the given <code>room</code> at the end of the rooms list of this home.
    * Once the <code>room</code> is added, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param room   the room to add
    */
   public void addRoom(Room room) {
@@ -889,7 +889,7 @@ public class Home implements Serializable, Cloneable {
    * Adds the <code>room</code> in parameter at a given <code>index</code>.
    * Once the <code>room</code> is added, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param room   the room to add
    * @param index  the index at which the room will be added
@@ -906,7 +906,7 @@ public class Home implements Serializable, Cloneable {
    * Removes the given <code>room</code> from the set of rooms of this home.
    * Once the <code>room</code> is removed, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * @param room  the room to remove
    */
@@ -930,14 +930,14 @@ public class Home implements Serializable, Cloneable {
   public void addWallsListener(CollectionListener<Wall> listener) {
     this.wallsChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the wall <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
    */
   public void removeWallsListener(CollectionListener<Wall> listener) {
     this.wallsChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the walls of this home.
@@ -950,8 +950,8 @@ public class Home implements Serializable, Cloneable {
    * Adds the given <code>wall</code> to the set of walls of this home.
    * Once the <code>wall</code> is added, wall listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param wall  the wall to add
    */
   public void addWall(Wall wall) {
@@ -966,7 +966,7 @@ public class Home implements Serializable, Cloneable {
    * Removes the given <code>wall</code> from the set of walls of this home.
    * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * If any wall is attached to <code>wall</code> they will be detached from it.
    * @param wall  the wall to remove
@@ -1000,7 +1000,7 @@ public class Home implements Serializable, Cloneable {
   public void addPolylinesListener(CollectionListener<Polyline> listener) {
     this.polylinesChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the polyline <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
@@ -1008,7 +1008,7 @@ public class Home implements Serializable, Cloneable {
    */
   public void removePolylinesListener(CollectionListener<Polyline> listener) {
     this.polylinesChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the polylines of this home.
@@ -1022,8 +1022,8 @@ public class Home implements Serializable, Cloneable {
    * Adds a given <code>polyline</code> at the end of the polylines list of this home.
    * Once the <code>polyline</code> is added, polyline listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param polyline  the polyline to add
    * @since 5.0
    */
@@ -1035,8 +1035,8 @@ public class Home implements Serializable, Cloneable {
    * Adds a <code>polyline</code> at a given <code>index</code> of the set of polylines of this home.
    * Once the <code>polyline</code> is added, polyline listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param polyline  the polyline to add
    * @param index  the index at which the polyline will be added
    * @since 5.0
@@ -1053,7 +1053,7 @@ public class Home implements Serializable, Cloneable {
    * Removes a given <code>polyline</code> from the set of polylines of this home.
    * Once the <code>polyline</code> is removed, polyline listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * @param polyline  the polyline to remove
    * @since 5.0
@@ -1078,14 +1078,14 @@ public class Home implements Serializable, Cloneable {
   public void addDimensionLinesListener(CollectionListener<DimensionLine> listener) {
     this.dimensionLinesChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the dimension line <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
    */
   public void removeDimensionLinesListener(CollectionListener<DimensionLine> listener) {
     this.dimensionLinesChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the dimension lines of this home.
@@ -1096,11 +1096,11 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Adds the given dimension line to the set of dimension lines of this home.
-   * Once <code>dimensionLine</code> is added, dimension line listeners added 
+   * Once <code>dimensionLine</code> is added, dimension line listeners added
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param dimensionLine  the dimension line to add
    */
   public void addDimensionLine(DimensionLine dimensionLine) {
@@ -1113,10 +1113,10 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Removes the given dimension line from the set of dimension lines of this home.
-   * Once <code>dimensionLine</code> is removed, dimension line listeners added 
+   * Once <code>dimensionLine</code> is removed, dimension line listeners added
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * @param dimensionLine  the dimension line to remove
    */
@@ -1140,14 +1140,14 @@ public class Home implements Serializable, Cloneable {
   public void addLabelsListener(CollectionListener<Label> listener) {
     this.labelsChangeSupport.addCollectionListener(listener);
   }
-  
+
   /**
    * Removes the label <code>listener</code> in parameter from this home.
    * @param listener the listener to remove
    */
   public void removeLabelsListener(CollectionListener<Label> listener) {
     this.labelsChangeSupport.removeCollectionListener(listener);
-  } 
+  }
 
   /**
    * Returns an unmodifiable collection of the labels of this home.
@@ -1158,11 +1158,11 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Adds the given label to the set of labels of this home.
-   * Once <code>label</code> is added, label listeners added 
+   * Once <code>label</code> is added, label listeners added
    * to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
-   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   * notification, with an {@link CollectionEvent#getType() event type}
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
    * @param label  the label to add
    */
   public void addLabel(Label label) {
@@ -1177,7 +1177,7 @@ public class Home implements Serializable, Cloneable {
    * Removes the given label from the set of labels of this home.
    * Once <code>label</code> is removed, label listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
-   * notification, with an {@link CollectionEvent#getType() event type} 
+   * notification, with an {@link CollectionEvent#getType() event type}
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    * @param label  the label to remove
    */
@@ -1193,7 +1193,7 @@ public class Home implements Serializable, Cloneable {
       this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
     }
   }
-  
+
   /**
    * Returns all the selectable and viewable items in this home, except the observer camera.
    * @return a list containing viewable walls, furniture, dimension lines, labels and compass.
@@ -1222,7 +1222,7 @@ public class Home implements Serializable, Cloneable {
   /**
    * Adds the viewable items to the set of selectable viewable items.
    */
-  private <T extends Selectable> void addViewableItems(Collection<T> items, 
+  private <T extends Selectable> void addViewableItems(Collection<T> items,
                                                        List<Selectable> selectableViewableItems) {
     for (T item : items) {
       if (item instanceof Elevatable) {
@@ -1234,9 +1234,9 @@ public class Home implements Serializable, Cloneable {
       }
     }
   }
-  
+
   /**
-   * Returns <code>true</code> if this home doesn't contain any item i.e.  
+   * Returns <code>true</code> if this home doesn't contain any item i.e.
    * no piece of furniture, no wall, no room, no dimension line and no label.
    * @since 2.2
    */
@@ -1260,7 +1260,7 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
-   * @param property the followed property 
+   * @param property the followed property
    * @param listener the listener to remove
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
@@ -1283,7 +1283,7 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Sets the name of this home and fires a <code>PropertyChangeEvent</code>.
-   * @param name  the new name of this home 
+   * @param name  the new name of this home
    */
   public void setName(String name) {
     if (name != this.name
@@ -1311,7 +1311,7 @@ public class Home implements Serializable, Cloneable {
           Property.MODIFIED.name(), !modified, modified);
     }
   }
-  
+
   /**
    * Returns whether this home was recovered or not.
    * @since 3.0
@@ -1331,7 +1331,7 @@ public class Home implements Serializable, Cloneable {
           Property.RECOVERED.name(), !recovered, recovered);
     }
   }
-  
+
   /**
    * Returns whether this home was repaired or not.
    * @since 4.4
@@ -1351,7 +1351,7 @@ public class Home implements Serializable, Cloneable {
           Property.REPAIRED.name(), !repaired, repaired);
     }
   }
-  
+
   /**
    * Returns the furniture property on which home is sorted or <code>null</code> if
    * home furniture isn't sorted.
@@ -1361,7 +1361,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Sets the furniture property on which this home should be sorted 
+   * Sets the furniture property on which this home should be sorted
    * and fires a <code>PropertyChangeEvent</code>.
    * @param furnitureSortedProperty the new property
    */
@@ -1371,7 +1371,7 @@ public class Home implements Serializable, Cloneable {
       HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_SORTED_PROPERTY.name(), 
+          Property.FURNITURE_SORTED_PROPERTY.name(),
           oldFurnitureSortedProperty, furnitureSortedProperty);
     }
   }
@@ -1382,16 +1382,16 @@ public class Home implements Serializable, Cloneable {
   public boolean isFurnitureDescendingSorted() {
     return this.furnitureDescendingSorted;
   }
-  
+
   /**
-   * Sets the furniture sort order on which home should be sorted 
+   * Sets the furniture sort order on which home should be sorted
    * and fires a <code>PropertyChangeEvent</code>.
    */
   public void setFurnitureDescendingSorted(boolean furnitureDescendingSorted) {
     if (furnitureDescendingSorted != this.furnitureDescendingSorted) {
       this.furnitureDescendingSorted = furnitureDescendingSorted;
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_DESCENDING_SORTED.name(), 
+          Property.FURNITURE_DESCENDING_SORTED.name(),
           !furnitureDescendingSorted, furnitureDescendingSorted);
     }
   }
@@ -1406,7 +1406,7 @@ public class Home implements Serializable, Cloneable {
       return Collections.unmodifiableList(this.furnitureVisibleProperties);
     }
   }
-  
+
   /**
    * Sets the furniture properties that are visible and the order in which they are visible,
    * then fires a <code>PropertyChangeEvent</code>.
@@ -1418,8 +1418,8 @@ public class Home implements Serializable, Cloneable {
       List<HomePieceOfFurniture.SortableProperty> oldFurnitureVisibleProperties = this.furnitureVisibleProperties;
       this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(furnitureVisibleProperties);
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_VISIBLE_PROPERTIES.name(), 
-          Collections.unmodifiableList(oldFurnitureVisibleProperties), 
+          Property.FURNITURE_VISIBLE_PROPERTIES.name(),
+          Collections.unmodifiableList(oldFurnitureVisibleProperties),
           Collections.unmodifiableList(furnitureVisibleProperties));
     }
   }
@@ -1450,17 +1450,17 @@ public class Home implements Serializable, Cloneable {
   public Camera getTopCamera() {
     return this.topCamera;
   }
-  
+
   /**
    * Returns the camera used to display this home from an observer point of view.
    */
   public ObserverCamera getObserverCamera() {
     return this.observerCamera;
   }
-  
+
   /**
    * Sets the camera used to display this home and fires a <code>PropertyChangeEvent</code>.
-   * @param camera  the camera to use 
+   * @param camera  the camera to use
    */
   public void setCamera(Camera camera) {
     if (camera != this.camera) {
@@ -1481,11 +1481,11 @@ public class Home implements Serializable, Cloneable {
     }
     return this.camera;
   }
-  
+
   /**
    * Sets the cameras stored by this home and fires a <code>PropertyChangeEvent</code>.
    * The list given as parameter is cloned but not the camera instances it contains.
-   * @param storedCameras  the new list of cameras 
+   * @param storedCameras  the new list of cameras
    * @since 3.0
    */
   public void setStoredCameras(List<Camera> storedCameras) {
@@ -1523,7 +1523,7 @@ public class Home implements Serializable, Cloneable {
   public Compass getCompass() {
     return this.compass;
   }
-  
+
   /**
    * Returns the print attributes of this home.
    */
@@ -1543,20 +1543,20 @@ public class Home implements Serializable, Cloneable {
     }
     this.print = print;
   }
-  
+
   /**
    * Returns the value of the visual property <code>name</code> associated with this home.
-   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)} 
+   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)}
    *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
   public Object getVisualProperty(String name) {
     return this.visualProperties.get(name);
   }
-  
+
   /**
    * Sets a visual property associated with this home.
-   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)} 
+   * @deprecated {@link #getVisualProperty(String)} and {@link #setVisualProperty(String, Object)}
    *     should be replaced by calls to {@link #getProperty(String)} and {@link #setProperty(String, String)}
    *     to ensure they can be easily saved and read. Future file format might not save visual properties anymore.
    */
@@ -1566,17 +1566,17 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Returns the value of the property <code>name</code> associated with this home.
-   * @return the value of the property or <code>null</code> if it doesn't exist. 
+   * @return the value of the property or <code>null</code> if it doesn't exist.
    * @since 5.2
    */
   public String getProperty(String name) {
     return this.properties.get(name);
   }
-  
+
   /**
    * Returns the numeric value of the property <code>name</code> associated with this home.
-   * @return an instance of {@link Long}, {@link Double} or <code>null</code> if the property 
-   * doesn't exist or can't be parsed. 
+   * @return an instance of {@link Long}, {@link Double} or <code>null</code> if the property
+   * doesn't exist or can't be parsed.
    * @since 5.2
    */
   public Number getNumericProperty(String name) {
@@ -1593,11 +1593,11 @@ public class Home implements Serializable, Cloneable {
     }
     return null;
   }
-  
+
   /**
    * Sets a property associated with this home.
    * @param name   the name of the property to set
-   * @param value  the new value of the property 
+   * @param value  the new value of the property
    * @since 5.2
    */
   public void setProperty(String name, String value) {
@@ -1609,18 +1609,18 @@ public class Home implements Serializable, Cloneable {
       this.properties.put(name, value);
     }
   }
-  
+
   /**
    * Returns the property names.
-   * @return a collection of all the names of the properties set with {@link #setProperty(String, String) setProperty} 
+   * @return a collection of all the names of the properties set with {@link #setProperty(String, String) setProperty}
    * @since 5.2
    */
   public Collection<String> getPropertyNames() {
     return this.properties.keySet();
   }
-  
+
   /**
-   * Returns <code>true</code> if the home objects belonging to the base plan 
+   * Returns <code>true</code> if the home objects belonging to the base plan
    * (generally walls, rooms, dimension lines and texts) are locked.
    * @since 1.8
    */
@@ -1629,7 +1629,7 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Sets whether home objects belonging to the base plan (generally walls, rooms, 
+   * Sets whether home objects belonging to the base plan (generally walls, rooms,
    * dimension lines and texts) are locked and fires a <code>PropertyChangeEvent</code>.
    * @since 1.8
    */
@@ -1640,19 +1640,19 @@ public class Home implements Serializable, Cloneable {
           Property.BASE_PLAN_LOCKED.name(), !basePlanLocked, basePlanLocked);
     }
   }
-  
+
   /**
-   * Returns the version of this home, the last time it was serialized or 
-   * or {@link #CURRENT_VERSION} if it is not serialized yet or 
-   * was serialized with Sweet Home 3D 0.x.  
+   * Returns the version of this home, the last time it was serialized or
+   * or {@link #CURRENT_VERSION} if it is not serialized yet or
+   * was serialized with Sweet Home 3D 0.x.
    * Version is useful to know with which Sweet Home 3D version this home was saved
-   * and warn user that he may lose information if he saves with 
+   * and warn user that he may lose information if he saves with
    * current application a home created by a more recent version.
    */
   public long getVersion() {
     return this.version;
   }
-  
+
   /**
    * Sets the version of this home.
    * @return version  the new version
@@ -1661,9 +1661,9 @@ public class Home implements Serializable, Cloneable {
   public void setVersion(long version) {
     this.version = version;
   }
-  
+
   /**
-   * Returns a clone of this home and the objects it contains. 
+   * Returns a clone of this home and the objects it contains.
    * Listeners bound to this home aren't added to the returned home.
    * @since 2.3
    */
@@ -1676,10 +1676,10 @@ public class Home implements Serializable, Cloneable {
       clone.addModelListeners();
       return clone;
     } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
+      throw new IllegalStateException("Super class isn't cloneable");
     }
   }
-  
+
   /**
    * Copies all data of a <code>source</code> home to a <code>destination</code> home.
    */
@@ -1700,7 +1700,7 @@ public class Home implements Serializable, Cloneable {
     destination.lightColor = source.lightColor;
     destination.wallsAlpha = source.wallsAlpha;
     destination.furnitureSortedProperty = source.furnitureSortedProperty;
-    
+
     // Deep copy selectable items
     destination.selectedItems = new ArrayList<Selectable>(source.selectedItems.size());
     destination.furniture = cloneSelectableItems(
@@ -1726,7 +1726,7 @@ public class Home implements Serializable, Cloneable {
         destination.selectedItems.add(destination.walls.get(i));
       }
     }
-    // Clone levels and set the level of cloned objects 
+    // Clone levels and set the level of cloned objects
     destination.levels = new ArrayList<Level>();
     if (source.levels.size() > 0) {
       for (Level level : source.levels) {
@@ -1798,10 +1798,10 @@ public class Home implements Serializable, Cloneable {
     destination.visualProperties = new HashMap<String, Object>(source.visualProperties);
     destination.properties = new HashMap<String, String>(source.properties);
   }
-  
+
   /**
    * Returns the list of cloned items in <code>source</code>.
-   * If a cloned item is selected its clone will be selected too (ie added to 
+   * If a cloned item is selected its clone will be selected too (ie added to
    * <code>destinationSelectedItems</code>).
    */
   @SuppressWarnings("unchecked")
@@ -1831,17 +1831,17 @@ public class Home implements Serializable, Cloneable {
     }
     return destination;
   }
-  
+
   /**
    * Returns a deep copy of home selectable <code>items</code>.
-   * @param items  the items to duplicate 
+   * @param items  the items to duplicate
    */
   public static List<Selectable> duplicate(List<? extends Selectable> items) {
     List<Selectable> list = new ArrayList<Selectable>();
     for (Selectable item : items) {
       if (!(item instanceof Wall)         // Walls are copied further
           && !(item instanceof Camera)    // Cameras and compass can't be duplicated
-          && !(item instanceof Compass)) { 
+          && !(item instanceof Compass)) {
         list.add(item.clone());
       }
     }
@@ -1873,7 +1873,7 @@ public class Home implements Serializable, Cloneable {
   public static List<Room> getRoomsSubList(List<? extends Selectable> items) {
     return getSubList(items, Room.class);
   }
-  
+
   /**
    * Returns a sub list of <code>items</code> that contains only labels.
    * @param items  the items among which the search is done
@@ -1882,7 +1882,7 @@ public class Home implements Serializable, Cloneable {
   public static List<Polyline> getPolylinesSubList(List<? extends Selectable> items) {
     return getSubList(items, Polyline.class);
   }
-  
+
   /**
    * Returns a sub list of <code>items</code> that contains only dimension lines.
    * @param items  the items among which the search is done
@@ -1890,7 +1890,7 @@ public class Home implements Serializable, Cloneable {
   public static List<DimensionLine> getDimensionLinesSubList(List<? extends Selectable> items) {
     return getSubList(items, DimensionLine.class);
   }
-  
+
   /**
    * Returns a sub list of <code>items</code> that contains only labels.
    * @param items  the items among which the search is done
@@ -1898,7 +1898,7 @@ public class Home implements Serializable, Cloneable {
   public static List<Label> getLabelsSubList(List<? extends Selectable> items) {
     return getSubList(items, Label.class);
   }
-  
+
   /**
    * Returns a sub list of <code>items</code> that contains only instances of <code>subListClass</code>.
    * @param items         the items among which the search is done
@@ -1906,7 +1906,7 @@ public class Home implements Serializable, Cloneable {
    * @since 2.2
    */
   @SuppressWarnings("unchecked")
-  public static <T> List<T> getSubList(List<? extends Selectable> items, 
+  public static <T> List<T> getSubList(List<? extends Selectable> items,
                                        Class<T> subListClass) {
     List<T> subList = new ArrayList<T>();
     for (Selectable item : items) {
