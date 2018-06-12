@@ -95,7 +95,7 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(OBJ_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "OBJ - Wavefront";
@@ -118,7 +118,7 @@ public class FileContentManager implements ContentManager {
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(LWS_EXTENSION);
        }
-   
+
        @Override
        public String getDescription() {
          return "LWS - LightWave Scene";
@@ -131,7 +131,7 @@ public class FileContentManager implements ContentManager {
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(THREEDS_EXTENSION);
        }
-   
+
        @Override
        public String getDescription() {
          return "3DS - 3D Studio";
@@ -144,7 +144,7 @@ public class FileContentManager implements ContentManager {
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(DAE_EXTENSION);
        }
-   
+
        @Override
        public String getDescription() {
          return "DAE - Collada";
@@ -157,7 +157,7 @@ public class FileContentManager implements ContentManager {
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(KMZ_EXTENSION);
        }
-   
+
        @Override
        public String getDescription() {
          return "KMZ";
@@ -170,7 +170,7 @@ public class FileContentManager implements ContentManager {
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(ZIP_EXTENSION);
        }
-   
+
        @Override
        public String getDescription() {
          return "ZIP";
@@ -188,7 +188,7 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(PNG_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "PNG";
@@ -207,7 +207,7 @@ public class FileContentManager implements ContentManager {
               || file.getName().toLowerCase().endsWith(JPEG_EXTENSION)
               || file.getName().toLowerCase().endsWith("jpeg");
         }
-        
+
         @Override
         public String getDescription() {
           return "JPEG";
@@ -228,7 +228,7 @@ public class FileContentManager implements ContentManager {
                  || file.getName().toLowerCase().endsWith(BMP_EXTENSION)
                  || file.getName().toLowerCase().endsWith(WBMP_EXTENSION);
         }
-    
+
         @Override
         public String getDescription() {
           return "BMP";
@@ -241,13 +241,13 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
                  || file.getName().toLowerCase().endsWith(GIF_EXTENSION);
         }
-    
+
         @Override
         public String getDescription() {
           return "GIF";
         }
       },
-      JPEG_FILTER [0], 
+      JPEG_FILTER [0],
       PNG_FILTER [0]};
   private static final String MOV_EXTENSION = ".mov";
   /**
@@ -261,7 +261,7 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(MOV_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "MOV";
@@ -279,7 +279,7 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(PDF_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "PDF";
@@ -297,7 +297,7 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(CSV_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "CSV - Tab Separated Values";
@@ -315,13 +315,13 @@ public class FileContentManager implements ContentManager {
           return file.isDirectory()
               || file.getName().toLowerCase().endsWith(SVG_EXTENSION);
         }
-        
+
         @Override
         public String getDescription() {
           return "SVG - Scalable Vector Graphics";
         }
       }};
-  
+
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
   private final String                    sweetHome3DFileExtension2;
@@ -333,7 +333,7 @@ public class FileContentManager implements ContentManager {
   private Map<ContentType, FileFilter []> fileFilters;
   private Map<ContentType, String []>     fileExtensions;
 
-  public FileContentManager(final UserPreferences preferences) {  
+  public FileContentManager(final UserPreferences preferences) {
     this.preferences = preferences;
     this.sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
     String homeExtension2;
@@ -349,7 +349,7 @@ public class FileContentManager implements ContentManager {
     this.texturesLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "texturesLibraryExtension");
     this.pluginFileExtension = preferences.getLocalizedString(FileContentManager.class, "pluginExtension");
     this.lastDirectories = new HashMap<ContentManager.ContentType, File>();
-    
+
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
@@ -367,11 +367,11 @@ public class FileContentManager implements ContentManager {
           public boolean accept(File file) {
             // Accept directories, .sh3d and .sh3x files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(sweetHome3DFileExtension)
-                || (sweetHome3DFileExtension2 != null 
-                     && file.getName().toLowerCase().endsWith(sweetHome3DFileExtension2));
+                || file.getName().toLowerCase().endsWith(FileContentManager.this.sweetHome3DFileExtension)
+                || (FileContentManager.this.sweetHome3DFileExtension2 != null
+                     && file.getName().toLowerCase().endsWith(FileContentManager.this.sweetHome3DFileExtension2));
           }
-          
+
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "homeDescription");
@@ -384,9 +384,9 @@ public class FileContentManager implements ContentManager {
           public boolean accept(File file) {
             // Accept directories and .sh3f files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(languageLibraryFileExtension);
+                || file.getName().toLowerCase().endsWith(FileContentManager.this.languageLibraryFileExtension);
           }
-         
+
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "languageLibraryDescription");
@@ -399,9 +399,9 @@ public class FileContentManager implements ContentManager {
           public boolean accept(File file) {
             // Accept directories and .sh3f files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(furnitureLibraryFileExtension);
+                || file.getName().toLowerCase().endsWith(FileContentManager.this.furnitureLibraryFileExtension);
           }
-          
+
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryDescription");
@@ -414,9 +414,9 @@ public class FileContentManager implements ContentManager {
           public boolean accept(File file) {
             // Accept directories and .sh3f files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(texturesLibraryFileExtension);
+                || file.getName().toLowerCase().endsWith(FileContentManager.this.texturesLibraryFileExtension);
           }
-         
+
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "texturesLibraryDescription");
@@ -429,9 +429,9 @@ public class FileContentManager implements ContentManager {
           public boolean accept(File file) {
             // Accept directories and .sh3f files
             return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(pluginFileExtension);
+                || file.getName().toLowerCase().endsWith(FileContentManager.this.pluginFileExtension);
           }
-         
+
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "pluginDescription");
@@ -445,7 +445,7 @@ public class FileContentManager implements ContentManager {
             // Accept directories only
             return file.isDirectory();
           }
-         
+
           @Override
           public String getDescription() {
             return "Photos";
@@ -470,14 +470,14 @@ public class FileContentManager implements ContentManager {
     this.fileExtensions.put(ContentType.CSV,               new String [] {CSV_EXTENSION});
     this.fileExtensions.put(ContentType.SVG,               new String [] {SVG_EXTENSION});
     this.fileExtensions.put(ContentType.OBJ,               new String [] {OBJ_EXTENSION});
-    this.fileExtensions.put(ContentType.MODEL,             
+    this.fileExtensions.put(ContentType.MODEL,
         new String [] {OBJ_EXTENSION, LWS_EXTENSION, THREEDS_EXTENSION, DAE_EXTENSION, ZIP_EXTENSION, KMZ_EXTENSION});
-    this.fileExtensions.put(ContentType.IMAGE,             
+    this.fileExtensions.put(ContentType.IMAGE,
         new String [] {PNG_EXTENSION, JPEG_EXTENSION, BMP_EXTENSION, WBMP_EXTENSION, GIF_EXTENSION} );
   }
-  
+
   /**
-   * Returns a {@link URLContent URL content} object that references 
+   * Returns a {@link URLContent URL content} object that references
    * the given file path.
    */
   public Content getContent(String contentPath) throws RecorderException {
@@ -487,11 +487,11 @@ public class FileContentManager implements ContentManager {
       throw new RecorderException("Couldn't access to content " + contentPath);
     }
   }
-  
+
   /**
    * Returns the file name of the file path in parameter.
    */
-  public String getPresentationName(String contentPath, 
+  public String getPresentationName(String contentPath,
                                     ContentType contentType) {
     switch (contentType) {
       case SWEET_HOME_3D :
@@ -507,9 +507,9 @@ public class FileContentManager implements ContentManager {
           fileName = fileName.substring(0, pointIndex);
         }
         return fileName;
-    }    
+    }
   }
-  
+
   /**
    * Returns the file filters available for a given content type.
    * This method may be overridden to add some file filters to existing content types
@@ -522,10 +522,10 @@ public class FileContentManager implements ContentManager {
       return this.fileFilters.get(contentType);
     }
   }
-  
+
   /**
-   * Returns the default file extension of a given content type. 
-   * If not <code>null</code> this extension will be appended automatically 
+   * Returns the default file extension of a given content type.
+   * If not <code>null</code> this extension will be appended automatically
    * to the file name chosen by user in save dialog.
    * This method may be overridden to change the default file extension of an existing content type
    * or to define the default file extension of a user defined content type.
@@ -537,21 +537,21 @@ public class FileContentManager implements ContentManager {
     }
     return null;
   }
-  
+
   /**
-   * Returns the supported file extensions for a given content type. 
+   * Returns the supported file extensions for a given content type.
    * This method may be overridden to change the file extensions of an existing content type
    * or to define the file extensions of a user defined content type.
    */
   protected String [] getFileExtensions(ContentType contentType) {
     return this.fileExtensions.get(contentType);
   }
-  
+
   /**
    * Returns <code>true</code> if the file path in parameter is accepted
    * for <code>contentType</code>.
    */
-  public boolean isAcceptable(String contentPath, 
+  public boolean isAcceptable(String contentPath,
                               ContentType contentType) {
     File file = new File(contentPath);
     for (FileFilter filter : getFileFilter(contentType)) {
@@ -561,14 +561,14 @@ public class FileContentManager implements ContentManager {
     }
     return false;
   }
-  
+
   /**
    * Returns <code>true</code> if the given content type is for directories.
    */
   protected boolean isDirectory(ContentType contentType) {
     return contentType == ContentType.PHOTOS_DIRECTORY;
   }
-  
+
   /**
    * Returns the file path chosen by user with an open file dialog.
    * @return the file path or <code>null</code> if user canceled its choice.
@@ -584,11 +584,11 @@ public class FileContentManager implements ContentManager {
       return showFileChooser(parentView, dialogTitle, contentType, null, false);
     }
   }
-  
+
   /**
    * Returns the file path chosen by user with a save file dialog.
-   * If this file already exists, the user will be prompted whether 
-   * he wants to overwrite this existing file. 
+   * If this file already exists, the user will be prompted whether
+   * he wants to overwrite this existing file.
    * @return the chosen file path or <code>null</code> if user canceled its choice.
    */
   public String showSaveDialog(View        parentView,
@@ -606,16 +606,16 @@ public class FileContentManager implements ContentManager {
         }
       }
     }
-    
+
     String savedPath;
-    // Use native file dialog under Mac OS X    
+    // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()
         && !isDirectory(contentType)) {
       savedPath = showFileDialog(parentView, dialogTitle, contentType, path, true);
     } else {
       savedPath = showFileChooser(parentView, dialogTitle, contentType, path, true);
     }
-    
+
     boolean addedExtension = false;
     if (savedPath != null) {
       if (defaultExtension != null) {
@@ -625,7 +625,7 @@ public class FileContentManager implements ContentManager {
         }
       }
 
-      // If no extension was added to file under Mac OS X, 
+      // If no extension was added to file under Mac OS X,
       // FileDialog already asks to user if he wants to overwrite savedName
       if (OperatingSystem.isMacOSX()
           && !addedExtension) {
@@ -642,14 +642,14 @@ public class FileContentManager implements ContentManager {
     }
     return savedPath;
   }
-  
+
   /**
    * Displays an AWT open file dialog.
    */
   private String showFileDialog(View               parentView,
                                 String             dialogTitle,
                                 final ContentType  contentType,
-                                String             path, 
+                                String             path,
                                 boolean            save) {
     FileDialog fileDialog = new FileDialog(
         JOptionPane.getFrameForComponent((JComponent)parentView));
@@ -658,9 +658,9 @@ public class FileContentManager implements ContentManager {
     if (save && path != null) {
       fileDialog.setFile(new File(path).getName());
     }
-    // Set supported files filter 
+    // Set supported files filter
     fileDialog.setFilenameFilter(new FilenameFilter() {
-        public boolean accept(File dir, String name) {          
+        public boolean accept(File dir, String name) {
           return isAcceptable(new File(dir, name).toString(), contentType);
         }
       });
@@ -685,7 +685,7 @@ public class FileContentManager implements ContentManager {
       dialogTitle = getFileDialogTitle(save);
     }
     fileDialog.setTitle(dialogTitle);
-    
+
     fileDialog.setVisible(true);
 
     String selectedFile = fileDialog.getFile();
@@ -709,7 +709,7 @@ public class FileContentManager implements ContentManager {
 
   /**
    * Returns the last directory used for the given content type.
-   * @return the last directory for <code>contentType</code> or the default last directory 
+   * @return the last directory for <code>contentType</code> or the default last directory
    *         if it's not set. If <code>contentType</code> is <code>null</code>, the
    *         returned directory will be the default last one or <code>null</code> if it's not set yet.
    */
@@ -726,7 +726,7 @@ public class FileContentManager implements ContentManager {
    */
   protected void setLastDirectory(ContentType contentType, File directory) {
     this.lastDirectories.put(contentType, directory);
-    // Store default last directory in null content 
+    // Store default last directory in null content
     this.lastDirectories.put(null, directory);
   }
 
@@ -747,7 +747,7 @@ public class FileContentManager implements ContentManager {
              || OperatingSystem.isJavaVersionGreaterOrEqual("1.8.0_60") && OperatingSystem.compareVersions(System.getProperty("os.version"), "10.0") >= 0)) {
       UIManager.put("FileChooser.useSystemExtensionHiding", false);
     }
-  
+
     final JFileChooser fileChooser;
     if (isDirectory(contentType)) {
       fileChooser = new DirectoryChooser(this.preferences);
@@ -759,7 +759,7 @@ public class FileContentManager implements ContentManager {
         final ScaledImageComponent previewLabel = new ScaledImageComponent();
         final ExecutorService previewImageLoader = Executors.newSingleThreadExecutor();
         final AtomicReference<File> selectedImageFile = new AtomicReference<File>();
-        fileChooser.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, 
+        fileChooser.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY,
             new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent ev) {
                 final File file = (File)ev.getNewValue();
@@ -773,7 +773,7 @@ public class FileContentManager implements ContentManager {
                       public void run() {
                         BufferedImage image = null;
                         try {
-                          // Check the file is the selected image file  
+                          // Check the file is the selected image file
                           if (selectedImageFile.get() == file) {
                             image = ImageIO.read(file);
                           }
@@ -798,7 +798,7 @@ public class FileContentManager implements ContentManager {
                 }
               }
             });
-        fileChooser.addPropertyChangeListener(JFileChooser.DIRECTORY_CHANGED_PROPERTY, 
+        fileChooser.addPropertyChangeListener(JFileChooser.DIRECTORY_CHANGED_PROPERTY,
             new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent ev) {
                 previewLabel.setImage(null);
@@ -808,23 +808,23 @@ public class FileContentManager implements ContentManager {
             });
         previewLabel.addAncestorListener(new AncestorListener() {
             public void ancestorRemoved(AncestorEvent event) {
-              previewImageLoader.shutdownNow(); 
+              previewImageLoader.shutdownNow();
             }
-            
+
             public void ancestorAdded(AncestorEvent event) {
             }
-  
+
             public void ancestorMoved(AncestorEvent event) {
             }
           });
         previewLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(0, OperatingSystem.isMacOSX() ? 0 : 5, 0, OperatingSystem.isMacOSX() ? 5 : 0), 
+            BorderFactory.createEmptyBorder(0, OperatingSystem.isMacOSX() ? 0 : 5, 0, OperatingSystem.isMacOSX() ? 5 : 0),
             BorderFactory.createLineBorder(Color.GRAY)));
-        previewLabel.setPreferredSize(new Dimension(128 + 12, 128 + 2));   
+        previewLabel.setPreferredSize(new Dimension(128 + 12, 128 + 2));
         fileChooser.setAccessory(previewLabel);
       }
     }
-    
+
     if (dialogTitle == null) {
       dialogTitle = getFileDialogTitle(save);
     }
@@ -839,21 +839,21 @@ public class FileContentManager implements ContentManager {
       } else {
         fileChooser.setCurrentDirectory(directory);
       }
-    }    
+    }
     // Set selected file
-    if (save 
+    if (save
         && path != null
         && (directory == null || !isDirectory(contentType))) {
       fileChooser.setSelectedFile(new File(path));
-    }    
-    // Set supported files filter 
+    }
+    // Set supported files filter
     FileFilter acceptAllFileFilter = fileChooser.getAcceptAllFileFilter();
     fileChooser.addChoosableFileFilter(acceptAllFileFilter);
     FileFilter [] contentFileFilters = getFileFilter(contentType);
     for (FileFilter filter : contentFileFilters) {
       fileChooser.addChoosableFileFilter(filter);
     }
-    // If there's only one file filter, select it 
+    // If there's only one file filter, select it
     if (contentFileFilters.length == 1) {
       fileChooser.setFileFilter(contentFileFilters [0]);
     } else {
@@ -867,7 +867,7 @@ public class FileContentManager implements ContentManager {
       option = fileChooser.showSaveDialog((JComponent)parentView);
     } else {
       option = fileChooser.showOpenDialog((JComponent)parentView);
-    }    
+    }
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve last directory for future calls
       if (isDirectory(contentType)) {
@@ -894,9 +894,9 @@ public class FileContentManager implements ContentManager {
       return this.preferences.getLocalizedString(FileContentManager.class, "openDialog.title");
     }
   }
-    
+
   /**
-   * Displays a dialog that let user choose whether he wants to overwrite 
+   * Displays a dialog that let user choose whether he wants to overwrite
    * file <code>path</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
@@ -906,12 +906,12 @@ public class FileContentManager implements ContentManager {
     String title = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.title");
     String replace = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.overwrite");
     String cancel = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.cancel");
-    
-    return JOptionPane.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView), 
+
+    return JOptionPane.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView),
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
-  
+
   /**
    * A file chooser dedicated to directory choice.
    */
@@ -935,18 +935,18 @@ public class FileContentManager implements ContentManager {
                                                         boolean leaf, int row, boolean hasFocus) {
             DirectoryNode node = (DirectoryNode)value;
             File file = (File)node.getUserObject();
-            super.getTreeCellRendererComponent(tree, DirectoryChooser.this.getName(file), 
+            super.getTreeCellRendererComponent(tree, DirectoryChooser.this.getName(file),
                 selected, expanded, leaf, row, hasFocus);
             setIcon(DirectoryChooser.this.getIcon(file));
             if (!node.isWritable()) {
               setForeground(Color.GRAY);
-            } 
+            }
             return this;
           }
         });
       this.treeSelectionListener = new TreeSelectionListener() {
           public void valueChanged(TreeSelectionEvent ev) {
-            TreePath selectionPath = directoriesTree.getSelectionPath();
+            TreePath selectionPath = DirectoryChooser.this.directoriesTree.getSelectionPath();
             if (selectionPath != null) {
               DirectoryNode selectedNode = (DirectoryNode)selectionPath.getLastPathComponent();
               setSelectedFile((File)selectedNode.getUserObject());
@@ -954,28 +954,28 @@ public class FileContentManager implements ContentManager {
           }
         };
       this.directoriesTree.addTreeSelectionListener(this.treeSelectionListener);
-      
+
       this.selectedFileListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             showSelectedFile();
           }
         };
       addPropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, this.selectedFileListener);
-      
+
       this.directoriesTree.addTreeExpansionListener(new TreeExpansionListener() {
           public void treeCollapsed(TreeExpansionEvent ev) {
-            if (ev.getPath().isDescendant(directoriesTree.getSelectionPath())) {
+            if (ev.getPath().isDescendant(DirectoryChooser.this.directoriesTree.getSelectionPath())) {
               // If selected node becomes hidden select not hidden parent
-              removePropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, selectedFileListener);
-              directoriesTree.setSelectionPath(ev.getPath());
-              addPropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, selectedFileListener);
+              removePropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, DirectoryChooser.this.selectedFileListener);
+              DirectoryChooser.this.directoriesTree.setSelectionPath(ev.getPath());
+              addPropertyChangeListener(SELECTED_FILE_CHANGED_PROPERTY, DirectoryChooser.this.selectedFileListener);
             }
           }
-          
+
           public void treeExpanded(TreeExpansionEvent ev) {
           }
         });
-      
+
       // Create an action used to create additional directories
       final String newDirectoryText = UIManager.getString("FileChooser.win32.newFolder");
       this.createDirectoryAction = new AbstractAction(newDirectoryText) {
@@ -985,7 +985,7 @@ public class FileContentManager implements ContentManager {
                 : UIManager.getString("FileChooser.other.newFolder");
             String newDirectoryName = newDirectoryNameBase;
             // Search a new directory name that doesn't exist
-            DirectoryNode parentNode = (DirectoryNode)directoriesTree.getLastSelectedPathComponent();
+            DirectoryNode parentNode = (DirectoryNode)DirectoryChooser.this.directoriesTree.getLastSelectedPathComponent();
             File parentDirectory = (File)parentNode.getUserObject();
             for (int i = 2; new File(parentDirectory, newDirectoryName).exists(); i++) {
               newDirectoryName = newDirectoryNameBase;
@@ -994,27 +994,27 @@ public class FileContentManager implements ContentManager {
               }
               newDirectoryName += i;
             }
-            newDirectoryName = (String)JOptionPane.showInputDialog(DirectoryChooser.this, 
-                preferences.getLocalizedString(FileContentManager.class, "createFolder.message"),                
+            newDirectoryName = (String)JOptionPane.showInputDialog(DirectoryChooser.this,
+                preferences.getLocalizedString(FileContentManager.class, "createFolder.message"),
                 newDirectoryText, JOptionPane.QUESTION_MESSAGE, null, null, newDirectoryName);
             if (newDirectoryName != null) {
               File newDirectory = new File(parentDirectory, newDirectoryName);
               if (!newDirectory.mkdir()) {
                 String newDirectoryErrorText = UIManager.getString("FileChooser.newFolderErrorText");
-                JOptionPane.showMessageDialog(DirectoryChooser.this, 
+                JOptionPane.showMessageDialog(DirectoryChooser.this,
                     newDirectoryErrorText, newDirectoryErrorText, JOptionPane.ERROR_MESSAGE);
               } else {
                 parentNode.updateChildren(parentNode.getChildDirectories());
-                ((DefaultTreeModel)directoriesTree.getModel()).nodeStructureChanged(parentNode);
+                ((DefaultTreeModel)DirectoryChooser.this.directoriesTree.getModel()).nodeStructureChanged(parentNode);
                 setSelectedFile(newDirectory);
               }
             }
           }
         };
-      
+
       setSelectedFile(getFileSystemView().getHomeDirectory());
     }
-    
+
     /**
      * Selects the given directory or its parent if it's a file.
      */
@@ -1025,9 +1025,9 @@ public class FileContentManager implements ContentManager {
       }
       super.setSelectedFile(file);
     }
-    
+
     /**
-     * Shows asynchronously the selected file in the directories tree, 
+     * Shows asynchronously the selected file in the directories tree,
      * filling the parents siblings hierarchy if necessary.
      */
     private void showSelectedFile() {
@@ -1039,16 +1039,16 @@ public class FileContentManager implements ContentManager {
               try {
                 EventQueue.invokeAndWait(new Runnable() {
                     public void run() {
-                      createDirectoryAction.setEnabled(false);
-                      if (directoriesTree.isShowing()) {
-                        directoriesTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                      DirectoryChooser.this.createDirectoryAction.setEnabled(false);
+                      if (DirectoryChooser.this.directoriesTree.isShowing()) {
+                        DirectoryChooser.this.directoriesTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                       }
                     }
                   });
                 File cononicalFile = selectedFile.getCanonicalFile();
                 // Search parents of the selected file
                 List<File> parentsAndFile = new ArrayList<File>();
-                for (File file = cononicalFile; 
+                for (File file = cononicalFile;
                     file != null;
                     file = getFileSystemView().getParentDirectory(file)) {
                   parentsAndFile.add(0, file);
@@ -1058,8 +1058,8 @@ public class FileContentManager implements ContentManager {
                 DirectoryNode node = rootNode;
                 pathToFileNode.add(node);
                 for (final File file : parentsAndFile) {
-                  final File [] childDirectories = node.isLoaded() 
-                      ? null 
+                  final File [] childDirectories = node.isLoaded()
+                      ? null
                       : node.getChildDirectories();
                   // Search in a child of the node has a user object equal to file
                   final DirectoryNode currentNode = node;
@@ -1067,7 +1067,7 @@ public class FileContentManager implements ContentManager {
                       public void run() {
                         if (!currentNode.isLoaded()) {
                           currentNode.updateChildren(childDirectories);
-                          ((DefaultTreeModel)directoriesTree.getModel()).nodeStructureChanged(currentNode);
+                          ((DefaultTreeModel)DirectoryChooser.this.directoriesTree.getModel()).nodeStructureChanged(currentNode);
                         }
                         for (int i = 0, n = currentNode.getChildCount(); i < n; i++) {
                           DirectoryNode child = (DirectoryNode)currentNode.getChildAt(i);
@@ -1084,22 +1084,22 @@ public class FileContentManager implements ContentManager {
                     break;
                   }
                 }
-                  
+
                 if (pathToFileNode.size() > 1) {
                   final TreePath path = new TreePath(pathToFileNode.toArray(new TreeNode [pathToFileNode.size()]));
                   EventQueue.invokeAndWait(new Runnable() {
                       public void run() {
-                        directoriesTree.removeTreeSelectionListener(treeSelectionListener);
-                        directoriesTree.expandPath(path);
-                        directoriesTree.setSelectionPath(path);
-                        directoriesTree.scrollRowToVisible(directoriesTree.getRowForPath(path));
-                        directoriesTree.addTreeSelectionListener(treeSelectionListener);
+                        DirectoryChooser.this.directoriesTree.removeTreeSelectionListener(DirectoryChooser.this.treeSelectionListener);
+                        DirectoryChooser.this.directoriesTree.expandPath(path);
+                        DirectoryChooser.this.directoriesTree.setSelectionPath(path);
+                        DirectoryChooser.this.directoriesTree.scrollRowToVisible(DirectoryChooser.this.directoriesTree.getRowForPath(path));
+                        DirectoryChooser.this.directoriesTree.addTreeSelectionListener(DirectoryChooser.this.treeSelectionListener);
                       }
-                    });                    
+                    });
                 }
-                
+
               } catch (IOException ex) {
-                // Ignore directories that can't be found 
+                // Ignore directories that can't be found
               } catch (InterruptedException ex) {
                 // Give up if interrupted
               } catch (InvocationTargetException ex) {
@@ -1107,9 +1107,9 @@ public class FileContentManager implements ContentManager {
               } finally {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      createDirectoryAction.setEnabled(directoriesTree.getSelectionCount() > 0 
-                          && ((DirectoryNode)directoriesTree.getSelectionPath().getLastPathComponent()).isWritable());
-                      directoriesTree.setCursor(Cursor.getDefaultCursor());
+                      DirectoryChooser.this.createDirectoryAction.setEnabled(DirectoryChooser.this.directoriesTree.getSelectionCount() > 0
+                          && ((DirectoryNode)DirectoryChooser.this.directoriesTree.getSelectionPath().getLastPathComponent()).isWritable());
+                      DirectoryChooser.this.directoriesTree.setCursor(Cursor.getDefaultCursor());
                     }
                   });
               }
@@ -1130,8 +1130,8 @@ public class FileContentManager implements ContentManager {
         options = new Object [] {createDirectoryButton, approveButton, cancelOption};
       }
       // Display chooser in a resizable dialog
-      final JOptionPane optionPane = new JOptionPane(SwingTools.createScrollPane(this.directoriesTree), 
-          JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, options, approveButton); 
+      final JOptionPane optionPane = new JOptionPane(SwingTools.createScrollPane(this.directoriesTree),
+          JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, options, approveButton);
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), getDialogTitle());
       dialog.setResizable(true);
       dialog.pack();
@@ -1139,15 +1139,15 @@ public class FileContentManager implements ContentManager {
         this.directoriesTree.scrollPathToVisible(this.directoriesTree.getSelectionPath());
         boolean validDirectory = ((DirectoryNode)this.directoriesTree.getSelectionPath().getLastPathComponent()).isWritable();
         approveButton.setEnabled(validDirectory);
-        createDirectoryAction.setEnabled(validDirectory);
+        this.createDirectoryAction.setEnabled(validDirectory);
       }
       this.directoriesTree.addTreeSelectionListener(new TreeSelectionListener() {
           public void valueChanged(TreeSelectionEvent ev) {
             TreePath selectedPath = ev.getPath();
-            boolean validDirectory = selectedPath != null 
+            boolean validDirectory = selectedPath != null
                 && ((DirectoryNode)ev.getPath().getLastPathComponent()).isWritable();
             approveButton.setEnabled(validDirectory);
-            createDirectoryAction.setEnabled(validDirectory); 
+            DirectoryChooser.this.createDirectoryAction.setEnabled(validDirectory);
           }
         });
       approveButton.addActionListener(new ActionListener() {
@@ -1167,7 +1167,7 @@ public class FileContentManager implements ContentManager {
     }
 
     /**
-     * Directory nodes which children are loaded when needed. 
+     * Directory nodes which children are loaded when needed.
      */
     private class DirectoryNode extends DefaultMutableTreeNode {
       private boolean loaded;
@@ -1185,7 +1185,7 @@ public class FileContentManager implements ContentManager {
       public boolean isWritable() {
         return this.writable;
       }
-      
+
       @Override
       public int getChildCount() {
         if (!this.loaded) {
@@ -1212,15 +1212,15 @@ public class FileContentManager implements ContentManager {
           return new File [0];
         }
       }
-      
+
       public boolean isLoaded() {
         return this.loaded;
       }
 
       public int updateChildren(File [] childDirectories) {
         if (this.children == null) {
-          this.children = new Vector<File>(childDirectories.length); 
-        }          
+          this.children = new Vector<TreeNode>(childDirectories.length);
+        }
         synchronized (this.children) {
           removeAllChildren();
           for (File childFile : childDirectories) {
