@@ -1,0 +1,298 @@
+# mannequin.mtl
+#
+# Sweet Home 3D, Copyright (c) 2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
+#
+# This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
+# available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
+# as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
+#
+
+newmtl Abdomen
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl Chest
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl Head
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftAnkle
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftArm
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftElbow
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftFoot
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftForearm
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftHand
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftHip
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftKnee
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftLeg
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftShoulder
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftThigh
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl LeftWrist
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl Neck
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl Pelvis
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightAnkle
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightArm
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightElbow
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightFoot
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightForearm
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightHand
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightHip
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightKnee
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightLeg
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightShoulder
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightThigh
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl RightWrist
+Ns 0.0
+Ka 0.8 0.8 0.8
+Kd 0.744089 0.602354 0.402309
+Ks 0.0 0.0 0.0
+Ke 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
