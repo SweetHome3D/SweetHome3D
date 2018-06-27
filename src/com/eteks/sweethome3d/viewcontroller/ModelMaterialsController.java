@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeMaterial;
+import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -38,7 +39,7 @@ public class ModelMaterialsController implements Controller {
   private final String                title;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
-  private final ContentManager        contentManager;  
+  private final ContentManager        contentManager;
   private final PropertyChangeSupport propertyChangeSupport;
   private View                        materialsChoiceView;
 
@@ -50,10 +51,11 @@ public class ModelMaterialsController implements Controller {
   private float                       modelDepth;
   private float                       modelHeight;
   private float [][]                  modelRotation;
+  private Transformation []           modelTransformations;
   private boolean                     backFaceShown;
   private HomeMaterial []             materials;
 
-  public ModelMaterialsController(String title, 
+  public ModelMaterialsController(String title,
                                   UserPreferences preferences,
                                   ViewFactory    viewFactory,
                                   ContentManager contentManager) {
@@ -90,7 +92,7 @@ public class ModelMaterialsController implements Controller {
   }
 
   /**
-   * Sets the 3D model which materials are displayed by the view 
+   * Sets the 3D model which materials are displayed by the view
    * and fires a <code>PropertyChangeEvent</code>.
    */
   public void setModel(Content model) {
@@ -100,7 +102,7 @@ public class ModelMaterialsController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.MODEL.name(), oldModel, model);
     }
   }
-  
+
   /**
    * Returns the 3D model which materials are displayed by the view.
    */
@@ -121,19 +123,33 @@ public class ModelMaterialsController implements Controller {
   public String getModelCreator() {
     return this.modelCreator;
   }
-  
+
   /**
    * Sets the rotation of the 3D model used to preview materials change.
    */
   void setModelRotation(float [][] modelRotation) {
     this.modelRotation = modelRotation;
   }
-  
+
   /**
    * Returns the rotation of the 3D model used to preview materials change.
    */
   public float [][] getModelRotation() {
     return this.modelRotation;
+  }
+
+  /**
+   * Sets the transformations of the 3D model used to preview materials change.
+   */
+  void setModelTransformations(Transformation [] modelTransformations) {
+    this.modelTransformations = modelTransformations;
+  }
+
+  /**
+   * Returns the transformations of the 3D model used to preview materials change.
+   */
+  public Transformation [] getModelTransformations() {
+    return this.modelTransformations;
   }
 
   /**
@@ -144,28 +160,28 @@ public class ModelMaterialsController implements Controller {
     this.modelDepth = depth;
     this.modelHeight = height;
   }
-  
+
   /**
    * Returns the width of the 3D model used to preview materials change.
    */
   public float getModelWidth() {
     return this.modelWidth;
   }
-  
+
   /**
    * Returns the depth of the 3D model used to preview materials change.
    */
   public float getModelDepth() {
     return this.modelDepth;
   }
-  
+
   /**
    * Returns the height of the 3D model used to preview materials change.
    */
   public float getModelHeight() {
     return this.modelHeight;
   }
-  
+
   /**
    * Sets whether the 3D model used to preview materials change should show back face.
    */
@@ -179,7 +195,7 @@ public class ModelMaterialsController implements Controller {
   public boolean isBackFaceShown() {
     return this.backFaceShown;
   }
-  
+
   /**
    * Sets the materials displayed by view and fires a <code>PropertyChangeEvent</code>.
    */
@@ -190,7 +206,7 @@ public class ModelMaterialsController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.MATERIALS.name(), oldMaterials, materials);
     }
   }
-  
+
   /**
    * Returns the materials displayed by view.
    */
@@ -204,7 +220,7 @@ public class ModelMaterialsController implements Controller {
   public String getDialogTitle() {
     return this.title;
   }
-  
+
   /**
    * Returns the texture controller of the model materials.
    */
@@ -213,7 +229,7 @@ public class ModelMaterialsController implements Controller {
     if (this.textureController == null
         && this.contentManager != null) {
       this.textureController = new TextureChoiceController(
-          this.preferences.getLocalizedString(ModelMaterialsController.class, "textureTitle"), 
+          this.preferences.getLocalizedString(ModelMaterialsController.class, "textureTitle"),
           this.preferences, this.viewFactory, this.contentManager);
     }
     return this.textureController;

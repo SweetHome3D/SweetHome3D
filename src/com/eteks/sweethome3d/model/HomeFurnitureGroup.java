@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private static final long serialVersionUID = 1L;
-  
+
   private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
   private List<HomePieceOfFurniture> furniture;
@@ -51,7 +51,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private float                      fixedWidth;
   private float                      fixedDepth;
   private float                      fixedHeight;
-  private float                      dropOnTopElevation; 
+  private float                      dropOnTopElevation;
   private String                     currency;
   // Fields removed in version 5.2
   // private List<Integer>           furnitureDefaultColors;
@@ -60,7 +60,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private transient PropertyChangeListener furnitureListener;
 
   /**
-   * Creates a group from the given <code>furniture</code> list. 
+   * Creates a group from the given <code>furniture</code> list.
    * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
    * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
    */
@@ -68,9 +68,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
                             String name) {
     this(furniture, furniture.get(0), name);
   }
-  
+
   /**
-   * Creates a group from the given <code>furniture</code> list. 
+   * Creates a group from the given <code>furniture</code> list.
    * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
    * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
    * The angle of the group is the one of the leading piece.
@@ -81,9 +81,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
                             String name) {
     this(furniture, leadingPiece.getAngle(), false, name);
   }
-  
+
   /**
-   * Creates a group from the given <code>furniture</code> list. 
+   * Creates a group from the given <code>furniture</code> list.
    * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
    * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
    * @since 5.2
@@ -92,18 +92,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
                             float angle, boolean modelMirrored,
                             String name) {
     super(furniture.get(0));
-    this.furniture = Collections.unmodifiableList(furniture); 
+    this.furniture = Collections.unmodifiableList(furniture);
     this.resizable = true;
     this.deformable = true;
     this.texturable = true;
-    
+
     boolean movable = true;
     boolean visible = false;
     for (HomePieceOfFurniture piece : furniture) {
       movable &= piece.isMovable();
       visible |= piece.isVisible();
     }
-    
+
     setName(name);
     setNameVisible(false);
     setNameXOffset(0);
@@ -114,14 +114,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super.setAngle(angle);
     super.setModelMirrored(modelMirrored);
     setVisible(visible);
-   
+
     updateLocationAndSize(furniture, angle, true);
 
     addFurnitureListener();
   }
 
   /**
-   * Initializes new piece fields to their default values 
+   * Initializes new piece fields to their default values
    * and reads piece from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -152,7 +152,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       if (this.currency != null) {
         if (piece.getCurrency() == null
             || !piece.getCurrency().equals(this.currency)) {
-          this.currency = null; 
+          this.currency = null;
         }
       }
     }
@@ -163,7 +163,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       Level minLevel = null;
       for (HomePieceOfFurniture piece : furniture) {
         Level level = piece.getLevel();
-        if (level != null 
+        if (level != null
             && (minLevel == null
                 || level.getElevation() < minLevel.getElevation())) {
           minLevel = level;
@@ -190,7 +190,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     for (HomePieceOfFurniture piece : furniture) {
       height = Math.max(height, piece.getElevation() + piece.getHeightInPlan());
       if (piece.getDropOnTopElevation() >= 0) {
-        dropOnTopElevation = Math.max(dropOnTopElevation, 
+        dropOnTopElevation = Math.max(dropOnTopElevation,
             piece.getElevation() + piece.getHeightInPlan() * piece.getDropOnTopElevation());
       }
     }
@@ -238,30 +238,30 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super.setY((float)center.getY());
     super.setElevation(elevation);
   }
-  
+
   /**
-   * Adds a listener to the furniture of this group that will update the size and location 
-   * of the group when its furniture is moved or resized. 
+   * Adds a listener to the furniture of this group that will update the size and location
+   * of the group when its furniture is moved or resized.
    */
   private void addFurnitureListener() {
     this.furnitureListener = new LocationAndSizeChangeListener(this);
     for (HomePieceOfFurniture piece : this.furniture) {
       piece.addPropertyChangeListener(this.furnitureListener);
-    }    
+    }
   }
 
   /**
-   * Properties listener that updates the size and location of this group. 
-   * This listener is bound to this group with a weak reference to avoid a strong link 
-   * of this group towards the furniture it contains.  
+   * Properties listener that updates the size and location of this group.
+   * This listener is bound to this group with a weak reference to avoid a strong link
+   * of this group towards the furniture it contains.
    */
-  private static class LocationAndSizeChangeListener implements PropertyChangeListener { 
+  private static class LocationAndSizeChangeListener implements PropertyChangeListener {
     private WeakReference<HomeFurnitureGroup> group;
-    
+
     public LocationAndSizeChangeListener(HomeFurnitureGroup group) {
       this.group = new WeakReference<HomeFurnitureGroup>(group);
     }
-    
+
     public void propertyChange(PropertyChangeEvent ev) {
       // If the group was garbage collected, remove this listener from furniture
       final HomeFurnitureGroup group = this.group.get();
@@ -280,7 +280,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
-   * Returns all the pieces of the given <code>furniture</code> list.  
+   * Returns all the pieces of the given <code>furniture</code> list.
    */
   private List<HomePieceOfFurniture> getFurnitureWithoutGroups(List<HomePieceOfFurniture> furniture) {
     List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
@@ -293,9 +293,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     return pieces;
   }
-  
+
   /**
-   * Returns the furniture of this group and of all its subgroups.  
+   * Returns the furniture of this group and of all its subgroups.
    * @since 5.0
    */
   public List<HomePieceOfFurniture> getAllFurniture() {
@@ -303,18 +303,18 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     for (HomePieceOfFurniture piece : getFurniture()) {
       if (piece instanceof HomeFurnitureGroup) {
         pieces.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
-      } 
+      }
     }
     return pieces;
   }
-  
+
   /**
    * Returns an unmodifiable list of the furniture of this group.
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
   }
-  
+
   /**
    * Adds the <code>piece</code> in parameter at the given <code>index</code>.
    */
@@ -363,7 +363,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public String getInformation() {
     return null;
   }
-  
+
   /**
    * Returns <code>true</code> if this group is movable.
    */
@@ -371,7 +371,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isMovable() {
     return super.isMovable();
   }
-  
+
   /**
    * Sets whether this group is movable or not.
    * @since 3.1
@@ -396,7 +396,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isResizable() {
     return this.resizable;
   }
-  
+
   /**
    * Returns <code>true</code> if all furniture of this group are deformable.
    * @since 3.0
@@ -405,7 +405,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isDeformable() {
     return this.deformable;
   }
-  
+
   /**
    * Returns <code>true</code> if all furniture of this group are texturable.
    * @since 3.5
@@ -414,7 +414,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isTexturable() {
     return this.texturable;
   }
-  
+
   /**
    * Returns <code>false</code>.
    * @since 5.5
@@ -423,7 +423,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isHorizontallyRotatable() {
     return false;
   }
-  
+
   /**
    * Returns the width of this group.
    */
@@ -435,9 +435,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       return super.getWidth();
     }
   }
-  
+
   /**
-   * Returns the width of this group. As a group can't be rotated around an horizontal axis, 
+   * Returns the width of this group. As a group can't be rotated around an horizontal axis,
    * its width in the horizontal plan is equal to its width.
    * @since 5.5
    */
@@ -457,9 +457,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       return super.getDepth();
     }
   }
-  
+
   /**
-   * Returns the depth of this group. As a group can't be rotated around an horizontal axis, 
+   * Returns the depth of this group. As a group can't be rotated around an horizontal axis,
    * its depth in the horizontal plan is equal to its depth.
    * @since 5.5
    */
@@ -467,7 +467,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public float getDepthInPlan() {
     return getDepth();
   }
-  
+
   /**
    * Returns the height of this group.
    */
@@ -481,7 +481,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
-   * Returns the height of this group. As a group can't be rotated around an horizontal axis, 
+   * Returns the height of this group. As a group can't be rotated around an horizontal axis,
    * its height in the horizontal plan is equal to its height.
    * @since 5.5
    */
@@ -510,13 +510,13 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Returns the elevation at which should be placed an object dropped on this group.
-   * @since 4.4 
+   * @since 4.4
    */
   @Override
   public float getDropOnTopElevation() {
     return this.dropOnTopElevation;
   }
-  
+
   /**
    * Returns <code>null</code>.
    */
@@ -539,7 +539,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public Content getModel() {
     return null;
   }
-  
+
   /**
    * @throws IllegalStateException
    */
@@ -547,7 +547,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setModelSize(Long modelSize) {
     throw new IllegalStateException("Can't set model size of a group");
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 5.5
@@ -556,7 +556,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public Long getModelSize() {
     return null;
   }
-  
+
   /**
    * Returns an identity matrix.
    */
@@ -564,7 +564,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public float [][] getModelRotation() {
     return IDENTITY;
   }
-  
+
   /**
    * Returns <code>true</code>.
    * @since 5.5
@@ -575,6 +575,27 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Returns <code>null</code>.
+   * @since 6.0
+   */
+  @Override
+  public Transformation [] getModelTransformations() {
+    return null;
+  }
+
+  /**
+   * Sets the transformations of this group.
+   */
+  @Override
+  public void setModelTransformations(Transformation [] modelTransformations) {
+    if (isDeformable()) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setModelTransformations(modelTransformations);
+      }
+    }
+  }
+
+  /**
    * Returns 0.
    * @since 5.5
    */
@@ -582,7 +603,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public float getPitch() {
     return 0;
   }
-  
+
   /**
    * Returns 0.
    * @since 5.5
@@ -591,7 +612,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public float getRoll() {
     return 0;
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 3.5
@@ -600,7 +621,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public String getStaircaseCutOutShape() {
     return null;
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 4.2
@@ -609,7 +630,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public String getCreator() {
     return null;
   }
-  
+
   /**
    * Returns the price of the furniture of this group with a price.
    */
@@ -621,7 +642,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         if (price == null) {
           price = piece.getPrice();
         } else {
-          price = price.add(piece.getPrice()); 
+          price = price.add(piece.getPrice());
         }
       }
     }
@@ -646,10 +667,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     super.setPrice(price);
   }
-  
+
   /**
-   * Returns the VAT percentage of the furniture of this group 
-   * or <code>null</code> if one piece has no VAT percentage 
+   * Returns the VAT percentage of the furniture of this group
+   * or <code>null</code> if one piece has no VAT percentage
    * or has a VAT percentage different from the other furniture.
    */
   @Override
@@ -660,16 +681,16 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         BigDecimal pieceValueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
         if (pieceValueAddedTaxPercentage == null
             || !pieceValueAddedTaxPercentage.equals(valueAddedTaxPercentage)) {
-          return null; 
+          return null;
         }
       }
     }
     return valueAddedTaxPercentage;
   }
-  
+
   /**
-   * Returns the currency of the furniture of this group 
-   * or <code>null</code> if one piece has no currency 
+   * Returns the currency of the furniture of this group
+   * or <code>null</code> if one piece has no currency
    * or has a currency different from the other furniture.
    * @since 3.5
    */
@@ -677,7 +698,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public String getCurrency() {
     return this.currency;
   }
-  
+
   /**
    * Returns the VAT of the furniture of this group.
    */
@@ -696,7 +717,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     return valueAddedTax;
   }
-  
+
   /**
    * Returns the total price of the furniture of this group.
    */
@@ -714,7 +735,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     return priceValueAddedTaxIncluded;
   }
-  
+
   /**
    * Returns <code>false</code>.
    */
@@ -722,7 +743,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public boolean isBackFaceShown() {
     return false;
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 5.2
@@ -731,7 +752,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public Integer getColor() {
     return null;
   }
-  
+
   /**
    * Sets the <code>color</code> of the furniture of this group.
    */
@@ -741,7 +762,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.setColor(color);
       }
-    } 
+    }
   }
 
   /**
@@ -752,7 +773,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public HomeTexture getTexture() {
     return null;
   }
-  
+
   /**
    * Sets the <code>texture</code> of the furniture of this group.
    */
@@ -762,9 +783,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.setTexture(texture);
       }
-    } 
+    }
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 5.2
@@ -783,9 +804,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.setModelMaterials(modelMaterials);
       }
-    } 
+    }
   }
-  
+
   /**
    * Returns <code>null</code>.
    * @since 5.2
@@ -793,7 +814,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public Float getShininess() {
     return null;
   }
-  
+
   /**
    * Sets the shininess of the furniture of this group.
    * @since 5.2
@@ -803,7 +824,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.setShininess(shininess);
       }
-    } 
+    }
   }
 
   /**
@@ -817,7 +838,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       double sinAngleDelta = Math.sin(angleDelta);
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.removePropertyChangeListener(this.furnitureListener);
-        piece.setAngle(piece.getAngle() + angleDelta);     
+        piece.setAngle(piece.getAngle() + angleDelta);
         float newX = getX() + (float)((piece.getX() - getX()) * cosAngleDelta - (piece.getY() - getY()) * sinAngleDelta);
         float newY = getY() + (float)((piece.getX() - getX()) * sinAngleDelta + (piece.getY() - getY()) * cosAngleDelta);
         piece.setX(newX);
@@ -827,7 +848,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setAngle(angle);
     }
   }
-  
+
   /**
    * Sets the <code>abscissa</code> of this group and moves its furniture accordingly.
    */
@@ -882,7 +903,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         float newX = getX() + (float)((piece.getX() - getX()) * cosAngle + (piece.getY() - getY()) * sinAngle);
         float newY = getY() + (float)((piece.getX() - getX()) * -sinAngle + (piece.getY() - getY()) * cosAngle);
         // Update its abscissa
-        newX = getX() + (newX - getX()) * widthFactor; 
+        newX = getX() + (newX - getX()) * widthFactor;
         // Rotate piece back to its angle
         piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
         piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
@@ -891,7 +912,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setWidth(width);
     }
   }
-  
+
   /**
    * Sets the <code>depth</code> of this group, then moves and resizes its furniture accordingly.
    * This method shouldn't be called on a group that contain furniture rotated around an horizontal axis.
@@ -935,7 +956,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.removePropertyChangeListener(this.furnitureListener);
         piece.setHeight(piece.getHeight() * heightFactor);
-        piece.setElevation(getElevation() 
+        piece.setElevation(getElevation()
             + (piece.getElevation() - getElevation()) * heightFactor);
         piece.addPropertyChangeListener(this.furnitureListener);
       }
@@ -961,7 +982,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       float newX = getX() + (float)((piece.getX() - getX()) * cosAngle + (piece.getY() - getY()) * sinAngle);
       float newY = getY() + (float)((piece.getX() - getX()) * -sinAngle + (piece.getY() - getY()) * cosAngle);
       // Update its coordinates
-      newX = getX() + (newX - getX()) * scale; 
+      newX = getX() + (newX - getX()) * scale;
       newY = getY() + (newY - getY()) * scale;
       // Rotate piece back to its angle
       piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
@@ -989,7 +1010,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setElevation(elevation);
     }
   }
-  
+
   /**
    * Sets whether the furniture of this group should be mirrored or not.
    */
@@ -1006,7 +1027,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
         float newX = getX() + (float)((piece.getX() - getX()) * cosAngle + (piece.getY() - getY()) * sinAngle);
         float newY = getY() + (float)((piece.getX() - getX()) * -sinAngle + (piece.getY() - getY()) * cosAngle);
         // Update its abscissa
-        newX = getX() - (newX - getX()); 
+        newX = getX() - (newX - getX());
         // Rotate piece back to its angle
         piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
         piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
@@ -1015,7 +1036,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       super.setModelMirrored(modelMirrored);
     }
   }
-  
+
   /**
    * Sets whether the furniture of this group should be visible or not.
    */
@@ -1037,7 +1058,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     super.setLevel(level);
   }
-  
+
   /**
    * Returns <code>true</code> if one of the pieces of this group intersects
    * with the horizontal rectangle which opposite corners are at points
@@ -1045,7 +1066,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    * @since 3.5
    */
   @Override
-  public boolean intersectsRectangle(float x0, float y0, 
+  public boolean intersectsRectangle(float x0, float y0,
                                      float x1, float y1) {
     for (HomePieceOfFurniture piece : this.furniture) {
       if (piece.intersectsRectangle(x0, y0, x1, y1)) {
@@ -1054,9 +1075,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     return false;
   }
-  
+
   /**
-   * Returns <code>true</code> if one of the pieces of this group contains 
+   * Returns <code>true</code> if one of the pieces of this group contains
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    * @since 3.5
@@ -1070,7 +1091,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     return false;
   }
-  
+
   /**
    * Returns a clone of this group with cloned furniture.
    */

@@ -64,6 +64,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -244,13 +245,13 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       depthInPlan CDATA #IMPLIED
  *       heightInPlan CDATA #IMPLIED'>
  *
- * &lt;!ELEMENT pieceOfFurniture (property*, textStyle?, texture?, material*)>
+ * &lt;!ELEMENT pieceOfFurniture (property*, textStyle?, texture?, material*, transformation*)>
  * &lt;!ATTLIST pieceOfFurniture
  *       %furnitureCommonAttributes;
  *       %pieceOfFurnitureCommonAttributes;
  *       %pieceOfFurnitureHorizontalRotationAttributes;>
  *
- * &lt;!ELEMENT doorOrWindow (sash*, property*, textStyle?, texture?, material*)>
+ * &lt;!ELEMENT doorOrWindow (sash*, property*, textStyle?, texture?, material*, transformation*)>
  * &lt;!ATTLIST doorOrWindow
  *       %furnitureCommonAttributes;
  *       %pieceOfFurnitureCommonAttributes;
@@ -269,7 +270,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       startAngle CDATA #REQUIRED
  *       endAngle CDATA #REQUIRED>
  *
- * &lt;!ELEMENT light (lightSource*, property*, textStyle?, texture?, material*)>
+ * &lt;!ELEMENT light (lightSource*, property*, textStyle?, texture?, material*, transformation*)>
  * &lt;!ATTLIST light
  *       %furnitureCommonAttributes;
  *       %pieceOfFurnitureCommonAttributes;
@@ -311,6 +312,11 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       key CDATA #IMPLIED
  *       color CDATA #IMPLIED
  *       shininess CDATA #IMPLIED>
+ *
+ * &lt;!ELEMENT transformation EMPTY>
+ * &lt;!ATTLIST transformation
+ *       name CDATA #REQUIRED
+ *       matrix CDATA #REQUIRED>
  *
  * &lt;!ELEMENT wall (property*, texture?, texture?, baseboard?, baseboard?)>
  * &lt;!ATTLIST wall
@@ -424,7 +430,8 @@ public class HomeXMLHandler extends DefaultHandler {
   private final Map<String, String> properties = new HashMap<String, String>();
   private final Map<String, TextStyle>    textStyles = new HashMap<String, TextStyle>();
   private final Map<String, HomeTexture>  textures = new HashMap<String, HomeTexture>();
-  private final List<HomeMaterial> materials = new ArrayList<HomeMaterial>();
+  private final List<HomeMaterial>        materials = new ArrayList<HomeMaterial>();
+  private final List<Transformation>      transformations = new ArrayList<Transformation>();
   private HomeTexture materialTexture;
   private final List<Sash>         sashes = new ArrayList<Sash>();
   private final List<LightSource>  lightSources = new ArrayList<LightSource>();
@@ -488,6 +495,7 @@ public class HomeXMLHandler extends DefaultHandler {
       this.textStyles.clear();
       this.textures.clear();
       this.materials.clear();
+      this.transformations.clear();
       this.sashes.clear();
       this.lightSources.clear();
       if ("furnitureGroup".equals(name)) {
@@ -666,6 +674,37 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("material".equals(name)) {
       this.materials.add(createMaterial(name, attributesMap));
+    } else if ("transformation".equals(name)) {
+      String matrixAttribute = attributesMap.get("matrix");
+      if (matrixAttribute == null) {
+        throw new SAXException("Missing attribute matrix");
+      } else {
+        String [] values = matrixAttribute.split(" ", 12);
+        if (values.length < 12) {
+          throw new SAXException("Missing values for attribute matrix");
+        }
+        try {
+          float [][] matrix = new float [][] {
+              {Float.parseFloat(values [0]),
+               Float.parseFloat(values [1]),
+               Float.parseFloat(values [2]),
+               Float.parseFloat(values [3])},
+              {Float.parseFloat(values [4]),
+               Float.parseFloat(values [5]),
+               Float.parseFloat(values [6]),
+               Float.parseFloat(values [7])},
+              {Float.parseFloat(values [8]),
+               Float.parseFloat(values [9]),
+               Float.parseFloat(values [10]),
+               Float.parseFloat(values [11])}};
+          Transformation transformation = new Transformation(
+              attributesMap.get("name"),
+              matrix);
+          this.transformations.add((Transformation)resolveObject(transformation, name, attributesMap));
+        } catch (NumberFormatException ex) {
+          throw new SAXException("Invalid value for attribute matrix", ex);
+        }
+      }
     } else if ("point".equals(name)) {
       this.points.add(new float [] {
           parseFloat(attributesMap, "x"),
@@ -1283,6 +1322,11 @@ public class HomeXMLHandler extends DefaultHandler {
         Float shininess = parseOptionalFloat(attributes, "shininess");
         if (shininess != null) {
           piece.setShininess(shininess);
+        }
+      }
+      if (piece.isDeformable()) {
+        if (this.transformations.size() > 0) {
+          piece.setModelTransformations(this.transformations.toArray(new Transformation [this.transformations.size()]));
         }
       }
 

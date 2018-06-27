@@ -103,13 +103,13 @@ public class ModelMaterialsComponent extends JButton implements View {
         }
       });
   }
-  
+
   /**
-   * A panel that displays available textures in a list to let user make choose one. 
+   * A panel that displays available textures in a list to let user make choose one.
    */
   private static class ModelMaterialsPanel extends JPanel {
     private final ModelMaterialsController controller;
-    
+
     private JLabel                 previewLabel;
     private ModelPreviewComponent  previewComponent;
     private JLabel                 materialsLabel;
@@ -125,7 +125,7 @@ public class ModelMaterialsComponent extends JButton implements View {
     private JSlider                shininessSlider;
     private PropertyChangeListener textureChangeListener;
 
-    public ModelMaterialsPanel(UserPreferences preferences, 
+    public ModelMaterialsPanel(UserPreferences preferences,
                                ModelMaterialsController controller) {
       super(new GridBagLayout());
       this.controller = controller;
@@ -133,19 +133,19 @@ public class ModelMaterialsComponent extends JButton implements View {
       setMnemonics(preferences);
       layoutComponents();
     }
-  
+
     /**
      * Creates and initializes components.
      */
-    private void createComponents(final UserPreferences preferences, 
+    private void createComponents(final UserPreferences preferences,
                                   final ModelMaterialsController controller) {
-      this.materialsLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+      this.materialsLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "materialsLabel.text"));
       this.materialsList = new JList(new MaterialsListModel(controller));
       this.materialsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.materialsList.setCellRenderer(new MaterialListCellRenderer());
-      
-      this.previewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+
+      this.previewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "previewLabel.text"));
       this.previewComponent = new ModelPreviewComponent(true);
       this.previewComponent.setFocusable(false);
@@ -155,27 +155,28 @@ public class ModelMaterialsComponent extends JButton implements View {
             previewComponent.setModel(controller.getModel(), controller.isBackFaceShown(), controller.getModelRotation(),
                 controller.getModelWidth(), controller.getModelDepth(), controller.getModelHeight());
             previewComponent.setModelMaterials(materialsListModel.getMaterials());
+            previewComponent.setModelTranformations(controller.getModelTransformations());
             materialsListModel.addListDataListener(new ListDataListener() {
                 public void contentsChanged(ListDataEvent ev) {
                   previewComponent.setModelMaterials(materialsListModel.getMaterials());
                 }
-                
+
                 public void intervalRemoved(ListDataEvent ev) {
                 }
-                
+
                 public void intervalAdded(ListDataEvent ev) {
                 }
               });
           }
-  
+
           public void modelError(Exception ex) {
             // Should happen only if model is missing
-            previewLabel.setVisible(false); 
+            previewLabel.setVisible(false);
             previewComponent.setVisible(false);
           }
         });
-      
-      this.colorAndTextureLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+
+      this.colorAndTextureLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "colorAndTextureLabel.text"));
 
       // Create color and texture image radio buttons properties
@@ -207,7 +208,7 @@ public class ModelMaterialsComponent extends JButton implements View {
         };
       this.invisibleRadioButton.addChangeListener(invisibleChoiceChangeListener);
 
-      this.colorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+      this.colorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "colorRadioButton.text"));
       final ChangeListener colorChoiceChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
@@ -238,7 +239,7 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         };
       this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, colorChangeListener);
-      
+
       final TextureChoiceController textureController = controller.getTextureController();
       this.textureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "textureRadioButton.text"));
@@ -270,14 +271,14 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         };
       // Listener added and removed in displayView()
-        
+
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(this.defaultColorAndTextureRadioButton);
       buttonGroup.add(this.invisibleRadioButton);
       buttonGroup.add(this.colorRadioButton);
       buttonGroup.add(this.textureRadioButton);
-      
-      this.shininessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+
+      this.shininessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           ModelMaterialsComponent.class, "shininessLabel.text"));
       this.shininessSlider = new JSlider(0, 128);
       JLabel mattLabel = new JLabel(preferences.getLocalizedString(
@@ -316,8 +317,8 @@ public class ModelMaterialsComponent extends JButton implements View {
                   textureController.removePropertyChangeListener(TextureChoiceController.Property.TEXTURE, textureChangeListener);
                 }
                 shininessSlider.removeChangeListener(shininessChangeListener);
-                
-                HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();              
+
+                HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
                 HomeTexture texture = material.getTexture();
                 Integer color = material.getColor();
                 Float shininess = material.getShininess();
@@ -358,14 +359,14 @@ public class ModelMaterialsComponent extends JButton implements View {
                   colorRadioButton.setSelected(true);
                   textureController.setTexture(null);
                   colorButton.setColor(color);
-                }         
+                }
 
                 if (shininess != null) {
                   shininessSlider.setValue((int)(shininess * 128));
                 } else {
                   shininessSlider.setValue((int)(defaultMaterial.getShininess() * 128));
                 }
-                
+
                 defaultColorAndTextureRadioButton.addChangeListener(defaultChoiceChangeListener);
                 invisibleRadioButton.addChangeListener(invisibleChoiceChangeListener);
                 colorRadioButton.addChangeListener(colorChoiceChangeListener);
@@ -379,7 +380,7 @@ public class ModelMaterialsComponent extends JButton implements View {
               enableComponents();
             }
           });
-      
+
       this.materialsList.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent ev) {
@@ -398,52 +399,52 @@ public class ModelMaterialsComponent extends JButton implements View {
       if (this.materialsList.getModel().getSize() > 0) {
         this.materialsList.setSelectedIndex(0);
       } else {
-        // Add a listener that will select first row as soon as the list contains some data      
+        // Add a listener that will select first row as soon as the list contains some data
         this.materialsList.getModel().addListDataListener(new ListDataListener() {
-            public void intervalAdded(ListDataEvent ev) {     
+            public void intervalAdded(ListDataEvent ev) {
               materialsList.setSelectedIndex(0);
               ((ListModel)ev.getSource()).removeListDataListener(this);
             }
-            
+
             public void contentsChanged(ListDataEvent ev) {
               intervalAdded(ev);
             }
-            
+
             public void intervalRemoved(ListDataEvent ev) {
-            }          
+            }
           });
       }
 
       enableComponents();
     }
-  
+
     /**
-     * Renderer used to display the materials in list. 
+     * Renderer used to display the materials in list.
      */
     private class MaterialListCellRenderer extends DefaultListCellRenderer {
       private Font defaultFont;
       private Icon emptyIcon = new Icon() {
           public void paintIcon(Component c, Graphics g, int x, int y) {
           }
-  
+
           public int getIconHeight() {
             return defaultFont.getSize();
           }
-    
+
           public int getIconWidth() {
             return getIconHeight();
           }
         };
-      
+
       @Override
-      public Component getListCellRendererComponent(final JList list, Object value, int index, 
+      public Component getListCellRendererComponent(final JList list, Object value, int index,
                                                     boolean isSelected, boolean cellHasFocus) {
         // Initialize fonts if not done
         if (this.defaultFont == null) {
           this.defaultFont = getFont();
         }
         HomeMaterial material = (HomeMaterial)value;
-        super.getListCellRendererComponent(list, material.getName(), index, isSelected, cellHasFocus);        
+        super.getListCellRendererComponent(list, material.getName(), index, isSelected, cellHasFocus);
         HomeTexture materialTexture = material.getTexture();
         Integer materialColor = material.getColor();
         HomeMaterial defaultMaterial = ((MaterialsListModel)materialsList.getModel()).getDefaultMaterialAt(index);
@@ -454,17 +455,17 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         }
         if (materialTexture != null) {
-          // Display material texture image with an icon  
+          // Display material texture image with an icon
           final HomeTexture texture = materialTexture;
           setIcon(new Icon() {
               public int getIconHeight() {
                 return defaultFont.getSize();
               }
-        
+
               public int getIconWidth() {
                 return getIconHeight();
               }
-              
+
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 Icon icon = IconManager.getInstance().getIcon(texture.getImage(), getIconHeight(), list);
                 if (icon.getIconWidth() != icon.getIconHeight()) {
@@ -478,23 +479,23 @@ public class ModelMaterialsComponent extends JButton implements View {
                   icon.paintIcon(c, g, x, y);
                 }
               }
-            });          
-        } else if (materialColor != null 
+            });
+        } else if (materialColor != null
                    && (materialColor.intValue() & 0xFF000000) != 0) {
-          // Display material color with an icon  
+          // Display material color with an icon
           final Color color = new Color(materialColor);
           setIcon(new Icon () {
               public int getIconHeight() {
                 return getFont().getSize();
               }
-      
+
               public int getIconWidth() {
                 return getIconHeight();
               }
-      
+
               public void paintIcon(Component c, Graphics g, int x, int y) {
-                int squareSize = getIconHeight();                
-                g.setColor(color);          
+                int squareSize = getIconHeight();
+                g.setColor(color);
                 g.fillRect(x + 2, y + 2, squareSize - 3, squareSize - 3);
                 g.setColor(c.getParent().getParent().getForeground());
                 g.drawRect(x + 1, y + 1, squareSize - 2, squareSize - 2);
@@ -506,7 +507,7 @@ public class ModelMaterialsComponent extends JButton implements View {
         return this;
       }
     }
-  
+
     /**
      * Enables editing components according to current selection in materials list.
      */
@@ -542,9 +543,9 @@ public class ModelMaterialsComponent extends JButton implements View {
         this.shininessLabel.setLabelFor(this.shininessSlider);
       }
     }
-    
+
     /**
-     * Layouts components in panel with their labels. 
+     * Layouts components in panel with their labels.
      */
     private void layoutComponents() {
       // Preview
@@ -555,7 +556,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       add(this.previewComponent, new GridBagConstraints(
           0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
-      
+
       // Materials list
       add(this.materialsLabel, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
@@ -567,43 +568,43 @@ public class ModelMaterialsComponent extends JButton implements View {
           1, 1, 1, 7, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
       SwingTools.installFocusBorder(this.materialsList);
-      
-      // Color and Texture 
+
+      // Color and Texture
       add(this.colorAndTextureLabel, new GridBagConstraints(
-          2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
-          2, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.invisibleRadioButton, new GridBagConstraints(
-          2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.colorRadioButton, new GridBagConstraints(
-          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
       add(this.colorButton, new GridBagConstraints(
-          3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       add(this.textureRadioButton, new GridBagConstraints(
-          2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
-          3, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          3, 4, 1, 1, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
 
-      // Shininess 
+      // Shininess
       add(this.shininessLabel, new GridBagConstraints(
-          2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(15, 0, 5, 0), 0, 0));
       add(this.shininessSlider, new GridBagConstraints(
-          2, 6, 2, 1, 0, 0, GridBagConstraints.NORTH, 
+          2, 6, 2, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
     }
-    
+
     public void displayView(View parent) {
       // Show panel in a resizable modal dialog
-      final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
+      final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE,
           JOptionPane.OK_CANCEL_OPTION);
       JComponent parentComponent = SwingUtilities.getRootPane((JComponent)parent);
       if (parentComponent != null) {
@@ -636,17 +637,17 @@ public class ModelMaterialsComponent extends JButton implements View {
 
       dialog.setVisible(true);
       dialog.dispose();
-      
+
       selectedMaterialBlinker.stop();
-      
+
       this.controller.getTextureController().removePropertyChangeListener(
           TextureChoiceController.Property.TEXTURE, this.textureChangeListener);
       if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
         this.controller.setMaterials(((MaterialsListModel)this.materialsList.getModel()).getMaterials());
       }
     }
- 
-    
+
+
     /**
      * Model for materials list.
      */
@@ -656,13 +657,13 @@ public class ModelMaterialsComponent extends JButton implements View {
 
       public MaterialsListModel(final ModelMaterialsController controller) {
         this.materials = controller.getMaterials();
-        ModelManager.getInstance().loadModel(controller.getModel(), 
+        ModelManager.getInstance().loadModel(controller.getModel(),
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelRoot) {
               defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot, controller.getModelCreator());
               if (materials != null) {
                 // Keep only materials that are defined in default materials set
-                // (the list can be different if the model loader interprets differently a 3D model file 
+                // (the list can be different if the model loader interprets differently a 3D model file
                 // or if materials come from a paste style action)
                 HomeMaterial [] updatedMaterials = new HomeMaterial [defaultMaterials.length];
                 boolean foundInDefaultMaterials = false;
@@ -687,7 +688,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             }
 
             public void modelError(Exception ex) {
-              // Let the list be empty  
+              // Let the list be empty
             }
           });
       }
@@ -699,7 +700,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             && this.materials [index].getName().equals(this.defaultMaterials [index].getName())) {
           return this.materials [index];
         } else {
-          return new HomeMaterial(this.defaultMaterials [index].getName(), null, null, null); 
+          return new HomeMaterial(this.defaultMaterials [index].getName(), null, null, null);
         }
       }
 
@@ -710,7 +711,7 @@ public class ModelMaterialsComponent extends JButton implements View {
           return 0;
         }
       }
-      
+
       public HomeMaterial getDefaultMaterialAt(int index) {
         return this.defaultMaterials [index];
       }
@@ -744,13 +745,13 @@ public class ModelMaterialsComponent extends JButton implements View {
       }
 
       /**
-       * Returns the edited materials. 
+       * Returns the edited materials.
        */
       public HomeMaterial [] getMaterials() {
         return this.materials;
       }
     }
-    
+
     /**
      * A timer that makes blink the selected material in preview.
      */
@@ -778,7 +779,7 @@ public class ModelMaterialsComponent extends JButton implements View {
                 materials = materials.clone();
               }
               HomeMaterial defaultMaterial = listModel.getDefaultMaterialAt(selectedIndex);
-              HomeMaterial selectedMaterial = materials [selectedIndex] != null 
+              HomeMaterial selectedMaterial = materials [selectedIndex] != null
                   ? materials [selectedIndex]
                   : defaultMaterial;
               int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
@@ -798,7 +799,7 @@ public class ModelMaterialsComponent extends JButton implements View {
                   blinkColor = new Color(selectedColor).brighter().brighter().getRGB();
                 }
               }
-              materials [selectedIndex] = 
+              materials [selectedIndex] =
                   new HomeMaterial(selectedMaterial.getName(), blinkColor, null, selectedMaterial.getShininess());
               previewComponent.setModelMaterials(materials);
             }
@@ -808,7 +809,7 @@ public class ModelMaterialsComponent extends JButton implements View {
           }
         }
       }
-      
+
       @Override
       public void restart() {
         setInitialDelay(100);

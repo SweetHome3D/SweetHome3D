@@ -214,18 +214,18 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  */
 public class PlanComponent extends JComponent implements PlanView, Scrollable, Printable {
   /**
-   * The circumstances under which the home items displayed by this component will be painted. 
+   * The circumstances under which the home items displayed by this component will be painted.
    */
   protected enum PaintMode {PAINT, PRINT, CLIPBOARD, EXPORT}
-  
-  private enum ActionType {DELETE_SELECTION, ESCAPE, 
+
+  private enum ActionType {DELETE_SELECTION, ESCAPE,
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       MOVE_SELECTION_FAST_LEFT, MOVE_SELECTION_FAST_UP, MOVE_SELECTION_FAST_DOWN, MOVE_SELECTION_FAST_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF,
       ACTIVATE_ALIGNMENT, DEACTIVATE_ALIGNMENT,
-      ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION,       
+      ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION,
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
-  
+
   /**
    * Indicator types that may be displayed on selected items.
    */
@@ -242,15 +242,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public static final IndicatorType ROTATE_ROLL   = new IndicatorType("ROTATE_ROLL");
 
     private final String name;
-    
+
     protected IndicatorType(String name) {
-      this.name = name;      
+      this.name = name;
     }
-    
+
     public final String name() {
       return this.name;
     }
-    
+
     @Override
     public String toString() {
       return this.name;
@@ -268,7 +268,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   private PlanRulerComponent    horizontalRuler;
   private PlanRulerComponent    verticalRuler;
-  
+
   private final Cursor          rotationCursor;
   private final Cursor          elevationCursor;
   private final Cursor          heightCursor;
@@ -277,7 +277,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor          moveCursor;
   private final Cursor          panningCursor;
   private final Cursor          duplicationCursor;
-  
+
   private Rectangle2D           rectangleFeedback;
   private Class<? extends Selectable> alignedObjectClass;
   private Selectable            alignedObjectFeedback;
@@ -293,17 +293,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private JToolTip              toolTip;
   private JWindow               toolTipWindow;
   private boolean               resizeIndicatorVisible;
-  
+
   private Map<PlanController.EditableProperty, JFormattedTextField> toolTipEditableTextFields;
   private KeyListener                       toolTipKeyListener;
-  
+
   private List<HomePieceOfFurniture>        sortedLevelFurniture;
   private List<Room>                        sortedLevelRooms;
   private Map<TextStyle, Font>              fonts;
   private Map<TextStyle, FontMetrics>       fontsMetrics;
-  
-  private Rectangle2D                       planBoundsCache;  
-  private boolean                           planBoundsCacheValid = false;  
+
+  private Rectangle2D                       planBoundsCache;
+  private boolean                           planBoundsCacheValid = false;
   private Rectangle2D                       invalidPlanBounds;
   private BufferedImage                     backgroundImageCache;
   private Map<TextureImage, BufferedImage>  patternImagesCache;
@@ -320,7 +320,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
 
   private static ExecutorService            backgroundImageLoader;
-  
+
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_PITCH_ROTATION_INDICATOR;
@@ -339,8 +339,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       CAMERA_PITCH_ROTATION_INDICATOR;
   private static final GeneralPath CAMERA_ELEVATION_INDICATOR;
   private static final Shape       CAMERA_BODY;
-  private static final Shape       CAMERA_HEAD;  
-  private static final GeneralPath DIMENSION_LINE_END;  
+  private static final Shape       CAMERA_HEAD;
+  private static final GeneralPath DIMENSION_LINE_END;
   private static final GeneralPath TEXT_LOCATION_INDICATOR;
   private static final GeneralPath TEXT_ANGLE_INDICATOR;
   private static final Shape       LABEL_CENTER_INDICATOR;
@@ -348,23 +348,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final GeneralPath COMPASS;
   private static final GeneralPath COMPASS_ROTATION_INDICATOR;
   private static final GeneralPath COMPASS_RESIZE_INDICATOR;
-  
+
   private static final GeneralPath ARROW;
-  
+
   private static final Stroke      INDICATOR_STROKE = new BasicStroke(1.5f);
-  private static final Stroke      POINT_STROKE = new BasicStroke(2f);  
-  
+  private static final Stroke      POINT_STROKE = new BasicStroke(2f);
+
   private static final float       WALL_STROKE_WIDTH = 1.5f;
   private static final float       BORDER_STROKE_WIDTH = 1f;
-  
+
   private static final BufferedImage ERROR_TEXTURE_IMAGE;
   private static final BufferedImage WAIT_TEXTURE_IMAGE;
 
 
   static {
     POINT_INDICATOR = new Ellipse2D.Float(-1.5f, -1.5f, 3, 3);
-    
-    // Create a path that draws an round arrow used as a rotation indicator 
+
+    // Create a path that draws an round arrow used as a rotation indicator
     // at top left point of a piece of furniture
     FURNITURE_ROTATION_INDICATOR = new GeneralPath();
     FURNITURE_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
@@ -373,7 +373,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(4f, -8.3f);
 
-    // Create a path used as pitch rotation indicator 
+    // Create a path used as pitch rotation indicator
     // at bottom left of a piece of furniture rotated around pitch
     FURNITURE_PITCH_ROTATION_INDICATOR = new GeneralPath();
     FURNITURE_PITCH_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
@@ -385,15 +385,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_PITCH_ROTATION_INDICATOR.moveTo(-10f, -4.5f);
     FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-12.3f, -2f);
     FURNITURE_PITCH_ROTATION_INDICATOR.lineTo(-12.8f, -5.8f);
-    
-    // Create a path used as pitch rotation indicator 
+
+    // Create a path used as pitch rotation indicator
     // at bottom left of a piece of furniture rotated around roll axis
     AffineTransform transform = AffineTransform.getRotateInstance(-Math.PI / 2);
     transform.concatenate(AffineTransform.getScaleInstance(1, -1));
     FURNITURE_ROLL_ROTATION_INDICATOR = FURNITURE_PITCH_ROTATION_INDICATOR.createTransformedShape(transform);
 
     ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
-    
+
     // Create a path that draws a line with one arrow as an elevation indicator
     // at top right of a piece of furniture
     ELEVATION_INDICATOR = new GeneralPath();
@@ -404,9 +404,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     ELEVATION_INDICATOR.moveTo(-1.2f, 1.5f); // Bottom arrow
     ELEVATION_INDICATOR.lineTo(0, 4.5f);
     ELEVATION_INDICATOR.lineTo(1.2f, 1.5f);
-    
+
     FURNITURE_HEIGHT_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
-    
+
     // Create a path that draws a line with two arrows as a height indicator
     // at bottom left of a piece of furniture
     FURNITURE_HEIGHT_INDICATOR = new GeneralPath();
@@ -422,28 +422,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_HEIGHT_INDICATOR.moveTo(-1.2f, 2.5f);  // Bottom arrow
     FURNITURE_HEIGHT_INDICATOR.lineTo(0f, 5.5f);
     FURNITURE_HEIGHT_INDICATOR.lineTo(1.2f, 2.5f);
-    
+
     LIGHT_POWER_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
-    
+
     // Create a path that draws a stripped triangle as a power indicator
     // at bottom left of a not deformable lights
     LIGHT_POWER_INDICATOR = new GeneralPath();
-    LIGHT_POWER_INDICATOR.moveTo(-8, 0); 
+    LIGHT_POWER_INDICATOR.moveTo(-8, 0);
     LIGHT_POWER_INDICATOR.lineTo(-6f, 0);
-    LIGHT_POWER_INDICATOR.lineTo(-6f, -1);    
-    LIGHT_POWER_INDICATOR.closePath();    
-    LIGHT_POWER_INDICATOR.moveTo(-3, 0); 
+    LIGHT_POWER_INDICATOR.lineTo(-6f, -1);
+    LIGHT_POWER_INDICATOR.closePath();
+    LIGHT_POWER_INDICATOR.moveTo(-3, 0);
     LIGHT_POWER_INDICATOR.lineTo(-1f, 0);
-    LIGHT_POWER_INDICATOR.lineTo(-1f, -2.5f);    
-    LIGHT_POWER_INDICATOR.lineTo(-3f, -1.8f);    
-    LIGHT_POWER_INDICATOR.closePath();    
-    LIGHT_POWER_INDICATOR.moveTo(2, 0); 
+    LIGHT_POWER_INDICATOR.lineTo(-1f, -2.5f);
+    LIGHT_POWER_INDICATOR.lineTo(-3f, -1.8f);
+    LIGHT_POWER_INDICATOR.closePath();
+    LIGHT_POWER_INDICATOR.moveTo(2, 0);
     LIGHT_POWER_INDICATOR.lineTo(4, 0);
-    LIGHT_POWER_INDICATOR.lineTo(4f, -3.5f);    
-    LIGHT_POWER_INDICATOR.lineTo(2f, -2.8f);    
-    LIGHT_POWER_INDICATOR.closePath();    
+    LIGHT_POWER_INDICATOR.lineTo(4f, -3.5f);
+    LIGHT_POWER_INDICATOR.lineTo(2f, -2.8f);
+    LIGHT_POWER_INDICATOR.closePath();
 
-    // Create a path used as a resize indicator 
+    // Create a path used as a resize indicator
     // at bottom right point of a piece of furniture
     FURNITURE_RESIZE_INDICATOR = new GeneralPath();
     FURNITURE_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
@@ -457,7 +457,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FURNITURE_RESIZE_INDICATOR.moveTo(7, 9.5f);
     FURNITURE_RESIZE_INDICATOR.lineTo(10, 10);
     FURNITURE_RESIZE_INDICATOR.lineTo(9.5f, 7);
-    
+
     // Create a path used an orientation indicator
     // at start and end points of a selected wall
     WALL_ORIENTATION_INDICATOR = new GeneralPath();
@@ -467,7 +467,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     WALL_POINT = new Ellipse2D.Float(-3, -3, 6, 6);
 
-    // Create a path used as a size indicator 
+    // Create a path used as a size indicator
     // at start and end points of a selected wall
     WALL_AND_LINE_RESIZE_INDICATOR = new GeneralPath();
     WALL_AND_LINE_RESIZE_INDICATOR.moveTo(5, -2);
@@ -477,15 +477,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     WALL_AND_LINE_RESIZE_INDICATOR.moveTo(8.7f, -1.8f);
     WALL_AND_LINE_RESIZE_INDICATOR.lineTo(12, 0);
     WALL_AND_LINE_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
-    
+
     // Create a path used as yaw rotation indicator for the camera
     transform = AffineTransform.getRotateInstance(-Math.PI / 4);
     CAMERA_YAW_ROTATION_INDICATOR = FURNITURE_ROTATION_INDICATOR.createTransformedShape(transform);
-    
+
     // Create a path used as pitch rotation indicator for the camera
     transform = AffineTransform.getRotateInstance(Math.PI);
     CAMERA_PITCH_ROTATION_INDICATOR = FURNITURE_PITCH_ROTATION_INDICATOR.createTransformedShape(transform);
-    
+
     // Create a path that draws a line with one arrow as an elevation indicator
     // at the back of the camera
     CAMERA_ELEVATION_INDICATOR = new GeneralPath();
@@ -497,14 +497,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     CAMERA_ELEVATION_INDICATOR.lineTo(0, 3.5f);
     CAMERA_ELEVATION_INDICATOR.lineTo(1.2f, 0.5f);
 
-    // Create a path used to draw the camera 
-    // This path looks like a human being seen from top that fits in one cm wide square 
+    // Create a path used to draw the camera
+    // This path looks like a human being seen from top that fits in one cm wide square
     GeneralPath cameraBodyAreaPath = new GeneralPath();
     cameraBodyAreaPath.append(new Ellipse2D.Float(-0.5f, -0.425f, 1f, 0.85f), false); // Body
     cameraBodyAreaPath.append(new Ellipse2D.Float(-0.5f, -0.3f, 0.24f, 0.6f), false); // Shoulder
     cameraBodyAreaPath.append(new Ellipse2D.Float(0.26f, -0.3f, 0.24f, 0.6f), false); // Shoulder
     CAMERA_BODY = new Area(cameraBodyAreaPath);
-    
+
     GeneralPath cameraHeadAreaPath = new GeneralPath();
     cameraHeadAreaPath.append(new Ellipse2D.Float(-0.18f, -0.45f, 0.36f, 1f), false); // Head
     cameraHeadAreaPath.moveTo(-0.04f, 0.55f); // Noise
@@ -512,13 +512,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     cameraHeadAreaPath.lineTo(0.04f, 0.55f);
     cameraHeadAreaPath.closePath();
     CAMERA_HEAD = new Area(cameraHeadAreaPath);
-    
+
     DIMENSION_LINE_END = new GeneralPath();
     DIMENSION_LINE_END.moveTo(-5, 5);
     DIMENSION_LINE_END.lineTo(5, -5);
     DIMENSION_LINE_END.moveTo(0, 5);
     DIMENSION_LINE_END.lineTo(0, -5);
-    
+
     // Create a path that draws three arrows going left, right and down
     TEXT_LOCATION_INDICATOR = new GeneralPath();
     TEXT_LOCATION_INDICATOR.append(new Arc2D.Float(-2, 0, 4, 4, 190, 160, Arc2D.CHORD), false);
@@ -537,17 +537,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     TEXT_LOCATION_INDICATOR.moveTo(-6, 6.5f);    // Left arrow
     TEXT_LOCATION_INDICATOR.lineTo(-10, 7);
     TEXT_LOCATION_INDICATOR.lineTo(-7.5f, 3.5f);
-    
+
     // Create a path used as angle indicator for texts
-    TEXT_ANGLE_INDICATOR = new GeneralPath(); 
-    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-1.25f, -1.25f, 2.5f, 2.5f, 10, 160, Arc2D.CHORD), false);    
+    TEXT_ANGLE_INDICATOR = new GeneralPath();
+    TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-1.25f, -1.25f, 2.5f, 2.5f, 10, 160, Arc2D.CHORD), false);
     TEXT_ANGLE_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 30, 120, Arc2D.OPEN), false);
     TEXT_ANGLE_INDICATOR.moveTo(4f, -5.2f);
     TEXT_ANGLE_INDICATOR.lineTo(6.9f, -4f);
     TEXT_ANGLE_INDICATOR.lineTo(5.8f, -7f);
-    
+
     LABEL_CENTER_INDICATOR = new Ellipse2D.Float(-1f, -1f, 2, 2);
-    
+
     // Create the path used to draw the compass
     COMPASS_DISC = new Ellipse2D.Float(-0.5f, -0.5f, 1, 1);
     BasicStroke stroke = new BasicStroke(0.01f);
@@ -579,8 +579,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     COMPASS_ROTATION_INDICATOR.moveTo(4f, 5.66f);
     COMPASS_ROTATION_INDICATOR.lineTo(7f, 5.66f);
     COMPASS_ROTATION_INDICATOR.lineTo(5.6f, 8.3f);
-    
-    // Create a path used as a resize indicator for the compass 
+
+    // Create a path used as a resize indicator for the compass
     COMPASS_RESIZE_INDICATOR = new GeneralPath();
     COMPASS_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
     COMPASS_RESIZE_INDICATOR.moveTo(4, -6);
@@ -592,7 +592,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     COMPASS_RESIZE_INDICATOR.moveTo(9, -1.5f);
     COMPASS_RESIZE_INDICATOR.lineTo(12, 0);
     COMPASS_RESIZE_INDICATOR.lineTo(9, 1.5f);
-    
+
     ARROW = new GeneralPath();
     ARROW.moveTo(-5, -2);
     ARROW.lineTo(0, 0);
@@ -610,29 +610,29 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g.drawLine(0, 0, 0, 0);
     g.dispose();
   }
-  
+
   /**
    * Creates a new plan that displays <code>home</code>.
    * @param home the home to display
    * @param preferences user preferences to retrieve used unit, grid visibility...
    * @param controller the optional controller used to manage home items modification
    */
-  public PlanComponent(Home home, 
+  public PlanComponent(Home home,
                        UserPreferences preferences,
                        PlanController controller) {
     this(home, preferences, null, controller);
   }
-  
+
   /**
    * Creates a new plan that displays <code>home</code>.
    * @param home the home to display
    * @param preferences user preferences to retrieve used unit, grid visibility...
    * @param object3dFactory a factory able to create 3D objects from <code>home</code> furniture.
-   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of
    *            this factory is expected to return an instance of {@link Object3DBranch} in current implementation.
    * @param controller the optional controller used to manage home items modification
    */
-  public PlanComponent(Home home, 
+  public PlanComponent(Home home,
                        UserPreferences preferences,
                        Object3DFactory  object3dFactory,
                        PlanController controller) {
@@ -650,7 +650,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       addMouseListeners(controller);
       addFocusListener(controller);
       addControllerListener(controller);
-      createActions(controller);      
+      createActions(controller);
       installDefaultKeyboardActions();
       setFocusable(true);
       setAutoscrolls(true);
@@ -677,16 +677,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Adds home items and selection listeners on this component to receive  
-   * changes notifications from home. 
+   * Adds home items and selection listeners on this component to receive
+   * changes notifications from home.
    */
-  private void addModelListeners(final Home home, final UserPreferences preferences, 
+  private void addModelListeners(final Home home, final UserPreferences preferences,
                                  final PlanController controller) {
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(final PropertyChangeEvent ev) {
           if (furnitureTopViewIconsCache != null
-              && (HomePieceOfFurniture.Property.ROLL.name().equals(ev.getPropertyName())
+              && (HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(ev.getPropertyName())
+                  || HomePieceOfFurniture.Property.ROLL.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.PITCH.name().equals(ev.getPropertyName())
                   || (HomePieceOfFurniture.Property.WIDTH_IN_PLAN.name().equals(ev.getPropertyName())
                       || HomePieceOfFurniture.Property.DEPTH_IN_PLAN.name().equals(ev.getPropertyName())
@@ -695,7 +696,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                          || ((HomePieceOfFurniture)ev.getSource()).getTexture() != null))) {
             if (HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
               sortedLevelFurniture = null;
-            } 
+            }
             if (controller == null || !controller.isModificationState()) {
               invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
             } else {
@@ -764,14 +765,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           revalidate();
         }
       });
-    
+
     // Add listener to update plan when walls change
     final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
           if (Wall.Property.X_START.name().equals(propertyName)
-              || Wall.Property.X_END.name().equals(propertyName) 
-              || Wall.Property.Y_START.name().equals(propertyName) 
+              || Wall.Property.X_END.name().equals(propertyName)
+              || Wall.Property.Y_START.name().equals(propertyName)
               || Wall.Property.Y_END.name().equals(propertyName)
               || Wall.Property.WALL_AT_START.name().equals(propertyName)
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
@@ -812,7 +813,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           revalidate();
         }
       });
-    
+
     // Add listener to update plan when rooms change
     final PropertyChangeListener roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -836,7 +837,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                      && (Room.Property.FLOOR_COLOR.name().equals(propertyName)
                          || Room.Property.FLOOR_TEXTURE.name().equals(propertyName)
                          || Room.Property.FLOOR_VISIBLE.name().equals(propertyName))) {
-            repaint(); 
+            repaint();
           }
         }
       };
@@ -970,11 +971,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
           if (Camera.Property.X.name().equals(propertyName)
-              || Camera.Property.Y.name().equals(propertyName) 
+              || Camera.Property.Y.name().equals(propertyName)
               || Camera.Property.FIELD_OF_VIEW.name().equals(propertyName)
               || Camera.Property.YAW.name().equals(propertyName)
               || ObserverCamera.Property.WIDTH.name().equals(propertyName)
-              || ObserverCamera.Property.DEPTH.name().equals(propertyName) 
+              || ObserverCamera.Property.DEPTH.name().equals(propertyName)
               || ObserverCamera.Property.HEIGHT.name().equals(propertyName)) {
             revalidate();
           }
@@ -984,7 +985,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
           if (Compass.Property.X.name().equals(propertyName)
-              || Compass.Property.Y.name().equals(propertyName) 
+              || Compass.Property.Y.name().equals(propertyName)
               || Compass.Property.NORTH_DIRECTION.name().equals(propertyName)
               || Compass.Property.DIAMETER.name().equals(propertyName)
               || Compass.Property.VISIBLE.name().equals(propertyName)) {
@@ -997,7 +998,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           repaint();
         }
       });
-    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
+    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE,
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           backgroundImageCache = null;
@@ -1018,21 +1019,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           repaint();
         }
       });
-    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.DEFAULT_FONT_NAME, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.DEFAULT_FONT_NAME,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED,
         new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN,
         new UserPreferencesChangeListener(this));
   }
 
@@ -1047,7 +1048,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns all the pieces depending on the given <code>piece</code> that are not groups.  
+   * Returns all the pieces depending on the given <code>piece</code> that are not groups.
    */
   private List<HomePieceOfFurniture> getFurnitureWithoutGroups(HomePieceOfFurniture piece) {
     if (piece instanceof HomeFurnitureGroup) {
@@ -1063,7 +1064,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Preferences property listener bound to this component with a weak reference to avoid
-   * strong link between preferences and this component.  
+   * strong link between preferences and this component.
    */
   private static class UserPreferencesChangeListener implements PropertyChangeListener {
     private WeakReference<PlanComponent>  planComponent;
@@ -1071,7 +1072,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public UserPreferencesChangeListener(PlanComponent planComponent) {
       this.planComponent = new WeakReference<PlanComponent>(planComponent);
     }
-    
+
     public void propertyChange(PropertyChangeEvent ev) {
       // If plan component was garbage collected, remove this listener from preferences
       PlanComponent planComponent = this.planComponent.get();
@@ -1084,9 +1085,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           case LANGUAGE :
           case UNIT :
             // Update format of tool tip text fields
-            for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry : 
+            for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry :
               planComponent.toolTipEditableTextFields.entrySet()) {
-              updateToolTipTextFieldFormatterFactory(toolTipTextFieldEntry.getValue(), 
+              updateToolTipTextFieldFormatterFactory(toolTipTextFieldEntry.getValue(),
                   toolTipTextFieldEntry.getKey(), preferences);
             }
             if (planComponent.horizontalRuler != null) {
@@ -1139,13 +1140,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.verticalRuler.repaint();
     }
   }
-  
+
   /**
    * Invalidates this component voiding plan bounds cache if <code>invalidatePlanBoundsCache</code> is <code>true</code>.
    */
   private void invalidate(boolean invalidatePlanBoundsCache) {
     if (isValid()) {
-      if (invalidatePlanBoundsCache) {      
+      if (invalidatePlanBoundsCache) {
         boolean planBoundsCacheWereValid = this.planBoundsCacheValid;
         if (this.invalidPlanBounds == null) {
           this.invalidPlanBounds = getPlanBounds().getBounds2D();
@@ -1157,12 +1158,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       super.invalidate();
     }
   }
-  
+
   @Override
   public void invalidate() {
     invalidate(true);
   }
-  
+
   /**
    * Validates this component and updates viewport position if it's displayed in a scrolled pane.
    */
@@ -1191,33 +1192,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     this.invalidPlanBounds = null;
   }
-  
+
   /**
-   * Adds AWT mouse listeners to this component that calls back <code>controller</code> methods.  
+   * Adds AWT mouse listeners to this component that calls back <code>controller</code> methods.
    */
   private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
       private Point lastMousePressedLocation;
-      
+
       @Override
       public void mousePressed(MouseEvent ev) {
         this.lastMousePressedLocation = ev.getPoint();
         if (isEnabled() && !ev.isPopupTrigger()) {
-          requestFocusInWindow();          
+          requestFocusInWindow();
           if (ev.getButton() == MouseEvent.BUTTON1) {
-            boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX() 
+            boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
                 ? ev.isShiftDown()
                 : ev.isShiftDown() && !ev.isAltDown();
-            boolean duplicationActivated = OperatingSystem.isMacOSX() 
-                ? ev.isAltDown() 
+            boolean duplicationActivated = OperatingSystem.isMacOSX()
+                ? ev.isAltDown()
                 : ev.isControlDown();
-            boolean magnetismToggled = OperatingSystem.isWindows() 
-                ? ev.isAltDown() 
-                : (OperatingSystem.isMacOSX() 
+            boolean magnetismToggled = OperatingSystem.isWindows()
+                ? ev.isAltDown()
+                : (OperatingSystem.isMacOSX()
                        ? ev.isMetaDown()
                        : ev.isShiftDown() && ev.isAltDown());
-            controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
-                ev.getClickCount(), ev.isShiftDown() && !ev.isControlDown() && !ev.isAltDown() && !ev.isMetaDown(), 
+            controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()),
+                ev.getClickCount(), ev.isShiftDown() && !ev.isControlDown() && !ev.isAltDown() && !ev.isMetaDown(),
                 alignmentActivated, duplicationActivated, magnetismToggled);
           }
         }
@@ -1253,7 +1254,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     };
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
-    addMouseWheelListener(new MouseWheelListener() {        
+    addMouseWheelListener(new MouseWheelListener() {
         public void mouseWheelMoved(MouseWheelEvent ev) {
           if (ev.getModifiers() == getToolkit().getMenuShortcutKeyMask()) {
             float mouseX = 0;
@@ -1269,10 +1270,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }
 
             float oldScale = getScale();
-            controller.zoom((float)(ev.getWheelRotation() < 0 
-                ? Math.pow(1.05, -ev.getWheelRotation()) 
+            controller.zoom((float)(ev.getWheelRotation() < 0
+                ? Math.pow(1.05, -ev.getWheelRotation())
                 : Math.pow(0.95, ev.getWheelRotation())));
-            
+
             if (getScale() != oldScale && getParent() instanceof JViewport) {
               // If scale changed, update viewport position to keep the same coordinates under mouse cursor
               ((JViewport)getParent()).setViewPosition(new Point());
@@ -1282,10 +1283,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             // If this listener is the only one registered on this component
             // redispatch event to its parent (for default scroll bar management)
             getParent().dispatchEvent(
-              new MouseWheelEvent(getParent(), ev.getID(), ev.getWhen(), 
-                  ev.getModifiersEx() | ev.getModifiers(), 
-                  ev.getX() - getX(), ev.getY() - getY(), 
-                  ev.getClickCount(), ev.isPopupTrigger(), ev.getScrollType(), 
+              new MouseWheelEvent(getParent(), ev.getID(), ev.getWhen(),
+                  ev.getModifiersEx() | ev.getModifiers(),
+                  ev.getX() - getX(), ev.getY() - getY(),
+                  ev.getClickCount(), ev.isPopupTrigger(), ev.getScrollType(),
                   ev.getScrollAmount(), ev.getWheelRotation()));
           }
         }
@@ -1293,8 +1294,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Adds AWT focus listener to this component that calls back <code>controller</code> 
-   * escape method on focus lost event.  
+   * Adds AWT focus listener to this component that calls back <code>controller</code>
+   * escape method on focus lost event.
    */
   private void addFocusListener(final PlanController controller) {
     addFocusListener(new FocusAdapter() {
@@ -1303,7 +1304,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           controller.escape();
         }
       });
-    
+
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       addPropertyChangeListener("Frame.active", new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
@@ -1315,12 +1316,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         });
     }
   }
-  
+
   /**
    * Adds a listener to the controller to follow changes in base plan modification state.
    */
   private void addControllerListener(final PlanController controller) {
-    controller.addPropertyChangeListener(PlanController.Property.BASE_PLAN_MODIFICATION_STATE, 
+    controller.addPropertyChangeListener(PlanController.Property.BASE_PLAN_MODIFICATION_STATE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             boolean wallsDoorsOrWindowsModification = controller.isBasePlanModificationState();
@@ -1328,7 +1329,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               // Limit base plan modification state to walls creation/handling and doors or windows handling
               if (controller.getMode() != PlanController.Mode.WALL_CREATION) {
                 for (Selectable item : (draggedItemsFeedback != null ? draggedItemsFeedback : home.getSelectedItems())) {
-                  if (!(item instanceof Wall) 
+                  if (!(item instanceof Wall)
                       && !(item instanceof HomePieceOfFurniture && ((HomePieceOfFurniture)item).isDoorOrWindow())) {
                     wallsDoorsOrWindowsModification = false;
                   }
@@ -1342,9 +1343,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         });
   }
-  
+
   /**
-   * Installs default keys bound to actions. 
+   * Installs default keys bound to actions.
    */
   private void installDefaultKeyboardActions() {
     InputMap inputMap = getInputMap(WHEN_FOCUSED);
@@ -1365,7 +1366,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), ActionType.ACTIVATE_EDITIION);
 
     if (OperatingSystem.isMacOSX()) {
-      // Under Mac OS X, duplication with Alt key 
+      // Under Mac OS X, duplication with Alt key
       inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
@@ -1377,7 +1378,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.ACTIVATE_EDITIION);
     } else {
-      // Under other systems, duplication with Ctrl key 
+      // Under other systems, duplication with Ctrl key
       inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
@@ -1389,9 +1390,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("control ENTER"), ActionType.ACTIVATE_EDITIION);
     }
-    
+
     if (OperatingSystem.isWindows()) {
-      // Under Windows, magnetism toggled with Alt key 
+      // Under Windows, magnetism toggled with Alt key
       inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
       inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.TOGGLE_MAGNETISM_OFF);
       inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
@@ -1403,7 +1404,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.ACTIVATE_EDITIION);
     } else if (OperatingSystem.isMacOSX()) {
-      // Under Windows, magnetism toggled with cmd key 
+      // Under Windows, magnetism toggled with cmd key
       inputMap.put(KeyStroke.getKeyStroke("meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
       inputMap.put(KeyStroke.getKeyStroke("released META"), ActionType.TOGGLE_MAGNETISM_OFF);
       inputMap.put(KeyStroke.getKeyStroke("shift meta pressed META"), ActionType.TOGGLE_MAGNETISM_ON);
@@ -1415,7 +1416,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("meta ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("meta ENTER"), ActionType.ACTIVATE_EDITIION);
     } else {
-      // Under other Unix systems, magnetism toggled with Alt + Shift key 
+      // Under other Unix systems, magnetism toggled with Alt + Shift key
       inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.TOGGLE_MAGNETISM_ON);
       inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
       inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
@@ -1437,7 +1438,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("control released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
-      
+
     } else if (OperatingSystem.isMacOSX()) {
       inputMap.put(KeyStroke.getKeyStroke("alt shift pressed SHIFT"), ActionType.ACTIVATE_ALIGNMENT);
       inputMap.put(KeyStroke.getKeyStroke("alt released SHIFT"), ActionType.DEACTIVATE_ALIGNMENT);
@@ -1450,9 +1451,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("control shift released ALT"), ActionType.ACTIVATE_ALIGNMENT);
     }
   }
-  
+
   /**
-   * Installs keys bound to actions during edition. 
+   * Installs keys bound to actions during edition.
    */
   private void installEditionKeyboardActions() {
     InputMap inputMap = getInputMap(WHEN_FOCUSED);
@@ -1462,7 +1463,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("ENTER"), ActionType.DEACTIVATE_EDITIION);
     inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), ActionType.DEACTIVATE_EDITIION);
     if (OperatingSystem.isMacOSX()) {
-      // Under Mac OS X, duplication with Alt key 
+      // Under Mac OS X, duplication with Alt key
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("alt ENTER"), ActionType.DEACTIVATE_EDITIION);
       inputMap.put(KeyStroke.getKeyStroke("alt shift ENTER"), ActionType.DEACTIVATE_EDITIION);
@@ -1471,7 +1472,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("shift alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("shift released ALT"), ActionType.DEACTIVATE_DUPLICATION);
     } else {
-      // Under other systems, duplication with Ctrl key 
+      // Under other systems, duplication with Ctrl key
       inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
       inputMap.put(KeyStroke.getKeyStroke("control ENTER"), ActionType.DEACTIVATE_EDITIION);
       inputMap.put(KeyStroke.getKeyStroke("control shift ENTER"), ActionType.DEACTIVATE_EDITIION);
@@ -1481,28 +1482,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       inputMap.put(KeyStroke.getKeyStroke("shift released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
     }
   }
- 
+
   /**
-   * Creates actions that calls back <code>controller</code> methods.  
+   * Creates actions that calls back <code>controller</code> methods.
    */
   private void createActions(final PlanController controller) {
-    // Delete selection action 
+    // Delete selection action
     Action deleteSelectionAction = new AbstractAction() {
       public void actionPerformed(ActionEvent ev) {
         controller.deleteSelection();
       }
     };
-    // Escape action 
+    // Escape action
     Action escapeAction = new AbstractAction() {
       public void actionPerformed(ActionEvent ev) {
         controller.escape();
       }
     };
-    // Move selection action  
+    // Move selection action
     class MoveSelectionAction extends AbstractAction {
       private final int dx;
       private final int dy;
-      
+
       public MoveSelectionAction(int dx, int dy) {
         this.dx = dx;
         this.dy = dy;
@@ -1515,7 +1516,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Toggle magnetism action
     class ToggleMagnetismAction extends AbstractAction {
       private final boolean toggle;
-      
+
       public ToggleMagnetismAction(boolean toggle) {
         this.toggle = toggle;
       }
@@ -1527,11 +1528,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Alignment action
     class SetAlignmentActivatedAction extends AbstractAction {
       private final boolean alignmentActivated;
-      
+
       public SetAlignmentActivatedAction(boolean alignmentActivated) {
         this.alignmentActivated = alignmentActivated;
       }
-      
+
       public void actionPerformed(ActionEvent ev) {
         controller.setAlignmentActivated(this.alignmentActivated);
       }
@@ -1539,7 +1540,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Duplication action
     class SetDuplicationActivatedAction extends AbstractAction {
       private final boolean duplicationActivated;
-      
+
       public SetDuplicationActivatedAction(boolean duplicationActivated) {
         this.duplicationActivated = duplicationActivated;
       }
@@ -1551,7 +1552,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Edition action
     class SetEditionActivatedAction extends AbstractAction {
       private final boolean editionActivated;
-      
+
       public SetEditionActivatedAction(boolean editionActivated) {
         this.editionActivated = editionActivated;
       }
@@ -1584,7 +1585,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Creates the text fields used in tool tip and their label.
    */
-  private void createToolTipTextFields(UserPreferences preferences, 
+  private void createToolTipTextFields(UserPreferences preferences,
                                        final PlanController controller) {
     this.toolTipEditableTextFields = new HashMap<PlanController.EditableProperty, JFormattedTextField>();
     Font toolTipFont = UIManager.getFont("ToolTip.font");
@@ -1612,11 +1613,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 controller.updateEditableProperty(editableProperty, null);
               }
             }
-    
+
             public void insertUpdate(DocumentEvent ev) {
               changedUpdate(ev);
             }
-    
+
             public void removeUpdate(DocumentEvent ev) {
               changedUpdate(ev);
             }
@@ -1631,7 +1632,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                                              PlanController.EditableProperty editableProperty,
                                                              UserPreferences preferences) {
     InternationalFormatter formatter;
-    if (editableProperty == PlanController.EditableProperty.ANGLE) {      
+    if (editableProperty == PlanController.EditableProperty.ANGLE) {
       formatter = new NumberFormatter(NumberFormat.getNumberInstance());
     } else {
       Format lengthFormat = preferences.getLengthUnit().getFormat();
@@ -1643,33 +1644,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     textField.setFormatterFactory(new DefaultFormatterFactory(formatter));
   }
-  
+
   /**
    * Returns a custom cursor with a hot spot point at center of cursor.
-   */ 
-  private Cursor createCustomCursor(String smallCursorImageResource, 
+   */
+  private Cursor createCustomCursor(String smallCursorImageResource,
                                     String largeCursorImageResource,
                                     String cursorName,
                                     int    defaultCursor) {
     if (OperatingSystem.isMacOSX()) {
       smallCursorImageResource = smallCursorImageResource.replace(".png", "-macosx.png");
     }
-    return createCustomCursor(PlanComponent.class.getResource(smallCursorImageResource), 
-        PlanComponent.class.getResource(largeCursorImageResource), 
-        0.5f, 0.5f, cursorName, 
+    return createCustomCursor(PlanComponent.class.getResource(smallCursorImageResource),
+        PlanComponent.class.getResource(largeCursorImageResource),
+        0.5f, 0.5f, cursorName,
         Cursor.getPredefinedCursor(defaultCursor));
   }
 
   /**
    * Returns a custom cursor created from images in parameters.
-   */ 
-  protected Cursor createCustomCursor(URL smallCursorImageUrl, 
+   */
+  protected Cursor createCustomCursor(URL smallCursorImageUrl,
                                       URL largeCursorImageUrl,
                                       float xCursorHotSpot,
                                       float yCursorHotSpot,
                                       String cursorName,
                                       Cursor defaultCursor) {
-    return SwingTools.createCustomCursor(smallCursorImageUrl, largeCursorImageUrl, 
+    return SwingTools.createCustomCursor(smallCursorImageUrl, largeCursorImageUrl,
         xCursorHotSpot, yCursorHotSpot, cursorName, defaultCursor);
   }
 
@@ -1690,14 +1691,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                      * getScale()) + insets.top + insets.bottom);
     }
   }
-  
+
   /**
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
     if (!this.planBoundsCacheValid) {
-      // Always enlarge plan bounds only when plan component is a child of a scroll pane 
-      if (this.planBoundsCache == null 
+      // Always enlarge plan bounds only when plan component is a child of a scroll pane
+      if (this.planBoundsCache == null
           || !(getParent() instanceof JViewport)) {
         // Ensure plan bounds are 10 x 10 meters wide at minimum
         this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
@@ -1730,15 +1731,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return this.planBoundsCache;
   }
-  
+
   /**
-   * Returns the collection of walls, furniture, rooms and dimension lines of the home 
+   * Returns the collection of walls, furniture, rooms and dimension lines of the home
    * painted by this component wherever the level they belong to is selected or not.
    */
   protected List<Selectable> getPaintedItems() {
     return this.home.getSelectableViewableItems();
   }
-  
+
   /**
    * Returns the bounds of the given collection of <code>items</code>.
    */
@@ -1750,10 +1751,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       } else {
         itemsBounds.add(getItemBounds(g, item));
       }
-    } 
+    }
     return itemsBounds;
   }
-  
+
   /**
    * Returns the bounds of the given <code>item</code>.
    */
@@ -1764,7 +1765,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     for (int i = 1; i < points.length; i++) {
       itemBounds.add(points [i][0], points [i][1]);
     }
-    
+
     // Retrieve used font
     Font componentFont;
     if (g != null) {
@@ -1772,73 +1773,73 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       componentFont = getFont();
     }
-    
+
     if (item instanceof Room) {
-      // Add to bounds the displayed name and area bounds of each room 
+      // Add to bounds the displayed name and area bounds of each room
       Room room = (Room)item;
       float xRoomCenter = room.getXCenter();
       float yRoomCenter = room.getYCenter();
       String roomName = room.getName();
       if (roomName != null && roomName.length() > 0) {
-        addTextBounds(room.getClass(), 
-            roomName, room.getNameStyle(), 
-            xRoomCenter + room.getNameXOffset(), 
+        addTextBounds(room.getClass(),
+            roomName, room.getNameStyle(),
+            xRoomCenter + room.getNameXOffset(),
             yRoomCenter + room.getNameYOffset(), room.getNameAngle(), itemBounds);
       }
       if (room.isAreaVisible()) {
         float area = room.getArea();
         if (area > 0.01f) {
           String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-          addTextBounds(room.getClass(), 
-              areaText, room.getAreaStyle(), 
-              xRoomCenter + room.getAreaXOffset(), 
+          addTextBounds(room.getClass(),
+              areaText, room.getAreaStyle(),
+              xRoomCenter + room.getAreaXOffset(),
               yRoomCenter + room.getAreaYOffset(), room.getAreaAngle(), itemBounds);
         }
       }
     } else if (item instanceof Polyline) {
-      Polyline polyline = (Polyline)item;      
+      Polyline polyline = (Polyline)item;
       return getPolylineShape(polyline).getBounds2D();
     } else if (item instanceof HomePieceOfFurniture) {
       if (item instanceof HomeDoorOrWindow) {
         HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
-        // Add to bounds door and window sashes 
+        // Add to bounds door and window sashes
         for (Sash sash : doorOrWindow.getSashes()) {
           itemBounds.add(getDoorOrWindowSashShape(doorOrWindow, sash).getBounds2D());
         }
       } else if (item instanceof HomeFurnitureGroup) {
         itemBounds.add(getItemsBounds(g, ((HomeFurnitureGroup)item).getFurniture()));
       }
-      // Add to bounds the displayed name of the piece of furniture 
+      // Add to bounds the displayed name of the piece of furniture
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
       String pieceName = piece.getName();
       if (piece.isVisible()
           && piece.isNameVisible()
           && pieceName.length() > 0) {
-        addTextBounds(piece.getClass(), 
-            pieceName, piece.getNameStyle(), 
-            piece.getX() + piece.getNameXOffset(), 
+        addTextBounds(piece.getClass(),
+            pieceName, piece.getNameStyle(),
+            piece.getX() + piece.getNameXOffset(),
             piece.getY() + piece.getNameYOffset(), piece.getNameAngle(), itemBounds);
       }
     } else if (item instanceof DimensionLine) {
-      // Add to bounds the text bounds of the dimension line length 
+      // Add to bounds the text bounds of the dimension line length
       DimensionLine dimensionLine = (DimensionLine)item;
       float dimensionLineLength = dimensionLine.getLength();
       String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
       TextStyle lengthStyle = dimensionLine.getLengthStyle();
       if (lengthStyle == null) {
         lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
-      }          
+      }
       FontMetrics lengthFontMetrics = getFontMetrics(componentFont, lengthStyle);
       Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g);
       // Transform length text bounding rectangle corners to their real location
-      double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+      double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(),
           dimensionLine.getXEnd() - dimensionLine.getXStart());
       AffineTransform transform = AffineTransform.getTranslateInstance(
           dimensionLine.getXStart(), dimensionLine.getYStart());
       transform.rotate(angle);
       transform.translate(0, dimensionLine.getOffset());
-      transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2, 
-          dimensionLine.getOffset() <= 0 
+      transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2,
+          dimensionLine.getOffset() <= 0
               ? -lengthFontMetrics.getDescent() - 1
               : lengthFontMetrics.getAscent() + 1);
       GeneralPath lengthTextBoundsPath = new GeneralPath(lengthTextBounds);
@@ -1848,7 +1849,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           itemBounds.add(pathPoint [0], pathPoint [1]);
         }
       }
-      // Add to bounds the end lines drawn at dimension line start and end  
+      // Add to bounds the end lines drawn at dimension line start and end
       transform.setToTranslation(dimensionLine.getXStart(), dimensionLine.getYStart());
       transform.rotate(angle);
       transform.translate(0, dimensionLine.getOffset());
@@ -1866,9 +1867,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     } else if (item instanceof Label) {
-      // Add to bounds the displayed text of a label 
+      // Add to bounds the displayed text of a label
       Label label = (Label)item;
-      addTextBounds(label.getClass(), 
+      addTextBounds(label.getClass(),
           label.getText(), label.getStyle(), label.getX(), label.getY(), label.getAngle(), itemBounds);
     } else if (item instanceof Compass) {
       Compass compass = (Compass)item;
@@ -1876,30 +1877,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       transform.scale(compass.getDiameter(), compass.getDiameter());
       transform.rotate(compass.getNorthDirection());
       return COMPASS.createTransformedShape(transform).getBounds2D();
-    } 
+    }
     return itemBounds;
   }
-  
+
   /**
    * Add <code>text</code> bounds to the given rectangle <code>bounds</code>.
    */
   private void addTextBounds(Class<? extends Selectable> selectableClass,
-                             String text, TextStyle style, 
+                             String text, TextStyle style,
                              float x, float y, float angle,
                              Rectangle2D bounds) {
     if (style == null) {
       style = this.preferences.getDefaultTextStyle(selectableClass);
-    }          
+    }
     for (float [] points : getTextBounds(text, style, x, y, angle)) {
       bounds.add(points [0], points [1]);
     }
   }
-  
+
   /**
    * Returns the coordinates of the bounding rectangle of the <code>text</code> centered at
-   * the point (<code>x</code>,<code>y</code>).  
+   * the point (<code>x</code>,<code>y</code>).
    */
-  public float [][] getTextBounds(String text, TextStyle style, 
+  public float [][] getTextBounds(String text, TextStyle style,
                                   float x, float y, float angle) {
     FontMetrics fontMetrics = getFontMetrics(getFont(), style);
     Rectangle2D textBounds = fontMetrics.getStringBounds(text, null);
@@ -1929,7 +1930,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return textPoints.toArray(new float [textPoints.size()][]);
     }
   }
-  
+
   /**
    * Returns the AWT font matching a given text style.
    */
@@ -1978,7 +1979,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Sets whether plan's background should be painted or not.
-   * Background may include grid and an image.   
+   * Background may include grid and an image.
    */
   public void setBackgroundPainted(boolean backgroundPainted) {
     if (this.backgroundPainted != backgroundPainted) {
@@ -1986,7 +1987,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       repaint();
     }
   }
-  
+
   /**
    * Returns <code>true</code> if plan's background should be painted.
    */
@@ -2003,14 +2004,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       repaint();
     }
   }
-  
+
   /**
    * Returns <code>true</code> if the outline of home selected items should be painted.
    */
   public boolean isSelectedItemsOutlinePainted() {
     return this.selectedItemsOutlinePainted;
   }
-  
+
   /**
    * Paints this component.
    */
@@ -2022,11 +2023,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     Insets insets = getInsets();
     // Clip component to avoid drawing in empty borders
-    g2D.clipRect(insets.left, insets.top, 
-        getWidth() - insets.left - insets.right, 
+    g2D.clipRect(insets.left, insets.top,
+        getWidth() - insets.left - insets.right,
         getHeight() - insets.top - insets.bottom);
     // Change component coordinates system to plan system
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     float paintScale = getScale();
     g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * paintScale,
         insets.top + (MARGIN - planBounds.getMinY()) * paintScale);
@@ -2035,8 +2036,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     try {
       paintContent(g2D, paintScale, PaintMode.PAINT);
     } catch (InterruptedIOException ex) {
-      // Ignore exception because it may happen only in EXPORT paint mode 
-    }   
+      // Ignore exception because it may happen only in EXPORT paint mode
+    }
     g2D.dispose();
   }
 
@@ -2045,7 +2046,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * to make it fill <code>pageFormat</code> imageable size.
    */
   public float getPrintPreferredScale(Graphics g, PageFormat pageFormat) {
-    List<Selectable> printedItems = getPaintedItems(); 
+    List<Selectable> printedItems = getPaintedItems();
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null) {
       float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
@@ -2060,7 +2061,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return 0;
     }
   }
-  
+
   /**
    * Returns the margin that should be added around home items bounds to ensure their
    * line stroke width is always fully visible.
@@ -2069,32 +2070,32 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float extraMargin = BORDER_STROKE_WIDTH;
     if (Home.getFurnitureSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(HomePieceOfFurniture.class, paintMode));
-    } 
+    }
     if (Home.getWallsSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(Wall.class, paintMode));
-    } 
+    }
     if (Home.getRoomsSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(Room.class, paintMode));
     }
     List<Polyline> polylines = Home.getPolylinesSubList(items);
     if (polylines.size() > 0) {
-      for (Polyline polyline : polylines) {        
-        extraMargin = Math.max(extraMargin, polyline.getStartArrowStyle() != null ||  polyline.getEndArrowStyle() != null 
+      for (Polyline polyline : polylines) {
+        extraMargin = Math.max(extraMargin, polyline.getStartArrowStyle() != null ||  polyline.getEndArrowStyle() != null
             ? 1.5f * polyline.getThickness()
             : polyline.getThickness());
       }
-    }    
+    }
     if (Home.getDimensionLinesSubList(items).size() > 0) {
       extraMargin = Math.max(extraMargin, getStrokeWidth(DimensionLine.class, paintMode));
-    }    
+    }
     return extraMargin / 2;
   }
-  
+
   /**
    * Returns the stroke width used to paint an item of the given class.
    */
   private float getStrokeWidth(Class<? extends Selectable> itemClass, PaintMode paintMode) {
-    float strokeWidth; 
+    float strokeWidth;
     if (Wall.class.isAssignableFrom(itemClass)
         || Room.class.isAssignableFrom(itemClass)) {
       strokeWidth = WALL_STROKE_WIDTH;
@@ -2106,13 +2107,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return strokeWidth;
   }
-  
+
   /**
-   * Prints this component plan at the scale given in the home print attributes or at a scale 
+   * Prints this component plan at the scale given in the home print attributes or at a scale
    * that makes it fill <code>pageFormat</code> imageable size if this attribute is <code>null</code>.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    List<Selectable> printedItems = getPaintedItems(); 
+    List<Selectable> printedItems = getPaintedItems();
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null) {
       double imageableX = pageFormat.getImageableX();
@@ -2151,7 +2152,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         rowIndex = pageIndex / pagesPerRow;
         columnIndex = pageIndex - rowIndex * pagesPerRow;
       }
-          
+
       Graphics2D g2D = (Graphics2D)g.create();
       g2D.clip(new Rectangle2D.Double(imageableX, imageableY, imageableWidth, imageableHeight));
       // Change coordinates system to paper imageable origin
@@ -2161,24 +2162,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(-printedItemBounds.getMinX() + extraMargin,
           -printedItemBounds.getMinY() + extraMargin);
       // Center plan in component if possible
-      g2D.translate(Math.max(0, 
-              (imageableWidth * pagesPerRow / printScale - printedItemBounds.getWidth() - 2 * extraMargin) / 2), 
-          Math.max(0, 
+      g2D.translate(Math.max(0,
+              (imageableWidth * pagesPerRow / printScale - printedItemBounds.getWidth() - 2 * extraMargin) / 2),
+          Math.max(0,
               (imageableHeight * pagesPerColumn / printScale - printedItemBounds.getHeight() - 2 * extraMargin) / 2));
       setRenderingHints(g2D);
       try {
         // Print component contents
         paintContent(g2D, printScale, PaintMode.PRINT);
       } catch (InterruptedIOException ex) {
-        // Ignore exception because it may happen only in EXPORT paint mode 
-      }   
+        // Ignore exception because it may happen only in EXPORT paint mode
+      }
       g2D.dispose();
       return PAGE_EXISTS;
     } else {
       return NO_SUCH_PAGE;
     }
   }
-  
+
   /**
    * Returns an image of selected items in plan for transfer purpose.
    */
@@ -2189,9 +2190,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return null;
     }
   }
-  
+
   /**
-   * Returns an image of the selected items displayed by this component 
+   * Returns an image of the selected items displayed by this component
    * (camera excepted) with no outline at scale 1/1 (1 pixel = 1cm).
    */
   public BufferedImage getClipboardImage() {
@@ -2203,8 +2204,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Use a scale of 1
       float clipboardScale = 1f;
       float extraMargin = getStrokeWidthExtraMargin(this.home.getSelectedItems(), PaintMode.CLIPBOARD);
-      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin), 
-              (int)Math.ceil(selectionBounds.getHeight() * clipboardScale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
+      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin),
+              (int)Math.ceil(selectionBounds.getHeight() * clipboardScale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);
       Graphics2D g2D = (Graphics2D)image.getGraphics();
       // Paint background in white
       g2D.setColor(Color.WHITE);
@@ -2218,21 +2219,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Paint component contents
         paintContent(g2D, clipboardScale, PaintMode.CLIPBOARD);
       } catch (InterruptedIOException ex) {
-        // Ignore exception because it may happen only in EXPORT paint mode 
+        // Ignore exception because it may happen only in EXPORT paint mode
         return null;
-      }   
+      }
       g2D.dispose();
       return image;
     }
   }
-  
+
   /**
    * Returns <code>true</code> if the given format is SVG.
    */
   public boolean isFormatTypeSupported(FormatType formatType) {
     return formatType == FormatType.SVG;
   }
-  
+
   /**
    * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format if this is the requested format.
    */
@@ -2243,36 +2244,36 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       throw new UnsupportedOperationException("Unsupported format " + formatType);
     }
   }
-  
+
   /**
    * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format.
    */
   public void exportToSVG(OutputStream out) throws IOException {
-    SVGSupport.exportToSVG(out, this);   
+    SVGSupport.exportToSVG(out, this);
   }
-  
+
   /**
    * Separated static class to be able to exclude FreeHEP library from classpath
-   * in case the application doesn't use export to SVG format. 
+   * in case the application doesn't use export to SVG format.
    */
   private static class SVGSupport {
-    public static void exportToSVG(OutputStream out, 
+    public static void exportToSVG(OutputStream out,
                                    PlanComponent planComponent) throws IOException {
       List<Selectable> homeItems = planComponent.getPaintedItems();
       Rectangle2D svgItemBounds = planComponent.getItemsBounds(null, homeItems);
       if (svgItemBounds == null) {
         svgItemBounds = new Rectangle2D.Float();
       }
-      
+
       float svgScale = 1f;
       float extraMargin = planComponent.getStrokeWidthExtraMargin(homeItems, PaintMode.EXPORT);
-      Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
+      Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin),
           (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
-      
+
       SVGGraphics2D exportG2D = new SVGGraphics2D(out, imageSize) {
           @Override
           public void writeHeader() throws IOException {
-            // Use English locale to avoid wrong encoding when localized dates contain accentuated letters 
+            // Use English locale to avoid wrong encoding when localized dates contain accentuated letters
             Locale defaultLocale = Locale.getDefault();
             Locale.setDefault(Locale.ENGLISH);
             super.writeHeader();
@@ -2282,25 +2283,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       UserProperties properties = new UserProperties();
       properties.setProperty(SVGGraphics2D.STYLABLE, true);
       properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
-      properties.setProperty(SVGGraphics2D.TITLE, 
-          planComponent.home.getName() != null 
-              ? planComponent.home.getName() 
+      properties.setProperty(SVGGraphics2D.TITLE,
+          planComponent.home.getName() != null
+              ? planComponent.home.getName()
               : "" );
       properties.setProperty(SVGGraphics2D.FOR, System.getProperty("user.name", ""));
       exportG2D.setProperties(properties);
       exportG2D.startExport();
       exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
           -svgItemBounds.getMinY() + extraMargin);
-      
+
       planComponent.checkCurrentThreadIsntInterrupted(PaintMode.EXPORT);
-      planComponent.paintContent(exportG2D, svgScale, PaintMode.EXPORT);   
+      planComponent.paintContent(exportG2D, svgScale, PaintMode.EXPORT);
       exportG2D.endExport();
     }
   }
-  
+
   /**
-   * Throws an <code>InterruptedRecorderException</code> exception if current thread 
-   * is interrupted and <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>.  
+   * Throws an <code>InterruptedRecorderException</code> exception if current thread
+   * is interrupted and <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>.
    */
   private void checkCurrentThreadIsntInterrupted(PaintMode paintMode) throws InterruptedIOException {
     if (paintMode == PaintMode.EXPORT
@@ -2308,7 +2309,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       throw new InterruptedIOException("Current thread interrupted");
     }
   }
-  
+
   /**
    * Sets rendering hints used to paint plan.
    */
@@ -2320,7 +2321,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Fills the background. 
+   * Fills the background.
    */
   private void paintBackground(Graphics2D g2D, Color backgroundColor) {
     if (isOpaque()) {
@@ -2335,7 +2336,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private boolean paintBackgroundImage(Graphics2D g2D, PaintMode paintMode) {
     Level selectedLevel = this.home.getSelectedLevel();
     Level backgroundImageLevel = null;
-    if (selectedLevel != null) { 
+    if (selectedLevel != null) {
       // Search the first level at same elevation with a background image
       List<Level> levels = this.home.getLevels();
       for (int i = levels.size() - 1; i >= 0; i--) {
@@ -2350,11 +2351,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     }
-    final BackgroundImage backgroundImage = backgroundImageLevel == null 
+    final BackgroundImage backgroundImage = backgroundImageLevel == null
         ? this.home.getBackgroundImage()
         : backgroundImageLevel.getBackgroundImage();
     if (backgroundImage != null && backgroundImage.isVisible()) {
-      // Under Mac OS X, prepare background image with alpha because Java 5/6 doesn't always 
+      // Under Mac OS X, prepare background image with alpha because Java 5/6 doesn't always
       // paint images correctly with alpha, and Java 7 blocks for some images
       final boolean prepareBackgroundImageWithAlphaInMemory = OperatingSystem.isMacOSX();
       if (this.backgroundImageCache == null && paintMode == PaintMode.PAINT) {
@@ -2388,12 +2389,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setTransform(previousTransform);
       }
       return true;
-    } 
+    }
     return false;
   }
 
   /**
-   * Returns the foreground color used to draw content. 
+   * Returns the foreground color used to draw content.
    */
   protected Color getForegroundColor(PaintMode mode) {
     if (mode == PaintMode.PAINT) {
@@ -2404,7 +2405,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns the background color used to draw content. 
+   * Returns the background color used to draw content.
    */
   protected Color getBackgroundColor(PaintMode mode) {
     if (mode == PaintMode.PAINT) {
@@ -2440,19 +2441,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     } catch (IOException ex) {
       return new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-      // Ignore exceptions, the user may know its background image is incorrect 
+      // Ignore exceptions, the user may know its background image is incorrect
       // if he tries to modify the background image
     }
-  } 
+  }
 
   /**
-   * Paints walls and rooms of lower levels or upper levels to help the user draw in the selected level. 
+   * Paints walls and rooms of lower levels or upper levels to help the user draw in the selected level.
    */
-  private void paintOtherLevels(Graphics2D g2D, float planScale, 
+  private void paintOtherLevels(Graphics2D g2D, float planScale,
                                 Color backgroundColor, Color foregroundColor) {
     List<Level> levels = this.home.getLevels();
     Level selectedLevel = this.home.getSelectedLevel();
-    if (levels.size() > 1 
+    if (levels.size() > 1
         && selectedLevel != null) {
       boolean level0 = levels.get(0).getElevation() == selectedLevel.getElevation();
       List<Level> otherLevels = null;
@@ -2461,7 +2462,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         int selectedLevelIndex = levels.indexOf(selectedLevel);
         otherLevels = new ArrayList<Level>();
         if (level0) {
-          // Search levels at the same elevation above level0 
+          // Search levels at the same elevation above level0
           int nextElevationLevelIndex = selectedLevelIndex;
           while (++nextElevationLevelIndex < levels.size()
               && levels.get(nextElevationLevelIndex).getElevation() == selectedLevel.getElevation()) {
@@ -2473,7 +2474,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (nextLevel.isViewable()) {
                 otherLevels.add(nextLevel);
               }
-            } while (++nextElevationLevelIndex < levels.size() 
+            } while (++nextElevationLevelIndex < levels.size()
                 && (nextLevel = levels.get(nextElevationLevelIndex)).getElevation() == nextElevation);
           }
         } else {
@@ -2489,11 +2490,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (previousLevel.isViewable()) {
                 otherLevels.add(previousLevel);
               }
-            } while (--previousElevationLevelIndex >= 0 
+            } while (--previousElevationLevelIndex >= 0
                 && (previousLevel = levels.get(previousElevationLevelIndex)).getElevation() == previousElevation);
           }
         }
-      
+
         if (this.otherLevelsRoomsCache == null) {
           if (!otherLevels.isEmpty()) {
             // Search viewable floors in levels above level0 or ceilings in levels below level0
@@ -2516,7 +2517,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             this.otherLevelsRoomsCache = Collections.emptyList();
           }
         }
-    
+
         if (this.otherLevelsWallsCache == null) {
           if (!otherLevels.isEmpty()) {
             // Search viewable walls in other levels
@@ -2540,20 +2541,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           this.otherLevelsWallsCache = Collections.emptyList();
         }
       }
-      
+
       if (!this.otherLevelsRoomsCache.isEmpty()) {
-        Composite oldComposite = setTransparency(g2D, 
+        Composite oldComposite = setTransparency(g2D,
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
         g2D.setPaint(Color.GRAY);
         g2D.fill(this.otherLevelsRoomAreaCache);
         g2D.setComposite(oldComposite);
       }
-      
+
       if (!this.otherLevelsWallsCache.isEmpty()) {
-        Composite oldComposite = setTransparency(g2D, 
+        Composite oldComposite = setTransparency(g2D,
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
-        fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale, 
-            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getNewWallPattern()), 
+        fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale,
+            getWallPaint(planScale, backgroundColor, foregroundColor, this.preferences.getNewWallPattern()),
             foregroundColor, PaintMode.PAINT);
         g2D.setComposite(oldComposite);
       }
@@ -2566,7 +2567,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Composite setTransparency(Graphics2D g2D, float alpha) {
     Composite oldComposite = g2D.getComposite();
     if (oldComposite instanceof AlphaComposite) {
-      g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+      g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
         ((AlphaComposite)oldComposite).getAlpha() * alpha));
     } else {
       g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
@@ -2580,12 +2581,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintGrid(Graphics2D g2D, float gridScale) {
     float gridSize = getGridSize(gridScale);
     float mainGridSize = getMainGridSize(gridScale);
-    
+
     float xMin;
     float yMin;
     float xMax;
     float yMax;
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     if (getParent() instanceof JViewport) {
       Rectangle viewRectangle = ((JViewport)getParent()).getViewRect();
       xMin = convertXPixelToModel(viewRectangle.x - 1);
@@ -2606,31 +2607,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Unsigned applet
     }
     if (useGridImage) {
-      // Draw grid with an image texture under Mac OS X, because default 2D rendering engine 
-      // is too slow and can't be replaced by Quartz engine in applet environment 
+      // Draw grid with an image texture under Mac OS X, because default 2D rendering engine
+      // is too slow and can't be replaced by Quartz engine in applet environment
       int imageWidth = Math.round(mainGridSize * gridScale);
       BufferedImage gridImage = new BufferedImage(imageWidth, imageWidth, BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)gridImage.getGraphics();
       setRenderingHints(imageGraphics);
       imageGraphics.scale(gridScale, gridScale);
-      
-      paintGridLines(imageGraphics, gridScale, 0, mainGridSize, 0, mainGridSize, gridSize, mainGridSize);    
+
+      paintGridLines(imageGraphics, gridScale, 0, mainGridSize, 0, mainGridSize, gridSize, mainGridSize);
       imageGraphics.dispose();
-      
+
       g2D.setPaint(new TexturePaint(gridImage, new Rectangle2D.Float(0, 0, mainGridSize, mainGridSize)));
-      
+
       g2D.fill(new Rectangle2D.Float(xMin, yMin, xMax - xMin, yMax - yMin));
     } else {
-      paintGridLines(g2D, gridScale, xMin, xMax, yMin, yMax, gridSize, mainGridSize);          
+      paintGridLines(g2D, gridScale, xMin, xMax, yMin, yMax, gridSize, mainGridSize);
     }
   }
-  
+
   /**
-   * Paints background grid lines from <code>xMin</code> to <code>xMax</code> 
+   * Paints background grid lines from <code>xMin</code> to <code>xMax</code>
    * and <code>yMin</code> to <code>yMax</code>.
    */
-  private void paintGridLines(Graphics2D g2D, float gridScale, 
-                              float xMin, float xMax, float yMin, float yMax, 
+  private void paintGridLines(Graphics2D g2D, float gridScale,
+                              float xMin, float xMax, float yMin, float yMax,
                               float gridSize, float mainGridSize) {
     g2D.setColor(UIManager.getColor("controlShadow"));
     g2D.setStroke(new BasicStroke(0.5f / gridScale));
@@ -2663,12 +2664,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private float getMainGridSize(float gridScale) {
     float [] mainGridSizes;
     LengthUnit lengthUnit = this.preferences.getLengthUnit();
-    if (lengthUnit == LengthUnit.INCH 
+    if (lengthUnit == LengthUnit.INCH
         || lengthUnit == LengthUnit.INCH_DECIMALS) {
       // Use a grid in inch and foot with a minimum grid increment of 1 inch
       float oneFoot = 2.54f * 12;
-      mainGridSizes = new float [] {oneFoot, 3 * oneFoot, 6 * oneFoot, 
-                                    12 * oneFoot, 24 * oneFoot, 48 * oneFoot, 96 * oneFoot, 192 * oneFoot, 384 * oneFoot}; 
+      mainGridSizes = new float [] {oneFoot, 3 * oneFoot, 6 * oneFoot,
+                                    12 * oneFoot, 24 * oneFoot, 48 * oneFoot, 96 * oneFoot, 192 * oneFoot, 384 * oneFoot};
     } else {
       // Use a grid in cm and meters with a minimum grid increment of 1 cm
       mainGridSizes = new float [] {100, 200, 500, 1000, 2000, 5000, 10000};
@@ -2680,18 +2681,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return mainGridSize;
   }
-  
+
   /**
    * Returns the space between lines grid.
    */
   private float getGridSize(float gridScale) {
     float [] gridSizes;
     LengthUnit lengthUnit = this.preferences.getLengthUnit();
-    if (lengthUnit == LengthUnit.INCH 
+    if (lengthUnit == LengthUnit.INCH
         || lengthUnit == LengthUnit.INCH_DECIMALS) {
       // Use a grid in inch and foot with a minimum grid increment of 1 inch
       float oneFoot = 2.54f * 12;
-      gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, oneFoot, 3 * oneFoot, 6 * oneFoot, 
+      gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, oneFoot, 3 * oneFoot, 6 * oneFoot,
                                 12 * oneFoot, 24 * oneFoot, 48 * oneFoot, 96 * oneFoot, 192 * oneFoot, 384 * oneFoot};
     } else {
       // Use a grid in cm and meters with a minimum grid increment of 1 cm
@@ -2704,10 +2705,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return gridSize;
   }
-  
+
   /**
    * Paints plan items.
-   * @throws InterruptedIOException if painting was interrupted (may happen only 
+   * @throws InterruptedIOException if painting was interrupted (may happen only
    *           if <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>).
    */
   private void paintContent(Graphics2D g2D, float planScale, PaintMode paintMode) throws InterruptedIOException {
@@ -2722,31 +2723,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     }
-    
+
     paintHomeItems(g2D, planScale, backgroundColor, foregroundColor, paintMode);
-        
+
     if (paintMode == PaintMode.PAINT) {
       List<Selectable> selectedItems = this.home.getSelectedItems();
-      
-      Color selectionColor = getSelectionColor(); 
+
+      Color selectionColor = getSelectionColor();
       Color furnitureOutlineColor = getFurnitureOutlineColor();
-      Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
+      Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(),
           selectionColor.getBlue(), 128);
-      Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
-          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-      Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
-          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+      Stroke selectionOutlineStroke = new BasicStroke(6 / planScale,
+          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+      Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale,
+          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
       Stroke locationFeedbackStroke = new BasicStroke(
-          1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+          1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0,
           new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
-      
-      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+
+      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor,
           planScale, backgroundColor, foregroundColor);
-      
+
       // Paint alignment feedback depending on aligned object class
       if (this.alignedObjectClass != null) {
         if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback, 
+          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
               selectionColor, locationFeedbackStroke, planScale,
               selectionOutlinePaint, selectionOutlineStroke);
         } else if (Room.class.isAssignableFrom(this.alignedObjectClass)) {
@@ -2758,48 +2759,48 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             paintPointFeedback(g2D, this.locationFeeback, selectionColor, planScale, selectionOutlinePaint, selectionOutlineStroke);
           }
         } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,               
+          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
               selectionColor, locationFeedbackStroke, planScale,
               selectionOutlinePaint, selectionOutlineStroke);
         }
       }
       if (this.centerAngleFeedback != null) {
-       paintAngleFeedback(g2D, this.centerAngleFeedback, this.point1AngleFeedback, this.point2AngleFeedback, 
-           planScale, selectionColor); 
+       paintAngleFeedback(g2D, this.centerAngleFeedback, this.point1AngleFeedback, this.point2AngleFeedback,
+           planScale, selectionColor);
       }
       if (this.dimensionLinesFeedback != null) {
-        List<Selectable> emptySelection = Collections.emptyList();        
-        paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection, 
-            null, null, null, locationFeedbackStroke, planScale, 
+        List<Selectable> emptySelection = Collections.emptyList();
+        paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection,
+            null, null, null, locationFeedbackStroke, planScale,
             backgroundColor, selectionColor, paintMode, true);
       }
-      
+
       if (this.draggedItemsFeedback != null) {
-        paintDimensionLines(g2D, Home.getDimensionLinesSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
-            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null, 
+        paintDimensionLines(g2D, Home.getDimensionLinesSubList(this.draggedItemsFeedback), this.draggedItemsFeedback,
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null,
             locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
-        paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
+        paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback,
             selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null,
             planScale, foregroundColor, paintMode);
-        paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+        paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null,
             planScale, foregroundColor);
-        paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+        paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null,
             planScale, foregroundColor);
-        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, 
+        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null,
             foregroundColor, furnitureOutlineColor, paintMode, false);
-        paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+        paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null,
             planScale, foregroundColor);
       }
-      
+
       paintRectangleFeedback(g2D, selectionColor, planScale);
     }
   }
-  
+
   /**
    * Paints home items at the given scale, and with background and foreground colors.
-   * Outline around selected items will be painted only under <code>PAINT</code> mode. 
+   * Outline around selected items will be painted only under <code>PAINT</code> mode.
    */
-  protected void paintHomeItems(Graphics g, float planScale, 
+  protected void paintHomeItems(Graphics g, float planScale,
                                 Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
     Graphics2D g2D = (Graphics2D)g;
     List<Selectable> selectedItems = this.home.getSelectedItems();
@@ -2817,17 +2818,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               return Float.compare(piece1.getGroundElevation(), piece2.getGroundElevation());
             }
           });
-    }    
-    
-    Color selectionColor = getSelectionColor(); 
-    Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
+    }
+
+    Color selectionColor = getSelectionColor();
+    Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(),
         selectionColor.getBlue(), 128);
-    Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+    Stroke selectionOutlineStroke = new BasicStroke(6 / planScale,
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale,
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     Stroke locationFeedbackStroke = new BasicStroke(
-        1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+        1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0,
         new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
 
     paintCompass(g2D, selectedItems, planScale, foregroundColor, paintMode);
@@ -2837,20 +2838,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     checkCurrentThreadIsntInterrupted(paintMode);
     paintWalls(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
-    
+
     checkCurrentThreadIsntInterrupted(paintMode);
-    paintFurniture(g2D, this.sortedLevelFurniture, selectedItems, 
+    paintFurniture(g2D, this.sortedLevelFurniture, selectedItems,
         planScale, backgroundColor, foregroundColor, getFurnitureOutlineColor(), paintMode, true);
-    
+
     checkCurrentThreadIsntInterrupted(paintMode);
-    paintPolylines(g2D, this.home.getPolylines(), selectedItems, selectionOutlinePaint,  
+    paintPolylines(g2D, this.home.getPolylines(), selectedItems, selectionOutlinePaint,
         selectionColor, planScale, foregroundColor, paintMode);
-    
+
     checkCurrentThreadIsntInterrupted(paintMode);
-    paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
-        selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
+    paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems,
+        selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor,
         locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
-    
+
     // Paint rooms text, furniture name and labels last to ensure they are not hidden
     checkCurrentThreadIsntInterrupted(paintMode);
     paintRoomsNameAndArea(g2D, selectedItems, planScale, foregroundColor, paintMode);
@@ -2859,24 +2860,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintFurnitureName(g2D, this.sortedLevelFurniture, selectedItems, planScale, foregroundColor, paintMode);
 
     checkCurrentThreadIsntInterrupted(paintMode);
-    paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+    paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke,
         selectionColor, planScale, foregroundColor, paintMode);
-    
+
     if (paintMode == PaintMode.PAINT
         && this.selectedItemsOutlinePainted) {
-      paintCompassOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintCompassOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor,
           planScale, foregroundColor);
-      paintRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor,
           planScale, foregroundColor);
-      paintWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor,
           planScale, foregroundColor);
-      paintFurnitureOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintFurnitureOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor,
           planScale, foregroundColor);
     }
   }
 
   /**
-   * Returns the color used to draw selection outlines. 
+   * Returns the color used to draw selection outlines.
    */
   protected Color getSelectionColor() {
     if (OperatingSystem.isMacOSX()) {
@@ -2892,8 +2893,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (selectionColor != null) {
           return selectionColor;
         }
-      }  
-        
+      }
+
       return UIManager.getColor("textHighlight");
     } else {
       // On systems different from Mac OS X, take a darker color
@@ -2902,17 +2903,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns the color used to draw furniture outline of 
+   * Returns the color used to draw furniture outline of
    * the shape where a user can click to select a piece of furniture.
    */
   protected Color getFurnitureOutlineColor() {
     return new Color((getForeground().getRGB() & 0xFFFFFF) | 0x55000000, true);
   }
-  
+
   /**
-   * Paints rooms. 
+   * Paints rooms.
    */
-  private void paintRooms(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+  private void paintRooms(Graphics2D g2D, List<Selectable> selectedItems, float planScale,
                           Color foregroundColor, PaintMode paintMode) {
     if (this.sortedLevelRooms == null) {
       // Sort home rooms in floor / floor-ceiling / ceiling order
@@ -2937,13 +2938,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }
           });
     }
-    
-    Color defaultFillPaint = paintMode == PaintMode.PRINT 
+
+    Color defaultFillPaint = paintMode == PaintMode.PRINT
         ? Color.WHITE
         : Color.GRAY;
     // Draw rooms area
     g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, paintMode) / planScale));
-    for (Room room : this.sortedLevelRooms) { 
+    for (Room room : this.sortedLevelRooms) {
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
       if (paintMode != PaintMode.CLIPBOARD
@@ -2975,7 +2976,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
                       new TextureManager.TextureObserver() {
                         public void textureUpdated(Texture texture) {
-                          floorTextureImagesCache.put(floorTexture, 
+                          floorTextureImagesCache.put(floorTexture,
                               ((ImageComponent2D)texture.getImage(0)).getImage());
                           if (!waitForTexture) {
                             repaint();
@@ -2984,24 +2985,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       });
                 } else {
                   // Use icon manager if texture manager should be ignored
-                  Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(), 
+                  Icon textureIcon = IconManager.getInstance().getIcon(floorTexture.getImage(),
                       waitForTexture ? null : this);
                   if (IconManager.getInstance().isWaitIcon(textureIcon)) {
-                    this.floorTextureImagesCache.put(floorTexture, WAIT_TEXTURE_IMAGE);                    
+                    this.floorTextureImagesCache.put(floorTexture, WAIT_TEXTURE_IMAGE);
                   } else if (IconManager.getInstance().isErrorIcon(textureIcon)) {
-                    this.floorTextureImagesCache.put(floorTexture, ERROR_TEXTURE_IMAGE);                    
-                  } else {                    
+                    this.floorTextureImagesCache.put(floorTexture, ERROR_TEXTURE_IMAGE);
+                  } else {
                     BufferedImage textureIconImage = new BufferedImage(
                         textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2DIcon = (Graphics2D)textureIconImage.getGraphics();
                     textureIcon.paintIcon(this, g2DIcon, 0, 0);
                     g2DIcon.dispose();
                     this.floorTextureImagesCache.put(floorTexture, textureIconImage);
-                  } 
+                  }
                 }
                 textureImage = this.floorTextureImagesCache.get(floorTexture);
               }
-              
+
               float textureWidth = floorTexture.getWidth();
               float textureHeight = floorTexture.getHeight();
               if (textureWidth == -1 || textureHeight == -1) {
@@ -3009,20 +3010,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 textureHeight = 100;
               }
               float textureScale = floorTexture.getScale();
-              g2D.setPaint(new TexturePaint(textureImage, 
+              g2D.setPaint(new TexturePaint(textureImage,
                   new Rectangle2D.Float(0, 0, textureWidth * textureScale, textureHeight * textureScale)));
               textureAngle = floorTexture.getAngle();
             }
-          }          
+          }
         }
-        
+
         Composite oldComposite = setTransparency(g2D, 0.75f);
         // Rotate graphics to rotate texture with requested angle
         // and draw shape rotated with the opposite angle
         g2D.rotate(textureAngle, 0, 0);
         AffineTransform rotation = textureAngle != 0
             ? AffineTransform.getRotateInstance(-textureAngle, 0, 0)
-            : null;       
+            : null;
         Shape roomShape = getShape(room.getPoints(), true, rotation);
         fillShape(g2D, roomShape, paintMode);
         g2D.setComposite(oldComposite);
@@ -3052,7 +3053,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (firstX > shapeBounds.getX()) {
         firstX -= anchorRect.getWidth();
       }
-      double firstY = anchorRect.getY() + Math.round(shapeBounds.getY() / anchorRect.getHeight()) * anchorRect.getHeight();    
+      double firstY = anchorRect.getY() + Math.round(shapeBounds.getY() / anchorRect.getHeight()) * anchorRect.getHeight();
       if (firstY > shapeBounds.getY()) {
         firstY -= anchorRect.getHeight();
       }
@@ -3078,23 +3079,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     try {
       return !Boolean.getBoolean("com.eteks.sweethome3d.no3D")
           // Refuse to share textures under Mac OS X with Java 1.7 for performance reasons
-          && !(OperatingSystem.isMacOSX() 
+          && !(OperatingSystem.isMacOSX()
                && OperatingSystem.isJavaVersionGreaterOrEqual("1.7"));
     } catch (AccessControlException ex) {
-      // If com.eteks.sweethome3d.no3D can't be read, 
-      // security manager won't allow to access to Java 3D DLLs required by TextureManager class too 
+      // If com.eteks.sweethome3d.no3D can't be read,
+      // security manager won't allow to access to Java 3D DLLs required by TextureManager class too
     }
     return false;
   }
-  
+
   /**
-   * Paints rooms name and area. 
+   * Paints rooms name and area.
    */
-  private void paintRoomsNameAndArea(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+  private void paintRoomsNameAndArea(Graphics2D g2D, List<Selectable> selectedItems, float planScale,
                                      Color foregroundColor, PaintMode paintMode) {
     g2D.setPaint(foregroundColor);
     Font previousFont = g2D.getFont();
-    for (Room room : this.sortedLevelRooms) { 
+    for (Room room : this.sortedLevelRooms) {
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
       if (paintMode != PaintMode.CLIPBOARD
@@ -3114,8 +3115,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (room.isAreaVisible()) {
           float area = room.getArea();
           if (area > 0.01f) {
-            // Draw room area 
-            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);            
+            // Draw room area
+            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
             paintText(g2D, room.getClass(), areaText, room.getAreaStyle(), null,
                 xRoomCenter + room.getAreaXOffset(),
                 yRoomCenter + room.getAreaYOffset(),
@@ -3132,20 +3133,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintText(Graphics2D g2D,
                          Class<? extends Selectable> selectableClass,
-                         String text, TextStyle style, Integer outlineColor, 
+                         String text, TextStyle style, Integer outlineColor,
                          float x, float y, float angle,
                          Font defaultFont) {
     AffineTransform previousTransform = g2D.getTransform();
     if (style == null) {
       style = this.preferences.getDefaultTextStyle(selectableClass);
-    }              
+    }
     FontMetrics fontMetrics = getFontMetrics(defaultFont, style);
     Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
     g2D.translate(x, y);
     g2D.rotate(angle);
     if (outlineColor != null) {
       // Draw text outline
-      BasicStroke stroke = new BasicStroke(style.getFontSize() * 0.05f); 
+      BasicStroke stroke = new BasicStroke(style.getFontSize() * 0.05f);
       TextStyle outlineStyle = style.deriveStyle(style.getFontSize() - stroke.getLineWidth());
       Font font = getFont(defaultFont, outlineStyle);
       g2D.setFont(font);
@@ -3164,13 +3165,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.drawString(text, 0, 0);
     g2D.setTransform(previousTransform);
   }
-  
+
   /**
-   * Paints the outline of rooms among <code>items</code> and indicators if 
-   * <code>items</code> contains only one room and indicator paint isn't <code>null</code>. 
+   * Paints the outline of rooms among <code>items</code> and indicators if
+   * <code>items</code> contains only one room and indicator paint isn't <code>null</code>.
    */
-  private void paintRoomsOutline(Graphics2D g2D, List<Selectable> items,   
-                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+  private void paintRoomsOutline(Graphics2D g2D, List<Selectable> items,
+                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
                           Paint indicatorPaint, float planScale, Color foregroundColor) {
     Collection<Room> rooms = Home.getRoomsSubList(items);
     AffineTransform previousTransform = g2D.getTransform();
@@ -3181,9 +3182,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
         g2D.draw(getShape(room.getPoints(), true, null));
-  
+
         if (indicatorPaint != null) {
-          g2D.setPaint(indicatorPaint);         
+          g2D.setPaint(indicatorPaint);
           // Draw points of the room
           for (float [] point : room.getPoints()) {
             g2D.translate(point [0], point [1]);
@@ -3195,23 +3196,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     }
-    
+
     // Draw rooms area
     g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, PaintMode.PAINT) / planScale));
-    for (Room room : rooms) { 
+    for (Room room : rooms) {
       if (isViewableAtSelectedLevel(room)) {
         g2D.draw(getShape(room.getPoints(), true, null));
       }
     }
 
     // Paint resize indicators of the room if indicator paint exists
-    if (items.size() == 1 
-        && rooms.size() == 1 
+    if (items.size() == 1
+        && rooms.size() == 1
         && indicatorPaint != null) {
       Room selectedRoom = rooms.iterator().next();
       if (isViewableAtSelectedLevel(selectedRoom)) {
-        g2D.setPaint(indicatorPaint);         
+        g2D.setPaint(indicatorPaint);
         paintPointsResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale, true, 0, 0, true);
         paintRoomNameOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
         paintRoomAreaOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
@@ -3223,7 +3224,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints resize indicators on selectable <code>item</code>.
    */
   private void paintPointsResizeIndicators(Graphics2D g2D, Selectable item,
-                                           Paint indicatorPaint, 
+                                           Paint indicatorPaint,
                                            float planScale,
                                            boolean closedPath,
                                            float   angleAtStart,
@@ -3258,10 +3259,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               nextPoint [0], nextPoint [1], point [0], point [1]);
           float xNormal2 = (nextPoint [1] - point [1]) / distance2;
           float yNormal2 = (point [0] - nextPoint [0]) / distance2;
-          angle = Math.atan2(yNormal1 + yNormal2, xNormal1 + xNormal2);         
-          // Ensure the indicator will be drawn outside of shape 
-          if (orientateIndicatorOutsideShape 
-                && item.containsPoint(point [0] + (float)Math.cos(angle), 
+          angle = Math.atan2(yNormal1 + yNormal2, xNormal1 + xNormal2);
+          // Ensure the indicator will be drawn outside of shape
+          if (orientateIndicatorOutsideShape
+                && item.containsPoint(point [0] + (float)Math.cos(angle),
                       point [1] + (float)Math.sin(angle), 0.001f)
               || !orientateIndicatorOutsideShape
                   && (xNormal1 * yNormal2 - yNormal1 * xNormal2) < 0) {
@@ -3270,7 +3271,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         } else if (i == 0) {
           angle = angleAtStart;
         } else {
-          angle = angleAtEnd;              
+          angle = angleAtEnd;
         }
         g2D.rotate(angle);
         g2D.draw(resizeIndicator);
@@ -3278,7 +3279,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     }
   }
-  
+
   /**
    * Returns the shape of the given indicator type.
    */
@@ -3298,7 +3299,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         return COMPASS_ROTATION_INDICATOR;
       } else if (item instanceof Camera) {
         return CAMERA_YAW_ROTATION_INDICATOR;
-      } 
+      }
     } else if (IndicatorType.ELEVATE.equals(indicatorType)) {
       if (item instanceof Camera) {
         return CAMERA_ELEVATION_INDICATOR;
@@ -3326,21 +3327,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else if (IndicatorType.ROTATE_ROLL.equals(indicatorType)) {
       if (item instanceof HomePieceOfFurniture) {
         return FURNITURE_ROLL_ROTATION_INDICATOR;
-      } 
+      }
     }
     return null;
   }
-  
+
   /**
    * Paints name indicator on <code>room</code>.
    */
   private void paintRoomNameOffsetIndicator(Graphics2D g2D, Room room,
-                                            Paint indicatorPaint, 
+                                            Paint indicatorPaint,
                                             float planScale) {
     if (this.resizeIndicatorVisible
         && room.getName() != null
         && room.getName().trim().length() > 0) {
-      float xName = room.getXCenter() + room.getNameXOffset(); 
+      float xName = room.getXCenter() + room.getNameXOffset();
       float yName = room.getYCenter() + room.getNameYOffset();
       paintTextIndicators(g2D, room.getClass(), room.getNameStyle(), xName, yName, room.getNameAngle(),
           indicatorPaint, planScale);
@@ -3351,14 +3352,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints resize indicator on <code>room</code>.
    */
   private void paintRoomAreaOffsetIndicator(Graphics2D g2D, Room room,
-                                            Paint indicatorPaint, 
+                                            Paint indicatorPaint,
                                             float planScale) {
     if (this.resizeIndicatorVisible
         && room.isAreaVisible()
         && room.getArea() > 0.01f) {
-      float xArea = room.getXCenter() + room.getAreaXOffset(); 
+      float xArea = room.getXCenter() + room.getAreaXOffset();
       float yArea = room.getYCenter() + room.getAreaYOffset();
-      paintTextIndicators(g2D, room.getClass(), room.getAreaStyle(), xArea, yArea, room.getAreaAngle(), 
+      paintTextIndicators(g2D, room.getClass(), room.getAreaStyle(), xArea, yArea, room.getAreaAngle(),
           indicatorPaint, planScale);
     }
   }
@@ -3366,11 +3367,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints text location and angle indicators at the given coordinates.
    */
-  private void paintTextIndicators(Graphics2D g2D, 
+  private void paintTextIndicators(Graphics2D g2D,
                                    Class<? extends Selectable> selectableClass,
-                                   TextStyle style, 
+                                   TextStyle style,
                                    float x, float y, float angle,
-                                   Paint indicatorPaint, 
+                                   Paint indicatorPaint,
                                    float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
@@ -3381,13 +3382,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.rotate(angle);
       g2D.scale(scaleInverse, scaleInverse);
       if (Label.class.isAssignableFrom(selectableClass)) {
-        g2D.draw(LABEL_CENTER_INDICATOR);      
+        g2D.draw(LABEL_CENTER_INDICATOR);
       } else {
         g2D.draw(getIndicator(null, IndicatorType.MOVE_TEXT));
       }
       if (style == null) {
         style = this.preferences.getDefaultTextStyle(selectableClass);
-      }              
+      }
       FontMetrics fontMetrics = getFontMetrics(g2D.getFont(), style);
       g2D.setTransform(previousTransform);
       g2D.translate(x, y);
@@ -3400,9 +3401,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints walls. 
+   * Paints walls.
    */
-  private void paintWalls(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+  private void paintWalls(Graphics2D g2D, List<Selectable> selectedItems, float planScale,
                           Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     Collection<Wall> paintedWalls;
     Map<Collection<Wall>, Area> wallAreas;
@@ -3413,12 +3414,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       paintedWalls = Home.getWallsSubList(selectedItems);
       wallAreas = getWallAreas(getDrawableWallsInSelectedLevel(paintedWalls));
     }
-    float wallPaintScale = paintMode == PaintMode.PRINT 
+    float wallPaintScale = paintMode == PaintMode.PRINT
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale;
     Composite oldComposite = null;
     if (paintMode == PaintMode.PAINT
-        && this.backgroundPainted 
+        && this.backgroundPainted
         && this.backgroundImageCache != null
         && this.wallsDoorsOrWindowsModification) {
       // Paint walls with half transparent paint when a wall or a door/window in the base plan is being handled
@@ -3426,8 +3427,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
       TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
-      fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale, 
-          getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
+      fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale,
+          getWallPaint(wallPaintScale, backgroundColor, foregroundColor,
               wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor, paintMode);
     }
     if (oldComposite != null) {
@@ -3438,7 +3439,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Fills and paints the given area.
    */
-  private void fillAndDrawWallsArea(Graphics2D g2D, Area area, float planScale, Paint fillPaint, 
+  private void fillAndDrawWallsArea(Graphics2D g2D, Area area, float planScale, Paint fillPaint,
                                     Paint drawPaint, PaintMode paintMode) {
     // Fill walls area
     g2D.setPaint(fillPaint);
@@ -3448,13 +3449,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setStroke(new BasicStroke(getStrokeWidth(Wall.class, paintMode) / planScale));
     g2D.draw(area);
   }
-  
+
   /**
-   * Paints the outline of walls among <code>items</code> and a resize indicator if 
-   * <code>items</code> contains only one wall and indicator paint isn't <code>null</code>. 
+   * Paints the outline of walls among <code>items</code> and a resize indicator if
+   * <code>items</code> contains only one wall and indicator paint isn't <code>null</code>.
    */
-  private void paintWallsOutline(Graphics2D g2D, List<Selectable> items,   
-                                 Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+  private void paintWallsOutline(Graphics2D g2D, List<Selectable> items,
+                                 Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
                                  Paint indicatorPaint, float planScale, Color foregroundColor) {
     float scaleInverse = 1 / planScale;
     Collection<Wall> walls = Home.getWallsSubList(items);
@@ -3465,15 +3466,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
         g2D.draw(getShape(wall.getPoints(), true, null));
-        
+
         if (indicatorPaint != null) {
           // Draw start point of the wall
           g2D.translate(wall.getXStart(), wall.getYStart());
           g2D.scale(scaleInverse, scaleInverse);
-          g2D.setPaint(indicatorPaint);         
+          g2D.setPaint(indicatorPaint);
           g2D.setStroke(POINT_STROKE);
           g2D.fill(WALL_POINT);
-        
+
           Float arcExtent = wall.getArcExtent();
           double indicatorAngle;
           double distanceAtScale;
@@ -3481,33 +3482,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float yArcCircleCenter = 0;
           double arcCircleRadius = 0;
           double startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
-          double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+          double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(),
               wall.getXEnd() - wall.getXStart());
           if (arcExtent != null
               && arcExtent.floatValue() != 0) {
             xArcCircleCenter = wall.getXArcCircleCenter();
             yArcCircleCenter = wall.getYArcCircleCenter();
-            arcCircleRadius = Point2D.distance(wall.getXStart(), wall.getYStart(), 
+            arcCircleRadius = Point2D.distance(wall.getXStart(), wall.getYStart(),
                 xArcCircleCenter, yArcCircleCenter);
             distanceAtScale = arcCircleRadius * Math.abs(arcExtent) * planScale;
-            indicatorAngle = Math.atan2(yArcCircleCenter - wall.getYStart(), 
-                    xArcCircleCenter - wall.getXStart())  
+            indicatorAngle = Math.atan2(yArcCircleCenter - wall.getYStart(),
+                    xArcCircleCenter - wall.getXStart())
                 + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
           } else {
             distanceAtScale = startPointToEndPointDistance * planScale;
             indicatorAngle = wallAngle;
           }
           // If the distance between start and end points is < 30
-          if (distanceAtScale < 30) { 
+          if (distanceAtScale < 30) {
             // Draw only one orientation indicator between the two points
             g2D.rotate(wallAngle);
             if (arcExtent != null) {
-              double wallToStartPointArcCircleCenterAngle = Math.abs(arcExtent) > Math.PI 
+              double wallToStartPointArcCircleCenterAngle = Math.abs(arcExtent) > Math.PI
                   ? -(Math.PI + arcExtent) / 2
                   : (Math.PI - arcExtent) / 2;
-              float arcCircleCenterToWallDistance = (float)(Math.tan(wallToStartPointArcCircleCenterAngle) 
-                  * startPointToEndPointDistance / 2); 
-              g2D.translate(startPointToEndPointDistance * planScale / 2, 
+              float arcCircleCenterToWallDistance = (float)(Math.tan(wallToStartPointArcCircleCenterAngle)
+                  * startPointToEndPointDistance / 2);
+              g2D.translate(startPointToEndPointDistance * planScale / 2,
                   (arcCircleCenterToWallDistance - arcCircleRadius * (Math.abs(wallAngle) > Math.PI / 2 ? -1: 1)) * planScale);
             } else {
               g2D.translate(distanceAtScale / 2, 0);
@@ -3519,22 +3520,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
           g2D.draw(WALL_ORIENTATION_INDICATOR);
           g2D.setTransform(previousTransform);
-          
+
           // Draw end point of the wall
           g2D.translate(wall.getXEnd(), wall.getYEnd());
           g2D.scale(scaleInverse, scaleInverse);
           g2D.fill(WALL_POINT);
-          if (distanceAtScale >= 30) { 
+          if (distanceAtScale >= 30) {
             if (arcExtent != null) {
               indicatorAngle += arcExtent;
-            } 
+            }
             // Draw orientation indicator at end of the wall
             g2D.rotate(indicatorAngle);
             g2D.translate(-10, 0);
             g2D.draw(WALL_ORIENTATION_INDICATOR);
-          }        
+          }
           g2D.setTransform(previousTransform);
-        }      
+        }
       }
     }
     // Draw walls area
@@ -3543,10 +3544,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     for (Area area : getWallAreas(getDrawableWallsInSelectedLevel(walls)).values()) {
       g2D.draw(area);
     }
-    
+
     // Paint resize indicator of the wall if indicator paint exists
-    if (items.size() == 1 
-        && walls.size() == 1 
+    if (items.size() == 1
+        && walls.size() == 1
         && indicatorPaint != null) {
       Wall wall = walls.iterator().next();
       if (isViewableAtSelectedLevel(wall)) {
@@ -3556,7 +3557,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns <code>true</code> if the given item can be viewed in the plan at the selected level. 
+   * Returns <code>true</code> if the given item can be viewed in the plan at the selected level.
    */
   private boolean isViewableAtSelectedLevel(Elevatable item) {
     Level level = item.getLevel();
@@ -3569,24 +3570,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints resize indicator on <code>wall</code>.
    */
   private void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
-                                        Paint indicatorPaint, 
+                                        Paint indicatorPaint,
                                         float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
-      
+
       Float arcExtent = wall.getArcExtent();
       double indicatorAngle;
       if (arcExtent != null
           && arcExtent.floatValue() != 0) {
-        indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYEnd(), 
-                wall.getXArcCircleCenter() - wall.getXEnd())  
+        indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYEnd(),
+                wall.getXArcCircleCenter() - wall.getXEnd())
             + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
       } else {
-        indicatorAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+        indicatorAngle = Math.atan2(wall.getYEnd() - wall.getYStart(),
             wall.getXEnd() - wall.getXStart());
       }
-      
+
       AffineTransform previousTransform = g2D.getTransform();
       float scaleInverse = 1 / planScale;
       // Draw resize indicator at wall end point
@@ -3601,7 +3602,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       } else {
         indicatorAngle += Math.PI;
       }
-      
+
       // Draw resize indicator at wall start point
       g2D.translate(wall.getXStart(), wall.getYStart());
       g2D.scale(scaleInverse, scaleInverse);
@@ -3610,9 +3611,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setTransform(previousTransform);
     }
   }
-  
+
   /**
-   * Returns areas matching the union of home wall shapes sorted by pattern. 
+   * Returns areas matching the union of home wall shapes sorted by pattern.
    */
   private Map<Collection<Wall>, Area> getWallAreas() {
     if (this.wallAreasCache == null) {
@@ -3633,9 +3634,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return wallsInSelectedLevel;
   }
-  
+
   /**
-   * Returns areas matching the union of <code>walls</code> shapes sorted by pattern. 
+   * Returns areas matching the union of <code>walls</code> shapes sorted by pattern.
    */
   private Map<Collection<Wall>, Area> getWallAreas(Collection<Wall> walls) {
     if (walls.size() == 0) {
@@ -3674,9 +3675,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return wallAreas;
   }
-  
+
   /**
-   * Returns an area matching the union of all <code>items</code> shapes. 
+   * Returns an area matching the union of all <code>items</code> shapes.
    */
   private Area getItemsArea(Collection<? extends Selectable> items) {
     Area itemsArea = new Area();
@@ -3699,18 +3700,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.wallsPatternBackgroundCache = backgroundColor;
       this.wallsPatternForegroundCache = foregroundColor;
     }
-    return new TexturePaint(patternImage, 
+    return new TexturePaint(patternImage,
         new Rectangle2D.Float(0, 0, 10 / planScale, 10 / planScale));
   }
-  
+
   /**
    * Paints home furniture.
    */
-  private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture, 
-                              List<? extends Selectable> selectedItems, float planScale, 
-                              Color backgroundColor, Color foregroundColor, 
+  private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture,
+                              List<? extends Selectable> selectedItems, float planScale,
+                              Color backgroundColor, Color foregroundColor,
                               Color furnitureOutlineColor,
-                              PaintMode paintMode, boolean paintIcon) {    
+                              PaintMode paintMode, boolean paintIcon) {
     if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
       Boolean allFurnitureViewedFromTop = null;
@@ -3721,11 +3722,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (piece instanceof HomeFurnitureGroup) {
             List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getFurniture();
             List<Selectable> emptyList = Collections.emptyList();
-            paintFurniture(g2D, groupFurniture,  
-                selectedPiece 
-                    ? groupFurniture 
-                    : emptyList, 
-                planScale, backgroundColor, foregroundColor, 
+            paintFurniture(g2D, groupFurniture,
+                selectedPiece
+                    ? groupFurniture
+                    : emptyList,
+                planScale, backgroundColor, foregroundColor,
                 furnitureOutlineColor, paintMode, paintIcon);
           } else if (paintMode != PaintMode.CLIPBOARD
                     || selectedPiece) {
@@ -3752,21 +3753,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               } else {
                 if (allFurnitureViewedFromTop == null) {
                   try {
-                    // Evaluate allFurnitureViewedFromTop value as late as possible to avoid mandatory dependency towards Java 3D 
-                    allFurnitureViewedFromTop = !Boolean.getBoolean("com.eteks.sweethome3d.no3D") 
+                    // Evaluate allFurnitureViewedFromTop value as late as possible to avoid mandatory dependency towards Java 3D
+                    allFurnitureViewedFromTop = !Boolean.getBoolean("com.eteks.sweethome3d.no3D")
                         && Component3DManager.getInstance().isOffScreenImageSupported();
                   } catch (AccessControlException ex) {
-                    // If com.eteks.sweethome3d.no3D property can't be read, 
+                    // If com.eteks.sweethome3d.no3D property can't be read,
                     // security manager won't allow to access to Java 3D DLLs required by PieceOfFurnitureModelIcon class too
                     allFurnitureViewedFromTop = false;
                   }
                 }
                 viewedFromTop = allFurnitureViewedFromTop.booleanValue();
-              }                
+              }
             } else {
               viewedFromTop = false;
             }
-            if (paintIcon 
+            if (paintIcon
                 && viewedFromTop) {
               if (piece instanceof HomeDoorOrWindow) {
                 // Draw doors and windows border
@@ -3776,19 +3777,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 g2D.setStroke(pieceBorderStroke);
                 g2D.draw(pieceShape2D);
               } else {
-                paintPieceOfFurnitureTop(g2D, piece, pieceShape2D, pieceBorderStroke, planScale, 
+                paintPieceOfFurnitureTop(g2D, piece, pieceShape2D, pieceBorderStroke, planScale,
                     backgroundColor, foregroundColor, paintMode);
               }
               if (paintMode == PaintMode.PAINT) {
-                // Draw selection outline rectangle  
+                // Draw selection outline rectangle
                 g2D.setStroke(pieceBorderStroke);
                 g2D.setPaint(furnitureOutlineColor);
                 g2D.draw(pieceShape);
-              } 
+              }
             } else {
               if (paintIcon) {
                 // Draw its icon
-                paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale, 
+                paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale,
                     backgroundColor, paintMode);
               }
               // Draw its border
@@ -3800,7 +3801,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 // Draw outline rectangle
                 g2D.setPaint(furnitureOutlineColor);
                 g2D.draw(pieceShape);
-              } 
+              }
             }
           }
         }
@@ -3827,14 +3828,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private Rectangle2D getDoorOrWindowRectangle(HomeDoorOrWindow doorOrWindow, boolean onlyWallPart) {
     // Doors and windows can't be rotated along horizontal axes
-    float wallThickness = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallThickness() : 1); 
+    float wallThickness = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallThickness() : 1);
     float wallDistance  = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallDistance()  : 0);
     String cutOutShape = doorOrWindow.getCutOutShape();
     float width = doorOrWindow.getWidth();
     float x;
     if (cutOutShape != null
         && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
-      // In case of a complex cut out, compute location and width of the window hole at wall intersection 
+      // In case of a complex cut out, compute location and width of the window hole at wall intersection
       Shape shape = ModelManager.getInstance().getShape(cutOutShape);
       Rectangle2D bounds = shape.getBounds2D();
       if (doorOrWindow.isModelMirrored()) {
@@ -3855,14 +3856,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints the shape of a door or a window in the thickness of the wall it intersects.
    */
-  private void paintDoorOrWindowWallThicknessArea(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
+  private void paintDoorOrWindowWallThicknessArea(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale,
                                                   Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     if (doorOrWindow.isWallCutOutOnBothSides()) {
       Area doorOrWindowWallArea = null;
       if (this.doorOrWindowWallThicknessAreasCache != null) {
         doorOrWindowWallArea = this.doorOrWindowWallThicknessAreasCache.get(doorOrWindow);
       }
-      
+
       if (doorOrWindowWallArea == null) {
         Rectangle2D doorOrWindowRectangle = getDoorOrWindowRectangle(doorOrWindow, false);
         // Apply rotation to the rectangle
@@ -3872,7 +3873,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         GeneralPath doorOrWindowWallPartShape = new GeneralPath();
         doorOrWindowWallPartShape.append(it, false);
         Area doorOrWindowWallPartArea = new Area(doorOrWindowWallPartShape);
-        
+
         doorOrWindowWallArea = new Area();
         for (Wall wall : home.getWalls()) {
           if (wall.isAtLevel(doorOrWindow.getLevel())
@@ -3882,9 +3883,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             wallArea.intersect(doorOrWindowWallPartArea);
             if (!wallArea.isEmpty()) {
               Rectangle2D doorOrWindowExtendedRectangle = new Rectangle2D.Float(
-                  (float)doorOrWindowRectangle.getX(), 
-                  (float)doorOrWindowRectangle.getY() - 2 * wall.getThickness(), 
-                  (float)doorOrWindowRectangle.getWidth(), 
+                  (float)doorOrWindowRectangle.getX(),
+                  (float)doorOrWindowRectangle.getY() - 2 * wall.getThickness(),
+                  (float)doorOrWindowRectangle.getWidth(),
                   (float)doorOrWindowRectangle.getWidth() + 4 * wall.getThickness());
               it = doorOrWindowExtendedRectangle.getPathIterator(rotation);
               GeneralPath path = new GeneralPath();
@@ -3896,12 +3897,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       }
-      
+
       if (this.doorOrWindowWallThicknessAreasCache == null) {
         this.doorOrWindowWallThicknessAreasCache = new WeakHashMap<HomeDoorOrWindow, Area>();
       }
       this.doorOrWindowWallThicknessAreasCache.put(doorOrWindow, doorOrWindowWallArea);
-      
+
       g2D.setPaint(backgroundColor);
       g2D.fill(doorOrWindowWallArea);
       g2D.setPaint(foregroundColor);
@@ -3913,20 +3914,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints the sashes of a door or a window.
    */
-  private void paintDoorOrWindowSashes(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
+  private void paintDoorOrWindowSashes(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale,
                                        Color foregroundColor, PaintMode paintMode) {
     BasicStroke sashBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
     g2D.setPaint(foregroundColor);
     g2D.setStroke(sashBorderStroke);
     for (Sash sash : doorOrWindow.getSashes()) {
       g2D.draw(getDoorOrWindowSashShape(doorOrWindow, sash));
-    }  
+    }
   }
 
   /**
-   * Returns the shape of a sash of a door or a window. 
+   * Returns the shape of a sash of a door or a window.
    */
-  private GeneralPath getDoorOrWindowSashShape(HomeDoorOrWindow doorOrWindow, 
+  private GeneralPath getDoorOrWindowSashShape(HomeDoorOrWindow doorOrWindow,
                                                Sash sash) {
     // Doors and windows can't be rotated along horizontal axes
     float modelMirroredSign = doorOrWindow.isModelMirrored() ? -1 : 1;
@@ -3938,9 +3939,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       startAngle = 180 - startAngle;
     }
     float extentAngle = modelMirroredSign * (float)Math.toDegrees(sash.getEndAngle() - sash.getStartAngle());
-    
-    Arc2D arc = new Arc2D.Float(xAxis - sashWidth, yAxis - sashWidth, 
-        2 * sashWidth, 2 * sashWidth, 
+
+    Arc2D arc = new Arc2D.Float(xAxis - sashWidth, yAxis - sashWidth,
+        2 * sashWidth, 2 * sashWidth,
         startAngle, extentAngle, Arc2D.PIE);
     AffineTransform transformation = AffineTransform.getTranslateInstance(doorOrWindow.getX(), doorOrWindow.getY());
     transformation.rotate(doorOrWindow.getAngle());
@@ -3955,7 +3956,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints home furniture visible name.
    */
   private void paintFurnitureName(Graphics2D g2D, List<HomePieceOfFurniture> furniture,
-                                  List<? extends Selectable> selectedItems, float planScale, 
+                                  List<? extends Selectable> selectedItems, float planScale,
                                   Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
@@ -3966,12 +3967,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (piece instanceof HomeFurnitureGroup) {
           List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getFurniture();
           List<Selectable> emptyList = Collections.emptyList();
-          paintFurnitureName(g2D, groupFurniture, 
-               selectedPiece 
-                   ? groupFurniture 
-                   : emptyList, 
+          paintFurnitureName(g2D, groupFurniture,
+               selectedPiece
+                   ? groupFurniture
+                   : emptyList,
                planScale, foregroundColor, paintMode);
-        } 
+        }
         if (piece.isNameVisible()
             && (paintMode != PaintMode.CLIPBOARD
                 || selectedPiece)) {
@@ -3991,17 +3992,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints the outline of furniture among <code>items</code> and indicators if 
-   * <code>items</code> contains only one piece and indicator paint isn't <code>null</code>. 
+   * Paints the outline of furniture among <code>items</code> and indicators if
+   * <code>items</code> contains only one piece and indicator paint isn't <code>null</code>.
    */
-  private void paintFurnitureOutline(Graphics2D g2D, List<Selectable> items,  
-                                     Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                                     Paint indicatorPaint, float planScale, 
+  private void paintFurnitureOutline(Graphics2D g2D, List<Selectable> items,
+                                     Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
+                                     Paint indicatorPaint, float planScale,
                                      Color foregroundColor) {
     BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale);
-    BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale, 
+    BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * getStrokeWidth(HomePieceOfFurniture.class, PaintMode.PAINT) / planScale,
         BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-    
+
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
     Area furnitureGroupsArea = null;
     BasicStroke furnitureGroupsStroke = new BasicStroke(15 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND);
@@ -4010,13 +4011,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     for (Iterator<HomePieceOfFurniture> it = furniture.iterator(); it.hasNext();) {
       HomePieceOfFurniture piece = it.next();
-      if (piece.isVisible() 
+      if (piece.isVisible()
           && isViewableAtSelectedLevel(piece)) {
         HomePieceOfFurniture homePieceOfFurniture = getPieceOfFurnitureInHomeFurniture(piece, homeFurniture);
         if (homePieceOfFurniture != piece) {
           Area groupArea = null;
           if (lastGroup != homePieceOfFurniture) {
-            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true, null);          
+            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true, null);
             groupArea = new Area(groupShape);
             // Enlarge group area
             groupArea.add(new Area(furnitureGroupsStroke.createStrokedShape(groupShape)));
@@ -4031,12 +4032,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }
             furnitureInGroupsArea.add(pieceArea);
           }
-          // Store last group to avoid useless multiple computation 
+          // Store last group to avoid useless multiple computation
           lastGroup = homePieceOfFurniture;
         }
       } else {
         it.remove();
-      } 
+      }
     }
     if (furnitureGroupsArea != null) {
       // Fill the area of furniture groups around items with light outine color
@@ -4046,11 +4047,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.fill(furnitureGroupsArea);
       g2D.setComposite(oldComposite);
     }
-    
+
     for (HomePieceOfFurniture piece : furniture) {
       float [][] points = piece.getPoints();
       Shape pieceShape = getShape(points, true, null);
-      
+
       // Draw selection border
       g2D.setPaint(selectionOutlinePaint);
       g2D.setStroke(selectionOutlineStroke);
@@ -4060,11 +4061,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setPaint(foregroundColor);
       g2D.setStroke(pieceBorderStroke);
       g2D.draw(pieceShape);
-      
+
       // Draw its front face with a thicker line
       g2D.setStroke(pieceFrontBorderStroke);
       g2D.draw(new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]));
-      
+
       if (items.size() == 1 && indicatorPaint != null) {
         paintPieceOFFurnitureIndicators(g2D, piece, indicatorPaint, planScale);
       }
@@ -4074,11 +4075,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns <code>piece</code> if it belongs to home furniture or the group to which <code>piece</code> belongs.
    */
-  private HomePieceOfFurniture getPieceOfFurnitureInHomeFurniture(HomePieceOfFurniture piece, 
+  private HomePieceOfFurniture getPieceOfFurnitureInHomeFurniture(HomePieceOfFurniture piece,
                                                                   List<HomePieceOfFurniture> homeFurniture) {
     // Prefer iterate twice the furniture list rather than calling getAllFurniture uselessly
     // because subselecting won't happen often
-    if (!homeFurniture.contains(piece)) { 
+    if (!homeFurniture.contains(piece)) {
       for (HomePieceOfFurniture homePiece : homeFurniture) {
         if (homePiece instanceof HomeFurnitureGroup
             && ((HomeFurnitureGroup)homePiece).getAllFurniture().contains(piece)) {
@@ -4092,11 +4093,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
-  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, 
-                                         Shape pieceShape2D, float planScale, 
+  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece,
+                                         Shape pieceShape2D, float planScale,
                                          Color backgroundColor, PaintMode paintMode) {
     // Get piece icon
-    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, 
+    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128,
         paintMode == PaintMode.PAINT ? this : null);
     paintPieceOfFurnitureIcon(g2D, piece, icon, pieceShape2D, planScale, backgroundColor);
   }
@@ -4109,7 +4110,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Fill piece area
     g2D.setPaint(backgroundColor);
     g2D.fill(pieceShape2D);
-    
+
     Shape previousClip = g2D.getClip();
     // Clip icon drawing into piece shape
     g2D.clip(pieceShape2D);
@@ -4119,8 +4120,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.translate(bounds.getCenterX(), bounds.getCenterY());
     float pieceDepth = piece.getDepthInPlan();
     if (piece instanceof HomeDoorOrWindow) {
-      pieceDepth *= ((HomeDoorOrWindow)piece).getWallThickness(); 
-    } 
+      pieceDepth *= ((HomeDoorOrWindow)piece).getWallThickness();
+    }
     // Scale icon to fit in its area
     float minDimension = Math.min(piece.getWidthInPlan(), pieceDepth);
     float iconScale = Math.min(1 / planScale, minDimension / icon.getIconHeight());
@@ -4140,10 +4141,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints <code>piece</code> top icon with <code>g2D</code>.
    */
-  private void paintPieceOfFurnitureTop(Graphics2D g2D, HomePieceOfFurniture piece, 
-                                        Shape pieceShape2D, BasicStroke pieceBorderStroke, 
-                                        float planScale, 
-                                        Color backgroundColor, Color foregroundColor, 
+  private void paintPieceOfFurnitureTop(Graphics2D g2D, HomePieceOfFurniture piece,
+                                        Shape pieceShape2D, BasicStroke pieceBorderStroke,
+                                        float planScale,
+                                        Color backgroundColor, Color foregroundColor,
                                         PaintMode paintMode) {
     if (this.furnitureTopViewIconsCache == null) {
       this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon>();
@@ -4161,14 +4162,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       this.furnitureTopViewIconsCache.put(piece, icon);
     }
-    
+
     if (icon.isWaitIcon() || icon.isErrorIcon()) {
       paintPieceOfFurnitureIcon(g2D, piece, icon, pieceShape2D, planScale, backgroundColor);
       g2D.setPaint(foregroundColor);
       g2D.setStroke(pieceBorderStroke);
       g2D.draw(pieceShape2D);
-    } else {        
-      AffineTransform previousTransform = g2D.getTransform();  
+    } else {
+      AffineTransform previousTransform = g2D.getTransform();
       // Translate to piece center
       final Rectangle bounds = pieceShape2D.getBounds();
       g2D.translate(bounds.getCenterX(), bounds.getCenterY());
@@ -4191,14 +4192,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints rotation, elevation, height and resize indicators on <code>piece</code>.
    */
-  private void paintPieceOFFurnitureIndicators(Graphics2D g2D, 
+  private void paintPieceOFFurnitureIndicators(Graphics2D g2D,
                                                HomePieceOfFurniture piece,
                                                Paint indicatorPaint,
                                                float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
-      
+
       AffineTransform previousTransform = g2D.getTransform();
       float [][] piecePoints = piece.getPoints();
       float scaleInverse = 1 / planScale;
@@ -4222,11 +4223,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.draw(ELEVATION_POINT_INDICATOR);
         // Place elevation indicator farther but don't rotate it
         g2D.translate(6.5f, -6.5f);
-        g2D.rotate(-pieceAngle); 
+        g2D.rotate(-pieceAngle);
         g2D.draw(elevationIndicator);
         g2D.setTransform(previousTransform);
       }
-      
+
       // Draw pitch, roll, light or height indicator at bottom left point of the piece
       g2D.translate(piecePoints [3][0], piecePoints [3][1]);
       g2D.scale(scaleInverse, scaleInverse);
@@ -4264,7 +4265,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       g2D.setTransform(previousTransform);
-        
+
       if (piece.isResizable()) {
         Shape resizeIndicator = getIndicator(piece, IndicatorType.RESIZE);
         if (resizeIndicator != null) {
@@ -4276,24 +4277,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           g2D.setTransform(previousTransform);
         }
       }
-      
+
       if (piece.isNameVisible()
           && piece.getName().trim().length() > 0) {
-        float xName = piece.getX() + piece.getNameXOffset(); 
+        float xName = piece.getX() + piece.getNameXOffset();
         float yName = piece.getY() + piece.getNameYOffset();
         paintTextIndicators(g2D, piece.getClass(), piece.getNameStyle(), xName, yName, piece.getNameAngle(),
             indicatorPaint, planScale);
       }
     }
   }
-  
+
   /**
-   * Paints polylines. 
+   * Paints polylines.
    */
-  private void paintPolylines(Graphics2D g2D, 
-                              Collection<Polyline> polylines, List<Selectable> selectedItems,   
-                              Paint selectionOutlinePaint,  
-                              Paint indicatorPaint, float planScale, 
+  private void paintPolylines(Graphics2D g2D,
+                              Collection<Polyline> polylines, List<Selectable> selectedItems,
+                              Paint selectionOutlinePaint,
+                              Paint indicatorPaint, float planScale,
                               Color foregroundColor, PaintMode paintMode) {
     // Draw polylines
     for (Polyline polyline : polylines) {
@@ -4303,11 +4304,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             || selected) {
           g2D.setPaint(new Color(polyline.getColor()));
           float thickness = polyline.getThickness();
-          g2D.setStroke(SwingTools.getStroke(thickness, 
+          g2D.setStroke(SwingTools.getStroke(thickness,
               polyline.getCapStyle(), polyline.getJoinStyle(), polyline.getDashStyle()));
           Shape polylineShape = getPolylineShape(polyline);
           g2D.draw(polylineShape);
-          
+
           // Search angle at start and at end
           float [] firstPoint = null;
           float [] secondPoint = null;
@@ -4325,30 +4326,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               lastPoint = pathPoint;
             }
           }
-          float angleAtStart = (float)Math.atan2(firstPoint [1] - secondPoint [1], 
+          float angleAtStart = (float)Math.atan2(firstPoint [1] - secondPoint [1],
               firstPoint [0] - secondPoint [0]);
-          float angleAtEnd = (float)Math.atan2(lastPoint [1] - beforeLastPoint [1], 
+          float angleAtEnd = (float)Math.atan2(lastPoint [1] - beforeLastPoint [1],
               lastPoint [0] - beforeLastPoint [0]);
-          float arrowDelta = polyline.getCapStyle() != Polyline.CapStyle.BUTT  
-              ? thickness / 2  
+          float arrowDelta = polyline.getCapStyle() != Polyline.CapStyle.BUTT
+              ? thickness / 2
               : 0;
           paintArrow(g2D, firstPoint, angleAtStart, polyline.getStartArrowStyle(), thickness, arrowDelta);
           paintArrow(g2D, lastPoint, angleAtEnd, polyline.getEndArrowStyle(), thickness, arrowDelta);
-          
+
           if (selected
               && paintMode == PaintMode.PAINT) {
             g2D.setPaint(selectionOutlinePaint);
-            g2D.setStroke(SwingTools.getStroke(thickness + 4 / planScale, 
+            g2D.setStroke(SwingTools.getStroke(thickness + 4 / planScale,
                 polyline.getCapStyle(), polyline.getJoinStyle(), Polyline.DashStyle.SOLID));
             g2D.draw(polylineShape);
-            
+
             // Paint resize indicators of the polyline if indicator paint exists
-            if (selectedItems.size() == 1 
+            if (selectedItems.size() == 1
                 && indicatorPaint != null) {
               Polyline selectedPolyline = (Polyline)selectedItems.get(0);
               if (isViewableAtSelectedLevel(selectedPolyline)) {
-                g2D.setPaint(indicatorPaint);         
-                paintPointsResizeIndicators(g2D, selectedPolyline, indicatorPaint, planScale, 
+                g2D.setPaint(indicatorPaint);
+                paintPointsResizeIndicators(g2D, selectedPolyline, indicatorPaint, planScale,
                     selectedPolyline.isClosedPath(), angleAtStart, angleAtEnd, false);
               }
             }
@@ -4357,7 +4358,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     }
   }
-  
+
   /**
    * Returns the shape of a polyline.
    */
@@ -4374,11 +4375,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         float [] vectorToBisectorPoint = new float [] {nextPoint [0] - previousPoint [0], nextPoint [1] - previousPoint [1]};
         float [] nextNextPoint     = points [(i + 2) % points.length];
         float [] vectorToBisectorNextPoint = new float [] {point[0] - nextNextPoint [0], point[1] - nextNextPoint [1]};
-        curve2D.setCurve(point[0], point[1], 
-            point [0] + (i != 0 || closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0), 
-            point [1] + (i != 0 || closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0), 
-            nextPoint [0] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0), 
-            nextPoint [1] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0), 
+        curve2D.setCurve(point[0], point[1],
+            point [0] + (i != 0 || closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0),
+            point [1] + (i != 0 || closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0),
+            nextPoint [0] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0),
+            nextPoint [1] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0),
             nextPoint [0], nextPoint [1]);
         polylineShape.append(curve2D, true);
       }
@@ -4391,7 +4392,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints polyline arrow at the given point and orientation.
    */
-  private void paintArrow(Graphics2D g2D, float [] point, float angle, 
+  private void paintArrow(Graphics2D g2D, float [] point, float angle,
                           Polyline.ArrowStyle arrowStyle, float thickness, float arrowDelta) {
     if (arrowStyle != null
         && arrowStyle != Polyline.ArrowStyle.NONE) {
@@ -4418,17 +4419,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           break;
       }
       g2D.setTransform(oldTransform);
-    }  
+    }
   }
 
   /**
-   * Paints dimension lines. 
+   * Paints dimension lines.
    */
-  private void paintDimensionLines(Graphics2D g2D, 
-                          Collection<DimensionLine> dimensionLines, List<Selectable> selectedItems,   
-                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                          Paint indicatorPaint, Stroke extensionLineStroke, float planScale, 
-                          Color backgroundColor, Color foregroundColor, 
+  private void paintDimensionLines(Graphics2D g2D,
+                          Collection<DimensionLine> dimensionLines, List<Selectable> selectedItems,
+                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
+                          Paint indicatorPaint, Stroke extensionLineStroke, float planScale,
+                          Color backgroundColor, Color foregroundColor,
                           PaintMode paintMode, boolean feedback) {
     // In clipboard paint mode, paint only selected dimension lines
     if (paintMode == PaintMode.CLIPBOARD) {
@@ -4443,13 +4444,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     for (DimensionLine dimensionLine : dimensionLines) {
       if (isViewableAtSelectedLevel(dimensionLine)) {
         AffineTransform previousTransform = g2D.getTransform();
-        double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+        double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(),
             dimensionLine.getXEnd() - dimensionLine.getXStart());
         float dimensionLineLength = dimensionLine.getLength();
         g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
         g2D.rotate(angle);
         g2D.translate(0, dimensionLine.getOffset());
-        
+
         if (paintMode == PaintMode.PAINT
             && this.selectedItemsOutlinePainted
             && selectedItems.contains(dimensionLine)) {
@@ -4466,10 +4467,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Draw extension lines
           g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
           g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
-          
+
           g2D.setPaint(foregroundColor);
         }
-        
+
         g2D.setStroke(dimensionLineStroke);
         // Draw dimension line
         g2D.draw(new Line2D.Float(0, 0, dimensionLineLength, 0));
@@ -4482,7 +4483,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setStroke(extensionLineStroke);
         g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
         g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
-        
+
         float displayedValue = feedback
             ? this.preferences.getLengthUnit().getMagnetizedLength(dimensionLineLength, getPixelLength())
             : dimensionLineLength;
@@ -4490,7 +4491,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         TextStyle lengthStyle = dimensionLine.getLengthStyle();
         if (lengthStyle == null) {
           lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
-        }          
+        }
         if (feedback && getFont() != null) {
           // Use default for feedback
           lengthStyle = lengthStyle.deriveStyle(getFont().getSize() / getScale());
@@ -4499,8 +4500,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         FontMetrics lengthFontMetrics = getFontMetrics(font, lengthStyle);
         Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g2D);
         int fontAscent = lengthFontMetrics.getAscent();
-        g2D.translate((dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
-            dimensionLine.getOffset() <= 0 
+        g2D.translate((dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2,
+            dimensionLine.getOffset() <= 0
                 ? -lengthFontMetrics.getDescent() - 1
                 : fontAscent + 1);
         if (feedback) {
@@ -4517,13 +4518,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Draw dimension length in middle
         g2D.setFont(font);
         g2D.drawString(lengthText, 0, 0);
-        
+
         g2D.setTransform(previousTransform);
       }
     }
     g2D.setFont(previousFont);
     // Paint resize indicator of selected dimension line
-    if (selectedItems.size() == 1 
+    if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
         && paintMode == PaintMode.PAINT
         && indicatorPaint != null) {
@@ -4535,18 +4536,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints resize indicator on a given dimension line.
    */
   private void paintDimensionLineResizeIndicator(Graphics2D g2D, DimensionLine dimensionLine,
-                                                 Paint indicatorPaint, 
+                                                 Paint indicatorPaint,
                                                  float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
 
-      double wallAngle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+      double wallAngle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(),
           dimensionLine.getXEnd() - dimensionLine.getXStart());
-      
+
       AffineTransform previousTransform = g2D.getTransform();
       float scaleInverse = 1 / planScale;
-      // Draw resize indicator at the start of dimension line 
+      // Draw resize indicator at the start of dimension line
       g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
       g2D.rotate(wallAngle);
       g2D.translate(0, dimensionLine.getOffset());
@@ -4555,8 +4556,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Shape resizeIndicator = getIndicator(dimensionLine, IndicatorType.RESIZE);
       g2D.draw(resizeIndicator);
       g2D.setTransform(previousTransform);
-      
-      // Draw resize indicator at the end of dimension line 
+
+      // Draw resize indicator at the end of dimension line
       g2D.translate(dimensionLine.getXEnd(), dimensionLine.getYEnd());
       g2D.rotate(wallAngle);
       g2D.translate(0, dimensionLine.getOffset());
@@ -4565,23 +4566,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setTransform(previousTransform);
 
       // Draw resize indicator at the middle of dimension line
-      g2D.translate((dimensionLine.getXStart() + dimensionLine.getXEnd()) / 2, 
+      g2D.translate((dimensionLine.getXStart() + dimensionLine.getXEnd()) / 2,
           (dimensionLine.getYStart() + dimensionLine.getYEnd()) / 2);
       g2D.rotate(wallAngle);
       g2D.translate(0, dimensionLine.getOffset());
-      g2D.rotate(dimensionLine.getOffset() <= 0 
-          ? Math.PI / 2 
+      g2D.rotate(dimensionLine.getOffset() <= 0
+          ? Math.PI / 2
           : -Math.PI / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.draw(resizeIndicator);
       g2D.setTransform(previousTransform);
     }
   }
-  
+
   /**
    * Paints home labels.
    */
-  private void paintLabels(Graphics2D g2D, Collection<Label> labels, List<Selectable> selectedItems, 
+  private void paintLabels(Graphics2D g2D, Collection<Label> labels, List<Selectable> selectedItems,
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, Paint indicatorPaint,
                            float planScale, Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
@@ -4604,7 +4605,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
           Integer color = label.getColor();
           g2D.setPaint(color != null ?  new Color(color) : foregroundColor);
-          paintText(g2D, label.getClass(), labelText, labelStyle, label.getOutlineColor(), 
+          paintText(g2D, label.getClass(), labelText, labelStyle, label.getOutlineColor(),
               xLabel, yLabel, labelAngle, previousFont);
 
           if (paintMode == PaintMode.PAINT && this.selectedItemsOutlinePainted && selectedLabel) {
@@ -4614,18 +4615,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             float [][] textBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle);
             g2D.draw(getShape(textBounds, true, null));
             g2D.setPaint(foregroundColor);
-            if (indicatorPaint != null 
-                && selectedItems.size() == 1 
+            if (indicatorPaint != null
+                && selectedItems.size() == 1
                 && selectedItems.get(0) == label) {
               paintTextIndicators(g2D, label.getClass(), labelStyle, xLabel, yLabel, labelAngle,
                   indicatorPaint, planScale);
-              
-              if (this.resizeIndicatorVisible 
+
+              if (this.resizeIndicatorVisible
                   && label.getPitch() != null) {
                 Shape elevationIndicator = getIndicator(label, IndicatorType.ELEVATE);
                 if (elevationIndicator != null) {
                   AffineTransform previousTransform = g2D.getTransform();
-                  // Draw elevation indicator at middle of label bottom line 
+                  // Draw elevation indicator at middle of label bottom line
                   g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
                   float scaleInverse = 1 / planScale;
                   g2D.scale(scaleInverse, scaleInverse);
@@ -4633,7 +4634,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   g2D.draw(ELEVATION_POINT_INDICATOR);
                   // Place elevation indicator farther but don't rotate it
                   g2D.translate(0, 10f);
-                  g2D.rotate(-label.getAngle()); 
+                  g2D.rotate(-label.getAngle());
                   g2D.draw(elevationIndicator);
                   g2D.setTransform(previousTransform);
                 }
@@ -4647,12 +4648,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints the compass. 
+   * Paints the compass.
    */
-  private void paintCompass(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+  private void paintCompass(Graphics2D g2D, List<Selectable> selectedItems, float planScale,
                             Color foregroundColor, PaintMode paintMode) {
     Compass compass = this.home.getCompass();
-    if (compass.isVisible() 
+    if (compass.isVisible()
         && (paintMode != PaintMode.CLIPBOARD
             || selectedItems.contains(compass))) {
       AffineTransform previousTransform = g2D.getTransform();
@@ -4667,20 +4668,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints the outline of the compass when it's belongs to <code>items</code>. 
+   * Paints the outline of the compass when it's belongs to <code>items</code>.
    */
   private void paintCompassOutline(Graphics2D g2D, List<Selectable> items,
-                                   Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                                   Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
                                    Paint indicatorPaint, float planScale, Color foregroundColor) {
     Compass compass = this.home.getCompass();
-    if (items.contains(compass) 
+    if (items.contains(compass)
         && compass.isVisible()) {
       AffineTransform previousTransform = g2D.getTransform();
       g2D.translate(compass.getX(), compass.getY());
       g2D.rotate(compass.getNorthDirection());
       float diameter = compass.getDiameter();
       g2D.scale(diameter, diameter);
-  
+
       g2D.setPaint(selectionOutlinePaint);
       g2D.setStroke(new BasicStroke((5.5f + planScale) / diameter / planScale));
       g2D.draw(COMPASS_DISC);
@@ -4689,27 +4690,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.draw(COMPASS_DISC);
       g2D.setTransform(previousTransform);
 
-      // Paint indicators of the compass 
-      if (items.size() == 1 
+      // Paint indicators of the compass
+      if (items.size() == 1
           && items.get(0) == compass) {
-        g2D.setPaint(indicatorPaint);         
+        g2D.setPaint(indicatorPaint);
         paintCompassIndicators(g2D, compass, indicatorPaint, planScale);
       }
     }
   }
 
-  private void paintCompassIndicators(Graphics2D g2D, 
+  private void paintCompassIndicators(Graphics2D g2D,
                                       Compass compass, Paint indicatorPaint,
                                       float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
-      
+
       AffineTransform previousTransform = g2D.getTransform();
-      // Draw rotation indicator at middle of second and third point of compass 
+      // Draw rotation indicator at middle of second and third point of compass
       float [][] compassPoints = compass.getPoints();
       float scaleInverse = 1 / planScale;
-      g2D.translate((compassPoints [2][0] + compassPoints [3][0]) / 2, 
+      g2D.translate((compassPoints [2][0] + compassPoints [3][0]) / 2,
           (compassPoints [2][1] + compassPoints [3][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(compass.getNorthDirection());
@@ -4717,7 +4718,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setTransform(previousTransform);
 
       // Draw resize indicator at middle of second and third point of compass
-      g2D.translate((compassPoints [1][0] + compassPoints [2][0]) / 2, 
+      g2D.translate((compassPoints [1][0] + compassPoints [2][0]) / 2,
           (compassPoints [1][1] + compassPoints [2][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(compass.getNorthDirection());
@@ -4729,18 +4730,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints wall location feedback.
    */
-  private void paintWallAlignmentFeedback(Graphics2D g2D, 
-                                          Wall alignedWall, Point2D locationFeedback, 
-                                          boolean showPointFeedback, 
+  private void paintWallAlignmentFeedback(Graphics2D g2D,
+                                          Wall alignedWall, Point2D locationFeedback,
+                                          boolean showPointFeedback,
                                           Paint feedbackPaint, Stroke feedbackStroke,
-                                          float planScale, Paint pointPaint, 
+                                          float planScale, Paint pointPaint,
                                           Stroke pointStroke) {
     // Paint wall location feedback
     if (locationFeedback != null) {
       float margin = 0.5f / planScale;
       // Search which wall start or end point is at locationFeedback abscissa or ordinate
       // ignoring the start and end point of alignedWall
-      float x = (float)locationFeedback.getX(); 
+      float x = (float)locationFeedback.getX();
       float y = (float)locationFeedback.getY();
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
@@ -4757,9 +4758,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                         || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
             if (Math.abs(deltaYToClosestWall) > Math.abs(y - wall.getYEnd())) {
               deltaYToClosestWall = y - wall.getYEnd();
-            }                
+            }
           }
-          
+
           if (Math.abs(y - wall.getYStart()) < margin
               && (alignedWall == null
                   || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
@@ -4771,13 +4772,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                         || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
             if (Math.abs(deltaXToClosestWall) > Math.abs(x - wall.getXEnd())) {
               deltaXToClosestWall = x - wall.getXEnd();
-            }                
+            }
           }
 
           float [][] wallPoints = wall.getPoints();
           // Take into account only points at start and end of the wall
-          wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
-                                       wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
+          wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1],
+                                       wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]};
           for (int i = 0; i < wallPoints.length; i++) {
             if (Math.abs(x - wallPoints [i][0]) < margin
                 && (alignedWall == null
@@ -4791,31 +4792,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                     || !equalsWallPoint(wallPoints [i][0], wallPoints [i][1], alignedWall))) {
               if (Math.abs(deltaXToClosestWall) > Math.abs(x - wallPoints [i][0])) {
                 deltaXToClosestWall = x - wallPoints [i][0];
-              }                
+              }
             }
           }
         }
       }
-      
+
       // Draw alignment horizontal and vertical lines
-      g2D.setPaint(feedbackPaint);         
+      g2D.setPaint(feedbackPaint);
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
               x - deltaXToClosestWall - 25 / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
               x - deltaXToClosestWall + 25 / planScale, y));
         }
       }
 
       if (deltaYToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
               x, y - deltaYToClosestWall - 25 / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
               x, y - deltaYToClosestWall + 25 / planScale));
         }
       }
@@ -4846,27 +4847,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints point feedback.
    */
-  private void paintPointFeedback(Graphics2D g2D, Point2D locationFeedback, 
+  private void paintPointFeedback(Graphics2D g2D, Point2D locationFeedback,
                                   Paint feedbackPaint, float planScale,
                                   Paint pointPaint, Stroke pointStroke) {
-    g2D.setPaint(pointPaint);         
+    g2D.setPaint(pointPaint);
     g2D.setStroke(pointStroke);
-    g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale, 
+    g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale,
         (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
-    g2D.setPaint(feedbackPaint);         
+    g2D.setPaint(feedbackPaint);
     g2D.setStroke(new BasicStroke(1 / planScale));
-    g2D.draw(new Line2D.Float((float)locationFeedback.getX(), 
-        (float)locationFeedback.getY() - 5f / planScale, 
-        (float)locationFeedback.getX(), 
+    g2D.draw(new Line2D.Float((float)locationFeedback.getX(),
+        (float)locationFeedback.getY() - 5f / planScale,
+        (float)locationFeedback.getX(),
         (float)locationFeedback.getY() + 5f / planScale));
-    g2D.draw(new Line2D.Float((float)locationFeedback.getX() - 5f / planScale, 
-        (float)locationFeedback.getY(), 
-        (float)locationFeedback.getX() + 5f / planScale, 
+    g2D.draw(new Line2D.Float((float)locationFeedback.getX() - 5f / planScale,
+        (float)locationFeedback.getY(),
+        (float)locationFeedback.getX() + 5f / planScale,
         (float)locationFeedback.getY()));
   }
-  
+
   /**
-   * Returns <code>true</code> if <code>wall</code> start or end point 
+   * Returns <code>true</code> if <code>wall</code> start or end point
    * equals the point (<code>x</code>, <code>y</code>).
    */
   private boolean equalsWallPoint(float x, float y, Wall wall) {
@@ -4877,17 +4878,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints room location feedback.
    */
-  private void paintRoomAlignmentFeedback(Graphics2D g2D, 
-                                          Room alignedRoom, Point2D locationFeedback, 
-                                          boolean showPointFeedback, 
+  private void paintRoomAlignmentFeedback(Graphics2D g2D,
+                                          Room alignedRoom, Point2D locationFeedback,
+                                          boolean showPointFeedback,
                                           Paint feedbackPaint, Stroke feedbackStroke,
-                                          float planScale, Paint pointPaint, 
+                                          float planScale, Paint pointPaint,
                                           Stroke pointStroke) {
     // Paint room location feedback
     if (locationFeedback != null) {
       float margin = 0.5f / planScale;
       // Search which room points are at locationFeedback abscissa or ordinate
-      float x = (float)locationFeedback.getX(); 
+      float x = (float)locationFeedback.getX();
       float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
@@ -4895,7 +4896,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         float [][] roomPoints = room.getPoints();
         int editedPointIndex = -1;
         if (room == alignedRoom) {
-          // Search which room point could match location feedback 
+          // Search which room point could match location feedback
           for (int i = 0; i < roomPoints.length; i++) {
             if (roomPoints [i][0] == x && roomPoints [i][1] == y) {
               editedPointIndex = i;
@@ -4920,8 +4921,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelsWallsCache)) {
         float [][] wallPoints = wall.getPoints();
         // Take into account only points at start and end of the wall
-        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
-                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
+        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1],
+                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]};
         for (int i = 0; i < wallPoints.length; i++) {
           if (Math.abs(x - wallPoints [i][0]) < margin
               && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
@@ -4933,30 +4934,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       }
-      
+
       // Draw alignment horizontal and vertical lines
-      g2D.setPaint(feedbackPaint);         
+      g2D.setPaint(feedbackPaint);
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
               x - deltaXToClosestObject - 25 / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
               x - deltaXToClosestObject + 25 / planScale, y));
         }
       }
 
       if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
               x, y - deltaYToClosestObject - 25 / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
               x, y - deltaYToClosestObject + 25 / planScale));
         }
       }
-      
+
       if (showPointFeedback) {
         paintPointFeedback(g2D, locationFeedback, feedbackPaint, planScale, pointPaint, pointStroke);
       }
@@ -4966,17 +4967,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints dimension line location feedback.
    */
-  private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
-                                                   DimensionLine alignedDimensionLine, Point2D locationFeedback, 
-                                                   boolean showPointFeedback, 
+  private void paintDimensionLineAlignmentFeedback(Graphics2D g2D,
+                                                   DimensionLine alignedDimensionLine, Point2D locationFeedback,
+                                                   boolean showPointFeedback,
                                                    Paint feedbackPaint, Stroke feedbackStroke,
-                                                   float planScale, Paint pointPaint, 
+                                                   float planScale, Paint pointPaint,
                                                    Stroke pointStroke) {
     // Paint dimension line location feedback
-    if (locationFeedback != null) {      
+    if (locationFeedback != null) {
       float margin = 0.5f / planScale;
       // Search which room points are at locationFeedback abscissa or ordinate
-      float x = (float)locationFeedback.getX(); 
+      float x = (float)locationFeedback.getX();
       float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
@@ -4996,37 +4997,37 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Search which dimension line start or end point is at locationFeedback abscissa or ordinate
       // ignoring the start and end point of alignedDimensionLine
       for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
-        if (isViewableAtSelectedLevel(dimensionLine) 
+        if (isViewableAtSelectedLevel(dimensionLine)
             && dimensionLine != alignedDimensionLine) {
           if (Math.abs(x - dimensionLine.getXStart()) < margin
               && (alignedDimensionLine == null
-                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(), 
+                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(),
                           alignedDimensionLine))) {
             if (Math.abs(deltaYToClosestObject) > Math.abs(y - dimensionLine.getYStart())) {
               deltaYToClosestObject = y - dimensionLine.getYStart();
             }
           } else if (Math.abs(x - dimensionLine.getXEnd()) < margin
                     && (alignedDimensionLine == null
-                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(),
                                 alignedDimensionLine))) {
             if (Math.abs(deltaYToClosestObject) > Math.abs(y - dimensionLine.getYEnd())) {
               deltaYToClosestObject = y - dimensionLine.getYEnd();
-            }                
+            }
           }
           if (Math.abs(y - dimensionLine.getYStart()) < margin
               && (alignedDimensionLine == null
-                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(), 
+                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(),
                           alignedDimensionLine))) {
             if (Math.abs(deltaXToClosestObject) > Math.abs(x - dimensionLine.getXStart())) {
               deltaXToClosestObject = x - dimensionLine.getXStart();
             }
           } else if (Math.abs(y - dimensionLine.getYEnd()) < margin
                     && (alignedDimensionLine == null
-                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(),
                                 alignedDimensionLine))) {
             if (Math.abs(deltaXToClosestObject) > Math.abs(x - dimensionLine.getXEnd())) {
               deltaXToClosestObject = x - dimensionLine.getXEnd();
-            }                
+            }
           }
         }
       }
@@ -5034,8 +5035,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       for (Wall wall : getViewedItems(this.home.getWalls(), this.otherLevelsWallsCache)) {
         float [][] wallPoints = wall.getPoints();
         // Take into account only points at start and end of the wall
-        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1], 
-                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]}; 
+        wallPoints = new float [][] {wallPoints [0], wallPoints [wallPoints.length / 2 - 1],
+                                     wallPoints [wallPoints.length / 2], wallPoints [wallPoints.length - 1]};
         for (int i = 0; i < wallPoints.length; i++) {
           if (Math.abs(x - wallPoints [i][0]) < margin
               && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
@@ -5065,26 +5066,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       }
-      
+
       // Draw alignment horizontal and vertical lines
-      g2D.setPaint(feedbackPaint);         
+      g2D.setPaint(feedbackPaint);
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
               x - deltaXToClosestObject - 25 / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y, 
+          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
               x - deltaXToClosestObject + 25 / planScale, y));
         }
       }
 
       if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
               x, y - deltaYToClosestObject - 25 / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
+          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
               x, y - deltaYToClosestObject + 25 / planScale));
         }
       }
@@ -5094,9 +5095,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     }
   }
-  
+
   /**
-   * Returns <code>true</code> if <code>dimensionLine</code> start or end point 
+   * Returns <code>true</code> if <code>dimensionLine</code> start or end point
    * equals the point (<code>x</code>, <code>y</code>).
    */
   private boolean equalsDimensionLinePoint(float x, float y, DimensionLine dimensionLine) {
@@ -5107,7 +5108,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints an arc centered at <code>center</code> point that goes
    */
-  private void paintAngleFeedback(Graphics2D g2D, Point2D center, 
+  private void paintAngleFeedback(Graphics2D g2D, Point2D center,
                                   Point2D point1, Point2D point2,
                                   float planScale, Color selectionColor) {
     g2D.setColor(selectionColor);
@@ -5115,11 +5116,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Compute angles
     double angle1 = Math.atan2(center.getY() - point1.getY(), point1.getX() - center.getX());
     if (angle1 < 0) {
-      angle1 = 2 * Math.PI + angle1; 
+      angle1 = 2 * Math.PI + angle1;
     }
     double angle2 = Math.atan2(center.getY() - point2.getY(), point2.getX() - center.getX());
     if (angle2 < 0) {
-      angle2 = 2 * Math.PI + angle2; 
+      angle2 = 2 * Math.PI + angle2;
     }
     double extent = angle2 - angle1;
     if (angle1 > angle2) {
@@ -5142,25 +5143,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints the observer camera at its current location, if home camera is the observer camera.
    */
   private void paintCamera(Graphics2D g2D, List<Selectable> selectedItems,
-                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                           Paint indicatorPaint, float planScale, 
+                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke,
+                           Paint indicatorPaint, float planScale,
                            Color backgroundColor, Color foregroundColor) {
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera == this.home.getCamera()) {
       AffineTransform previousTransform = g2D.getTransform();
       g2D.translate(camera.getX(), camera.getY());
       g2D.rotate(camera.getYaw());
-  
+
       // Compute camera drawing at scale
       float [][] points = camera.getPoints();
       double yScale = Point2D.distance(points [0][0], points [0][1], points [3][0], points [3][1]);
       double xScale = Point2D.distance(points [0][0], points [0][1], points [1][0], points [1][1]);
-      AffineTransform cameraTransform = AffineTransform.getScaleInstance(xScale, yScale);    
-      Shape scaledCameraBody = 
+      AffineTransform cameraTransform = AffineTransform.getScaleInstance(xScale, yScale);
+      Shape scaledCameraBody =
           new Area(CAMERA_BODY).createTransformedArea(cameraTransform);
-      Shape scaledCameraHead = 
+      Shape scaledCameraHead =
           new Area(CAMERA_HEAD).createTransformedArea(cameraTransform);
-      
+
       // Paint body
       g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraBody);
@@ -5168,16 +5169,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       BasicStroke stroke = new BasicStroke(getStrokeWidth(ObserverCamera.class, PaintMode.PAINT) / planScale);
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraBody);
-  
+
       if (selectedItems.contains(camera)
           && this.selectedItemsOutlinePainted) {
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
         Area cameraOutline = new Area(scaledCameraBody);
         cameraOutline.add(new Area(scaledCameraHead));
-        g2D.draw(cameraOutline);      
+        g2D.draw(cameraOutline);
       }
-      
+
       // Paint head
       g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraHead);
@@ -5198,35 +5199,35 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       cameraFieldOfViewAngle.lineTo(-xEndAngle, yEndAngle);
       g2D.draw(cameraFieldOfViewAngle);
       g2D.setTransform(previousTransform);
-  
+
       // Paint resize indicator of selected camera
-      if (selectedItems.size() == 1 
+      if (selectedItems.size() == 1
           && selectedItems.get(0) == camera) {
         paintCameraRotationIndicators(g2D, camera, indicatorPaint, planScale);
       }
     }
   }
 
-  private void paintCameraRotationIndicators(Graphics2D g2D, 
+  private void paintCameraRotationIndicators(Graphics2D g2D,
                                              ObserverCamera camera, Paint indicatorPaint,
                                              float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
-      
+
       AffineTransform previousTransform = g2D.getTransform();
-      // Draw yaw rotation indicator at middle of first and last point of camera 
+      // Draw yaw rotation indicator at middle of first and last point of camera
       float [][] cameraPoints = camera.getPoints();
       float scaleInverse = 1 / planScale;
-      g2D.translate((cameraPoints [0][0] + cameraPoints [3][0]) / 2, 
+      g2D.translate((cameraPoints [0][0] + cameraPoints [3][0]) / 2,
           (cameraPoints [0][1] + cameraPoints [3][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
       g2D.draw(getIndicator(camera, IndicatorType.ROTATE));
       g2D.setTransform(previousTransform);
 
-      // Draw pitch rotation indicator at middle of second and third point of camera 
-      g2D.translate((cameraPoints [1][0] + cameraPoints [2][0]) / 2, 
+      // Draw pitch rotation indicator at middle of second and third point of camera
+      g2D.translate((cameraPoints [1][0] + cameraPoints [2][0]) / 2,
           (cameraPoints [1][1] + cameraPoints [2][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
@@ -5235,8 +5236,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       Shape elevationIndicator = getIndicator(camera, IndicatorType.ELEVATE);
       if (elevationIndicator != null) {
-        // Draw elevation indicator at middle of first and second point of camera 
-        g2D.translate((cameraPoints [0][0] + cameraPoints [1][0]) / 2, 
+        // Draw elevation indicator at middle of first and second point of camera
+        g2D.translate((cameraPoints [0][0] + cameraPoints [1][0]) / 2,
             (cameraPoints [0][1] + cameraPoints [1][1]) / 2);
         g2D.scale(scaleInverse, scaleInverse);
         g2D.draw(POINT_INDICATOR);
@@ -5279,20 +5280,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Sets rectangle selection feedback coordinates. 
+   * Sets rectangle selection feedback coordinates.
    */
   public void setRectangleFeedback(float x0, float y0, float x1, float y1) {
     this.rectangleFeedback = new Rectangle2D.Float(x0, y0, 0, 0);
     this.rectangleFeedback.add(x1, y1);
     repaint();
   }
-  
+
   /**
    * Ensures selected items are visible at screen and moves
    * scroll bars if needed.
    */
   public void makeSelectionVisible() {
-    // As multiple selections may happen during an action, 
+    // As multiple selections may happen during an action,
     // make the selection visible the latest possible to avoid multiple changes
     if (!this.selectionScrollUpdated) {
       this.selectionScrollUpdated = true;
@@ -5347,7 +5348,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       viewport.setViewPosition(viewRectangle.getLocation());
     }
   }
-  
+
   /**
    * Returns the scale used to display the plan.
    */
@@ -5372,7 +5373,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         xViewCenterPosition = convertXPixelToModel(viewRectangle.x + viewRectangle.width / 2);
         yViewCenterPosition = convertYPixelToModel(viewRectangle.y + viewRectangle.height / 2);
       }
-      
+
       this.scale = scale;
       // Revalidate plan without computing again unchanged plan bounds
       invalidate(false);
@@ -5380,14 +5381,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       if (parent instanceof JViewport) {
         Dimension viewSize = parent.getViewSize();
-        float viewWidth = convertXPixelToModel(viewRectangle.x + viewRectangle.width) 
-            - convertXPixelToModel(viewRectangle.x);          
+        float viewWidth = convertXPixelToModel(viewRectangle.x + viewRectangle.width)
+            - convertXPixelToModel(viewRectangle.x);
         int xViewLocation = Math.max(0, Math.min(convertXModelToPixel(xViewCenterPosition - viewWidth / 2),
             viewSize.width - viewRectangle.x));
-        float viewHeight = convertYPixelToModel(viewRectangle.y + viewRectangle.height) 
-            - convertYPixelToModel(viewRectangle.y);          
+        float viewHeight = convertYPixelToModel(viewRectangle.y + viewRectangle.height)
+            - convertYPixelToModel(viewRectangle.y);
         int yViewLocation = Math.max(0, Math.min(convertYModelToPixel(yViewCenterPosition - viewHeight / 2),
-            viewSize.height - viewRectangle.y));        
+            viewSize.height - viewRectangle.y));
         parent.setViewPosition(new Point(xViewLocation, yViewLocation));
       }
     }
@@ -5398,7 +5399,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public float convertXPixelToModel(int x) {
     Insets insets = getInsets();
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     return (x - insets.left) / getScale() - MARGIN + (float)planBounds.getMinX();
   }
 
@@ -5407,7 +5408,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public float convertYPixelToModel(int y) {
     Insets insets = getInsets();
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     return (y - insets.top) / getScale() - MARGIN + (float)planBounds.getMinY();
   }
 
@@ -5416,7 +5417,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private int convertXModelToPixel(float x) {
     Insets insets = getInsets();
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     return (int)Math.round((x - planBounds.getMinX() + MARGIN) * getScale()) + insets.left;
   }
 
@@ -5425,7 +5426,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private int convertYModelToPixel(float y) {
     Insets insets = getInsets();
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     return (int)Math.round((y - planBounds.getMinY() + MARGIN) * getScale()) + insets.top;
   }
 
@@ -5454,21 +5455,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public float getPixelLength() {
     return 1 / getScale();
   }
-  
+
   /**
    * Returns the bounds of <code>shape</code> in pixels coordinates space.
    */
   private Rectangle getShapePixelBounds(Shape shape) {
     Rectangle2D shapeBounds = shape.getBounds2D();
     return new Rectangle(
-        convertXModelToPixel((float)shapeBounds.getMinX()), 
+        convertXModelToPixel((float)shapeBounds.getMinX()),
         convertYModelToPixel((float)shapeBounds.getMinY()),
         (int)Math.round(shapeBounds.getWidth() * getScale()),
         (int)Math.round(shapeBounds.getHeight() * getScale()));
   }
-  
+
   /**
-   * Sets the cursor of this component. 
+   * Sets the cursor of this component.
    */
   public void setCursor(CursorType cursorType) {
     switch (cursorType) {
@@ -5507,15 +5508,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Sets tool tip text displayed as feedback. 
-   * @param toolTipFeedback the text displayed in the tool tip 
+   * Sets tool tip text displayed as feedback.
+   * @param toolTipFeedback the text displayed in the tool tip
    *                    or <code>null</code> to make tool tip disappear.
    */
   public void setToolTipFeedback(String toolTipFeedback, float x, float y) {
     stopToolTipPropertiesEdition();
     JToolTip toolTip = getToolTip();
-    // Change tool tip text    
-    toolTip.setTipText(toolTipFeedback);    
+    // Change tool tip text
+    toolTip.setTipText(toolTipFeedback);
     showToolTipComponentAt(toolTip, x , y);
   }
 
@@ -5536,31 +5537,31 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void showToolTipComponentAt(JComponent toolTipComponent, float x, float y) {
     if (this.toolTipWindow == null) {
-      // Show tool tip in a window (we don't use a Swing Popup because 
-      // we require the tool tip window to move along with mouse pointer 
+      // Show tool tip in a window (we don't use a Swing Popup because
+      // we require the tool tip window to move along with mouse pointer
       // and a Swing popup can't move without hiding then showing it again)
       this.toolTipWindow = new JWindow(JOptionPane.getFrameForComponent(this));
       this.toolTipWindow.setFocusableWindowState(false);
       this.toolTipWindow.add(toolTipComponent);
       // Add to window a mouse listener that redispatch mouse events to
-      // plan component (if the user moves fast enough the mouse pointer in a way 
+      // plan component (if the user moves fast enough the mouse pointer in a way
       // it's in toolTipWindow, the matching event is dispatched to toolTipWindow)
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
         @Override
         public void mousePressed(MouseEvent ev) {
           mouseMoved(ev);
         }
-        
+
         @Override
         public void mouseReleased(MouseEvent ev) {
           mouseMoved(ev);
         }
-        
+
         @Override
         public void mouseMoved(MouseEvent ev) {
           dispatchEvent(SwingUtilities.convertMouseEvent(toolTipWindow, ev, PlanComponent.this));
         }
-        
+
         @Override
         public void mouseDragged(MouseEvent ev) {
           mouseMoved(ev);
@@ -5576,7 +5577,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       toolTipComponent.revalidate();
     }
-    // Convert (x, y) to screen coordinates 
+    // Convert (x, y) to screen coordinates
     Point point = new Point(convertXModelToPixel(x), convertYModelToPixel(y));
     SwingUtilities.convertPointToScreen(point, this);
     // Add to point the half of cursor size
@@ -5585,25 +5586,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       point.x += cursorSize.width / 2 + 3;
       point.y += cursorSize.height / 2 + 3;
     } else {
-      // If custom cursor isn't supported let's consider 
+      // If custom cursor isn't supported let's consider
       // default cursor size is 16 pixels wide
       point.x += 11;
       point.y += 11;
     }
-    this.toolTipWindow.setLocation(point);      
+    this.toolTipWindow.setLocation(point);
     this.toolTipWindow.pack();
-    // Make the tooltip visible 
+    // Make the tooltip visible
     // (except in Applets run with Java 7 under Mac OS X where the tooltips are buggy)
     this.toolTipWindow.setVisible(!OperatingSystem.isMacOSX()
         || !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
         || SwingUtilities.getAncestorOfClass(JApplet.class, this) == null);
     toolTipComponent.paintImmediately(toolTipComponent.getBounds());
   }
-  
+
   /**
    * Set tool tip edition.
    */
-  public void setToolTipEditedProperties(final PlanController.EditableProperty [] toolTipEditedProperties, 
+  public void setToolTipEditedProperties(final PlanController.EditableProperty [] toolTipEditedProperties,
                                          Object [] toolTipPropertyValues,
                                          float x, float y) {
     final JPanel toolTipPropertiesPanel = new JPanel(new GridBagLayout());
@@ -5622,8 +5623,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add labels and text fields to tool tip panel
     for (int i = 0; i < toolTipEditedProperties.length; i++) {
       JFormattedTextField textField = this.toolTipEditableTextFields.get(toolTipEditedProperties [i]);
-      textField.setValue(toolTipPropertyValues [i]); 
-      JLabel label = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, 
+      textField.setValue(toolTipPropertyValues [i]);
+      JLabel label = new JLabel(this.preferences.getLocalizedString(PlanComponent.class,
           toolTipEditedProperties [i].name() + ".editablePropertyLabel.text") + " ");
       label.setFont(textField.getFont());
       JLabel unitLabel = null;
@@ -5634,10 +5635,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                  || this.preferences.getLengthUnit() != LengthUnit.INCH_DECIMALS) {
         unitLabel = new JLabel(" " + this.preferences.getLengthUnit().getName());
       }
-      
+
       JPanel labelTextFieldPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
       labelTextFieldPanel.setOpaque(false);
-      
+
       labelTextFieldPanel.add(label);
       labelTextFieldPanel.add(textField);
       if (unitLabel != null) {
@@ -5648,23 +5649,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           0, i, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
           new Insets(0, 0, 0, 0), 0, 0));
     }
-    
+
     showToolTipComponentAt(toolTipPropertiesPanel, x, y);
     // Add a key listener that redispatches events to tool tip text fields
     // (don't give focus to tool tip window otherwise plan component window will lose focus)
     this.toolTipKeyListener = new KeyListener() {
         private int focusedTextFieldIndex;
         private JTextComponent focusedTextField;
-  
+
         {
           // Simulate focus on first text field
           setFocusedTextFieldIndex(0);
         }
-        
+
         private void setFocusedTextFieldIndex(int textFieldIndex) {
           if (this.focusedTextField != null) {
             this.focusedTextField.getCaret().setVisible(false);
-            this.focusedTextField.getCaret().setSelectionVisible(false);        
+            this.focusedTextField.getCaret().setSelectionVisible(false);
           }
           this.focusedTextFieldIndex = textFieldIndex;
           this.focusedTextField = toolTipEditableTextFields.get(toolTipEditedProperties [textFieldIndex]);
@@ -5675,19 +5676,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
           this.focusedTextField.getCaret().setSelectionVisible(true);
         }
-        
+
         public void keyPressed(KeyEvent ev) {
           keyTyped(ev);
         }
-  
+
         public void keyReleased(KeyEvent ev) {
           if (ev.getKeyCode() != KeyEvent.VK_CONTROL
-              && ev.getKeyCode() != KeyEvent.VK_ALT) { 
+              && ev.getKeyCode() != KeyEvent.VK_ALT) {
             // Forward other key events to focused text field (except for Ctrl and Alt key, otherwise InputMap won't receive it)
             KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
           }
         }
-  
+
         public void keyTyped(KeyEvent ev) {
           Set<AWTKeyStroke> forwardKeys = this.focusedTextField.getFocusTraversalKeys(
               KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
@@ -5715,23 +5716,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               ev.consume();
             } else if (ev.getKeyCode() != KeyEvent.VK_ESCAPE
                        && ev.getKeyCode() != KeyEvent.VK_CONTROL
-                       && ev.getKeyCode() != KeyEvent.VK_ALT) { 
+                       && ev.getKeyCode() != KeyEvent.VK_ALT) {
               // Forward other key events to focused text field (except for Esc key, otherwise InputMap won't receive it)
               KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
               this.focusedTextField.getCaret().setVisible(true);
               toolTipWindow.pack();
-            } 
+            }
           }
-        }      
+        }
       };
 
     addKeyListener(this.toolTipKeyListener);
     setFocusTraversalKeysEnabled(false);
     installEditionKeyboardActions();
   }
-  
+
   /**
-   * Deletes tool tip text from screen. 
+   * Deletes tool tip text from screen.
    */
   public void deleteToolTipFeedback() {
     stopToolTipPropertiesEdition();
@@ -5752,30 +5753,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       setFocusTraversalKeysEnabled(true);
       removeKeyListener(toolTipKeyListener);
       this.toolTipKeyListener = null;
-      
+
       for (JFormattedTextField textField : this.toolTipEditableTextFields.values()) {
         textField.getCaret().setVisible(false);
         textField.getCaret().setSelectionVisible(false);
-      }      
+      }
     }
   }
 
   /**
-   * Sets whether the resize indicator of selected wall or piece of furniture 
-   * should be visible or not. 
+   * Sets whether the resize indicator of selected wall or piece of furniture
+   * should be visible or not.
    */
   public void setResizeIndicatorVisible(boolean resizeIndicatorVisible) {
-    this.resizeIndicatorVisible = resizeIndicatorVisible;    
+    this.resizeIndicatorVisible = resizeIndicatorVisible;
     repaint();
   }
-  
+
   /**
-   * Sets the location point for alignment feedback. 
+   * Sets the location point for alignment feedback.
    */
   public void setAlignmentFeedback(Class<? extends Selectable> alignedObjectClass,
                                    Selectable alignedObject,
-                                   float x, 
-                                   float y, 
+                                   float x,
+                                   float y,
                                    boolean showPointFeedback) {
     this.alignedObjectClass = alignedObjectClass;
     this.alignedObjectFeedback = alignedObject;
@@ -5783,12 +5784,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     this.showPointFeedback = showPointFeedback;
     repaint();
   }
-  
+
   /**
    * Sets the points used to draw an angle in plan view.
    */
-  public void setAngleFeedback(float xCenter, float yCenter, 
-                               float x1, float y1, 
+  public void setAngleFeedback(float xCenter, float yCenter,
+                               float x1, float y1,
                                float x2, float y2) {
     this.centerAngleFeedback = new Point2D.Float(xCenter, yCenter);
     this.point1AngleFeedback = new Point2D.Float(x1, y1);
@@ -5796,7 +5797,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Sets the feedback of dragged items drawn during a drag and drop operation, 
+   * Sets the feedback of dragged items drawn during a drag and drop operation,
    * initiated from outside of plan view.
    */
   public void setDraggedItemsFeedback(List<Selectable> draggedItems) {
@@ -5818,7 +5819,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public void deleteFeedback() {
     deleteToolTipFeedback();
     this.rectangleFeedback = null;
-    
+
     this.alignedObjectClass = null;
     this.alignedObjectFeedback = null;
     this.locationFeeback = null;
@@ -5841,7 +5842,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Returns the size of the given piece of furniture in the horizontal plan, 
+   * Returns the size of the given piece of furniture in the horizontal plan,
    * or <code>null</code> if the view isn't able to compute such a value.
    */
   public float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece) {
@@ -5861,12 +5862,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     try {
       return !Boolean.getBoolean("com.eteks.sweethome3d.no3D");
     } catch (AccessControlException ex) {
-      // If com.eteks.sweethome3d.no3D can't be read, 
-      // security manager won't allow to access to Java 3D DLLs required by ModelManager class too 
+      // If com.eteks.sweethome3d.no3D can't be read,
+      // security manager won't allow to access to Java 3D DLLs required by ModelManager class too
       return false;
     }
   }
-  
+
   // Scrollable implementation
   public Dimension getPreferredScrollableViewportSize() {
     return getPreferredSize();
@@ -5899,27 +5900,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return visibleRect.height / 10;
     }
   }
-  
+
   /**
    * Returns the component used as an horizontal ruler for this plan.
    */
   public View getHorizontalRuler() {
     if (this.horizontalRuler == null) {
       this.horizontalRuler = new PlanRulerComponent(SwingConstants.HORIZONTAL);
-    } 
+    }
     return this.horizontalRuler;
   }
-  
+
   /**
    * Returns the component used as a vertical ruler for this plan.
    */
   public View getVerticalRuler() {
     if (this.verticalRuler == null) {
       this.verticalRuler = new PlanRulerComponent(SwingConstants.VERTICAL);
-    } 
+    }
     return this.verticalRuler;
   }
-  
+
   /**
    * A component displaying the plan horizontal or vertical ruler associated to this plan.
    */
@@ -5929,8 +5930,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     /**
      * Creates a plan ruler.
-     * @param orientation <code>SwingConstants.HORIZONTAL</code> or 
-     *                    <code>SwingConstants.VERTICAL</code>. 
+     * @param orientation <code>SwingConstants.HORIZONTAL</code> or
+     *                    <code>SwingConstants.VERTICAL</code>.
      */
     public PlanRulerComponent(int orientation) {
       this.orientation = orientation;
@@ -5941,7 +5942,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
 
     /**
-     * Adds a mouse listener to this ruler that stores current mouse location. 
+     * Adds a mouse listener to this ruler that stores current mouse location.
      */
     private void addMouseListeners() {
       MouseInputListener mouseInputListener = new MouseInputAdapter() {
@@ -5950,7 +5951,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             mouseLocation = ev.getPoint();
             repaint();
           }
-  
+
           @Override
           public void mouseMoved(MouseEvent ev) {
             mouseLocation = ev.getPoint();
@@ -5962,7 +5963,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             mouseLocation = ev.getPoint();
             repaint();
           }
-          
+
           @Override
           public void mouseExited(MouseEvent ev) {
             mouseLocation = null;
@@ -5977,17 +5978,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (getParent() instanceof JViewport) {
               ((JViewport)getParent()).addChangeListener(new ChangeListener() {
                   public void stateChanged(ChangeEvent ev) {
-                    mouseLocation = MouseInfo.getPointerInfo().getLocation(); 
+                    mouseLocation = MouseInfo.getPointerInfo().getLocation();
                     SwingUtilities.convertPointFromScreen(mouseLocation, PlanComponent.this);
                     repaint();
                   }
                 });
             }
           }
-          
+
           public void ancestorRemoved(AncestorEvent ev) {
           }
-          
+
           public void ancestorMoved(AncestorEvent ev) {
           }
         });
@@ -6017,7 +6018,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     }
-    
+
     /**
      * Paints this component.
      */
@@ -6027,11 +6028,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       paintBackground(g2D);
       Insets insets = getInsets();
       // Clip component to avoid drawing in empty borders
-      g2D.clipRect(insets.left, insets.top, 
-          getWidth() - insets.left - insets.right, 
+      g2D.clipRect(insets.left, insets.top,
+          getWidth() - insets.left - insets.right,
           getHeight() - insets.top - insets.bottom);
       // Change component coordinates system to plan system
-      Rectangle2D planBounds = getPlanBounds();    
+      Rectangle2D planBounds = getPlanBounds();
       float paintScale = getScale();
       g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * paintScale,
           insets.top + (MARGIN - planBounds.getMinY()) * paintScale);
@@ -6044,7 +6045,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
 
     /**
-     * Fills the background with UI window background color. 
+     * Fills the background with UI window background color.
      */
     private void paintBackground(Graphics2D g2D) {
       if (isOpaque()) {
@@ -6059,14 +6060,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private void paintRuler(Graphics2D g2D, float rulerScale) {
       float gridSize = getGridSize(rulerScale);
       float mainGridSize = getMainGridSize(rulerScale);
-      
+
       float xMin;
       float yMin;
       float xMax;
       float yMax;
       float xRulerBase;
       float yRulerBase;
-      Rectangle2D planBounds = getPlanBounds();    
+      Rectangle2D planBounds = getPlanBounds();
       boolean leftToRightOriented = getComponentOrientation().isLeftToRight();
       if (getParent() instanceof JViewport) {
         Rectangle viewRectangle = ((JViewport)getParent()).getViewRect();
@@ -6074,15 +6075,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         yMin = convertYPixelToModel(viewRectangle.y - 1);
         xMax = convertXPixelToModel(viewRectangle.x + viewRectangle.width);
         yMax = convertYPixelToModel(viewRectangle.y + viewRectangle.height);
-        xRulerBase = leftToRightOriented 
+        xRulerBase = leftToRightOriented
             ? convertXPixelToModel(viewRectangle.x + viewRectangle.width - 1)
-            : convertXPixelToModel(viewRectangle.x); 
+            : convertXPixelToModel(viewRectangle.x);
         yRulerBase = convertYPixelToModel(viewRectangle.y + viewRectangle.height - 1);
       } else {
         xMin = (float)planBounds.getMinX() - MARGIN;
         yMin = (float)planBounds.getMinY() - MARGIN;
         xMax = convertXPixelToModel(getWidth() - 1);
-        yRulerBase = 
+        yRulerBase =
         yMax = convertYPixelToModel(getHeight() - 1);
         xRulerBase = leftToRightOriented ? xMax : xMin;
       }
@@ -6092,7 +6093,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       float tickSize = 5 / rulerScale;
       float mainTickSize = (fontAscent + 6) / rulerScale;
       NumberFormat format = NumberFormat.getIntegerInstance();
-      
+
       g2D.setColor(getForeground());
       float lineWidth = 0.5f / rulerScale;
       g2D.setStroke(new BasicStroke(lineWidth));
@@ -6182,9 +6183,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         value = 0; // Avoid "-0" text
       }
       LengthUnit lengthUnit = preferences.getLengthUnit();
-      if (lengthUnit == LengthUnit.INCH 
+      if (lengthUnit == LengthUnit.INCH
           || lengthUnit == LengthUnit.INCH_DECIMALS) {
-        text = format.format(LengthUnit.centimeterToFoot((float)value)) + "'"; 
+        text = format.format(LengthUnit.centimeterToFoot((float)value)) + "'";
       } else {
         text = format.format(value / 100);
         if (value == 0) {
@@ -6196,11 +6197,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * A proxy for the furniture icon seen from top. 
+   * A proxy for the furniture icon seen from top.
    */
   private abstract static class PieceOfFurnitureTopViewIcon implements Icon {
     private Icon icon;
-    
+
     public PieceOfFurnitureTopViewIcon(Icon icon) {
       this.icon = icon;
     }
@@ -6212,7 +6213,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public int getIconHeight() {
       return this.icon.getIconHeight();
     }
-    
+
     public void paintIcon(Component c, Graphics g, int x, int y) {
       this.icon.paintIcon(c, g, x, y);
     }
@@ -6220,32 +6221,32 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public boolean isWaitIcon() {
       return IconManager.getInstance().isWaitIcon(this.icon);
     }
-    
+
     public boolean isErrorIcon() {
       return IconManager.getInstance().isErrorIcon(this.icon);
     }
-    
+
     protected void setIcon(Icon icon) {
       this.icon = icon;
     }
   }
-  
+
   /**
-   * A proxy for the furniture plan icon generated from its plan icon. 
+   * A proxy for the furniture plan icon generated from its plan icon.
    */
   private static class PieceOfFurniturePlanIcon extends PieceOfFurnitureTopViewIcon {
     private final float pieceWidth;
     private final float pieceDepth;
     private Integer     pieceColor;
     private HomeTexture pieceTexture;
-    
+
     /**
      * Creates a plan icon proxy for a <code>piece</code> of furniture.
      * @param piece an object containing a plan icon content
      * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
      *            be read immediately in the current thread.
      */
-    public PieceOfFurniturePlanIcon(final HomePieceOfFurniture piece, 
+    public PieceOfFurniturePlanIcon(final HomePieceOfFurniture piece,
                                     final Component waitingComponent) {
       super(IconManager.getInstance().getIcon(piece.getPlanIcon(), waitingComponent));
       this.pieceWidth = piece.getWidth();
@@ -6253,18 +6254,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.pieceColor = piece.getColor();
       this.pieceTexture = piece.getTexture();
     }
-    
+
     @Override
     public void paintIcon(final Component c, Graphics g, int x, int y) {
       if (!isWaitIcon()
           && !isErrorIcon()) {
         if (this.pieceColor != null) {
-          // Create a monochrome icon from plan icon  
+          // Create a monochrome icon from plan icon
           BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
           Graphics imageGraphics = image.getGraphics();
           super.paintIcon(c, imageGraphics, 0, 0);
           imageGraphics.dispose();
-          
+
           final int colorRed   = this.pieceColor & 0xFF0000;
           final int colorGreen = this.pieceColor & 0xFF00;
           final int colorBlue  = this.pieceColor & 0xFF;
@@ -6273,17 +6274,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 {
                   canFilterIndexColorModel = true;
                 }
-  
+
                 public int filterRGB (int x, int y, int argb) {
                   int alpha = argb & 0xFF000000;
                   int red   = (argb & 0x00FF0000) >> 16;
                   int green = (argb & 0x0000FF00) >> 8;
                   int blue  = argb & 0x000000FF;
-                  
-                  // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue 
+
+                  // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue
                   // for faster results
                   int brightness = ((red + red + red + green + green + green + green + blue) >> 4) + 0x7F;
-                  
+
                   red   = (colorRed   * brightness / 0xFF) & 0xFF0000;
                   green = (colorGreen * brightness / 0xFF) & 0xFF00;
                   blue  = (colorBlue  * brightness / 0xFF) & 0xFF;
@@ -6301,10 +6302,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                     setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage(), pieceTexture.getAngle());
                   }
                 });
-          } else { 
+          } else {
             Icon textureIcon = IconManager.getInstance().getIcon(this.pieceTexture.getImage(), null);
             if (IconManager.getInstance().isErrorIcon(textureIcon)) {
-              setTexturedIcon(c, ERROR_TEXTURE_IMAGE, 0);                    
+              setTexturedIcon(c, ERROR_TEXTURE_IMAGE, 0);
             } else {
               BufferedImage textureIconImage = new BufferedImage(
                   textureIcon.getIconWidth(), textureIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -6314,49 +6315,49 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               setTexturedIcon(c, textureIconImage, this.pieceTexture.getAngle());
             }
           }
-  
+
           // Don't need texture information anymore
           this.pieceTexture = null;
         }
       }
       super.paintIcon(c, g, x, y);
     }
-    
+
     private void setTexturedIcon(Component c, BufferedImage textureImage, float angle) {
       // Paint plan icon in an image
       BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
       imageGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-      PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);     
-      
+      PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);
+
       // Fill the pixels of plan icon with texture image
-      imageGraphics.setPaint(new TexturePaint(textureImage, 
-          new Rectangle2D.Float(0, 0, -getIconWidth() / this.pieceWidth * this.pieceTexture.getWidth(), 
-              -getIconHeight() / this.pieceDepth * this.pieceTexture.getHeight())));      
+      imageGraphics.setPaint(new TexturePaint(textureImage,
+          new Rectangle2D.Float(0, 0, -getIconWidth() / this.pieceWidth * this.pieceTexture.getWidth(),
+              -getIconHeight() / this.pieceDepth * this.pieceTexture.getHeight())));
       imageGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
       imageGraphics.rotate(angle);
       float maxDimension = Math.max(image.getWidth(), image.getHeight());
       imageGraphics.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
-      imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());                  
+      imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());
       imageGraphics.dispose();
-      
+
       setIcon(new ImageIcon(image));
     }
   }
-  
+
   /**
-   * A proxy for the furniture top view icon generated from its 3D model. 
+   * A proxy for the furniture top view icon generated from its 3D model.
    */
   private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
     private static BranchGroup     sceneRoot;
     private static ExecutorService iconsCreationExecutor;
-    
+
     /**
      * Creates a top view icon proxy for a <code>piece</code> of furniture.
      * @param piece an object containing a 3D content
      * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
      *            be read immediately in the current thread.
-     * @param iconSize the size in pixels of the generated icon 
+     * @param iconSize the size in pixels of the generated icon
      */
     public PieceOfFurnitureModelIcon(final HomePieceOfFurniture piece,
                                      final Object3DFactory object3dFactory,
@@ -6398,23 +6399,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                     pieceWidth, pieceDepth, pieceHeight, iconSize));
               }
             }
-        
+
             public void modelError(Exception ex) {
               // Too bad, we'll use errorIcon
-              setIcon(IconManager.getInstance().getErrorIcon());                
+              setIcon(IconManager.getInstance().getErrorIcon());
               if (waitingComponent != null) {
                 waitingComponent.repaint();
               }
             }
           });
     }
-    
+
     /**
      * Returns the branch group bound to a universe and a canvas for the given resolution.
      */
     private BranchGroup getSceneRoot(int iconSize) {
       if (sceneRoot == null) {
-        // Create the universe used to compute top view icons 
+        // Create the universe used to compute top view icons
         Canvas3D canvas3D = Component3DManager.getInstance().getOffScreenCanvas3D(iconSize, iconSize);
         SimpleUniverse universe = new SimpleUniverse(canvas3D);
         ViewingPlatform viewingPlatform = universe.getViewingPlatform();
@@ -6427,7 +6428,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         transform.mul(rotation);
         viewPlatformTransform.setTransform(transform);
         // Use parallel projection
-        Viewer viewer = viewingPlatform.getViewers() [0];      
+        Viewer viewer = viewingPlatform.getViewers() [0];
         javax.media.j3d.View view = viewer.getView();
         view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
         sceneRoot = new BranchGroup();
@@ -6439,9 +6440,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         background.setCapability(Background.ALLOW_COLOR_WRITE);
         background.setApplicationBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
         sceneRoot.addChild(background);
-        Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
-                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
-                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
+        Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),
+                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)),
+                           new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)),
                            new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
         for (Light light : lights) {
           light.setInfluencingBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
@@ -6463,8 +6464,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     /**
      * Returns an icon created and scaled from piece model content.
      */
-    private Icon createIcon(Object3DBranch pieceNode,  
-                            float pieceWidth, float pieceDepth, float pieceHeight, 
+    private Icon createIcon(Object3DBranch pieceNode,
+                            float pieceWidth, float pieceDepth, float pieceHeight,
                             int iconSize) {
       // Add piece model scene to a normalized transform group
       Transform3D scaleTransform = new Transform3D();
@@ -6472,8 +6473,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       TransformGroup modelTransformGroup = new TransformGroup();
       modelTransformGroup.setTransform(scaleTransform);
       modelTransformGroup.addChild(pieceNode);
-      // Replace model textures by clones because Java 3D doesn't accept all the time 
-      // to share textures between offscreen and onscreen environments 
+      // Replace model textures by clones because Java 3D doesn't accept all the time
+      // to share textures between offscreen and onscreen environments
       cloneTexture(pieceNode, new IdentityHashMap<Texture, Texture>());
 
       BranchGroup model = new BranchGroup();
@@ -6481,45 +6482,45 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       model.addChild(modelTransformGroup);
       BranchGroup sceneRoot = getSceneRoot(iconSize);
       sceneRoot.addChild(model);
-      
+
       // Render scene with a white background
-      Background background = (Background)sceneRoot.getChild(0);        
+      Background background = (Background)sceneRoot.getChild(0);
       background.setColor(1, 1, 1);
       Canvas3D canvas3D = ((SimpleUniverse)sceneRoot.getLocale().getVirtualUniverse()).getCanvas();
       canvas3D.renderOffScreenBuffer();
-      canvas3D.waitForOffScreenRendering();          
+      canvas3D.waitForOffScreenRendering();
       BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
       int [] imageWithWhiteBackgoundPixels = getImagePixels(imageWithWhiteBackgound);
-      
+
       // Render scene with a black background
       background.setColor(0, 0, 0);
       canvas3D.renderOffScreenBuffer();
-      canvas3D.waitForOffScreenRendering();          
+      canvas3D.waitForOffScreenRendering();
       BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
       int [] imageWithBlackBackgoundPixels = getImagePixels(imageWithBlackBackgound);
-      
+
       // Create an image with transparent pixels where model isn't drawn
       for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
         if (imageWithBlackBackgoundPixels [i] != imageWithWhiteBackgoundPixels [i]
             && imageWithBlackBackgoundPixels [i] == 0xFF000000
             && imageWithWhiteBackgoundPixels [i] == 0xFFFFFFFF) {
           imageWithWhiteBackgoundPixels [i] = 0;
-        }           
+        }
       }
-      
+
       sceneRoot.removeChild(model);
       return new ImageIcon(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
-          imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
+          imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(),
           imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())));
     }
 
     /**
-     * Replace the textures set on node shapes by clones. 
+     * Replace the textures set on node shapes by clones.
      */
     private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
       if (node instanceof Group) {
         // Enumerate children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+        Enumeration<?> enumeration = ((Group)node).getAllChildren();
         while (enumeration.hasMoreElements()) {
           cloneTexture((Node)enumeration.nextElement(), replacedTextures);
         }
@@ -6538,7 +6539,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             appearance.setTexture(replacedTexture);
           }
         }
-      } 
+      }
     }
 
     /**
@@ -6547,7 +6548,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private int [] getImagePixels(BufferedImage image) {
       if (image.getType() == BufferedImage.TYPE_INT_RGB
           || image.getType() == BufferedImage.TYPE_INT_ARGB) {
-        // Use a faster way to get pixels 
+        // Use a faster way to get pixels
         return (int [])image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
       } else {
         return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null,
@@ -6588,6 +6589,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           Math.max(0.001f, (float)(upper.x - lower.x)), // width in plan
           Math.max(0.001f, (float)(upper.z - lower.z)), // depth in plan
           Math.max(0.001f, (float)(upper.y - lower.y))}; // height in plan
-    } 
+    }
   }
 }
