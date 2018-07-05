@@ -488,12 +488,18 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     boolean modifiedTransformations = false;
     if (node instanceof Group) {
       if (node instanceof TransformGroup
-          && node.getUserData() != null
+          && node.getUserData() instanceof String
           && ((String)node.getUserData()).endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX)
           && (updatedTransformations == null
               || !updatedTransformations.contains(node.getUserData()))) {
-        ((TransformGroup)node).setTransform(new Transform3D());
-        modifiedTransformations = true;
+        TransformGroup group = (TransformGroup)node;
+        Transform3D transform = new Transform3D();
+        group.getTransform(transform);
+        if ((transform.getType() & Transform3D.IDENTITY) != Transform3D.IDENTITY) {
+          transform.setIdentity();
+          group.setTransform(transform);
+          modifiedTransformations = true;
+        }
       }
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements()) {

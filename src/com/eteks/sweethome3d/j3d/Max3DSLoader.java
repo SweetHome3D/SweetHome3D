@@ -80,7 +80,7 @@ import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
- * A loader for 3DS streams.<br> 
+ * A loader for 3DS streams.<br>
  * Mainly an adaptation in Java 3D of the GNU LGPL C library available at www.lib3ds.org.
  * Note: this class is compatible with Java 3D 1.3.
  * @author Emmanuel Puybaret
@@ -89,10 +89,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private enum ChunkID {
     NULL_CHUNK(0x0000),
     M3DMAGIC(0x4D4D),   // 3DS file
-    SMAGIC(0x2D2D),    
-    LMAGIC(0x2D3D),    
+    SMAGIC(0x2D2D),
+    LMAGIC(0x2D3D),
     MLIBMAGIC(0x3DAA),  // MLI file
-    MATMAGIC(0x3DFF),    
+    MATMAGIC(0x3DFF),
     CMAGIC(0xC23D),     // PRJ file
     M3D_VERSION(0x0002),
     M3D_KFVERSION(0x0005),
@@ -313,13 +313,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     VIEWPORT_DATA_3(0x7012),
     VIEWPORT_SIZE(0x7020),
     NETWORK_VIEW(0x7030);
-    
+
     private short id;
 
     private ChunkID(int id) {
-      this.id = (short)id;      
+      this.id = (short)id;
     }
-    
+
     public static ChunkID valueOf(short id) {
       for (ChunkID chunck : values()) {
         if (id == chunck.id) {
@@ -337,7 +337,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private final static int TRACK_KEY_USE_EASE_FROM = 0x10;
 
   private final static Appearance DEFAULT_APPEARANCE;
-  
+
   static {
     DEFAULT_APPEARANCE = new Appearance();
     DEFAULT_APPEARANCE.setMaterial(new Material(
@@ -346,7 +346,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         new Color3f(0.3000f, 0.3000f, 0.3000f),
         128.0f));
   }
-  
+
   private Boolean                           useCaches;
   private float                             masterScale;
   private List<Mesh3DS>                     meshes;
@@ -356,14 +356,14 @@ public class Max3DSLoader extends LoaderBase implements Loader {
 
   /**
    * Sets whether this loader should try or avoid accessing to URLs with cache.
-   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or 
-   *    <code>null</code> then caches will be used according to the value 
+   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or
+   *    <code>null</code> then caches will be used according to the value
    *    returned by {@link URLConnection#getDefaultUseCaches()}.
    */
   public void setUseCaches(Boolean useCaches) {
     this.useCaches = Boolean.valueOf(useCaches);
   }
-  
+
   /**
    * Returns the scene described in the given 3DS file.
    */
@@ -374,7 +374,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         baseUrl = new File(this.basePath).toURI().toURL();
       } else {
         baseUrl = new File(file).toURI().toURL();
-      } 
+      }
     } catch (MalformedURLException ex) {
       throw new FileNotFoundException(file);
     }
@@ -388,7 +388,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     URL baseUrl = this.baseUrl;
     if (this.baseUrl == null) {
       baseUrl = url;
-    } 
+    }
     InputStream in;
     try {
       in = openStream(url, this.useCaches);
@@ -397,7 +397,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     }
     return load(in, baseUrl);
   }
-  
+
   /**
    * Returns an input stream ready to read data from the given URL.
    */
@@ -441,22 +441,22 @@ public class Max3DSLoader extends LoaderBase implements Loader {
    */
   private Scene parseStream(ChunksInputStream in) throws IOException {
     this.masterScale = 1;
-    this.meshes = new ArrayList<Mesh3DS>(); 
+    this.meshes = new ArrayList<Mesh3DS>();
     this.materials = new LinkedHashMap<String, Material3DS>();
     this.meshesGroups = new HashMap<String, List<TransformGroup>>();
-    
-    boolean magicNumberRead = false; 
+
+    boolean magicNumberRead = false;
     switch (in.readChunkHeader().getID()) {
       case M3DMAGIC :
       case MLIBMAGIC :
       case CMAGIC :
-        magicNumberRead = true; 
+        magicNumberRead = true;
         while (!in.isChunckEndReached()) {
           switch (in.readChunkHeader().getID()) {
             case M3D_VERSION :
               in.readLittleEndianUnsignedInt();
               break;
-            case EDITOR_DATA : 
+            case EDITOR_DATA :
               parseEditorData(in);
               break;
             case KEY_FRAMER_DATA :
@@ -467,7 +467,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               break;
           }
           in.releaseChunk();
-        } 
+        }
         break;
       case EDITOR_DATA :
         parseEditorData(in);
@@ -480,7 +480,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         }
     }
     in.releaseChunk();
-    
+
     try {
       return createScene();
     } finally {
@@ -490,15 +490,15 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       this.root = null;
     }
   }
-  
+
   /**
-   * Returns a new scene created from the parsed objects. 
+   * Returns a new scene created from the parsed objects.
    */
   private SceneBase createScene() {
     SceneBase scene = new SceneBase();
     BranchGroup sceneRoot = new BranchGroup();
     scene.setSceneGroup(sceneRoot);
-    
+
     Transform3D rotation = new Transform3D();
     rotation.rotX(-Math.PI / 2);
     Transform3D scale = new Transform3D();
@@ -511,7 +511,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       mainGroup.addChild(this.root);
       mainGroup = this.root;
     }
-    
+
     // Create appearances from 3DS materials
     Map<Material3DS, Appearance> appearances = new HashMap<Max3DSLoader.Material3DS, Appearance>();
     for (Material3DS material : this.materials.values()) {
@@ -546,13 +546,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           appearanceMaterial.setSpecularColor(specularColor);
         }
       }
-      
+
       Float transparency = material.getTransparency();
       if (transparency != null && transparency > 0) {
         appearance.setTransparencyAttributes(new TransparencyAttributes(
             TransparencyAttributes.NICEST, Math.min(1f, transparency)));
       }
-       
+
       appearance.setTexture(material.getTexture());
       appearances.put(material, appearance);
     }
@@ -581,16 +581,16 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               float weight = (float)Math.atan2(length, vector1.dot(vector2));
               normal.scale(weight / length);
             }
-            
-            // Add vertex index to the list of shared vertices 
+
+            // Add vertex index to the list of shared vertices
             Mesh3DSSharedVertex sharedVertex = new Mesh3DSSharedVertex(i, normal);
             sharedVertex.setNextVertex(sharedVertices [vertexIndex]);
             sharedVertices [vertexIndex] = sharedVertex;
             defaultNormals [k] = normal;
           }
         }
-        
-        // Adjust the normals of shared vertices belonging to no smoothing group 
+
+        // Adjust the normals of shared vertices belonging to no smoothing group
         // or to the same smoothing group
         Vector3f [] normals = new Vector3f [3 * faces.length];
         for (int i = 0, k = 0; i < faces.length; i++) {
@@ -601,11 +601,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             int vertexIndex = vertexIndices [j];
             Vector3f normal = new Vector3f();
             if (face.getSmoothingGroup() == null) {
-              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
-                   sharedVertex != null; 
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex];
+                   sharedVertex != null;
                    sharedVertex = sharedVertex.getNextVertex()) {
-                // Take into account only normals of shared vertex with a crease angle  
-                // smaller than PI / 2 (i.e. dot product > 0) 
+                // Take into account only normals of shared vertex with a crease angle
+                // smaller than PI / 2 (i.e. dot product > 0)
                 if (faces [sharedVertex.getFaceIndex()].getSmoothingGroup() == null
                     && (sharedVertex.getNormal() == defaultNormals [k]
                         || sharedVertex.getNormal().dot(defaultNormals [k]) > 0)) {
@@ -614,8 +614,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               }
             } else {
               long smoothingGroup = face.getSmoothingGroup();
-              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
-                   sharedVertex != null; 
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex];
+                   sharedVertex != null;
                    sharedVertex = sharedVertex.getNextVertex()) {
                 Face3DS sharedIndexFace = faces [sharedVertex.getFaceIndex()];
                 if (sharedIndexFace.getSmoothingGroup() != null
@@ -623,8 +623,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                   smoothingGroup |= sharedIndexFace.getSmoothingGroup();
                 }
               }
-              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex]; 
-                  sharedVertex != null; 
+              for (Mesh3DSSharedVertex sharedVertex = sharedVertices [vertexIndex];
+                  sharedVertex != null;
                   sharedVertex = sharedVertex.getNextVertex()) {
                 Face3DS sharedIndexFace = faces [sharedVertex.getFaceIndex()];
                 if (sharedIndexFace.getSmoothingGroup() != null
@@ -633,7 +633,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                 }
               }
             }
-            
+
             if (normal.lengthSquared() != 0) {
               normal.normalize();
             } else {
@@ -646,10 +646,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             normals [k] = normal;
             normalIndices [j] = k;
           }
-          
+
           face.setNormalIndices(normalIndices);
         }
-        
+
         // Sort faces to ensure they are cited material group by material group
         Arrays.sort(faces, new Comparator<Face3DS>() {
             public int compare(Face3DS face1, Face3DS face2) {
@@ -668,7 +668,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               }
             }
           });
-        
+
         // Seek the parent of this mesh
         Group parentGroup;
         List<TransformGroup> meshGroups = this.meshesGroups.get(mesh.getName());
@@ -683,7 +683,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           }
           parentGroup = sharedGroup;
         }
-        
+
         // Apply mesh transform
         Transform3D transform = mesh.getTransform();
         if (transform != null) {
@@ -704,7 +704,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         while (i < faces.length) {
           Face3DS firstFace = faces [i];
           Material3DS firstMaterial = firstFace.getMaterial();
-          
+
           // Search how many faces share the same characteristics
           int max = i;
           while (++max < faces.length) {
@@ -712,7 +712,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               break;
             }
           }
-          
+
           // Create indices arrays for the faces with an index between i and max
           int faceCount = max - i;
           int [] coordinateIndices = new int [faceCount * 3];
@@ -726,8 +726,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               normalIndices [k]     = faceNormalIndices [l];
             }
           }
-          
-          // Generate geometry 
+
+          // Generate geometry
           GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
           geometryInfo.setCoordinates(vertices);
           geometryInfo.setCoordinateIndices(coordinateIndices);
@@ -739,7 +739,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
           GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
-          
+
           if (shape == null || material != firstMaterial) {
             material = firstMaterial;
             Appearance appearance = appearances.get(firstMaterial);
@@ -751,9 +751,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               appearance.setPolygonAttributes(new PolygonAttributes(
                   PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0));
             }
-            shape = new Shape3D(geometryArray, appearance);   
+            shape = new Shape3D(geometryArray, appearance);
             parentGroup.addChild(shape);
-            scene.addNamedObject(mesh.getName() + (i == 0 ? "" : String.valueOf(i)), shape);
+            scene.addNamedObject(mesh.getName() + (i == 0 ? "" : "_" + String.valueOf(i)), shape);
           } else {
             shape.addGeometry(geometryArray);
           }
@@ -770,16 +770,16 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private void parseEditorData(ChunksInputStream in) throws IOException {
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
-        case MESH_VERSION : 
+        case MESH_VERSION :
           in.readLittleEndianInt();
           break;
-        case MASTER_SCALE : 
+        case MASTER_SCALE :
           this.masterScale = in.readLittleEndianFloat();
           break;
-        case NAMED_OBJECT : 
+        case NAMED_OBJECT :
           parseNamedObject(in);
           break;
-        case MATERIAL_ENTRY : 
+        case MATERIAL_ENTRY :
           Material3DS material = parseMaterial(in);
           this.materials.put(material.getName(), material);
           break;
@@ -793,7 +793,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case RAY_BIAS :
         case VIEWPORT_LAYOUT :
         case DEFAULT_VIEW :
-        case AMBIENT_LIGHT : 
+        case AMBIENT_LIGHT :
         case BIT_MAP :
         case SOLID_BGND :
         case V_GRADIENT :
@@ -805,13 +805,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         case DISTANCE_CUE :
         case USE_FOG :
         case USE_LAYER_FOG :
-        case USE_DISTANCE_CUE : 
+        case USE_DISTANCE_CUE :
         default :
           in.readUntilChunkEnd();
           break;
       }
       in.releaseChunk();
-    } 
+    }
   }
 
   /**
@@ -821,11 +821,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     String name = in.readString();
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
-        case TRIANGLE_MESH_OBJECT : 
+        case TRIANGLE_MESH_OBJECT :
           this.meshes.add(parseMeshData(in, name));
           break;
-        case CAMERA_OBJECT : 
-        case LIGHT_OBJECT : 
+        case CAMERA_OBJECT :
+        case LIGHT_OBJECT :
         case OBJECT_HIDDEN :
         case OBJECT_DOESNT_CAST :
         case OBJECT_VIS_LOFTER :
@@ -838,43 +838,43 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
+    }
   }
 
   /**
-   * Returns the mesh read from the current chunk.  
+   * Returns the mesh read from the current chunk.
    */
   private Mesh3DS parseMeshData(ChunksInputStream in, String name) throws IOException {
     Point3f [] vertices = null;
     TexCoord2f [] textureCoordinates = null;
     Transform3D transform = null;
     Short  color = null;
-    Face3DS [] faces = null; 
+    Face3DS [] faces = null;
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
         case MESH_MATRIX :
-          try { 
+          try {
             transform = parseMatrix(in);
             transform.invert();
           } catch (SingularMatrixException ex) {
             transform = null;
           }
           break;
-        case MESH_COLOR : 
+        case MESH_COLOR :
           color = in.readUnsignedByte();
           break;
-        case POINT_ARRAY : 
+        case POINT_ARRAY :
           vertices = new Point3f [in.readLittleEndianUnsignedShort()];
           for (int i = 0; i < vertices.length; i++) {
-            vertices [i] = new Point3f(in.readLittleEndianFloat(), 
+            vertices [i] = new Point3f(in.readLittleEndianFloat(),
                 in.readLittleEndianFloat(), in.readLittleEndianFloat());
           }
           break;
-        case FACE_ARRAY : 
+        case FACE_ARRAY :
           faces = parseFacesData(in);
           while (!in.isChunckEndReached()) {
             switch (in.readChunkHeader().getID()) {
-              case MESH_MATERIAL_GROUP : 
+              case MESH_MATERIAL_GROUP :
                 String materialName = in.readString();
                 Material3DS material = null;
                 if (this.materials != null) {
@@ -898,23 +898,23 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                 break;
             }
             in.releaseChunk();
-          } 
+          }
           break;
-        case TEXTURE_COORDINATES : 
+        case TEXTURE_COORDINATES :
           textureCoordinates = new TexCoord2f [in.readLittleEndianUnsignedShort()];
           for (int i = 0; i < textureCoordinates.length; i++) {
-            textureCoordinates [i] = 
+            textureCoordinates [i] =
                 new TexCoord2f(in.readLittleEndianFloat(), in.readLittleEndianFloat());
           }
           break;
-        case POINT_FLAG_ARRAY : 
-        case MESH_TEXTURE_INFO : 
+        case POINT_FLAG_ARRAY :
+        case MESH_TEXTURE_INFO :
         default :
           in.readUntilChunkEnd();
           break;
       }
       in.releaseChunk();
-    } 
+    }
     return new Mesh3DS(name, vertices, textureCoordinates, faces, color, transform);
   }
 
@@ -938,7 +938,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               case NODE_HIERARCHY :
                 String meshName = in.readString();
                 meshGroup = !"$$$DUMMY".equals(meshName);
-                in.readLittleEndianUnsignedShort(); 
+                in.readLittleEndianUnsignedShort();
                 in.readLittleEndianUnsignedShort();
                 short parentId = in.readLittleEndianShort();
                 TransformGroup transformGroup = new TransformGroup();
@@ -951,11 +951,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
                   if (parentId > transformGroups.size() - 1) {
                     throw new IncorrectFormatException("Inconsistent nodes hierarchy");
                   }
-                  transformGroups.get(parentId).addChild(transformGroup);                  
+                  transformGroups.get(parentId).addChild(transformGroup);
                 }
                 transformGroups.add(transformGroup);
                 if (meshGroup) {
-                  // Store group parent of mesh 
+                  // Store group parent of mesh
                   List<TransformGroup> meshGroups = this.meshesGroups.get(meshName);
                   if (meshGroups == null) {
                     meshGroups = new ArrayList<TransformGroup>();
@@ -993,14 +993,14 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             }
             in.releaseChunk();
           }
-          
+
           // Prepare transformations
           Transform3D transform = new Transform3D();
           if (position != null) {
             Transform3D positionTransform = new Transform3D();
             positionTransform.setTranslation(position);
             transform.mul(positionTransform);
-          } 
+          }
           if (rotationAxis != null
               && rotationAngle != 0) {
             double length = rotationAxis.length();
@@ -1012,13 +1012,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
               rotationTransform.set(new Quat4d(rotationAxis.x * sin, rotationAxis.y * sin, rotationAxis.z * sin, cos));
               transform.mul(rotationTransform);
             }
-          } 
+          }
           if (scale != null) {
             Transform3D scaleTransform = new Transform3D();
             scaleTransform.setScale(new Vector3d(scale));
             transform.mul(scaleTransform);
           }
-          if (pivot != null 
+          if (pivot != null
               && meshGroup) {
             Transform3D pivotTransform = new Transform3D();
             pivot.negate();
@@ -1032,7 +1032,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
+    }
   }
 
   /**
@@ -1044,7 +1044,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     in.readLittleEndianUnsignedInt();
     in.readLittleEndianInt();           // Key frames count
     in.readLittleEndianInt();           // Key frame index
-    int flags = in.readLittleEndianUnsignedShort(); 
+    int flags = in.readLittleEndianUnsignedShort();
     if ((flags & TRACK_KEY_USE_TENS) != 0) {
       in.readLittleEndianFloat();
     }
@@ -1063,14 +1063,14 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the mesh faces read from the current chunk.  
+   * Returns the mesh faces read from the current chunk.
    */
   private Face3DS [] parseFacesData(ChunksInputStream in) throws IOException {
     Face3DS [] faces = new Face3DS [in.readLittleEndianUnsignedShort()];
     for (int i = 0; i < faces.length; i++) {
       faces [i] = new Face3DS(
-        i, 
-        in.readLittleEndianUnsignedShort(), 
+        i,
+        in.readLittleEndianUnsignedShort(),
         in.readLittleEndianUnsignedShort(),
         in.readLittleEndianUnsignedShort(),
         in.readLittleEndianUnsignedShort());
@@ -1079,7 +1079,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the 3DS material read from the current chunk.  
+   * Returns the 3DS material read from the current chunk.
    */
   private Material3DS parseMaterial(ChunksInputStream in) throws IOException {
     String name = null;
@@ -1092,16 +1092,16 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     Texture texture = null;
     while (!in.isChunckEndReached()) {
       switch (in.readChunkHeader().getID()) {
-        case MATERIAL_NAME : 
+        case MATERIAL_NAME :
           name = in.readString();
           break;
-        case MATERIAL_AMBIENT : 
-          ambientColor = parseColor(in); 
+        case MATERIAL_AMBIENT :
+          ambientColor = parseColor(in);
           break;
-        case MATERIAL_DIFFUSE : 
+        case MATERIAL_DIFFUSE :
           diffuseColor = parseColor(in);
           break;
-        case MATERIAL_SPECULAR : 
+        case MATERIAL_SPECULAR :
           specularColor = parseColor(in);
           break;
         case MATERIAL_SHININESS :
@@ -1113,18 +1113,18 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
         case MATERIAL_TWO_SIDED :
           twoSided = true;
-          break;         
+          break;
         case MATERIAL_TEXMAP :
           texture = parseTextureMap(in);
           break;
         case MATERIAL_XPFALL :
-        case MATERIAL_SELF_ILPCT : 
-        case MATERIAL_SHIN2PCT : 
-        case MATERIAL_USE_XPFALL : 
-        case MATERIAL_SELF_ILLUM :  
-        case MATERIAL_REFBLUR : 
+        case MATERIAL_SELF_ILPCT :
+        case MATERIAL_SHIN2PCT :
+        case MATERIAL_USE_XPFALL :
+        case MATERIAL_SELF_ILLUM :
+        case MATERIAL_REFBLUR :
         case MATERIAL_USE_REFBLUR :
-        case MATERIAL_SHADING : 
+        case MATERIAL_SHADING :
         case MATERIAL_DECAL :
         case MATERIAL_ADDITIVE :
         case MATERIAL_FACEMAP :
@@ -1153,13 +1153,13 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
-    return new Material3DS(name, ambientColor, diffuseColor, specularColor, 
+    }
+    return new Material3DS(name, ambientColor, diffuseColor, specularColor,
         shininess, transparency, texture, twoSided);
   }
 
   /**
-   * Returns the color read from the current chunk.  
+   * Returns the color read from the current chunk.
    */
   private Color3f parseColor(ChunksInputStream in) throws IOException {
     boolean linearColor = false;
@@ -1168,23 +1168,23 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       switch (in.readChunkHeader().getID()) {
         case LINEAR_COLOR_24 :
           linearColor = true;
-          color = new Color3f(in.readUnsignedByte() / 255.f, 
+          color = new Color3f(in.readUnsignedByte() / 255.f,
               in.readUnsignedByte() / 255.f, in.readUnsignedByte() / 255.f);
           break;
         case COLOR_24 :
-          Color3f readColor = new Color3f(in.readUnsignedByte() / 255.f, 
+          Color3f readColor = new Color3f(in.readUnsignedByte() / 255.f,
               in.readUnsignedByte() / 255.f, in.readUnsignedByte() / 255.f);
           if (!linearColor) {
             color = readColor;
           }
           break;
-        case LINEAR_COLOR_FLOAT : 
+        case LINEAR_COLOR_FLOAT :
           linearColor = true;
-          color = new Color3f(in.readLittleEndianFloat(), 
+          color = new Color3f(in.readLittleEndianFloat(),
               in.readLittleEndianFloat(), in.readLittleEndianFloat());
           break;
         case COLOR_FLOAT :
-          readColor = new Color3f(in.readLittleEndianFloat(), 
+          readColor = new Color3f(in.readLittleEndianFloat(),
               in.readLittleEndianFloat(), in.readLittleEndianFloat());
           if (!linearColor) {
             color = readColor;
@@ -1195,7 +1195,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
+    }
     if (color != null) {
       return color;
     } else {
@@ -1204,7 +1204,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the percentage read from the current chunk.  
+   * Returns the percentage read from the current chunk.
    */
   private Float parsePercentage(ChunksInputStream in) throws IOException {
     Float percentage = null;
@@ -1218,7 +1218,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
+    }
     if (percentage != null) {
       return percentage;
     } else {
@@ -1227,7 +1227,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the texture read from the current chunk.  
+   * Returns the texture read from the current chunk.
    */
   private Texture parseTextureMap(ChunksInputStream in) throws IOException {
     String mapName = null;
@@ -1238,7 +1238,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
         case PERCENTAGE_INT :
         case MATERIAL_MAP_TILING :
-        case MATERIAL_MAP_TEXBLUR : 
+        case MATERIAL_MAP_TEXBLUR :
         case MATERIAL_MAP_USCALE :
         case MATERIAL_MAP_VSCALE :
         case MATERIAL_MAP_UOFFSET :
@@ -1254,8 +1254,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           break;
       }
       in.releaseChunk();
-    } 
-    
+    }
+
     if (mapName != null) {
       Texture texture = readTexture(in, mapName);
       if (texture != null) {
@@ -1282,7 +1282,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           } else if ("jar".equals(baseUrl.getProtocol())) {
             String file = baseUrl.getFile();
             int entryIndex = file.indexOf('!') + 2;
-            URL zipUrl = new URL(file.substring(0, entryIndex - 2)); 
+            URL zipUrl = new URL(file.substring(0, entryIndex - 2));
             // Seek map name in the same sub folder as base URL
             String mapNamePath = file.substring(entryIndex, file.lastIndexOf('/') + 1) + mapName;
             String entryName = getEntryNameIgnoreCase(zipUrl, mapNamePath);
@@ -1295,7 +1295,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     }
     return null;
   }
-  
+
   /**
    * Returns the entry in a zip file equal to the given name ignoring case.
    */
@@ -1340,7 +1340,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the texture read from the given file.  
+   * Returns the texture read from the given file.
    */
   private Texture readTexture(ChunksInputStream in, String fileName) throws IOException {
     InputStream imageStream = null;
@@ -1350,11 +1350,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
           ? new URL(baseUrl, fileName.replace("%", "%25").replace("#", "%23"))
           : new File(fileName).toURI().toURL();
       imageStream = openStream(textureImageUrl, useCaches);
-      BufferedImage textureImage;          
+      BufferedImage textureImage;
       try {
         textureImage = ImageIO.read(imageStream);
       } catch (ConcurrentModificationException ex) {
-        // Try to read the image once more, 
+        // Try to read the image once more,
         // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
         imageStream.close();
         imageStream = openStream(textureImageUrl, useCaches);
@@ -1386,7 +1386,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the matrix read from the current chunk.  
+   * Returns the matrix read from the current chunk.
    */
   private Transform3D parseMatrix(ChunksInputStream in) throws IOException {
     float [] matrix = {
@@ -1403,7 +1403,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     matrix [2] = in.readLittleEndianFloat();
     matrix [6] = in.readLittleEndianFloat();
     matrix [10] = in.readLittleEndianFloat();
-  
+
     matrix [3] = in.readLittleEndianFloat();
     matrix [7] = in.readLittleEndianFloat();
     matrix [11] = in.readLittleEndianFloat();
@@ -1411,10 +1411,10 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the vector read from the current chunk.  
+   * Returns the vector read from the current chunk.
    */
   private Vector3f parseVector(ChunksInputStream in) throws IOException {
-    return new Vector3f(in.readLittleEndianFloat(), 
+    return new Vector3f(in.readLittleEndianFloat(),
         in.readLittleEndianFloat(), in.readLittleEndianFloat());
   }
 
@@ -1434,31 +1434,31 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       this.length = length;
       this.readLength = 6;
     }
-    
+
     public ChunkID getID() {
       return this.id;
     }
-    
+
     public long getLength() {
       return this.length;
     }
-    
+
     public void incrementReadLength(long readBytes) {
       this.readLength += readBytes;
     }
-    
+
     public long getReadLength() {
       return this.readLength;
     }
-    
+
     @Override
     public String toString() {
       return this.id + " " + this.length;
     }
   }
-  
+
   /**
-   * An input stream storing chunks hierarchy and other data required during parsing. 
+   * An input stream storing chunks hierarchy and other data required during parsing.
    */
   private static class ChunksInputStream extends FilterInputStream {
     private Stack<Chunk3DS> stack;
@@ -1489,19 +1489,19 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       this.stack.push(chunk);
       return chunk;
     }
-    
+
     /**
-     * Pops the chunk at the top of stack and checks it was entirely read. 
+     * Pops the chunk at the top of stack and checks it was entirely read.
      */
-    public void releaseChunk() {      
+    public void releaseChunk() {
       Chunk3DS chunk = this.stack.pop();
       if (chunk.getLength() != chunk.getReadLength()) {
-        throw new IncorrectFormatException("Chunk " + chunk.getID() + " invalid length. " 
+        throw new IncorrectFormatException("Chunk " + chunk.getID() + " invalid length. "
             + "Expected to read " + chunk.getLength() + " bytes, but actually read " + chunk.getReadLength() + " bytes");
       }
       if (!this.stack.isEmpty()) {
         this.stack.peek().incrementReadLength(chunk.getLength());
-      }      
+      }
     }
 
     /**
@@ -1511,7 +1511,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       Chunk3DS chunk = this.stack.peek();
       return chunk.getLength() == chunk.getReadLength();
     }
-    
+
     /**
      * Reads the stream until the end of the current chunk.
      */
@@ -1525,7 +1525,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       }
       chunk.incrementReadLength(remainingLength);
     }
-    
+
     /**
      * Returns the unsigned byte read from this stream.
      */
@@ -1538,21 +1538,21 @@ public class Max3DSLoader extends LoaderBase implements Loader {
         return (short)(b & 0xFF);
       }
     }
-    
+
     /**
      * Returns the unsigned short read from this stream.
      */
     public int readLittleEndianUnsignedShort() throws IOException {
       return (int)readLittleEndianShort(true) & 0xFFFF;
     }
-    
+
     /**
      * Returns the short read from this stream.
      */
     public short readLittleEndianShort() throws IOException {
       return readLittleEndianShort(true);
     }
-    
+
     private short readLittleEndianShort(boolean incrementReadLength) throws IOException {
       int b1 = this.in.read();
       if (b1 == -1) {
@@ -1574,25 +1574,25 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     public float readLittleEndianFloat() throws IOException {
       return Float.intBitsToFloat(readLittleEndianInt(true));
     }
-    
+
     /**
      * Returns the unsigned integer read from this stream.
      */
     public long readLittleEndianUnsignedInt() throws IOException {
       return readLittleEndianUnsignedInt(true);
     }
-    
+
     private long readLittleEndianUnsignedInt(boolean incrementReadLength) throws IOException {
       return (long)readLittleEndianInt(incrementReadLength) & 0xFFFFFFFFL;
     }
-    
+
     /**
      * Returns the integer read from this stream.
      */
     public int readLittleEndianInt() throws IOException {
       return readLittleEndianInt(true);
     }
-    
+
     private int readLittleEndianInt(boolean incrementReadLength) throws IOException {
       int b1 = this.in.read();
       if (b1 == -1) {
@@ -1627,7 +1627,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       return stringBytes.toString("ISO-8859-1");
     }
   }
-  
+
   /**
    * 3DS mesh.
    */
@@ -1639,7 +1639,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     private Short         color;
     private Transform3D   transform;
 
-    public Mesh3DS(String name, 
+    public Mesh3DS(String name,
                    Point3f [] vertices, TexCoord2f [] textureCoordinates, Face3DS [] faces,
                    Short color, Transform3D transform) {
       this.name = name;
@@ -1649,23 +1649,23 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       this.color = color;
       this.transform = transform;
     }
-    
+
     public String getName() {
       return this.name;
     }
-    
+
     public Point3f [] getVertices() {
       return this.vertices;
     }
-    
+
     public TexCoord2f [] getTextureCoordinates() {
       return this.textureCoordinates;
     }
-    
+
     public Face3DS [] getFaces() {
       return this.faces;
     }
-    
+
     public Transform3D getTransform() {
       return this.transform;
     }
@@ -1684,16 +1684,16 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     public Face3DS(int index,
                    int vertexAIndex,
                    int vertexBIndex,
-                   int vertexCIndex, 
+                   int vertexCIndex,
                    int flags) {
       this.index = index;
       this.vertexIndices = new int [] {vertexAIndex, vertexBIndex, vertexCIndex};
     }
-    
+
     public int getIndex() {
       return this.index;
     }
-    
+
     public int [] getVertexIndices() {
       return this.vertexIndices;
     }
@@ -1701,7 +1701,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     public void setNormalIndices(int [] normalIndices) {
       this.normalIndices = normalIndices;
     }
-    
+
     public int [] getNormalIndices() {
       return this.normalIndices;
     }
@@ -1713,11 +1713,11 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     public Material3DS getMaterial() {
       return this.material;
     }
-    
+
     public void setSmoothingGroup(Long smoothingGroup) {
       this.smoothingGroup = smoothingGroup;
     }
-    
+
     public Long getSmoothingGroup() {
       return this.smoothingGroup;
     }
@@ -1735,7 +1735,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     private Float   transparency;
     private Texture texture;
     private boolean twoSided;
-    
+
     public Material3DS(String name, Color3f ambientColor, Color3f diffuseColor, Color3f specularColor,
                        Float shininess, Float transparency, Texture texture, boolean twoSided) {
       this.name = name;
@@ -1751,36 +1751,36 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     public String getName() {
       return this.name;
     }
-    
+
     public boolean isTwoSided() {
       return this.twoSided;
     }
-    
+
     public Color3f getAmbientColor() {
       return this.ambientColor;
     }
-    
+
     public Color3f getDiffuseColor() {
       return this.diffuseColor;
     }
-    
+
     public Color3f getSpecularColor() {
       return this.specularColor;
     }
-    
+
     public Float getShininess() {
       return this.shininess;
     }
-    
+
     public Float getTransparency() {
       return this.transparency;
     }
-    
+
     public Texture getTexture() {
       return this.texture;
     }
   }
-  
+
   /**
    * Vertex shared between faces in a mesh.
    */
@@ -1788,24 +1788,24 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     private int                 faceIndex;
     private Vector3f            normal;
     private Mesh3DSSharedVertex nextVertex;
-    
+
     public Mesh3DSSharedVertex(int faceIndex, Vector3f normal) {
       this.faceIndex = faceIndex;
       this.normal = normal;
     }
-    
+
     public int getFaceIndex() {
       return this.faceIndex;
     }
-    
+
     public Vector3f getNormal() {
       return this.normal;
     }
-    
+
     public void setNextVertex(Mesh3DSSharedVertex nextVertex) {
       this.nextVertex = nextVertex;
     }
-    
+
     public Mesh3DSSharedVertex getNextVertex() {
       return this.nextVertex;
     }

@@ -41,6 +41,7 @@ import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -120,6 +121,15 @@ public class HomeFurnitureController implements Controller {
   private boolean            widthDepthDeformable;
   private boolean            texturable;
   private boolean            visibleEditable;
+
+  private boolean            doorOrWindow;
+  private float              wallThickness;
+  private float              wallDistance;
+  private float              wallWidth;
+  private float              wallLeft;
+  private float              wallHeight;
+  private float              wallTop;
+  private Sash []            sashes;
 
   /**
    * Creates the controller of home furniture view with undo support.
@@ -279,6 +289,14 @@ public class HomeFurnitureController implements Controller {
       }
       setPaint(null);
       setModelTransformations(null);
+      this.doorOrWindow = false;
+      this.wallThickness = 1;
+      this.wallDistance = 0;
+      this.wallWidth = 1;
+      this.wallLeft = 0;
+      this.wallHeight = 1;
+      this.wallTop = 0;
+      this.sashes = new Sash [0];
       setShininess(null);
       this.visibleEditable = false;
       setVisible(null);
@@ -545,12 +563,25 @@ public class HomeFurnitureController implements Controller {
         setPaint(null);
       }
 
+      // Allow transformation change only on one piece at a time
       Transformation [] modelTransformations = firstPiece.getModelTransformations();
-      if (modelTransformations != null) {
-        for (int i = 1; i < selectedFurniture.size() && modelTransformations != null; i++) {
-          if (!Arrays.equals(modelTransformations, selectedFurniture.get(i).getModelTransformations())) {
-            modelTransformations = null;
-          }
+      if (selectedFurniture.size() != 1) {
+        modelTransformations = null;
+      } else {
+        if (modelTransformations == null) {
+          modelTransformations = new Transformation [0];
+        }
+        if (firstPiece instanceof HomeDoorOrWindow) {
+          HomeDoorOrWindow editedDoorOrWindow = (HomeDoorOrWindow)firstPiece;
+          this.doorOrWindow = true;
+          this.wallThickness = editedDoorOrWindow.getWallThickness();
+          this.wallDistance = editedDoorOrWindow.getWallDistance();
+          this.wallWidth = editedDoorOrWindow.getWallWidth();
+          this.wallLeft = editedDoorOrWindow.getWallLeft();
+          this.wallHeight = editedDoorOrWindow.getWallHeight();
+          this.wallTop = editedDoorOrWindow.getWallTop();
+          this.sashes = editedDoorOrWindow.getSashes();
+
         }
       }
       setModelTransformations(modelTransformations);
@@ -638,7 +669,8 @@ public class HomeFurnitureController implements Controller {
         if (piece instanceof HomeFurnitureGroup) {
           for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
             if (!childPiece.isDeformable()
-                || childPiece.isHorizontallyRotated()) {
+                || childPiece.isHorizontallyRotated()
+                || childPiece.getModelTransformations() != null) {
               // Make selection not deformable if it contains a group with pieces
               // which are be deformable or rotated around an horizontal axis
               deformable = false;
@@ -646,7 +678,8 @@ public class HomeFurnitureController implements Controller {
             }
           }
         } else {
-          deformable = piece.isDeformable();
+          deformable = piece.isDeformable()
+              && piece.getModelTransformations() == null;
         }
       }
       setDeformable(deformable);
@@ -700,6 +733,8 @@ public class HomeFurnitureController implements Controller {
       case ROLL :
       case PITCH :
         return isRollAndPitchEditable();
+      case MODEL_TRANSFORMATIONS :
+        return getModelTransformations() != null;
       case LIGHT_POWER :
         return isLightPowerEditable();
       case VISIBLE :
@@ -1217,17 +1252,88 @@ public class HomeFurnitureController implements Controller {
 
   /**
    * Sets model transformations.
+   * @since 6.0
    */
   public void setModelTransformations(Transformation [] modelTransformations) {
     if (!Arrays.equals(modelTransformations, this.modelTransformations)) {
       Transformation [] oldModelTransformations = this.modelTransformations;
       this.modelTransformations = modelTransformations;
       this.propertyChangeSupport.firePropertyChange(Property.MODEL_TRANSFORMATIONS.name(), oldModelTransformations, modelTransformations);
+      setDeformable(modelTransformations == null || modelTransformations.length == 0);
+      setProportional(modelTransformations != null && modelTransformations.length > 0);
     }
   }
 
   /**
+   * Sets model transformations and updated dimensions of the edited piece.
+   * @since 6.0
+   */
+  public void setModelTransformations(Transformation [] transformations,
+                                      float x,
+                                      float y,
+                                      float elevation,
+                                      float width,
+                                      float depth,
+                                      float height) {
+    if (this.doorOrWindow) {
+      float currentX = getX();
+      float currentY = getY();
+      float currentElevation = getElevation();
+      float currentWidth = getWidth();
+      float currentDepth = getDepth();
+      float currentHeight = getHeight();
+      float angle = -getAngle();
+
+      float currentXAlongWidth = (float)(currentX * Math.cos(angle) - currentY * Math.sin(angle));
+      float updatedXAlongWidth = (float)(x * Math.cos(angle) - y * Math.sin(angle));
+      float currentWallLeft = this.wallLeft * currentWidth;
+      // wallWidth and xWallLeft don't change
+      float wallWidth = this.wallWidth * currentWidth;
+      float xWallLeft = currentXAlongWidth - currentWidth / 2 + currentWallLeft;
+      float newWallLeft = xWallLeft - updatedXAlongWidth + width / 2;
+
+      float currentYAlongDepth = (float)(currentX * Math.sin(angle) + currentY * Math.cos(angle));
+      float updatedYAlongDepth = (float)(x * Math.sin(angle) + y * Math.cos(angle));
+      float currentWallDistance = this.wallDistance * currentDepth;
+      // wallThickness and yWallBack don't change
+      float wallThickness = this.wallThickness * currentDepth;
+      float yWallBack = currentYAlongDepth - currentDepth / 2 + currentWallDistance;
+      float newWallDistance = yWallBack - updatedYAlongDepth + depth / 2;
+
+      float currentWallTop = this.wallTop * currentHeight;
+      // elevation don't change
+      float wallHeight = this.wallHeight * currentHeight;
+      float newWallTop = currentWallTop + elevation + height - (currentElevation + currentHeight);
+
+      Sash [] sashes = this.sashes;
+      for (int i = 0; i < sashes.length; i++) {
+        Sash sash = sashes [i];
+        float xAxis = sash.getXAxis() * currentWidth;
+        xAxis += newWallLeft - currentWallLeft;
+        float yAxis = sash.getYAxis() * currentDepth;
+        yAxis += newWallDistance - currentWallDistance;
+        sashes [i] = new Sash(xAxis / width, yAxis / depth,
+            sash.getWidth() * currentWidth / width, sash.getStartAngle(), sash.getEndAngle());
+      }
+      this.wallThickness = wallThickness / depth;
+      this.wallDistance = newWallDistance / depth;
+      this.wallWidth = wallWidth / width;
+      this.wallLeft = newWallLeft / width;
+      this.wallHeight = wallHeight / height;
+      this.wallTop = newWallTop / height;
+      this.sashes  = sashes;
+    }
+    setModelTransformations(transformations);
+    setX(x);
+    setY(y);
+    setWidth(width, false, false, false);
+    setDepth(depth, false, false, false);
+    setHeight(height, false, false);
+  }
+
+  /**
    * Returns model transformations.
+   * @since 6.0
    */
   public Transformation [] getModelTransformations() {
     return this.modelTransformations;
@@ -1388,7 +1494,8 @@ public class HomeFurnitureController implements Controller {
       Float width = getWidth();
       Float depth = getDepth();
       Float height = getHeight();
-      boolean proportional = isProportional();
+      boolean proportional = isProportional()
+          && (width == null || depth == null || height == null);
       FurniturePaint paint = getPaint();
       Integer color = paint == FurniturePaint.COLORED
           ? getColor()
@@ -1434,14 +1541,17 @@ public class HomeFurnitureController implements Controller {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, name, nameVisible, description, price, x, y, elevation, angle, roll, pitch, horizontalAxis, basePlanItem,
-          width, depth, height, proportional, paint, color, texture, modelMaterials, modelTransformations, defaultShininess, shininess, visible, modelMirrored, lightPower);
+          width, depth, height, proportional, modelTransformations,
+          this.wallThickness, this.wallDistance, this.wallWidth, this.wallLeft, this.wallHeight, this.wallTop, this.sashes,
+          paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
       if (this.undoSupport != null) {
         List<Selectable> newSelection = this.home.getSelectedItems();
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, newSelection, modifiedFurniture,
             name, nameVisible, description, price, x, y, elevation, angle, roll, pitch, horizontalAxis, basePlanItem,
-            width, depth, height, proportional, paint, color, texture, modelMaterials, modelTransformations,
-            defaultShininess, shininess, visible, modelMirrored, lightPower);
+            width, depth, height, proportional, modelTransformations,
+            this.wallThickness, this.wallDistance, this.wallWidth, this.wallLeft, this.wallHeight, this.wallTop, this.sashes,
+            paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
         this.undoSupport.postEdit(undoableEdit);
       }
       if (name != null) {
@@ -1479,16 +1589,23 @@ public class HomeFurnitureController implements Controller {
     private final Float                       depth;
     private final Float                       height;
     private final boolean                     proportional;
+    private final Transformation []           modelTransformations;
     private final FurniturePaint              paint;
     private final Integer                     color;
     private final HomeTexture                 texture;
     private final HomeMaterial []             modelMaterials;
-    private final Transformation []           modelTransformations;
     private final boolean                     defaultShininess;
     private final Float                       shininess;
     private final Boolean                     visible;
     private final Boolean                     modelMirrored;
     private final Float                       lightPower;
+    private final float                       wallThickness;
+    private final float                       wallDistance;
+    private final float                       wallWidth;
+    private final float                       wallLeft;
+    private final float                       wallHeight;
+    private final float                       wallTop;
+    private final Sash []                     sashes;
 
     private FurnitureModificationUndoableEdit(Home home,
                                               UserPreferences preferences,
@@ -1498,9 +1615,10 @@ public class HomeFurnitureController implements Controller {
                                               String name, Boolean nameVisible, String description, BigDecimal price,
                                               Float x, Float y, Float elevation,
                                               Float angle, Float roll, Float pitch, FurnitureHorizontalAxis horizontalAxis, Boolean basePlanItem,
-                                              Float width, Float depth, Float height, boolean proportional,
-                                              FurniturePaint paint, Integer color, HomeTexture texture,
-                                              HomeMaterial [] modelMaterials, Transformation [] modelTransformations,
+                                              Float width, Float depth, Float height, boolean proportional, Transformation [] modelTransformations,
+                                              float wallThickness, float wallDistance, float wallWidth, float wallLeft, float wallHeight, float wallTop, Sash [] sashes,
+                                              FurniturePaint paint, Integer color,
+                                              HomeTexture texture, HomeMaterial [] modelMaterials,
                                               boolean defaultShininess, Float shininess,
                                               Boolean visible,
                                               Boolean modelMirrored,
@@ -1526,11 +1644,18 @@ public class HomeFurnitureController implements Controller {
       this.depth = depth;
       this.height = height;
       this.proportional = proportional;
+      this.modelTransformations = modelTransformations;
+      this.wallThickness = wallThickness;
+      this.wallDistance = wallDistance;
+      this.wallWidth = wallWidth;
+      this.wallLeft = wallLeft;
+      this.wallHeight = wallHeight;
+      this.wallTop = wallTop;
+      this.sashes = sashes;
       this.paint = paint;
       this.color = color;
       this.texture = texture;
       this.modelMaterials = modelMaterials;
-      this.modelTransformations = modelTransformations;
       this.defaultShininess = defaultShininess;
       this.shininess = shininess;
       this.visible = visible;
@@ -1551,8 +1676,9 @@ public class HomeFurnitureController implements Controller {
       doModifyFurniture(this.modifiedFurniture,
           this.name, this.nameVisible, this.description, this.price, this.x, this.y, this.elevation,
           this.angle, this.roll, this.pitch, this.horizontalAxis, this.basePlanItem,
-          this.width, this.depth, this.height, this.proportional,
-          this.paint, this.color, this.texture, this.modelMaterials, this.modelTransformations,
+          this.width, this.depth, this.height, this.proportional, this.modelTransformations,
+          this.wallThickness, this.wallDistance, this.wallWidth, this.wallLeft, this.wallHeight, this.wallTop, this.sashes,
+          this.paint, this.color, this.texture, this.modelMaterials,
           this.defaultShininess, this.shininess,
           this.visible, this.modelMirrored, this.lightPower);
       this.home.setSelectedItems(this.newSelection);
@@ -1572,9 +1698,10 @@ public class HomeFurnitureController implements Controller {
                                         String name, Boolean nameVisible, String description, BigDecimal price,
                                         Float x, Float y, Float elevation,
                                         Float angle, Float roll, Float pitch, FurnitureHorizontalAxis horizontalAxis, Boolean basePlanItem,
-                                        Float width, Float depth, Float height, boolean proportional,
-                                        FurniturePaint paint, Integer color, HomeTexture texture,
-                                        HomeMaterial [] modelMaterials, Transformation [] modelTransformations,
+                                        Float width, Float depth, Float height, boolean proportional, Transformation [] modelTransformations,
+                                        float wallThickness, float wallDistance, float wallWidth, float wallLeft, float wallHeight, float wallTop, Sash [] sashes,
+                                        FurniturePaint paint, Integer color,
+                                        HomeTexture texture, HomeMaterial [] modelMaterials,
                                         boolean defaultShininess, Float shininess,
                                         Boolean visible, Boolean modelMirrored,
                                         Float lightPower) {
@@ -1659,6 +1786,19 @@ public class HomeFurnitureController implements Controller {
         if (modelMirrored != null) {
           piece.setModelMirrored(modelMirrored);
         }
+
+        if (piece instanceof HomeDoorOrWindow
+            && !Arrays.deepEquals(piece.getModelTransformations(),
+                    modelTransformations != null && modelTransformations.length > 0 ? modelTransformations : null)) {
+          HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+          doorOrWindow.setWallThickness(wallThickness);
+          doorOrWindow.setWallDistance(wallDistance);
+          doorOrWindow.setWallWidth(wallWidth);
+          doorOrWindow.setWallLeft(wallLeft);
+          doorOrWindow.setWallHeight(wallHeight);
+          doorOrWindow.setWallTop(wallTop);
+          doorOrWindow.setSashes(sashes);
+        }
       }
       if (piece.isTexturable()) {
         if (paint != null) {
@@ -1691,9 +1831,8 @@ public class HomeFurnitureController implements Controller {
           piece.setShininess(shininess);
         }
       }
-      if (piece.isDeformable()
-          && modelTransformations != null) {
-        piece.setModelTransformations(modelTransformations);
+      if (modelTransformations != null) {
+        piece.setModelTransformations(modelTransformations.length > 0 ? modelTransformations : null);
       }
       if (visible != null) {
         piece.setVisible(visible);
@@ -1732,10 +1871,10 @@ public class HomeFurnitureController implements Controller {
     private final float                width;
     private final float                depth;
     private final float                height;
+    private final Transformation []    modelTransformations;
     private final Integer              color;
     private final HomeTexture          texture;
     private final HomeMaterial []      modelMaterials;
-    private final Transformation []    modelTransformations;
     private final Float                shininess;
     private final boolean              visible;
     private final boolean              modelMirrored;
@@ -1756,10 +1895,10 @@ public class HomeFurnitureController implements Controller {
       this.width = piece.getWidth();
       this.depth = piece.getDepth();
       this.height = piece.getHeight();
+      this.modelTransformations = piece.getModelTransformations();
       this.color = piece.getColor();
       this.texture = piece.getTexture();
       this.modelMaterials = piece.getModelMaterials();
-      this.modelTransformations = piece.getModelTransformations();
       this.shininess = piece.getShininess();
       this.visible = piece.isVisible();
       this.modelMirrored = piece.isModelMirrored();
@@ -1791,14 +1930,12 @@ public class HomeFurnitureController implements Controller {
         this.piece.setHeight(this.height);
         this.piece.setModelMirrored(this.modelMirrored);
       }
+      this.piece.setModelTransformations(this.modelTransformations);
       if (this.piece.isTexturable()) {
         this.piece.setColor(this.color);
         this.piece.setTexture(this.texture);
         this.piece.setModelMaterials(this.modelMaterials);
         this.piece.setShininess(this.shininess);
-      }
-      if (this.piece.isDeformable()) {
-        this.piece.setModelTransformations(this.modelTransformations);
       }
       this.piece.setVisible(this.visible);
     }
@@ -1809,15 +1946,37 @@ public class HomeFurnitureController implements Controller {
    */
   private static class ModifiedDoorOrWindow extends ModifiedPieceOfFurniture {
     private final boolean boundToWall;
+    private final float   wallThickness;
+    private final float   wallDistance;
+    private final float   wallWidth;
+    private final float   wallLeft;
+    private final float   wallHeight;
+    private final float   wallTop;
+    private final Sash [] sashes;
 
     public ModifiedDoorOrWindow(HomeDoorOrWindow doorOrWindow) {
       super(doorOrWindow);
       this.boundToWall = doorOrWindow.isBoundToWall();
+      this.wallThickness = doorOrWindow.getWallThickness();
+      this.wallDistance = doorOrWindow.getWallDistance();
+      this.wallWidth = doorOrWindow.getWallWidth();
+      this.wallLeft = doorOrWindow.getWallLeft();
+      this.wallHeight = doorOrWindow.getWallHeight();
+      this.wallTop = doorOrWindow.getWallTop();
+      this.sashes = doorOrWindow.getSashes();
     }
 
     public void reset() {
       super.reset();
-      ((HomeDoorOrWindow)getPieceOfFurniture()).setBoundToWall(this.boundToWall);
+      HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)getPieceOfFurniture();
+      doorOrWindow.setBoundToWall(this.boundToWall);
+      doorOrWindow.setWallThickness(this.wallThickness);
+      doorOrWindow.setWallDistance(this.wallDistance);
+      doorOrWindow.setWallWidth(this.wallWidth);
+      doorOrWindow.setWallLeft(this.wallLeft);
+      doorOrWindow.setWallHeight(this.wallHeight);
+      doorOrWindow.setWallTop(this.wallTop);
+      doorOrWindow.setSashes(this.sashes);
     }
   }
 

@@ -69,13 +69,13 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.image.TextureLoader;
 
 /**
- * An OBJ + MTL loader. 
+ * An OBJ + MTL loader.
  * It supports the same features as {@link com.sun.j3d.loaders.objectfile.ObjectFile ObjectFile}
  * Java 3D class, expected for texture images format (supports only BMP, WBMP, GIF, JPEG and PNG format).
  * Compared to <code>ObjectFile</code>, this class supports transparency as defined in
- * <a href="http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/">MTL file format</a> 
- * specifications, and doesn't oblige to define texture coordinate on all vertices 
- * when only one face needs such coordinates. Material description is stored in 
+ * <a href="http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/">MTL file format</a>
+ * specifications, and doesn't oblige to define texture coordinate on all vertices
+ * when only one face needs such coordinates. Material description is stored in
  * {@link OBJMaterial OBJMaterial} instances to be able to use additional OBJ information
  * in other circumstances.<br>
  * Note: this class is compatible with Java 3D 1.3.
@@ -83,10 +83,10 @@ import com.sun.j3d.utils.image.TextureLoader;
  */
 public class OBJLoader extends LoaderBase implements Loader {
   /**
-   * Description of the default Java 3D materials at MTL format 
+   * Description of the default Java 3D materials at MTL format
    * (copied from com.sun.j3d.loaders.objectfile.DefaultMaterials class with inverse d transparency factor)
    */
-  private static final String JAVA_3D_MATERIALS = 
+  private static final String JAVA_3D_MATERIALS =
     "newmtl amber\n" +
     "Ka 0.0531 0.0531 0.0531\n" +
     "Kd 0.5755 0.2678 0.0000\n" +
@@ -985,7 +985,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     "Ns 60.0000\n" +
     "sharpness 60.0000\n";
   private final static Map<String, Appearance> DEFAULT_APPEARANCES;
-  
+
   static {
     try {
       DEFAULT_APPEARANCES = parseMaterialStream(new StringReader(JAVA_3D_MATERIALS), null, null);
@@ -994,7 +994,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       throw new InternalError("Can't access to default materials");
     }
   }
-  
+
   private Boolean                 useCaches;
   private List<Point3f>           vertices;
   private List<TexCoord2f>        textureCoordinates;
@@ -1004,18 +1004,18 @@ public class OBJLoader extends LoaderBase implements Loader {
   private String                  currentMaterial;
   private boolean                 currentSmooth;
   private Map<String, Appearance> appearances;
-  
+
 
   /**
    * Sets whether this loader should try or avoid accessing to URLs with cache.
-   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or 
-   *    <code>null</code> then caches will be used according to the value 
+   * @param useCaches <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code>, or
+   *    <code>null</code> then caches will be used according to the value
    *    returned by {@link URLConnection#getDefaultUseCaches()}.
    */
   public void setUseCaches(Boolean useCaches) {
     this.useCaches = Boolean.valueOf(useCaches);
   }
-  
+
   /**
    * Returns the scene described in the given OBJ file.
    */
@@ -1026,14 +1026,14 @@ public class OBJLoader extends LoaderBase implements Loader {
         baseUrl = new File(this.basePath).toURI().toURL();
       } else {
         baseUrl = new File(file).toURI().toURL();
-      } 
+      }
     } catch (MalformedURLException ex) {
       throw new FileNotFoundException(file);
     }
     try {
       return load(new InputStreamReader(new FileInputStream(file), "ISO-8859-1"), baseUrl);
     } catch (UnsupportedEncodingException ex) {
-      // Shouldn't happen 
+      // Shouldn't happen
       return load(new InputStreamReader(new FileInputStream(file)));
     }
   }
@@ -1045,7 +1045,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     URL baseUrl = this.baseUrl;
     if (this.baseUrl == null) {
       baseUrl = url;
-    } 
+    }
     InputStream in;
     try {
       in = openStream(url, this.useCaches);
@@ -1055,11 +1055,11 @@ public class OBJLoader extends LoaderBase implements Loader {
     try {
       return load(new InputStreamReader(in, "ISO-8859-1"), baseUrl);
     } catch (UnsupportedEncodingException ex) {
-      // Shouldn't happen 
+      // Shouldn't happen
       return load(new InputStreamReader(in));
     }
   }
-  
+
   /**
    * Returns an input stream ready to read data from the given URL.
    */
@@ -1099,9 +1099,9 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the scene parsed from a stream. 
+   * Returns the scene parsed from a stream.
    */
-  private Scene parseObjectStream(Reader reader, 
+  private Scene parseObjectStream(Reader reader,
                                   URL baseUrl) throws IOException {
     this.vertices = new ArrayList<Point3f>();
     this.textureCoordinates = new ArrayList<TexCoord2f>();
@@ -1121,11 +1121,11 @@ public class OBJLoader extends LoaderBase implements Loader {
         case StreamTokenizer.TT_EOL:
           break;
         default :
-          throw new IncorrectFormatException("Unexpected token " + tokenizer.sval 
+          throw new IncorrectFormatException("Unexpected token " + tokenizer.sval
               + " at row " + tokenizer.lineno());
       }
     }
-    
+
     try {
       return createScene();
     } finally {
@@ -1138,14 +1138,14 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns a new scene created from the parsed objects. 
+   * Returns a new scene created from the parsed objects.
    */
   private SceneBase createScene() {
     Point3f [] vertices = this.vertices.toArray(new Point3f [this.vertices.size()]);
-    TexCoord2f [] textureCoordinates = 
+    TexCoord2f [] textureCoordinates =
         this.textureCoordinates.toArray(new TexCoord2f [this.textureCoordinates.size()]);
     Vector3f [] normals = this.normals.toArray(new Vector3f [this.normals.size()]);
-  
+
     SceneBase scene = new SceneBase();
     BranchGroup sceneRoot = new BranchGroup();
     scene.setSceneGroup(sceneRoot);
@@ -1155,15 +1155,15 @@ public class OBJLoader extends LoaderBase implements Loader {
           && !geometries.isEmpty()) {
         int i = 0;
         while (i < geometries.size()) {
-          Geometry firstGeometry = geometries.get(i);          
+          Geometry firstGeometry = geometries.get(i);
           boolean firstGeometryHasTextureCoordinateIndices = firstGeometry.hasTextureCoordinateIndices();
           boolean firstFaceHasNormalIndices = (firstGeometry instanceof Face) && ((Face)firstGeometry).hasNormalIndices();
           boolean firstFaceIsSmooth = (firstGeometry instanceof Face) && ((Face)firstGeometry).isSmooth();
-          
+
           String firstGeometryMaterial = firstGeometry.getMaterial();
           Appearance appearance = getAppearance(firstGeometryMaterial);
-          
-          // Search how many geometries share the same characteristics 
+
+          // Search how many geometries share the same characteristics
           int max = i;
           while (++max < geometries.size()) {
             Geometry geometry = geometries.get(max);
@@ -1177,7 +1177,7 @@ public class OBJLoader extends LoaderBase implements Loader {
               break;
             }
           }
-          
+
           // Create indices arrays for the geometries with an index between i and max
           int geometryCount = max - i;
           int indexCount = 0;
@@ -1185,7 +1185,7 @@ public class OBJLoader extends LoaderBase implements Loader {
             indexCount += geometries.get(i + j).getVertexIndices().length;
           }
           int [] coordinatesIndices = new int [indexCount];
-          int [] stripCounts = new int [geometryCount]; 
+          int [] stripCounts = new int [geometryCount];
           for (int j = 0, destIndex = 0; j < geometryCount; j++) {
             int [] geometryVertexIndices = geometries.get(i + j).getVertexIndices();
             System.arraycopy(geometryVertexIndices, 0, coordinatesIndices, destIndex, geometryVertexIndices.length);
@@ -1201,7 +1201,7 @@ public class OBJLoader extends LoaderBase implements Loader {
               System.arraycopy(geometryTextureCoordinateIndices, 0, textureCoordinateIndices, destIndex, geometryTextureCoordinateIndices.length);
               destIndex += geometryTextureCoordinateIndices.length;
             }
-          } 
+          }
 
           GeometryArray geometryArray;
           if (firstGeometry instanceof Face) {
@@ -1209,13 +1209,13 @@ public class OBJLoader extends LoaderBase implements Loader {
             geometryInfo.setCoordinates(vertices);
             geometryInfo.setCoordinateIndices(coordinatesIndices);
             geometryInfo.setStripCounts(stripCounts);
-            
+
             if (firstGeometryHasTextureCoordinateIndices) {
               geometryInfo.setTextureCoordinateParams(1, 2);
               geometryInfo.setTextureCoordinates(0, textureCoordinates);
               geometryInfo.setTextureCoordinateIndices(0, textureCoordinateIndices);
-            } 
-            
+            }
+
             if (firstFaceHasNormalIndices) {
               int [] normalIndices = new int [indexCount];
               for (int j = 0, destIndex = 0; j < geometryCount; j++) {
@@ -1238,9 +1238,9 @@ public class OBJLoader extends LoaderBase implements Loader {
             if (firstGeometryHasTextureCoordinateIndices) {
               format |= IndexedGeometryArray.TEXTURE_COORDINATE_2;
             }
-            
+
             // Use non indexed line array to avoid referencing the whole vertices
-            geometryArray = new LineStripArray(coordinatesIndices.length, format, stripCounts);            
+            geometryArray = new LineStripArray(coordinatesIndices.length, format, stripCounts);
             for (int j = 0; j < coordinatesIndices.length; j++) {
               geometryArray.setCoordinate(j, vertices [coordinatesIndices [j]]);
             }
@@ -1250,21 +1250,21 @@ public class OBJLoader extends LoaderBase implements Loader {
               }
             }
           }
-          
+
           // Clone appearance to avoid sharing it
           if (appearance != null) {
             appearance = (Appearance)appearance.cloneNodeComponent(false);
-            // Create texture coordinates if geometry doesn't define its own coordinates 
-            // and appearance contains a texture 
+            // Create texture coordinates if geometry doesn't define its own coordinates
+            // and appearance contains a texture
             if (!firstGeometryHasTextureCoordinateIndices
                 && appearance.getTexture() != null) {
               appearance.setTexCoordGeneration(new TexCoordGeneration());
             }
           }
-          Shape3D shape = new Shape3D(geometryArray, appearance);   
+          Shape3D shape = new Shape3D(geometryArray, appearance);
           sceneRoot.addChild(shape);
-          scene.addNamedObject(group.getName() + (i == 0 ? "" : String.valueOf(i)), shape);
-          
+          scene.addNamedObject(group.getName() + (i == 0 ? "" : "_" + String.valueOf(i)), shape);
+
           i = max;
         }
       }
@@ -1273,7 +1273,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the appearance matching a given <code>material</code>. 
+   * Returns the appearance matching a given <code>material</code>.
    */
   private Appearance getAppearance(String material) {
     Appearance appearance = null;
@@ -1289,7 +1289,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   /**
    * Parses the line starting with a word.
    */
-  private void parseObjectLine(StreamTokenizer tokenizer, 
+  private void parseObjectLine(StreamTokenizer tokenizer,
                                URL baseUrl) throws IOException {
     if ("v".equals(tokenizer.sval)) {
       // Read vertex v x y z
@@ -1310,14 +1310,14 @@ public class OBJLoader extends LoaderBase implements Loader {
       float y = parseNumber(tokenizer);
       skipBackSlash(tokenizer);
       float z = parseNumber(tokenizer);
-      this.normals.add(new Vector3f(x, y, z));      
+      this.normals.add(new Vector3f(x, y, z));
     } else if ("vt".equals(tokenizer.sval)) {
-      // Read texture coordinate vt x y 
+      // Read texture coordinate vt x y
       //                       or vt x y z
       float x = parseNumber(tokenizer);
       skipBackSlash(tokenizer);
       float y = parseNumber(tokenizer);
-      this.textureCoordinates.add(new TexCoord2f(x, y));    
+      this.textureCoordinates.add(new TexCoord2f(x, y));
       // Skip next number if it exists
       if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
         tokenizer.pushBack();
@@ -1327,9 +1327,9 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Read line l v       v       v       ...
       //        or l v/vt    v/vt    v/vt    ...
       List<Integer> vertexIndices = new ArrayList<Integer>(2);
-      List<Integer> textureCoordinateIndices = new ArrayList<Integer>(2); 
+      List<Integer> textureCoordinateIndices = new ArrayList<Integer>(2);
       boolean first = true;
-      while (true) {      
+      while (true) {
         if (first) {
           first = false;
         } else {
@@ -1346,28 +1346,28 @@ public class OBJLoader extends LoaderBase implements Loader {
           vertexIndex += this.vertices.size() + 1;
         }
         vertexIndices.add(vertexIndex);
-        
+
         if (tokenizer.nextToken() != '/') {
-          // l v  
-          tokenizer.pushBack();        
+          // l v
+          tokenizer.pushBack();
         } else {
-          // l v/vt : read texture coordinate index 
+          // l v/vt : read texture coordinate index
           int textureCoordinateIndex = parseInteger(tokenizer) - 1;
           if (textureCoordinateIndex < 0) {
             textureCoordinateIndex += this.textureCoordinates.size() + 1;
-          }          
+          }
           textureCoordinateIndices.add(textureCoordinateIndex);
         }
       }
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
       tokenizer.wordChars('/', '/');
       if (textureCoordinateIndices.size() != 0
           && textureCoordinateIndices.size() != vertexIndices.size()) {
-        // Ignore unconsistent texture coordinate 
+        // Ignore unconsistent texture coordinate
         textureCoordinateIndices.clear();
-      } 
+      }
       if (vertexIndices.size() > 1) {
-        this.currentGroup.addGeometry(new Line(vertexIndices, textureCoordinateIndices, 
+        this.currentGroup.addGeometry(new Line(vertexIndices, textureCoordinateIndices,
             this.currentMaterial));
       }
     } else if ("f".equals(tokenizer.sval)) {
@@ -1377,7 +1377,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       //        or f v/vt    v/vt    v/vt    ...
       //        or f v/vt/vn v/vt/vn v/vt/vn ...
       List<Integer> vertexIndices = new ArrayList<Integer>(4);
-      List<Integer> textureCoordinateIndices = new ArrayList<Integer>(4); 
+      List<Integer> textureCoordinateIndices = new ArrayList<Integer>(4);
       List<Integer> normalIndices = new ArrayList<Integer>(4);
       boolean first = true;
       while (true) {
@@ -1397,23 +1397,23 @@ public class OBJLoader extends LoaderBase implements Loader {
           vertexIndex += this.vertices.size() + 1;
         }
         vertexIndices.add(vertexIndex);
-        
+
         if (tokenizer.nextToken() != '/') {
-          // f v  
-          tokenizer.pushBack();        
+          // f v
+          tokenizer.pushBack();
         } else {
           if (tokenizer.nextToken() != '/') {
-            // f v/vt : read texture coordinate index 
-            tokenizer.pushBack();        
+            // f v/vt : read texture coordinate index
+            tokenizer.pushBack();
             int textureCoordinateIndex = parseInteger(tokenizer) - 1;
             if (textureCoordinateIndex < 0) {
               textureCoordinateIndex += this.textureCoordinates.size() + 1;
-            }          
+            }
             textureCoordinateIndices.add(textureCoordinateIndex);
             tokenizer.nextToken();
           }
           if (tokenizer.ttype == '/') {
-            //    f v//vn 
+            //    f v//vn
             // or f v/vt/vn : read normal index
             int normalIndex = parseInteger(tokenizer) - 1;
             if (normalIndex < 0) {
@@ -1425,25 +1425,25 @@ public class OBJLoader extends LoaderBase implements Loader {
           }
         }
       }
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
       tokenizer.wordChars('/', '/');
       if (textureCoordinateIndices.size() != 0
           && textureCoordinateIndices.size() != vertexIndices.size()) {
-        // Ignore unconsistent texture coordinate 
+        // Ignore unconsistent texture coordinate
         textureCoordinateIndices.clear();
-      } 
+      }
       if (normalIndices.size() != 0
           && normalIndices.size() != vertexIndices.size()) {
-        // Ignore unconsistent normals 
+        // Ignore unconsistent normals
         normalIndices.clear();
       }
       if (vertexIndices.size() > 2) {
-        this.currentGroup.addGeometry(new Face(vertexIndices, textureCoordinateIndices, normalIndices, 
+        this.currentGroup.addGeometry(new Face(vertexIndices, textureCoordinateIndices, normalIndices,
             this.currentSmooth, this.currentMaterial));
       }
     } else if ("g".equals(tokenizer.sval)
                || "o".equals(tokenizer.sval)) {
-      // Read group name g name 
+      // Read group name g name
       //  or object name o name
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
         this.currentGroup = this.groups.get(tokenizer.sval);
@@ -1455,15 +1455,15 @@ public class OBJLoader extends LoaderBase implements Loader {
         // Use default group
         this.currentGroup = this.groups.get("default");
         tokenizer.pushBack();
-      } else {  
+      } else {
         throw new IncorrectFormatException("Expected group or object name at line " + tokenizer.lineno());
       }
       // Skip other names
-      while (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {        
+      while (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
       }
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
     } else if ("s".equals(tokenizer.sval)) {
-      // Read smoothing group s n 
+      // Read smoothing group s n
       //                   or s off
       if (tokenizer.nextToken() == StreamTokenizer.TT_WORD) {
         this.currentSmooth = !"off".equals(tokenizer.sval);
@@ -1481,7 +1481,7 @@ public class OBJLoader extends LoaderBase implements Loader {
         throw new IncorrectFormatException("Expected material name at line " + tokenizer.lineno());
       }
     } else if ("mtllib".equals(tokenizer.sval)) {
-      // Read characters following mtllib in case they contain a file name with spaces 
+      // Read characters following mtllib in case they contain a file name with spaces
       tokenizer.wordChars(' ', ' ');
       int mtllibToken = tokenizer.nextToken();
       tokenizer.whitespaceChars(' ', ' ');
@@ -1508,15 +1508,15 @@ public class OBJLoader extends LoaderBase implements Loader {
       do {
         token = tokenizer.nextToken();
       } while (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF);
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
     }
-    
+
     int token = tokenizer.nextToken();
     if (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF) {
       throw new IncorrectFormatException("Expected end of line at line " + tokenizer.lineno());
     }
   }
-  
+
   /**
    * Returns a new tokenizer for an OBJ or MTL stream.
    */
@@ -1538,7 +1538,7 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Returns the integer contained in the next token. 
+   * Returns the integer contained in the next token.
    */
   private static int parseInteger(StreamTokenizer tokenizer) throws IOException {
     if (tokenizer.nextToken() != StreamTokenizer.TT_WORD) {
@@ -1547,14 +1547,14 @@ public class OBJLoader extends LoaderBase implements Loader {
       try {
         return Integer.parseInt(tokenizer.sval);
       } catch (NumberFormatException ex) {
-        throw new IncorrectFormatException("Found " + tokenizer.sval + 
-            " instead of an integer at line " + tokenizer.lineno()); 
+        throw new IncorrectFormatException("Found " + tokenizer.sval +
+            " instead of an integer at line " + tokenizer.lineno());
       }
     }
   }
 
   /**
-   * Returns the number contained in the next token. 
+   * Returns the number contained in the next token.
    */
   private static float parseNumber(StreamTokenizer tokenizer) throws IOException {
     if (tokenizer.nextToken() != StreamTokenizer.TT_WORD) {
@@ -1563,14 +1563,14 @@ public class OBJLoader extends LoaderBase implements Loader {
       try {
         return Float.parseFloat(tokenizer.sval);
       } catch (NumberFormatException ex) {
-        throw new IncorrectFormatException("Found " + tokenizer.sval + 
-            " instead of a number at line " + tokenizer.lineno()); 
+        throw new IncorrectFormatException("Found " + tokenizer.sval +
+            " instead of a number at line " + tokenizer.lineno());
       }
     }
   }
 
   /**
-   * Skips the back slash in the next token if it's followed by a new line.  
+   * Skips the back slash in the next token if it's followed by a new line.
    */
   private static void skipBackSlash(StreamTokenizer tokenizer) throws IOException {
     tokenizer.ordinaryChar('\\');
@@ -1599,7 +1599,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     }
 
     if (in != null) {
-      try {        
+      try {
         this.appearances.putAll(parseMaterialStream(
             new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl, this.useCaches));
         return true;
@@ -1618,37 +1618,37 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * Parses a map of appearances parsed from the given stream. 
+   * Parses a map of appearances parsed from the given stream.
    */
-  private static Map<String, Appearance> parseMaterialStream(Reader reader, 
-                                                             URL baseUrl, 
+  private static Map<String, Appearance> parseMaterialStream(Reader reader,
+                                                             URL baseUrl,
                                                              Boolean useCaches) throws IOException {
     Map<String, Appearance> appearances = new HashMap<String, Appearance>();
-    Appearance              currentAppearance = null;    
+    Appearance              currentAppearance = null;
     StreamTokenizer tokenizer = createTokenizer(reader);
     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
       switch (tokenizer.ttype) {
         case StreamTokenizer.TT_WORD :
-          currentAppearance = parseMaterialLine(tokenizer, 
+          currentAppearance = parseMaterialLine(tokenizer,
               appearances, currentAppearance, baseUrl, useCaches);
           break;
         case StreamTokenizer.TT_EOL:
           break;
         default :
-          throw new IncorrectFormatException("Unexpected token " + tokenizer.sval 
+          throw new IncorrectFormatException("Unexpected token " + tokenizer.sval
               + " at row " + tokenizer.lineno());
       }
     }
     return appearances;
   }
-  
+
   /**
    * Parses the line starting with a word describing a material.
    */
-  private static Appearance parseMaterialLine(StreamTokenizer tokenizer, 
+  private static Appearance parseMaterialLine(StreamTokenizer tokenizer,
                                               Map<String, Appearance> appearances,
                                               Appearance currentAppearance,
-                                              URL baseUrl, 
+                                              URL baseUrl,
                                               Boolean useCaches) throws IOException {
     if ("newmtl".equals(tokenizer.sval)) {
       // Read material name newmtl name (tolerating space in the name)
@@ -1668,7 +1668,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
     } else if ("Ka".equals(tokenizer.sval)) {
       // Read ambient color Ka r g b
-      Color3f ambientColor = new Color3f(parseNumber(tokenizer), 
+      Color3f ambientColor = new Color3f(parseNumber(tokenizer),
           parseNumber(tokenizer), parseNumber(tokenizer));
       if (currentAppearance != null) {
         Material material = getMaterial(currentAppearance);
@@ -1676,7 +1676,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
     } else if ("Kd".equals(tokenizer.sval)) {
       // Read diffuse or emissive color Kd r g b
-      Color3f diffuseColor = new Color3f(parseNumber(tokenizer), 
+      Color3f diffuseColor = new Color3f(parseNumber(tokenizer),
           parseNumber(tokenizer), parseNumber(tokenizer));
       if (currentAppearance != null) {
         OBJMaterial material = getMaterial(currentAppearance);
@@ -1686,11 +1686,11 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
     } else if ("Ks".equals(tokenizer.sval)) {
       // Read specular color Ks r g b
-      Color3f specularColor = new Color3f(parseNumber(tokenizer), 
+      Color3f specularColor = new Color3f(parseNumber(tokenizer),
           parseNumber(tokenizer), parseNumber(tokenizer));
       if (currentAppearance != null) {
         OBJMaterial material = getMaterial(currentAppearance);
-        if (!material.isIlluminationModelSet() 
+        if (!material.isIlluminationModelSet()
             || material.getIlluminationModel() >= 2) {
           material.setSpecularColor(specularColor);
         } else {
@@ -1702,7 +1702,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       float shininess = parseNumber(tokenizer);
       if (currentAppearance != null) {
         OBJMaterial material = getMaterial(currentAppearance);
-        if (!material.isIlluminationModelSet() 
+        if (!material.isIlluminationModelSet()
             || material.getIlluminationModel() >= 2) {
           // Use shininess at a max value equal to 128
           material.setShininess(Math.max(1f, Math.min(shininess, 128f)));
@@ -1711,14 +1711,14 @@ public class OBJLoader extends LoaderBase implements Loader {
         }
       }
     } else if ("Ni".equals(tokenizer.sval)) {
-      // Read optical density Ni val  
+      // Read optical density Ni val
       float opticalDensity = parseNumber(tokenizer);
       if (currentAppearance != null) {
         OBJMaterial material = getMaterial(currentAppearance);
         material.setOpticalDensity(opticalDensity);
       }
     } else if ("sharpness".equals(tokenizer.sval)) {
-      // Read sharpness sharpness val  
+      // Read sharpness sharpness val
       float sharpness = parseNumber(tokenizer);
       if (currentAppearance != null) {
         OBJMaterial material = getMaterial(currentAppearance);
@@ -1731,7 +1731,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           // Ignore halo transparency
           parseNumber(tokenizer);
         } else {
-          tokenizer.pushBack();     
+          tokenizer.pushBack();
           float transparency = parseNumber(tokenizer);
           if (currentAppearance != null) {
             if (transparency >= 1) {
@@ -1766,7 +1766,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           imageFileName = tokenizer.sval;
         }
       }
-      
+
       if (imageFileName != null) {
         InputStream in = null;
         try {
@@ -1783,19 +1783,19 @@ public class OBJLoader extends LoaderBase implements Loader {
               texture = appearanceTexture;
             }
           }
-          if (texture == null) {  
+          if (texture == null) {
             in = openStream(textureImageUrl, useCaches);
-            BufferedImage textureImage = null;          
+            BufferedImage textureImage = null;
             try {
               textureImage = ImageIO.read(in);
             } catch (ConcurrentModificationException ex) {
-              // Try to read the image once more, 
+              // Try to read the image once more,
               // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
               in.close();
               in = openStream(textureImageUrl, useCaches);
               textureImage = ImageIO.read(in);
             }
-            
+
             if (textureImage != null) {
               TextureLoader textureLoader = new TextureLoader(textureImage);
               texture = textureLoader.getTexture();
@@ -1822,20 +1822,20 @@ public class OBJLoader extends LoaderBase implements Loader {
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());
       }
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
     } else {
       int token;
       do {
         token = tokenizer.nextToken();
       } while (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF);
-      tokenizer.pushBack();     
+      tokenizer.pushBack();
     }
-    
+
     int token = tokenizer.nextToken();
     if (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF) {
       throw new IncorrectFormatException("Expected end of line at line " + tokenizer.lineno());
     }
-    
+
     return currentAppearance;
   }
 
@@ -1852,15 +1852,15 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * The coordinates indices of a geometry. 
+   * The coordinates indices of a geometry.
    */
   private static abstract class Geometry {
     private int [] vertexIndices;
     private int [] textureCoordinateIndices;
     private String material;
-    
-    public Geometry(List<Integer> vertexIndices, 
-                    List<Integer> textureCoordinateIndices, 
+
+    public Geometry(List<Integer> vertexIndices,
+                    List<Integer> textureCoordinateIndices,
                     String        material) {
       this.vertexIndices = new int [vertexIndices.size()];
       for (int i = 0; i < this.vertexIndices.length; i++) {
@@ -1874,45 +1874,45 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       this.material = material;
     }
-    
+
     public int [] getVertexIndices() {
       return this.vertexIndices;
     }
-    
+
     public int [] getTextureCoordinateIndices() {
       return this.textureCoordinateIndices;
     }
-    
+
     public boolean hasTextureCoordinateIndices() {
-      return this.textureCoordinateIndices != null 
+      return this.textureCoordinateIndices != null
           && this.textureCoordinateIndices.length > 0;
     }
-    
+
     public String getMaterial() {
       return this.material;
     }
   }
-  
+
   /**
-   * The coordinates indices of a line. 
+   * The coordinates indices of a line.
    */
   private static class Line extends Geometry {
-    public Line(List<Integer> vertexIndices, 
-                List<Integer> textureCoordinateIndices, 
+    public Line(List<Integer> vertexIndices,
+                List<Integer> textureCoordinateIndices,
                 String        material) {
       super(vertexIndices, textureCoordinateIndices, material);
     }
   }
-  
+
   /**
-   * The coordinates indices of a face. 
+   * The coordinates indices of a face.
    */
   private static class Face extends Geometry {
     private int []  normalIndices;
     private boolean smooth;
-    
-    public Face(List<Integer> vertexIndices, 
-                List<Integer> textureCoordinateIndices, 
+
+    public Face(List<Integer> vertexIndices,
+                List<Integer> textureCoordinateIndices,
                 List<Integer> normalIndices,
                 boolean       smooth,
                 String        material) {
@@ -1925,41 +1925,41 @@ public class OBJLoader extends LoaderBase implements Loader {
         }
       }
     }
-    
+
     public boolean isSmooth() {
       return this.smooth;
     }
-    
+
     public int [] getNormalIndices() {
       return this.normalIndices;
     }
-    
+
     public boolean hasNormalIndices() {
       return this.normalIndices != null
           && this.normalIndices.length > 0;
     }
   }
-  
+
   /**
-   * A named group of geometries. 
+   * A named group of geometries.
    */
   private static class Group {
     private final String   name;
     private List<Geometry> geometries;
- 
+
     public Group(String name) {
       this.name = name;
       this.geometries = new ArrayList<Geometry>();
     }
-    
+
     public String getName() {
       return this.name;
     }
-    
+
     public void addGeometry(Geometry face) {
       this.geometries.add(face);
     }
-    
+
     public List<Geometry> getGeometries() {
       return this.geometries;
     }

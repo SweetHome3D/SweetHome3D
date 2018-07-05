@@ -1,12 +1,12 @@
 # openDoor.obj Produced by Art of Illusion and Blender
 #
-# Sweet Home 3D, Copyright (c) 2006-2017 Emmanuel PUYBARET / eTeks <info@eteks.com>
+# Sweet Home 3D, Copyright (c) 2006-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 #
 # This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
 # available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
 # as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
 #
-g Gond_2
+g sweethome3d_hinge_1_3
 v -0.40107 -0.84 0.02863
 v -0.404 -0.84 0.0357
 v -0.41107 -0.84 0.02863
@@ -59,7 +59,7 @@ f 14 7 15
 f 15 8 16
 f 16 9 17
 f 17 2 10
-g Montant
+g frame
 v 0.4575 -1.02 0.0195
 v 0.4575 -1.02 -0.0755
 v 0.4575 1.065 -0.0755
@@ -104,7 +104,7 @@ f 23 28 40 33
 f 30 42 35 31
 f 41 33 40 39
 f 29 20 42 30
-g Gond
+g sweethome3d_hinge_1_1
 v -0.40107 0.76 0.02863
 v -0.404 0.76 0.0357
 v -0.41107 0.76 0.02863
@@ -157,7 +157,7 @@ f 56 49 57
 f 57 50 58
 f 58 51 59
 f 59 44 52
-g Porte
+g sweethome3d_opening_on_hinge_1_door
 v 0.17725 -1.02 0.60492
 v -0.40612 -1.02 0.02156
 v 0.20553 -1.02 0.57664
@@ -174,7 +174,7 @@ f 64 68 65 63
 f 62 67 68 64
 f 68 67 66 65
 f 67 62 61 66
-g Poignee
+g sweethome3d_opening_on_hinge_1_handleIn
 v 0.14059 -0.01494 0.55427
 v 0.14559 -0.02577 0.55802
 v 0.13477 -0.01494 0.56169
@@ -450,7 +450,7 @@ f 151 152 157
 f 152 158 157
 f 152 147 158
 f 147 153 158
-g Gond_1
+g sweethome3d_hinge_1_2
 v -0.40107 -0.04 0.02863
 v -0.404 -0.04 0.0357
 v -0.41107 -0.04 0.02863
@@ -503,7 +503,7 @@ f 174 167 175
 f 175 168 176
 f 176 169 177
 f 177 162 170
-g Poignee_1
+g sweethome3d_opening_on_hinge_1_handleOut
 v 0.15687 -0.01494 0.53799
 v 0.16061 -0.00412 0.543
 v 0.16429 -0.01494 0.53217

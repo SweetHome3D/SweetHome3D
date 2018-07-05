@@ -1,12 +1,12 @@
 # slidingDoors.obj Produced by Art of Illusion and Blender
 #
-# Sweet Home 3D, Copyright (c) 2006-2017 Emmanuel PUYBARET / eTeks <info@eteks.com>
+# Sweet Home 3D, Copyright (c) 2006-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 #
 # This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
 # available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
 # as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
 #
-g Rail_haut
+g rail
 v -0.73955 2.458 0.00015
 v 0.80045 2.458 0.00015
 v 0.80045 2.458 -0.00191
@@ -57,7 +57,7 @@ f 13 15 21
 f 7 9 11 13
 f 7 13 21 23
 f 24 22 14 8
-g Bord_1
+g sweethome3d_opening_on_rail_1_edge2
 v 0.01894 0.01 -0.00446
 v 0.01894 2.48 -0.00446
 v 0.01805 2.48 -0.00474
@@ -91,7 +91,7 @@ f 29 30 28 27
 f 31 32 30 29
 f 39 40 38 37
 f 36 34 33 35
-g Bord_3
+g sweethome3d_opening_on_rail_2_edge2
 v 0.03798 2.48041 -0.04266
 v 0.03798 0.01041 -0.04266
 v 0.03888 0.01041 -0.04294
@@ -125,7 +125,7 @@ f 59 60 58 57
 f 49 50 48 47
 f 51 52 50 49
 f 53 54 52 51
-g Porte
+g sweethome3d_opening_on_rail_1_door
 v 0.79284 0.01103 -0.01157
 v 0.00284 0.01103 -0.01157
 v 0.79284 0.01103 -0.02157
@@ -142,7 +142,7 @@ f 65 70 71 66
 f 70 65 67 69
 f 69 67 68 72
 f 72 71 70 69
-g Porte_1
+g sweethome3d_opening_on_rail_2_door
 v 0.05028 0.01103 -0.04974
 v -0.73972 0.01103 -0.04974
 v 0.05028 0.01103 -0.05974
@@ -159,7 +159,7 @@ f 80 79 78 77
 f 76 80 77 75
 f 75 77 78 73
 f 74 79 80 76
-g Bord
+g sweethome3d_opening_on_rail_1_edge1
 v 0.78054 2.48041 -0.00449
 v 0.78054 0.01041 -0.00449
 v 0.78143 0.01041 -0.00478
@@ -193,7 +193,7 @@ f 83 84 81 82
 f 89 90 88 87
 f 93 94 92 91
 f 85 86 84 83
-g Rail_bas
+g sweethome3d_unique_rail
 v 0.80027 0.0002 -0.07604
 v -0.73973 0.0002 -0.07604
 v -0.73973 0.00217 -0.07513
@@ -270,7 +270,7 @@ f 133 134 132 131
 f 117 118 116 115
 f 129 130 128 127
 f 145 146 144 143
-g Bord_2
+g sweethome3d_opening_on_rail_2_edge1
 v -0.72336 0.01 -0.04266
 v -0.72336 2.48 -0.04266
 v -0.72425 2.48 -0.04294

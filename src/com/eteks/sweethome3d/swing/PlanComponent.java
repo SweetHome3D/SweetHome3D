@@ -189,6 +189,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Sash;
@@ -725,6 +726,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                      && (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(ev.getPropertyName())
+                         || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))) {
@@ -3832,24 +3835,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float wallDistance  = doorOrWindow.getDepth() * (onlyWallPart ? doorOrWindow.getWallDistance()  : 0);
     String cutOutShape = doorOrWindow.getCutOutShape();
     float width = doorOrWindow.getWidth();
-    float x;
+    float wallWidth = doorOrWindow.getWallWidth() * width;
+    float x = doorOrWindow.getX() - width / 2;
+    x += doorOrWindow.isModelMirrored()
+        ? (1 - doorOrWindow.getWallLeft() - doorOrWindow.getWallWidth()) * width
+        : doorOrWindow.getWallLeft() * width;
     if (cutOutShape != null
-        && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
+        && !PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE.equals(cutOutShape)) {
       // In case of a complex cut out, compute location and width of the window hole at wall intersection
       Shape shape = ModelManager.getInstance().getShape(cutOutShape);
       Rectangle2D bounds = shape.getBounds2D();
       if (doorOrWindow.isModelMirrored()) {
-        x = doorOrWindow.getX() + (float)(0.5 - bounds.getX() - bounds.getWidth()) * width;
+        x += (float)(1 - bounds.getX() - bounds.getWidth()) * wallWidth;
       } else {
-        x = doorOrWindow.getX() - (float)(0.5 - bounds.getX()) * width;
+        x += (float)bounds.getX() * wallWidth;
       }
-      width *= bounds.getWidth();
-    } else {
-      x = doorOrWindow.getX() - width / 2;
+      wallWidth *= bounds.getWidth();
     }
     Rectangle2D doorOrWindowWallPartRectangle = new Rectangle2D.Float(
         x, doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
-        width, wallThickness);
+        wallWidth, wallThickness);
     return doorOrWindowWallPartRectangle;
   }
 

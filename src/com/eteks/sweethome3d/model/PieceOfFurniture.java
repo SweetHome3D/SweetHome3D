@@ -27,6 +27,11 @@ import java.math.BigDecimal;
  */
 public interface PieceOfFurniture {
   /**
+   * The default cut out shape that covers a 1 unit wide square.
+   */
+  public static final String  DEFAULT_CUT_OUT_SHAPE = "M0,0 v1 h1 v-1 z";
+
+  /**
    * Returns the name of this piece of furniture.
    */
   public abstract String getName();
@@ -35,7 +40,7 @@ public interface PieceOfFurniture {
    * Returns the description of this piece of furniture.
    */
   public abstract String getDescription();
-  
+
   /**
    * Returns the additional information associated to this piece, or <code>null</code>.
    * @since 4.2
@@ -64,9 +69,9 @@ public interface PieceOfFurniture {
 
   /**
    * Returns the elevation at which should be placed an object dropped on this piece.
-   * @return a percentage of the height of this piece. A negative value means that the piece 
-   *         should be ignored when an object is dropped on it. 
-   * @since 4.4 
+   * @return a percentage of the height of this piece. A negative value means that the piece
+   *         should be ignored when an object is dropped on it.
+   * @since 4.4
    */
   public abstract float getDropOnTopElevation();
 
@@ -98,62 +103,62 @@ public interface PieceOfFurniture {
    * Returns the 3D model of this piece of furniture.
    */
   public abstract Content getModel();
-  
+
   /**
    * Returns the size of the 3D model of this piece of furniture or <code>null</code> if not known.
-   * @since 5.5 
+   * @since 5.5
    */
   public abstract Long getModelSize();
-  
+
   /**
-   * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures 
+   * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures
    * its model is correctly oriented.
    */
   public float [][] getModelRotation();
-  
+
   /**
-   * Returns the shape used to cut out upper levels when they intersect with the piece   
+   * Returns the shape used to cut out upper levels when they intersect with the piece
    * like a staircase.
    * @since 3.4
    */
   public String getStaircaseCutOutShape();
-  
+
   /**
    * Returns the creator of this piece or <code>null</code>.
    * @since 4.2
    */
   public String getCreator();
-  
+
   /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.
    */
   public abstract boolean isBackFaceShown();
-  
+
   /**
    * Returns the color of this piece of furniture.
    */
   public abstract Integer getColor();
-  
+
   /**
    * Returns <code>true</code> if this piece is resizable.
    */
   public abstract boolean isResizable();
-  
+
   /**
    * Returns <code>true</code> if this piece is deformable. The width, depth and height
    * of a deformable piece may change independently from each other.
    * @since 3.0
    */
   public abstract boolean isDeformable();
-  
+
   /**
-   * Returns <code>true</code> if the width and depth of this piece may 
+   * Returns <code>true</code> if the width and depth of this piece may
    * be changed independently from each other.
    * @since 5.5
    */
   boolean isWidthDepthDeformable();
-  
+
   /**
    * Returns <code>false</code> if this piece should always keep the same color or texture.
    * @since 3.0
@@ -165,19 +170,19 @@ public interface PieceOfFurniture {
    * @since 5.5
    */
  boolean isHorizontallyRotatable();
-  
+
   /**
-   * Returns the price of this piece of furniture or <code>null</code>. 
+   * Returns the price of this piece of furniture or <code>null</code>.
    */
   public abstract BigDecimal getPrice();
-  
+
   /**
-   * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
+   * Returns the Value Added Tax percentage applied to the price of this piece of furniture.
    */
   public abstract BigDecimal getValueAddedTaxPercentage();
-  
+
   /**
-   * Returns the price currency, noted with ISO 4217 code, or <code>null</code> 
+   * Returns the price currency, noted with ISO 4217 code, or <code>null</code>
    * if it has no price or default currency should be used.
    * @since 3.4
    */

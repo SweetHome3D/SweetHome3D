@@ -1,12 +1,12 @@
 # doubleHungWindow80x122.obj Produced by Art of Illusion and Blender
 #
-# Sweet Home 3D, Copyright (c) 2006-2017 Emmanuel PUYBARET / eTeks <info@eteks.com>
+# Sweet Home 3D, Copyright (c) 2006-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 #
 # This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
 # available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
 # as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
 #
-g Fenetre_1
+g upperWindow
 v 0.39 1.522 0.043
 v -0.39 1.522 0.043
 v 0.39 1.522 0.003
@@ -42,7 +42,7 @@ f 2 1 11 10
 f 12 17 8 5
 f 16 4 8 17
 f 16 14 15 3 4
-g Tour_Fenetre
+g frame
 v 0.405 2.21836 -0.131
 v 0.405 2.21836 0.139
 v -0.405 2.21836 0.139
@@ -78,7 +78,7 @@ f 24 27 32 31
 f 21 18 22 28
 f 22 18 30 25
 f 29 25 30 34 33
-g Fenetre_2
+g sweethome3d_opening_on_rail_1
 v 0.39 0.952 -0.003
 v -0.39 0.952 -0.003
 v 0.39 0.952 -0.043
@@ -113,7 +113,7 @@ f 49 48 37 38
 f 39 46 50 42
 f 36 44 47 41
 f 45 35 40 43
-g sweethome3d_window_pane_1
+g sweethome3d_window_pane_on_rail_1
 v 0.355 0.992 -0.018
 v -0.355 0.992 -0.018
 v 0.355 0.992 -0.028
@@ -130,7 +130,7 @@ f 55 53 54 58
 f 58 54 52 57
 f 56 51 53 55
 f 58 57 56 55
-g Montant_fenetre
+g sweethome3d_unique_rail
 v 0.4 0.9423 0.051
 v -0.4 0.9423 0.051
 v 0.4 0.9423 -0.049

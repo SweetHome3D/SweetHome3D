@@ -27,12 +27,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
 import java.security.AccessControlException;
 
 import javax.media.j3d.BranchGroup;
+import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -53,6 +56,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
@@ -626,6 +630,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             controller.removePropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED,
                 mirroredModelChangeListener);
             controller.setModelMirrored(mirroredModelCheckBox.getValue());
+            // TODO Update location if transformed model is wider than default model. Forbid mirror if selection contains more one than one transformed piece
             controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED,
                 mirroredModelChangeListener);
           }
@@ -635,8 +640,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     if (controller.isPropertyEditable(HomeFurnitureController.Property.MODEL_TRANSFORMATIONS)) {
       try {
         if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
-          this.modelTransformationsButton = new JButton(SwingTools.getLocalizedLabelText(preferences,
-              HomeFurniturePanel.class, "modelTransformationsButton.text"));
+          this.modelTransformationsButton = new JButton();
           this.modelTransformationsButton.setVisible(false);
           if (OperatingSystem.isMacOSX()) {
             this.modelTransformationsButton.putClientProperty("JButton.buttonType", "segmented");
@@ -647,8 +651,13 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             ModelManager.getInstance().loadModel(modelMaterialsController.getModel(),
                 new ModelManager.ModelObserver() {
                   public void modelUpdated(BranchGroup modelRoot) {
-                    if (ModelManager.getInstance().containsDeformableNode(modelRoot)) {
+                    ModelManager modelManager = ModelManager.getInstance();
+                    if (modelManager.containsDeformableNode(modelRoot)) {
                       // Make button visible only if model contains some deformable nodes
+                      modelTransformationsButton.setText(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class,
+                          modelManager.containsNode(modelRoot, ModelManager.MANNEQUIN_ABDOMEN_PREFIX)
+                              ? "mannequinTransformationsButton.text"
+                              : "modelTransformationsButton.text"));
                       modelTransformationsButton.setVisible(true);
                       modelTransformationsButton.addActionListener(new ActionListener() {
                           public void actionPerformed(ActionEvent ev) {
@@ -1425,6 +1434,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private static class ModelTransformationsPanel extends JPanel {
     private ModelPreviewComponent   previewComponent;
     private JLabel                  transformationsLabel;
+    private JButton                 resetTransformationsButton;
+    private JButton                 viewFromFrontButton;
+    private JButton                 viewFromSideButton;
+    private JButton                 viewFromTopButton;
     private String                  dialogTitle;
     private HomeFurnitureController controller;
 
@@ -1450,10 +1463,50 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           modelMaterialsController.getModelWidth(), modelMaterialsController.getModelDepth(), modelMaterialsController.getModelHeight());
       this.previewComponent.setModelMaterials(modelMaterialsController.getMaterials());
       this.previewComponent.setModelTranformations(controller.getModelTransformations());
+      this.previewComponent.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseReleased(MouseEvent ev) {
+            updateComponents(controller);
+          }
+        });
 
       this.transformationsLabel = new JLabel(preferences.getLocalizedString(ModelTransformationsPanel.class, "transformationsLabel.text"));
 
+      this.resetTransformationsButton = new JButton(new AbstractAction(SwingTools.getLocalizedLabelText(preferences,
+              ModelTransformationsPanel.class, "resetTransformationsButton.text")) {
+          public void actionPerformed(ActionEvent ev) {
+            previewComponent.resetModelTranformations();
+            updateComponents(controller);
+          }
+        });
+      updateComponents(controller);
+      this.viewFromFrontButton = new JButton(new AbstractAction(SwingTools.getLocalizedLabelText(preferences,
+              ModelTransformationsPanel.class, "viewFromFrontButton.text")) {
+          public void actionPerformed(ActionEvent ev) {
+            previewComponent.setViewYaw(0);
+            previewComponent.setViewPitch(0);
+          }
+        });
+      this.viewFromSideButton = new JButton(new AbstractAction(SwingTools.getLocalizedLabelText(preferences,
+            ModelTransformationsPanel.class, "viewFromSideButton.text")) {
+          public void actionPerformed(ActionEvent ev) {
+            previewComponent.setViewYaw((float)(Math.PI / 2));
+            previewComponent.setViewPitch(0);
+          }
+        });
+      this.viewFromTopButton = new JButton(new AbstractAction(SwingTools.getLocalizedLabelText(preferences,
+            ModelTransformationsPanel.class, "viewFromTopButton.text")) {
+          public void actionPerformed(ActionEvent ev) {
+            previewComponent.setViewYaw(0);
+            previewComponent.setViewPitch(-(float)(Math.PI / 2));
+          }
+        });
+
       this.dialogTitle = preferences.getLocalizedString(ModelTransformationsPanel.class, "modelTransformations.title");
+    }
+
+    private void updateComponents(HomeFurnitureController controller) {
+      this.resetTransformationsButton.setEnabled(this.previewComponent.getModelTransformations() != null);
     }
 
     /**
@@ -1461,6 +1514,14 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
      */
     private void setMnemonics(UserPreferences preferences) {
       if (!OperatingSystem.isMacOSX()) {
+        this.resetTransformationsButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(ModelTransformationsPanel.class, "resetTransformationsButton.mnemonic")).getKeyCode());
+        this.viewFromFrontButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(ModelTransformationsPanel.class, "viewFromFrontButton.mnemonic")).getKeyCode());
+        this.viewFromSideButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(ModelTransformationsPanel.class, "viewFromSideButton.mnemonic")).getKeyCode());
+        this.viewFromTopButton.setMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(ModelTransformationsPanel.class, "viewFromTopButton.mnemonic")).getKeyCode());
       }
     }
 
@@ -1470,22 +1531,50 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     private void layoutComponents() {
       // Preview
       add(this.transformationsLabel, new GridBagConstraints(
-          0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
       this.previewComponent.setPreferredSize(new Dimension(400, 400));
       add(this.previewComponent, new GridBagConstraints(
-          0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
+          0, 1, 1, 10, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
+      add(this.resetTransformationsButton, new GridBagConstraints(
+          1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+      add(this.viewFromFrontButton, new GridBagConstraints(
+          1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+      add(this.viewFromSideButton, new GridBagConstraints(
+          1, 3, 1, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+      add(this.viewFromTopButton, new GridBagConstraints(
+          1, 4, 1, 1, 0, 0, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
     }
 
+    private void updateLocationAndSize() {
+      float modelX = this.previewComponent.getModelX();
+      float modelY = this.previewComponent.getModelY();
+      float pieceX = (float)(this.controller.getX()
+          + modelX * Math.cos(this.controller.getAngle()) - modelY * Math.sin(this.controller.getAngle()));
+      float pieceY = (float)(this.controller.getY()
+          + modelX * Math.sin(this.controller.getAngle()) + modelY * Math.cos(this.controller.getAngle()));
+      float pieceElevation = this.controller.getElevation()
+          + this.previewComponent.getModelElevation() + this.controller.getHeight() / 2;
+      Transformation [] modelTransformations = this.previewComponent.getModelTransformations();
+      this.controller.setModelTransformations(modelTransformations != null ? modelTransformations : new Transformation [0],
+          pieceX, pieceY, pieceElevation,
+          this.previewComponent.getModelWidth(),
+          this.previewComponent.getModelDepth(),
+          this.previewComponent.getModelHeight());
+    }
+
+    /**
+     * Displays this panel in a modal dialog box.
+     */
     public void displayView(View parent) {
       JComponent parentComponent = SwingUtilities.getRootPane((JComponent)parent);
       if (SwingTools.showConfirmDialog(parentComponent, this, this.dialogTitle, null) == JOptionPane.OK_OPTION) {
-        controller.setModelTransformations(previewComponent.getModelTransformations());
-        // Update size
-        controller.setWidth(previewComponent.getModelWidth());
-        controller.setDepth(previewComponent.getModelDepth());
-        controller.setHeight(previewComponent.getModelHeight());
+        updateLocationAndSize();
       }
     }
   }

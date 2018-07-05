@@ -59,6 +59,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Sash;
@@ -257,6 +258,10 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       %pieceOfFurnitureCommonAttributes;
  *       wallThickness CDATA "1"
  *       wallDistance CDATA "0"
+ *       wallWidth CDATA "1"
+ *       wallLeft CDATA "0"
+ *       wallHeight CDATA "1"
+ *       wallTop CDATA "0"
  *       wallCutOutOnBothSides (false | true) "false"
  *       widthDepthDeformable (false | true) "true"
  *       cutOutShape CDATA #IMPLIED
@@ -1125,7 +1130,7 @@ public class HomeXMLHandler extends DefaultHandler {
       if (cutOutShape == null
           && !"doorOrWindow".equals(elementName)) {
         // Set default cut out shape set on old HomePieceOfFurniture instances with doorOrWindow attribute set to true
-        cutOutShape = "M0,0 v1 h1 v-1 z";
+        cutOutShape = PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE;
       }
       piece = new HomeDoorOrWindow(new CatalogDoorOrWindow(
           catalogId,
@@ -1335,7 +1340,24 @@ public class HomeXMLHandler extends DefaultHandler {
         ((HomeLight)piece).setPower(parseFloat(attributes, "power"));
       } else if (piece instanceof HomeDoorOrWindow
                  && "doorOrWindow".equals(elementName)) {
-        ((HomeDoorOrWindow)piece).setBoundToWall(!"false".equals(attributes.get("boundToWall")));
+        HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+        doorOrWindow.setBoundToWall(!"false".equals(attributes.get("boundToWall")));
+        Float wallWidth = parseOptionalFloat(attributes, "wallWidth");
+        if (wallWidth != null) {
+          doorOrWindow.setWallWidth(wallWidth);
+        }
+        Float wallLeft = parseOptionalFloat(attributes, "wallLeft");
+        if (wallLeft != null) {
+          doorOrWindow.setWallLeft(wallLeft);
+        }
+        Float wallHeight = parseOptionalFloat(attributes, "wallHeight");
+        if (wallHeight != null) {
+          doorOrWindow.setWallHeight(wallHeight);
+        }
+        Float wallTop = parseOptionalFloat(attributes, "wallTop");
+        if (wallTop != null) {
+          doorOrWindow.setWallTop(wallTop);
+        }
       }
     }
   }

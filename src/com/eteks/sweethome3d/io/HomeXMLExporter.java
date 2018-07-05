@@ -431,6 +431,10 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
         HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
         writer.writeFloatAttribute("wallThickness", doorOrWindow.getWallThickness(), 1f);
         writer.writeFloatAttribute("wallDistance", doorOrWindow.getWallDistance(), 0f);
+        writer.writeFloatAttribute("wallWidth", doorOrWindow.getWallWidth(), 1f);
+        writer.writeFloatAttribute("wallLeft", doorOrWindow.getWallLeft(), 0f);
+        writer.writeFloatAttribute("wallHeight", doorOrWindow.getWallHeight(), 1f);
+        writer.writeFloatAttribute("wallTop", doorOrWindow.getWallTop(), 0f);
         writer.writeAttribute("cutOutShape", doorOrWindow.getCutOutShape(), null);
         writer.writeBooleanAttribute("wallCutOutOnBothSides", doorOrWindow.isWallCutOutOnBothSides(), false);
         writer.writeBooleanAttribute("widthDepthDeformable", doorOrWindow.isWidthDepthDeformable(), true);

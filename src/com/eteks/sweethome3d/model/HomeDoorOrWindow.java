@@ -30,11 +30,15 @@ import java.io.ObjectInputStream;
 public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWindow {
   private static final long serialVersionUID = 1L;
 
-  private final float   wallThickness;
-  private final float   wallDistance;
+  private float         wallThickness;
+  private float         wallDistance;
+  private float         wallWidth;
+  private float         wallLeft;
+  private float         wallHeight;
+  private float         wallTop;
   private boolean       wallCutOutOnBothSides; // false for version < 5.5
   private boolean       widthDepthDeformable;
-  private final Sash [] sashes;
+  private Sash []       sashes;
   private String        cutOutShape;
   private boolean       boundToWall;
 
@@ -46,6 +50,10 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     super(doorOrWindow);
     this.wallThickness = doorOrWindow.getWallThickness();
     this.wallDistance = doorOrWindow.getWallDistance();
+    this.wallWidth = 1;
+    this.wallLeft = 0;
+    this.wallHeight = 1;
+    this.wallTop = 0;
     this.wallCutOutOnBothSides = doorOrWindow.isWallCutOutOnBothSides();
     this.widthDepthDeformable = doorOrWindow.isWidthDepthDeformable();
     this.sashes = doorOrWindow.getSashes();
@@ -53,34 +61,128 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
 
   /**
-   * Initializes new fields to their default values 
+   * Initializes new fields to their default values
    * and reads object from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.cutOutShape = "M0,0 v1 h1 v-1 z";
+    this.cutOutShape = PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE;
     this.widthDepthDeformable = true;
+    this.wallWidth = 1;
+    this.wallLeft = 0;
+    this.wallHeight = 1;
+    this.wallTop = 0;
     in.defaultReadObject();
   }
-  
+
   /**
-   * Returns the default thickness of the wall in which this door or window should be placed.
+   * Returns the thickness of the wall in which this door or window should be placed.
    * @return a value in percentage of the depth of the door or the window.
    */
   public float getWallThickness() {
     return this.wallThickness;
   }
-  
+
   /**
-   * Returns the default distance that should lie at the back side of this door or window.
+   * Sets the thickness of the wall in which this door or window should be placed.
+   * @param wallThickness a value in percentage of the depth of the door or the window.
+   * @since 6.0
+   */
+  public void setWallThickness(float wallThickness) {
+    this.wallThickness = wallThickness;
+  }
+
+  /**
+   * Returns the distance between the back side of this door or window and the wall where it's located.
    * @return a distance in percentage of the depth of the door or the window.
    */
   public float getWallDistance() {
     return this.wallDistance;
   }
-    
+
+  /**
+   * Sets the distance between the back side of this door or window and the wall where it's located.
+   * @param wallDistance a distance in percentage of the depth of the door or the window.
+   * @since 6.0
+   */
+  public void setWallDistance(float wallDistance) {
+    this.wallDistance = wallDistance;
+  }
+
+  /**
+   * Returns the width of the wall part in which this door or window should be placed.
+   * @return a value in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public float getWallWidth() {
+    return this.wallWidth;
+  }
+
+  /**
+   * Sets the width of the wall part in which this door or window should be placed.
+   * @param wallWidth a value in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public void setWallWidth(float wallWidth) {
+    this.wallWidth = wallWidth;
+  }
+
+  /**
+   * Returns the distance between the left side of this door or window and the wall part where it should be placed.
+   * @return a distance in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public float getWallLeft() {
+    return this.wallLeft;
+  }
+
+  /**
+   * Sets the distance between the left side of this door or window and the wall part where it should be placed.
+   * @param wallLeft a distance in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public void setWallLeft(float wallLeft) {
+    this.wallLeft = wallLeft;
+  }
+
+  /**
+   * Returns the height of the wall part in which this door or window should be placed.
+   * @return a value in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public float getWallHeight() {
+    return this.wallHeight;
+  }
+
+  /**
+   * Sets the height of the wall part in which this door or window should be placed.
+   * @param wallHeight a value in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public void setWallHeight(float wallHeight) {
+    this.wallHeight = wallHeight;
+  }
+
+  /**
+   * Returns the distance between the left side of this door or window and the wall part where it should be placed.
+   * @return a distance in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public float getWallTop() {
+    return this.wallTop;
+  }
+
+  /**
+   * Sets the distance between the top side of this door or window and the wall part where it should be placed.
+   * @param wallTop a distance in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public void setWallTop(float wallTop) {
+    this.wallTop = wallTop;
+  }
+
   /**
    * Returns a copy of the sashes attached to this door or window.
-   * If no sash is defined an empty array is returned. 
+   * If no sash is defined an empty array is returned.
    */
   public Sash [] getSashes() {
     if (this.sashes.length == 0) {
@@ -88,6 +190,17 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     } else {
       return this.sashes.clone();
     }
+  }
+
+  /**
+   * Sets the sashes attached to this door or window.
+   * @param sashes sashes of this window.
+   * @since 6.0
+   */
+  public void setSashes(Sash [] sashes) {
+    this.sashes = sashes.length == 0
+        ? sashes
+        : sashes.clone();
   }
 
   /**
@@ -101,16 +214,16 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   /**
    * Returns <code>true</code> if this door or window should cut out the both sides
    * of the walls it intersects, even if its front or back side are within the wall thickness.
-   * @since 5.5 
+   * @since 5.5
    */
   public boolean isWallCutOutOnBothSides() {
     return this.wallCutOutOnBothSides;
   }
-  
+
   /**
-   * Returns <code>false</code> if the width and depth of the new door or window may 
+   * Returns <code>false</code> if the width and depth of the new door or window may
    * not be changed independently from each other. When <code>false</code>, this door or window
-   * will also make a hole in the wall when it's placed whatever its depth if its 
+   * will also make a hole in the wall when it's placed whatever its depth if its
    * {@link #isBoundToWall() bouldToWall} flag is <code>true</code>.
    * @since 5.5
    */
@@ -118,26 +231,26 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   public boolean isWidthDepthDeformable() {
     return this.widthDepthDeformable;
   }
-  
+
   /**
-   * Returns <code>true</code> if the location and the size of this door or window 
-   * were bound to a wall, last time they were updated. 
+   * Returns <code>true</code> if the location and the size of this door or window
+   * were bound to a wall, last time they were updated.
    */
   public boolean isBoundToWall() {
     return this.boundToWall;
   }
-  
+
   /**
-   * Sets whether the location and the size of this door or window 
-   * were bound to a wall, last time they were updated. 
+   * Sets whether the location and the size of this door or window
+   * were bound to a wall, last time they were updated.
    */
   public void setBoundToWall(boolean boundToWall) {
     this.boundToWall = boundToWall;
   }
 
   /**
-   * Sets the abscissa of this door or window and 
-   * resets its {@link #isBoundToWall() boundToWall} flag if the abscissa changed. 
+   * Sets the abscissa of this door or window and
+   * resets its {@link #isBoundToWall() boundToWall} flag if the abscissa changed.
    */
   @Override
   public void setX(float x) {
@@ -148,8 +261,8 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
 
   /**
-   * Sets the ordinate of this door or window and 
-   * resets its {@link #isBoundToWall() boundToWall} flag if the ordinate changed. 
+   * Sets the ordinate of this door or window and
+   * resets its {@link #isBoundToWall() boundToWall} flag if the ordinate changed.
    */
   @Override
   public void setY(float y) {
@@ -160,8 +273,8 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
 
   /**
-   * Sets the angle of this door or window and 
-   * resets its {@link #isBoundToWall() boundToWall} flag if the angle changed. 
+   * Sets the angle of this door or window and
+   * resets its {@link #isBoundToWall() boundToWall} flag if the angle changed.
    */
   @Override
   public void setAngle(float angle) {
@@ -170,10 +283,10 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     }
     super.setAngle(angle);
   }
-  
+
   /**
-   * Sets the depth of this door or window and 
-   * resets its {@link #isBoundToWall() boundToWall} flag if the depth changed. 
+   * Sets the depth of this door or window and
+   * resets its {@link #isBoundToWall() boundToWall} flag if the depth changed.
    */
   @Override
   public void setDepth(float depth) {
@@ -182,7 +295,7 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     }
     super.setDepth(depth);
   }
-  
+
   /**
    * Returns always <code>true</code>.
    */
@@ -190,7 +303,7 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   public boolean isDoorOrWindow() {
     return true;
   }
-  
+
   /**
    * Returns a clone of this door or window.
    */
@@ -198,6 +311,6 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   public HomeDoorOrWindow clone() {
     HomeDoorOrWindow clone = (HomeDoorOrWindow)super.clone();
     clone.boundToWall = false;
-    return clone;    
+    return clone;
   }
 }

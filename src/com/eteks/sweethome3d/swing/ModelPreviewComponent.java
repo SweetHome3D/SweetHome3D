@@ -40,6 +40,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
@@ -363,6 +364,7 @@ public class ModelPreviewComponent extends JComponent {
         private Point2d        pivotCenterPixel;
         private Transform3D    translationFromOrigin;
         private Transform3D    translationToOrigin;
+        private BoundingBox    modelBounds;
 
         @Override
         public void mousePressed(MouseEvent ev) {
@@ -395,33 +397,83 @@ public class ModelPreviewComponent extends JComponent {
                   i--;
                 }
                 if (i >= 0) {
-                  Node pivotNode = group.getChild(i);
-                  Point3f pivotCenter = modelManager.getCenter(pivotNode);
-                  Point3f pivotCenterAtScreen = new Point3f(pivotCenter);
-                  Transform3D pivotTransform = getTransformBetweenNodes(pivotNode.getParent(), sceneTree);
-                  pivotTransform.transform(pivotCenterAtScreen);
+                  Node referenceNode = group.getChild(i);
+                  Point3f nodeCenter = modelManager.getCenter(referenceNode);
+                  Point3f nodeCenterAtScreen = new Point3f(nodeCenter);
+                  Transform3D pivotTransform = getTransformBetweenNodes(referenceNode.getParent(), sceneTree);
+                  pivotTransform.transform(nodeCenterAtScreen);
                   Transform3D transformToCanvas = new Transform3D();
                   canvas.getVworldToImagePlate(transformToCanvas);
-                  transformToCanvas.transform(pivotCenterAtScreen);
+                  transformToCanvas.transform(nodeCenterAtScreen);
                   this.pivotCenterPixel = new Point2d();
-                  canvas.getPixelLocationFromImagePlate(new Point3d(pivotCenterAtScreen), this.pivotCenterPixel);
+                  canvas.getPixelLocationFromImagePlate(new Point3d(nodeCenterAtScreen), this.pivotCenterPixel);
+
+                  String transformationName = (String)this.pickedTransformGroup.getUserData();
+                  this.translationFromOrigin = new Transform3D();
+                  this.translationFromOrigin.setTranslation(new Vector3d(nodeCenter));
+                  Transform3D transformBetweenNodes = getTransformBetweenNodes(referenceNode.getParent(), getModelNode());
+                  transformBetweenNodes.setTranslation(new Vector3d());
+                  transformBetweenNodes.invert();
+                  this.translationFromOrigin.mul(transformBetweenNodes);
 
                   Transform3D pitchRotation = new Transform3D();
                   pitchRotation.rotX(viewPitch);
                   Transform3D yawRotation = new Transform3D();
                   yawRotation.rotY(viewYaw);
 
-                  this.translationFromOrigin = new Transform3D();
-                  this.translationFromOrigin.setTranslation(new Vector3d(pivotCenter));
-                  Transform3D transformBetweenNodes = getTransformBetweenNodes(pivotNode.getParent(), getModelNode());
-                  transformBetweenNodes.setTranslation(new Vector3d());
-                  transformBetweenNodes.invert();
-                  this.translationFromOrigin.mul(transformBetweenNodes);
-                  this.translationFromOrigin.mul(yawRotation);
-                  this.translationFromOrigin.mul(pitchRotation);
+                  if (transformationName.startsWith(ModelManager.HINGE_PREFIX)
+                      || transformationName.startsWith(ModelManager.RAIL_PREFIX)) {
+                    Transform3D rotation = new Transform3D();
+                    Vector3f nodeSize = modelManager.getSize(referenceNode);
+                    getTransformBetweenNodes(getModelRoot(referenceNode), getModelNode()).transform(nodeSize);
+                    nodeSize.absolute();
+
+                    Transform3D modelRotationAtScreen = new Transform3D(yawRotation);
+                    modelRotationAtScreen.mul(pitchRotation);
+                    modelRotationAtScreen.invert();
+
+                    // Set rotation around (or translation along) hinge largest dimension
+                    // taking into account the direction of the axis at screen
+                    if (nodeSize.y > nodeSize.x && nodeSize.y > nodeSize.z) {
+                      Vector3f yAxisAtScreen = new Vector3f(0, 1, 0);
+                      modelRotationAtScreen.transform(yAxisAtScreen);
+                      if (transformationName.startsWith(ModelManager.RAIL_PREFIX)
+                          ? yAxisAtScreen.y > 0
+                          : yAxisAtScreen.z < 0) {
+                        rotation.rotX(Math.PI / 2);
+                      } else {
+                        rotation.rotX(-Math.PI / 2);
+                      }
+                    } else if (nodeSize.z > nodeSize.x && nodeSize.z > nodeSize.y) {
+                      Vector3f zAxisAtScreen = new Vector3f(0, 0, 1);
+                      modelRotationAtScreen.transform(zAxisAtScreen);
+                      if (transformationName.startsWith(ModelManager.RAIL_PREFIX)
+                          ? zAxisAtScreen.x > 0
+                          : zAxisAtScreen.z < 0) {
+                      rotation.rotX(Math.PI);
+                      }
+                    } else {
+                      Vector3f xAxisAtScreen = new Vector3f(1, 0, 0);
+                      modelRotationAtScreen.transform(xAxisAtScreen);
+                      if (transformationName.startsWith(ModelManager.RAIL_PREFIX)
+                          ? xAxisAtScreen.x > 0
+                          : xAxisAtScreen.z < 0) {
+                        rotation.rotY(-Math.PI / 2);
+                      } else {
+                        rotation.rotY(Math.PI / 2);
+                      }
+                    }
+                    this.translationFromOrigin.mul(rotation);
+                  } else {
+                    // Set rotation in the screen plan for mannequin handling
+                    this.translationFromOrigin.mul(yawRotation);
+                    this.translationFromOrigin.mul(pitchRotation);
+                  }
 
                   this.translationToOrigin = new Transform3D(this.translationFromOrigin);
                   this.translationToOrigin.invert();
+
+                  this.modelBounds = modelManager.getBounds(getModelNode());
                 }
               }
             }
@@ -460,33 +512,43 @@ public class ModelPreviewComponent extends JComponent {
         public void mouseDragged(MouseEvent ev) {
           if (getModelNode() != null) {
             if (this.pivotCenterPixel != null) {
-              Transform3D pivotRotation = new Transform3D();
-              double angle = Math.atan2(this.pivotCenterPixel.y - ev.getY(), ev.getX() - this.pivotCenterPixel.x)
-                  - Math.atan2(this.pivotCenterPixel.y - this.yLastMouseMove, this.xLastMouseMove - this.pivotCenterPixel.x);
-              pivotRotation.rotZ(angle);
+              String transformationName = (String)this.pickedTransformGroup.getUserData();
+              Transform3D additionalTransform = new Transform3D();
+              if (transformationName.startsWith(ModelManager.RAIL_PREFIX)) {
+                additionalTransform.setTranslation(new Vector3f(0, 0,
+                    (float)Point2D.distance(ev.getX(), ev.getY(), this.xLastMouseMove, this.yLastMouseMove) * Math.signum(this.xLastMouseMove - ev.getX())));
+              } else {
+                double angle = Math.atan2(this.pivotCenterPixel.y - ev.getY(), ev.getX() - this.pivotCenterPixel.x)
+                    - Math.atan2(this.pivotCenterPixel.y - this.yLastMouseMove, this.xLastMouseMove - this.pivotCenterPixel.x);
+                additionalTransform.rotZ(angle);
+              }
 
-              pivotRotation.mul(pivotRotation, this.translationToOrigin);
-              pivotRotation.mul(this.translationFromOrigin, pivotRotation);
+              additionalTransform.mul(additionalTransform, this.translationToOrigin);
+              additionalTransform.mul(this.translationFromOrigin, additionalTransform);
 
-              Transform3D transform = new Transform3D();
-              this.pickedTransformGroup.getTransform(transform);
-              transform.mul(pivotRotation, transform);
-              this.pickedTransformGroup.setTransform(transform);
+              Transform3D newTransform = new Transform3D();
+              this.pickedTransformGroup.getTransform(newTransform);
+              newTransform.mul(additionalTransform, newTransform);
+              this.pickedTransformGroup.setTransform(newTransform);
 
               // Update size with model normalization and main transformation
-              Node modelRoot = getModelRoot(this.pickedTransformGroup);
-              Transform3D nodeTransform = getTransformBetweenNodes(modelRoot, getModelNode());
-
-              BoundingBox newBounds = ModelManager.getInstance().getBounds(modelRoot);
+              Point3d modelLower = new Point3d();
+              this.modelBounds.getLower(modelLower);
+              Point3d modelUpper = new Point3d();
+              this.modelBounds.getUpper(modelUpper);
+              ModelManager modelManager = ModelManager.getInstance();
+              BoundingBox newBounds = modelManager.getBounds(getModelNode());
               Point3d newLower = new Point3d();
               newBounds.getLower(newLower);
               Point3d newUpper = new Point3d();
               newBounds.getUpper(newUpper);
-              nodeTransform.transform(newLower);
-              nodeTransform.transform(newUpper);
+              previewedPiece.setX(previewedPiece.getX() + (float)(newUpper.x + newLower.x) / 2 - (float)(modelUpper.x + modelLower.x) / 2);
+              previewedPiece.setY(previewedPiece.getY() + (float)(newUpper.z + newLower.z) / 2 - (float)(modelUpper.z + modelLower.z) / 2);
+              previewedPiece.setElevation(previewedPiece.getElevation() + (float)(newLower.y - modelLower.y));
               previewedPiece.setWidth((float)(newUpper.x - newLower.x));
               previewedPiece.setDepth((float)(newUpper.z - newLower.z));
               previewedPiece.setHeight((float)(newUpper.y - newLower.y));
+              this.modelBounds = newBounds;
 
               // Update matching piece of furniture transformations array
               Transformation[] transformations = previewedPiece.getModelTransformations();
@@ -494,7 +556,6 @@ public class ModelPreviewComponent extends JComponent {
               if (transformations != null) {
                 transformationsList.addAll(Arrays.asList(transformations));
               }
-              String transformationName = (String)this.pickedTransformGroup.getUserData();
               transformationName = transformationName.substring(0, transformationName.length() - ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX.length());
               for (Iterator<Transformation> it = transformationsList.iterator(); it.hasNext();) {
                 Transformation transformation = it.next();
@@ -504,7 +565,7 @@ public class ModelPreviewComponent extends JComponent {
                 }
               }
               float [] matrix = new float [16];
-              transform.get(matrix);
+              newTransform.get(matrix);
               transformationsList.add(new Transformation(transformationName, new float [][] {
                   {matrix [0], matrix [1], matrix [2], matrix [3]},
                   {matrix [4], matrix [5], matrix [6], matrix [7]},
@@ -520,7 +581,7 @@ public class ModelPreviewComponent extends JComponent {
                 // Mouse move along Y axis with Alt down changes scale
                 setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((ev.getY() - this.yLastMouseMove) * ZOOM_FACTOR))));
               } else if (pitchChangeSupported && !ev.isAltDown()) {
-             // Mouse move along Y axis changes pitch
+                // Mouse move along Y axis changes pitch
                 float viewPitch = getViewPitch() - ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
                 if (this.boundedPitch) {
                   setViewPitch(Math.max(-(float)Math.PI / 4, Math.min(0, viewPitch)));
@@ -1076,6 +1137,46 @@ public class ModelPreviewComponent extends JComponent {
     }
   }
 
+  void resetModelTranformations() {
+    if (this.previewedPiece != null) {
+      ModelManager modelManager = ModelManager.getInstance();
+      BoundingBox oldBounds = modelManager.getBounds(getModelNode());
+      Point3d oldLower = new Point3d();
+      oldBounds.getLower(oldLower);
+      Point3d oldUpper = new Point3d();
+      oldBounds.getUpper(oldUpper);
+
+      resetTranformations(getModelNode());
+
+      BoundingBox newBounds = modelManager.getBounds(getModelNode());
+      Point3d newLower = new Point3d();
+      newBounds.getLower(newLower);
+      Point3d newUpper = new Point3d();
+      newBounds.getUpper(newUpper);
+      previewedPiece.setX(previewedPiece.getX() + (float)(newUpper.x + newLower.x) / 2 - (float)(oldUpper.x + oldLower.x) / 2);
+      previewedPiece.setY(previewedPiece.getY() + (float)(newUpper.z + newLower.z) / 2 - (float)(oldUpper.z + oldLower.z) / 2);
+      previewedPiece.setElevation(previewedPiece.getElevation() + (float)(newLower.y - oldLower.y));
+      this.previewedPiece.setWidth((float)(newUpper.x - newLower.x));
+      this.previewedPiece.setDepth((float)(newUpper.z - newLower.z));
+      this.previewedPiece.setHeight((float)(newUpper.y - newLower.y));
+      this.previewedPiece.setModelTransformations(null);
+    }
+  }
+
+  private void resetTranformations(Node node) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup
+          && node.getUserData() instanceof String
+          && ((String)node.getUserData()).endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX)) {
+        ((TransformGroup)node).setTransform(new Transform3D());
+      }
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        resetTranformations((Node)enumeration.nextElement());
+      }
+    }
+  }
+
   /**
    * Returns the transformations applied to 3D model.
    */
@@ -1085,6 +1186,27 @@ public class ModelPreviewComponent extends JComponent {
     } else {
       return null;
     }
+  }
+
+  /**
+   * Returns the abscissa of the 3D model.
+   */
+  float getModelX() {
+    return this.previewedPiece.getX();
+  }
+
+  /**
+   * Returns the ordinate of the 3D model.
+   */
+  float getModelY() {
+    return this.previewedPiece.getY();
+  }
+
+  /**
+   * Returns the elevation of the 3D model.
+   */
+  float getModelElevation() {
+    return this.previewedPiece.getElevation();
   }
 
   /**

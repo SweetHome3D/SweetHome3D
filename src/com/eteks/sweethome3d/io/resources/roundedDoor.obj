@@ -1,12 +1,12 @@
 # roundedDoor.obj Produced by Art of Illusion and Blender
 #
-# Sweet Home 3D, Copyright (c) 2006-2017 Emmanuel PUYBARET / eTeks <info@eteks.com>
+# Sweet Home 3D, Copyright (c) 2006-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 #
 # This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
 # available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
 # as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
 #
-g Gond_1
+g sweethome3d_hinge_1_2
 v -0.40393 -0.14615 0.02143
 v -0.401 -0.14615 0.0285
 v -0.411 -0.14615 0.0285
@@ -59,7 +59,7 @@ f 18 14 15
 f 18 15 16
 f 18 16 17
 f 18 17 10
-g Porte
+g sweethome3d_opening_on_hinge_1_door
 v 0.4115 -1.02019 0.02
 v -0.4115 -1.02019 0.02
 v 0.4115 -1.02019 -0.02
@@ -236,7 +236,7 @@ f 64 87 86 66
 f 75 30 29 72
 f 37 82 81 49
 f 43 36 35 42
-g Gond
+g sweethome3d_hinge_1_1
 v -0.40393 -0.84 0.02143
 v -0.401 -0.84 0.0285
 v -0.411 -0.84 0.0285
@@ -289,7 +289,7 @@ f 108 104 105
 f 108 105 106
 f 108 106 107
 f 108 107 100
-g Poignee
+g sweethome3d_opening_on_hinge_1_handleOut
 v 0.35078 -0.01753 -0.01303
 v 0.35314 -0.01018 -0.01267
 v 0.35137 -0.01753 -0.01712
@@ -985,7 +985,7 @@ f 327 328 337
 f 328 338 337
 f 328 319 338
 f 319 329 338
-g Poignee_1
+g sweethome3d_opening_on_hinge_1_handleIn
 v 0.35078 -0.01753 0.01022
 v 0.35314 -0.02488 0.00986
 v 0.35137 -0.01753 0.01431
@@ -1681,7 +1681,7 @@ f 559 560 569
 f 560 570 569
 f 560 551 570
 f 551 561 570
-g Montant
+g frame
 v -0.458 0.607 -0.075528
 v -0.458 0.607 0.019472
 v -0.45579 0.65189 0.019472
@@ -2215,7 +2215,7 @@ f 589 590 588 587
 f 640 645 644 646 648 641
 f 784 729 783 671 652
 f 731 688 683 685
-g Gond_2
+g sweethome3d_hinge_1_3
 v -0.40393 0.53886 0.02143
 v -0.401 0.53886 0.0285
 v -0.411 0.53886 0.0285

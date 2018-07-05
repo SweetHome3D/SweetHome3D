@@ -1287,22 +1287,17 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   /**
    * Sets the transformations applied to some parts of the 3D model of this piece of furniture.
    * Once this piece is updated, listeners added to this piece will receive a change notification.
-   * @param modelTransformations the transformations of the 3D model or <code>null</code> if they shouldn't be changed
-   * @throws IllegalStateException if this piece of furniture isn't deformable
+   * @param modelTransformations the transformations of the 3D model or <code>null</code> if no transformation shouldn't be applied
    * @since 6.0
    */
   public void setModelTransformations(Transformation [] modelTransformations) {
-    if (isDeformable()) {
-      if (!Arrays.equals(modelTransformations, this.modelTransformations)) {
-        Transformation [] oldModelTransformations = this.modelTransformations;
-        this.modelTransformations = modelTransformations != null
-            ? modelTransformations.clone()
-            : null;
-        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelTransformations, modelTransformations);
-      }
-    } else {
-      throw new IllegalStateException("Piece isn't deformable");
-    }
+    if (!Arrays.equals(modelTransformations, this.modelTransformations)) {
+      Transformation [] oldModelTransformations = this.modelTransformations;
+      this.modelTransformations = modelTransformations != null && modelTransformations.length > 0
+          ? modelTransformations.clone()
+          : null;
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelTransformations, modelTransformations);
+     }
   }
 
   /**
