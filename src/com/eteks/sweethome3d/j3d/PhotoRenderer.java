@@ -44,6 +44,8 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
+import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Geometry;
@@ -78,6 +80,8 @@ import javax.media.j3d.TriangleArray;
 import javax.media.j3d.TriangleFanArray;
 import javax.media.j3d.TriangleStripArray;
 import javax.vecmath.Color3f;
+import javax.vecmath.Matrix4f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
@@ -112,6 +116,7 @@ import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
@@ -123,13 +128,13 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
  */
 public class PhotoRenderer {
   public enum Quality {LOW, HIGH}
-  
+
   private final Home home;
   private final Object3DFactory object3dFactory;
   private final Quality quality;
   private final Compass compass;
   private final int homeLightColor;
-  
+
   private final SunflowAPI sunflow;
   private boolean useSunSky;
   private boolean useSunskyLight;
@@ -149,19 +154,19 @@ public class PhotoRenderer {
 
   /**
    * Creates an instance ready to render the scene matching the given <code>home</code>.
-   * @throws IOException if texture image files required in the scene couldn't be created. 
+   * @throws IOException if texture image files required in the scene couldn't be created.
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
     this(home, new PhotoObject3DFactory(), quality);
   }
-  
+
   /**
    * Creates an instance ready to render the scene matching the given <code>home</code>.
    * @param home the home to render
    * @param object3dFactory a factory able to create 3D objects from <code>home</code> items.
-   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of 
+   *            The {@link Object3DFactory#createObject3D(Home, Selectable, boolean) createObject3D} of
    *            this factory is expected to return an instance of {@link Node} in current implementation.
-   * @throws IOException if texture image files required in the scene couldn't be created. 
+   * @throws IOException if texture image files required in the scene couldn't be created.
    */
   public PhotoRenderer(Home home,
                        Object3DFactory object3dFactory,
@@ -170,15 +175,15 @@ public class PhotoRenderer {
     this.compass = home.getCompass();
     this.quality = quality;
     this.sunflow = new SunflowAPI();
-    
+
     this.useSunskyLight = !(home.getCamera() instanceof ObserverCamera);
-    boolean silk = isSilkShaderUsed(quality);  
-    
+    boolean silk = isSilkShaderUsed(quality);
+
     if (object3dFactory == null) {
       object3dFactory = new PhotoObject3DFactory();
     }
     this.object3dFactory = object3dFactory;
-    
+
     HomeEnvironment homeEnvironment = home.getEnvironment();
     float subpartSize = homeEnvironment.getSubpartSizeUnderLight();
     // Dividing walls and rooms surface in subparts is useless
@@ -210,7 +215,7 @@ public class PhotoRenderer {
         }
       }
     }
-    // Create a 3D ground large enough to join the sky at the horizon  
+    // Create a 3D ground large enough to join the sky at the horizon
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
     Transform3D translation = new Transform3D();
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
@@ -222,48 +227,48 @@ public class PhotoRenderer {
     HomeTexture skyTexture = homeEnvironment.getSkyTexture();
     this.useSunSky = skyTexture == null || this.useSunskyLight;
     if (!this.useSunSky) {
-      // If observer camera is used with a sky texture, 
-      // create an image base light from sky texture  
+      // If observer camera is used with a sky texture,
+      // create an image base light from sky texture
       InputStream skyImageStream = skyTexture.getImage().openStream();
       BufferedImage skyImage = ImageIO.read(skyImageStream);
       skyImageStream.close();
       // Create a temporary image base light twice as high that will contain sky image in the top part
-      BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), 
+      BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(),
           skyImage.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
       g2D.drawRenderedImage(skyImage, null);
       g2D.dispose();
       File imageFile = OperatingSystem.createTemporaryFile("ibl", ".png");
       ImageIO.write(imageBaseLightImage, "png", imageFile);
-      // Add it to images cache with a null key just to delete it 
+      // Add it to images cache with a null key just to delete it
       // with the other temporary images in dispose method
       this.textureImagesCache.put(null, imageFile.getAbsolutePath());
-      
+
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("fixed", true);
-      this.sunflow.parameter("samples", 0); 
+      this.sunflow.parameter("samples", 0);
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
-    } 
-    
-    // Set light settings 
+    }
+
+    // Set light settings
     int ceillingLightColor = homeEnvironment.getCeillingLightColor();
     this.homeLightColor = homeEnvironment.getLightColor();
     if (ceillingLightColor > 0) {
-      // Add lights at the top of each room 
+      // Add lights at the top of each room
       for (Room room : home.getRooms()) {
         Level roomLevel = room.getLevel();
-        if (room.isCeilingVisible() 
+        if (room.isCeilingVisible()
             && (roomLevel == null || roomLevel.isViewableAndVisible())) {
           float xCenter = room.getXCenter();
           float yCenter = room.getYCenter();
-          
+
           double smallestDistance = Float.POSITIVE_INFINITY;
           float roomElevation = roomLevel != null
               ? roomLevel.getElevation()
               : 0;
-          float roomHeight = roomElevation + 
+          float roomHeight = roomElevation +
               (roomLevel == null ? home.getWallHeight() : roomLevel.getHeight());
           List<Level> levels = home.getLevels();
           if (roomLevel == null || levels.indexOf(roomLevel) == levels.size() - 1) {
@@ -277,14 +282,14 @@ public class PhotoRenderer {
                 for (int i = 0; i < points.length; i++) {
                   double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], xCenter, yCenter);
                   if (distanceToWallPoint < smallestDistance) {
-                    smallestDistance = distanceToWallPoint; 
+                    smallestDistance = distanceToWallPoint;
                     if (i == 0 || i == points.length - 1) { // Wall start
-                      roomHeight = wallHeightAtStart != null 
-                          ? wallHeightAtStart 
+                      roomHeight = wallHeightAtStart != null
+                          ? wallHeightAtStart
                           : home.getWallHeight();
                     } else { // Wall end
-                      roomHeight = wall.isTrapezoidal() 
-                          ? wall.getHeightAtEnd() 
+                      roomHeight = wall.isTrapezoidal()
+                          ? wall.getHeightAtEnd()
                           : (wallHeightAtStart != null ? wallHeightAtStart : home.getWallHeight());
                     }
                     roomHeight += wallElevation;
@@ -293,17 +298,17 @@ public class PhotoRenderer {
               }
             }
           }
-          
+
           float power = (float)Math.sqrt(room.getArea()) / 3;
-          this.sunflow.parameter("radiance", null, 
-              power * (ceillingLightColor >> 16) / 0xD0 * (this.homeLightColor >> 16) / 255, 
-              power * ((ceillingLightColor >> 8) & 0xFF) / 0xD0 * ((this.homeLightColor >> 8) & 0xFF) / 255, 
+          this.sunflow.parameter("radiance", null,
+              power * (ceillingLightColor >> 16) / 0xD0 * (this.homeLightColor >> 16) / 255,
+              power * ((ceillingLightColor >> 8) & 0xFF) / 0xD0 * ((this.homeLightColor >> 8) & 0xFF) / 255,
               power * (ceillingLightColor & 0xFF) / 0xD0 * (this.homeLightColor & 0xFF) / 255);
-          this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 25, yCenter));                    
+          this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 25, yCenter));
           this.sunflow.parameter("radius", 20f);
           this.sunflow.parameter("samples", 4);
           this.sunflow.light(UUID.randomUUID().toString(), "sphere");
-        } 
+        }
       }
     }
 
@@ -314,29 +319,72 @@ public class PhotoRenderer {
       if (light.getPower() > 0f
           && (level == null
               || level.isViewableAndVisible())) {
-        if (light.isHorizontallyRotated()) {
-          // Retrieve the 3D model of the light to get the transformation with horizontal rotation 
+        if (light.isHorizontallyRotated()
+            || light.getModelTransformations() != null) {
+          // Retrieve the 3D model of the light to get the transformation with horizontal rotation
           modelManager.loadModel(light.getModel(), true,
               new ModelManager.ModelObserver() {
                 public void modelUpdated(BranchGroup modelRoot) {
                   float [][] modelRotation = light.getModelRotation();
-                  // Add light model to a normalized transform group
-                  TransformGroup normalizedModel = modelManager.
-                      getNormalizedTransformGroup(modelRoot, modelRotation, 1, light.isModelCenteredAtOrigin());
+
+                  Transformation[] transformations = light.getModelTransformations();
+                  Transform3D undeformedModelInvertedNormalization = null;
+                  Node undeformedModel = null;
+                  if (transformations != null) {
+                    undeformedModel = modelManager.cloneNode(modelRoot);
+                    undeformedModelInvertedNormalization = modelManager.
+                        getNormalizedTransform(modelRoot, modelRotation, 1, light.isModelCenteredAtOrigin());
+                    undeformedModelInvertedNormalization.invert();
+                    updateModelTransformations(modelRoot, transformations);
+                  }
+
+                  // Compute normalization of the light
+                  Transform3D normalization = modelManager.
+                      getNormalizedTransform(modelRoot, modelRotation, 1, light.isModelCenteredAtOrigin());
+                  TransformGroup normalizedModel = new TransformGroup(normalization);
                   normalizedModel.addChild(modelRoot);
-                  // Get the transformation applied to the light model 
+                  // Get the transformation applied to the light model
                   Transform3D lightTransform = modelManager.getPieceOfFurnitureNormalizedModelTransformation(
                       light, normalizedModel);
-                  exportLightSources(light, lightTransform);
+
+                  if (transformations != null) {
+                    for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
+                      int i;
+                      for (i = 0; i < transformations.length; i++) {
+                        Transformation transformation = transformations [i];
+                        // Compute light source location in undeformed model space
+                        Point3f lightSourceLocation = getNormalizedLightSourceLocation(lightSource);
+                        undeformedModelInvertedNormalization.transform(lightSourceLocation);
+                        BoundingSphere lightSphere = new BoundingSphere(new Point3d(lightSourceLocation), getLightSourceRadius(light, lightSource));
+                        String transformUserData = transformation.getName() + ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX;
+                        if (intersectsDeformedNode(undeformedModel, lightSphere, transformUserData)) {
+                          Transform3D deformedLightSourceTransform = new Transform3D(lightTransform);
+                          // Compute transformation of the light source in deformed model
+                          deformedLightSourceTransform.mul(normalization);
+                          Transform3D deformation = getDeformation(modelRoot, new Transform3D(), transformUserData);
+                          deformedLightSourceTransform.mul(deformation);
+                          deformedLightSourceTransform.mul(undeformedModelInvertedNormalization);
+                          exportLightSource(light, lightSource, deformedLightSourceTransform);
+                          break;
+                        }
+                      }
+                      if (i == transformations.length) {
+                        // Export light without deformation
+                        exportLightSource(light, lightSource, lightTransform);
+                      }
+                    }
+                  } else {
+                    exportLightSources(light, lightTransform);
+                  }
                 }
-                    
+
                 public void modelError(Exception ex) {
                   // In case of problem, ignore light
                 }
               });
         } else {
           // Compute the light transformation without horizontal rotation
-          Transform3D lightTransform = 
+          Transform3D lightTransform =
               modelManager.getPieceOfFurnitureNormalizedModelTransformation(light, null);
           exportLightSources(light, lightTransform);
         }
@@ -364,11 +412,97 @@ public class PhotoRenderer {
   }
 
   /**
-   * Renders home in <code>image</code> at the given <code>camera</code> location and image size.
-   * The rendered objects of the home are the same ones since last call to render or construction. 
+   * Sets the transformations applied to <code>node</code> children.
    */
-  public void render(final BufferedImage image, 
-                     Camera camera, 
+  private void updateModelTransformations(Node node, Transformation[] transformations) {
+    for (Transformation transformation : transformations) {
+      String transformUserData = transformation.getName() + ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX;
+      updateTransformation(node, transformUserData, transformation.getMatrix());
+    }
+  }
+
+  /**
+   * Sets the transformation matrix of the children which user data is equal to <code>transformGroupUserData</code>.
+   */
+  private void updateTransformation(Node node, String transformGroupUserData, float[][] matrix) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup
+          && transformGroupUserData.equals(node.getUserData())) {
+        Matrix4f transformMatrix = new Matrix4f();
+        transformMatrix.setRow(0, matrix[0]);
+        transformMatrix.setRow(1, matrix[1]);
+        transformMatrix.setRow(2, matrix[2]);
+        transformMatrix.setRow(3, new float [] {0, 0, 0, 1});
+        ((TransformGroup)node).setTransform(new Transform3D(transformMatrix));
+      } else {
+        Enumeration<?> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasMoreElements()) {
+          updateTransformation((Node)enumeration.nextElement(), transformGroupUserData, matrix);
+        }
+      }
+    }
+    // No Link parsing
+  }
+
+  /**
+   * Returns <code>true</code> if the <code>node<code> or its children with a user data equal to
+   * <code>transformGroupUserData</code> intersects with <code>lightBounds</code>.
+   */
+  private boolean intersectsDeformedNode(Node node, Bounds lightBounds,
+                                         String transformGroupUserData) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        if (transformGroupUserData.equals(node.getUserData())
+            && ModelManager.getInstance().getBounds(node).intersect(lightBounds)) {
+          return true;
+        }
+      }
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        if (intersectsDeformedNode((Node)enumeration.nextElement(), lightBounds, transformGroupUserData)) {
+          return true;
+        }
+      }
+    }
+    // No Link parsing
+    return false;
+  }
+
+  /**
+   * Returns the transformation applied from <code>node<code> to its child which user data
+   * is equal to <code>transformGroupUserData</code>.
+   */
+  private Transform3D getDeformation(Node node, Transform3D parentTransformation,
+                                     String transformGroupUserData) {
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformation = new Transform3D(parentTransformation);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformation.mul(transform);
+        if (transformGroupUserData.equals(node.getUserData())) {
+          return parentTransformation;
+        }
+      }
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        Transform3D transform = getDeformation((Node)enumeration.nextElement(), parentTransformation,
+            transformGroupUserData);
+        if (transform != null) {
+          return transform;
+        }
+      }
+    }
+    // No Link parsing
+    return null;
+  }
+
+  /**
+   * Renders home in <code>image</code> at the given <code>camera</code> location and image size.
+   * The rendered objects of the home are the same ones since last call to render or construction.
+   */
+  public void render(final BufferedImage image,
+                     Camera camera,
                      final ImageObserver observer) {
     try {
       render(image, camera, null, observer);
@@ -376,20 +510,20 @@ public class PhotoRenderer {
       // Exception can't happen, since there's no updated item
     }
   }
-  
+
   /**
    * Renders home in <code>image</code> at the given <code>camera</code> location and image size.
-   * The home objects listed in <code>updatedItems</code> will be updated in the renderer, 
-   * allowing animations or modifications of their appearance. 
+   * The home objects listed in <code>updatedItems</code> will be updated in the renderer,
+   * allowing animations or modifications of their appearance.
    */
-  public void render(final BufferedImage image, 
+  public void render(final BufferedImage image,
                      Camera camera,
-                     List<? extends Selectable> updatedItems, 
+                     List<? extends Selectable> updatedItems,
                      final ImageObserver observer) throws IOException {
     this.renderingThread = Thread.currentThread();
 
     if (updatedItems != null) {
-      boolean silk = isSilkShaderUsed(this.quality);  
+      boolean silk = isSilkShaderUsed(this.quality);
       for (Selectable item : updatedItems) {
         // Remove from SunFlow updated objects
         String [] itemNames = this.homeItemsNames.get(item);
@@ -398,7 +532,7 @@ public class PhotoRenderer {
             this.sunflow.remove(name);
           }
         }
-        
+
         Node node = (Node)this.object3dFactory.createObject3D(home, item, true);
         if (node != null) {
           itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
@@ -406,7 +540,7 @@ public class PhotoRenderer {
         }
       }
     }
-    
+
     if (this.sunSkyLightName != null) {
       this.sunflow.remove(this.sunSkyLightName);
       this.sunSkyLightName = null;
@@ -422,11 +556,11 @@ public class PhotoRenderer {
     if (sunDirection [1] > -0.075f) {
       if (this.useSunSky) {
         this.sunflow.parameter("up", new Vector3(0, 1, 0));
-        this.sunflow.parameter("east", 
+        this.sunflow.parameter("east",
             new Vector3((float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())));
         this.sunflow.parameter("sundir", new Vector3(sunDirection [0], sunDirection [1], sunDirection [2]));
         this.sunflow.parameter("turbidity", 6f);
-        this.sunflow.parameter("samples", this.useSunskyLight ? 12 : 0); 
+        this.sunflow.parameter("samples", this.useSunskyLight ? 12 : 0);
         this.sunSkyLightName = UUID.randomUUID().toString();
         this.sunflow.light(this.sunSkyLightName, "sunsky");
       }
@@ -435,21 +569,21 @@ public class PhotoRenderer {
       SunSkyLight sunSkyLight = new SunSkyLight();
       ParameterList parameterList = new ParameterList();
       parameterList.addVectors("up", InterpolationType.NONE, new float [] {0, 1, 0});
-      parameterList.addVectors("east", InterpolationType.NONE, 
+      parameterList.addVectors("east", InterpolationType.NONE,
           new float [] {(float)Math.sin(compass.getNorthDirection()), 0, (float)Math.cos(compass.getNorthDirection())});
-      parameterList.addVectors("sundir", InterpolationType.NONE, 
+      parameterList.addVectors("sundir", InterpolationType.NONE,
           new float [] {sunDirection [0], sunDirection [1], sunDirection [2]});
       sunSkyLight.update(parameterList, this.sunflow);
       float [] sunColor = sunSkyLight.getSunColor().getRGB();
-      
+
       // Simulate additional Sun with a faraway sphere light of a color depending of the hour of the day
-      int sunPower = this.useSunskyLight ? 10 : 40; 
+      int sunPower = this.useSunskyLight ? 10 : 40;
       this.sunflow.parameter("radiance", null,
-          (this.homeLightColor >> 16) * sunPower * (float)Math.sqrt(sunColor [0]), 
-          ((this.homeLightColor >> 8) & 0xFF) * sunPower * (float)Math.sqrt(sunColor [1]), 
+          (this.homeLightColor >> 16) * sunPower * (float)Math.sqrt(sunColor [0]),
+          ((this.homeLightColor >> 8) & 0xFF) * sunPower * (float)Math.sqrt(sunColor [1]),
           (this.homeLightColor & 0xFF) * sunPower * (float)Math.sqrt(sunColor [2]));
-      this.sunflow.parameter("center", new Point3(1000000 * sunDirection [0], 1000000 * sunDirection [1], 1000000 * sunDirection [2])); 
-      this.sunflow.parameter("radius", 10000f);  
+      this.sunflow.parameter("center", new Point3(1000000 * sunDirection [0], 1000000 * sunDirection [1], 1000000 * sunDirection [2]));
+      this.sunflow.parameter("radius", 10000f);
       this.sunflow.parameter("samples", 4);
       this.sunLightName = UUID.randomUUID().toString();
       this.sunflow.light(this.sunLightName, "sphere");
@@ -459,23 +593,23 @@ public class PhotoRenderer {
         this.sunflow.parameter("gi.engine", "ambocc");
         this.sunflow.parameter("gi.ambocc.bright", null, new float [] {1, 1, 1});
         // Use complementary color
-        this.sunflow.parameter("gi.ambocc.dark", null, 
-            new float [] {(sunColor [1] + sunColor [2]) / 200, 
+        this.sunflow.parameter("gi.ambocc.dark", null,
+            new float [] {(sunColor [1] + sunColor [2]) / 200,
                           (sunColor [0] + sunColor [2]) / 200,
                           (sunColor [0] + sunColor [1]) / 200});
         this.sunflow.parameter("gi.ambocc.samples", 1);
         this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
       }
     }
-    
+
     if ("path".equals(globalIllumination)) {
       this.sunflow.parameter("gi.engine", "path");
       this.sunflow.parameter("gi.path.samples", 64);
       this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
     }
-    
-    // Update camera lens 
-    final String CAMERA_NAME = "camera";    
+
+    // Update camera lens
+    final String CAMERA_NAME = "camera";
     switch (camera.getLens()) {
       case SPHERICAL:
         this.sunflow.camera(CAMERA_NAME, "spherical");
@@ -489,12 +623,12 @@ public class PhotoRenderer {
         this.sunflow.camera(CAMERA_NAME, "thinlens");
         break;
       case PINHOLE:
-      default: 
+      default:
         this.sunflow.camera(CAMERA_NAME, "pinhole");
         break;
     }
-    
-    // Update camera location 
+
+    // Update camera location
     Point3 eye = new Point3(camera.getX(), camera.getZ(), camera.getY());
     Matrix4 transform;
     float yaw = camera.getYaw();
@@ -506,17 +640,17 @@ public class PhotoRenderer {
     }
     double pitchCos = Math.cos(pitch);
     if (Math.abs(pitchCos) > 1E-6) {
-      // Set the point the camera is pointed to 
+      // Set the point the camera is pointed to
       Point3 target = new Point3(
-          camera.getX() - (float)(Math.sin(yaw) * pitchCos), 
-          camera.getZ() - (float)Math.sin(pitch), 
-          camera.getY() + (float)(Math.cos(yaw) * pitchCos)); 
-      Vector3 up = new Vector3(0, 1, 0);              
+          camera.getX() - (float)(Math.sin(yaw) * pitchCos),
+          camera.getZ() - (float)Math.sin(pitch),
+          camera.getY() + (float)(Math.cos(yaw) * pitchCos));
+      Vector3 up = new Vector3(0, 1, 0);
       transform = Matrix4.lookAt(eye, target, up);
     } else {
       // Compute matrix directly when the camera points to top or bottom
-      transform = new Matrix4((float)-Math.cos(yaw), (float)-Math.sin(yaw), 0, camera.getX(), 
-          0, 0, (float)Math.signum(Math.sin(pitch)), camera.getZ(), 
+      transform = new Matrix4((float)-Math.cos(yaw), (float)-Math.sin(yaw), 0, camera.getX(),
+          0, 0, (float)Math.signum(Math.sin(pitch)), camera.getZ(),
           (float)-Math.sin(yaw), (float)Math.cos(yaw), 0, camera.getY());
     }
     this.sunflow.parameter("transform", transform);
@@ -528,22 +662,22 @@ public class PhotoRenderer {
     // Set image size and quality
     this.sunflow.parameter("resolutionX", image.getWidth());
     this.sunflow.parameter("resolutionY", image.getHeight());
-    
+
     int antiAliasingMin = Integer.parseInt(getRenderingParameterValue("antiAliasing.min"));
     int antiAliasingMax = Integer.parseInt(getRenderingParameterValue("antiAliasing.max"));
     String filter = getRenderingParameterValue("filter");
     this.sunflow.parameter("filter", filter);
     this.sunflow.parameter("aa.min", antiAliasingMin);
-    this.sunflow.parameter("aa.max", antiAliasingMax); 
+    this.sunflow.parameter("aa.max", antiAliasingMax);
     String samplerAlgorithm = getRenderingParameterValue("samplerAlgorithm");
-    this.sunflow.parameter("sampler", samplerAlgorithm); // ipr, fast or bucket 
+    this.sunflow.parameter("sampler", samplerAlgorithm); // ipr, fast or bucket
 
     // Render image with default camera
     this.sunflow.parameter("camera", CAMERA_NAME);
     this.sunflow.options(SunflowAPI.DEFAULT_OPTIONS);
     this.sunflow.render(SunflowAPI.DEFAULT_OPTIONS, new BufferedImageDisplay(image, observer));
   }
-  
+
   /**
    * Stops the rendering process.
    */
@@ -561,13 +695,13 @@ public class PhotoRenderer {
    * Trying to use this renderer after a call to this method may lead to errors.
    */
   public void dispose() {
-    // Clean up temporary images 
+    // Clean up temporary images
     for (String imagePath : this.textureImagesCache.values()) {
       new File(imagePath).delete();
     }
     this.textureImagesCache.clear();
   }
-  
+
   /**
    * Returns the value of the given rendering parameter.
    */
@@ -581,14 +715,14 @@ public class PhotoRenderer {
       return value;
     } else {
       // Return default value stored in properties resource file
-      // (for example: property lowQuality.antiAliasing.min 
+      // (for example: property lowQuality.antiAliasing.min
       //  in com/eteks/sweethome3d/j3d/PhotoRenderer.properties file)
       return ResourceBundle.getBundle(baseName).getString(prefixedParameter);
     }
   }
 
   /**
-   * Returns sun direction at a given <code>time</code>. 
+   * Returns sun direction at a given <code>time</code>.
    * @author Frédéric Mantegazza
    */
   private float [] getSunDirection(Compass compass, long time) {
@@ -605,7 +739,7 @@ public class PhotoRenderer {
    */
   private boolean isSilkShaderUsed(Quality quality) {
     // SunFlow produce too much white spots when silk shader is used with sun sky light
-    // so use this shader only when observer is used 
+    // so use this shader only when observer is used
     boolean silk = !this.useSunskyLight && quality == Quality.HIGH;
     String shininessShader = getRenderingParameterValue("shininessShader");
     if ("glossy".equals(shininessShader)) {
@@ -618,7 +752,7 @@ public class PhotoRenderer {
 
   /**
    * Exports the given Java 3D <code>node</code> and its children with SunFlow API,
-   * then returns the SunFlow names that match this node.   
+   * then returns the SunFlow names that match this node.
    */
   private String [] exportNode(Node node, boolean ignoreTransparency, boolean silk) throws IOException {
     List<String> nodeNames = new ArrayList<String>();
@@ -628,8 +762,8 @@ public class PhotoRenderer {
 
   /**
    * Exports all the 3D shapes children of <code>node</code> with SunFlow API.
-   */ 
-  private void exportNode(Node node, 
+   */
+  private void exportNode(Node node,
                           boolean ignoreTransparency,
                           boolean silk,
                           List<String> nodeNames,
@@ -642,7 +776,7 @@ public class PhotoRenderer {
         parentTransformations.mul(transform);
       }
       // Export all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements()) {
         exportNode((Node)enumeration.nextElement(), ignoreTransparency, silk, nodeNames, parentTransformations);
       }
@@ -651,11 +785,11 @@ public class PhotoRenderer {
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
-      RenderingAttributes renderingAttributes = appearance != null 
+      RenderingAttributes renderingAttributes = appearance != null
           ? appearance.getRenderingAttributes() : null;
-      TransparencyAttributes transparencyAttributes = appearance != null 
+      TransparencyAttributes transparencyAttributes = appearance != null
           ? appearance.getTransparencyAttributes() : null;
-      // Ignore invisible shapes and fully transparency shapes without a texture 
+      // Ignore invisible shapes and fully transparency shapes without a texture
       if ((renderingAttributes == null
               || renderingAttributes.getVisible())
           && (transparencyAttributes == null
@@ -663,7 +797,7 @@ public class PhotoRenderer {
         String shapeName = (String)shape.getUserData();
         // Build a unique object name
         String uuid = UUID.randomUUID().toString();
-  
+
         String appearanceName = null;
         TexCoordGeneration texCoordGeneration = null;
         Transform3D textureTransform = new Transform3D();
@@ -691,7 +825,7 @@ public class PhotoRenderer {
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           String objectNameBase = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
+          String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration,
               textureTransform, cullFace, backFaceNormalFlip, objectNameBase);
           if (objectsName != null) {
             for (String objectName : objectsName) {
@@ -706,22 +840,22 @@ public class PhotoRenderer {
           }
         }
       }
-    }    
+    }
   }
-  
+
   /**
    * Returns the names of the exported 3D geometries with SunFlow API.
    */
-  private String [] exportNodeGeometry(Geometry geometry, 
-                                       Transform3D parentTransformations, 
-                                       TexCoordGeneration texCoordGeneration, 
-                                       Transform3D textureTransform, 
-                                       int cullFace, 
+  private String [] exportNodeGeometry(Geometry geometry,
+                                       Transform3D parentTransformations,
+                                       TexCoordGeneration texCoordGeneration,
+                                       Transform3D textureTransform,
+                                       int cullFace,
                                        boolean backFaceNormalFlip,
                                        String objectNameBase) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;
-      
+
       // Create vertices indices array according to geometry class
       int [] verticesIndices = null;
       int [] stripVertexCount = null;
@@ -735,12 +869,12 @@ public class PhotoRenderer {
         } else if (geometryArray instanceof IndexedGeometryStripArray) {
           IndexedTriangleStripArray geometryStripArray = (IndexedTriangleStripArray)geometryArray;
           stripVertexCount = new int [geometryStripArray.getNumStrips()];
-          geometryStripArray.getStripIndexCounts(stripVertexCount);          
+          geometryStripArray.getStripIndexCounts(stripVertexCount);
           if (geometryArray instanceof IndexedLineStripArray) {
             verticesIndices = new int [getLineCount(stripVertexCount) * 2];
           } else {
             verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
-          } 
+          }
         }
       } else {
         if (geometryArray instanceof LineArray) {
@@ -757,7 +891,7 @@ public class PhotoRenderer {
             verticesIndices = new int [getLineCount(stripVertexCount) * 2];
           } else {
             verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
-          }       
+          }
         }
       }
 
@@ -769,13 +903,13 @@ public class PhotoRenderer {
         float [] vertices = new float [geometryArray.getVertexCount() * 3];
         float [] normals = !line && (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
             ? new float [geometryArray.getVertexCount() * 3]
-            : null;        
-        // Store temporarily exported triangles to avoid to add their opposite triangles 
-        // (SunFlow doesn't render correctly a face and its opposite)  
+            : null;
+        // Store temporarily exported triangles to avoid to add their opposite triangles
+        // (SunFlow doesn't render correctly a face and its opposite)
         Set<Triangle> exportedTriangles = line
             ? null
             : new HashSet<Triangle>(geometryArray.getVertexCount());
-        
+
         boolean uvsGenerated = false;
         Vector4f planeS = null;
         Vector4f planeT = null;
@@ -788,8 +922,8 @@ public class PhotoRenderer {
             texCoordGeneration.getPlaneS(planeS);
             texCoordGeneration.getPlaneT(planeT);
           }
-        } 
-  
+        }
+
         float [] uvs;
         if (uvsGenerated
             || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
@@ -797,20 +931,20 @@ public class PhotoRenderer {
         } else {
           uvs = null;
         }
-       
+
         if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
           if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
             float [] vertexData = geometryArray.getInterleavedVertices();
             int vertexSize = vertexData.length / geometryArray.getVertexCount();
-            // Export vertices coordinates 
-            for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+            // Export vertices coordinates
+            for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount();
                  index < n; index++, i += vertexSize) {
               Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
               exportVertex(parentTransformations, vertex, index, vertices);
             }
             // Export normals
             if (normals != null) {
-              for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+              for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount();
                    index < n; index++, i += vertexSize) {
                 Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
                 exportNormal(parentTransformations, normal, index, normals, backFaceNormalFlip);
@@ -819,7 +953,7 @@ public class PhotoRenderer {
             // Export texture coordinates
             if (texCoordGeneration != null) {
               if (uvsGenerated) {
-                for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+                for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount();
                       index < n; index++, i += vertexSize) {
                   TexCoord2f textureCoordinates = generateTextureCoordinates(
                       vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
@@ -827,7 +961,7 @@ public class PhotoRenderer {
                 }
               }
             } else if (uvs != null) {
-              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount();
                     index < n; index++, i += vertexSize) {
                 TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
                 exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
@@ -908,7 +1042,7 @@ public class PhotoRenderer {
           int [] uvsIndices = uvs != null
               ? new int [verticesIndices.length]
               : null;
-              
+
           if (geometryArray instanceof IndexedLineArray) {
             IndexedLineArray lineArray = (IndexedLineArray)geometryArray;
             for (int i = 0, n = lineArray.getIndexCount(); i < n; i += 2) {
@@ -918,21 +1052,21 @@ public class PhotoRenderer {
             if (geometryArray instanceof IndexedTriangleArray) {
               IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
               for (int i = 0, n = triangleArray.getIndexCount(), triangleIndex = 0; i < n; i += 3) {
-                triangleIndex = exportIndexedTriangle(triangleArray, i, i + 1, i + 2, 
+                triangleIndex = exportIndexedTriangle(triangleArray, i, i + 1, i + 2,
                     verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
               }
             } else if (geometryArray instanceof IndexedQuadArray) {
               IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
               for (int i = 0, n = quadArray.getIndexCount(), triangleIndex = 0; i < n; i += 4) {
-                triangleIndex = exportIndexedTriangle(quadArray, i, i + 1, i + 2, 
+                triangleIndex = exportIndexedTriangle(quadArray, i, i + 1, i + 2,
                     verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
-                triangleIndex = exportIndexedTriangle(quadArray, i, i + 2, i + 3, 
+                triangleIndex = exportIndexedTriangle(quadArray, i, i + 2, i + 3,
                     verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
               }
             } else if (geometryArray instanceof IndexedLineStripArray) {
               IndexedLineStripArray lineStripArray = (IndexedLineStripArray)geometryArray;
               for (int initialIndex = 0, lineIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1;
                      i < n; i++, lineIndex += 2) {
                    exportIndexedLine(lineStripArray, i, i + 1, verticesIndices, lineIndex);
                 }
@@ -941,13 +1075,13 @@ public class PhotoRenderer {
             } else if (geometryArray instanceof IndexedTriangleStripArray) {
               IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
               for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0;
                      i < n; i++, j++) {
                   if (j % 2 == 0) {
-                    triangleIndex = exportIndexedTriangle(triangleStripArray, i, i + 1, i + 2, 
+                    triangleIndex = exportIndexedTriangle(triangleStripArray, i, i + 1, i + 2,
                         verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
-                  } else { // Vertices of odd triangles are in reverse order               
-                    triangleIndex = exportIndexedTriangle(triangleStripArray, i, i + 2, i + 1, 
+                  } else { // Vertices of odd triangles are in reverse order
+                    triangleIndex = exportIndexedTriangle(triangleStripArray, i, i + 2, i + 1,
                         verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
                   }
                 }
@@ -956,16 +1090,16 @@ public class PhotoRenderer {
             } else if (geometryArray instanceof IndexedTriangleFanArray) {
               IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
               for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2;
                      i < n; i++) {
-                  triangleIndex = exportIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2, 
+                  triangleIndex = exportIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2,
                       verticesIndices, normalsIndices, uvsIndices, triangleIndex, vertices, exportedTriangles, cullFace);
                 }
                 initialIndex += stripVertexCount [strip];
               }
             }
           }
-          
+
           if (normalsIndices != null && !Arrays.equals(verticesIndices, normalsIndices)
               || uvsIndices != null && !Arrays.equals(verticesIndices, uvsIndices)) {
             // Remove indirection in verticesIndices, normals and uvsIndices
@@ -1008,25 +1142,25 @@ public class PhotoRenderer {
             for (int i = 0, n = lineArray.getVertexCount(); i < n; i += 2) {
               exportLine(lineArray, i, i + 1, verticesIndices, i);
             }
-          } else { 
+          } else {
             if (geometryArray instanceof TriangleArray) {
               TriangleArray triangleArray = (TriangleArray)geometryArray;
               for (int i = 0, n = triangleArray.getVertexCount(), triangleIndex = 0; i < n; i += 3) {
-                triangleIndex = exportTriangle(triangleArray, i, i + 1, i + 2, 
+                triangleIndex = exportTriangle(triangleArray, i, i + 1, i + 2,
                     verticesIndices, triangleIndex, vertices, exportedTriangles, cullFace);
               }
             } else if (geometryArray instanceof QuadArray) {
               QuadArray quadArray = (QuadArray)geometryArray;
               for (int i = 0, n = quadArray.getVertexCount(), triangleIndex = 0; i < n; i += 4) {
-                triangleIndex = exportTriangle(quadArray, i, i + 1, i + 2, 
+                triangleIndex = exportTriangle(quadArray, i, i + 1, i + 2,
                     verticesIndices, triangleIndex, vertices, exportedTriangles, cullFace);
-                triangleIndex = exportTriangle(quadArray, i + 2, i + 3, i, 
+                triangleIndex = exportTriangle(quadArray, i + 2, i + 3, i,
                     verticesIndices, triangleIndex, vertices, exportedTriangles, cullFace);
               }
             } else if (geometryArray instanceof LineStripArray) {
               LineStripArray lineStripArray = (LineStripArray)geometryArray;
               for (int initialIndex = 0, lineIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1;
                      i < n; i++, lineIndex += 2) {
                   exportLine(lineStripArray, i, i + 1, verticesIndices, lineIndex);
                 }
@@ -1035,13 +1169,13 @@ public class PhotoRenderer {
             } else if (geometryArray instanceof TriangleStripArray) {
               TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
               for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0;
                      i < n; i++, j++) {
                   if (j % 2 == 0) {
-                    triangleIndex = exportTriangle(triangleStripArray, i, i + 1, i + 2, 
+                    triangleIndex = exportTriangle(triangleStripArray, i, i + 1, i + 2,
                         verticesIndices, triangleIndex, vertices, exportedTriangles, cullFace);
-                  } else { // Vertices of odd triangles are in reverse order               
-                    triangleIndex = exportTriangle(triangleStripArray, i, i + 2, i + 1, 
+                  } else { // Vertices of odd triangles are in reverse order
+                    triangleIndex = exportTriangle(triangleStripArray, i, i + 2, i + 1,
                         verticesIndices, triangleIndex, vertices, exportedTriangles, cullFace);
                   }
                 }
@@ -1050,9 +1184,9 @@ public class PhotoRenderer {
             } else if (geometryArray instanceof TriangleFanArray) {
               TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
               for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
+                for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2;
                      i < n; i++) {
-                  triangleIndex = exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, verticesIndices, 
+                  triangleIndex = exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, verticesIndices,
                       triangleIndex, vertices, exportedTriangles, cullFace);
                 }
                 initialIndex += stripVertexCount [strip];
@@ -1060,13 +1194,13 @@ public class PhotoRenderer {
             }
           }
         }
-      
+
         if (line) {
           String [] objectNames = new String [verticesIndices.length / 2];
           for (int startIndex = 0; startIndex < verticesIndices.length; startIndex += 2) {
             String objectName = objectNameBase + "-" + startIndex;
             objectNames [startIndex / 2] = objectName;
-            
+
             // Get points coordinates of a segment
             float [] points = new float [6];
             int pointIndex = 0;
@@ -1076,7 +1210,7 @@ public class PhotoRenderer {
               points [pointIndex++] = vertices [indirectIndex++];
               points [pointIndex++] = vertices [indirectIndex];
             }
-            
+
             // Create as many hairs as segments otherwise long hairs become invisible
             this.sunflow.parameter("segments", 1);
             this.sunflow.parameter("widths", 0.15f);
@@ -1090,9 +1224,9 @@ public class PhotoRenderer {
             // Reduce verticesIndices array to contain only exported triangles
             int [] tmp = new int [exportedTrianglesVertexCount];
             System.arraycopy(verticesIndices, 0, tmp, 0, tmp.length);
-            verticesIndices = tmp;              
+            verticesIndices = tmp;
           }
-          
+
           this.sunflow.parameter("triangles", verticesIndices);
           this.sunflow.parameter("points", "point", "vertex", vertices);
           if (normals != null) {
@@ -1125,18 +1259,18 @@ public class PhotoRenderer {
           return new String [] {objectNameBase};
         }
       }
-    } 
+    }
     return null;
   }
-  
+
   /**
    * Returns texture coordinates generated with <code>texCoordGeneration</code> computed
    * as described in <code>TexCoordGeneration</code> javadoc.
    */
-  private TexCoord2f generateTextureCoordinates(float x, float y, float z, 
-                                                Vector4f planeS, 
+  private TexCoord2f generateTextureCoordinates(float x, float y, float z,
+                                                Vector4f planeS,
                                                 Vector4f planeT) {
-    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z + planeS.w, 
+    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z + planeS.w,
         x * planeT.x + y * planeT.y + z * planeT.z + planeT.w);
   }
 
@@ -1163,7 +1297,7 @@ public class PhotoRenderer {
   }
 
   /**
-   * Applies to <code>vertex</code> the given transformation, and stores it in <code>vertices</code>.  
+   * Applies to <code>vertex</code> the given transformation, and stores it in <code>vertices</code>.
    */
   private void exportVertex(Transform3D transformationToParent,
                             Point3f vertex, int index,
@@ -1176,7 +1310,7 @@ public class PhotoRenderer {
   }
 
   /**
-   * Applies to <code>normal</code> the given transformation, and stores it in <code>normals</code>.  
+   * Applies to <code>normal</code> the given transformation, and stores it in <code>normals</code>.
    */
   private void exportNormal(Transform3D transformationToParent,
                             Vector3f normal, int index,
@@ -1193,9 +1327,9 @@ public class PhotoRenderer {
   }
 
   /**
-   * Stores <code>textureCoordinates</code> in <code>uvs</code>. 
+   * Stores <code>textureCoordinates</code> in <code>uvs</code>.
    */
-  private void exportTextureCoordinates(TexCoord2f textureCoordinates, 
+  private void exportTextureCoordinates(TexCoord2f textureCoordinates,
                                         Transform3D textureTransform,
                                         int index, float [] uvs) {
     index *= 2;
@@ -1211,24 +1345,24 @@ public class PhotoRenderer {
   }
 
   /**
-   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2. 
+   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2.
    */
-  private void exportIndexedLine(IndexedGeometryArray geometryArray, 
+  private void exportIndexedLine(IndexedGeometryArray geometryArray,
                                  int vertexIndex1, int vertexIndex2,
-                                 int [] verticesIndices, 
+                                 int [] verticesIndices,
                                  int index) {
     verticesIndices [index++] = geometryArray.getCoordinateIndex(vertexIndex1);
     verticesIndices [index] = geometryArray.getCoordinateIndex(vertexIndex2);
   }
-    
+
   /**
-   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2, vertexIndex3. 
+   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2, vertexIndex3.
    */
-  private int exportIndexedTriangle(IndexedGeometryArray geometryArray, 
+  private int exportIndexedTriangle(IndexedGeometryArray geometryArray,
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3,
-                                    int [] verticesIndices, int [] normalsIndices, int [] textureCoordinatesIndices, 
-                                    int index, 
-                                    float [] vertices, 
+                                    int [] verticesIndices, int [] normalsIndices, int [] textureCoordinatesIndices,
+                                    int index,
+                                    float [] vertices,
                                     Set<Triangle> exportedTriangles,
                                     int cullFace) {
     if (cullFace == PolygonAttributes.CULL_FRONT) {
@@ -1237,7 +1371,7 @@ public class PhotoRenderer {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
-    
+
     int coordinateIndex1 = geometryArray.getCoordinateIndex(vertexIndex1);
     int coordinateIndex2 = geometryArray.getCoordinateIndex(vertexIndex2);
     int coordinateIndex3 = geometryArray.getCoordinateIndex(vertexIndex3);
@@ -1261,24 +1395,24 @@ public class PhotoRenderer {
     }
     return index;
   }
-    
+
   /**
-   * Stores in <code>verticesIndices</code> the indices vertexIndex1 and vertexIndex2. 
+   * Stores in <code>verticesIndices</code> the indices vertexIndex1 and vertexIndex2.
    */
-  private void exportLine(GeometryArray geometryArray, 
-                          int vertexIndex1, int vertexIndex2, 
+  private void exportLine(GeometryArray geometryArray,
+                          int vertexIndex1, int vertexIndex2,
                           int [] verticesIndices, int index) {
     verticesIndices [index++] = vertexIndex1;
     verticesIndices [index] = vertexIndex2;
   }
-    
+
   /**
-   * Stores in <code>verticesIndices</code> the indices vertexIndex1, vertexIndex2, vertexIndex3. 
+   * Stores in <code>verticesIndices</code> the indices vertexIndex1, vertexIndex2, vertexIndex3.
    */
-  private int exportTriangle(GeometryArray geometryArray, 
+  private int exportTriangle(GeometryArray geometryArray,
                              int vertexIndex1, int vertexIndex2, int vertexIndex3,
-                             int [] verticesIndices, int index, 
-                             float [] vertices, 
+                             int [] verticesIndices, int index,
+                             float [] vertices,
                              Set<Triangle> exportedTriangles,
                              int cullFace) {
     if (cullFace == PolygonAttributes.CULL_FRONT) {
@@ -1287,26 +1421,26 @@ public class PhotoRenderer {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
-    
+
     Triangle exportedTriangle = new Triangle(vertices, vertexIndex1, vertexIndex2, vertexIndex3);
     if (!exportedTriangles.contains(exportedTriangle)) {
       exportedTriangles.add(exportedTriangle);
       verticesIndices [index++] = vertexIndex1;
       verticesIndices [index++] = vertexIndex2;
       verticesIndices [index++] = vertexIndex3;
-    } 
+    }
     return index;
   }
-    
+
   /**
-   * Exports a Java3D appearance as a SunFlow shader.  
+   * Exports a Java3D appearance as a SunFlow shader.
    */
   private void exportAppearance(Appearance appearance,
-                                String appearanceName, 
+                                String appearanceName,
                                 boolean mirror,
                                 boolean ignoreTransparency,
                                 boolean silk) throws IOException {
-    Texture texture = appearance.getTexture();    
+    Texture texture = appearance.getTexture();
     if (mirror) {
       Material material = appearance.getMaterial();
       if (material != null) {
@@ -1316,7 +1450,7 @@ public class PhotoRenderer {
       }
       this.sunflow.shader(appearanceName, "mirror");
     } else if (texture != null) {
-      // Check shape transparency 
+      // Check shape transparency
       TransparencyAttributes transparencyAttributes = appearance.getTransparencyAttributes();
       float transparency;
       if (transparencyAttributes != null
@@ -1326,8 +1460,8 @@ public class PhotoRenderer {
       } else {
         transparency = 1;
       }
-      
-      TransparentTextureKey key = new TransparentTextureKey(texture, transparency);      
+
+      TransparentTextureKey key = new TransparentTextureKey(texture, transparency);
       String imagePath = this.textureImagesCache.get(key);
       if (imagePath == null) {
         if (texture.getUserData() instanceof URL && transparency == 1) {
@@ -1337,7 +1471,7 @@ public class PhotoRenderer {
           RenderedImage image = imageComponent.getRenderedImage();
           if (transparency < 1) {
             // Compute a partially transparent image
-            BufferedImage transparentImage = new BufferedImage(image.getWidth(), 
+            BufferedImage transparentImage = new BufferedImage(image.getWidth(),
                 image.getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2D = (Graphics2D)transparentImage.getGraphics();
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency));
@@ -1388,8 +1522,8 @@ public class PhotoRenderer {
           if (material instanceof OBJMaterial
               && ((OBJMaterial)material).isOpticalDensitySet()) {
             float opticalDensity = ((OBJMaterial)material).getOpticalDensity();
-            // To avoid rendering issues in SunFlow, use glass ETA for optical density equal to 1 
-            // (i.e. the index of refraction of vacuum that has no meaning for furniture parts)             
+            // To avoid rendering issues in SunFlow, use glass ETA for optical density equal to 1
+            // (i.e. the index of refraction of vacuum that has no meaning for furniture parts)
             this.sunflow.parameter("eta", opticalDensity <= 1f ?  1.55f  : opticalDensity);
           } else {
             // Use glass ETA as default
@@ -1397,15 +1531,15 @@ public class PhotoRenderer {
           }
           float transparency = 1 - transparencyAttributes.getTransparency();
           this.sunflow.parameter("color", null,
-              new float [] {(1 - transparency) + transparency * diffuseColor [0], 
-                            (1 - transparency) + transparency * diffuseColor [1], 
+              new float [] {(1 - transparency) + transparency * diffuseColor [0],
+                            (1 - transparency) + transparency * diffuseColor [1],
                             (1 - transparency) + transparency * diffuseColor [2]});
-          this.sunflow.parameter("absorption.color", null, 
-              new float [] {transparency * (1 - diffuseColor [0]), 
-                            transparency * (1 - diffuseColor [1]), 
+          this.sunflow.parameter("absorption.color", null,
+              new float [] {transparency * (1 - diffuseColor [0]),
+                            transparency * (1 - diffuseColor [1]),
                             transparency * (1 - diffuseColor [2])});
           this.sunflow.shader(appearanceName, "glass");
-        } else if (material.getLightingEnable()) {  
+        } else if (material.getLightingEnable()) {
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 1) {
@@ -1417,7 +1551,7 @@ public class PhotoRenderer {
               this.sunflow.parameter("glossyness", (float)Math.pow(10, -Math.log(shininess) / Math.log(5)));
               this.sunflow.parameter("samples", 1);
               this.sunflow.shader(appearanceName, "uber");
-            } else { 
+            } else {
               this.sunflow.parameter("shiny", shininess / 512f);
               this.sunflow.shader(appearanceName, "shiny_diffuse");
             }
@@ -1441,34 +1575,47 @@ public class PhotoRenderer {
   }
 
   /**
-   * Exports the given light sources as SunFlow lights placed at the right location 
-   * with <code>lightTransform</code>.  
+   * Exports the given light sources as SunFlow lights placed at the right location
+   * with <code>lightTransform</code>.
    */
   private void exportLightSources(HomeLight light, Transform3D lightTransform) {
-    float lightPower = light.getPower();
-    for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
-      float lightRadius = lightSource.getDiameter() != null 
-              ? lightSource.getDiameter() * light.getWidth() / 2 
-              : 3.25f; // Default radius compatible with most lights available before version 3.0
-      float power = 5 * lightPower * lightPower / (lightRadius * lightRadius);
-      int lightColor = lightSource.getColor();
-      this.sunflow.parameter("radiance", null,
-          power * (lightColor >> 16) * (this.homeLightColor >> 16),
-          power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
-          power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
-      Point3f lightSourceLocation = new Point3f(
-          lightSource.getX() - 0.5f, 
-          lightSource.getZ() - 0.5f, 
-          0.5f - lightSource.getY());
-      lightTransform.transform(lightSourceLocation);
-      this.sunflow.parameter("center",
-          new Point3(lightSourceLocation.getX(),
-              lightSourceLocation.getY(),
-              lightSourceLocation.getZ())); 
-      this.sunflow.parameter("radius", lightRadius);
-      this.sunflow.parameter("samples", 4);
-      this.sunflow.light(UUID.randomUUID().toString(), "sphere");
+    for (LightSource lightSource : light.getLightSources()) {
+      exportLightSource(light, lightSource, lightTransform);
     }
+  }
+
+  /**
+   * Exports the given light source as SunFlow lights placed at the right location
+   * with <code>lightTransform</code>.
+   */
+  private void exportLightSource(HomeLight light, LightSource lightSource, Transform3D lightTransform) {
+    float lightPower = light.getPower();
+    float lightRadius = getLightSourceRadius(light, lightSource);
+    float power = 5 * lightPower * lightPower / (lightRadius * lightRadius);
+    int lightColor = lightSource.getColor();
+    this.sunflow.parameter("radiance", null,
+        power * (lightColor >> 16) * (this.homeLightColor >> 16),
+        power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
+        power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
+    Point3f lightSourceLocation = getNormalizedLightSourceLocation(lightSource);
+    lightTransform.transform(lightSourceLocation);
+    this.sunflow.parameter("center",
+        new Point3(lightSourceLocation.getX(),
+            lightSourceLocation.getY(),
+            lightSourceLocation.getZ()));
+    this.sunflow.parameter("radius", lightRadius);
+    this.sunflow.parameter("samples", 4);
+    this.sunflow.light(UUID.randomUUID().toString(), "sphere");
+  }
+
+  private float getLightSourceRadius(HomeLight light, LightSource lightSource) {
+    return lightSource.getDiameter() != null
+        ? lightSource.getDiameter() * light.getWidth() / 2
+        : 3.25f; // Default radius compatible with most lights available before version 3.0
+  }
+
+  private Point3f getNormalizedLightSourceLocation(LightSource lightSource) {
+    return new Point3f(lightSource.getX() - 0.5f, lightSource.getZ() - 0.5f, 0.5f - lightSource.getY());
   }
 
   /**
@@ -1481,7 +1628,7 @@ public class PhotoRenderer {
         return new Room3D((Room)item, home, !(home.getCamera() instanceof ObserverCamera), waitForLoading);
       } else {
         return super.createObject3D(home, item, waitForLoading);
-      }  
+      }
     }
   }
 
@@ -1491,10 +1638,10 @@ public class PhotoRenderer {
    */
   private static final class BufferedImageDisplay implements Display {
     private static final int BASE_INFO_FLAGS = ImageObserver.WIDTH | ImageObserver.HEIGHT | ImageObserver.PROPERTIES;
-    private static final int [] BORDERS = {Color.RED.toRGB(), Color.GREEN.toRGB(), Color.BLUE.toRGB(), 
+    private static final int [] BORDERS = {Color.RED.toRGB(), Color.GREEN.toRGB(), Color.BLUE.toRGB(),
                                            Color.YELLOW.toRGB(), Color.CYAN.toRGB(), Color.MAGENTA.toRGB(),
                                            new Color(1, 0.5f, 0).toRGB(), new Color(0.5f, 1, 0).toRGB()};
-    
+
     private final ImageObserver observer;
     private final BufferedImage image;
 
@@ -1534,7 +1681,7 @@ public class PhotoRenderer {
     public synchronized void imageUpdate(int x, int y, int width, int height, Color [] data, float [] alpha) {
       for (int j = 0, index = 0; j < height; j++) {
         for (int i = 0; i < width; i++, index++) {
-          this.image.setRGB(x + i, y + j, 
+          this.image.setRGB(x + i, y + j,
               data [index].copy().mul(1.0f / alpha [index]).toNonLinear().toRGBA(alpha [index]));
         }
       }
@@ -1552,7 +1699,7 @@ public class PhotoRenderer {
     }
 
     public void imageEnd() {
-      notifyObserver(ImageObserver.FRAMEBITS | BASE_INFO_FLAGS, 
+      notifyObserver(ImageObserver.FRAMEBITS | BASE_INFO_FLAGS,
             0, 0, this.image.getWidth(), this.image.getHeight());
     }
 
@@ -1575,7 +1722,7 @@ public class PhotoRenderer {
       return null;
     }
   }
-  
+
   /**
    * A triangle used to remove faces cited more that once (opposite faces included).
    */
@@ -1585,7 +1732,7 @@ public class PhotoRenderer {
     private float [] point3;
     private int      hashCode;
     private boolean  hashCodeSet;
-    
+
     public Triangle(float [] vertices, int index1, int index2, int index3) {
       this.point1 = new float [] {vertices [index1 * 3], vertices [index1 * 3 + 1], vertices [index1 * 3 + 2]};
       this.point2 = new float [] {vertices [index2 * 3], vertices [index2 * 3 + 1], vertices [index2 * 3 + 2]};
@@ -1595,8 +1742,8 @@ public class PhotoRenderer {
     @Override
     public int hashCode() {
       if (!this.hashCodeSet) {
-        this.hashCode = 31 * Arrays.hashCode(this.point1) 
-            + 31 * Arrays.hashCode(this.point2) 
+        this.hashCode = 31 * Arrays.hashCode(this.point1)
+            + 31 * Arrays.hashCode(this.point2)
             + 31 * Arrays.hashCode(this.point3);
         this.hashCodeSet = true;
       }
@@ -1626,9 +1773,9 @@ public class PhotoRenderer {
       return false;
     }
   }
-  
+
   /**
-   * A key used to manage textures at different levels of transparency. 
+   * A key used to manage textures at different levels of transparency.
    */
   private static class TransparentTextureKey {
     private Texture texture;
@@ -1638,13 +1785,13 @@ public class PhotoRenderer {
       this.texture = texture;
       this.transparency = transparency;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
-      return ((TransparentTextureKey)obj).texture.equals(this.texture) 
+      return ((TransparentTextureKey)obj).texture.equals(this.texture)
           && ((TransparentTextureKey)obj).transparency == this.transparency;
     }
-    
+
     @Override
     public int hashCode() {
       return this.texture.hashCode() + Float.floatToIntBits(this.transparency);
