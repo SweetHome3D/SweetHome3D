@@ -171,6 +171,11 @@ public class ModelManager {
   public static final String    MANNEQUIN_ABDOMEN_CHEST_PREFIX  = "sweethome3d_mannequin_abdomen_chest";
   public static final String    MANNEQUIN_ABDOMEN_PELVIS_PREFIX = "sweethome3d_mannequin_abdomen_pelvis";
   /**
+   * <code>Node</code> user data prefix for ball / rotating  joints.
+   */
+  public static final String    BALL_PREFIX                 = "sweethome3d_ball_";
+  public static final String    ARM_ON_BALL_PREFIX          = "sweethome3d_arm_on_ball_";
+  /**
    * <code>Node</code> user data prefix for hinge / rotating opening joints.
    */
   public static final String    HINGE_PREFIX                = "sweethome3d_hinge_";
@@ -1170,6 +1175,7 @@ public class ModelManager {
     } else {
       // Reorganize rotating openings
       updateDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX);
+      updateDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null);
       // Reorganize sliding openings
       updateDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX);
     }
@@ -1178,21 +1184,21 @@ public class ModelManager {
   private void updateDeformableModelHierarchy(Group group, String uniqueReferenceNodePrefix, String referenceNodePrefix,
                                               String openingPrefix, String openingPanePrefix) {
     if (containsNode(group, openingPrefix + 1)
-        || containsNode(group, openingPanePrefix + 1)) {
+        || (openingPanePrefix != null && containsNode(group, openingPanePrefix + 1))) {
       if (containsNode(group, referenceNodePrefix + 1)) {
         // Reorganize openings with multiple reference nodes
         int i = 1;
         do {
           Node referenceNode = extractNodes(group, referenceNodePrefix + i, null);
           Node opening = extractNodes(group, openingPrefix + i, null);
-          Node openingPane = extractNodes(group, openingPanePrefix + i, null);
+          Node openingPane = openingPanePrefix != null ? extractNodes(group, openingPanePrefix + i, null) : null;
           TransformGroup openingGroup = createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane);
           group.addChild(referenceNode);
           group.addChild(openingGroup);
           i++;
         } while (containsNode(group, referenceNodePrefix + i)
             && (containsNode(group, openingPrefix + i)
-                || containsNode(group, openingPanePrefix + i)));
+                || (openingPanePrefix != null && containsNode(group, openingPanePrefix + i))));
       } else if (uniqueReferenceNodePrefix != null
                  && containsNode(group, uniqueReferenceNodePrefix)) {
         // Reorganize openings with a unique reference node

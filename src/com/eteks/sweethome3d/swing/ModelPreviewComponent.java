@@ -465,7 +465,7 @@ public class ModelPreviewComponent extends JComponent {
                     }
                     this.translationFromOrigin.mul(rotation);
                   } else {
-                    // Set rotation in the screen plan for mannequin handling
+                    // Set rotation in the screen plan for mannequin or ball handling
                     this.translationFromOrigin.mul(yawRotation);
                     this.translationFromOrigin.mul(pitchRotation);
                   }
