@@ -111,6 +111,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
    */
   @Override
   protected void writeAttributes(XMLWriter writer, Home home) throws IOException {
+    home.setVersion(Home.CURRENT_VERSION);
     writer.writeAttribute("version", String.valueOf(home.getVersion()));
     writer.writeAttribute("name", home.getName(), null);
     writer.writeAttribute("camera", home.getCamera() == home.getObserverCamera() ? "observerCamera" : "topCamera");
