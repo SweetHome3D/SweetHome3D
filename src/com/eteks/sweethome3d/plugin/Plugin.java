@@ -29,35 +29,35 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
  * The super class of a plug-in.
  * Subclasses should implement {@link #getActions() getActions} method
  * to return the actions that will be available to user.
- * This class should be packed in a JAR file with a family of properties file named 
- * <code>ApplicationPlugin.properties</code> at its root or in one of its subfolders. 
+ * This class should be packed in a JAR file with a family of properties file named
+ * <code>ApplicationPlugin.properties</code> at its root or in one of its subfolders.
  * This file describes a plug-in with the following keys (all of them are mandatory
  * except <code>id</code>):
- * <ul><li>The <code>id</code> key gives an optional id to the plug-in, 
- *     which can be useful to determine if an update for this plug-in is available 
+ * <ul><li>The <code>id</code> key gives an optional id to the plug-in,
+ *     which can be useful to determine if an update for this plug-in is available
  *     during libraries updates checking.</li>
  *     <li>The <code>name</code> key specifies the name of the plug-in.</li>
  *     <li>The <code>class</code> key specifies the fully qualified class name
  *     of the plug-in.</li>
- *     <li>The <code>description</code> key specifies the description of 
+ *     <li>The <code>description</code> key specifies the description of
  *     the plug-in.</li>
  *     <li>The <code>version</code> key specifies the version of the plug-in.
  *     <li>The <code>license</code> key specifies the license under which
  *     the plug-in is distributed.</li>
  *     <li>The <code>provider</code> key specifies the provider, the developer
- *     and/or the editor of the plug-in.</li>    
- *     <li>The <code>applicationMinimumVersion</code> key specifies the 
+ *     and/or the editor of the plug-in.</li>
+ *     <li>The <code>applicationMinimumVersion</code> key specifies the
  *     minimum application version under which this plug-in may work. Note that
  *     only the first two groups of digits will be used for the comparison
  *     with current JVM version, and that plug-ins were available from
  *     version 1.5.</li>
- *     <li>The <code>javaMinimumVersion</code> key specifies the 
+ *     <li>The <code>javaMinimumVersion</code> key specifies the
  *     minimum Java version under which this plug-in may work. Note that
  *     only the first two groups of digits will be used for the comparison
- *     with current JVM version.</li></ul>    
- * <br>For example, a plug-in class named <code>com.mycompany.mypackage.MyPlugin</code> 
- * will become a plug-in if it's packed in a JAR file with the following 
- * <code>ApplicationPlugin.properties</code> file: 
+ *     with current JVM version.</li></ul>
+ * <br>For example, a plug-in class named <code>com.mycompany.mypackage.MyPlugin</code>
+ * will become a plug-in if it's packed in a JAR file with the following
+ * <code>ApplicationPlugin.properties</code> file:
  * <pre> name=My plug-in
  * class=com.mycompany.mypackage.MyPlugin
  * description=This plug-in rocks!
@@ -108,7 +108,7 @@ public abstract class Plugin {
   public final String getName() {
     return this.name;
   }
-  
+
   /**
    * Sets the description of this plug-in.
    */
@@ -122,7 +122,7 @@ public abstract class Plugin {
   public final String getDescription() {
     return this.description;
   }
-  
+
   /**
    * Sets the version of this plug-in.
    */
@@ -136,7 +136,7 @@ public abstract class Plugin {
   public final String getVersion() {
     return this.version;
   }
-  
+
   /**
    * Sets the license of this plug-in.
    */
@@ -150,7 +150,7 @@ public abstract class Plugin {
   public final String getLicense() {
     return this.license;
   }
-  
+
   /**
    * Sets the provider of this plug-in.
    */
@@ -164,14 +164,14 @@ public abstract class Plugin {
   public String getProvider() {
     return this.provider;
   }
-  
+
   /**
    * Sets the user preferences of the current application.
    */
   final void setUserPreferences(UserPreferences userPreferences) {
-    this.userPreferences = userPreferences;    
+    this.userPreferences = userPreferences;
   }
-  
+
   /**
    * Returns the user preferences of the current application.
    */
@@ -208,31 +208,39 @@ public abstract class Plugin {
   public HomeController getHomeController() {
     return this.homeController;
   }
-  
+
   /**
-   * Sets the undoable edit support that records undoable modifications made on a home. 
+   * Sets the undoable edit support that records undoable modifications made on a home.
    */
   final void setUndoableEditSupport(UndoableEditSupport undoableEditSupport) {
     this.undoableEditSupport = undoableEditSupport;
   }
 
   /**
-   * Returns the undoable edit support that records undoable modifications made on a home. 
+   * Returns the undoable edit support that records undoable modifications made on a home.
    */
   public final UndoableEditSupport getUndoableEditSupport() {
     return this.undoableEditSupport;
   }
- 
+
+  /**
+   * This method will be called once the properties of this plug-in are initialized.
+   * Subclasses may override it to initialize data associated to this plug-in.
+   * @since 6.0
+   */
+  public void init() {
+  }
+
   /**
    * This method will be called when the home referenced by this plug-in will be deleted.
    * Subclasses may override it to free resources associated to this plug-in.
    */
-  public void destroy() {    
+  public void destroy() {
   }
-  
+
   /**
-   * Returns the actions available on this plug-in. 
-   * These actions may define the properties defined by 
+   * Returns the actions available on this plug-in.
+   * These actions may define the properties defined by
    * {@link PluginAction.Property PluginAction.Property} enumeration.
    */
   public abstract PluginAction [] getActions();
