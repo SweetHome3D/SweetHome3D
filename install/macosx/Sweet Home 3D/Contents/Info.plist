@@ -235,9 +235,10 @@
 			<string>$JAVAROOT/Textures.jar</string>
 			<string>$JAVAROOT/Examples.jar</string>
 			<string>$JAVAROOT/Help.jar</string>
+			<string>$JAVAROOT/batik-svgpathparser-1.7.jar</string>
+			<string>$JAVAROOT/jeksparser-calculator.jar</string>
 			<string>$JAVAROOT/freehep-vectorgraphics-svg-2.1.1b.jar</string>
 			<string>$JAVAROOT/sunflow-0.07.3i.jar</string>
-			<string>$JAVAROOT/batik-svgpathparser-1.7.jar</string>
 		</array>
 		<key>Properties</key>
 		<dict>

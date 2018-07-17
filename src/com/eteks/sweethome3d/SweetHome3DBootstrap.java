@@ -34,22 +34,23 @@ import javax.swing.JOptionPane;
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
 /**
- * This bootstrap class loads Sweet Home 3D application classes from jars in classpath 
+ * This bootstrap class loads Sweet Home 3D application classes from jars in classpath
  * or from extension jars stored as resources.
  * @author Emmanuel Puybaret
  */
 public class SweetHome3DBootstrap {
-  public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
+  public static void main(String [] args) throws MalformedURLException, IllegalAccessException,
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
     Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
     List<String> extensionJarsAndDlls = new ArrayList<String>(Arrays.asList(new String [] {
-        "iText-2.1.7.jar", // Jars included in Sweet Home 3D executable jar file 
+        "batik-svgpathparser-1.7.jar",
+        "jeksparsercalculator.jar",
+        "iText-2.1.7.jar", // Jars included in Sweet Home 3D executable jar file
         "freehep-vectorgraphics-svg-2.1.1b.jar",
         "sunflow-0.07.3i.jar",
         "jmf.jar",
-        "batik-svgpathparser-1.7.jar",
         "jnlp.jar"}));
-    
+
     String operatingSystemName = System.getProperty("os.name");
     String javaVersion = System.getProperty("java.version");
     String java7Prefix = "1.7.0_";
@@ -59,12 +60,12 @@ public class SweetHome3DBootstrap {
         // Refuse to let Sweet Home 3D run under Mac OS X with Java Web Start 6
         String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
             ? "Sweet Home 3D ne peut pas fonctionner avec Java\n"
-            + "Web Start 6 sous Mac OS X de façon fiable.\n" 
-            + "Merci de télécharger le programme d'installation depuis\n" 
+            + "Web Start 6 sous Mac OS X de façon fiable.\n"
+            + "Merci de télécharger le programme d'installation depuis\n"
             + "http://www.sweethome3d.com/fr/download.jsp"
-            : "Sweet Home 3D can't reliably run with Java Web Start 6\n" 
-            + "under Mac OS X.\n" 
-            + "Please download the installer version from\n" 
+            : "Sweet Home 3D can't reliably run with Java Web Start 6\n"
+            + "under Mac OS X.\n"
+            + "Please download the installer version from\n"
             + "http://www.sweethome3d.com/download.jsp";
         JOptionPane.showMessageDialog(null, message);
         System.exit(1);
@@ -88,22 +89,22 @@ public class SweetHome3DBootstrap {
           && Integer.parseInt(javaVersion.substring(java7Prefix.length(), java7Prefix.length() + 2)) < 40
           || javaVersion.length() == java7Prefix.length() + 1 // Test whether version is on 1 digit (i.e. < 40)
           || !Character.isDigit(javaVersion.charAt(java7Prefix.length() + 1)))) {
-        // Refuse to let Sweet Home 3D run under Mac OS X with Java 7 before version 7u40 
+        // Refuse to let Sweet Home 3D run under Mac OS X with Java 7 before version 7u40
         String message = Locale.getDefault().getLanguage().equals(Locale.FRENCH.getLanguage())
-            ? "Sous Mac OS X, Sweet Home 3D ne peut fonctionner avec Java 7\n" 
-            + "qu'à partir de la version Java 7u40. Merci de mettre à jour\n" 
+            ? "Sous Mac OS X, Sweet Home 3D ne peut fonctionner avec Java 7\n"
+            + "qu'à partir de la version Java 7u40. Merci de mettre à jour\n"
             + "votre version de Java ou de lancer Sweet Home 3D sous Java 6."
-            : "Under Mac OS X, Sweet Home 3D can run with Java 7 only\n" 
-            + "from version Java 7u40. Please, update you Java version\n" 
+            : "Under Mac OS X, Sweet Home 3D can run with Java 7 only\n"
+            + "from version Java 7u40. Please, update you Java version\n"
             + "or run Sweet Home 3D under Java 6.";
         JOptionPane.showMessageDialog(null, message);
         System.exit(1);
-      } else { // Java >= 1.7.0_40    
+      } else { // Java >= 1.7.0_40
         extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
             "java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
             "java3d-1.6/vecmath.jar",
             "java3d-1.6/j3dutils.jar",
-            "java3d-1.6/gluegen-rt.jar", 
+            "java3d-1.6/gluegen-rt.jar",
             "java3d-1.6/jogl-java3d.jar",
             "java3d-1.6/macosx/libgluegen-rt.jnilib",
             "java3d-1.6/macosx/libjogl_desktop.jnilib",
@@ -126,7 +127,7 @@ public class SweetHome3DBootstrap {
         } else {
           extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
               "linux/i386/libj3dcore-ogl.so", // Linux 32 bits DLLs
-              "linux/i386/libj3dcore-ogl-cg.so", 
+              "linux/i386/libj3dcore-ogl-cg.so",
               "windows/i386/j3dcore-d3d.dll", // Windows 32 bits DLLs
               "windows/i386/j3dcore-ogl.dll",
               "windows/i386/j3dcore-ogl-cg.dll",
@@ -137,7 +138,7 @@ public class SweetHome3DBootstrap {
             "java3d-1.6/j3dcore.jar", // Java 3D 1.6 jars
             "java3d-1.6/vecmath.jar",
             "java3d-1.6/j3dutils.jar",
-            "java3d-1.6/gluegen-rt.jar", 
+            "java3d-1.6/gluegen-rt.jar",
             "java3d-1.6/jogl-java3d.jar"}));
         // Disable JOGL library loader
         System.setProperty("jogamp.gluegen.UseTempJarCache", "false");
@@ -164,7 +165,7 @@ public class SweetHome3DBootstrap {
         }
       }
     }
-    
+
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media",
@@ -179,24 +180,24 @@ public class SweetHome3DBootstrap {
         "com.sun.media",
         "com.ibm.media",
         "jmpapps.util",
-        "com.microcrowd.loader.java3d",
         "org.sunflow",
-        "org.apache.batik"};
+        "org.apache.batik",
+        "com.eteks.parser"};
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
     ClassLoader java3DClassLoader = operatingSystemName.startsWith("Windows")
         ? new ExtensionsClassLoader(
-            sweetHome3DBootstrapClass.getClassLoader(), 
+            sweetHome3DBootstrapClass.getClassLoader(),
             sweetHome3DBootstrapClass.getProtectionDomain(),
             extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), null, applicationPackages,
-            // Use cache under Windows because temporary files tagged as deleteOnExit can't 
-            // be deleted if they are still opened when program exits 
-            new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-")  
+            // Use cache under Windows because temporary files tagged as deleteOnExit can't
+            // be deleted if they are still opened when program exits
+            new File(System.getProperty("java.io.tmpdir")), applicationClassName + "-cache-")
         : new ExtensionsClassLoader(
-            sweetHome3DBootstrapClass.getClassLoader(), 
+            sweetHome3DBootstrapClass.getClassLoader(),
             sweetHome3DBootstrapClass.getProtectionDomain(),
-            extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);      
+            extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
-    Method applicationClassMain = 
+    Method applicationClassMain =
         applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
     // Call application class main method with reflection
     applicationClassMain.invoke(null, new Object [] {args});

@@ -235,9 +235,10 @@
 			<string>$APP_PACKAGE/../lib/Textures.jar</string>
 			<string>$APP_PACKAGE/../lib/Examples.jar</string>
 			<string>$APP_PACKAGE/../lib/Help.jar</string>
+			<string>$APP_PACKAGE/../lib/batik-svgpathparser-1.7.jar</string>
+			<string>$APP_PACKAGE/../lib/jeksparser-calculator.jar</string>
 			<string>$APP_PACKAGE/../lib/freehep-vectorgraphics-svg-2.1.1b.jar</string>
 			<string>$APP_PACKAGE/../lib/sunflow-0.07.3i.jar</string>
-			<string>$APP_PACKAGE/../lib/batik-svgpathparser-1.7.jar</string>
 		</array>
 		<key>Properties</key>
 		<dict>

@@ -36,52 +36,52 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 /**
  * This applet class displays the 3D view of a Sweet Home 3D file from its URL.
  * <p>This applet accepts the following parameters:
- * 
- * <ul><li><code>homeURL</code> specifies the URL of the home that will be downloaded 
- *     and displayed at applet launch. 
- *     <br>This URL should return a content at SH3D file format. If it's not an absolute URL, 
- *     it will be read relative to applet document base. By default, this parameter is 
+ *
+ * <ul><li><code>homeURL</code> specifies the URL of the home that will be downloaded
+ *     and displayed at applet launch.
+ *     <br>This URL should return a content at SH3D file format. If it's not an absolute URL,
+ *     it will be read relative to applet document base. By default, this parameter is
  *     equal to <code>default.sh3d</code>.</li>
- *     
- *     <li><code>level</code> specifies the name of the level that should be displayed. 
- *     Note that selecting a level may have a different effect according to the 
- *     <i>Display all levels / Selected level</i> options in the displayed home 
- *     and whether visitor eyes should be adjusted to selected level. 
+ *
+ *     <li><code>level</code> specifies the name of the level that should be displayed.
+ *     Note that selecting a level may have a different effect according to the
+ *     <i>Display all levels / Selected level</i> options in the displayed home
+ *     and whether visitor eyes should be adjusted to selected level.
  *     By default, the chosen level (if there are some) is one used when home was saved.</li>
- *     
- *     <li><code>camera</code> specifies the name of the stored point of view that should be selected. 
+ *
+ *     <li><code>camera</code> specifies the name of the stored point of view that should be selected.
  *     By default, the camera is one used when home was saved.</li>
- *     
- *     <li><code>selectableLevels</code> specifies a comma separated list of level names 
+ *
+ *     <li><code>selectableLevels</code> specifies a comma separated list of level names
  *     that will be added to the contextual menu of the 3D view, to let the user select a level.</li>
- *     
- *     <li><code>selectableCameras</code> specifies a comma separated list of stored viewpoint names 
+ *
+ *     <li><code>selectableCameras</code> specifies a comma separated list of stored viewpoint names
  *     that will be added to the contextual menu of the 3D view, to let the user select a point of view.
  *     If both <code>selectableLevels</code> and <code>selectableCameras</code> are specified, a
  *     separator will be added in the contextual menu to separate both lists.</li>
- *     
- *     <li><code>ignoreCache</code> specifies whether home file may be read from Java 
- *     cache or not. 
+ *
+ *     <li><code>ignoreCache</code> specifies whether home file may be read from Java
+ *     cache or not.
  *     <br>If its value is <code>true</code>, then each time the applet is launched the
- *     home file will be downloaded ignoring the file that may exist in cache. 
+ *     home file will be downloaded ignoring the file that may exist in cache.
  *     By default, its value is <code>false</code>.</li>
- *     
- *     <li><code>navigationPanel</code> specifies whether navigation arrows should be 
- *     displayed or not. By default, its value is <code>false</code>. 
+ *
+ *     <li><code>navigationPanel</code> specifies whether navigation arrows should be
+ *     displayed or not. By default, its value is <code>false</code>.
  *     Use <code>true</code> to display navigation panel.</li>
  *
  *     <li><code>activateCameraSwitchKey</code> specifies whether the space bar should be used
- *     or not to switch between aerial view and virtual visitor view. 
+ *     or not to switch between aerial view and virtual visitor view.
  *     By default, its value is <code>true</code>.</li></ul>
- *     
- * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
+ *
+ * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that
  * it requires Java 5 when it's run under an old JVM.
- *     
+ *
  * @author Emmanuel Puybaret
  */
 public class SweetHome3DViewer extends JApplet {
   private Object appletApplication;
-  
+
   public void init() {
     if (!isJava5OrSuperior()) {
       showError(getLocalizedString("requirementsMessage"));
@@ -103,9 +103,9 @@ public class SweetHome3DViewer extends JApplet {
     this.appletApplication = null;
     System.gc();
   }
-  
+
   /**
-   * Returns <code>true</code> if current JVM version is 5+. 
+   * Returns <code>true</code> if current JVM version is 5+.
    */
   private boolean isJava5OrSuperior() {
     String javaVersion = System.getProperty("java.version");
@@ -123,14 +123,14 @@ public class SweetHome3DViewer extends JApplet {
   }
 
   /**
-   * Returns the localized string matching the given <code>key</code>. 
+   * Returns the localized string matching the given <code>key</code>.
    */
   private String getLocalizedString(String key) {
     Class SweetHome3DViewerClass = SweetHome3DViewer.class;
     return ResourceBundle.getBundle(SweetHome3DViewerClass.getPackage().getName().replace('.', '/') + "/package").
         getString(SweetHome3DViewerClass.getName().substring(SweetHome3DViewerClass.getName().lastIndexOf('.') + 1) + "." + key);
   }
-  
+
   /**
    * Shows the given text in a label.
    */
@@ -138,7 +138,7 @@ public class SweetHome3DViewer extends JApplet {
     JLabel label = new JLabel(text, JLabel.CENTER);
     setContentPane(label);
   }
-  
+
   /**
    * Creates a new <code>AppletApplication</code> instance that manages this applet content.
    */
@@ -163,7 +163,7 @@ public class SweetHome3DViewer extends JApplet {
             "java3d-1.6/j3dcore.jar", // Mac OS X Java 3D 1.6 jars and DLLs
             "java3d-1.6/vecmath.jar",
             "java3d-1.6/j3dutils.jar",
-            "java3d-1.6/gluegen-rt.jar", 
+            "java3d-1.6/gluegen-rt.jar",
             "java3d-1.6/jogl-java3d.jar",
             "java3d-1.6/macosx/libgluegen-rt.jnilib",
             "java3d-1.6/macosx/libjogl_desktop.jnilib",
@@ -205,18 +205,17 @@ public class SweetHome3DViewer extends JApplet {
           "jogamp",
           "javax.media.opengl",
           "javax.media.nativewindow",
-          "com.microcrowd.loader.java3d",
           "org.apache.batik"}));
-      
+
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
           sweetHome3DViewerClass.getClassLoader(), sweetHome3DViewerClass.getProtectionDomain(),
-          (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
+          (String [])java3DFiles.toArray(new String [java3DFiles.size()]),
           (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
-      
+
       // Call application constructor with reflection
       String applicationClassName = "com.eteks.sweethome3d.applet.ViewerHelper";
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
-      Constructor applicationConstructor = 
+      Constructor applicationConstructor =
           applicationClass.getConstructor(new Class [] {JApplet.class});
       this.appletApplication = applicationConstructor.newInstance(new Object [] {this});
     } catch (Throwable ex) {
@@ -226,10 +225,10 @@ public class SweetHome3DViewer extends JApplet {
       if (ex instanceof AccessControlException) {
         showError(getLocalizedString("signatureError"));
       } else {
-        showError("<html>" + getLocalizedString("startError") 
+        showError("<html>" + getLocalizedString("startError")
             + "<br>Exception" + ex.getClass().getName() + " " + ex.getMessage());
         ex.printStackTrace();
       }
     }
-  }  
+  }
 }

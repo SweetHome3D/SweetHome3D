@@ -19,13 +19,16 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Color;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
+import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParseException;
+import java.text.ParsePosition;
 
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -33,12 +36,19 @@ import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 
+import com.eteks.parser.CalculatorParser;
+import com.eteks.parser.CompilationException;
+import com.eteks.parser.Function;
+import com.eteks.parser.Interpreter;
+import com.eteks.parser.Syntax;
+
 /**
- * A spinner which commits its value during edition and selects 
+ * A spinner which commits its value during edition and selects
  * the value displayed in its editor when it gains focus.
  * @author Emmanuel Puybaret
  */
@@ -49,16 +59,16 @@ public class AutoCommitSpinner extends JSpinner {
   public AutoCommitSpinner(SpinnerModel model) {
     this(model, null);
   }
-  
+
   /**
    * Creates a spinner with a given <code>model</code> and <code>format</code>.
    */
-  public AutoCommitSpinner(SpinnerModel model, 
+  public AutoCommitSpinner(SpinnerModel model,
                            Format format) {
     super(model);
     JComponent editor = getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
-      final JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();      
+      final JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();
       SwingTools.addAutoSelectionOnFocusGain(textField);
       // Commit text during edition
       if (textField.getFormatterFactory() instanceof DefaultFormatterFactory) {
@@ -85,56 +95,61 @@ public class AutoCommitSpinner extends JSpinner {
                     public void focusGained(FocusEvent ev) {
                       textField.addKeyListener(keyListener);
                     }
-                    
+
                     public void focusLost(FocusEvent ev) {
                       textField.removeKeyListener(keyListener);
                     };
                   });
               }
-              
+
               @Override
               public Format getFormat() {
                 Format format = super.getFormat();
                 // Use a different format depending on whether the text field has focus or not
                 if (textField.hasFocus() && format instanceof DecimalFormat) {
-                  // No grouping when text field has focus 
-                  DecimalFormat noGroupingFormat = (DecimalFormat)format.clone();
+                  // No grouping when text field has focus
+                  final DecimalFormat noGroupingFormat = (DecimalFormat)format.clone();
                   noGroupingFormat.setGroupingUsed(false);
-                  return noGroupingFormat;
+                  try {
+                    return new CalculatorFormat(noGroupingFormat);
+                  } catch (LinkageError ex) {
+                    // Don't allow formulas if Jeks Parser library isn't available
+                    return noGroupingFormat;
+                  }
                 } else {
                   return format;
                 }
               }
-            
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMaximum() {
                 return numberFormatter.getMaximum();
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMinimum() {
                 return numberFormatter.getMinimum();
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public void setMaximum(Comparable maximum) {
                 numberFormatter.setMaximum(maximum);
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public void setMinimum(Comparable minimum) {
                 numberFormatter.setMinimum(minimum);
               }
-              
+
               @Override
               public Class<?> getValueClass() {
                 return numberFormatter.getValueClass();
               }
-              
+
               @Override
               public String valueToString(Object value) throws ParseException {
                 if (textField.hasFocus()
@@ -148,15 +163,20 @@ public class AutoCommitSpinner extends JSpinner {
             };
           editFormatter.setCommitsOnValidEdit(true);
           textField.setFormatterFactory(new DefaultFormatterFactory(editFormatter));
+          textField.addFocusListener(new FocusAdapter() {
+              public void focusLost(FocusEvent ev) {
+                textField.setForeground(UIManager.getColor("Spinner.foreground"));
+              }
+            });
         }
       }
     }
-    
+
     if (format != null) {
       setFormat(format);
     }
   }
-  
+
   /**
    * Sets the format used to display the value of this spinner.
    */
@@ -173,13 +193,13 @@ public class AutoCommitSpinner extends JSpinner {
   }
 
   /**
-   * A spinner number model that will reset to minimum when maximum is reached. 
+   * A spinner number model that will reset to minimum when maximum is reached.
    */
   public static class SpinnerModuloNumberModel extends SpinnerNumberModel {
     public SpinnerModuloNumberModel(int value, int minimum, int maximum, int stepSize) {
       super(value, minimum, maximum, stepSize);
     }
-    
+
     @Override
     public Object getNextValue() {
       if (getNumber().intValue() + getStepSize().intValue() < ((Number)getMaximum()).intValue()) {
@@ -188,7 +208,7 @@ public class AutoCommitSpinner extends JSpinner {
         return getNumber().intValue() + getStepSize().intValue() - ((Number)getMaximum()).intValue() + ((Number)getMinimum()).intValue();
       }
     }
-    
+
     @Override
     public Object getPreviousValue() {
       if (getNumber().intValue() - getStepSize().intValue() >= ((Number)getMinimum()).intValue()) {
@@ -196,6 +216,267 @@ public class AutoCommitSpinner extends JSpinner {
       } else {
         return getNumber().intValue() - getStepSize().intValue() - ((Number)getMinimum()).intValue() + ((Number)getMaximum()).intValue();
       }
+    }
+  }
+
+  /**
+   * A decimal format able to calculate formulas.
+   */
+  private class CalculatorFormat extends DecimalFormat {
+    private DecimalFormat    numberFormat;
+    private CalculatorParser parser;
+
+    private CalculatorFormat(DecimalFormat numberFormat) {
+      super(numberFormat.toPattern());
+      this.numberFormat = numberFormat;
+      this.parser = new CalculatorParser(new CalculatorSyntax(numberFormat));
+    }
+
+    @Override
+    public Number parse(String text, ParsePosition pos) {
+      final String parsedText = text.substring(pos.getIndex());
+      Number number = this.numberFormat.parse(text, pos);
+      if ((number == null || pos.getIndex() != text.length())
+          && parsedText.indexOf('\'') == -1
+          && parsedText.indexOf('"') == -1) {
+        try {
+          // Try to parse with Jeks Parser
+          number = (Double)this.parser.computeExpression(parsedText, new CalculatorInterpreter());
+          pos.setIndex(text.length());
+        } catch (CompilationException ex) {
+          // Keep default value
+        }
+      }
+      Color defaultColor = UIManager.getColor("Spinner.foreground");
+      if (Color.BLACK.equals(defaultColor) || Color.WHITE.equals(defaultColor)) {
+        JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
+        NumberFormatter formatter = (NumberFormatter)textField.getFormatter();
+        if (pos.getIndex() != text.length()
+               && text.substring(pos.getIndex()).trim().length() > 0
+            || number != null
+               && (number.doubleValue() < ((Number)formatter.getMinimum()).doubleValue()
+                   || number.doubleValue() > ((Number)formatter.getMaximum()).doubleValue())) {
+          // Change text color if parsing couldn't be completed
+          textField.setForeground(Color.RED.darker());
+        } else {
+          textField.setForeground(defaultColor);
+        }
+      }
+
+      return number;
+    }
+
+    public StringBuffer format(double number, StringBuffer result, FieldPosition position) {
+      return this.numberFormat.format(number, result, position);
+    }
+  }
+
+  /**
+   * The syntax used in computed spinners.
+   */
+  private static class CalculatorSyntax implements Syntax {
+    private final DecimalFormat format;
+
+    private CalculatorSyntax(DecimalFormat format) {
+      this.format = format;
+    }
+
+    public Object getLiteral(String expression, StringBuffer extractedString) {
+      ParsePosition position = new ParsePosition(0);
+      Number literal = this.format.parse(expression, position);
+      extractedString.append(expression, 0, position.getIndex());
+      return literal;
+    }
+
+    public Object getConstantKey(String constant) {
+      return null; // No constant only numbers
+    }
+
+    public Object getUnaryOperatorKey(String unaryOperator) {
+      if ("-".equals(unaryOperator)) {
+        return unaryOperator;
+      } else {
+        return null;
+      }
+    }
+
+    public Object getBinaryOperatorKey(String binaryOperator) {
+      if ("+".equals(binaryOperator)
+          || "-".equals(binaryOperator)
+          || "/".equals(binaryOperator)
+          || "*".equals(binaryOperator)
+          || "^".equals(binaryOperator)) {
+        return binaryOperator;
+      } else {
+        return null;
+      }
+    }
+
+    public Object getConditionPartKey(String ternaryOperator) {
+      return null; // No condition
+    }
+
+    public int getConditionPartCount() {
+      return 0;
+    }
+
+    public Object getCommonFunctionKey(String predefinedFunction) {
+      predefinedFunction = predefinedFunction.toUpperCase();
+      if ("LN".equals(predefinedFunction)
+          || "LOG".equals(predefinedFunction)
+          || "EXP".equals(predefinedFunction)
+          || "SQR".equals(predefinedFunction)
+          || "SQRT".equals(predefinedFunction)
+          || "COS".equals(predefinedFunction)
+          || "SIN".equals(predefinedFunction)
+          || "TAN".equals(predefinedFunction)
+          || "ARCCOS".equals(predefinedFunction)
+          || "ARCSIN".equals(predefinedFunction)
+          || "ARCTAN".equals(predefinedFunction)) {
+        return predefinedFunction;
+      } else {
+        return null;
+      }
+    }
+
+    public Function getFunction(String userFunction) {
+      return null; // No function
+    }
+
+    public int getBinaryOperatorPriority(Object binaryOperatorKey) {
+      if ("+".equals(binaryOperatorKey)
+          || "-".equals(binaryOperatorKey)) {
+        return 1;
+      } else if ("/".equals(binaryOperatorKey)
+                || "*".equals(binaryOperatorKey)) {
+        return 2;
+      } else if ("^".equals(binaryOperatorKey)) {
+        return 3;
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    public String getAssignmentOperator() {
+      return null;
+    }
+
+    public String getWhiteSpaceCharacters() {
+      return " \t\n\r";
+    }
+
+    public char getOpeningBracket() {
+      return '(';
+    }
+
+    public char getClosingBracket() {
+      return ')';
+    }
+
+    public char getParameterSeparator() {
+      return 0;
+    }
+
+    public String getDelimiters() {
+      return " \t\n\r-+*/().";
+    }
+
+    public boolean isCaseSensitive() {
+      return false;
+    }
+
+    public boolean isShortSyntax() {
+      // Supports common function calls without brackets
+      return true;
+    }
+
+    public boolean isValidIdentifier(String identifier) {
+      return false; // No identifier
+    }
+  }
+
+  /**
+   * The interpreter used to compute spinners.
+   */
+  private static class CalculatorInterpreter implements Interpreter {
+    public Object getLiteralValue(Object literal) {
+      return literal;
+    }
+
+    public Object getParameterValue(Object parameter) {
+      return null; // No parameter
+    }
+
+    public Object getConstantValue(Object key) {
+      return null; // No constant
+    }
+
+    public Double getUnaryOperatorValue(Object unaryOperator, Object param) {
+      if (unaryOperator.equals("-")) {
+        return -((Number)param).doubleValue();
+      } else {
+        throw new IllegalArgumentException("Not implemented");
+      }
+    }
+
+    public Double getBinaryOperatorValue(Object binaryOperator, Object param1, Object param2) {
+      if (binaryOperator.equals("+")) {
+        return ((Number)param1).doubleValue() + ((Number)param2).doubleValue();
+      } else if (binaryOperator.equals("-")) {
+        return ((Number)param1).doubleValue() - ((Number)param2).doubleValue();
+      } else if (binaryOperator.equals("/")) {
+        return ((Number)param1).doubleValue() / ((Number)param2).doubleValue();
+      } else if (binaryOperator.equals("*")) {
+        return ((Number)param1).doubleValue() * ((Number)param2).doubleValue();
+      } else if (binaryOperator.equals("^")) {
+        return Math.pow(((Number)param1).doubleValue(), ((Number)param2).doubleValue());
+      } else {
+        throw new IllegalArgumentException("Not implemented");
+      }
+    }
+
+    public Double getCommonFunctionValue(Object predefinedFunction, Object param) {
+      if (predefinedFunction.equals("LN")) {
+        return Math.log(((Number)param).doubleValue());
+      } else if (predefinedFunction.equals("LOG")) {
+        return Math.log(((Number)param).doubleValue()) / Math.log(10.);
+      } else if (predefinedFunction.equals("EXP")) {
+        return Math.exp(((Number)param).doubleValue());
+      } else if (predefinedFunction.equals("SQR")) {
+        return ((Number)param).doubleValue() * ((Number)param).doubleValue();
+      } else if (predefinedFunction.equals("SQRT")) {
+        return Math.sqrt(((Number)param).doubleValue());
+      } else if (predefinedFunction.equals("COS")) {
+        return Math.cos(Math.toRadians(((Number)param).doubleValue()));
+      } else if (predefinedFunction.equals("SIN")) {
+        return Math.sin(Math.toRadians(((Number)param).doubleValue()));
+      } else if (predefinedFunction.equals("TAN")) {
+        return Math.tan(Math.toRadians(((Number)param).doubleValue()));
+      } else if (predefinedFunction.equals("ARCCOS")) {
+        return Math.toDegrees(Math.acos(((Number)param).doubleValue()));
+      } else if (predefinedFunction.equals("ARCSIN")) {
+        return Math.toDegrees(Math.asin(((Number)param).doubleValue()));
+      } else if (predefinedFunction.equals("ARCTAN")) {
+        return Math.toDegrees(Math.atan(((Number)param).doubleValue()));
+      } else {
+        throw new IllegalArgumentException("Not implemented");
+      }
+    }
+
+    public Object getConditionValue(Object paramIf, Object paramThen, Object paramElse) {
+      return null;
+    }
+
+    public boolean isTrue(Object param) {
+      return false; // No condition
+    }
+
+    public boolean supportsRecursiveCall() {
+      return false;
+    }
+
+    public Object getFunctionValue(Function function, Object [] parameters, boolean recursiveCall) {
+      return null; // No function
     }
   }
 }
