@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -78,15 +79,18 @@ import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * User preferences initialized from 
+ * User preferences initialized from
  * {@link com.eteks.sweethome3d.io.DefaultUserPreferences default user preferences}
- * and stored in user preferences on local file system. 
+ * and stored in user preferences on local file system.
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
   private static final String LANGUAGE                                  = "language";
   private static final String UNIT                                      = "unit";
   private static final String EXTENSIBLE_UNIT                           = "extensibleUnit";
+  private static final String CURRENCY                                  = "currency";
+  private static final String VALUE_ADDED_TAX_ENABLED                   = "valueAddedTaxEnabled";
+  private static final String DEFAULT_VALUE_ADDED_TAX_PERCENTAGE        = "defaultValueAddedTaxPercentage";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
   private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
   private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
@@ -117,8 +121,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String RECENT_TEXTURE_WIDTH                      = "recentTextureWidth#";
   private static final String RECENT_TEXTURE_HEIGHT                     = "recentTextureHeight#";
   private static final String RECENT_HOMES                              = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
-  
+  private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";
+
   private static final String FURNITURE_NAME                            = "furnitureName#";
   private static final String FURNITURE_CREATOR                         = "furnitureCreator#";
   private static final String FURNITURE_CATEGORY                        = "furnitureCategory#";
@@ -133,7 +137,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_COLOR                           = "furnitureColor#";
   private static final String FURNITURE_MODEL_SIZE                      = "furnitureModelSize#";
   private static final String FURNITURE_MODEL_ROTATION                  = "furnitureModelRotation#";
-  private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE         = "furnitureStaircaseCutOutShape#"; 
+  private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE         = "furnitureStaircaseCutOutShape#";
   private static final String FURNITURE_BACK_FACE_SHOWN                 = "furnitureBackFaceShown#";
   private static final String FURNITURE_ICON_YAW                        = "furnitureIconYaw#";
   private static final String FURNITURE_PROPORTIONAL                    = "furnitureProportional#";
@@ -153,7 +157,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String TEXTURES_LIBRARIES_PLUGIN_SUB_FOLDER      = "textures";
 
   private static final PreferencesURLContent MISSING_CONTENT;
-  
+
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   private List<ClassLoader>          resourceClassLoaders;
   private final File                 preferencesFolder;
@@ -162,11 +166,11 @@ public class FileUserPreferences extends UserPreferences {
   private Executor                   catalogsLoader;
   private Executor                   updater;
   private List<Library>              libraries;
-  
+
   private Map<Content, PreferencesURLContent> copiedContentsCache = new WeakHashMap<Content, PreferencesURLContent>();
-  
+
   public static final String PLUGIN_LANGUAGE_LIBRARY_FAMILY = "PluginLanguageLibrary";
-  
+
   static {
     PreferencesURLContent dummyURLContent = null;
     try {
@@ -175,9 +179,9 @@ public class FileUserPreferences extends UserPreferences {
     }
     MISSING_CONTENT = dummyURLContent;
   }
- 
+
   /**
-   * Creates user preferences read from user preferences in file system, 
+   * Creates user preferences read from user preferences in file system,
    * and from resource files.
    */
   public FileUserPreferences() {
@@ -185,7 +189,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Creates user preferences stored in the folders given in parameter. 
+   * Creates user preferences stored in the folders given in parameter.
    * @param preferencesFolder the folder where preferences files are stored
    *    or <code>null</code> if this folder is the default one.
    * @param applicationFolders the folders where application private files are stored
@@ -197,17 +201,17 @@ public class FileUserPreferences extends UserPreferences {
                              File [] applicationFolders) {
     this(preferencesFolder, applicationFolders, null);
   }
-  
+
   /**
-   * Creates user preferences stored in the folders given in parameter. 
+   * Creates user preferences stored in the folders given in parameter.
    * @param preferencesFolder the folder where preferences files are stored
    *    or <code>null</code> if this folder is the default one.
    * @param applicationFolders  the folders where application private files are stored
    *    or <code>null</code> if it's the default one. As the first application folder
    *    is used as the folder where plug-ins files are imported by the user, it should
    *    have write access otherwise the user won't be able to import them.
-   * @param updater  an executor that will be used to update user preferences for lengthy 
-   *    operations. If <code>null</code>, then these operations and 
+   * @param updater  an executor that will be used to update user preferences for lengthy
+   *    operations. If <code>null</code>, then these operations and
    *    updates will be executed in the current thread.
    */
   public FileUserPreferences(File preferencesFolder,
@@ -228,12 +232,12 @@ public class FileUserPreferences extends UserPreferences {
       this.catalogsLoader = Executors.newSingleThreadExecutor();
       this.updater = updater;
     }
-    
+
     updateSupportedLanguages();
 
     final Preferences preferences;
     // From version 3.0 use portable preferences
-    PortablePreferences portablePreferences = new PortablePreferences();    
+    PortablePreferences portablePreferences = new PortablePreferences();
     // If portable preferences storage doesn't exist and default preferences folder is used
     if (!portablePreferences.exist()
         && preferencesFolder == null) {
@@ -242,36 +246,36 @@ public class FileUserPreferences extends UserPreferences {
     } else {
       preferences = portablePreferences;
     }
-    
+
     String language = preferences.get(LANGUAGE, getLanguage());
     // Check language is still supported
     if (!Arrays.asList(getSupportedLanguages()).contains(language)) {
-      language = Locale.ENGLISH.getLanguage();  
+      language = Locale.ENGLISH.getLanguage();
     }
-    setLanguage(language);    
+    setLanguage(language);
 
     setFurnitureCatalog(new FurnitureCatalog());
-    // Fill default furniture catalog 
+    // Fill default furniture catalog
     updateFurnitureDefaultCatalog(defaultExecutor, defaultExecutor);
     // Read additional furniture
     readModifiableFurnitureCatalog(preferences);
-    
+
     setTexturesCatalog(new TexturesCatalog());
-    // Fill default textures catalog 
+    // Fill default textures catalog
     updateTexturesDefaultCatalog(defaultExecutor, defaultExecutor);
     // Read additional textures
     readModifiableTexturesCatalog(preferences);
-    
+
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences(false, this);
-    
-    // Fill default patterns catalog 
+
+    // Fill default patterns catalog
     PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();
     setPatternsCatalog(patternsCatalog);
 
-    // Read other preferences 
+    // Read other preferences
     LengthUnit defaultLengthUnit = defaultPreferences.getLengthUnit();
     try {
-      // EXTENSIBLE_UNIT was added in version 4.0 to store new additional length unit 
+      // EXTENSIBLE_UNIT was added in version 4.0 to store new additional length unit
       // to avoid breaking program if an older version of FileUserPreferences reads new preferences
       String extensibleUnit = preferences.get(EXTENSIBLE_UNIT, null);
       if (extensibleUnit != null) {
@@ -282,25 +286,36 @@ public class FileUserPreferences extends UserPreferences {
     } catch (IllegalArgumentException ex) {
       setUnit(defaultLengthUnit);
     }
-    setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
+    setCurrency(preferences.get(CURRENCY, defaultPreferences.getCurrency()));
+    setValueAddedTaxEnabled(preferences.getBoolean(VALUE_ADDED_TAX_ENABLED, defaultPreferences.isValueAddedTaxEnabled()));
+    String percentage = preferences.get(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE, null);
+    BigDecimal valueAddedTaxPercentage = defaultPreferences.getDefaultValueAddedTaxPercentage();
+    if (percentage != null) {
+      try {
+        valueAddedTaxPercentage = new BigDecimal(percentage);
+      } catch (NumberFormatException ex) {
+      }
+    }
+    setDefaultValueAddedTaxPercentage(valueAddedTaxPercentage);
+    setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE,
         defaultPreferences.isFurnitureCatalogViewedInTree()));
-    setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
+    setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE,
         defaultPreferences.isNavigationPanelVisible()));
-    setAerialViewCenteredOnSelectionEnabled(preferences.getBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+    setAerialViewCenteredOnSelectionEnabled(preferences.getBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED,
         defaultPreferences.isAerialViewCenteredOnSelectionEnabled()));
-    setObserverCameraSelectedAtChange(preferences.getBoolean(OBSERVER_CAMERA_SELECTED_AT_CHANGE, 
+    setObserverCameraSelectedAtChange(preferences.getBoolean(OBSERVER_CAMERA_SELECTED_AT_CHANGE,
         defaultPreferences.isObserverCameraSelectedAtChange()));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, defaultPreferences.isRulersVisible()));
     setGridVisible(preferences.getBoolean(GRID_VISIBLE, defaultPreferences.isGridVisible()));
     setDefaultFontName(preferences.get(DEFAULT_FONT_NAME,  defaultPreferences.getDefaultFontName()));
-    setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
+    setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP,
         defaultPreferences.isFurnitureViewedFromTop()));
     setFurnitureModelIconSize(preferences.getInt(FURNITURE_MODEL_ICON_SIZE, defaultPreferences.getFurnitureModelIconSize()));
-    setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
+    setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED,
         defaultPreferences.isRoomFloorColoredOrTextured()));
     try {
-      setWallPattern(patternsCatalog.getPattern(preferences.get(WALL_PATTERN, 
+      setWallPattern(patternsCatalog.getPattern(preferences.get(WALL_PATTERN,
           defaultPreferences.getWallPattern().getName())));
     } catch (IllegalArgumentException ex) {
       // Ensure wall pattern always exists even if new patterns are added in future versions
@@ -308,21 +323,21 @@ public class FileUserPreferences extends UserPreferences {
     }
     try {
       if (defaultPreferences.getNewWallPattern() != null) {
-        setNewWallPattern(patternsCatalog.getPattern(preferences.get(NEW_WALL_PATTERN, 
+        setNewWallPattern(patternsCatalog.getPattern(preferences.get(NEW_WALL_PATTERN,
             defaultPreferences.getNewWallPattern().getName())));
       }
     } catch (IllegalArgumentException ex) {
       // Keep new wall pattern unchanged
     }
-    setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
+    setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS,
         defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
-        defaultPreferences.getNewWallHeight()));    
-    setNewWallBaseboardThickness(preferences.getFloat(NEW_WALL_BASEBOARD_THICKNESS, 
+        defaultPreferences.getNewWallHeight()));
+    setNewWallBaseboardThickness(preferences.getFloat(NEW_WALL_BASEBOARD_THICKNESS,
         defaultPreferences.getNewWallBaseboardThickness()));
     setNewWallBaseboardHeight(preferences.getFloat(NEW_WALL_BASEBOARD_HEIGHT,
         defaultPreferences.getNewWallBaseboardHeight()));
-    setNewFloorThickness(preferences.getFloat(NEW_FLOOR_THICKNESS, 
+    setNewFloorThickness(preferences.getFloat(NEW_FLOOR_THICKNESS,
         defaultPreferences.getNewFloorThickness()));
     setCheckUpdatesEnabled(preferences.getBoolean(CHECK_UPDATES_ENABLED,
         defaultPreferences.isCheckUpdatesEnabled()));
@@ -331,7 +346,6 @@ public class FileUserPreferences extends UserPreferences {
     }
     setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
         defaultPreferences.getAutoSaveDelayForRecovery()));
-    setCurrency(defaultPreferences.getCurrency());    
     // Read recent colors list
     String [] recentColors = preferences.get(RECENT_COLORS, "").split(",");
     List<Integer> recentColorsList = new ArrayList<Integer>(recentColors.length);
@@ -374,9 +388,9 @@ public class FileUserPreferences extends UserPreferences {
         break;
       }
     }
-    
+
     setHomeExamples(defaultPreferences.getHomeExamples());
-    
+
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           // Update catalogs with new default locale
@@ -386,7 +400,7 @@ public class FileUserPreferences extends UserPreferences {
           setHomeExamples(new DefaultUserPreferences(false, FileUserPreferences.this).getHomeExamples());
         }
       });
-    
+
     if (preferences != portablePreferences) {
       // Switch to portable preferences now that all preferences are read
       this.preferences = portablePreferences;
@@ -396,14 +410,14 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Updates the default supported languages with languages available in plugin folder. 
+   * Updates the default supported languages with languages available in plugin folder.
    */
   private void updateSupportedLanguages() {
     removeLibraries(LANGUAGE_LIBRARY_TYPE);
     List<ClassLoader> resourceClassLoaders = new ArrayList<ClassLoader>();
     String [] defaultSupportedLanguages = getDefaultSupportedLanguages();
     Set<String> supportedLanguages = new TreeSet<String>(Arrays.asList(defaultSupportedLanguages));
-   
+
     File [] languageLibrariesPluginFolders = getLanguageLibrariesPluginFolders();
     if (languageLibrariesPluginFolders != null) {
       for (File languageLibrariesPluginFolder : languageLibrariesPluginFolders) {
@@ -413,9 +427,9 @@ public class FileUserPreferences extends UserPreferences {
             return pathname.isFile();
           }
         });
-        
+
         if (pluginLanguageLibraryFiles != null) {
-          // Treat language files in reverse order so file named with a date or a version 
+          // Treat language files in reverse order so file named with a date or a version
           // will be taken into account from most recent to least recent
           Arrays.sort(pluginLanguageLibraryFiles, Collections.reverseOrder(OperatingSystem.getFileVersionComparator()));
           for (File pluginLanguageLibraryFile : pluginLanguageLibraryFiles) {
@@ -432,7 +446,7 @@ public class FileUserPreferences extends UserPreferences {
                   languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE,
                       ResourceBundle.getBundle(PLUGIN_LANGUAGE_LIBRARY_FAMILY, Locale.getDefault(), classLoader));
                 } catch (MissingResourceException ex) {
-                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE, 
+                  languageLibrary = new DefaultLibrary(pluginLanguageLibraryFile.getCanonicalPath(), LANGUAGE_LIBRARY_TYPE,
                       null, getLanguageLibraryDefaultName(languages), null, getDefaultVersion(pluginLanguageLibraryFile), null, null);
                 }
                 libraries.add(0, languageLibrary);
@@ -444,7 +458,7 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    
+
     // Give less priority to default class loader
     resourceClassLoaders.addAll(super.getResourceClassLoaders());
     this.resourceClassLoaders = Collections.unmodifiableList(resourceClassLoaders);
@@ -486,7 +500,7 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
   }
-  
+
   /**
    * Returns a text in English describing the given languages.
    */
@@ -497,8 +511,8 @@ public class FileUserPreferences extends UserPreferences {
         description += ", ";
       }
       int underscoreIndex = language.indexOf('_');
-      Locale locale = underscoreIndex < 0 
-          ? new Locale(language) 
+      Locale locale = underscoreIndex < 0
+          ? new Locale(language)
           : new Locale(language.substring(0, underscoreIndex), language.substring(underscoreIndex + 1));
       description += locale.getDisplayLanguage(Locale.ENGLISH);
       if (underscoreIndex >= 0) {
@@ -535,24 +549,24 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Returns the default class loader of user preferences and the class loaders that
-   * give access to resources in language libraries plugin folder. 
+   * give access to resources in language libraries plugin folder.
    */
   @Override
   public List<ClassLoader> getResourceClassLoaders() {
     return this.resourceClassLoaders;
   }
-  
+
   /**
    * Reloads furniture default catalogs.
    */
-  private void updateFurnitureDefaultCatalog(Executor furnitureCatalogLoader, 
+  private void updateFurnitureDefaultCatalog(Executor furnitureCatalogLoader,
                                              final Executor updater) {
     final FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     furnitureCatalogLoader.execute(new Runnable() {
         public void run() {
           updater.execute(new Runnable() {
               public void run() {
-                // Delete default furniture of current furniture catalog          
+                // Delete default furniture of current furniture catalog
                 for (FurnitureCategory category : furnitureCatalog.getCategories()) {
                   for (CatalogPieceOfFurniture piece : category.getFurniture()) {
                     if (!piece.isModifiable()) {
@@ -562,9 +576,9 @@ public class FileUserPreferences extends UserPreferences {
                 }
               }
             });
-          
+
           // Read default furniture catalog
-          final FurnitureCatalog resourceFurnitureCatalog = 
+          final FurnitureCatalog resourceFurnitureCatalog =
               readFurnitureCatalogFromResource(getFurnitureLibrariesPluginFolders());
           for (final FurnitureCategory category : resourceFurnitureCatalog.getCategories()) {
             for (final CatalogPieceOfFurniture piece : category.getFurniture()) {
@@ -611,14 +625,14 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Reloads textures default catalog.
    */
-  private void updateTexturesDefaultCatalog(Executor texturesCatalogLoader, 
+  private void updateTexturesDefaultCatalog(Executor texturesCatalogLoader,
                                             final Executor updater) {
     final TexturesCatalog texturesCatalog = getTexturesCatalog();
     texturesCatalogLoader.execute(new Runnable() {
         public void run() {
           updater.execute(new Runnable() {
               public void run() {
-                // Delete default textures of current textures catalog          
+                // Delete default textures of current textures catalog
                 for (TexturesCategory category : texturesCatalog.getCategories()) {
                   for (CatalogTexture texture : category.getTextures()) {
                     if (!texture.isModifiable()) {
@@ -628,9 +642,9 @@ public class FileUserPreferences extends UserPreferences {
                 }
               }
             });
-            
+
           // Read default textures catalog
-          final TexturesCatalog resourceTexturesCatalog = 
+          final TexturesCatalog resourceTexturesCatalog =
               readTexturesCatalogFromResource(getTexturesLibrariesPluginFolders());
           for (final TexturesCategory category : resourceTexturesCatalog.getCategories()) {
             for (final CatalogTexture texture : category.getTextures()) {
@@ -701,7 +715,7 @@ public class FileUserPreferences extends UserPreferences {
     }
     setRecentTextures(recentTextures);
   }
-  
+
   /**
    * Read modifiable furniture catalog from preferences.
    */
@@ -721,7 +735,7 @@ public class FileUserPreferences extends UserPreferences {
         getFurnitureCatalog().add(pieceCategory, piece);
       }
     }
-  }  
+  }
 
   /**
    * Returns the modifiable piece of furniture read from <code>preferences</code> at the given <code>index</code>.
@@ -732,8 +746,8 @@ public class FileUserPreferences extends UserPreferences {
    * @param preferencesFolder  the folder where piece resources can be stored
    * @return the read piece of furniture or <code>null</code> if the piece at the given index doesn't exist.
    */
-  protected CatalogPieceOfFurniture readModifiablePieceOfFurniture(Preferences preferences, 
-                                                                   int index, 
+  protected CatalogPieceOfFurniture readModifiablePieceOfFurniture(Preferences preferences,
+                                                                   int index,
                                                                    File preferencesFolder) {
     String name = preferences.get(FURNITURE_NAME + index, null);
     if (name == null) {
@@ -750,8 +764,8 @@ public class FileUserPreferences extends UserPreferences {
     boolean doorOrWindow = preferences.getBoolean(FURNITURE_DOOR_OR_WINDOW + index, false);
     String staircaseCutOutShape = preferences.get(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + index, null);
     String colorString = preferences.get(FURNITURE_COLOR + index, null);
-    Integer color = colorString != null 
-        ? Integer.valueOf(colorString) : null; 
+    Integer color = colorString != null
+        ? Integer.valueOf(colorString) : null;
     float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + index);
     boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + index, false);
     String modelSizeString = preferences.get(FURNITURE_MODEL_SIZE + index, null);
@@ -762,19 +776,19 @@ public class FileUserPreferences extends UserPreferences {
     boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + index, true);
 
     if (doorOrWindow) {
-      return new CatalogDoorOrWindow(name, icon, model,  
+      return new CatalogDoorOrWindow(name, icon, model,
           width, depth, height, elevation, movable, 1, 0, new Sash [0],
           color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
     } else {
-      return new CatalogPieceOfFurniture(name, icon, model,  
-          width, depth, height, elevation, movable, 
+      return new CatalogPieceOfFurniture(name, icon, model,
+          width, depth, height, elevation, movable,
           staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
     }
   }
 
   /**
-   * Returns the furniture category of a piece at the given <code>index</code> 
-   * read from <code>preferences</code>. 
+   * Returns the furniture category of a piece at the given <code>index</code>
+   * read from <code>preferences</code>.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
    * @param preferences        the preferences from which piece of furniture data can be read
@@ -798,14 +812,14 @@ public class FileUserPreferences extends UserPreferences {
         return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
       } else {
         try {
-          return new float [][] {{Float.parseFloat(values [0]), 
-                                  Float.parseFloat(values [1]), 
-                                  Float.parseFloat(values [2])}, 
-                                 {Float.parseFloat(values [3]), 
-                                  Float.parseFloat(values [4]), 
-                                  Float.parseFloat(values [5])}, 
-                                 {Float.parseFloat(values [6]), 
-                                  Float.parseFloat(values [7]), 
+          return new float [][] {{Float.parseFloat(values [0]),
+                                  Float.parseFloat(values [1]),
+                                  Float.parseFloat(values [2])},
+                                 {Float.parseFloat(values [3]),
+                                  Float.parseFloat(values [4]),
+                                  Float.parseFloat(values [5])},
+                                 {Float.parseFloat(values [6]),
+                                  Float.parseFloat(values [7]),
                                   Float.parseFloat(values [8])}};
         } catch (NumberFormatException ex) {
           return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
@@ -813,11 +827,11 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
   }
-  
+
   /**
    * Returns a content instance from the resource file value of key.
    */
-  private PreferencesURLContent getContent(Preferences preferences, String key, 
+  private PreferencesURLContent getContent(Preferences preferences, String key,
                                            File preferencesFolder) {
     String content = preferences.get(key, null);
     if (content != null) {
@@ -834,7 +848,7 @@ public class FileUserPreferences extends UserPreferences {
         // Check if a local file exists
         if (urlContent.isJAREntry()) {
           URL jarEntryURL = urlContent.getJAREntryURL();
-          if ("file".equals(jarEntryURL.getProtocol()) 
+          if ("file".equals(jarEntryURL.getProtocol())
               && !new File(jarEntryURL.toURI()).exists()) {
             return MISSING_CONTENT;
           }
@@ -847,11 +861,11 @@ public class FileUserPreferences extends UserPreferences {
         // Return MISSING_CONTENT for incorrect URL and content
       } catch (URISyntaxException ex) {
         // Return MISSING_CONTENT for incorrect content
-      } 
+      }
     }
     return MISSING_CONTENT;
   }
-  
+
   /**
    * Read modifiable textures catalog from preferences.
    */
@@ -870,7 +884,7 @@ public class FileUserPreferences extends UserPreferences {
         getTexturesCatalog().add(textureCategory, texture);
       }
     }
-  }  
+  }
 
   /**
    * Returns the modifiable texture read from <code>preferences</code> at the given <code>index</code>.
@@ -881,7 +895,7 @@ public class FileUserPreferences extends UserPreferences {
    * @param preferencesFolder  the folder where textures resources can be stored
    * @return the read texture or <code>null</code> if the texture at the given index doesn't exist.
    */
-  protected CatalogTexture readModifiableTexture(Preferences preferences, 
+  protected CatalogTexture readModifiableTexture(Preferences preferences,
                                                  int index, File preferencesFolder) {
     String name = preferences.get(TEXTURE_NAME + index, null);
     if (name == null) {
@@ -896,8 +910,8 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the category of a texture at the given <code>index</code> 
-   * read from <code>preferences</code>. 
+   * Returns the category of a texture at the given <code>index</code>
+   * read from <code>preferences</code>.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
    * @param preferences        the preferences from which texture data can be read
@@ -917,9 +931,22 @@ public class FileUserPreferences extends UserPreferences {
     writeModifiableFurnitureCatalog(preferences);
     writeRecentAndModifiableTexturesCatalog(preferences);
 
-    // Write other preferences 
+    // Write other preferences
     preferences.put(LANGUAGE, getLanguage());
-    preferences.put(EXTENSIBLE_UNIT, getLengthUnit().name());   
+    preferences.put(EXTENSIBLE_UNIT, getLengthUnit().name());
+    String currency = getCurrency();
+    if (currency == null) {
+      preferences.remove(CURRENCY);
+    } else {
+      preferences.put(CURRENCY, currency);
+    }
+    preferences.putBoolean(VALUE_ADDED_TAX_ENABLED, isValueAddedTaxEnabled());
+    BigDecimal valueAddedTaxPercentage = getDefaultValueAddedTaxPercentage();
+    if (valueAddedTaxPercentage == null) {
+      preferences.remove(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE);
+    } else {
+      preferences.put(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE, valueAddedTaxPercentage.toPlainString());
+    }
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
@@ -941,11 +968,11 @@ public class FileUserPreferences extends UserPreferences {
     if (newWallPattern != null) {
       preferences.put(NEW_WALL_PATTERN, newWallPattern.getName());
     }
-    preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
+    preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
-    preferences.putFloat(NEW_WALL_BASEBOARD_THICKNESS, getNewWallBaseboardThickness());   
+    preferences.putFloat(NEW_WALL_BASEBOARD_THICKNESS, getNewWallBaseboardThickness());
     preferences.putFloat(NEW_WALL_BASEBOARD_HEIGHT, getNewWallBaseboardHeight());
-    preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());   
+    preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());
     preferences.putBoolean(CHECK_UPDATES_ENABLED, isCheckUpdatesEnabled());
     Long updatesMinimumDate = getUpdatesMinimumDate();
     if (updatesMinimumDate != null) {
@@ -967,7 +994,7 @@ public class FileUserPreferences extends UserPreferences {
     for (int j = 0; j < 100 && itColor.hasNext(); j++) {
       if (j > 0) {
         recentColors.append(",");
-      } 
+      }
       recentColors.append(String.format("#%6X", itColor.next() & 0xFFFFFF).replace(' ', '0'));
     }
     preferences.put(RECENT_COLORS, recentColors.toString());
@@ -978,7 +1005,7 @@ public class FileUserPreferences extends UserPreferences {
       Entry<String, Boolean> ignoredActionTipEntry = it.next();
       if (ignoredActionTipEntry.getValue()) {
         preferences.put(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
-      } 
+      }
     }
     // Remove obsolete keys
     for ( ; i <= this.ignoredActionTips.size(); i++) {
@@ -996,7 +1023,7 @@ public class FileUserPreferences extends UserPreferences {
             && autoCompletionStrings.length() + autoCompletionString.length() + 1 <= Preferences.MAX_VALUE_LENGTH) {
           if (autoCompletionStrings.length() > 0) {
             autoCompletionStrings.append(",");
-          } 
+          }
           autoCompletionStrings.append(autoCompletionString);
         }
       }
@@ -1007,9 +1034,9 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(AUTO_COMPLETION_PROPERTY + i);
       preferences.remove(AUTO_COMPLETION_STRINGS + i);
     }
-    
+
     try {
-      // Write preferences 
+      // Write preferences
       preferences.flush();
     } catch (BackingStoreException ex) {
       throw new RecorderException("Couldn't write preferences", ex);
@@ -1027,9 +1054,9 @@ public class FileUserPreferences extends UserPreferences {
         if (piece.isModifiable()) {
           preferences.put(FURNITURE_NAME + i, piece.getName());
           preferences.put(FURNITURE_CATEGORY + i, category.getName());
-          putContent(preferences, FURNITURE_ICON + i, piece.getIcon(), 
+          putContent(preferences, FURNITURE_ICON + i, piece.getIcon(),
               FURNITURE_CONTENT_PREFIX, furnitureContentURLs);
-          putContent(preferences, FURNITURE_MODEL + i, piece.getModel(), 
+          putContent(preferences, FURNITURE_MODEL + i, piece.getModel(),
               FURNITURE_CONTENT_PREFIX, furnitureContentURLs);
           preferences.putFloat(FURNITURE_WIDTH + i, piece.getWidth());
           preferences.putFloat(FURNITURE_DEPTH + i, piece.getDepth());
@@ -1048,7 +1075,7 @@ public class FileUserPreferences extends UserPreferences {
             preferences.remove(FURNITURE_COLOR + i);
           }
           float [][] modelRotation = piece.getModelRotation();
-          preferences.put(FURNITURE_MODEL_ROTATION + i, 
+          preferences.put(FURNITURE_MODEL_ROTATION + i,
               floatToString(modelRotation[0][0]) + " " + floatToString(modelRotation[0][1]) + " " + floatToString(modelRotation[0][2]) + " "
               + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
               + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]));
@@ -1107,7 +1134,7 @@ public class FileUserPreferences extends UserPreferences {
       return String.valueOf(f);
     }
   }
-    
+
   /**
    * Writes recent textures and modifiable textures catalog in <code>preferences</code>.
    */
@@ -1117,7 +1144,7 @@ public class FileUserPreferences extends UserPreferences {
     int i = 1;
     for (TextureImage texture : getRecentTextures()) {
       preferences.put(RECENT_TEXTURE_NAME + i, texture.getName());
-      putContent(preferences, RECENT_TEXTURE_IMAGE + i, texture.getImage(), 
+      putContent(preferences, RECENT_TEXTURE_IMAGE + i, texture.getImage(),
           TEXTURE_CONTENT_PREFIX, texturesContentURLs);
       if (texture.getWidth() != -1) {
         preferences.putFloat(RECENT_TEXTURE_WIDTH + i, texture.getWidth());
@@ -1144,7 +1171,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(RECENT_TEXTURE_HEIGHT + i);
       preferences.remove(RECENT_TEXTURE_CREATOR + i);
     }
-    
+
     // Save modifiable textures
     i = 1;
     for (TexturesCategory category : getTexturesCatalog().getCategories()) {
@@ -1152,7 +1179,7 @@ public class FileUserPreferences extends UserPreferences {
         if (texture.isModifiable()) {
           preferences.put(TEXTURE_NAME + i, texture.getName());
           preferences.put(TEXTURE_CATEGORY + i, category.getName());
-          putContent(preferences, TEXTURE_IMAGE + i, texture.getImage(), 
+          putContent(preferences, TEXTURE_IMAGE + i, texture.getImage(),
               TEXTURE_CONTENT_PREFIX, texturesContentURLs);
           preferences.putFloat(TEXTURE_WIDTH + i, texture.getWidth());
           preferences.putFloat(TEXTURE_HEIGHT + i, texture.getHeight());
@@ -1174,14 +1201,14 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(TEXTURE_HEIGHT + i);
       preferences.remove(TEXTURE_CREATOR + i);
     }
-    
+
     deleteObsoleteContent(texturesContentURLs, TEXTURE_CONTENT_PREFIX);
   }
 
   /**
    * Writes <code>key</code> <code>content</code> in <code>preferences</code>.
    */
-  private void putContent(Preferences preferences, String key, 
+  private void putContent(Preferences preferences, String key,
                           Content content, String contentPrefix,
                           Set<URL> savedContentURLs) throws RecorderException {
     if (content instanceof PreferencesURLContent) {
@@ -1205,7 +1232,7 @@ public class FileUserPreferences extends UserPreferences {
             && ((TemporaryURLContent)content).isJAREntry()) {
           URLContent urlContent = (URLContent)content;
           try {
-            // If content is a JAR entry copy the content of its URL and rebuild a new URL content from 
+            // If content is a JAR entry copy the content of its URL and rebuild a new URL content from
             // this copy and the entry name
             PreferencesURLContent copiedContent = copyToPreferencesURLContent(new URLContent(urlContent.getJAREntryURL()), contentPrefix);
             preferencesContent = new PreferencesURLContent(new URL("jar:" + copiedContent.getURL() + "!/" + urlContent.getJAREntryName()));
@@ -1219,16 +1246,16 @@ public class FileUserPreferences extends UserPreferences {
         // Store the copied content in cache to avoid copying it again the next time preferences are written
         this.copiedContentsCache.put(content, preferencesContent);
       }
-      
+
       putContent(preferences, key, preferencesContent, contentPrefix, savedContentURLs);
     }
   }
 
   /**
-   * Returns a content object that references a copy of <code>content</code> in 
+   * Returns a content object that references a copy of <code>content</code> in
    * user preferences folder.
    */
-  private PreferencesURLContent copyToPreferencesURLContent(Content content, 
+  private PreferencesURLContent copyToPreferencesURLContent(Content content,
                                                             String contentPrefix) throws RecorderException {
     InputStream tempIn = null;
     OutputStream tempOut = null;
@@ -1237,7 +1264,7 @@ public class FileUserPreferences extends UserPreferences {
       tempIn = content.openStream();
       tempOut = new FileOutputStream(preferencesFile);
       byte [] buffer = new byte [8192];
-      int size; 
+      int size;
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
       }
@@ -1259,7 +1286,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folders where language libraries files are placed 
+   * Returns the folders where language libraries files are placed
    * or <code>null</code> if that folder can't be retrieved.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
@@ -1273,7 +1300,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folders where furniture catalog files are placed 
+   * Returns the folders where furniture catalog files are placed
    * or <code>null</code> if that folder can't be retrieved.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
@@ -1287,7 +1314,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folders where texture catalog files are placed 
+   * Returns the folders where texture catalog files are placed
    * or <code>null</code> if that folder can't be retrieved.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
@@ -1301,7 +1328,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the first Sweet Home 3D application folder. 
+   * Returns the first Sweet Home 3D application folder.
    */
   public File getApplicationFolder() throws IOException {
     File [] applicationFolders = getApplicationFolders();
@@ -1313,20 +1340,20 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns Sweet Home 3D application folders. 
+   * Returns Sweet Home 3D application folders.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
    */
   public File [] getApplicationFolders() throws IOException {
     if (this.applicationFolders != null) {
       return this.applicationFolders;
-    } else { 
+    } else {
       return new File [] {OperatingSystem.getDefaultApplicationFolder()};
     }
   }
 
   /**
-   * Returns subfolders of Sweet Home 3D application folders of a given name. 
+   * Returns subfolders of Sweet Home 3D application folders of a given name.
    * Caution : This method can be called from constructor so overriding implementations
    * shouldn't be based on the state of their fields.
    */
@@ -1347,7 +1374,7 @@ public class FileUserPreferences extends UserPreferences {
     // Return a new file in preferences folder
     return File.createTempFile(filePrefix, ".pref", getPreferencesFolder());
   }
-  
+
   /**
    * Creates preferences folder and its sub folders if it doesn't exist.
    */
@@ -1376,9 +1403,9 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Deletes from application folder the content files starting by <code>contentPrefix</code>
-   * that don't belong to <code>contentURLs</code>. 
+   * that don't belong to <code>contentURLs</code>.
    */
-  private void deleteObsoleteContent(final Set<URL> contentURLs, 
+  private void deleteObsoleteContent(final Set<URL> contentURLs,
                                      final String contentPrefix) throws RecorderException {
     // Search obsolete contents
     File applicationFolder;
@@ -1400,16 +1427,16 @@ public class FileUserPreferences extends UserPreferences {
           }
         });
     if (obsoleteContentFiles != null) {
-      // Delete obsolete contents at program exit to ensure removed contents 
+      // Delete obsolete contents at program exit to ensure removed contents
       // can still be saved in homes that reference them
       for (File file : obsoleteContentFiles) {
         file.deleteOnExit();
       }
     }
   }
-  
+
   /**
-   * Returns the folder where files depending on preferences are stored. 
+   * Returns the folder where files depending on preferences are stored.
    */
   private File getPreferencesFolder() throws IOException {
     if (this.preferencesFolder != null) {
@@ -1436,20 +1463,20 @@ public class FileUserPreferences extends UserPreferences {
    * Sets which action tip should be ignored.
    */
   @Override
-  public void setActionTipIgnored(String actionKey) {   
+  public void setActionTipIgnored(String actionKey) {
     this.ignoredActionTips.put(actionKey, true);
     super.setActionTipIgnored(actionKey);
   }
-  
+
   /**
-   * Returns whether an action tip should be ignored or not. 
+   * Returns whether an action tip should be ignored or not.
    */
   @Override
   public boolean isActionTipIgnored(String actionKey) {
     Boolean ignoredActionTip = this.ignoredActionTips.get(actionKey);
     return ignoredActionTip != null && ignoredActionTip.booleanValue();
   }
-  
+
   /**
    * Resets the display flag of action tips.
    */
@@ -1462,9 +1489,9 @@ public class FileUserPreferences extends UserPreferences {
     }
     super.resetIgnoredActionTips();
   }
-  
+
   /**
-   * Returns <code>true</code> if the language library at the given location exists 
+   * Returns <code>true</code> if the language library at the given location exists
    * in the first language libraries folder.
    * @param location the file path of the resource to check
    */
@@ -1478,7 +1505,7 @@ public class FileUserPreferences extends UserPreferences {
       return new File(languageLibrariesPluginFolders [0], libraryFileName).exists();
     }
   }
-  
+
   /**
    * Adds <code>languageLibraryPath</code> to the first language libraries folder
    * to make the language library it contains available to supported languages.
@@ -1499,7 +1526,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns <code>true</code> if the furniture library at the given <code>location</code> exists 
+   * Returns <code>true</code> if the furniture library at the given <code>location</code> exists
    * in the first furniture libraries folder.
    * @param location the file path of the resource to check
    */
@@ -1516,7 +1543,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Adds the file <code>furnitureLibraryPath</code> to the first furniture libraries folder 
+   * Adds the file <code>furnitureLibraryPath</code> to the first furniture libraries folder
    * to make the furniture library available to catalog.
    */
   @Override
@@ -1536,7 +1563,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns <code>true</code> if the textures library at the given <code>location</code> exists 
+   * Returns <code>true</code> if the textures library at the given <code>location</code> exists
    * in the first textures libraries folder.
    * @param location the file path of the resource to check
    */
@@ -1553,7 +1580,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Adds the file <code>texturesLibraryPath</code> to the first textures libraries folder 
+   * Adds the file <code>texturesLibraryPath</code> to the first textures libraries folder
    * to make the textures library available to catalog.
    */
   @Override
@@ -1581,16 +1608,16 @@ public class FileUserPreferences extends UserPreferences {
     if (destinationFile.exists()) {
       // Delete file to reinitialize handlers
       destinationFile.delete();
-    }    
+    }
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {
       tempIn = new BufferedInputStream(new FileInputStream(libraryFile));
       // Create folder if it doesn't exist
       folder.mkdirs();
-      tempOut = new FileOutputStream(destinationFile);          
+      tempOut = new FileOutputStream(destinationFile);
       byte [] buffer = new byte [8192];
-      int size; 
+      int size;
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
       }
@@ -1603,7 +1630,7 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
   }
-  
+
   /**
    * Returns the libraries available in user preferences.
    * @since 4.0
@@ -1637,50 +1664,50 @@ public class FileUserPreferences extends UserPreferences {
 
     if (updateFurnitureCatalog) {
       updateFurnitureDefaultCatalog(this.catalogsLoader, this.updater);
-    } 
+    }
     if (updateTexturesCatalog) {
       updateTexturesDefaultCatalog(this.catalogsLoader, this.updater);
-    }  
+    }
     if (updateSupportedLanguages) {
       updateSupportedLanguages();
     }
   }
 
   /**
-   * Returns <code>true</code> if the given file <code>library</code> can be deleted. 
+   * Returns <code>true</code> if the given file <code>library</code> can be deleted.
    * @since 4.0
    */
   public boolean isLibraryDeletable(Library library) {
-    return new File(library.getLocation()).canWrite();    
+    return new File(library.getLocation()).canWrite();
   }
 
-  
+
   /**
-   * A content stored in preferences. 
+   * A content stored in preferences.
    */
   private static class PreferencesURLContent extends URLContent {
     public PreferencesURLContent(URL url) {
       super(url);
     }
   }
-  
-  
+
+
   /**
    * Preferences based on the <code>preferences.xml</code> file
    * stored in a preferences folder.
    */
   private class PortablePreferences extends AbstractPreferences {
-    private static final String PREFERENCES_FILE = "preferences.xml"; 
-    
+    private static final String PREFERENCES_FILE = "preferences.xml";
+
     private Properties  preferencesProperties;
     private boolean     exist;
-    
+
     private PortablePreferences() {
       super(null, "");
       this.preferencesProperties = new Properties();
       this.exist = readPreferences();
     }
-    
+
     public boolean exist() {
       return this.exist;
     }
@@ -1757,7 +1784,7 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    
+
     /**
      * Writes user preferences.
      */

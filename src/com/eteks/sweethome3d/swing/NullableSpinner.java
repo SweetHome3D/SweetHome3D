@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.text.NumberFormat;
@@ -34,18 +35,18 @@ import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
- * Spinner that accepts empty string values. In this case the returned value is <code>null</code>. 
+ * Spinner that accepts empty string values. In this case the returned value is <code>null</code>.
  */
 public class NullableSpinner extends AutoCommitSpinner {
   /**
-   * Creates a default nullable spinner able to edit an integer. 
+   * Creates a default nullable spinner able to edit an integer.
    */
   public NullableSpinner() {
     this(new NullableSpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
   }
-  
+
   /**
-   * Creates a nullable spinner from <code>model</code>. 
+   * Creates a nullable spinner from <code>model</code>.
    */
   public NullableSpinner(NullableSpinnerNumberModel model) {
     super(model, model.getFormat());
@@ -64,7 +65,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                   return super.getFormat();
                 }
               }
-              
+
               @Override
               public boolean getCommitsOnValidEdit() {
                 if (defaultFormatter instanceof NumberFormatter) {
@@ -73,7 +74,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                   return super.getCommitsOnValidEdit();
                 }
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMaximum() {
@@ -83,7 +84,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                   return super.getMaximum();
                 }
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public Comparable getMinimum() {
@@ -93,7 +94,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                   return super.getMinimum();
                 }
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public void setMaximum(Comparable maximum) {
@@ -103,7 +104,7 @@ public class NullableSpinner extends AutoCommitSpinner {
                   super.setMaximum(maximum);
                 }
               }
-              
+
               @SuppressWarnings({"rawtypes"})
               @Override
               public void setMinimum(Comparable minimum) {
@@ -113,11 +114,11 @@ public class NullableSpinner extends AutoCommitSpinner {
                   super.setMinimum(minimum);
                 }
               }
-              
+
               @Override
               public Object stringToValue(String text) throws ParseException {
                 if (text.length() == 0 && ((NullableSpinnerNumberModel)getModel()).isNullable()) {
-                  // Return null for empty text 
+                  // Return null for empty text
                   return null;
                 } else {
                   return defaultFormatter.stringToValue(text);
@@ -137,9 +138,9 @@ public class NullableSpinner extends AutoCommitSpinner {
         }
       });
   }
-  
+
   /**
-   * Spinner date model that accepts <code>null</code> values. 
+   * Spinner date model that accepts <code>null</code> values.
    */
   public static class NullableSpinnerDateModel extends SpinnerDateModel {
     private boolean isNull;
@@ -149,7 +150,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Object getNextValue() {
       if (this.isNull) {
         return super.getValue();
-      } 
+      }
       return super.getNextValue();
     }
 
@@ -157,7 +158,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Object getPreviousValue() {
       if (this.isNull) {
         return super.getValue();
-      } 
+      }
       return super.getPreviousValue();
     }
 
@@ -171,7 +172,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     }
 
     /**
-     * Sets model value. This method is overridden to store whether current value is <code>null</code> 
+     * Sets model value. This method is overridden to store whether current value is <code>null</code>
      * or not (super class <code>setValue</code> doesn't accept <code>null</code> value).
      */
     @Override
@@ -182,8 +183,8 @@ public class NullableSpinner extends AutoCommitSpinner {
           fireStateChanged();
         }
       } else {
-        if (this.isNull 
-            && value != null 
+        if (this.isNull
+            && value != null
             && value.equals(super.getValue())) {
           // Fire a state change if the value set is the same one as the one stored by number model
           // and this model exposed a null value before
@@ -213,9 +214,9 @@ public class NullableSpinner extends AutoCommitSpinner {
       }
     }
   }
-  
+
   /**
-   * Spinner number model that accepts <code>null</code> values. 
+   * Spinner number model that accepts <code>null</code> values.
    */
   public static class NullableSpinnerNumberModel extends SpinnerNumberModel {
     private boolean isNull;
@@ -230,17 +231,29 @@ public class NullableSpinner extends AutoCommitSpinner {
       super(new Float(value), new Float(minimum), new Float(maximum), new Float(stepSize));
     }
 
+    public NullableSpinnerNumberModel(BigDecimal value, BigDecimal minimum, BigDecimal maximum, BigDecimal stepSize) {
+      super(value, minimum, maximum, stepSize);
+    }
+
     @Override
     public Object getNextValue() {
       if (this.isNull) {
         return super.getValue();
-      } 
-      Object nextValue = super.getNextValue();
-      if (nextValue == null) {
-        // Force to maximum value
-        return getMaximum();
-      } else {
+      }
+      if (getMaximum() instanceof BigDecimal) {
+        BigDecimal nextValue = ((BigDecimal)super.getValue()).add((BigDecimal)getStepSize());
+        if (nextValue.compareTo((BigDecimal)getMaximum()) > 0) {
+          nextValue = (BigDecimal)getMaximum();
+        }
         return nextValue;
+      } else {
+        Object nextValue = super.getNextValue();
+        if (nextValue == null) {
+          // Force to maximum value
+          return getMaximum();
+        } else {
+          return nextValue;
+        }
       }
     }
 
@@ -248,13 +261,21 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Object getPreviousValue() {
       if (this.isNull) {
         return super.getValue();
-      } 
-      Object previousValue = super.getPreviousValue();
-      if (previousValue == null) {
-        // Force to minimum value
-        return getMinimum();
-      } else {
+      }
+      if (getMinimum() instanceof BigDecimal) {
+        BigDecimal previousValue = ((BigDecimal)super.getValue()).subtract((BigDecimal)getStepSize());
+        if (previousValue.compareTo((BigDecimal)getMinimum()) < 0) {
+          previousValue = (BigDecimal)getMinimum();
+        }
         return previousValue;
+      } else {
+        Object previousValue = super.getPreviousValue();
+        if (previousValue == null) {
+          // Force to minimum value
+          return getMinimum();
+        } else {
+          return previousValue;
+        }
       }
     }
 
@@ -268,7 +289,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     }
 
     /**
-     * Sets model value. This method is overridden to store whether current value is <code>null</code> 
+     * Sets model value. This method is overridden to store whether current value is <code>null</code>
      * or not (super class <code>setValue</code> doesn't accept <code>null</code> value).
      */
     @Override
@@ -279,8 +300,8 @@ public class NullableSpinner extends AutoCommitSpinner {
           fireStateChanged();
         }
       } else {
-        if (this.isNull 
-            && value != null 
+        if (this.isNull
+            && value != null
             && value.equals(super.getValue())) {
           // Fire a state change if the value set is the same one as the one stored by number model
           // and this model exposed a null value before
@@ -322,23 +343,23 @@ public class NullableSpinner extends AutoCommitSpinner {
       return NumberFormat.getNumberInstance();
     }
   }
-  
+
   /**
-   * A nullable spinner number model that will reset to minimum when maximum is reached. 
+   * A nullable spinner number model that will reset to minimum when maximum is reached.
    */
   public static class NullableSpinnerModuloNumberModel extends NullableSpinnerNumberModel {
     private Class numberClass;
-    
+
     public NullableSpinnerModuloNumberModel(int value, int minimum, int maximum, int stepSize) {
       super(value, minimum, maximum, stepSize);
       this.numberClass = int.class;
     }
-    
+
     public NullableSpinnerModuloNumberModel(float value, float minimum, float maximum, float stepSize) {
       super(value, minimum, maximum, stepSize);
       this.numberClass = float.class;
     }
-    
+
     @Override
     public Object getNextValue() {
       if (this.numberClass == int.class) {
@@ -357,7 +378,7 @@ public class NullableSpinner extends AutoCommitSpinner {
         }
       }
     }
-    
+
     @Override
     public Object getPreviousValue() {
       if (this.numberClass == int.class) {
@@ -382,30 +403,30 @@ public class NullableSpinner extends AutoCommitSpinner {
      */
     @Override
     Format getFormat() {
-      return this.numberClass == int.class 
+      return this.numberClass == int.class
           ? NumberFormat.getIntegerInstance()
           : new DecimalFormat("0.#");
     }
   }
-  
+
   /**
-   * Nullable spinner model displaying length values matching preferences unit. 
+   * Nullable spinner model displaying length values matching preferences unit.
    */
   public static class NullableSpinnerLengthModel extends NullableSpinnerNumberModel {
     private final UserPreferences preferences;
 
     /**
-     * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter. 
+     * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter.
      */
     public NullableSpinnerLengthModel(UserPreferences preferences, float minimum, float maximum) {
       this(preferences, minimum, minimum, maximum);
     }
 
     /**
-     * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter. 
+     * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter.
      */
     public NullableSpinnerLengthModel(UserPreferences preferences, float value, float minimum, float maximum) {
-      super(value, minimum, maximum, 
+      super(value, minimum, maximum,
             preferences.getLengthUnit() == LengthUnit.INCH
             || preferences.getLengthUnit() == LengthUnit.INCH_DECIMALS
               ? LengthUnit.inchToCentimeter(0.125f) : 0.5f);
@@ -436,7 +457,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public void setMinimumLength(float minimum) {
       setMinimum(Float.valueOf(minimum));
     }
-    
+
     /**
      * Returns the format used by this model.
      */

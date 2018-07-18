@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.io;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class DefaultUserPreferences extends UserPreferences {
   public DefaultUserPreferences() {
     this(true, null);
   }
-  
+
   /**
    * Creates default user preferences read from resource files.
    * @param readCatalogs          if <code>false</code> furniture and texture catalog won't be read
@@ -65,11 +66,11 @@ public class DefaultUserPreferences extends UserPreferences {
       setLanguage(localizedPreferences.getLanguage());
     }
     // Read default furniture catalog
-    setFurnitureCatalog(readCatalogs 
-        ? new DefaultFurnitureCatalog(localizedPreferences, (File)null) 
+    setFurnitureCatalog(readCatalogs
+        ? new DefaultFurnitureCatalog(localizedPreferences, (File)null)
         : new FurnitureCatalog());
     // Read default textures catalog
-    setTexturesCatalog(readCatalogs 
+    setTexturesCatalog(readCatalogs
         ? new DefaultTexturesCatalog(localizedPreferences, (File)null)
         : new TexturesCatalog());
     // Build default patterns catalog
@@ -85,9 +86,8 @@ public class DefaultUserPreferences extends UserPreferences {
     PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
     setPatternsCatalog(patternsCatalog);
     // Read other preferences from resource bundle
-    setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
-        localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
-    setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));  
+    setFurnitureCatalogViewedInTree(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
+    setNavigationPanelVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "navigationPanelVisible")));
     setAerialViewCenteredOnSelectionEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "aerialViewCenteredOnSelectionEnabled", "false")));
     setObserverCameraSelectedAtChange(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "observerCameraSelectedAtChange", "true")));
     setUnit(LengthUnit.valueOf(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase(Locale.ENGLISH)));
@@ -95,7 +95,7 @@ public class DefaultUserPreferences extends UserPreferences {
     setGridVisible(Boolean.parseBoolean(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
     // Allow furnitureViewedFromTop and roomFloorColoredOrTextured to be different according to the running OS
     String osName = System.getProperty("os.name");
-    setFurnitureViewedFromTop(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "furnitureViewedFromTop." + osName, 
+    setFurnitureViewedFromTop(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "furnitureViewedFromTop." + osName,
         localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop"))));
     setFurnitureModelIconSize(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "furnitureModelIconSize", "128")));
     setFloorColoredOrTextured(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "roomFloorColoredOrTextured." + osName,
@@ -112,7 +112,9 @@ public class DefaultUserPreferences extends UserPreferences {
     setNewFloorThickness(Float.parseFloat(getOptionalLocalizedString(localizedPreferences, "newFloorThickness", "12")));
     setCheckUpdatesEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "checkUpdatesEnabled", "false")));
     setAutoSaveDelayForRecovery(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "autoSaveDelayForRecovery", "0")));
-    setCurrency(getOptionalLocalizedString(localizedPreferences, "currency", null)); 
+    setCurrency(getOptionalLocalizedString(localizedPreferences, "currency", null));
+    setDefaultValueAddedTaxPercentage(new BigDecimal(getOptionalLocalizedString(localizedPreferences, "defaultValueAddedTaxPercentage", "20")));
+    setValueAddedTaxEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "valueAddedTaxEnabled", "false")));
     for (String property : new String [] {"LevelName", "HomePieceOfFurnitureName", "RoomName", "LabelText"}) {
       String autoCompletionStringsList = getOptionalLocalizedString(localizedPreferences, "autoCompletionStrings#" + property, null);
       if (autoCompletionStringsList != null) {
@@ -131,7 +133,7 @@ public class DefaultUserPreferences extends UserPreferences {
       try {
         String homeExampleName = localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "homeExampleName#" + ++i);
         homeExamples.add(new HomeDescriptor(homeExampleName,
-            getContent(localizedPreferences, "homeExampleContent#" + i, false), 
+            getContent(localizedPreferences, "homeExampleContent#" + i, false),
             getContent(localizedPreferences, "homeExampleIcon#" + i, true)));
       } catch (IllegalArgumentException ex) {
         break;
@@ -143,7 +145,7 @@ public class DefaultUserPreferences extends UserPreferences {
   /**
    * Returns the content of matching the value of the given content key.
    */
-  private Content getContent(UserPreferences localizedPreferences, 
+  private Content getContent(UserPreferences localizedPreferences,
                              String contentKey,
                              boolean optional) {
     String contentFile = optional
@@ -153,7 +155,7 @@ public class DefaultUserPreferences extends UserPreferences {
       return null;
     }
     try {
-      // Try first to interpret contentFile as an absolute URL 
+      // Try first to interpret contentFile as an absolute URL
       return new URLContent(new URL(contentFile));
     } catch (MalformedURLException ex) {
       // Otherwise find if it's a resource
@@ -161,7 +163,7 @@ public class DefaultUserPreferences extends UserPreferences {
     }
   }
 
-  private String getOptionalLocalizedString(UserPreferences localizedPreferences, 
+  private String getOptionalLocalizedString(UserPreferences localizedPreferences,
                                             String   resourceKey,
                                             String   defaultValue) {
     try {
@@ -172,7 +174,7 @@ public class DefaultUserPreferences extends UserPreferences {
   }
 
   /**
-   * Throws an exception because default user preferences can't be written 
+   * Throws an exception because default user preferences can't be written
    * with this class.
    */
   @Override
@@ -195,7 +197,7 @@ public class DefaultUserPreferences extends UserPreferences {
   public void addLanguageLibrary(String name) throws RecorderException {
     throw new UnsupportedOperationException("Default user preferences can't manage language libraries");
   }
-  
+
   /**
    * Throws an exception because default user preferences can't manage additional furniture libraries.
    */
@@ -211,7 +213,7 @@ public class DefaultUserPreferences extends UserPreferences {
   public void addFurnitureLibrary(String name) throws RecorderException {
     throw new UnsupportedOperationException("Default user preferences can't manage furniture libraries");
   }
-  
+
   /**
    * Throws an exception because default user preferences can't manage textures libraries.
    */

@@ -77,6 +77,7 @@ import javax.imageio.stream.ImageInputStream;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -777,7 +778,9 @@ public class SwingTools {
             hideDisabledMenuItems(((JMenu)component).getPopupMenu());
           }
         } else if (component instanceof JMenuItem) {
-          component.setVisible(component.isEnabled());
+          Action action = ((JMenuItem)component).getAction();
+          component.setVisible(component.isEnabled()
+              && (action == null || !Boolean.FALSE.equals(action.getValue(ResourceAction.VISIBLE))));
         }
       }
       hideUselessSeparators(popupMenu);

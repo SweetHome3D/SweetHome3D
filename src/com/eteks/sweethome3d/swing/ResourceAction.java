@@ -37,44 +37,45 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class ResourceAction extends AbstractAction {
-  public static final String POPUP = "Popup";
+  public static final String VISIBLE = "Visible";
+  public static final String POPUP   = "Popup";
   public static final String TOGGLE_BUTTON_MODEL = "ToggleButtonModel";
-  
+
   /**
-   * Creates a disabled action with properties retrieved from a resource bundle 
+   * Creates a disabled action with properties retrieved from a resource bundle
    * in which key starts with <code>actionPrefix</code>.
-   * @param preferences   user preferences used to retrieve localized properties of the action 
+   * @param preferences   user preferences used to retrieve localized properties of the action
    * @param resourceClass the class used as a context to retrieve localized properties of the action
    * @param actionPrefix  prefix used in resource bundle to search action properties
    */
-  public ResourceAction(UserPreferences preferences, 
-                        Class<?> resourceClass, 
+  public ResourceAction(UserPreferences preferences,
+                        Class<?> resourceClass,
                         String actionPrefix) {
     this(preferences, resourceClass, actionPrefix, false);
   }
-  
+
   /**
-   * Creates an action with properties retrieved from a resource bundle 
+   * Creates an action with properties retrieved from a resource bundle
    * in which key starts with <code>actionPrefix</code>.
    * @param preferences   user preferences used to retrieve localized description of the action
    * @param resourceClass the class used as a context to retrieve localized properties of the action
    * @param actionPrefix  prefix used in resource bundle to search action properties
    * @param enabled <code>true</code> if the action should be enabled at creation.
    */
-  public ResourceAction(UserPreferences preferences, 
-                        Class<?> resourceClass, 
-                        String actionPrefix, 
+  public ResourceAction(UserPreferences preferences,
+                        Class<?> resourceClass,
+                        String actionPrefix,
                         boolean enabled) {
-    readActionProperties(preferences, resourceClass, actionPrefix);    
+    readActionProperties(preferences, resourceClass, actionPrefix);
     setEnabled(enabled);
-    
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
         new LanguageChangeListener(this, resourceClass, actionPrefix));
   }
-    
+
   /**
    * Preferences property listener bound to this action with a weak reference to avoid
-   * strong link between preferences and this action.  
+   * strong link between preferences and this action.
    */
   private static class LanguageChangeListener implements PropertyChangeListener {
     private final WeakReference<ResourceAction> resourceAction;
@@ -96,28 +97,28 @@ public class ResourceAction extends AbstractAction {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        resourceAction.readActionProperties((UserPreferences)ev.getSource(), 
+        resourceAction.readActionProperties((UserPreferences)ev.getSource(),
             this.resourceClass, this.actionPrefix);
       }
     }
   }
-  
+
   /**
    * Reads from the properties of this action.
    */
-  private void readActionProperties(UserPreferences preferences, 
-                                    Class<?> resourceClass, 
+  private void readActionProperties(UserPreferences preferences,
+                                    Class<?> resourceClass,
                                     String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
     putValue(NAME, getOptionalString(preferences, resourceClass, propertyPrefix + NAME, true));
     putValue(DEFAULT, getValue(NAME));
     putValue(POPUP, getOptionalString(preferences, resourceClass, propertyPrefix + POPUP, true));
-    
-    putValue(SHORT_DESCRIPTION, 
+
+    putValue(SHORT_DESCRIPTION,
         getOptionalString(preferences, resourceClass, propertyPrefix + SHORT_DESCRIPTION, false));
-    putValue(LONG_DESCRIPTION, 
+    putValue(LONG_DESCRIPTION,
         getOptionalString(preferences, resourceClass, propertyPrefix + LONG_DESCRIPTION, false));
-    
+
     String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON, false);
     if (smallIcon != null) {
       putValue(SMALL_ICON, SwingTools.getScaledImageIcon(resourceClass.getResource(smallIcon)));
@@ -125,7 +126,7 @@ public class ResourceAction extends AbstractAction {
 
     String propertyKey = propertyPrefix + ACCELERATOR_KEY;
     // Search first if there's a key for this OS
-    String acceleratorKey = getOptionalString(preferences, 
+    String acceleratorKey = getOptionalString(preferences,
         resourceClass, propertyKey + "." + System.getProperty("os.name"), false);
     if (acceleratorKey == null) {
       // Then search default value
@@ -134,23 +135,24 @@ public class ResourceAction extends AbstractAction {
     if (acceleratorKey !=  null) {
       putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(acceleratorKey));
     }
-    
+
     String mnemonicKey = getOptionalString(preferences, resourceClass, propertyPrefix + MNEMONIC_KEY, false);
     if (mnemonicKey != null) {
       putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
+    putValue(VISIBLE, Boolean.TRUE);
   }
 
   /**
-   * Returns the value of <code>propertyKey</code> in <code>preferences</code>, 
+   * Returns the value of <code>propertyKey</code> in <code>preferences</code>,
    * or <code>null</code> if the property doesn't exist.
    */
-  private String getOptionalString(UserPreferences preferences, 
-                                   Class<?> resourceClass, 
+  private String getOptionalString(UserPreferences preferences,
+                                   Class<?> resourceClass,
                                    String propertyKey,
                                    boolean label) {
     try {
-      String localizedText = label 
+      String localizedText = label
           ? SwingTools.getLocalizedLabelText(preferences, resourceClass, propertyKey)
           : preferences.getLocalizedString(resourceClass, propertyKey);
       if (localizedText != null && localizedText.length() > 0) {
@@ -170,9 +172,9 @@ public class ResourceAction extends AbstractAction {
   public void actionPerformed(ActionEvent ev) {
     throw new UnsupportedOperationException();
   }
-  
+
   /**
-   * An action decorator.  
+   * An action decorator.
    */
   private static class AbstractDecoratedAction implements Action {
     private Action action;
@@ -191,7 +193,7 @@ public class ResourceAction extends AbstractAction {
               // In case a property value changes, fire the new value decorated in subclasses
               // unless new value is null (most Swing listeners don't check new value is null !)
               if (newValue != null) {
-                propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(),
                     propertyName, ev.getOldValue(), newValue));
               }
             }
@@ -226,14 +228,14 @@ public class ResourceAction extends AbstractAction {
     public final void setEnabled(boolean enabled) {
       this.action.setEnabled(enabled);
     }
-    
+
     protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
       this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
-  
+
   /**
-   * An action decorator for menu items.  
+   * An action decorator for menu items.
    */
   public static class MenuItemAction extends AbstractDecoratedAction {
     public MenuItemAction(Action action) {
@@ -251,15 +253,15 @@ public class ResourceAction extends AbstractAction {
       return super.getValue(key);
     }
   }
-  
+
   /**
-   * An action decorator for popup menu items.  
+   * An action decorator for popup menu items.
    */
   public static class PopupMenuItemAction extends MenuItemAction {
     public PopupMenuItemAction(Action action) {
       super(action);
-      // Add a listener on POPUP value changes because the value of the 
-      // POPUP key replaces the one matching NAME if it exists       
+      // Add a listener on POPUP value changes because the value of the
+      // POPUP key replaces the one matching NAME if it exists
       addPropertyChangeListener(new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             if (POPUP.equals(ev.getPropertyName())
@@ -271,7 +273,7 @@ public class ResourceAction extends AbstractAction {
     }
 
     public Object getValue(String key) {
-      // If it exists, return POPUP key value if NAME key is required 
+      // If it exists, return POPUP key value if NAME key is required
       if (key.equals(NAME)) {
         Object value = super.getValue(POPUP);
         if (value != null) {
@@ -290,7 +292,7 @@ public class ResourceAction extends AbstractAction {
   }
 
   /**
-   * An action decorator for tool bar buttons.  
+   * An action decorator for tool bar buttons.
    */
   public static class ToolBarAction extends AbstractDecoratedAction {
     public ToolBarAction(Action action) {
@@ -298,16 +300,16 @@ public class ResourceAction extends AbstractAction {
     }
 
     public Object getValue(String key) {
-      // Ignore NAME in tool bar 
-      if (key.equals(NAME)) {        
+      // Ignore NAME in tool bar
+      if (key.equals(NAME)) {
         return null;
-      } 
+      }
       return super.getValue(key);
     }
   }
 
   /**
-   * An action decorator for  buttons.  
+   * An action decorator for  buttons.
    */
   public static class ButtonAction extends AbstractDecoratedAction {
     public ButtonAction(Action action) {

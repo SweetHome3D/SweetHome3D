@@ -78,6 +78,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private NullableCheckBox        nameVisibleCheckBox;
   private JLabel                  priceLabel;
   private JSpinner                priceSpinner;
+  private JLabel                  valueAddedTaxPercentageLabel;
+  private JSpinner                valueAddedTaxPercentageSpinner;
   private JLabel                  xLabel;
   private JSpinner                xSpinner;
   private JLabel                  yLabel;
@@ -235,25 +237,63 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.priceLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
           HomeFurniturePanel.class, "priceLabel.text"));
       final NullableSpinner.NullableSpinnerNumberModel priceSpinnerModel =
-          new NullableSpinner.NullableSpinnerNumberModel(0, 0, 1E8f, 1f);
+          new NullableSpinner.NullableSpinnerNumberModel(BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("1000000000"), BigDecimal.ONE);
       this.priceSpinner = new NullableSpinner(priceSpinnerModel);
       BigDecimal price = controller.getPrice();
-      priceSpinnerModel.setNullable(price == null);
-      priceSpinnerModel.setValue(price == null  ? null  : price.floatValue());
+      priceSpinnerModel.setNullable(true);
+      priceSpinnerModel.setValue(price);
       final PropertyChangeListener priceChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             priceSpinnerModel.setNullable(ev.getNewValue() == null);
-            priceSpinnerModel.setValue(ev.getNewValue() != null ? ((Number)ev.getNewValue()).floatValue() : null);
+            priceSpinnerModel.setValue(ev.getNewValue());
           }
         };
       controller.addPropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
       priceSpinnerModel.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             controller.removePropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
-            controller.setPrice(new BigDecimal(priceSpinnerModel.getNumber().doubleValue()));
+            controller.setPrice((BigDecimal)priceSpinnerModel.getNumber());
             controller.addPropertyChangeListener(HomeFurnitureController.Property.PRICE, priceChangeListener);
           }
         });
+
+      if (controller.isPropertyEditable(HomeFurnitureController.Property.VALUE_ADDED_TAX_PERCENTAGE)) {
+        this.valueAddedTaxPercentageLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+            HomeFurniturePanel.class, "valueAddedTaxPercentageLabel.text"));
+        final BigDecimal hundred = new BigDecimal("100");
+        final NullableSpinner.NullableSpinnerNumberModel valueAddedTaxPercentageSpinnerModel = new NullableSpinner.NullableSpinnerNumberModel(
+            BigDecimal.ZERO, BigDecimal.ZERO, hundred, new BigDecimal("0.5"));
+        this.valueAddedTaxPercentageSpinner = new NullableSpinner(valueAddedTaxPercentageSpinnerModel);
+        BigDecimal valueAddedTaxPercentage = controller.getValueAddedTaxPercentage();
+        valueAddedTaxPercentageSpinnerModel.setNullable(true);
+        if (valueAddedTaxPercentage != null) {
+          valueAddedTaxPercentageSpinnerModel.setValue(valueAddedTaxPercentage.multiply(hundred));
+        } else {
+          valueAddedTaxPercentageSpinnerModel.setValue(null);
+        }
+        final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              priceSpinnerModel.setNullable(ev.getNewValue() == null);
+              if (ev.getNewValue() != null) {
+                valueAddedTaxPercentageSpinnerModel.setValue(((BigDecimal)ev.getNewValue()).multiply(hundred));
+              } else {
+                valueAddedTaxPercentageSpinnerModel.setValue(null);
+              }
+            }
+          };
+        valueAddedTaxPercentageSpinnerModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent ev) {
+              // Remove listener on controller to avoid being recalled since actual value is divided by 100
+              controller.removePropertyChangeListener(HomeFurnitureController.Property.VALUE_ADDED_TAX_PERCENTAGE, propertyChangeListener);
+              controller.setValueAddedTaxPercentage(valueAddedTaxPercentageSpinnerModel.getValue() != null
+                  ? ((BigDecimal)valueAddedTaxPercentageSpinnerModel.getValue()).divide(hundred)
+                  : null);
+              controller.addPropertyChangeListener(HomeFurnitureController.Property.VALUE_ADDED_TAX_PERCENTAGE, propertyChangeListener);
+            }
+          });
+        controller.addPropertyChangeListener(HomeFurnitureController.Property.VALUE_ADDED_TAX_PERCENTAGE,
+            propertyChangeListener);
+      }
     }
 
     final float maximumLength = preferences.getLengthUnit().getMaximumLength();
@@ -630,7 +670,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             controller.removePropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED,
                 mirroredModelChangeListener);
             controller.setModelMirrored(mirroredModelCheckBox.getValue());
-            // TODO Update location if transformed model is wider than default model. Forbid mirror if selection contains more one than one transformed piece
             controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED,
                 mirroredModelChangeListener);
           }
@@ -1002,6 +1041,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             preferences.getLocalizedString(HomeFurniturePanel.class, "priceLabel.mnemonic")).getKeyCode());
         this.priceLabel.setLabelFor(this.priceSpinner);
       }
+      if (this.valueAddedTaxPercentageLabel != null) {
+        this.valueAddedTaxPercentageLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+            preferences.getLocalizedString(HomeFurniturePanel.class, "valueAddedTaxPercentageLabel.mnemonic")).getKeyCode());
+        this.valueAddedTaxPercentageLabel.setLabelFor(this.valueAddedTaxPercentageSpinner);
+      }
       if (this.xLabel != null) {
         this.xLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
             preferences.getLocalizedString(HomeFurniturePanel.class, "xLabel.mnemonic")).getKeyCode());
@@ -1111,29 +1155,37 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           0, 0, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
           new Insets(0, 0, 0, 5), 0, 0));
       namePanel.add(this.nameTextField, new GridBagConstraints(
-          1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+          1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (this.nameVisibleCheckBox != null) {
       namePanel.add(this.nameVisibleCheckBox, new GridBagConstraints(
-          2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+          4, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     }
     if (this.descriptionLabel != null) {
       namePanel.add(this.descriptionLabel, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
           new Insets(5, 0, 0, 5), 0, 0));
       namePanel.add(this.descriptionTextField, new GridBagConstraints(
-          1, 1, priceDisplayed  ? 1  : 3, 1, 0, 0, GridBagConstraints.LINE_START,
+          1, 1, priceDisplayed ? 1 : 3, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, priceDisplayed  ? 10  : 0), 0, 0));
     }
     if (priceDisplayed) {
       namePanel.add(this.priceLabel, new GridBagConstraints(
-          this.descriptionLabel != null  ? 2  : 0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
+          this.descriptionLabel != null ? 2 : 0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
           new Insets(5, 0, 0, 5), 0, 0));
       namePanel.add(this.priceSpinner, new GridBagConstraints(
-          this.descriptionLabel != null  ? 3  : 1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+          this.descriptionLabel != null ? 3 : 1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), OperatingSystem.isMacOSX() ? -60 : -30, 0));
+      if (this.valueAddedTaxPercentageLabel != null) {
+        namePanel.add(this.valueAddedTaxPercentageLabel, new GridBagConstraints(
+            this.descriptionLabel != null ? 4 : 2, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
+            new Insets(5, 10, 0, 5), 0, 0));
+        namePanel.add(this.valueAddedTaxPercentageSpinner, new GridBagConstraints(
+            this.descriptionLabel != null ? 5 : 3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+      }
     }
     if (namePanel.getComponentCount() > 0) {
       add(namePanel, new GridBagConstraints(0, 0, orientationPanelDisplayed ? 4 : 3, 1, 0, 0, labelAlignment,
@@ -1302,7 +1354,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     }
     if (this.modelTransformationsButton != null) {
       sizePanel.add(this.modelTransformationsButton, new GridBagConstraints(
-          0, 4, 2, 1, 0, 1, GridBagConstraints.CENTER,
+          0, 4, 2, 1, 0, 1, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     if (sizePanel.getComponentCount() > 0) {

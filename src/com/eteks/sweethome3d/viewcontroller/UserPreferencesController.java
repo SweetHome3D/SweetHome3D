@@ -21,10 +21,12 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.math.BigDecimal;
 
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.UserPreferences.Property;
 
 /**
  * A MVC controller for user preferences view.
@@ -32,14 +34,15 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class UserPreferencesController implements Controller {
   /**
-   * The properties that may be edited by the view associated to this controller. 
+   * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
-      FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
-      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
+  public enum Property {LANGUAGE, UNIT, CURRENCY, VALUE_ADDED_TAX_ENABLED,
+      MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME,
+      FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE,
       NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE,
       CHECK_UPDATES_ENABLED, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_SAVE_FOR_RECOVERY_ENABLED}
-  
+
   private final UserPreferences         preferences;
   private final ViewFactory             viewFactory;
   private final HomeController          homeController;
@@ -48,6 +51,8 @@ public class UserPreferencesController implements Controller {
 
   private String                        language;
   private LengthUnit                    unit;
+  private String                        currency;
+  private boolean                       valueAddedTaxEnabled;
   private boolean                       furnitureCatalogViewedInTree;
   private boolean                       navigationPanelVisible;
   private boolean                       aerialViewCenteredOnSelectionEnabled;
@@ -72,7 +77,7 @@ public class UserPreferencesController implements Controller {
    * Creates the controller of user preferences view.
    */
   public UserPreferencesController(UserPreferences preferences,
-                                   ViewFactory viewFactory, 
+                                   ViewFactory viewFactory,
                                    ContentManager contentManager) {
     this(preferences, viewFactory, contentManager, null);
   }
@@ -81,14 +86,14 @@ public class UserPreferencesController implements Controller {
    * Creates the controller of user preferences view.
    */
   public UserPreferencesController(UserPreferences preferences,
-                                   ViewFactory viewFactory, 
+                                   ViewFactory viewFactory,
                                    ContentManager contentManager,
                                    HomeController homeController) {
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.homeController = homeController;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -98,7 +103,7 @@ public class UserPreferencesController implements Controller {
   public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.userPreferencesView == null) {
-      this.userPreferencesView = this.viewFactory.createUserPreferencesView(this.preferences, this); 
+      this.userPreferencesView = this.viewFactory.createUserPreferencesView(this.preferences, this);
     }
     return this.userPreferencesView;
   }
@@ -130,6 +135,8 @@ public class UserPreferencesController implements Controller {
   protected void updateProperties() {
     setLanguage(this.preferences.getLanguage());
     setUnit(this.preferences.getLengthUnit());
+    setCurrency(this.preferences.getCurrency());
+    setValueAddedTaxEnabled(this.preferences.isValueAddedTaxEnabled());
     setFurnitureCatalogViewedInTree(this.preferences.isFurnitureCatalogViewedInTree());
     setNavigationPanelVisible(this.preferences.isNavigationPanelVisible());
     setAerialViewCenteredOnSelectionEnabled(this.preferences.isAerialViewCenteredOnSelectionEnabled());
@@ -151,13 +158,13 @@ public class UserPreferencesController implements Controller {
     setCheckUpdatesEnabled(this.preferences.isCheckUpdatesEnabled());
     setAutoSaveDelayForRecovery(this.preferences.getAutoSaveDelayForRecovery());
     setAutoSaveForRecoveryEnabled(this.preferences.getAutoSaveDelayForRecovery() > 0);
-  }  
+  }
 
   /**
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
    * may render it differently.
-   * The implementation of this method always returns <code>true</code> except for <code>LANGUAGE</code> if it's not editable. 
+   * The implementation of this method always returns <code>true</code> except for <code>LANGUAGE</code> if it's not editable.
    */
   public boolean isPropertyEditable(Property property) {
     switch (property) {
@@ -167,7 +174,7 @@ public class UserPreferencesController implements Controller {
         return true;
     }
   }
-  
+
   /**
    * Sets the edited language.
    */
@@ -205,41 +212,81 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
+   * Sets the edited currency.
+   * @since 6.0
+   */
+  public void setCurrency(String currency) {
+    if (currency != this.currency) {
+      String oldCurrency = this.currency;
+      this.currency = currency;
+      this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+    }
+  }
+
+  /**
+   * Returns the edited currency.
+   * @since 6.0
+   */
+  public String getCurrency() {
+    return this.currency;
+  }
+
+  /**
+   * Sets whether Value Added Tax should be taken in account in prices.
+   * @since 6.0
+   */
+  public void setValueAddedTaxEnabled(boolean valueAddedTaxEnabled) {
+    if (this.valueAddedTaxEnabled != valueAddedTaxEnabled) {
+      this.valueAddedTaxEnabled = valueAddedTaxEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.VALUE_ADDED_TAX_ENABLED.name(),
+          !valueAddedTaxEnabled, valueAddedTaxEnabled);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if Value Added Tax should be taken in account in prices.
+   * @since 6.0
+   */
+  public boolean isValueAddedTaxEnabled() {
+    return this.valueAddedTaxEnabled;
+  }
+
+  /**
    * Sets whether the furniture catalog should be viewed in a tree or a different way.
    */
   public void setFurnitureCatalogViewedInTree(boolean furnitureCatalogViewedInTree) {
     if (this.furnitureCatalogViewedInTree != furnitureCatalogViewedInTree) {
       this.furnitureCatalogViewedInTree = furnitureCatalogViewedInTree;
-      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_CATALOG_VIEWED_IN_TREE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_CATALOG_VIEWED_IN_TREE.name(),
           !furnitureCatalogViewedInTree, furnitureCatalogViewedInTree);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if furniture catalog should be viewed in a tree.
    */
   public boolean isFurnitureCatalogViewedInTree() {
     return this.furnitureCatalogViewedInTree;
   }
-  
+
   /**
    * Sets whether the navigation panel should be displayed or not.
    */
   public void setNavigationPanelVisible(boolean navigationPanelVisible) {
     if (this.navigationPanelVisible != navigationPanelVisible) {
       this.navigationPanelVisible = navigationPanelVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.NAVIGATION_PANEL_VISIBLE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NAVIGATION_PANEL_VISIBLE.name(),
           !navigationPanelVisible, navigationPanelVisible);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if the navigation panel should be displayed.
    */
   public boolean isNavigationPanelVisible() {
     return this.navigationPanelVisible;
   }
-  
+
   /**
    * Sets whether aerial view should be centered on selection or not.
    * @since 4.0
@@ -247,11 +294,11 @@ public class UserPreferencesController implements Controller {
   public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
     if (aerialViewCenteredOnSelectionEnabled != this.aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED.name(),
           !aerialViewCenteredOnSelectionEnabled, aerialViewCenteredOnSelectionEnabled);
     }
   }
-  
+
   /**
    * Returns whether aerial view should be centered on selection or not.
    * @since 4.0
@@ -259,7 +306,7 @@ public class UserPreferencesController implements Controller {
   public boolean isAerialViewCenteredOnSelectionEnabled() {
     return this.aerialViewCenteredOnSelectionEnabled;
   }
-  
+
   /**
    * Sets whether the observer camera should be selected at each change.
    * @since 5.5
@@ -267,11 +314,11 @@ public class UserPreferencesController implements Controller {
   public void setObserverCameraSelectedAtChange(boolean observerCameraSelectedAtChange) {
     if (observerCameraSelectedAtChange != this.observerCameraSelectedAtChange) {
       this.observerCameraSelectedAtChange = observerCameraSelectedAtChange;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE.name(),
           !observerCameraSelectedAtChange, observerCameraSelectedAtChange);
     }
   }
-  
+
   /**
    * Returns whether the observer camera should be selected at each change.
    * @since 5.5
@@ -345,7 +392,7 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
-   * Returns the name of the font that should be used by default or <code>null</code> 
+   * Returns the name of the font that should be used by default or <code>null</code>
    * if the default font should be the default one in the application.
    * @since 5.0
    */
@@ -354,16 +401,16 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
-   * Sets how furniture should be displayed in plan. 
+   * Sets how furniture should be displayed in plan.
    */
   public void setFurnitureViewedFromTop(boolean furnitureViewedFromTop) {
     if (this.furnitureViewedFromTop != furnitureViewedFromTop) {
       this.furnitureViewedFromTop = furnitureViewedFromTop;
-      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_VIEWED_FROM_TOP.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_VIEWED_FROM_TOP.name(),
           !furnitureViewedFromTop, furnitureViewedFromTop);
     }
   }
-  
+
   /**
    * Returns how furniture should be displayed in plan.
    */
@@ -397,7 +444,7 @@ public class UserPreferencesController implements Controller {
   public void setRoomFloorColoredOrTextured(boolean floorTextureVisible) {
     if (this.roomFloorColoredOrTextured != floorTextureVisible) {
       this.roomFloorColoredOrTextured = floorTextureVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.ROOM_FLOOR_COLORED_OR_TEXTURED.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.ROOM_FLOOR_COLORED_OR_TEXTURED.name(),
           !floorTextureVisible, floorTextureVisible);
     }
   }
@@ -408,7 +455,7 @@ public class UserPreferencesController implements Controller {
   public boolean isRoomFloorColoredOrTextured() {
     return this.roomFloorColoredOrTextured;
   }
-  
+
   /**
    * Sets default walls top pattern in plan, and notifies
    * listeners of this change.
@@ -417,7 +464,7 @@ public class UserPreferencesController implements Controller {
     if (this.wallPattern != wallPattern) {
       TextureImage oldWallPattern = this.wallPattern;
       this.wallPattern = wallPattern;
-      this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(),
           oldWallPattern, wallPattern);
     }
   }
@@ -428,7 +475,7 @@ public class UserPreferencesController implements Controller {
   public TextureImage getWallPattern() {
     return this.wallPattern;
   }
-  
+
   /**
    * Sets the edited new wall top pattern in plan, and notifies
    * listeners of this change.
@@ -438,7 +485,7 @@ public class UserPreferencesController implements Controller {
     if (this.newWallPattern != newWallPattern) {
       TextureImage oldNewWallPattern = this.newWallPattern;
       this.newWallPattern = newWallPattern;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_PATTERN.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_PATTERN.name(),
           oldNewWallPattern, newWallPattern);
     }
   }
@@ -450,7 +497,7 @@ public class UserPreferencesController implements Controller {
   public TextureImage getNewWallPattern() {
     return this.newWallPattern;
   }
-  
+
   /**
    * Sets the edited new wall thickness.
    */
@@ -512,7 +559,7 @@ public class UserPreferencesController implements Controller {
   public void setCheckUpdatesEnabled(boolean updatesChecked) {
     if (updatesChecked != this.checkUpdatesEnabled) {
       this.checkUpdatesEnabled = updatesChecked;
-      this.propertyChangeSupport.firePropertyChange(Property.CHECK_UPDATES_ENABLED.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.CHECK_UPDATES_ENABLED.name(),
           !updatesChecked, updatesChecked);
     }
   }
@@ -532,7 +579,7 @@ public class UserPreferencesController implements Controller {
     if (autoSaveDelayForRecovery != this.autoSaveDelayForRecovery) {
       float oldAutoSaveDelayForRecovery = this.autoSaveDelayForRecovery;
       this.autoSaveDelayForRecovery = autoSaveDelayForRecovery;
-      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_DELAY_FOR_RECOVERY.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_DELAY_FOR_RECOVERY.name(),
           oldAutoSaveDelayForRecovery, autoSaveDelayForRecovery);
     }
   }
@@ -550,7 +597,7 @@ public class UserPreferencesController implements Controller {
   public void setAutoSaveForRecoveryEnabled(boolean autoSaveForRecoveryEnabled) {
     if (autoSaveForRecoveryEnabled != this.autoSaveForRecoveryEnabled) {
       this.autoSaveForRecoveryEnabled = autoSaveForRecoveryEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_FOR_RECOVERY_ENABLED.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.AUTO_SAVE_FOR_RECOVERY_ENABLED.name(),
           !autoSaveForRecoveryEnabled, autoSaveForRecoveryEnabled);
     }
   }
@@ -578,7 +625,7 @@ public class UserPreferencesController implements Controller {
   public boolean mayImportLanguageLibrary() {
     return this.homeController != null;
   }
-  
+
   /**
    * Imports a language library chosen by the user.
    */
@@ -601,6 +648,8 @@ public class UserPreferencesController implements Controller {
   public void modifyUserPreferences() {
     this.preferences.setLanguage(getLanguage());
     this.preferences.setUnit(getUnit());
+    this.preferences.setCurrency(getCurrency());
+    this.preferences.setValueAddedTaxEnabled(isValueAddedTaxEnabled());
     this.preferences.setFurnitureCatalogViewedInTree(isFurnitureCatalogViewedInTree());
     this.preferences.setNavigationPanelVisible(isNavigationPanelVisible());
     this.preferences.setAerialViewCenteredOnSelectionEnabled(isAerialViewCenteredOnSelectionEnabled());
