@@ -1022,22 +1022,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           repaint();
         }
       });
-    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.DEFAULT_FONT_NAME,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN,
-        new UserPreferencesChangeListener(this));
+    UserPreferencesChangeListener preferencesListener = new UserPreferencesChangeListener(this);
+    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.DEFAULT_FONT_NAME, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, preferencesListener);
   }
 
   /**
