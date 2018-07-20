@@ -113,7 +113,9 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
     // Add listener to update totals when furniture price changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (HomePieceOfFurniture.Property.PRICE.name().equals(ev.getPropertyName())) {
+          if (HomePieceOfFurniture.Property.PRICE.name().equals(ev.getPropertyName())
+              || HomePieceOfFurniture.Property.VALUE_ADDED_TAX_PERCENTAGE.name().equals(ev.getPropertyName())
+              || HomePieceOfFurniture.Property.CURRENCY.name().equals(ev.getPropertyName())) {
             updateTotals(home, preferences);
           }
         }
