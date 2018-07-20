@@ -44,7 +44,7 @@ public class SweetHome3DBootstrap {
     Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
     List<String> extensionJarsAndDlls = new ArrayList<String>(Arrays.asList(new String [] {
         "batik-svgpathparser-1.7.jar",
-        "jeksparsercalculator.jar",
+        "jeksparser-calculator.jar",
         "iText-2.1.7.jar", // Jars included in Sweet Home 3D executable jar file
         "freehep-vectorgraphics-svg-2.1.1b.jar",
         "sunflow-0.07.3i.jar",
