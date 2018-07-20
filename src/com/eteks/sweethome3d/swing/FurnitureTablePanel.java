@@ -89,23 +89,18 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
                                 FurnitureController controller) {
     this.furnitureTable = createFurnitureTable(home, preferences, controller);
 
-    NumberFormat currencyFormat = DecimalFormat.getCurrencyInstance();
-
     this.totalPriceLabel = new JLabel(preferences.getLocalizedString(
         FurnitureTablePanel.class, "totalPriceLabel.text"));
-    this.totalPriceTextField = new JFormattedTextField(currencyFormat);
-    this.totalPriceTextField.setEditable(false);
+    this.totalPriceTextField = createTotalTextField();
 
     this.totalValueAddedTaxLabel = new JLabel(preferences.getLocalizedString(
         FurnitureTablePanel.class, "totalValueAddedTaxLabel.text"));
-    this.totalValueAddedTaxTextField = new JFormattedTextField(currencyFormat);
-    this.totalValueAddedTaxTextField.setEditable(false);
+    this.totalValueAddedTaxTextField = createTotalTextField();
 
     // Create price Value Added Tax included label and its spinner bound to DEPTH controller property
     this.totalPriceValueAddedTaxIncludedLabel = new JLabel(preferences.getLocalizedString(
         FurnitureTablePanel.class, "totalPriceValueAddedTaxIncludedLabel.text"));
-    this.totalPriceValueAddedTaxIncludedTextField = new JFormattedTextField(currencyFormat);
-    this.totalPriceValueAddedTaxIncludedTextField.setEditable(false);
+    this.totalPriceValueAddedTaxIncludedTextField = createTotalTextField();
 
     updateTotalsVisibility(preferences);
     updateTotals(home, preferences);
@@ -145,6 +140,14 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
    */
   protected FurnitureTable createFurnitureTable(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(home, preferences, controller);
+  }
+
+  private JFormattedTextField createTotalTextField() {
+    NumberFormat currencyFormat = DecimalFormat.getCurrencyInstance();
+    JFormattedTextField totalTextField = new JFormattedTextField(currencyFormat);
+    totalTextField.setEditable(false);
+    totalTextField.setFocusable(false);
+    return totalTextField;
   }
 
   /**
