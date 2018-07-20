@@ -277,6 +277,14 @@
     <mkdir dir="deploy/lib"/>
     <!-- Copy jar files adding to their manifest attributes necessary
          to be able to call applet methods from JavaScript -->
+    <jar destfile="deploy/lib/jeksparser-calculator.jar" filesetmanifest="merge">
+      <manifest>
+        <attribute name="Permissions"               value="all-permissions"/>
+        <attribute name="Codebase"                  value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
+      </manifest>
+      <zipfileset src="lib/jeksparser-calculator.jar"/>
+    </jar>
     <jar destfile="deploy/lib/freehep-vectorgraphics-svg-2.1.1b.jar" filesetmanifest="merge">
       <manifest>
         <attribute name="Permissions"               value="all-permissions"/>
