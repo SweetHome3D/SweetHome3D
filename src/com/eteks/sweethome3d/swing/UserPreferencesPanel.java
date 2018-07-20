@@ -306,7 +306,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         controller.addPropertyChangeListener(UserPreferencesController.Property.VALUE_ADDED_TAX_ENABLED,
             new PropertyChangeListener() {
                 public void propertyChange(PropertyChangeEvent ev) {
-                  valueAddedTaxCheckBox.setEnabled(controller.isValueAddedTaxEnabled());
+                  valueAddedTaxCheckBox.setEnabled(controller.getCurrency() != null);
+                  valueAddedTaxCheckBox.setSelected(controller.isValueAddedTaxEnabled());
                 }
               });
       }

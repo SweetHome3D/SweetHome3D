@@ -717,12 +717,10 @@ public class HomePane extends JRootPane implements HomeView {
    * actions when some preferences change.
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY,
-        new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(UserPreferences.Property.VALUE_ADDED_TAX_ENABLED,
-        new UserPreferencesChangeListener(this));
+    UserPreferencesChangeListener listener = new UserPreferencesChangeListener(this);
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, listener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY, listener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.VALUE_ADDED_TAX_ENABLED, listener);
   }
 
   /**
@@ -748,6 +746,7 @@ public class HomePane extends JRootPane implements HomeView {
         switch (property) {
           case LANGUAGE :
             SwingTools.updateSwingResourceLanguage((UserPreferences)ev.getSource());
+            break;
           case CURRENCY :
             actionMap.get(ActionType.DISPLAY_HOME_FURNITURE_PRICE).putValue(ResourceAction.VISIBLE, ev.getNewValue() != null);
             actionMap.get(ActionType.SORT_HOME_FURNITURE_BY_PRICE).putValue(ResourceAction.VISIBLE, ev.getNewValue() != null);
@@ -2638,13 +2637,6 @@ public class HomePane extends JRootPane implements HomeView {
     // Configure furniture view
     JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();
     if (furnitureView != null) {
-      // Set default traversal keys of furniture view
-      KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      furnitureView.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-          focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
-      furnitureView.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-          focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
-
       // Create furniture view popup menu
       JPopupMenu furnitureViewPopup = new JPopupMenu();
       addActionToPopupMenu(ActionType.UNDO, furnitureViewPopup);
@@ -2673,6 +2665,13 @@ public class HomePane extends JRootPane implements HomeView {
       furnitureView.setComponentPopupMenu(furnitureViewPopup);
 
       if (furnitureView instanceof Scrollable) {
+        // Set default traversal keys of furniture view
+        KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        furnitureView.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+            focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+        furnitureView.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+            focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
+
         JScrollPane furnitureScrollPane = SwingTools.createScrollPane(furnitureView);
         // Add a mouse listener that gives focus to furniture view when
         // user clicks in its viewport (tables don't spread vertically if their row count is too small)

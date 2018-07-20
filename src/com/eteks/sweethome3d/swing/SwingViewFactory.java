@@ -74,7 +74,7 @@ public class SwingViewFactory implements ViewFactory {
   static {
     SwingTools.updateComponentDefaults();
   }
-  
+
   /**
    * Returns a new view that displays furniture <code>catalog</code>.
    */
@@ -87,13 +87,13 @@ public class SwingViewFactory implements ViewFactory {
       return new FurnitureCatalogListPanel(catalog, preferences, furnitureCatalogController);
     }
   }
-  
+
   /**
    * Returns a new table that displays <code>home</code> furniture.
    */
   public View createFurnitureView(Home home, UserPreferences preferences,
                                   FurnitureController furnitureController) {
-    return new FurnitureTable(home, preferences, furnitureController);
+    return new FurnitureTablePanel(home, preferences, furnitureController);
   }
 
   /**
@@ -114,7 +114,7 @@ public class SwingViewFactory implements ViewFactory {
         return new HomeComponent3D(home, preferences, homeController3D);
       }
     } catch (AccessControlException ex) {
-      // If com.eteks.sweethome3d.no3D property can't be read, 
+      // If com.eteks.sweethome3d.no3D property can't be read,
       // security manager won't allow to access to Java 3D DLLs required by HomeComponent3D class too
     }
     return null;
@@ -129,7 +129,7 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that displays a wizard. 
+   * Returns a new view that displays a wizard.
    */
   public DialogView createWizardView(UserPreferences preferences,
                                      WizardController wizardController) {
@@ -137,29 +137,29 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that displays the different steps that helps user to choose a background image. 
+   * Returns a new view that displays the different steps that helps user to choose a background image.
    */
   public View createBackgroundImageWizardStepsView(BackgroundImage backgroundImage,
-                      UserPreferences preferences, 
+                      UserPreferences preferences,
                       BackgroundImageWizardController backgroundImageWizardController) {
-    return new BackgroundImageWizardStepsPanel(backgroundImage, preferences,  
+    return new BackgroundImageWizardStepsPanel(backgroundImage, preferences,
         backgroundImageWizardController);
   }
 
   /**
-   * Returns a new view that displays the different steps that helps user to import furniture. 
+   * Returns a new view that displays the different steps that helps user to import furniture.
    */
   public ImportedFurnitureWizardStepsView createImportedFurnitureWizardStepsView(
                       CatalogPieceOfFurniture piece,
                       String modelName, boolean importHomePiece,
-                      UserPreferences preferences, 
+                      UserPreferences preferences,
                       ImportedFurnitureWizardController importedFurnitureWizardController) {
     return new ImportedFurnitureWizardStepsPanel(piece, modelName, importHomePiece,
         preferences, importedFurnitureWizardController);
   }
 
   /**
-   * Returns a new view that displays the different steps that helps the user to import a texture. 
+   * Returns a new view that displays the different steps that helps the user to import a texture.
    */
   public View createImportedTextureWizardStepsView(
                       CatalogTexture texture, String textureName,
@@ -208,7 +208,7 @@ public class SwingViewFactory implements ViewFactory {
                                  WallController wallController) {
     return new WallPanel(preferences, wallController);
   }
-  
+
   /**
    * Returns a new view that edits room values.
    */
@@ -216,7 +216,7 @@ public class SwingViewFactory implements ViewFactory {
                                    RoomController roomController) {
     return new RoomPanel(preferences, roomController);
   }
-  
+
   /**
    * Returns a new view that edits polyline values.
    */
@@ -233,7 +233,7 @@ public class SwingViewFactory implements ViewFactory {
                                     LabelController labelController) {
     return new LabelPanel(modification, preferences, labelController);
   }
-  
+
   /**
    * Returns a new view that edits compass values.
    */
@@ -241,25 +241,25 @@ public class SwingViewFactory implements ViewFactory {
                                     CompassController compassController) {
     return new CompassPanel(preferences, compassController);
   }
-  
+
   /**
    * Returns a new view that edits 3D attributes.
    */
   public DialogView createHome3DAttributesView(UserPreferences preferences,
                                   Home3DAttributesController home3DAttributesController) {
-    return new Home3DAttributesPanel(preferences, home3DAttributesController);    
+    return new Home3DAttributesPanel(preferences, home3DAttributesController);
   }
-  
+
   /**
    * Returns a new view that edits observer camera values.
    */
   public DialogView createObserverCameraView(UserPreferences preferences,
                                              ObserverCameraController observerCameraController) {
-    return new ObserverCameraPanel(preferences, observerCameraController);    
+    return new ObserverCameraPanel(preferences, observerCameraController);
   }
-  
+
   /**
-   * Returns a new view that edits the texture of the given controller.  
+   * Returns a new view that edits the texture of the given controller.
    */
   public TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                             TextureChoiceController textureChoiceController) {
@@ -267,7 +267,7 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that edits the baseboard of its controller.  
+   * Returns a new view that edits the baseboard of its controller.
    */
   public View createBaseboardChoiceView(UserPreferences preferences,
                                         BaseboardChoiceController baseboardChoiceController) {
@@ -275,7 +275,7 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that edits the materials of its controller.  
+   * Returns a new view that edits the materials of its controller.
    */
   public View createModelMaterialsView(UserPreferences preferences,
                                         ModelMaterialsController controller) {
@@ -291,7 +291,7 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that displays <code>home</code> print preview. 
+   * Returns a new view that displays <code>home</code> print preview.
    */
   public DialogView createPrintPreviewView(Home home,
                                            UserPreferences preferences,
@@ -299,33 +299,33 @@ public class SwingViewFactory implements ViewFactory {
                                            PrintPreviewController printPreviewController) {
     return new PrintPreviewPanel(home, preferences, homeController, printPreviewController);
   }
-  
+
   /**
-   * Returns a new view able to compute a photos of a home from its stored points of view. 
+   * Returns a new view able to compute a photos of a home from its stored points of view.
    */
-  public DialogView createPhotosView(Home home, UserPreferences preferences, 
+  public DialogView createPhotosView(Home home, UserPreferences preferences,
                                      PhotosController photosController) {
     return new PhotosPanel(home, preferences, photosController);
   }
-  
+
   /**
-   * Returns a new view able to create photo realistic images of the given home. 
+   * Returns a new view able to create photo realistic images of the given home.
    */
-  public DialogView createPhotoView(Home home, 
-                                    UserPreferences preferences, 
+  public DialogView createPhotoView(Home home,
+                                    UserPreferences preferences,
                                     PhotoController photoController) {
     return new PhotoPanel(home, preferences, photoController);
   }
-  
+
   /**
-   * Returns a new view able to create 3D videos of the given home. 
+   * Returns a new view able to create 3D videos of the given home.
    */
-  public DialogView createVideoView(Home home, 
-                                    UserPreferences preferences, 
+  public DialogView createVideoView(Home home,
+                                    UserPreferences preferences,
                                     VideoController videoController) {
     return new VideoPanel(home, preferences, videoController);
   }
-  
+
   /**
    * Returns a new view that displays Sweet Home 3D help.
    */

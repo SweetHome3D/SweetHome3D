@@ -23,8 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Currency;
 import java.util.List;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -1832,6 +1834,14 @@ public class HomeFurnitureController implements Controller {
               && (price == null || !price.equals(piece.getPrice()))) {
             // Update currency when price changes
             piece.setCurrency(price != null ? currency : null);
+          }
+          if (price != null) {
+            // Update scale according to fraction digits of the currency
+            try {
+              price = price.setScale(Currency.getInstance(currency).getDefaultFractionDigits(), RoundingMode.HALF_UP);
+            } catch (IllegalArgumentException ex) {
+              // Unknown currency
+            }
           }
           piece.setPrice(price);
         }

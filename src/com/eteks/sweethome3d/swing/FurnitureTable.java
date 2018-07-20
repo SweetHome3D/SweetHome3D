@@ -119,15 +119,14 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
-import com.eteks.sweethome3d.viewcontroller.ExportableView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.TransferableView;
+import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 
 /**
  * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable implements TransferableView, ExportableView, Printable {
+public class FurnitureTable extends JTable implements FurnitureView, Printable {
   private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
 
   private UserPreferences        preferences;
@@ -151,7 +150,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
    * that displays furniture of <code>home</code>.
    */
   public FurnitureTable(Home home, UserPreferences preferences,
-                       FurnitureController controller) {
+                        FurnitureController controller) {
     this.preferences = preferences;
     float resolutionScale = SwingTools.getResolutionScale();
     if (resolutionScale != 1) {
@@ -550,10 +549,10 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
    * and its header when unit or language changes.
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
-    preferences.addPropertyChangeListener(
-        UserPreferences.Property.UNIT, new UserPreferencesChangeListener(this));
-    preferences.addPropertyChangeListener(
-        UserPreferences.Property.LANGUAGE, new UserPreferencesChangeListener(this));
+    UserPreferencesChangeListener preferencesListener = new UserPreferencesChangeListener(this);
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, preferencesListener);
+    preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY, preferencesListener);
   }
 
   /**
@@ -1036,7 +1035,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
   /**
    * Sets the filter applied to the furniture displayed in this table.
    */
-  public void setFurnitureFilter(FurnitureTable.FurnitureFilter filter) {
+  public void setFurnitureFilter(FurnitureFilter filter) {
     FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
     tableModel.setFurnitureFilter(filter);
   }
@@ -1044,7 +1043,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
   /**
    * Returns the filter applied to the furniture displayed in this table.
    */
-  public FurnitureTable.FurnitureFilter getFurnitureFilter() {
+  public FurnitureFilter getFurnitureFilter() {
     FurnitureTreeTableModel tableModel = (FurnitureTreeTableModel)getModel();
     return tableModel.getFurnitureFilter();
   }
@@ -1489,13 +1488,21 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
       // Renderer super class used to display sizes
       class PriceRenderer extends DefaultTableCellRenderer {
         public Component getTableCellRendererComponent(JTable table,
-             BigDecimal price, String currency, boolean isSelected, boolean hasFocus,
+             BigDecimal price, String currencyCode, boolean isSelected, boolean hasFocus,
              int row, int column) {
-          String defaultCurrency = preferences.getCurrency();
           String value;
-          if (price != null && defaultCurrency != null) {
+          if (price != null) {
             NumberFormat currencyFormat = DecimalFormat.getCurrencyInstance();
-            currencyFormat.setCurrency(Currency.getInstance(currency != null ? currency : defaultCurrency));
+            if (currencyCode == null) {
+              currencyCode = preferences.getCurrency();
+            }
+            try {
+              Currency currency = Currency.getInstance(currencyCode);
+              currencyFormat.setCurrency(currency);
+              currencyFormat.setMaximumFractionDigits(currency.getDefaultFractionDigits());
+            } catch (IllegalArgumentException ex) {
+              // Ignore currency
+            }
             value = currencyFormat.format(price);
           } else {
             value = null;
@@ -1942,7 +1949,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
             public void setBounds(int x, int y, int width, int height) {
               // Avoid renderer component to be wider than the tree
               // to ensure ellipsis is displayed if piece name is too long
-              super.setBounds(x, y, nameRendererTree.getWidth() - x, height); 
+              super.setBounds(x, y, nameRendererTree.getWidth() - x, height);
             }
           };
 
@@ -2152,7 +2159,7 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
                 } else {
                   int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
                   if (deletionIndex != -1) {
-                    if (expandedGroups.contains(piece)) { 
+                    if (expandedGroups.contains(piece)) {
                       filterAndSortFurniture();
                     } else {
                       filteredAndSortedFurniture.remove(deletionIndex);
@@ -2482,16 +2489,5 @@ public class FurnitureTable extends JTable implements TransferableView, Exportab
       }
       return false;
     }
-  }
-
-  /**
-   * The super type used to specify how furniture should be filtered in furniture table.
-   */
-  public static interface FurnitureFilter {
-    /**
-     * Returns <code>true</code> if the given <code>piece</code> should be shown,
-     * otherwise returns <code>false</code> if the <code>piece</code> should be hidden.
-     */
-    public abstract boolean include(Home home, HomePieceOfFurniture piece);
   }
 }

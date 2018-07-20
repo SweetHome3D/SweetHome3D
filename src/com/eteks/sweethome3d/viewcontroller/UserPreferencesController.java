@@ -21,12 +21,10 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.math.BigDecimal;
 
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.UserPreferences.Property;
 
 /**
  * A MVC controller for user preferences view.
@@ -220,6 +218,9 @@ public class UserPreferencesController implements Controller {
       String oldCurrency = this.currency;
       this.currency = currency;
       this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+      if (currency == null) {
+        setValueAddedTaxEnabled(false);
+      }
     }
   }
 
