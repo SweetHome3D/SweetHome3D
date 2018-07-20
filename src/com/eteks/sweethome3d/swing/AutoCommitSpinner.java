@@ -165,7 +165,7 @@ public class AutoCommitSpinner extends JSpinner {
           textField.setFormatterFactory(new DefaultFormatterFactory(editFormatter));
           textField.addFocusListener(new FocusAdapter() {
               public void focusLost(FocusEvent ev) {
-                textField.setForeground(UIManager.getColor("Spinner.foreground"));
+                textField.setForeground(UIManager.getColor("FormattedTextField.foreground"));
               }
             });
         }
@@ -247,7 +247,7 @@ public class AutoCommitSpinner extends JSpinner {
           // Keep default value
         }
       }
-      Color defaultColor = UIManager.getColor("Spinner.foreground");
+      Color defaultColor = UIManager.getColor("FormattedTextField.foreground");
       if (Color.BLACK.equals(defaultColor) || Color.WHITE.equals(defaultColor)) {
         JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
         NumberFormatter formatter = (NumberFormatter)textField.getFormatter();
