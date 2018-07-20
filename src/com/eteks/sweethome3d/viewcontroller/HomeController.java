@@ -208,7 +208,6 @@ public class HomeController implements Controller {
       };
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
-    this.childControllers = new ArrayList<Controller>();
 
     // Update recent homes list
     if (home.getName() != null) {
@@ -384,7 +383,6 @@ public class HomeController implements Controller {
     if (this.furnitureCatalogController == null) {
       this.furnitureCatalogController = new FurnitureCatalogController(
           this.preferences.getFurnitureCatalog(), this.preferences, this.viewFactory, this.contentManager);
-      this.childControllers.add(this.furnitureCatalogController);
     }
     return this.furnitureCatalogController;
   }
@@ -397,7 +395,6 @@ public class HomeController implements Controller {
     if (this.furnitureController == null) {
       this.furnitureController = new FurnitureController(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
-      this.childControllers.add(this.furnitureController);
     }
     return this.furnitureController;
   }
@@ -410,7 +407,6 @@ public class HomeController implements Controller {
     if (this.planController == null) {
       this.planController = new PlanController(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
-      this.childControllers.add(this.planController);
     }
     return this.planController;
   }
@@ -423,7 +419,6 @@ public class HomeController implements Controller {
     if (this.homeController3D == null) {
       this.homeController3D = new HomeController3D(
           this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
-      this.childControllers.add(this.homeController3D);
     }
     return this.homeController3D;
   }
@@ -1791,7 +1786,14 @@ public class HomeController implements Controller {
                                   final TransferableView.DataType ... dataTypes) {
      final List<Object> data = new ArrayList<Object>();
      for (int i = 0; i < dataTypes.length; i++) {
-       for (Controller childController : childControllers) {
+       if (this.childControllers == null) {
+         this.childControllers = new ArrayList<Controller>();
+         this.childControllers.add(getFurnitureCatalogController());
+         this.childControllers.add(getFurnitureController());
+         this.childControllers.add(getPlanController());
+         this.childControllers.add(getHomeController3D());
+       }
+       for (Controller childController : this.childControllers) {
          if (childController.getView() instanceof TransferableView) {
            data.add(((TransferableView)childController.getView()).createTransferData(dataTypes [i]));
          }
