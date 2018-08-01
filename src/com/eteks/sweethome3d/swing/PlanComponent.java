@@ -639,9 +639,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                        PlanController controller) {
     this.home = home;
     this.preferences = preferences;
-    this.object3dFactory = object3dFactory == null && !Boolean.getBoolean("com.eteks.sweethome3d.no3D")
-        ? new Object3DBranchFactory()
-        : object3dFactory;
+    try {
+      if (object3dFactory == null && !Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+        object3dFactory = new Object3DBranchFactory();
+      }
+    } catch (AccessControlException ex) {
+      // Can't access to properties
+    }
+    this.object3dFactory = object3dFactory;
     // Set JComponent default properties
     setOpaque(true);
     // Add listeners
