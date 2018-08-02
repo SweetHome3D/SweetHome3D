@@ -46,6 +46,7 @@ import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.text.NumberFormat;
@@ -860,7 +861,19 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
    */
   public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
     if  (formatType == FormatType.CSV) {
-      OutputStreamWriter writer = new OutputStreamWriter(out);
+      String csvEncoding;
+      try {
+        csvEncoding = System.getProperty("com.eteks.sweethome3d.CSVEncoding", "UTF-8");
+        // If property is empty, use default Java system encoding
+        if (csvEncoding.length() == 0) {
+          csvEncoding = null;
+        }
+      } catch (AccessControlException ex) {
+        csvEncoding = "UTF-8";
+      }
+      OutputStreamWriter writer = csvEncoding != null
+          ? new OutputStreamWriter(out, csvEncoding)
+          : new OutputStreamWriter(out);
       char fieldSeparator = settings != null
           ? settings.getProperty("fieldSeparator", "\t").charAt(0)
           : '\t';
@@ -892,8 +905,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
     writer.write(System.getProperty("line.separator"));
   }
 
-  private void exportRowToCSV(Writer writer, char fieldSeparator, int rowIndex)
-      throws IOException {
+  private void exportRowToCSV(Writer writer, char fieldSeparator, int rowIndex) throws IOException {
     TableModel model = getModel();
     HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)model.getValueAt(rowIndex, 0);
     // Force format for sizes to always display decimals
