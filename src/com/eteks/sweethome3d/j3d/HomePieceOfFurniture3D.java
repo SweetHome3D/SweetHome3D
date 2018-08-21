@@ -212,10 +212,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   @Override
   public void update() {
-    updatePieceOfFurnitureModelTransformations();
-    updatePieceOfFurnitureTransform();
-    updatePieceOfFurnitureModelMirrored();
-    updatePieceOfFurnitureColorAndTexture(false);
+    if (isVisible()) {
+      updatePieceOfFurnitureModelTransformations();
+      updatePieceOfFurnitureTransform();
+      updatePieceOfFurnitureModelMirrored();
+      updatePieceOfFurnitureColorAndTexture(false);
+    }
     updateLight();
     updatePieceOfFurnitureVisibility();
   }
@@ -267,9 +269,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     if (piece instanceof HomeLight
         && this.home != null) {
       boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0
-          && piece.isVisible()
-          && (piece.getLevel() == null
-            || piece.getLevel().isViewableAndVisible());
+          && isVisible();
       HomeLight light = (HomeLight)piece;
       LightSource [] lightSources = light.getLightSources();
       if (numChildren() > 2) {
@@ -365,9 +365,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       drawingMode = null;
     }
     // Update visibility of filled model shapes
-    boolean visible = piece.isVisible()
-        && (piece.getLevel() == null
-            || piece.getLevel().isViewableAndVisible());
+    boolean visible = isVisible();
     HomeMaterial [] materials = piece.getColor() == null && piece.getTexture() == null
         ? piece.getModelMaterials()
         : null;
@@ -982,6 +980,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // Change visibility
       renderingAttributes.setVisible(visible);
     }
+  }
+
+  /**
+   * Returns <code>true</code> if this 3D piece is visible.
+   */
+  private boolean isVisible() {
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    return piece.isVisible()
+        && (piece.getLevel() == null
+            || piece.getLevel().isViewableAndVisible());
   }
 
   /**
