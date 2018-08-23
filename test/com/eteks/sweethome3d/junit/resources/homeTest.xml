@@ -1,0 +1,25 @@
+<?xml version='1.0'?>
+<home version='6000' name='HomeTest.xml' camera='topCamera' wallHeight='250.0'>
+  <doorOrWindow catalogId='eTeks#frontDoor' name='Front door' creator='eTeks' model='com/eteks/sweethome3d/io/resources/frontDoor.obj' icon='com/eteks/sweethome3d/io/resources/frontDoor.png' x='1.0416663' y='216.75' angle='4.712389' width='101.5' depth='9.584083' height='208.5' modelSize='24179' dropOnTopElevation='-0.004796163' wallThickness='0.7826087' cutOutShape='M0,0 v1 h1 v-1 z' wallCutOutOnBothSides='true'>
+    <sash xAxis='0.049261082' yAxis='0.7826087' width='0.9014778' startAngle='0.0' endAngle='-1.5707964'/>
+  </doorOrWindow>
+  <doorOrWindow catalogId='eTeks#doubleWindow126x163' name='Double window' creator='eTeks' model='com/eteks/sweethome3d/io/resources/doubleWindow126x163.obj' icon='com/eteks/sweethome3d/io/resources/doubleWindow126x163.png' x='298.65' y='96.0' elevation='47.0' angle='1.5707964' width='132.0' depth='10.200749' height='174.0' modelSize='13650' movable='false' dropOnTopElevation='-0.0057471264' wallThickness='0.7352941' cutOutShape='M0,0 v1 h1 v-1 z' wallCutOutOnBothSides='true'>
+    <sash xAxis='0.015151516' yAxis='0.7352941' width='0.4810606' startAngle='0.0' endAngle='-1.5707964'/>
+    <sash xAxis='0.9848485' yAxis='0.7352941' width='0.4810606' startAngle='3.1415927' endAngle='4.712389'/>
+  </doorOrWindow>
+  <wall id='wall0' wallAtStart='wall3' wallAtEnd='wall1' xStart='0.0' yStart='0.0' xEnd='300.0' yEnd='0.0' height='250.0' thickness='7.5' pattern='hatchUp'/>
+  <wall id='wall1' wallAtStart='wall0' wallAtEnd='wall2' xStart='300.0' yStart='0.0' xEnd='300.0' yEnd='300.0' height='250.0' thickness='7.5' pattern='hatchUp'/>
+  <wall id='wall2' wallAtStart='wall1' wallAtEnd='wall3' xStart='300.0' yStart='300.0' xEnd='0.0' yEnd='300.0' height='250.0' thickness='7.5' pattern='hatchUp'/>
+  <wall id='wall3' wallAtStart='wall0' wallAtEnd='wall2' xStart='0.0' yStart='0.0' xEnd='0.0' yEnd='300.0' height='250.0' thickness='7.5' pattern='hatchUp'/>
+  <room areaVisible='true'>
+    <point x='296.25' y='3.75'/>
+    <point x='296.25' y='296.25'/>
+    <point x='3.75' y='296.25'/>
+    <point x='3.75' y='3.75'/>
+  </room>
+  <dimensionLine xStart='296.25' yStart='3.75' xEnd='296.25' yEnd='296.75' offset='-50.0'/>
+  <label x='150.0' y='356.0'>
+    <textStyle fontSize='18.0'/>
+    <text>Test</text>
+  </label>
+</home>
