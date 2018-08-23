@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -55,8 +56,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * An <code>InputStream</code> filter that reads a home from a stream 
- * at .sh3d file format. 
+ * An <code>InputStream</code> filter that reads a home from a stream
+ * at .sh3d file format.
  * @see DefaultHomeOutputStream
  * @author Emmanuel Puybaret
  */
@@ -65,12 +66,12 @@ public class DefaultHomeInputStream extends FilterInputStream {
   private final HomeXMLHandler     xmlHandler;
   private final UserPreferences    preferences;
   private final boolean            preferPreferencesContent;
-  
+
   private File zipFile;
 
   /**
    * Creates a home input stream filter able to read a home and its content
-   * from <code>in</code>. The dependencies of the read home included in the stream 
+   * from <code>in</code>. The dependencies of the read home included in the stream
    * will be checked.
    */
   public DefaultHomeInputStream(InputStream in) throws IOException {
@@ -81,7 +82,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
    * Creates a home input stream filter able to read a home and its content
    * from <code>in</code>.
    */
-  public DefaultHomeInputStream(InputStream in, 
+  public DefaultHomeInputStream(InputStream in,
                                 ContentRecording contentRecording) throws IOException {
     this(in, contentRecording, null, false);
   }
@@ -89,14 +90,14 @@ public class DefaultHomeInputStream extends FilterInputStream {
   /**
    * Creates a home input stream filter able to read a home and its content
    * from <code>in</code>. If <code>preferences</code> isn't <code>null</code>
-   * and <code>preferPreferencesContent</code> is <code>true</code>, 
-   * the furniture and textures contents it references will replace the one of 
-   * the read home when they are equal. If <code>preferPreferencesContent</code> 
-   * is <code>false</code>, preferences content will be used only 
+   * and <code>preferPreferencesContent</code> is <code>true</code>,
+   * the furniture and textures contents it references will replace the one of
+   * the read home when they are equal. If <code>preferPreferencesContent</code>
+   * is <code>false</code>, preferences content will be used only
    * to replace damaged equal content that might be found in read home files.
    */
-  public DefaultHomeInputStream(InputStream in, 
-                                ContentRecording contentRecording, 
+  public DefaultHomeInputStream(InputStream in,
+                                ContentRecording contentRecording,
                                 UserPreferences preferences,
                                 boolean preferPreferencesContent) {
     this(in, contentRecording, null, preferences, preferPreferencesContent);
@@ -104,27 +105,27 @@ public class DefaultHomeInputStream extends FilterInputStream {
 
   /**
    * Creates a home input stream filter able to read a home and its content
-   * from <code>in</code>. 
+   * from <code>in</code>.
    * @param in  the zipped stream from which the home will be read
-   * @param contentRecording  specifies whether content referenced by the read home is included 
+   * @param contentRecording  specifies whether content referenced by the read home is included
    *            or not in the stream.
-   * @param xmlHandler  SAX handler used to parse <code>Home.xml</code> entry when present, or 
+   * @param xmlHandler  SAX handler used to parse <code>Home.xml</code> entry when present, or
    *            <code>null</code> if only <code>Home</code> entry should taken into account.
-   * @param preferences  if not <code>null</code> and <code>preferPreferencesContent</code> 
-   *            is <code>true</code>, the furniture and textures contents it references will 
-   *            replace the one of the read home when they are equal. 
-   *            If <code>preferPreferencesContent</code> is <code>false</code>, preferences 
-   *            content will be used only to replace damaged equal content that might be found 
+   * @param preferences  if not <code>null</code> and <code>preferPreferencesContent</code>
+   *            is <code>true</code>, the furniture and textures contents it references will
+   *            replace the one of the read home when they are equal.
+   *            If <code>preferPreferencesContent</code> is <code>false</code>, preferences
+   *            content will be used only to replace damaged equal content that might be found
    *            in read home files.
-   * @param preferPreferencesContent if <code>true</code>, the returned home will reference 
-   *            contents in preferences when equal. 
+   * @param preferPreferencesContent if <code>true</code>, the returned home will reference
+   *            contents in preferences when equal.
    */
-  public DefaultHomeInputStream(InputStream in, 
+  public DefaultHomeInputStream(InputStream in,
                                 ContentRecording contentRecording,
                                 HomeXMLHandler xmlHandler,
                                 UserPreferences preferences,
                                 boolean preferPreferencesContent) {
-    super(new PushbackInputStream(in, 2));
+    super(new PushbackInputStream(in, 5));
     this.contentRecording = contentRecording;
     this.xmlHandler = xmlHandler;
     this.preferences = preferences;
@@ -132,24 +133,24 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Creates a home input stream filter able to read a home and its content the given file. 
-   * The file will be read directly without using a temporary copy except if it contains some invalid entries. 
+   * Creates a home input stream able to read a home and its content from the given file.
+   * The file will be read directly without using a temporary copy except if it contains some invalid entries.
    * @param zipFile  the zipped file from which the home will be read
-   * @param contentRecording  specifies whether content referenced by the read home is included 
+   * @param contentRecording  specifies whether content referenced by the read home is included
    *            or not in the stream.
-   * @param xmlHandler  SAX handler used to parse <code>Home.xml</code> entry when present, or 
+   * @param xmlHandler  SAX handler used to parse <code>Home.xml</code> entry when present, or
    *            <code>null</code> if only <code>Home</code> entry should taken into account.
-   * @param preferences  if not <code>null</code> and <code>preferPreferencesContent</code> 
-   *            is <code>true</code>, the furniture and textures contents it references will 
-   *            replace the one of the read home when they are equal. 
-   *            If <code>preferPreferencesContent</code> is <code>false</code>, preferences 
-   *            content will be used only to replace damaged equal content that might be found 
+   * @param preferences  if not <code>null</code> and <code>preferPreferencesContent</code>
+   *            is <code>true</code>, the furniture and textures contents it references will
+   *            replace the one of the read home when they are equal.
+   *            If <code>preferPreferencesContent</code> is <code>false</code>, preferences
+   *            content will be used only to replace damaged equal content that might be found
    *            in read home files.
-   * @param preferPreferencesContent if <code>true</code>, the returned home will reference 
-   *            contents in preferences when equal. 
+   * @param preferPreferencesContent if <code>true</code>, the returned home will reference
+   *            contents in preferences when equal.
    * @throws FileNotFoundException if the given file can't be opened
    */
-  public DefaultHomeInputStream(File zipFile, 
+  public DefaultHomeInputStream(File zipFile,
                                 ContentRecording contentRecording,
                                 HomeXMLHandler xmlHandler,
                                 UserPreferences preferences,
@@ -163,8 +164,8 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Throws an <code>InterruptedRecorderException</code> exception 
-   * if current thread is interrupted. The interrupted status of the current thread 
+   * Throws an <code>InterruptedRecorderException</code> exception
+   * if current thread is interrupted. The interrupted status of the current thread
    * is cleared when an exception is thrown.
    */
   private static void checkCurrentThreadIsntInterrupted() throws InterruptedIOException {
@@ -172,10 +173,46 @@ public class DefaultHomeInputStream extends FilterInputStream {
       throw new InterruptedIOException();
     }
   }
-  
+
+  /**
+   * Returns <code>true</code> if the prefix of the read input stream is as expected.
+   */
+  public boolean isPrefixCorrect() throws IOException {
+    if (isZipPrefix()) {
+      return true;
+    } else {
+      // Check XML prolog
+      return isPrefix(new byte [] {'<', '?', 'x', 'm', 'l'});
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the prefix of the read input stream is the one of a zipped stream.
+   */
+  private boolean isZipPrefix() throws IOException {
+    // Check first bytes are PK
+    return isPrefix(new byte [] {'P', 'K'});
+  }
+
+  /**
+   * Returns <code>true</code> if the bytes in parameter are the ones in input stream.
+   */
+  private boolean isPrefix(byte [] expectedBytes) throws IOException {
+    if (!(this.in instanceof PushbackInputStream)) {
+      // Check prefix on with PushbackInputStream streams
+      throw new IOException("Can't check prefix");
+    }
+    byte [] b = new byte [expectedBytes.length];
+    int length = this.in.read(b);
+    if (length != -1) {
+      ((PushbackInputStream)this.in).unread(b, 0, length);
+    }
+    return Arrays.equals(expectedBytes, b);
+  }
+
   /**
    * Reads home from a zipped stream containing a <code>Home.xml</code> or <code>Home</code> entry,
-   * or if the stream isn't zipped, reads the input stream as a XML input stream.   
+   * or if the stream isn't zipped, reads the input stream as a XML input stream.
    */
   public Home readHome() throws IOException, ClassNotFoundException {
     boolean zipContent = true;
@@ -185,14 +222,8 @@ public class DefaultHomeInputStream extends FilterInputStream {
     if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
       InputStream homeIn = null;
       if (this.zipFile == null) {
-        // Check first two bytes are PK
-        byte [] b = new byte [2];
-        int length = this.in.read(b);
-        if (length != -1) {
-          ((PushbackInputStream)this.in).unread(b, 0, length);
-        }
-        if (b [0] == 'P' && b [1] == 'K') {
-          // If it's a zipped content stream, copy home stream in a temporary file  
+        if (isZipPrefix()) {
+          // If it's a zipped content stream, copy home stream in a temporary file
           this.zipFile = OperatingSystem.createTemporaryFile("open", ".sweethome3d");
           OutputStream fileCopyOut = new BufferedOutputStream(new FileOutputStream(this.zipFile));
           homeIn = new CopiedInputStream(new BufferedInputStream(this.in), fileCopyOut);
@@ -203,7 +234,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
       } else {
         homeIn = this.in;
       }
-      
+
       if (validZipFile) {
         // Check if all entries in the home file can be fully read using a zipped input stream
         List<ZipEntry> validEntries = new ArrayList<ZipEntry>();
@@ -221,19 +252,19 @@ public class DefaultHomeInputStream extends FilterInputStream {
             this.zipFile = createTemporaryFileFromValidEntriesCount(this.zipFile, validEntriesCount);
           }
         }
-        
+
         homeUrl = this.zipFile.toURI().toURL();
         contentContext = new HomeContentContext(homeUrl, this.preferences, this.preferPreferencesContent);
       }
     }
-    
+
     InputStream homeObjectIn = null;
     try {
       Home home;
       if (zipContent) {
         boolean homeEntry = false;
         boolean homeXmlEntry = false;
-        
+
         // Open a zip input from file
         ZipInputStream zipIn = new ZipInputStream(this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT
             ? this.in : new FileInputStream(this.zipFile));
@@ -241,11 +272,11 @@ public class DefaultHomeInputStream extends FilterInputStream {
         for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
           if ("Home".equals(entry.getName())) {
             homeEntry = true;
-          } else if (this.xmlHandler != null 
+          } else if (this.xmlHandler != null
                     && "Home.xml".equals(entry.getName())) {
             homeXmlEntry = true;
           }
-          
+
           if (this.contentRecording == ContentRecording.INCLUDE_NO_CONTENT) {
             // Stop at the first entry from which home can be read
             if (homeEntry || homeXmlEntry) {
@@ -257,24 +288,24 @@ public class DefaultHomeInputStream extends FilterInputStream {
             break;
           }
         }
-        
+
         checkCurrentThreadIsntInterrupted();
         if (!homeEntry && !homeXmlEntry) {
           throw new IOException("Missing entry \"Home\" or \"Home.xml\"");
-        } 
-  
+        }
+
         if (this.contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
           // Reset stream on the Home.xml or Home entry
           zipIn.close();
           zipIn = new ZipInputStream(new FileInputStream(this.zipFile));
-          ZipEntry entry = null; 
+          ZipEntry entry = null;
           do {
             entry = zipIn.getNextEntry();
-          } while (!(homeEntry && "Home".equals(entry.getName()) 
-                     || homeXmlEntry && "Home.xml".equals(entry.getName()))); 
+          } while (!(homeEntry && "Home".equals(entry.getName())
+                     || homeXmlEntry && "Home.xml".equals(entry.getName())));
         }
         homeObjectIn = zipIn;
-        
+
         // Read Home entry
         checkCurrentThreadIsntInterrupted();
         if (homeEntry) {
@@ -282,10 +313,10 @@ public class DefaultHomeInputStream extends FilterInputStream {
         } else {
           home = readHomeXML(homeObjectIn, contentContext);
         }
-        
-        // Check all content is valid        
+
+        // Check all content is valid
         if (contentContext != null && (!validZipFile || contentContext.containsInvalidContents())) {
-          if (contentContext.containsCheckedContents()) { 
+          if (contentContext.containsCheckedContents()) {
             home.setRepaired(true);
           } else {
             throw new DamagedHomeIOException(home, contentContext.getInvalidContents());
@@ -295,7 +326,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         // Try to read input stream as an XML file referencing content resources
         home = readHomeXML(homeObjectIn = this.in, null);
       }
-      
+
       if (home == null) {
         throw new IOException("No home object in input");
       } else {
@@ -314,8 +345,8 @@ public class DefaultHomeInputStream extends FilterInputStream {
    * Returns the home read from the given serialized input stream.
    */
   private Home readHomeObject(InputStream in, HomeContentContext contentContext) throws IOException, ClassNotFoundException {
-    // Use an ObjectInputStream that replaces temporary URLs of Content objects 
-    // by URLs relative to file 
+    // Use an ObjectInputStream that replaces temporary URLs of Content objects
+    // by URLs relative to file
     Object object = new HomeObjectInputStream(in, contentContext).readObject();
     return object instanceof Home
         ? (Home)object
@@ -344,7 +375,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.  
+   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.
    * <code>validEntries</code> will contain the valid entries.
    */
   private boolean isZipFileValidUsingInputStream(InputStream in, List<ZipEntry> validEntries) throws IOException {
@@ -368,9 +399,9 @@ public class DefaultHomeInputStream extends FilterInputStream {
       }
     }
   }
-  
+
   /**
-   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.  
+   * Returns <code>true</code> if all the entries of the given zipped <code>file</code> are valid.
    * <code>validEntries</code> will contain the valid entries.
    */
   private boolean isZipFileValidUsingDictionnary(File file, List<ZipEntry> validEntries) throws IOException {
@@ -391,7 +422,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
           checkCurrentThreadIsntInterrupted();
         } catch (IOException ex) {
           validZipFile = false;
-        } 
+        }
       }
     } catch (Exception ex) {
       validZipFile = false;
@@ -435,7 +466,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
    * Returns a temporary file containing the valid entries of the given <code>file</code>.
    */
   private File createTemporaryFileFromValidEntries(File file, List<ZipEntry> validEntries) throws IOException {
-    if (validEntries.size() <= 0) {      
+    if (validEntries.size() <= 0) {
       throw new IOException("No valid entries");
     }
     File tempfile = OperatingSystem.createTemporaryFile("part", ".sh3d");
@@ -460,7 +491,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
       }
     }
   }
-  
+
   /**
    * Copies the a zipped entry.
    */
@@ -472,7 +503,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
     entryCopy.setExtra(entry.getExtra());
     zipOut.putNextEntry(entryCopy);
     byte [] buffer = new byte [8192];
-    int size; 
+    int size;
     while ((size = zipIn.read(buffer)) != -1) {
       zipOut.write(buffer, 0, size);
     }
@@ -480,7 +511,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
-   * Checks the model sizes among the given furniture and returns <code>true</code> 
+   * Checks the model sizes among the given furniture and returns <code>true</code>
    * if one of these sizes is already set.
    */
   private boolean checkModelSizes(List<HomePieceOfFurniture> furniture) {
@@ -511,7 +542,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
       super(in);
       this.out = out;
     }
-    
+
     @Override
     public int read() throws IOException {
       int b = super.read();
@@ -529,13 +560,13 @@ public class DefaultHomeInputStream extends FilterInputStream {
       }
       return size;
     }
-    
+
     @Override
     public void close() throws IOException {
       try {
         // Copy remaining bytes
         byte [] buffer = new byte [8192];
-        int size; 
+        int size;
         while ((size = this.in.read(buffer)) != -1) {
           this.out.write(buffer, 0, size);
         }
@@ -546,15 +577,15 @@ public class DefaultHomeInputStream extends FilterInputStream {
       }
     }
   }
-  
+
   /**
-   * <code>ObjectInputStream</code> that replaces temporary <code>URLContent</code> 
+   * <code>ObjectInputStream</code> that replaces temporary <code>URLContent</code>
    * objects by <code>URLContent</code> objects that points to file.
    */
   private class HomeObjectInputStream extends ObjectInputStream {
     private HomeContentContext contentContext;
 
-    public HomeObjectInputStream(InputStream in, 
+    public HomeObjectInputStream(InputStream in,
                                  HomeContentContext contentContext) throws IOException {
       super(in);
       if (contentRecording != ContentRecording.INCLUDE_NO_CONTENT) {
@@ -562,7 +593,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
         this.contentContext = contentContext;
       }
     }
-    
+
     @Override
     protected Object resolveObject(Object obj) throws IOException {
       if (obj instanceof URLContent) {
@@ -571,7 +602,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
           // Replace "temp" in URL and lookup content in read file or preferences resources
           return this.contentContext.lookupContent(url.substring(url.indexOf('!') + 2));
         }
-      } 
+      }
       return obj;
     }
   }
