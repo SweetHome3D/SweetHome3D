@@ -1560,7 +1560,8 @@ public class HomeController implements Controller {
   private void adjustFurnitureSizeAndElevation(List<HomePieceOfFurniture> furniture, boolean keepDoorsAndWindowDepth) {
     if (this.preferences.isMagnetismEnabled()) {
       for (HomePieceOfFurniture piece : furniture) {
-        if (piece.isResizable()) {
+        if (!(piece instanceof HomeFurnitureGroup)
+            && piece.isResizable()) {
           piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
           // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall
           if (!(piece instanceof HomeDoorOrWindow) || !keepDoorsAndWindowDepth) {
