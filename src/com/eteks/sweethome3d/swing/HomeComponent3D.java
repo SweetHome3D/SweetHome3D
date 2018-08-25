@@ -71,6 +71,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -144,6 +145,7 @@ import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
@@ -2294,9 +2296,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addLevelListener(final Group group) {
     this.levelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
-              || Level.Property.VISIBLE.name().equals(ev.getPropertyName())
+          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())
               || Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
+            Set<Selectable> objects = homeObjects.keySet();
+            ArrayList<Selectable> updatedItems = new ArrayList<Selectable>(objects.size());
+            for (Selectable item : objects) {
+              if (item instanceof Room // 3D rooms depend on rooms at other levels
+                  || !(item instanceof Elevatable)
+                  || ((Elevatable)item).isAtLevel((Level)ev.getSource())) {
+                updatedItems.add(item);
+              }
+            }
+            updateObjects(updatedItems);
+            groundChangeListener.propertyChange(null);
+          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
             updateObjects(homeObjects.keySet());
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
