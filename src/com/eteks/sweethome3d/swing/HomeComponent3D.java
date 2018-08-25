@@ -2195,7 +2195,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (this.lightScopeOutsideWallsAreaCache == null) {
       // Compute a smaller area surrounding all walls at all levels
       Area wallsPath = new Area();
-      for (Wall wall : home.getWalls()) {
+      for (Wall wall : this.home.getWalls()) {
         Wall thinnerWall = wall.clone();
         thinnerWall.setThickness(Math.max(thinnerWall.getThickness() - 0.1f, 0.08f));
         wallsPath.add(new Area(getShape(thinnerWall.getPoints())));
@@ -2338,7 +2338,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (!Wall.Property.PATTERN.name().equals(propertyName)) {
             Wall updatedWall = (Wall)ev.getSource();
             updateWall(updatedWall);
-            updateObjects(home.getRooms());
+            List<Level> levels = home.getLevels();
+            if (updatedWall.getLevel() == null
+                || updatedWall.isAtLevel(levels.get(levels.size() - 1))) {
+              // Update rooms which ceiling height may need an update at last level
+              updateObjects(home.getRooms());
+            }
             if (updatedWall.getLevel() != null && updatedWall.getLevel().getElevation() < 0) {
               groundChangeListener.propertyChange(null);
             }
@@ -2397,15 +2402,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
-            updatePieceOfFurnitureGeometry(updatedPiece);
+            updatePieceOfFurnitureGeometry(updatedPiece, propertyName, (Float)ev.getOldValue());
             updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
-              || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(ev.getPropertyName())
+              || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(propertyName)
               || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
-            updatePieceOfFurnitureGeometry(updatedPiece);
+            updatePieceOfFurnitureGeometry(updatedPiece, null, null);
           } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
               || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(propertyName)
@@ -2416,11 +2421,31 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
 
-        private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece) {
+        private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece, String propertyName, Float oldValue) {
           updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-          // If piece is or contains a door or a window, update walls that intersect with piece
           if (containsDoorsAndWindows(piece)) {
-            updateObjects(home.getWalls());
+            if (oldValue != null) {
+              HomePieceOfFurniture oldPiece = piece.clone();
+              // Reset the modified property to its old value
+              if (HomePieceOfFurniture.Property.X.name().equals(propertyName)) {
+                oldPiece.setX(oldValue);
+              } else if (HomePieceOfFurniture.Property.Y.name().equals(propertyName)) {
+                oldPiece.setY(oldValue);
+              } else if (HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)) {
+                oldPiece.setAngle(oldValue);
+              } else if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)) {
+                oldPiece.setWidth(oldValue);
+              } else if (HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
+                oldPiece.setDepth(oldValue);
+              }
+              // For doors and windows, propertyName can't be equal to ROLL or PITCH
+
+              // Update walls which intersect the piece with its old property value and the one with the new value
+              updateIntersectingWalls(oldPiece, piece);
+            } else {
+              // Property value change won't influence the walls that intersect the door or window
+              updateIntersectingWalls(piece);
+            }
           } else if (containsStaircases(piece)) {
             updateObjects(home.getRooms());
           }
@@ -2471,7 +2496,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           // If piece is or contains a door or a window, update walls that intersect with piece
           if (containsDoorsAndWindows(piece)) {
-            updateObjects(home.getWalls());
+            updateIntersectingWalls(piece);
           } else if (containsStaircases(piece)) {
             updateObjects(home.getRooms());
           } else {
@@ -2717,7 +2742,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Updates <code>objects</code> later. Should be invoked from Event Dispatch Thread.
+   * Updates 3D <code>objects</code> later. Should be invoked from Event Dispatch Thread.
    */
   private void updateObjects(Collection<? extends Selectable> objects) {
     if (this.homeObjectsToUpdate != null) {
@@ -2743,8 +2768,48 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Updates <code>wall</code> geometry,
-   * and the walls at its end or start.
+   * Updates walls that may intersect from the given doors or window.
+   */
+  private void updateIntersectingWalls(HomePieceOfFurniture ... doorOrWindows) {
+    Collection<Wall> walls = this.home.getWalls();
+    int wallCount = 0;
+    if (this.homeObjectsToUpdate != null) {
+      for (Selectable object : this.homeObjectsToUpdate) {
+        if (object instanceof Wall) {
+          wallCount++;
+        }
+      }
+    }
+    // Check if some more walls may require an update
+    if (wallCount != walls.size()) {
+      List<Wall> updatedWalls = new ArrayList<Wall>();
+      Rectangle2D doorOrWindowBounds = null;
+      // Compute the approximate bounds of the doors and windows
+      for (HomePieceOfFurniture doorOrWindow : doorOrWindows) {
+        float [][] points = doorOrWindow.getPoints();
+        if (doorOrWindowBounds == null) {
+          doorOrWindowBounds = new Rectangle2D.Float(points [0][0], points [0][1], 0, 0);
+        } else {
+          doorOrWindowBounds.add(points [0][0], points [0][1]);
+        }
+        for (int i = 1; i < points.length; i++) {
+          doorOrWindowBounds.add(points [i][0], points [i][1]);
+        }
+      }
+      // Search walls that intersect the bounds
+      for (Wall wall : walls) {
+        if (wall.intersectsRectangle((float)doorOrWindowBounds.getX(), (float)doorOrWindowBounds.getY(),
+            (float)doorOrWindowBounds.getX() + (float)doorOrWindowBounds.getWidth(),
+            (float)doorOrWindowBounds.getY() + (float)doorOrWindowBounds.getHeight())) {
+          updatedWalls.add(wall);
+        }
+      }
+      updateObjects(updatedWalls);
+    }
+  }
+
+  /**
+   * Updates <code>wall</code> geometry and the walls at its end or start.
    */
   private void updateWall(Wall wall) {
     Collection<Wall> wallsToUpdate = new ArrayList<Wall>(3);
