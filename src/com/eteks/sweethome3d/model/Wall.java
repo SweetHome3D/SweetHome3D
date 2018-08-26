@@ -1225,6 +1225,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     clone.wallAtStart = null;
     clone.wallAtEnd = null;
     clone.level = null;
+    clone.shapeCache = null;
     clone.pointsCache = null;
     clone.pointsIncludingBaseboardsCache = null;
     return clone;
