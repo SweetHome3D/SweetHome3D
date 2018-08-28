@@ -139,6 +139,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       wallCreationState;
   private final ControllerState       wallDrawingState;
   private final ControllerState       wallResizeState;
+  private final ControllerState       wallArcExtentState;
   private final ControllerState       pieceOfFurnitureRotationState;
   private final ControllerState       pieceOfFurniturePitchRotationState;
   private final ControllerState       pieceOfFurnitureRollRotationState;
@@ -219,6 +220,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.wallCreationState = new WallCreationState();
     this.wallDrawingState = new WallDrawingState();
     this.wallResizeState = new WallResizeState();
+    this.wallArcExtentState = new WallArcExtentState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
     this.pieceOfFurniturePitchRotationState = new PieceOfFurniturePitchRotationState();
     this.pieceOfFurnitureRollRotationState = new PieceOfFurnitureRollRotationState();
@@ -513,6 +515,13 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getWallResizeState() {
     return this.wallResizeState;
+  }
+
+  /**
+   * Returns the wall arc extent state.
+   */
+  protected ControllerState getWallArcExtentState() {
+    return this.wallArcExtentState;
   }
 
   /**
@@ -3334,6 +3343,24 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the selected wall with a middle point at (<code>x</code>, <code>y</code>).
+   */
+  private Wall getArcExtentWallAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Wall
+        && isItemResizable(selectedItems.get(0))) {
+      Wall wall = (Wall)selectedItems.get(0);
+      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      if (wall.isAtLevel(this.home.getSelectedLevel())
+          && wall.isMiddlePointAt(x, y, margin)) {
+        return wall;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Returns a new room instance with the given points.
    * The new room is added to home.
    */
@@ -5578,6 +5605,38 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Posts an undoable operation about <code>wall</code> arc extent change.
+   */
+  private void postWallArcExtent(final Wall wall, final Float oldArcExtent) {
+    final Float newArcExtent = wall.getArcExtent();
+    if (newArcExtent != oldArcExtent
+        && (newArcExtent == null || !newArcExtent.equals(oldArcExtent))) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          wall.setArcExtent(oldArcExtent);
+          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+        }
+
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          wall.setArcExtent(newArcExtent);
+          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+        }
+
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoWallArcExtentName");
+        }
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Posts an undoable operation about <code>room</code> resizing.
    */
   private void postRoomResize(final Room room, final float oldX, final float oldY,
@@ -7209,7 +7268,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (getModifiedLightPowerAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.POWER);
       } else if (getOffsetDimensionLineAt(x, y) != null
-          || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+          || getHeightResizedPieceOfFurnitureAt(x, y) != null
+          || getArcExtentWallAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.HEIGHT);
       } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
@@ -7277,6 +7337,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getLightPowerModificationState());
         } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureHeightState());
+        } else if (getArcExtentWallAt(x, y) != null) {
+          setState(getWallArcExtentState());
         } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureRotationState());
         } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
@@ -8092,6 +8154,52 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
+    /**
+     * Returns arc extent from the circumscribed circle of the triangle
+     * with vertices (x1, y1) (x2, y2) (x, y).
+     */
+    protected float getArcExtent(float x1, float y1, float x2, float y2, float x, float y) {
+      float [] arcCenter = getCircumscribedCircleCenter(x1, y1, x2, y2, x, y);
+      double startPointToBissectorLine1Distance = Point2D.distance(x1, y1, x2, y2) / 2;
+      double arcCenterToWallDistance = Float.isInfinite(arcCenter [0]) || Float.isInfinite(arcCenter [1])
+          ? Float.POSITIVE_INFINITY
+          : Line2D.ptLineDist(x1, y1, x2, y2, arcCenter [0], arcCenter [1]);
+      int mousePosition = Line2D.relativeCCW(x1, y1, x2, y2, x, y);
+      int centerPosition = Line2D.relativeCCW(x1, y1, x2, y2, arcCenter [0], arcCenter [1]);
+      float arcExtent;
+      if (centerPosition == mousePosition) {
+        arcExtent = (float)(Math.PI + 2 * Math.atan2(arcCenterToWallDistance, startPointToBissectorLine1Distance));
+      } else {
+        arcExtent = (float)(2 * Math.atan2(startPointToBissectorLine1Distance, arcCenterToWallDistance));
+      }
+      arcExtent = Math.min(arcExtent, 3 * (float)Math.PI / 2);
+      arcExtent *= mousePosition;
+      return arcExtent;
+    }
+
+    /**
+     * Returns the circumscribed circle of the triangle with vertices (x1, y1) (x2, y2) (x, y).
+     */
+    private float [] getCircumscribedCircleCenter(float x1, float y1, float x2, float y2, float x, float y) {
+      float [][] bissectorLine1 = getBissectorLine(x1, y1, x2, y2);
+      float [][] bissectorLine2 = getBissectorLine(x1, y1, x, y);
+      float [] arcCenter = computeIntersection(bissectorLine1 [0], bissectorLine1 [1],
+          bissectorLine2 [0], bissectorLine2 [1]);
+      return arcCenter;
+    }
+
+    private float [][] getBissectorLine(float x1, float y1, float x2, float y2) {
+      float xMiddlePoint = (x1 + x2) / 2;
+      float yMiddlePoint = (y1 + y2) / 2;
+      float bissectorLineAlpha = (x1 - x2) / (y2 - y1);
+      if (bissectorLineAlpha > 1E10) {
+        // Vertical line
+        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint, yMiddlePoint + 1}};
+      } else {
+        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint + 1, bissectorLineAlpha + yMiddlePoint}};
+      }
+    }
+
     protected void showWallAngleFeedback(Wall wall, boolean ignoreArcExtent) {
       Float arcExtent = wall.getArcExtent();
       if (!ignoreArcExtent && arcExtent != null) {
@@ -8257,25 +8365,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (this.wallArcExtent != null) {
         // Compute current wall arc extent from the circumscribed circle of the triangle
         // with vertices (xStart, yStart) (xEnd, yEnd) (x, y)
-        float [] arcCenter = getCircumscribedCircleCenter(this.newWall.getXStart(), this.newWall.getYStart(),
-            this.newWall.getXEnd(), this.newWall.getYEnd(), x, y);
-        double startPointToBissectorLine1Distance = Point2D.distance(this.newWall.getXStart(), this.newWall.getYStart(),
-            this.newWall.getXEnd(), this.newWall.getYEnd()) / 2;
-        double arcCenterToWallDistance = Float.isInfinite(arcCenter [0]) || Float.isInfinite(arcCenter [1])
-            ? Float.POSITIVE_INFINITY
-            : Line2D.ptLineDist(this.newWall.getXStart(), this.newWall.getYStart(),
-                  this.newWall.getXEnd(), this.newWall.getYEnd(), arcCenter [0], arcCenter [1]);
-        int mousePosition = Line2D.relativeCCW(this.newWall.getXStart(), this.newWall.getYStart(),
-            this.newWall.getXEnd(), this.newWall.getYEnd(), x, y);
-        int centerPosition = Line2D.relativeCCW(this.newWall.getXStart(), this.newWall.getYStart(),
-            this.newWall.getXEnd(), this.newWall.getYEnd(), arcCenter [0], arcCenter [1]);
-        if (centerPosition == mousePosition) {
-          this.wallArcExtent = (float)(Math.PI + 2 * Math.atan2(arcCenterToWallDistance, startPointToBissectorLine1Distance));
-        } else {
-          this.wallArcExtent = (float)(2 * Math.atan2(startPointToBissectorLine1Distance, arcCenterToWallDistance));
-        }
-        this.wallArcExtent = Math.min(this.wallArcExtent, 3 * (float)Math.PI / 2);
-        this.wallArcExtent *= mousePosition;
+        this.wallArcExtent = getArcExtent(this.newWall.getXStart(), this.newWall.getXEnd(),
+            this.newWall.getYStart(), this.newWall.getYEnd(), x, y);
         if (this.alignmentActivated
             || this.magnetismEnabled) {
           this.wallArcExtent = (float)Math.toRadians(Math.round(Math.toDegrees(this.wallArcExtent)));
@@ -8312,29 +8403,6 @@ public class PlanController extends FurnitureController implements Controller {
       // Update move coordinates
       this.xLastEnd = xEnd;
       this.yLastEnd = yEnd;
-    }
-
-    /**
-     * Returns the circumscribed circle of the triangle with vertices (x1, y1) (x2, y2) (x, y).
-     */
-    private float [] getCircumscribedCircleCenter(float x1, float y1, float x2, float y2, float x, float y) {
-      float [][] bissectorLine1 = getBissectorLine(x1, y1, x2, y2);
-      float [][] bissectorLine2 = getBissectorLine(x1, y1, x, y);
-      float [] arcCenter = computeIntersection(bissectorLine1 [0], bissectorLine1 [1],
-          bissectorLine2 [0], bissectorLine2 [1]);
-      return arcCenter;
-    }
-
-    private float [][] getBissectorLine(float x1, float y1, float x2, float y2) {
-      float xMiddlePoint = (x1 + x2) / 2;
-      float yMiddlePoint = (y1 + y2) / 2;
-      float bissectorLineAlpha = (x1 - x2) / (y2 - y1);
-      if (bissectorLineAlpha > 1E10) {
-        // Vertical line
-        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint, yMiddlePoint + 1}};
-      } else {
-        return new float [][] {{xMiddlePoint, yMiddlePoint}, {xMiddlePoint + 1, bissectorLineAlpha + yMiddlePoint}};
-      }
     }
 
     @Override
@@ -8864,6 +8932,109 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void escape() {
       moveWallPoint(this.selectedWall, this.oldX, this.oldY, this.startPoint);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedWall = null;
+    }
+  }
+
+  /**
+   * Wall arc extent state. This state manages wall arc extent change.
+   */
+  private class WallArcExtentState extends AbstractWallState {
+    private Wall         selectedWall;
+    private Float        oldArcExtent;
+    private float        deltaXToMiddlePoint;
+    private float        deltaYToMiddlePoint;
+    private boolean      magnetismEnabled;
+    private boolean      alignmentActivated;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+
+    @Override
+    public boolean isBasePlanModificationState() {
+      return true;
+    }
+
+    @Override
+    public void enter() {
+      super.enter();
+      this.selectedWall = (Wall)home.getSelectedItems().get(0);
+      this.oldArcExtent = this.selectedWall.getArcExtent();
+      float [][] wallPoints = this.selectedWall.getPoints();
+      int leftSideMiddlePointIndex = wallPoints.length / 4;
+      int rightSideMiddlePointIndex = wallPoints.length - 1 - leftSideMiddlePointIndex;
+      if (wallPoints.length % 4 == 0) {
+        leftSideMiddlePointIndex--;
+      }
+      float middleX = (wallPoints [leftSideMiddlePointIndex][0] + wallPoints [rightSideMiddlePointIndex][0]) / 2;
+      float middleY = (wallPoints [leftSideMiddlePointIndex][1] + wallPoints [rightSideMiddlePointIndex][1]) / 2;
+      this.deltaXToMiddlePoint = getXLastMousePress() - middleX;
+      this.deltaYToMiddlePoint = getYLastMousePress() - middleY;
+      this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      toggleMagnetism(wasMagnetismToggledLastMousePress());
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, false),
+          getXLastMousePress(), getYLastMousePress());
+      showWallAngleFeedback(this.selectedWall, false);
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      PlanView planView = getView();
+      float newX = x - this.deltaXToMiddlePoint;
+      float newY = y - this.deltaYToMiddlePoint;
+      float arcExtent = getArcExtent(this.selectedWall.getXStart(), this.selectedWall.getYStart(),
+          this.selectedWall.getXEnd(), this.selectedWall.getYEnd(), newX, newY);
+      if (this.alignmentActivated
+          || this.magnetismEnabled) {
+        arcExtent = (float)Math.toRadians(Math.round(Math.toDegrees(arcExtent)));
+      }
+      this.selectedWall.setArcExtent(arcExtent);
+
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, false), x, y);
+      showWallAngleFeedback(this.selectedWall, false);
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postWallArcExtent(this.selectedWall, this.oldArcExtent);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedWall.setArcExtent(this.oldArcExtent);
       setState(getSelectionState());
     }
 

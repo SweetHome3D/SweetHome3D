@@ -241,6 +241,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public static final IndicatorType ROTATE_TEXT   = new IndicatorType("ROTATE_TEXT");
     public static final IndicatorType ROTATE_PITCH  = new IndicatorType("ROTATE_PITCH");
     public static final IndicatorType ROTATE_ROLL   = new IndicatorType("ROTATE_ROLL");
+    public static final IndicatorType ARC_EXTENT    = new IndicatorType("ARC_EXTENT");
 
     private final String name;
 
@@ -335,6 +336,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final Shape       LIGHT_POWER_POINT_INDICATOR;
   private static final GeneralPath WALL_ORIENTATION_INDICATOR;
   private static final Shape       WALL_POINT;
+  private static final GeneralPath WALL_ARC_EXTENT_INDICATOR;
   private static final GeneralPath WALL_AND_LINE_RESIZE_INDICATOR;
   private static final Shape       CAMERA_YAW_ROTATION_INDICATOR;
   private static final Shape       CAMERA_PITCH_ROTATION_INDICATOR;
@@ -467,6 +469,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     WALL_ORIENTATION_INDICATOR.lineTo(-4, 4);
 
     WALL_POINT = new Ellipse2D.Float(-3, -3, 6, 6);
+
+    // Create a path used as arc extent indicator for wall
+    WALL_ARC_EXTENT_INDICATOR = new GeneralPath();
+    WALL_ARC_EXTENT_INDICATOR.append(new Arc2D.Float(-4, 1, 8, 5, 210, 120, Arc2D.OPEN), false);
+    WALL_ARC_EXTENT_INDICATOR.moveTo(0, 6);
+    WALL_ARC_EXTENT_INDICATOR.lineTo(0, 11);
+    WALL_ARC_EXTENT_INDICATOR.moveTo(-1.8f, 8.7f);
+    WALL_ARC_EXTENT_INDICATOR.lineTo(0, 12);
+    WALL_ARC_EXTENT_INDICATOR.lineTo(1.8f, 8.7f);
 
     // Create a path used as a size indicator
     // at start and end points of a selected wall
@@ -3329,6 +3340,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (item instanceof HomePieceOfFurniture) {
         return FURNITURE_ROLL_ROTATION_INDICATOR;
       }
+    } else if (IndicatorType.ARC_EXTENT.equals(indicatorType)) {
+      if (item instanceof Wall) {
+        return WALL_ARC_EXTENT_INDICATOR;
+      }
     }
     return null;
   }
@@ -3552,7 +3567,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         && indicatorPaint != null) {
       Wall wall = walls.iterator().next();
       if (isViewableAtSelectedLevel(wall)) {
-        paintWallResizeIndicator(g2D, wall, indicatorPaint, planScale);
+        paintWallResizeIndicators(g2D, wall, indicatorPaint, planScale);
       }
     }
   }
@@ -3568,29 +3583,45 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints resize indicator on <code>wall</code>.
+   * Paints resize indicators on <code>wall</code>.
    */
-  private void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
-                                        Paint indicatorPaint,
-                                        float planScale) {
+  private void paintWallResizeIndicators(Graphics2D g2D, Wall wall,
+                                         Paint indicatorPaint,
+                                         float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(INDICATOR_STROKE);
+
+      AffineTransform previousTransform = g2D.getTransform();
+      float scaleInverse = 1 / planScale;
+      float [][] wallPoints = wall.getPoints();
+      int leftSideMiddlePointIndex = wallPoints.length / 4;
+      double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(),
+          wall.getXEnd() - wall.getXStart());
+
+      // Draw arc extent indicator at wall middle
+      if (wallPoints.length % 4 == 0) {
+        g2D.translate((wallPoints [leftSideMiddlePointIndex - 1][0] + wallPoints [leftSideMiddlePointIndex][0]) / 2,
+            (wallPoints [leftSideMiddlePointIndex - 1][1] + wallPoints [leftSideMiddlePointIndex][1]) / 2);
+      } else {
+        g2D.translate(wallPoints [leftSideMiddlePointIndex][0], wallPoints [leftSideMiddlePointIndex][1]);
+      }
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(wallAngle + Math.PI);
+      g2D.draw(getIndicator(wall, IndicatorType.ARC_EXTENT));
+      g2D.setTransform(previousTransform);
 
       Float arcExtent = wall.getArcExtent();
       double indicatorAngle;
       if (arcExtent != null
           && arcExtent.floatValue() != 0) {
         indicatorAngle = Math.atan2(wall.getYArcCircleCenter() - wall.getYEnd(),
-                wall.getXArcCircleCenter() - wall.getXEnd())
+            wall.getXArcCircleCenter() - wall.getXEnd())
             + (arcExtent > 0 ? -Math.PI / 2 : Math.PI /2);
       } else {
-        indicatorAngle = Math.atan2(wall.getYEnd() - wall.getYStart(),
-            wall.getXEnd() - wall.getXStart());
+        indicatorAngle = wallAngle;
       }
 
-      AffineTransform previousTransform = g2D.getTransform();
-      float scaleInverse = 1 / planScale;
       // Draw resize indicator at wall end point
       g2D.translate(wall.getXEnd(), wall.getYEnd());
       g2D.scale(scaleInverse, scaleInverse);

@@ -251,7 +251,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public void setArcExtent(Float arcExtent) {
     if (arcExtent != this.arcExtent
-        || (arcExtent != null && !arcExtent.equals(this.arcExtent))) {
+        && (arcExtent == null || !arcExtent.equals(this.arcExtent))) {
       Float oldArcExtent = this.arcExtent;
       this.arcExtent = arcExtent;
       clearPointsCache();
@@ -441,7 +441,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public void setHeight(Float height) {
     if (height != this.height
-        || (height != null && !height.equals(this.height))) {
+        && (height == null || !height.equals(this.height))) {
       Float oldHeight = this.height;
       this.height = height;
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(),
@@ -1122,6 +1122,24 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public boolean containsPoint(float x, float y, boolean includeBaseboards, float margin) {
     return containsShapeAtWithMargin(getShape(includeBaseboards), x, y, margin);
+  }
+
+  /**
+   * Returns <code>true</code> if the middle point of this wall is the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isMiddlePointAt(float x, float y, float margin) {
+    float [][] wallPoints = getPoints();
+    int leftSideMiddlePointIndex = wallPoints.length / 4;
+    int rightSideMiddlePointIndex = wallPoints.length - 1 - leftSideMiddlePointIndex;
+    Line2D middleLine = wallPoints.length % 4 == 0
+        ? new Line2D.Float((wallPoints [leftSideMiddlePointIndex - 1][0] + wallPoints [leftSideMiddlePointIndex][0]) / 2,
+            (wallPoints [leftSideMiddlePointIndex - 1][1] + wallPoints [leftSideMiddlePointIndex][1]) / 2,
+            (wallPoints [rightSideMiddlePointIndex][0] + wallPoints [rightSideMiddlePointIndex + 1][0]) / 2,
+            (wallPoints [rightSideMiddlePointIndex][1] + wallPoints [rightSideMiddlePointIndex + 1][1]) / 2)
+        : new Line2D.Float(wallPoints [leftSideMiddlePointIndex][0], wallPoints [leftSideMiddlePointIndex][1],
+            wallPoints [rightSideMiddlePointIndex][0], wallPoints [rightSideMiddlePointIndex][1]);
+    return containsShapeAtWithMargin(middleLine, x, y, margin);
   }
 
   /**
