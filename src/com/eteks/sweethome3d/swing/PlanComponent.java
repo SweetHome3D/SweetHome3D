@@ -849,8 +849,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.AREA_STYLE.name().equals(propertyName)
               || Room.Property.AREA_ANGLE.name().equals(propertyName)) {
             sortedLevelRooms = null;
-            otherLevelsRoomsCache = null;
             otherLevelsRoomAreaCache = null;
+            otherLevelsRoomsCache = null;
             revalidate();
           } else if (preferences.isRoomFloorColoredOrTextured()
                      && (Room.Property.FLOOR_COLOR.name().equals(propertyName)
@@ -871,8 +871,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             ev.getItem().removePropertyChangeListener(roomChangeListener);
           }
           sortedLevelRooms = null;
-          otherLevelsRoomsCache = null;
           otherLevelsRoomAreaCache = null;
+          otherLevelsRoomsCache = null;
           revalidate();
         }
       });
@@ -956,8 +956,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             backgroundImageCache = null;
             otherLevelsWallAreaCache = null;
             otherLevelsWallsCache = null;
-            otherLevelsRoomsCache = null;
             otherLevelsRoomAreaCache = null;
+            otherLevelsRoomsCache = null;
             wallAreasCache = null;
             doorOrWindowWallThicknessAreasCache = null;
             sortedLevelFurniture = null;
@@ -1029,8 +1029,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           backgroundImageCache = null;
           otherLevelsWallAreaCache = null;
           otherLevelsWallsCache = null;
-          otherLevelsRoomsCache = null;
           otherLevelsRoomAreaCache = null;
+          otherLevelsRoomsCache = null;
           wallAreasCache = null;
           doorOrWindowWallThicknessAreasCache = null;
           sortedLevelRooms = null;

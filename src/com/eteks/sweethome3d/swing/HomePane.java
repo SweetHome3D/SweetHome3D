@@ -462,9 +462,14 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.DELETE_SELECTION, preferences, planController, "deleteSelection");
       createAction(ActionType.LOCK_BASE_PLAN, preferences, planController, "lockBasePlan");
       createAction(ActionType.UNLOCK_BASE_PLAN, preferences, planController, "unlockBasePlan");
+      createAction(ActionType.FLIP_HORIZONTALLY, preferences, planController, "flipHorizontally");
+      createAction(ActionType.FLIP_VERTICALLY, preferences, planController, "flipVertically");
       createAction(ActionType.MODIFY_COMPASS, preferences, planController, "modifyCompass");
       createAction(ActionType.MODIFY_WALL, preferences, planController, "modifySelectedWalls");
       createAction(ActionType.MODIFY_ROOM, preferences, planController, "modifySelectedRooms");
+      createAction(ActionType.JOIN_WALLS, preferences, planController, "joinSelectedWalls");
+      createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, planController, "reverseSelectedWallsDirection");
+      createAction(ActionType.SPLIT_WALL, preferences, planController, "splitSelectedWall");
       // ADD_ROOM_POINT and DELETE_ROOM_POINT actions are actually defined later in updateRoomActions
       createAction(ActionType.ADD_ROOM_POINT, preferences);
       createAction(ActionType.DELETE_ROOM_POINT, preferences);
@@ -478,9 +483,6 @@ public class HomePane extends JRootPane implements HomeView {
       toggleBoldAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createBoldStyleToggleModel(home, preferences));
       Action toggleItalicAction = createAction(ActionType.TOGGLE_ITALIC_STYLE, preferences, planController, "toggleItalicStyle");
       toggleItalicAction.putValue(ResourceAction.TOGGLE_BUTTON_MODEL, createItalicStyleToggleModel(home, preferences));
-      createAction(ActionType.JOIN_WALLS, preferences, planController, "joinSelectedWalls");
-      createAction(ActionType.REVERSE_WALL_DIRECTION, preferences, planController, "reverseSelectedWallsDirection");
-      createAction(ActionType.SPLIT_WALL, preferences, planController, "splitSelectedWall");
       createAction(ActionType.IMPORT_BACKGROUND_IMAGE, preferences, controller, "importBackgroundImage");
       createAction(ActionType.MODIFY_BACKGROUND_IMAGE, preferences, controller, "modifyBackgroundImage");
       createAction(ActionType.HIDE_BACKGROUND_IMAGE, preferences, controller, "hideBackgroundImage");
@@ -1119,6 +1121,8 @@ public class HomePane extends JRootPane implements HomeView {
     if (lockUnlockBasePlanMenuItem != null) {
       planMenu.add(lockUnlockBasePlanMenuItem);
     }
+    addActionToMenu(ActionType.FLIP_HORIZONTALLY, planMenu);
+    addActionToMenu(ActionType.FLIP_VERTICALLY, planMenu);
     addActionToMenu(ActionType.MODIFY_COMPASS, planMenu);
     addActionToMenu(ActionType.MODIFY_WALL, planMenu);
     addActionToMenu(ActionType.JOIN_WALLS, planMenu);
@@ -2829,6 +2833,8 @@ public class HomePane extends JRootPane implements HomeView {
       if (lockUnlockBasePlanMenuItem != null) {
         planViewPopup.add(lockUnlockBasePlanMenuItem);
       }
+      addActionToPopupMenu(ActionType.FLIP_HORIZONTALLY, planViewPopup);
+      addActionToPopupMenu(ActionType.FLIP_VERTICALLY, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
       addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);

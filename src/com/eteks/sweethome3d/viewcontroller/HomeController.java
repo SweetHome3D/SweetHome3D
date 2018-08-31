@@ -902,6 +902,10 @@ public class HomeController implements Controller {
                  || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomeView.ActionType.MODIFY_WALL,
         homeSelectionContainsWalls);
+    view.setEnabled(HomeView.ActionType.FLIP_HORIZONTALLY,
+        homeSelectionContainsOneCopiableItemOrMore);
+    view.setEnabled(HomeView.ActionType.FLIP_VERTICALLY,
+        homeSelectionContainsOneCopiableItemOrMore);
     view.setEnabled(HomeView.ActionType.JOIN_WALLS,
         homeSelectionContainsOneOrTwoWallsWithOneFreeEnd);
     view.setEnabled(HomeView.ActionType.REVERSE_WALL_DIRECTION,

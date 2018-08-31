@@ -519,6 +519,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Returns the wall arc extent state.
+   * @since 6.0
    */
   protected ControllerState getWallArcExtentState() {
     return this.wallArcExtentState;
@@ -960,6 +961,262 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Flips horizontally selected objects.
+   * @since 6.0
+   */
+  public void flipHorizontally() {
+    flipSelectedItems(true);
+  }
+
+  /**
+   * Flips vertically selected objects.
+   * @since 6.0
+   */
+  public void flipVertically() {
+    flipSelectedItems(false);
+  }
+
+  private void flipSelectedItems(boolean horizontally) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (!selectedItems.isEmpty()) {
+      doFlipItems(selectedItems, horizontally);
+      selectAndShowItems(selectedItems, this.home.isAllLevelsSelection());
+      postFlipItems(selectedItems.toArray(new Selectable [selectedItems.size()]), horizontally);
+    }
+  }
+
+  /**
+   * Posts an undoable flip operation applied on <code>items</code>.
+   */
+  private void postFlipItems(final Selectable [] items, final boolean horizontalFlip) {
+    final boolean allLevelsSelection = home.isAllLevelsSelection();
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        doFlipItems(Arrays.asList(items), horizontalFlip);
+        selectAndShowItems(Arrays.asList(items), allLevelsSelection);
+      }
+
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doFlipItems(Arrays.asList(items), horizontalFlip);
+        selectAndShowItems(Arrays.asList(items), allLevelsSelection);
+      }
+
+      @Override
+      public String getPresentationName() {
+        return preferences.getLocalizedString(PlanController.class, "undoFlipName");
+      }
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Flips the <code>items</code>.
+   */
+  private void doFlipItems(List<Selectable> items, boolean horizontalFlip) {
+    float minX = Float.MAX_VALUE;
+    float minY = Float.MAX_VALUE;
+    float maxX = -Float.MAX_VALUE;
+    float maxY = -Float.MAX_VALUE;
+    for (Selectable item : items) {
+      if (!(item instanceof ObserverCamera)) {
+        float [][] points = item instanceof Label
+            ? getView().getTextBounds(((Label)item).getText(), ((Label)item).getStyle(),
+                ((Label)item).getX(), ((Label)item).getY(), ((Label)item).getAngle())
+            : item.getPoints();
+        for (float [] point : points) {
+          minX = Math.min(minX, point [0]);
+          minY = Math.min(minY, point [1]);
+          maxX = Math.max(maxX, point [0]);
+          maxY = Math.max(maxY, point [1]);
+        }
+      }
+    }
+    float symmetryX = (minX + maxX) / 2;
+    float symmetryY = (minY + maxY) / 2;
+    for (Selectable item : items) {
+      flipItem(item, items, horizontalFlip ? symmetryX : symmetryY, horizontalFlip);
+    }
+  }
+
+  /**
+   * Flips the given <code>item</code> with the given axis coordinate.
+   * @param item the item to flip
+   * @param flippedItems list of all the items that must be flipped
+   * @param axisCoordinate the coordinate of the symmetry axis
+   * @param horizontalFlip if <code>true</code> the item should be flipped horizontally otherwise vertically
+   * @since 6.0
+   */
+  protected void flipItem(Selectable item, List<Selectable> flippedItems, float axisCoordinate, boolean horizontalFlip) {
+    if (item instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getFurniture()) {
+        flipItem(piece, flippedItems, axisCoordinate, horizontalFlip);
+      }
+    } else if (item instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+      if (horizontalFlip) {
+        piece.setX(axisCoordinate * 2 - piece.getX());
+        piece.setAngle(-piece.getAngle());
+        piece.setNameXOffset(-piece.getNameXOffset());
+      } else {
+        piece.setY(axisCoordinate * 2 - piece.getY());
+        piece.setAngle((float)Math.PI - piece.getAngle());
+        piece.setNameYOffset(-piece.getNameYOffset());
+        if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
+          // Take into account font size
+          float baseOffset = getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass());
+          piece.setNameXOffset(piece.getNameXOffset() - baseOffset * (float)Math.sin(piece.getNameAngle()));
+          piece.setNameYOffset(piece.getNameYOffset() - baseOffset * (float)Math.cos(piece.getNameAngle()));
+        }
+      }
+      if (piece.isHorizontallyRotatable()) {
+        piece.setRoll(-piece.getRoll());
+      }
+      if (piece.isResizable()) {
+        piece.setModelMirrored(!piece.isModelMirrored());
+      }
+      piece.setNameAngle(-piece.getNameAngle());
+    } else if (item instanceof Wall) {
+      Wall wall = (Wall)item;
+      if (horizontalFlip) {
+        wall.setXStart(axisCoordinate * 2 - wall.getXStart());
+        Wall wallAtStart = wall.getWallAtStart();
+        if (wallAtStart != null && !flippedItems.contains(wallAtStart)) {
+          if (wallAtStart.getWallAtStart() == wall) {
+            wallAtStart.setXStart(axisCoordinate * 2 - wallAtStart.getXStart());
+          } else {
+            wallAtStart.setXEnd(axisCoordinate * 2 - wallAtStart.getXEnd());
+          }
+        }
+        wall.setXEnd(axisCoordinate * 2 - wall.getXEnd());
+        Wall wallAtEnd = wall.getWallAtEnd();
+        if (wallAtEnd != null && !flippedItems.contains(wallAtEnd)) {
+          if (wallAtEnd.getWallAtStart() == wall) {
+            wallAtEnd.setXStart(axisCoordinate * 2 - wallAtEnd.getXStart());
+          } else {
+            wallAtEnd.setXEnd(axisCoordinate * 2 - wallAtEnd.getXEnd());
+          }
+        }
+      } else {
+        wall.setYStart(axisCoordinate * 2 - wall.getYStart());
+        Wall wallAtStart = wall.getWallAtStart();
+        if (wallAtStart != null && !flippedItems.contains(wallAtStart)) {
+          if (wallAtStart.getWallAtStart() == wall) {
+            wallAtStart.setYStart(axisCoordinate * 2 - wallAtStart.getYStart());
+          } else {
+            wallAtStart.setYEnd(axisCoordinate * 2 - wallAtStart.getYEnd());
+          }
+        }
+        wall.setYEnd(axisCoordinate * 2 - wall.getYEnd());
+        Wall wallAtEnd = wall.getWallAtEnd();
+        if (wallAtEnd != null && !flippedItems.contains(wallAtEnd)) {
+          if (wallAtEnd.getWallAtStart() == wall) {
+            wallAtEnd.setYStart(axisCoordinate * 2 - wallAtEnd.getYStart());
+          } else {
+            wallAtEnd.setYEnd(axisCoordinate * 2 - wallAtEnd.getYEnd());
+          }
+        }
+      }
+      Float arcExtent = wall.getArcExtent();
+      if (arcExtent != null) {
+        wall.setArcExtent(-arcExtent);
+      }
+      reverseWallSideStyles(wall);
+    } else if (item instanceof Room) {
+      Room room = (Room)item;
+      float [][] points = room.getPoints();
+      for (float [] point : points) {
+        if (horizontalFlip) {
+          point [0] = axisCoordinate * 2 - point [0];
+        } else {
+          point [1] = axisCoordinate * 2 - point [1];
+        }
+      }
+      room.setPoints(points);
+      if (horizontalFlip) {
+        room.setNameXOffset(-room.getNameXOffset());
+        room.setAreaXOffset(-room.getAreaXOffset());
+      } else {
+        room.setNameYOffset(-room.getNameYOffset());
+        // Take into account font size
+        float baseOffset = getTextBaseOffset(room.getName(), room.getNameStyle(), room.getClass());
+        room.setNameXOffset(room.getNameXOffset() - baseOffset * (float)Math.sin(room.getNameAngle()));
+        room.setNameYOffset(room.getNameYOffset() - baseOffset * (float)Math.cos(room.getNameAngle()));
+
+        room.setAreaYOffset(-room.getAreaYOffset());
+        baseOffset = getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()),
+            room.getAreaStyle(), room.getClass());
+        room.setAreaXOffset(room.getAreaXOffset() - baseOffset * (float)Math.sin(room.getAreaAngle()));
+        room.setAreaYOffset(room.getAreaYOffset() - baseOffset * (float)Math.cos(room.getAreaAngle()));
+      }
+      room.setNameAngle(-room.getNameAngle());
+      room.setAreaAngle(-room.getAreaAngle());
+    } else if (item instanceof Polyline) {
+      Polyline polyline = (Polyline)item;
+      float [][] points = polyline.getPoints();
+      for (float [] point : points) {
+        if (horizontalFlip) {
+          point [0] = axisCoordinate * 2 - point [0];
+        } else {
+          point [1] = axisCoordinate * 2 - point [1];
+        }
+      }
+      polyline.setPoints(points);
+    } else if (item instanceof DimensionLine) {
+      DimensionLine dimensionLine = (DimensionLine)item;
+      if (horizontalFlip) {
+        // Reverse also ends to keep same text orientation
+        float xStart = dimensionLine.getXStart();
+        dimensionLine.setXStart(axisCoordinate * 2 - dimensionLine.getXEnd());
+        dimensionLine.setXEnd(axisCoordinate * 2 - xStart);
+        float yStart = dimensionLine.getYStart();
+        dimensionLine.setYStart(dimensionLine.getYEnd());
+        dimensionLine.setYEnd(yStart);
+      } else {
+        dimensionLine.setYStart(axisCoordinate * 2 - dimensionLine.getYStart());
+        dimensionLine.setYEnd(axisCoordinate * 2 - dimensionLine.getYEnd());
+        dimensionLine.setOffset(-dimensionLine.getOffset());
+      }
+    } else if (item instanceof Label) {
+      Label label = (Label)item;
+      if (horizontalFlip) {
+        label.setX(axisCoordinate * 2 - label.getX());
+        label.setAngle(-label.getAngle());
+      } else {
+        label.setY(axisCoordinate * 2 - label.getY());
+        if (label.getPitch() != null) {
+          label.setAngle((float)Math.PI - label.getAngle());
+        } else {
+          label.setAngle(-label.getAngle());
+        }
+      }
+    } else if (item instanceof Compass) {
+      Compass compass = (Compass)item;
+      if (horizontalFlip) {
+        compass.setX(axisCoordinate * 2 - compass.getX());
+        compass.setNorthDirection(-compass.getNorthDirection());
+      } else {
+        compass.setY(axisCoordinate * 2 - compass.getY());
+        compass.setNorthDirection((float)Math.PI - compass.getNorthDirection());
+      }
+    }
+  }
+
+  /**
+   * Returns the offset between the vertical middle of the text and its base.
+   */
+  private float getTextBaseOffset(String text, TextStyle textStyle, Class<? extends Selectable> itemClass) {
+    if (textStyle == null) {
+      textStyle = this.preferences.getDefaultTextStyle(itemClass);
+    }
+    float [][] textBounds = getView().getTextBounds(text != null ? text : "Ag", textStyle, 0, 0, 0);
+    return (textBounds [textBounds.length - 1][1] + textBounds [0][1]) / 2;
+  }
+
+  /**
    * Controls how selected walls are joined.
    * @since 5.5
    */
@@ -1248,30 +1505,37 @@ public class PlanController extends FurnitureController implements Controller {
         wallAtEnd.setWallAtStart(wall);
       }
 
-      Integer rightSideColor = wall.getRightSideColor();
-      HomeTexture rightSideTexture = wall.getRightSideTexture();
-      float leftSideShininess = wall.getLeftSideShininess();
-      Baseboard leftSideBaseboard = wall.getLeftSideBaseboard();
-      Integer leftSideColor = wall.getLeftSideColor();
-      HomeTexture leftSideTexture = wall.getLeftSideTexture();
-      float rightSideShininess = wall.getRightSideShininess();
-      Baseboard rightSideBaseboard = wall.getRightSideBaseboard();
-      wall.setLeftSideColor(rightSideColor);
-      wall.setLeftSideTexture(rightSideTexture);
-      wall.setLeftSideShininess(rightSideShininess);
-      wall.setLeftSideBaseboard(rightSideBaseboard);
-      wall.setRightSideColor(leftSideColor);
-      wall.setRightSideTexture(leftSideTexture);
-      wall.setRightSideShininess(leftSideShininess);
-      wall.setRightSideBaseboard(leftSideBaseboard);
-
       Float heightAtEnd = wall.getHeightAtEnd();
       if (heightAtEnd != null) {
         Float height = wall.getHeight();
         wall.setHeight(heightAtEnd);
         wall.setHeightAtEnd(height);
       }
+
+      reverseWallSideStyles(wall);
     }
+  }
+
+  /**
+   * Exchanges wall side styles.
+   */
+  private void reverseWallSideStyles(Wall wall) {
+    Integer rightSideColor = wall.getRightSideColor();
+    HomeTexture rightSideTexture = wall.getRightSideTexture();
+    float leftSideShininess = wall.getLeftSideShininess();
+    Baseboard leftSideBaseboard = wall.getLeftSideBaseboard();
+    Integer leftSideColor = wall.getLeftSideColor();
+    HomeTexture leftSideTexture = wall.getLeftSideTexture();
+    float rightSideShininess = wall.getRightSideShininess();
+    Baseboard rightSideBaseboard = wall.getRightSideBaseboard();
+    wall.setLeftSideColor(rightSideColor);
+    wall.setLeftSideTexture(rightSideTexture);
+    wall.setLeftSideShininess(rightSideShininess);
+    wall.setLeftSideBaseboard(rightSideBaseboard);
+    wall.setRightSideColor(leftSideColor);
+    wall.setRightSideTexture(leftSideTexture);
+    wall.setRightSideShininess(leftSideShininess);
+    wall.setRightSideBaseboard(leftSideBaseboard);
   }
 
   /**
