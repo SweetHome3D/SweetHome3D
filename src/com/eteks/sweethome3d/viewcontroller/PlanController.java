@@ -1023,11 +1023,7 @@ public class PlanController extends FurnitureController implements Controller {
     float maxY = -Float.MAX_VALUE;
     for (Selectable item : items) {
       if (!(item instanceof ObserverCamera)) {
-        float [][] points = item instanceof Label
-            ? getView().getTextBounds(((Label)item).getText(), ((Label)item).getStyle(),
-                ((Label)item).getX(), ((Label)item).getY(), ((Label)item).getAngle())
-            : item.getPoints();
-        for (float [] point : points) {
+        for (float [] point : item.getPoints()) {
           minX = Math.min(minX, point [0]);
           minY = Math.min(minY, point [1]);
           maxX = Math.max(maxX, point [0]);
@@ -1038,22 +1034,23 @@ public class PlanController extends FurnitureController implements Controller {
     float symmetryX = (minX + maxX) / 2;
     float symmetryY = (minY + maxY) / 2;
     for (Selectable item : items) {
-      flipItem(item, items, horizontalFlip ? symmetryX : symmetryY, horizontalFlip);
+      flipItem(item, horizontalFlip ? symmetryX : symmetryY, horizontalFlip, items);
     }
   }
 
   /**
    * Flips the given <code>item</code> with the given axis coordinate.
    * @param item the item to flip
-   * @param flippedItems list of all the items that must be flipped
    * @param axisCoordinate the coordinate of the symmetry axis
    * @param horizontalFlip if <code>true</code> the item should be flipped horizontally otherwise vertically
+   * @param flippedItems list of all the items that must be flipped
    * @since 6.0
    */
-  protected void flipItem(Selectable item, List<Selectable> flippedItems, float axisCoordinate, boolean horizontalFlip) {
+  protected void flipItem(Selectable item, float axisCoordinate, boolean horizontalFlip,
+                          List<Selectable> flippedItems) {
     if (item instanceof HomeFurnitureGroup) {
       for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getFurniture()) {
-        flipItem(piece, flippedItems, axisCoordinate, horizontalFlip);
+        flipItem(piece, axisCoordinate, horizontalFlip, flippedItems);
       }
     } else if (item instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
