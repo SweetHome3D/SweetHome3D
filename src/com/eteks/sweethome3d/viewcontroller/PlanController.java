@@ -1059,10 +1059,12 @@ public class PlanController extends FurnitureController implements Controller {
         piece.setX(axisCoordinate * 2 - piece.getX());
         piece.setAngle(-piece.getAngle());
         piece.setNameXOffset(-piece.getNameXOffset());
-        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
-          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
-        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
-          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        if (nameStyle != null) {
+          if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+          } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+          }
         }
       } else {
         piece.setY(axisCoordinate * 2 - piece.getY());
@@ -1144,15 +1146,19 @@ public class PlanController extends FurnitureController implements Controller {
       if (horizontalFlip) {
         room.setNameXOffset(-room.getNameXOffset());
         room.setAreaXOffset(-room.getAreaXOffset());
-        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
-          room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
-        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
-          room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        if (nameStyle != null) {
+          if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+            room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+          } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+            room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+          }
         }
-        if (areaStyle.getAlignment() == TextStyle.Alignment.LEFT) {
-          room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.RIGHT));
-        } else if (areaStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
-          room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        if (areaStyle != null) {
+          if (areaStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+            room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+          } else if (areaStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+            room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.LEFT));
+          }
         }
       } else {
         room.setNameYOffset(-room.getNameYOffset());
@@ -1209,10 +1215,12 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }
       TextStyle style = label.getStyle();
-      if (style.getAlignment() == TextStyle.Alignment.LEFT) {
-        label.setStyle(style.deriveStyle(TextStyle.Alignment.RIGHT));
-      } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
-        label.setStyle(style.deriveStyle(TextStyle.Alignment.LEFT));
+      if (style != null) {
+        if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+          label.setStyle(style.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+          label.setStyle(style.deriveStyle(TextStyle.Alignment.LEFT));
+        }
       }
     } else if (item instanceof Compass) {
       Compass compass = (Compass)item;
