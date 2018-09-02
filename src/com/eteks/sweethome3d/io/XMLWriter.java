@@ -1,5 +1,5 @@
 /*
- * XMLWriter.java 
+ * XMLWriter.java
  *
  * Copyright (c) 2015 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -34,7 +34,7 @@ public class XMLWriter extends FilterWriter {
   private Stack<String> elements = new Stack<String>();
   private boolean emptyElement;
   private boolean elementWithText;
-  
+
   /**
    * Creates a writer in the given output stream encoded in UTF-8.
    */
@@ -42,7 +42,7 @@ public class XMLWriter extends FilterWriter {
     super(new OutputStreamWriter(out, "UTF-8"));
     this.out.write("<?xml version='1.0'?>\n");
   }
-  
+
   /**
    * Writes a start tag for the given element.
    */
@@ -58,7 +58,7 @@ public class XMLWriter extends FilterWriter {
     this.emptyElement = true;
     this.elementWithText = false;
   }
-  
+
   /**
    * Writes an end tag for the given element.
    */
@@ -85,17 +85,17 @@ public class XMLWriter extends FilterWriter {
       this.out.write("  ");
     }
   }
-  
+
   /**
-   * Writes the attribute of the given <code>name</code> with its <code>value</code> 
+   * Writes the attribute of the given <code>name</code> with its <code>value</code>
    * in the tag of the last started element.
    */
   public void writeAttribute(String name, String value) throws IOException {
     this.out.write(" " + name + "='" + replaceByEntities(value) + "'");
   }
-  
+
   /**
-   * Writes the name and the value of an attribute in the tag of the last started element, 
+   * Writes the name and the value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>defaultValue</code>.
    */
   public void writeAttribute(String name, String value, String defaultValue) throws IOException {
@@ -104,17 +104,17 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, value);
     }
   }
-  
+
   /**
-   * Writes the attribute of the given <code>name</code> with its integer <code>value</code> 
+   * Writes the attribute of the given <code>name</code> with its integer <code>value</code>
    * in the tag of the last started element.
    */
   public void writeIntegerAttribute(String name, int value) throws IOException {
     writeAttribute(name, String.valueOf(value));
   }
-  
+
   /**
-   * Writes the name and the integer value of an attribute in the tag of the last started element, 
+   * Writes the name and the integer value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>defaultValue</code>.
    */
   public void writeIntegerAttribute(String name, int value, int defaultValue) throws IOException {
@@ -122,17 +122,17 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, String.valueOf(value));
     }
   }
-  
+
   /**
-   * Writes the attribute of the given <code>name</code> with its long <code>value</code> 
+   * Writes the attribute of the given <code>name</code> with its long <code>value</code>
    * in the tag of the last started element.
    */
   public void writeLongAttribute(String name, long value) throws IOException {
     writeAttribute(name, String.valueOf(value));
   }
-  
+
   /**
-   * Writes the name and the long value of an attribute in the tag of the last started element, 
+   * Writes the name and the long value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>null</code>.
    */
   public void writeLongAttribute(String name, Long value) throws IOException {
@@ -140,17 +140,17 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, value.toString());
     }
   }
-  
+
   /**
-   * Writes the attribute of the given <code>name</code> with its float <code>value</code> 
+   * Writes the attribute of the given <code>name</code> with its float <code>value</code>
    * in the tag of the last started element.
    */
   public void writeFloatAttribute(String name, float value) throws IOException {
     writeAttribute(name, String.valueOf(value));
   }
-  
+
   /**
-   * Writes the name and the float value of an attribute in the tag of the last started element, 
+   * Writes the name and the float value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>defaultValue</code>.
    */
   public void writeFloatAttribute(String name, float value, float defaultValue) throws IOException {
@@ -158,9 +158,9 @@ public class XMLWriter extends FilterWriter {
       writeFloatAttribute(name, value);
     }
   }
-  
+
   /**
-   * Writes the name and the float value of an attribute in the tag of the last started element, 
+   * Writes the name and the float value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>null</code>.
    */
   public void writeFloatAttribute(String name, Float value) throws IOException {
@@ -168,9 +168,9 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, value.toString());
     }
   }
-  
+
   /**
-   * Writes the name and the value of an attribute in the tag of the last started element, 
+   * Writes the name and the value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>null</code>.
    */
   public void writeBigDecimalAttribute(String name, BigDecimal value) throws IOException {
@@ -178,9 +178,9 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, String.valueOf(value));
     }
   }
-  
+
   /**
-   * Writes the name and the boolean value of an attribute in the tag of the last started element, 
+   * Writes the name and the boolean value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>defaultValue</code>.
    */
   public void writeBooleanAttribute(String name, boolean value, boolean defaultValue) throws IOException {
@@ -188,9 +188,9 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, String.valueOf(value));
     }
   }
-  
+
   /**
-   * Writes the name and the color value of an attribute in the tag of the last started element, 
+   * Writes the name and the color value of an attribute in the tag of the last started element,
    * except if <code>value</code> equals <code>null</code>. The color is written in hexadecimal.
    */
   public void writeColorAttribute(String name, Integer color) throws IOException {
@@ -198,7 +198,7 @@ public class XMLWriter extends FilterWriter {
       writeAttribute(name, String.format("%08X", color));
     }
   }
-  
+
   /**
    * Writes the given <code>text</code> as the content of the current element.
    */
@@ -210,14 +210,14 @@ public class XMLWriter extends FilterWriter {
     }
     super.out.write(replaceByEntities(text));
   }
-  
+
   /**
-   * Returns the string in parameter with &amp;, &lt;, &apos; and &quot; characters replaced by their matching entities.
+   * Returns the string in parameter with &amp;, &lt;, &apos;, &quot; and feed line characters replaced by their matching entities.
    */
   private static String replaceByEntities(String s) {
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace("'", "&apos;").replace("\"", "&quot;");
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace("'", "&apos;").replace("\"", "&quot;").replace("\n", "&#10;");
   }
-  
+
   /**
    * Writes the given character as the content of the current element.
    */

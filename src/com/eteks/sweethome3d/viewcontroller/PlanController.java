@@ -1054,17 +1054,23 @@ public class PlanController extends FurnitureController implements Controller {
       }
     } else if (item instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+      TextStyle nameStyle = piece.getNameStyle();
       if (horizontalFlip) {
         piece.setX(axisCoordinate * 2 - piece.getX());
         piece.setAngle(-piece.getAngle());
         piece.setNameXOffset(-piece.getNameXOffset());
+        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        }
       } else {
         piece.setY(axisCoordinate * 2 - piece.getY());
         piece.setAngle((float)Math.PI - piece.getAngle());
         piece.setNameYOffset(-piece.getNameYOffset());
         if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
           // Take into account font size
-          float baseOffset = getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass());
+          float baseOffset = getTextBaseOffset(piece.getName(), nameStyle, piece.getClass());
           piece.setNameXOffset(piece.getNameXOffset() - baseOffset * (float)Math.sin(piece.getNameAngle()));
           piece.setNameYOffset(piece.getNameYOffset() - baseOffset * (float)Math.cos(piece.getNameAngle()));
         }
@@ -1133,19 +1139,31 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }
       room.setPoints(points);
+      TextStyle nameStyle = room.getNameStyle();
+      TextStyle areaStyle = room.getAreaStyle();
       if (horizontalFlip) {
         room.setNameXOffset(-room.getNameXOffset());
         room.setAreaXOffset(-room.getAreaXOffset());
+        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+          room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+          room.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        }
+        if (areaStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+          room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (areaStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+          room.setAreaStyle(areaStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        }
       } else {
         room.setNameYOffset(-room.getNameYOffset());
         // Take into account font size
-        float baseOffset = getTextBaseOffset(room.getName(), room.getNameStyle(), room.getClass());
+        float baseOffset = getTextBaseOffset(room.getName(), nameStyle, room.getClass());
         room.setNameXOffset(room.getNameXOffset() - baseOffset * (float)Math.sin(room.getNameAngle()));
         room.setNameYOffset(room.getNameYOffset() - baseOffset * (float)Math.cos(room.getNameAngle()));
 
         room.setAreaYOffset(-room.getAreaYOffset());
         baseOffset = getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()),
-            room.getAreaStyle(), room.getClass());
+            areaStyle, room.getClass());
         room.setAreaXOffset(room.getAreaXOffset() - baseOffset * (float)Math.sin(room.getAreaAngle()));
         room.setAreaYOffset(room.getAreaYOffset() - baseOffset * (float)Math.cos(room.getAreaAngle()));
       }
@@ -1189,6 +1207,12 @@ public class PlanController extends FurnitureController implements Controller {
         } else {
           label.setAngle(-label.getAngle());
         }
+      }
+      TextStyle style = label.getStyle();
+      if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+        label.setStyle(style.deriveStyle(TextStyle.Alignment.RIGHT));
+      } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+        label.setStyle(style.deriveStyle(TextStyle.Alignment.LEFT));
       }
     } else if (item instanceof Compass) {
       Compass compass = (Compass)item;
@@ -4461,8 +4485,20 @@ public class PlanController extends FurnitureController implements Controller {
       textStyle = this.preferences.getDefaultTextStyle(item.getClass());
     }
     float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, textAngle);
-    return Math.abs(x - (textBounds [0][0] + textBounds [1][0]) / 2) <= margin
-        && Math.abs(y - (textBounds [0][1] + textBounds [1][1]) / 2) <= margin;
+    float anglePointX;
+    float anglePointY;
+    if (textStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+      anglePointX = textBounds [0][0];
+      anglePointY = textBounds [0][1];
+    } else if (textStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+      anglePointX = textBounds [1][0];
+      anglePointY = textBounds [1][1];
+    } else { // CENTER
+      anglePointX = (textBounds [0][0] + textBounds [1][0]) / 2;
+      anglePointY = (textBounds [0][1] + textBounds [1][1]) / 2;
+    }
+    return Math.abs(x - anglePointX) <= margin
+        && Math.abs(y - anglePointY) <= margin;
   }
 
   /**
@@ -4496,10 +4532,26 @@ public class PlanController extends FurnitureController implements Controller {
           && isItemMovable(label)) {
         float margin = INDICATOR_PIXEL_MARGIN / getScale();
         if (label.isAtLevel(this.home.getSelectedLevel())) {
+          TextStyle style = label.getStyle();
+          if (style == null) {
+            style = this.preferences.getDefaultTextStyle(label.getClass());
+          }
           float [][] textBounds = getView().getTextBounds(label.getText(), getItemTextStyle(label, label.getStyle()),
               label.getX(), label.getY(), label.getAngle());
-          if (Math.abs(x - (textBounds [2][0] + textBounds [3][0]) / 2) <= margin
-              && Math.abs(y - (textBounds [2][1] + textBounds [3][1]) / 2) <= margin) {
+          float pointX;
+          float pointY;
+          if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+            pointX = textBounds [3][0];
+            pointY = textBounds [3][1];
+          } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+            pointX = textBounds [2][0];
+            pointY = textBounds [2][1];
+          } else { // CENTER
+            pointX = (textBounds [2][0] + textBounds [3][0]) / 2;
+            pointY = (textBounds [2][1] + textBounds [3][1]) / 2;
+          }
+          if (Math.abs(x - pointX) <= margin
+              && Math.abs(y - pointY) <= margin) {
             return label;
           }
         }

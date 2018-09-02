@@ -723,6 +723,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
             writer.writeFloatAttribute("fontSize", textStyle.getFontSize());
             writer.writeBooleanAttribute("bold", textStyle.isBold(), false);
             writer.writeBooleanAttribute("italic", textStyle.isItalic(), false);
+            writer.writeAttribute("alignment", textStyle.getAlignment().name(), TextStyle.Alignment.CENTER.name());
           }
         }.writeElement(writer, textStyle);
     }

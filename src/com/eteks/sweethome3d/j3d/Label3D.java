@@ -56,12 +56,12 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author Emmanuel Puybaret
  */
 public class Label3D extends Object3DBranch {
-  private static final TransparencyAttributes DEFAULT_TRANSPARENCY_ATTRIBUTES = 
+  private static final TransparencyAttributes DEFAULT_TRANSPARENCY_ATTRIBUTES =
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
-  private static final PolygonAttributes      DEFAULT_POLYGON_ATTRIBUTES = 
+  private static final PolygonAttributes      DEFAULT_POLYGON_ATTRIBUTES =
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, false);
   private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
-  
+
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
@@ -71,7 +71,7 @@ public class Label3D extends Object3DBranch {
   private Integer     color;
   private Transform3D baseLineTransform;
   private Texture     texture;
-  
+
   public Label3D(Label label, Home home, boolean waitForLoading) {
     setUserData(label);
 
@@ -80,7 +80,7 @@ public class Label3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
     setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
-    
+
     update();
   }
 
@@ -101,7 +101,7 @@ public class Label3D extends Object3DBranch {
           || (style != null && !style.equals(this.style))
           || (color == null && this.color != null)
           || (color != null && !color.equals(this.color))) {
-        // If text, style and color changed, recompute label texture  
+        // If text, style and color changed, recompute label texture
         int fontStyle = Font.PLAIN;
         if (style.isBold()) {
           fontStyle = Font.BOLD;
@@ -109,26 +109,37 @@ public class Label3D extends Object3DBranch {
         if (style.isItalic()) {
           fontStyle |= Font.ITALIC;
         }
-        Font defaultFont; 
+        Font defaultFont;
         if (style.getFontName() != null) {
           defaultFont = new Font(style.getFontName(), fontStyle, 1);
         } else {
           defaultFont = UIManager.getFont("TextField.font");
         }
-        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
+        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f);
         Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
-  
+
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
         FontMetrics fontMetrics = g2D.getFontMetrics(font);
         g2D.dispose();
-        
-        Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        float textWidth = (float)textBounds.getWidth() + 2 * stroke.getLineWidth();
+
+        String [] lines = text.split("\n");
+        float [] lineWidths = new float [lines.length];
+        float textWidth = -Float.MAX_VALUE;
+        float baseLineShift = 0;
+        for (int i = 0; i < lines.length; i++) {
+          Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], null);
+          if (i == 0) {
+            baseLineShift = -(float)lineBounds.getY() + fontMetrics.getHeight() * (lines.length - 1);
+          }
+          lineWidths [i] = (float)lineBounds.getWidth() + 2 * stroke.getLineWidth();
+          textWidth = Math.max(lineWidths [i], textWidth);
+        }
+
         if (style.isItalic()) {
           textWidth += fontMetrics.getAscent() * 0.2;
         }
-        float textHeight = (float)textBounds.getHeight() + 2 * stroke.getLineWidth();
+        float textHeight = (float)fontMetrics.getHeight() * lines.length + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -143,34 +154,57 @@ public class Label3D extends Object3DBranch {
           scale = (float)(height / textHeight);
           width = (int)Math.ceil(scale * textWidth);
         }
-  
+
         if (width > 0 && height > 0) {
           // Draw text in an image
-          BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
+          BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
           g2D = (Graphics2D)textureImage.getGraphics();
           g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
           g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-          if (outlineColor != null) {
-            g2D.setColor(new Color(outlineColor));
-            g2D.setStroke(stroke);
-            if (text.length() > 0) {
-              TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-              g2D.draw(textLayout.getOutline(null));
+
+          g2D.translate(0, baseLineShift);
+          for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines [i];
+            float translationX;
+            if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+              translationX = 0;
+            } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+              translationX = textWidth - lineWidths [i];
+            } else { // CENTER
+              translationX = (textWidth - lineWidths [i]) / 2;
             }
+            translationX += stroke.getLineWidth() / 2;
+            g2D.translate(translationX, 0);
+            if (outlineColor != null) {
+              g2D.setColor(new Color(outlineColor));
+              g2D.setStroke(stroke);
+              if (line.length() > 0) {
+                TextLayout textLayout = new TextLayout(line, font, g2D.getFontRenderContext());
+                g2D.draw(textLayout.getOutline(null));
+              }
+            }
+            g2D.setFont(font);
+            g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
+            g2D.drawString(line, 0f, 0f);
+            g2D.translate(-translationX, -fontMetrics.getHeight());
           }
-          g2D.setFont(font);
-          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
-          g2D.drawString(text, 0f, 0f);
           g2D.dispose();
-  
+
           Transform3D scaleTransform = new Transform3D();
           scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
           // Move to the middle of base line
           this.baseLineTransform = new Transform3D();
-          this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
+          float translationX;
+          if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+            translationX = textWidth / 2;
+          } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+            translationX = -textWidth / 2;
+          } else { // CENTER
+            translationX = 0;
+          }
+          this.baseLineTransform.setTranslation(new Vector3d(translationX, 0, textHeight / 2 - baseLineShift));
           this.baseLineTransform.mul(scaleTransform);
           this.texture = new TextureLoader(textureImage).getTexture();
           this.text = text;
@@ -180,19 +214,19 @@ public class Label3D extends Object3DBranch {
           clear();
         }
       }
-      
+
       if (this.texture != null) {
         if (numChildren() == 0) {
           BranchGroup group = new BranchGroup();
           group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.setCapability(BranchGroup.ALLOW_DETACH);
-          
+
           TransformGroup transformGroup = new TransformGroup();
           // Allow the change of the transformation that sets label size, position and orientation
           transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
           transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.addChild(transformGroup);
-  
+
           Appearance appearance = new Appearance();
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
           appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
@@ -201,15 +235,15 @@ public class Label3D extends Object3DBranch {
           appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-  
+
           Box box = new Box(0.5f, 0f, 0.5f, appearance);
           Shape3D shape = box.getShape(Box.TOP);
           box.removeChild(shape);
           transformGroup.addChild(shape);
-          
+
           addChild(group);
         }
-        
+
         TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
         // Apply pitch rotation
         Transform3D pitchRotation = new Transform3D();
@@ -231,7 +265,7 @@ public class Label3D extends Object3DBranch {
   }
 
   /**
-   * Removes children and clear fields. 
+   * Removes children and clear fields.
    */
   private void clear() {
     removeAllChildren();

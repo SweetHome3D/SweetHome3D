@@ -1915,22 +1915,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public float [][] getTextBounds(String text, TextStyle style,
                                   float x, float y, float angle) {
     FontMetrics fontMetrics = getFontMetrics(getFont(), style);
-    Rectangle2D textBounds = fontMetrics.getStringBounds(text, null);
-    float halfTextLength = (float)textBounds.getWidth() / 2;
+    Rectangle2D textBounds = null;
+    String [] lines = text.split("\n");
+    for (int i = 0; i < lines.length; i++) {
+      Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], null);
+      if (textBounds == null
+          || textBounds.getWidth() < lineBounds.getWidth()) {
+        textBounds = lineBounds;
+      }
+    }
+    float textWidth = (float)textBounds.getWidth();
+    float shiftX;
+    if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+      shiftX = 0;
+    } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+      shiftX = -textWidth;
+    } else { // CENTER
+      shiftX = -textWidth / 2;
+    }
     if (angle == 0) {
       float minY = (float)(y + textBounds.getY());
       float maxY = (float)(minY + textBounds.getHeight());
+      minY -= (float)(textBounds.getHeight() * (lines.length - 1));
       return new float [][] {
-          {x - halfTextLength, minY},
-          {x + halfTextLength, minY},
-          {x + halfTextLength, maxY},
-          {x - halfTextLength, maxY}};
+          {x + shiftX, minY},
+          {x + shiftX + textWidth, minY},
+          {x + shiftX + textWidth, maxY},
+          {x + shiftX, maxY}};
     } else {
+      textBounds.add(textBounds.getX(), textBounds.getY() - textBounds.getHeight() * (lines.length - 1));
       // Transform text bounding rectangle corners to their real location
       AffineTransform transform = new AffineTransform();
       transform.translate(x, y);
       transform.rotate(angle);
-      transform.translate(-halfTextLength, 0);
+      transform.translate(shiftX, 0);
       GeneralPath textBoundsPath = new GeneralPath(textBounds);
       List<float []> textPoints = new ArrayList<float[]>(4);
       for (PathIterator it = textBoundsPath.getPathIterator(transform); !it.isDone(); it.next()) {
@@ -3149,32 +3167,57 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                          float x, float y, float angle,
                          Font defaultFont) {
     AffineTransform previousTransform = g2D.getTransform();
+    g2D.translate(x, y);
+    g2D.rotate(angle);
     if (style == null) {
       style = this.preferences.getDefaultTextStyle(selectableClass);
     }
     FontMetrics fontMetrics = getFontMetrics(defaultFont, style);
-    Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-    g2D.translate(x, y);
-    g2D.rotate(angle);
-    if (outlineColor != null) {
-      // Draw text outline
-      BasicStroke stroke = new BasicStroke(style.getFontSize() * 0.05f);
-      TextStyle outlineStyle = style.deriveStyle(style.getFontSize() - stroke.getLineWidth());
-      Font font = getFont(defaultFont, outlineStyle);
-      g2D.setFont(font);
-      Color defaultColor = g2D.getColor();
-      g2D.setColor(new Color(outlineColor));
-      g2D.setStroke(stroke);
-      g2D.translate(-(float)textBounds.getWidth() / 2 + stroke.getLineWidth() / 2, 0);
-      TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-      g2D.draw(textLayout.getOutline(null));
-      g2D.setColor(defaultColor);
-    } else {
-      g2D.setFont(getFont(defaultFont, style));
-      g2D.translate(-(float)textBounds.getWidth() / 2, 0);
+    String [] lines = text.split("\n");
+    float [] lineWidths = new float [lines.length];
+    float textWidth = -Float.MAX_VALUE;
+    for (int i = 0; i < lines.length; i++) {
+      lineWidths [i] = (float)fontMetrics.getStringBounds(lines [i], null).getWidth();
+      textWidth = Math.max(lineWidths [i], textWidth);
     }
-    // Draw text
-    g2D.drawString(text, 0, 0);
+    BasicStroke stroke = null;
+    Font font;
+    if (outlineColor != null) {
+      stroke = new BasicStroke(style.getFontSize() * 0.05f);
+      TextStyle outlineStyle = style.deriveStyle(style.getFontSize() - stroke.getLineWidth());
+      font = getFont(defaultFont, outlineStyle);
+      g2D.setStroke(stroke);
+    } else {
+      font = getFont(defaultFont, style);
+    }
+    g2D.setFont(font);
+
+    for (int i = lines.length - 1; i >= 0; i--) {
+      String line = lines [i];
+      float translationX;
+      if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+        translationX = 0;
+      } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+        translationX = -lineWidths [i];
+      } else { // CENTER
+        translationX = -lineWidths [i] / 2;
+      }
+      if (outlineColor != null) {
+        translationX += stroke.getLineWidth() / 2;
+      }
+      g2D.translate(translationX, 0);
+      if (outlineColor != null) {
+        // Draw text outline
+        Color defaultColor = g2D.getColor();
+        g2D.setColor(new Color(outlineColor));
+        TextLayout textLayout = new TextLayout(line, font, g2D.getFontRenderContext());
+        g2D.draw(textLayout.getOutline(null));
+        g2D.setColor(defaultColor);
+      }
+      // Draw text
+      g2D.drawString(line, 0, 0);
+      g2D.translate(-translationX, -fontMetrics.getHeight());
+    }
     g2D.setTransform(previousTransform);
   }
 
@@ -3359,8 +3402,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         && room.getName().trim().length() > 0) {
       float xName = room.getXCenter() + room.getNameXOffset();
       float yName = room.getYCenter() + room.getNameYOffset();
-      paintTextIndicators(g2D, room.getClass(), room.getNameStyle(), xName, yName, room.getNameAngle(),
-          indicatorPaint, planScale);
+      paintTextIndicators(g2D, room.getClass(), getLineCount(room.getName()),
+          room.getNameStyle(), xName, yName, room.getNameAngle(), indicatorPaint, planScale);
     }
   }
 
@@ -3375,7 +3418,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         && room.getArea() > 0.01f) {
       float xArea = room.getXCenter() + room.getAreaXOffset();
       float yArea = room.getYCenter() + room.getAreaYOffset();
-      paintTextIndicators(g2D, room.getClass(), room.getAreaStyle(), xArea, yArea, room.getAreaAngle(),
+      paintTextIndicators(g2D, room.getClass(), 1, room.getAreaStyle(), xArea, yArea, room.getAreaAngle(),
           indicatorPaint, planScale);
     }
   }
@@ -3385,7 +3428,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintTextIndicators(Graphics2D g2D,
                                    Class<? extends Selectable> selectableClass,
-                                   TextStyle style,
+                                   int lineCount, TextStyle style,
                                    float x, float y, float angle,
                                    Paint indicatorPaint,
                                    float planScale) {
@@ -3409,11 +3452,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setTransform(previousTransform);
       g2D.translate(x, y);
       g2D.rotate(angle);
-      g2D.translate(0, -fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
+      g2D.translate(0, -fontMetrics.getHeight() * (lineCount - 1)
+          - fontMetrics.getAscent() * (Label.class.isAssignableFrom(selectableClass) ? 1 : 0.85));
       g2D.scale(scaleInverse, scaleInverse);
       g2D.draw(getIndicator(null, IndicatorType.ROTATE_TEXT));
       g2D.setTransform(previousTransform);
     }
+  }
+
+  /**
+   * Returns the number of lines in the given <code>text</code>.
+   */
+  private int getLineCount(String text) {
+    int lineCount = 1;
+    for (int i = 0, n = text.length(); i < n; i++) {
+      if (text.charAt(i) == '\n') {
+        lineCount++;
+      }
+    }
+    return lineCount;
   }
 
   /**
@@ -4316,8 +4373,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           && piece.getName().trim().length() > 0) {
         float xName = piece.getX() + piece.getNameXOffset();
         float yName = piece.getY() + piece.getNameYOffset();
-        paintTextIndicators(g2D, piece.getClass(), piece.getNameStyle(), xName, yName, piece.getNameAngle(),
-            indicatorPaint, planScale);
+        paintTextIndicators(g2D, piece.getClass(), getLineCount(piece.getName()),
+            piece.getNameStyle(), xName, yName, piece.getNameAngle(), indicatorPaint, planScale);
       }
     }
   }
@@ -4652,16 +4709,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (indicatorPaint != null
                 && selectedItems.size() == 1
                 && selectedItems.get(0) == label) {
-              paintTextIndicators(g2D, label.getClass(), labelStyle, xLabel, yLabel, labelAngle,
-                  indicatorPaint, planScale);
+              paintTextIndicators(g2D, label.getClass(), getLineCount(labelText),
+                  labelStyle, xLabel, yLabel, labelAngle, indicatorPaint, planScale);
 
               if (this.resizeIndicatorVisible
                   && label.getPitch() != null) {
                 Shape elevationIndicator = getIndicator(label, IndicatorType.ELEVATE);
                 if (elevationIndicator != null) {
                   AffineTransform previousTransform = g2D.getTransform();
-                  // Draw elevation indicator at middle of label bottom line
-                  g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
+                  // Draw elevation indicator bellow rotation center
+                  if (labelStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+                    g2D.translate(textBounds [3][0], textBounds [3][1]);
+                  } else if (labelStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+                    g2D.translate(textBounds [2][0], textBounds [2][1]);
+                  } else { // CENTER
+                    g2D.translate((textBounds [2][0] + textBounds [3][0]) / 2, (textBounds [2][1] + textBounds [3][1]) / 2);
+                  }
                   float scaleInverse = 1 / planScale;
                   g2D.scale(scaleInverse, scaleInverse);
                   g2D.rotate(label.getAngle());

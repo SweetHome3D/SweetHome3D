@@ -42,10 +42,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class LabelController implements Controller {
   /**
-   * The property that may be edited by the view associated to this controller. 
+   * The property that may be edited by the view associated to this controller.
    */
-  public enum Property {TEXT, FONT_NAME, FONT_SIZE, COLOR, PITCH, ELEVATION}
-  
+  public enum Property {TEXT, ALIGNMENT, FONT_NAME, FONT_SIZE, COLOR, PITCH, ELEVATION}
+
   private final Home                  home;
   private final Float                 x;
   private final Float                 y;
@@ -56,6 +56,7 @@ public class LabelController implements Controller {
   private DialogView                  labelView;
 
   private String  text;
+  private TextStyle.Alignment alignment;
   private String  fontName;
   private boolean fontNameSet;
   private Float   fontSize;
@@ -63,13 +64,13 @@ public class LabelController implements Controller {
   private Float   pitch;
   private Boolean pitchEnabled;
   private Float   elevation;
-  
+
   /**
    * Creates the controller of label modifications with undo support.
    */
   public LabelController(Home home,
                          UserPreferences preferences,
-                         ViewFactory viewFactory, 
+                         ViewFactory viewFactory,
                          UndoableEditSupport undoSupport) {
     this.home = home;
     this.x = null;
@@ -78,7 +79,7 @@ public class LabelController implements Controller {
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -87,7 +88,7 @@ public class LabelController implements Controller {
    */
   public LabelController(Home home, float x, float y,
                          UserPreferences preferences,
-                         ViewFactory viewFactory, 
+                         ViewFactory viewFactory,
                          UndoableEditSupport undoSupport) {
     this.home = home;
     this.x = x;
@@ -96,6 +97,7 @@ public class LabelController implements Controller {
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.alignment = TextStyle.Alignment.CENTER;
     this.fontName = preferences.getDefaultFontName();
     this.fontNameSet = true;
     this.fontSize = preferences.getDefaultTextStyle(Label.class).getFontSize();
@@ -113,6 +115,7 @@ public class LabelController implements Controller {
       setFontName(null);
       this.fontNameSet = false;
       setFontSize(null);
+      setAlignment(null);
       setColor(null);
       setPitch(null);
       this.pitchEnabled = Boolean.FALSE;
@@ -131,7 +134,21 @@ public class LabelController implements Controller {
       }
       setText(text);
 
-      String fontName = firstLabel.getStyle() != null 
+      TextStyle.Alignment alignment = firstLabel.getStyle() != null
+          ? firstLabel.getStyle().getAlignment()
+          : TextStyle.Alignment.CENTER;
+      for (int i = 1; i < selectedLabels.size(); i++) {
+        Label label = selectedLabels.get(i);
+        if (!alignment.equals(label.getStyle() != null
+                ? label.getStyle().getAlignment()
+                : TextStyle.Alignment.CENTER)) {
+          alignment = null;
+          break;
+        }
+      }
+      setAlignment(alignment);
+
+      String fontName = firstLabel.getStyle() != null
           ? firstLabel.getStyle().getFontName()
           : null;
       boolean fontNameSet = true;
@@ -145,14 +162,14 @@ public class LabelController implements Controller {
       }
       setFontName(fontName);
       this.fontNameSet = fontNameSet;
-      
+
       float labelDefaultFontSize = this.preferences.getDefaultTextStyle(Label.class).getFontSize();
-      Float fontSize = firstLabel.getStyle() != null 
+      Float fontSize = firstLabel.getStyle() != null
           ? firstLabel.getStyle().getFontSize()
           : labelDefaultFontSize;
       for (int i = 1; i < selectedLabels.size(); i++) {
         Label label = selectedLabels.get(i);
-        if (!fontSize.equals(label.getStyle() != null 
+        if (!fontSize.equals(label.getStyle() != null
                 ? label.getStyle().getFontSize()
                 : labelDefaultFontSize)) {
           fontSize = null;
@@ -182,7 +199,7 @@ public class LabelController implements Controller {
         }
       }
       setPitch(pitch);
-      
+
       Boolean pitchEnabled = firstLabel.getPitch() != null;
       for (int i = 1; i < selectedLabels.size(); i++) {
         if (!pitchEnabled.equals(selectedLabels.get(i).getPitch() != null)) {
@@ -202,7 +219,7 @@ public class LabelController implements Controller {
       setElevation(elevation);
     }
   }
-  
+
   /**
    * Returns the view associated with this controller.
    */
@@ -213,7 +230,7 @@ public class LabelController implements Controller {
     }
     return this.labelView;
   }
-  
+
   /**
    * Displays the view controlled by this controller.
    */
@@ -252,7 +269,25 @@ public class LabelController implements Controller {
   public String getText() {
     return this.text;
   }
-  
+
+  /**
+   * Sets the edited text alignment.
+   */
+  public void setAlignment(TextStyle.Alignment alignment) {
+    if (alignment != this.alignment) {
+      TextStyle.Alignment oldAlignment = this.alignment;
+      this.alignment = alignment;
+      this.propertyChangeSupport.firePropertyChange(Property.ALIGNMENT.name(), oldAlignment, alignment);
+    }
+  }
+
+  /**
+   * Returns the edited text alignment.
+   */
+  public TextStyle.Alignment getAlignment() {
+    return this.alignment;
+  }
+
   /**
    * Sets the edited font name.
    */
@@ -314,7 +349,7 @@ public class LabelController implements Controller {
   public Integer getColor() {
     return this.color;
   }
-  
+
   /**
    * Sets the edited pitch.
    */
@@ -326,16 +361,16 @@ public class LabelController implements Controller {
     }
     this.pitchEnabled = pitch != null;
   }
-  
+
   /**
    * Returns the edited pitch.
    */
   public Float getPitch() {
     return this.pitch;
   }
-  
+
   /**
-   * Returns <code>Boolean.TRUE</code> if all edited labels are viewed in 3D, 
+   * Returns <code>Boolean.TRUE</code> if all edited labels are viewed in 3D,
    * or <code>Boolean.FALSE</code> if no label is viewed in 3D.
    */
   public Boolean isPitchEnabled() {
@@ -365,24 +400,28 @@ public class LabelController implements Controller {
    */
   public void createLabel() {
     String text = getText();
-    
+
     if (text != null && text.trim().length() > 0) {
       // Apply modification
       List<Selectable> oldSelection = this.home.getSelectedItems();
-      boolean basePlanLocked = this.home.isBasePlanLocked();    
+      boolean basePlanLocked = this.home.isBasePlanLocked();
       boolean allLevelsSelection = this.home.isAllLevelsSelection();
       Label label = new Label(text, x, y);
+      TextStyle.Alignment alignment = getAlignment();
       String fontName = getFontName();
       Float fontSize = getFontSize();
-      if (fontName != null 
+      if (fontName != null
           || fontSize != null
           || getPitch() != null) {
         TextStyle style = this.preferences.getDefaultTextStyle(Label.class);
         if (fontName != null) {
           style = style.deriveStyle(fontName);
-        } 
+        }
         if (fontSize != null) {
           style = style.deriveStyle(fontSize);
+        }
+        if (alignment != null) {
+          style = style.deriveStyle(alignment);
         }
         label.setStyle(style);
       }
@@ -395,13 +434,15 @@ public class LabelController implements Controller {
       label.setElevation(getElevation());
       // Unlock base plan if label is a part of it
       boolean newBasePlanLocked = basePlanLocked && !isLabelPartOfBasePlan(label);
-      doAddLabel(this.home, label, newBasePlanLocked); 
+      doAddLabel(this.home, label, newBasePlanLocked);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelCreationUndoableEdit(
             this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection, label, newBasePlanLocked);
         this.undoSupport.postEdit(undoableEdit);
       }
-      this.preferences.addAutoCompletionString("LabelText", text);
+      if (text.indexOf('\n') < 0) {
+        this.preferences.addAutoCompletionString("LabelText", text);
+      }
     }
   }
 
@@ -419,11 +460,11 @@ public class LabelController implements Controller {
     private final boolean          newBasePlanLocked;
 
     private LabelCreationUndoableEdit(Home home,
-                                      UserPreferences preferences, 
-                                      List<Selectable> oldSelection, 
-                                      boolean oldBasePlanLocked, 
+                                      UserPreferences preferences,
+                                      List<Selectable> oldSelection,
+                                      boolean oldBasePlanLocked,
                                       boolean oldAllLevelsSelection,
-                                      Label label, 
+                                      Label label,
                                       boolean newBasePlanLocked) {
       this.home = home;
       this.preferences = preferences;
@@ -445,7 +486,7 @@ public class LabelController implements Controller {
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doAddLabel(this.home, this.label, this.newBasePlanLocked); 
+      doAddLabel(this.home, this.label, this.newBasePlanLocked);
     }
 
     @Override
@@ -457,8 +498,8 @@ public class LabelController implements Controller {
   /**
    * Adds label to home and selects it.
    */
-  private static void doAddLabel(Home home, 
-                                 Label label, 
+  private static void doAddLabel(Home home,
+                                 Label label,
                                  boolean basePlanLocked) {
     home.addLabel(label);
     home.setBasePlanLocked(basePlanLocked);
@@ -489,6 +530,7 @@ public class LabelController implements Controller {
     List<Label> selectedLabels = Home.getLabelsSubList(oldSelection);
     if (!selectedLabels.isEmpty()) {
       String text = getText();
+      TextStyle.Alignment alignment = getAlignment();
       String fontName = getFontName();
       boolean fontNameSet = isFontNameSet();
       Float fontSize = getFontSize();
@@ -496,49 +538,53 @@ public class LabelController implements Controller {
       Float pitch = getPitch();
       Boolean pitchEnabled = isPitchEnabled();
       Float elevation = getElevation();
-      
+
       // Create an array of modified labels with their current properties values
-      ModifiedLabel [] modifiedLabels = new ModifiedLabel [selectedLabels.size()]; 
+      ModifiedLabel [] modifiedLabels = new ModifiedLabel [selectedLabels.size()];
       for (int i = 0; i < modifiedLabels.length; i++) {
         modifiedLabels [i] = new ModifiedLabel(selectedLabels.get(i));
       }
       // Apply modification
       TextStyle defaultStyle = this.preferences.getDefaultTextStyle(Label.class);
-      doModifyLabels(modifiedLabels, text, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation); 
+      doModifyLabels(modifiedLabels, text, alignment, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home, 
-            this.preferences, oldSelection, modifiedLabels, text, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
+        UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home,
+            this.preferences, oldSelection, modifiedLabels, text, alignment, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
         this.undoSupport.postEdit(undoableEdit);
-      }      
-      this.preferences.addAutoCompletionString("LabelText", text);
+      }
+      if (text.indexOf('\n') < 0) {
+        this.preferences.addAutoCompletionString("LabelText", text);
+      }
     }
   }
-  
+
   /**
    * Undoable edit for label modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
   private static class LabelModificationUndoableEdit extends AbstractUndoableEdit {
-    private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
-    private final ModifiedLabel [] modifiedLabels;
-    private final String           text;
-    private final String           fontName;
-    private final boolean          fontNameSet;
-    private final Float            fontSize;
-    private final TextStyle        defaultStyle;
-    private final Integer          color;
-    private final Float            pitch;
-    private final Boolean          pitchEnabled;
-    private final Float            elevation;
+    private final Home                home;
+    private final UserPreferences     preferences;
+    private final List<Selectable>    oldSelection;
+    private final ModifiedLabel []    modifiedLabels;
+    private final String              text;
+    private final TextStyle.Alignment alignment;
+    private final String              fontName;
+    private final boolean             fontNameSet;
+    private final Float               fontSize;
+    private final TextStyle           defaultStyle;
+    private final Integer             color;
+    private final Float               pitch;
+    private final Boolean             pitchEnabled;
+    private final Float               elevation;
 
     private LabelModificationUndoableEdit(Home home,
-                                          UserPreferences preferences, 
+                                          UserPreferences preferences,
                                           List<Selectable> oldSelection,
                                           ModifiedLabel [] modifiedLabels,
-                                          String text, 
-                                          String fontName, boolean fontNameSet, Float fontSize, TextStyle defaultStyle,
+                                          String text, TextStyle.Alignment alignment,
+                                          String fontName, boolean fontNameSet,
+                                          Float fontSize, TextStyle defaultStyle,
                                           Integer color, Float pitch, Boolean pitchEnabled,
                                           Float elevation) {
       this.home = home;
@@ -546,6 +592,7 @@ public class LabelController implements Controller {
       this.oldSelection = oldSelection;
       this.modifiedLabels = modifiedLabels;
       this.text = text;
+      this.alignment = alignment;
       this.fontName = fontName;
       this.fontNameSet = fontNameSet;
       this.fontSize = fontSize;
@@ -559,21 +606,21 @@ public class LabelController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      undoModifyLabels(this.modifiedLabels); 
-      this.home.setSelectedItems(this.oldSelection); 
+      undoModifyLabels(this.modifiedLabels);
+      this.home.setSelectedItems(this.oldSelection);
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModifyLabels(this.modifiedLabels, this.text, this.fontName, this.fontNameSet, this.fontSize, this.defaultStyle,
-          this.color, this.pitch, this.pitchEnabled, this.elevation); 
-      this.home.setSelectedItems(this.oldSelection); 
+      doModifyLabels(this.modifiedLabels, this.text, this.alignment, this.fontName, this.fontNameSet, this.fontSize, this.defaultStyle,
+          this.color, this.pitch, this.pitchEnabled, this.elevation);
+      this.home.setSelectedItems(this.oldSelection);
     }
 
     @Override
     public String getPresentationName() {
-      return this.preferences.getLocalizedString(LabelController.class, 
+      return this.preferences.getLocalizedString(LabelController.class,
           "undoModifyLabelsName");
     }
   }
@@ -581,15 +628,20 @@ public class LabelController implements Controller {
   /**
    * Modifies labels properties with the values in parameter.
    */
-  private static void doModifyLabels(ModifiedLabel [] modifiedLabels, 
-                                     String text, String fontName, boolean fontNameSet, 
-                                     Float fontSize, TextStyle defaultStyle,
+  private static void doModifyLabels(ModifiedLabel [] modifiedLabels,
+                                     String text, TextStyle.Alignment alignment, String fontName,
+                                     boolean fontNameSet, Float fontSize, TextStyle defaultStyle,
                                      Integer color, Float pitch, Boolean pitchEnabled,
                                      Float elevation) {
     for (ModifiedLabel modifiedLabel : modifiedLabels) {
       Label label = modifiedLabel.getLabel();
       if (text != null) {
         label.setText(text);
+      }
+      if (alignment != null) {
+        label.setStyle(label.getStyle() != null
+            ? label.getStyle().deriveStyle(alignment)
+            : defaultStyle.deriveStyle(alignment));
       }
       if (fontNameSet) {
         label.setStyle(label.getStyle() != null
@@ -654,11 +706,11 @@ public class LabelController implements Controller {
     }
 
     public void reset() {
-      this.label.setText(this.text);         
-      this.label.setStyle(this.style);         
-      this.label.setColor(this.color);         
-      this.label.setPitch(this.pitch);         
-      this.label.setElevation(this.elevation);         
+      this.label.setText(this.text);
+      this.label.setStyle(this.style);
+      this.label.setColor(this.color);
+      this.label.setPitch(this.pitch);
+      this.label.setElevation(this.elevation);
     }
   }
 }

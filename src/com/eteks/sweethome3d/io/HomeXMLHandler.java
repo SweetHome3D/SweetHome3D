@@ -296,7 +296,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       fontName CDATA #IMPLIED
  *       fontSize CDATA #REQUIRED
  *       bold (false | true) "false"
- *       italic (false | true) "false">
+ *       italic (false | true) "false"
+ *       alignment (LEFT | CENTER | RIGHT) "CENTER">
  *
  * &lt;!ELEMENT texture EMPTY>
  * &lt;!ATTLIST texture
@@ -1617,10 +1618,20 @@ public class HomeXMLHandler extends DefaultHandler {
    */
   private TextStyle createTextStyle(String elementName,
                                     Map<String, String> attributes) throws SAXException {
+    TextStyle.Alignment alignment = TextStyle.Alignment.CENTER;
+    String alignmentString = attributes.get("alignment");
+    if (alignmentString != null) {
+      try {
+        alignment = TextStyle.Alignment.valueOf(alignmentString);
+      } catch (IllegalArgumentException ex) {
+        // Ignore malformed enum constant
+      }
+    }
     TextStyle textStyle = new TextStyle(attributes.get("fontName"),
         parseFloat(attributes, "fontSize"),
         "true".equals(attributes.get("bold")),
-        "true".equals(attributes.get("italic")));
+        "true".equals(attributes.get("italic")),
+        alignment);
     return (TextStyle)resolveObject(textStyle, elementName, attributes);
   }
 
