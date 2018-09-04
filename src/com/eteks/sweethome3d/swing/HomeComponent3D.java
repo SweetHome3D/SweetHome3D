@@ -61,6 +61,7 @@ import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1037,15 +1038,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     view.setFieldOfView(fieldOfView);
     double frontClipDistance = 2.5f;
-    // It's recommended to keep ratio between back and front clip distances under 3000
-    final float frontBackDistanceRatio = 3000;
-    BoundingBox approximateHomeBounds = getApproximateHomeBounds();
-    // If camera is out of home bounds, adjust the front clip distance to the distance to home bounds
-    if (approximateHomeBounds != null
-        && !approximateHomeBounds.intersect(new Point3d(camera.getX(), camera.getY(), camera.getZ()))) {
-      float distanceToClosestBoxSide = getDistanceToBox(camera.getX(), camera.getY(), camera.getZ(), approximateHomeBounds);
-      if (!Float.isNaN(distanceToClosestBoxSide)) {
-        frontClipDistance = Math.max(frontClipDistance, 0.1f * distanceToClosestBoxSide);
+    float frontBackDistanceRatio = 500000; // More than 10 km for a 2.5 cm front distance
+    if (Component3DManager.getInstance().getDepthSize() <= 16) {
+      // It's recommended to keep ratio between back and front clip distances under 3000 for a 16 bit Z-buffer
+      frontBackDistanceRatio = 3000;
+      BoundingBox approximateHomeBounds = getApproximateHomeBounds();
+      // If camera is out of home bounds, adjust the front clip distance to the distance to home bounds
+      if (approximateHomeBounds != null
+          && !approximateHomeBounds.intersect(new Point3d(camera.getX(), camera.getY(), camera.getZ()))) {
+        float distanceToClosestBoxSide = getDistanceToBox(camera.getX(), camera.getY(), camera.getZ(), approximateHomeBounds);
+        if (!Float.isNaN(distanceToClosestBoxSide)) {
+          frontClipDistance = Math.max(frontClipDistance, 0.1f * distanceToClosestBoxSide);
+        }
       }
     }
     if (camera.getZ() > 0 && width != 0 && height != 0) {
