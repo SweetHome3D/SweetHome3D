@@ -1865,7 +1865,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       double nextAlpha = (i  + 1) * 2 * Math.PI / divisionCount;
       float cosNextAlpha = (float)Math.cos(nextAlpha);
       float sinNextAlpha = (float)Math.sin(nextAlpha);
-      for (int j = 0; j < divisionCount / 4; j++) {
+      for (int j = 0, max = divisionCount / 4; j < max; j++) {
         double beta = 2 * j * Math.PI / divisionCount;
         float cosBeta = (float)Math.cos(beta);
         float sinBeta = (float)Math.sin(beta);
@@ -1879,16 +1879,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         float sinNextBeta = (float)Math.sin(nextBeta);
         if (top) {
           coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
-          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinBeta);
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, (float)j / max);
 
           coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
-          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinBeta);
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, (float)j / max);
 
           coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
-          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinNextBeta);
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, (float)(j + 1) / max);
 
           coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
-          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinNextBeta);
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, (float)(j + 1) / max);
         } else {
           coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
           float color1 = .9f + y * .5f;
