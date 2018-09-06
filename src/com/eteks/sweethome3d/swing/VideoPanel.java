@@ -560,16 +560,16 @@ public class VideoPanel extends JPanel implements DialogView {
           switch (getAspectRatio(videoFormat)) {
             case RATIO_4_3 :
               aspectRatio = preferences.getLocalizedString(
-                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4:3Ratio.text");
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4_3Ratio.text");
               break;
             case RATIO_24_10 :
               aspectRatio = preferences.getLocalizedString(
-                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40:1Ratio.text");
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40_1Ratio.text");
               break;
             default :
             case RATIO_16_9 :
               aspectRatio = preferences.getLocalizedString(
-                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16:9Ratio.text");
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16_9Ratio.text");
               break;
           }
           Dimension videoSize = videoFormat.getSize();

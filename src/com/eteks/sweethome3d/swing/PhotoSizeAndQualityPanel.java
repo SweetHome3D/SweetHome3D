@@ -167,23 +167,23 @@ public class PhotoSizeAndQualityPanel extends JPanel {
                 break;
               case RATIO_4_3 :
                 displayedValue = preferences.getLocalizedString(
-                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4:3Ratio.text");
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4_3Ratio.text");
                 break;
               case RATIO_3_2 :
                 displayedValue = preferences.getLocalizedString(
-                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.3:2Ratio.text");
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.3_2Ratio.text");
                 break;
               case RATIO_16_9 :
                 displayedValue = preferences.getLocalizedString(
-                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16:9Ratio.text");
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16_9Ratio.text");
                 break;
               case RATIO_2_1 :
                 displayedValue = preferences.getLocalizedString(
-                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2:1Ratio.text");
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2_1Ratio.text");
                 break;
               case RATIO_24_10 :
                 displayedValue = preferences.getLocalizedString(
-                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40:1Ratio.text");
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40_1Ratio.text");
                 break;
             }
           }
