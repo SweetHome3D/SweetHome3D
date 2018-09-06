@@ -63,7 +63,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.AbstractPhotoController;
 
 /**
- * A panel to edit photo size and quality. 
+ * A panel to edit photo size and quality.
  * @author Emmanuel Puybaret
  */
 public class PhotoSizeAndQualityPanel extends JPanel {
@@ -78,21 +78,21 @@ public class PhotoSizeAndQualityPanel extends JPanel {
   private JLabel                        fastQualityLabel;
   private JLabel                        bestQualityLabel;
 
-  public PhotoSizeAndQualityPanel(Home home, 
-                    UserPreferences preferences, 
+  public PhotoSizeAndQualityPanel(Home home,
+                    UserPreferences preferences,
                     AbstractPhotoController controller) {
     super(new GridBagLayout());
     createComponents(home, preferences, controller);
     setMnemonics(preferences);
-    layoutComponents();    
+    layoutComponents();
 
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, new LanguageChangeListener(this));
   }
-  
+
   /**
    * Creates and initializes components.
    */
-  private void createComponents(final Home home, 
+  private void createComponents(final Home home,
                                 final UserPreferences preferences,
                                 final AbstractPhotoController controller) {
     // Create width label and spinner bound to WIDTH controller property
@@ -105,14 +105,14 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           controller.setWidth(((Number)widthSpinnerModel.getValue()).intValue());
         }
       });
-    controller.addPropertyChangeListener(AbstractPhotoController.Property.WIDTH, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.WIDTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             widthSpinnerModel.setValue(controller.getWidth());
           }
         });
 
-    
+
     // Create height label and spinner bound to HEIGHT controller property
     this.heightLabel = new JLabel();
     final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 10000, 10);
@@ -123,7 +123,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           controller.setHeight(((Number)heightSpinnerModel.getValue()).intValue());
         }
       });
-    controller.addPropertyChangeListener(AbstractPhotoController.Property.HEIGHT, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.HEIGHT,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             heightSpinnerModel.setValue(controller.getHeight());
@@ -147,10 +147,11 @@ public class PhotoSizeAndQualityPanel extends JPanel {
         AspectRatio.RATIO_4_3,
         AspectRatio.RATIO_3_2,
         AspectRatio.RATIO_16_9,
-        AspectRatio.RATIO_2_1});
+        AspectRatio.RATIO_2_1,
+        AspectRatio.RATIO_24_10});
     this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, 
+        public Component getListCellRendererComponent(JList list, Object value,
                                                       int index, boolean isSelected, boolean cellHasFocus) {
           AspectRatio aspectRatio = (AspectRatio)value;
           String displayedValue = "";
@@ -165,19 +166,27 @@ public class PhotoSizeAndQualityPanel extends JPanel {
                     PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.squareRatio.text");
                 break;
               case RATIO_4_3 :
-                displayedValue = "4/3";
+                displayedValue = preferences.getLocalizedString(
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4:3Ratio.text");
                 break;
               case RATIO_3_2 :
-                displayedValue = "3/2";
+                displayedValue = preferences.getLocalizedString(
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.3:2Ratio.text");
                 break;
               case RATIO_16_9 :
-                displayedValue = "16/9";
+                displayedValue = preferences.getLocalizedString(
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16:9Ratio.text");
                 break;
               case RATIO_2_1 :
-                displayedValue = "2/1";
+                displayedValue = preferences.getLocalizedString(
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2:1Ratio.text");
+                break;
+              case RATIO_24_10 :
+                displayedValue = preferences.getLocalizedString(
+                    PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40:1Ratio.text");
                 break;
             }
-          } 
+          }
           return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
               cellHasFocus);
         }
@@ -211,7 +220,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' src='" 
+                + "<td><img border='1' src='"
                 + new ResourceURLContent(PhotoSizeAndQualityPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
                 + "<td>" + preferences.getLocalizedString(PhotoSizeAndQualityPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
                 + "</tr></table>";
@@ -238,27 +247,27 @@ public class PhotoSizeAndQualityPanel extends JPanel {
             });
         }
       });
-    this.qualitySlider.setPaintTicks(true);    
+    this.qualitySlider.setPaintTicks(true);
     this.qualitySlider.setMajorTickSpacing(1);
     this.qualitySlider.setSnapToTicks(true);
     final boolean offScreenImageSupported = Component3DManager.getInstance().isOffScreenImageSupported();
     this.qualitySlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (!offScreenImageSupported) {
-            // Can't support 2 first quality levels if offscreen image isn't supported 
+            // Can't support 2 first quality levels if offscreen image isn't supported
             qualitySlider.setValue(Math.max(qualitySlider.getMinimum() + 2, qualitySlider.getValue()));
           }
           controller.setQuality(qualitySlider.getValue() - qualitySlider.getMinimum());
         }
       });
-    controller.addPropertyChangeListener(AbstractPhotoController.Property.QUALITY, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.QUALITY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             qualitySlider.setValue(qualitySlider.getMinimum() + controller.getQuality());
           }
         });
     this.qualitySlider.setValue(this.qualitySlider.getMinimum() + controller.getQuality());
-   
+
     // Listener on 3D view notified when its size changes
     final JComponent view3D = (JComponent)controller.get3DView();
     final ComponentAdapter view3DSizeListener = new ComponentAdapter() {
@@ -267,19 +276,19 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
         }
       };
-    addAncestorListener(new AncestorListener() {        
+    addAncestorListener(new AncestorListener() {
       public void ancestorAdded(AncestorEvent ev) {
         view3D.addComponentListener(view3DSizeListener);
         ToolTipManager.sharedInstance().registerComponent(qualitySlider);
       }
-      
+
       public void ancestorRemoved(AncestorEvent ev) {
         ToolTipManager.sharedInstance().unregisterComponent(qualitySlider);
         view3D.removeComponentListener(view3DSizeListener);
       }
-      
+
       public void ancestorMoved(AncestorEvent ev) {
-      }        
+      }
     });
 
     setComponentTexts(preferences);
@@ -293,23 +302,23 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     int bestLabelOffset = 0;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
     return qualitySlider.getMinimum()
-        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight() 
-                          ? fastLabelOffset 
+        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight()
+                          ? fastLabelOffset
                           : bestLabelOffset))
         / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
   }
-  
+
   /**
    * Sets the texts of the components.
    */
   private void setComponentTexts(UserPreferences preferences) {
-    this.widthLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.widthLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoSizeAndQualityPanel.class, "widthLabel.text"));
-    this.heightLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.heightLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoSizeAndQualityPanel.class, "heightLabel.text"));
-    this.applyProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.applyProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoSizeAndQualityPanel.class, "applyProportionsCheckBox.text"));
-    this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoSizeAndQualityPanel.class, "qualityLabel.text"));
     this.fastQualityLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoSizeAndQualityPanel.class, "fastLabel.text"));
@@ -341,7 +350,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
 
   /**
    * Preferences property listener bound to this panel with a weak reference to avoid
-   * strong link between user preferences and this panel.  
+   * strong link between user preferences and this panel.
    */
   public static class LanguageChangeListener implements PropertyChangeListener {
     private final WeakReference<PhotoSizeAndQualityPanel> photoPanel;
@@ -365,7 +374,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
   }
 
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
     int labelAlignment = OperatingSystem.isMacOSX()
@@ -374,46 +383,46 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     // First row
     Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
     // Use HORIZONTAL fill constraint with label alignment to ensure
     // label is correctly sized in small dialogs
     this.widthLabel.setHorizontalAlignment(labelAlignment);
     Insets componentInsets = new Insets(0, 0, 0, 10);
     add(this.widthSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     add(this.heightLabel, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
     this.heightLabel.setHorizontalAlignment(labelAlignment);
     add(this.heightSpinner, new GridBagConstraints(
-        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Second row
     JPanel proportionsPanel = new JPanel();
     proportionsPanel.add(this.applyProportionsCheckBox);
     proportionsPanel.add(this.aspectRatioComboBox);
     add(proportionsPanel, new GridBagConstraints(
-        0, 1, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 1, 4, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
     add(this.qualityLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     this.qualityLabel.setHorizontalAlignment(labelAlignment);
     add(this.qualitySlider, new GridBagConstraints(
-        1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Fourth row
     JPanel qualityLabelsPanel = new JPanel(new BorderLayout(20, 0));
     qualityLabelsPanel.add(this.fastQualityLabel, BorderLayout.WEST);
     qualityLabelsPanel.add(this.bestQualityLabel, BorderLayout.EAST);
     add(qualityLabelsPanel, new GridBagConstraints(
-        1, 4, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 4, 3, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isWindows() ? 0 : -3, 0, 0, 0), 0, 0));
   }
-  
+
   /**
    * Enables or disables this panel and its components.
    */
@@ -426,12 +435,12 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     this.aspectRatioComboBox.setEnabled(enabled);
     this.qualitySlider.setEnabled(enabled);
   }
-  
+
   /**
    * Enables or disables components that allow to force proportions.
    */
   public void setProportionsChoiceEnabled(boolean enabled) {
-    this.applyProportionsCheckBox.setEnabled(enabled); 
-    this.aspectRatioComboBox.setEnabled(enabled && this.applyProportionsCheckBox.isSelected()); 
+    this.applyProportionsCheckBox.setEnabled(enabled);
+    this.aspectRatioComboBox.setEnabled(enabled && this.applyProportionsCheckBox.isSelected());
   }
 }

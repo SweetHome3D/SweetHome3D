@@ -105,7 +105,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       subpartSizeUnderLight CDATA "0"
  *       photoWidth CDATA "400"
  *       photoHeight CDATA "300"
- *       photoAspectRatio (FREE_RATIO | VIEW_3D_RATIO | RATIO_4_3 | RATIO_3_2 | RATIO_16_9 | RATIO_2_1 | SQUARE_RATIO) "VIEW_3D_RATIO"
+ *       photoAspectRatio (FREE_RATIO | VIEW_3D_RATIO | RATIO_4_3 | RATIO_3_2 | RATIO_16_9 | RATIO_2_1 | RATIO_24_10 | SQUARE_RATIO) "VIEW_3D_RATIO"
  *       photoQuality CDATA "0"
  *       videoWidth CDATA "320"
  *       videoAspectRatio (RATIO_4_3 | RATIO_16_9) "RATIO_4_3"
