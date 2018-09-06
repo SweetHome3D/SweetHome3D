@@ -129,6 +129,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureView;
  */
 public class FurnitureTable extends JTable implements FurnitureView, Printable {
   private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
+  private static final String COLUMN_WIDTHS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ColumnWidths";
 
   private UserPreferences        preferences;
   private ListSelectionListener  tableSelectionListener;
@@ -160,7 +161,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
     }
     setModel(new FurnitureTreeTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
-    updateTableColumnsWidth(0);
+    updateTableColumnsWidth(home, 0);
     updateExpandedRows(home);
     updateTableSelectedFurniture(home);
     // Add listeners to model
@@ -360,28 +361,53 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   /**
    * Updates table columns width from the content of its cells.
    */
-  private void updateTableColumnsWidth(int additionalSpacing) {
+  private void updateTableColumnsWidth(Home home, int additionalSpacing) {
+    final TableColumnModel columnModel = getColumnModel();
+    int [] preferredColumnWidths = null;
+    if (home != null
+        && home.getProperty(COLUMN_WIDTHS_VISUAL_PROPERTY) != null) {
+      // Retrieve column widths
+      String [] columWidths = home.getProperty(COLUMN_WIDTHS_VISUAL_PROPERTY).split(",");
+      if (columWidths.length == columnModel.getColumnCount()) {
+        preferredColumnWidths = new int [columWidths.length];
+        for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+          try {
+            int columnWidth = Integer.parseInt(columWidths [columnIndex]);
+            preferredColumnWidths [columnIndex] = columnWidth;
+          } catch (NumberFormatException ex) {
+            preferredColumnWidths = null;
+            break;
+          }
+        }
+      }
+    }
+
     int intercellWidth = getIntercellSpacing().width + additionalSpacing;
-    TableColumnModel columnModel = getColumnModel();
     TableModel tableModel = getModel();
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       TableColumn column = columnModel.getColumn(columnIndex);
       int modelColumnIndex = convertColumnIndexToModel(columnIndex);
-      int preferredWidth = column.getHeaderRenderer().getTableCellRendererComponent(
-          this, column.getHeaderValue(), false, false, -1, columnIndex).getPreferredSize().width;
-      int rowCount = tableModel.getRowCount();
-      if (rowCount > 0) {
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-          preferredWidth = Math.max(preferredWidth,
-              column.getCellRenderer().getTableCellRendererComponent(
-                  this, tableModel.getValueAt(rowIndex, modelColumnIndex), false, false, -1, columnIndex).
-                      getPreferredSize().width);
+      int preferredWidth;
+      if (preferredColumnWidths == null) {
+        preferredWidth = column.getHeaderRenderer().getTableCellRendererComponent(
+            this, column.getHeaderValue(), false, false, -1, columnIndex).getPreferredSize().width;
+        int rowCount = tableModel.getRowCount();
+        if (rowCount > 0) {
+          for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            preferredWidth = Math.max(preferredWidth,
+                column.getCellRenderer().getTableCellRendererComponent(
+                    this, tableModel.getValueAt(rowIndex, modelColumnIndex), false, false, -1, columnIndex).
+                        getPreferredSize().width);
+          }
+        } else {
+          preferredWidth = Math.max(preferredWidth, column.getPreferredWidth());
         }
+        preferredWidth += intercellWidth;
       } else {
-        preferredWidth = Math.max(preferredWidth, column.getPreferredWidth());
+        preferredWidth = preferredColumnWidths [columnIndex];
       }
-      column.setPreferredWidth(preferredWidth + intercellWidth);
-      column.setWidth(preferredWidth + intercellWidth);
+      column.setPreferredWidth(preferredWidth);
+      column.setWidth(preferredWidth);
     }
   }
 
@@ -726,6 +752,26 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         public void columnSelectionChanged(ListSelectionEvent ev) {
         }
       });
+
+    // Track column width changes
+    PropertyChangeListener columnWidthListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if ("width".equals(ev.getPropertyName())) {
+            StringBuilder columnWidths = new StringBuilder();
+            for (int i = 0, n = getColumnModel().getColumnCount(); i < n; i++) {
+              if (columnWidths.length() != 0) {
+                columnWidths.append(',');
+              }
+              columnWidths.append(getColumnModel().getColumn(i).getWidth());
+            }
+            controller.setHomeProperty(COLUMN_WIDTHS_VISUAL_PROPERTY, columnWidths.toString());
+          }
+        }
+      };
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      TableColumn column = getColumnModel().getColumn(columnIndex);
+      column.addPropertyChangeListener(columnWidthListener);
+    }
   }
 
   /**
@@ -801,9 +847,9 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
       setColumnModel(printableColumnModel);
       if (OperatingSystem.isWindows()) {
         // Add 3 pixels to columns to get a correct rendering
-        updateTableColumnsWidth(3);
+        updateTableColumnsWidth(null, 3);
       } else {
-        updateTableColumnsWidth(0);
+        updateTableColumnsWidth(null, 0);
       }
       setGridColor(gridColor);
       Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
@@ -1100,6 +1146,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               updateModelColumns(home.getFurnitureVisibleProperties());
+              // Will implicitly change columns width and update COLUMN_WIDTHS_VISUAL_PROPERTY property
             }
           });
     }
