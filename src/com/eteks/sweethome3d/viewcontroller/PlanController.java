@@ -9861,10 +9861,12 @@ public class PlanController extends FurnitureController implements Controller {
   private class PieceOfFurnitureResizeState extends ControllerState {
     private boolean                 magnetismEnabled;
     private boolean                 alignmentActivated;
+    private boolean                 widthOrDepthResizingActivated;
     private float                   deltaXToResizePoint;
     private float                   deltaYToResizePoint;
     private ResizedPieceOfFurniture resizedPiece;
     private float                   resizedPieceWidthInPlan;
+    private float []                resizePoint;
     private float []                topLeftPoint;
     private String                  widthResizeToolTipFeedback;
     private String                  depthResizeToolTipFeedback;
@@ -9898,13 +9900,14 @@ public class PlanController extends FurnitureController implements Controller {
       this.resizedPiece = new ResizedPieceOfFurniture(selectedPiece);
       this.resizedPieceWidthInPlan = selectedPiece.getWidthInPlan();
       float [][] resizedPiecePoints = selectedPiece.getPoints();
-      float [] resizePoint = resizedPiecePoints [2];
-      this.deltaXToResizePoint = getXLastMousePress() - resizePoint [0];
-      this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
+      this.resizePoint = resizedPiecePoints [2];
+      this.deltaXToResizePoint = getXLastMousePress() - this.resizePoint [0];
+      this.deltaYToResizePoint = getYLastMousePress() - this.resizePoint [1];
       this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasMagnetismToggledLastMousePress();
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      this.widthOrDepthResizingActivated = wasDuplicationActivatedLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth(), selectedPiece.getHeight()),
@@ -9943,7 +9946,8 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (!selectedPiece.isWidthDepthDeformable()) {
         newDepth = this.resizedPiece.getDepth() * newWidth / this.resizedPiece.getWidth();
       } else if (!this.resizedPiece.isDoorOrWindowBoundToWall()
-                 || !this.magnetismEnabled) {
+                 || !this.magnetismEnabled
+                 || this.widthOrDepthResizingActivated) {
         // Update piece depth if it's not a door a window
         // or if it's a a door a window unbound to a wall when magnetism is enabled
         newDepth = (float)(deltaY * cos - deltaX * sin);
@@ -9953,6 +9957,18 @@ public class PlanController extends FurnitureController implements Controller {
         newDepth = Math.min(Math.max(newDepth, preferences.getLengthUnit().getMinimumLength()),
             preferences.getLengthUnit().getMaximumLength());
         doorOrWindowBoundToWall = newDepth == this.resizedPiece.getDepth();
+
+        if (this.widthOrDepthResizingActivated) {
+          // Allow resizing of only width or depth depending on the location of the cursor
+          // above or below a line joining the two opposite corners of the resized piece
+          if (Math.signum(Line2D.relativeCCW(this.topLeftPoint [0], this.topLeftPoint [1],
+              this.resizePoint [0], this.resizePoint [1],
+              x - this.deltaXToResizePoint, y - this.deltaYToResizePoint)) >= 0) {
+            newDepth = this.resizedPiece.getDepth();
+          } else {
+            newWidth = this.resizedPiece.getWidth();
+          }
+        }
       }
 
       // Update piece size
@@ -10001,6 +10017,12 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void setAlignmentActivated(boolean alignmentActivated) {
       this.alignmentActivated = alignmentActivated;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void setDuplicationActivated(boolean duplicationActivated) {
+      this.widthOrDepthResizingActivated = duplicationActivated;
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
