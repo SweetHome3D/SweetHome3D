@@ -417,16 +417,17 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
               || HomeView.ActionType.ADD_LEVEL_AT_SAME_ELEVATION.name().equals(((JMenuItem)component).getAction().getValue(ResourceAction.RESOURCE_PREFIX)))) {
         tabbedPanePopup.add(component);
         // Add also menu item to plan component and enable it only when there's no level in home
-        planComponentPopup.add(new ResourceAction.PopupMenuItemAction(((JMenuItem)component).getAction()));
+        final ResourceAction.PopupMenuItemAction menuItemAction = new ResourceAction.PopupMenuItemAction(((JMenuItem)component).getAction());
+        planComponentPopup.add(menuItemAction);
         final JMenuItem planMenuItem = (JMenuItem)planComponentPopup.getComponent(planComponentPopup.getComponentCount() - 1);
-        planMenuItem.setEnabled(this.multipleLevelsTabbedPane.getTabCount() <= 2);
+        planMenuItem.setEnabled(this.multipleLevelsTabbedPane.getTabCount() <= 2 && menuItemAction.isEnabled());
         this.multipleLevelsTabbedPane.addPropertyChangeListener("indexForTabComponent",
             new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent ev) {
                 // Change visibility later once tabs are fully updated
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      planMenuItem.setEnabled(multipleLevelsTabbedPane.getTabCount() <= 2);
+                      planMenuItem.setEnabled(multipleLevelsTabbedPane.getTabCount() <= 2 && menuItemAction.isEnabled());
                     }
                   });
               }
