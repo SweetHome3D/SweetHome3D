@@ -1,19 +1,19 @@
 /*
  * HomeControllerTest.java 15 mai 2006
- * 
+ *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
@@ -62,6 +62,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
@@ -90,15 +91,15 @@ public class HomeControllerTest extends TestCase {
     this.preferences = new DefaultUserPreferences();
     this.preferences.setFurnitureCatalogViewedInTree(true);
     this.home = new Home();
-    this.homeController = 
+    this.homeController =
         new HomeController(this.home, this.preferences, viewFactory);
-    FurnitureCatalogController catalogController = 
+    FurnitureCatalogController catalogController =
         homeController.getFurnitureCatalogController();
     this.catalogTree = (FurnitureCatalogTree)catalogController.getView();
-    this.furnitureController = 
+    this.furnitureController =
         homeController.getFurnitureController();
-    this.furnitureTable = 
-        (FurnitureTable)furnitureController.getView();
+    this.furnitureTable =
+        SwingTools.findChildren((JComponent)furnitureController.getView(), FurnitureTable.class).get(0);
   }
 
   /**
@@ -106,25 +107,25 @@ public class HomeControllerTest extends TestCase {
    */
   public void testHomeFurniture() {
     // 2. Select the two first pieces of furniture in catalog and add them to the table
-    catalogTree.expandRow(0); 
+    catalogTree.expandRow(0);
     catalogTree.addSelectionInterval(1, 2);
     homeController.addHomeFurniture();
 
     // Check the table contains two pieces
-    assertEquals("Table doesn't contain 2 pieces", 
+    assertEquals("Table doesn't contain 2 pieces",
         2, furnitureTable.getRowCount());
     //  Check the two pieces in table are selected
-    assertEquals("Table doesn't display 2 selected pieces", 
+    assertEquals("Table doesn't display 2 selected pieces",
         2, furnitureTable.getSelectedRowCount());
 
     // 3. Select the first piece in table, delete it
     furnitureTable.setRowSelectionInterval(0, 0);
     homeController.getFurnitureController().deleteSelection();
     // Check the table contains only one piece
-    assertEquals("Table doesn't contain 1 piece", 
+    assertEquals("Table doesn't contain 1 piece",
         1, furnitureTable.getRowCount());
     // Check the table doesn't display any selection
-    assertEquals("Table selection isn't empty", 
+    assertEquals("Table selection isn't empty",
         0, furnitureTable.getSelectedRowCount());
   }
 
@@ -134,32 +135,32 @@ public class HomeControllerTest extends TestCase {
   public void testHomeFurnitureUndoableActions() {
     // Check all actions are disabled
     assertActionsEnabled(false, false, false, false);
-    
+
     // 2. Select the two first pieces of furniture in catalog
-    catalogTree.expandRow(0); 
+    catalogTree.expandRow(0);
     catalogTree.addSelectionInterval(1, 2);
     // Check only Add action is enabled
     assertActionsEnabled(true, false, false, false);
-    
+
     // 3. Add the selected furniture to the table
     runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
     List<HomePieceOfFurniture> furniture = home.getFurniture();
     //  Check Add, Delete and Undo actions are enabled
     assertActionsEnabled(true, true, true, false);
-    
+
     // 4. Select the first piece in table and delete it
     furnitureTable.setRowSelectionInterval(0, 0);
     runAction(HomePane.ActionType.DELETE_HOME_FURNITURE);
     //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);
-    
+
     // 5. Undo last operation
     runAction(HomePane.ActionType.UNDO);
     // Check home contains the deleted piece
     HomePieceOfFurniture firstPiece = furniture.get(0);
-    assertEquals("Deleted piece isn't undeleted", 
+    assertEquals("Deleted piece isn't undeleted",
         firstPiece, home.getFurniture().get(0));
-    assertEquals("Deleted piece isn't selected", 
+    assertEquals("Deleted piece isn't selected",
         firstPiece, home.getSelectedItems().get(0));
     //  Check all actions are enabled
     assertActionsEnabled(true, true, true, true);
@@ -167,11 +168,11 @@ public class HomeControllerTest extends TestCase {
     // 6. Undo first operation
     runAction(HomePane.ActionType.UNDO);
     // Check home is empty
-    assertTrue("Home furniture isn't empty", 
+    assertTrue("Home furniture isn't empty",
         home.getFurniture().isEmpty());
     //  Check Add and Redo actions are enabled
     assertActionsEnabled(true, false, false, true);
-    
+
     // 7. Redo first operation
     runAction(HomePane.ActionType.REDO);
     // Check home contains the two previously added pieces
@@ -194,9 +195,9 @@ public class HomeControllerTest extends TestCase {
     //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);
   }
-  
+
   /**
-   * Tests zoom and alignment tools. 
+   * Tests zoom and alignment tools.
    */
   public void testZoomAndAligment() {
     // Add the first two pieces of catalog first category to home
@@ -208,35 +209,35 @@ public class HomeControllerTest extends TestCase {
     this.home.addPieceOfFurniture(secondPiece);
     // Add a wall to home
     this.home.addWall(new Wall(0, 0, 100, 0, 7, this.home.getWallHeight()));
-    
+
     PlanController planController = this.homeController.getPlanController();
     float scale = planController.getScale();
-    
-    // 1. Zoom in 
-    runAction(HomePane.ActionType.ZOOM_IN);    
+
+    // 1. Zoom in
+    runAction(HomePane.ActionType.ZOOM_IN);
     // Check scale changed
-    assertEquals("Scale is incorrect", scale * 1.5f, planController.getScale()); 
-    
-    // 2. Zoom out 
-    runAction(HomePane.ActionType.ZOOM_OUT);    
+    assertEquals("Scale is incorrect", scale * 1.5f, planController.getScale());
+
+    // 2. Zoom out
+    runAction(HomePane.ActionType.ZOOM_OUT);
     // Check scale is back to its previous value
     assertEquals("Scale is incorrect", scale, planController.getScale());
-    
+
     // 3. Select all while table has focus
     this.homeController.focusedViewChanged(this.furnitureTable);
     runAction(HomePane.ActionType.SELECT_ALL);
     // Check selection contains the two pieces
-    assertEquals("Selection doesn't contain home furniture", 
+    assertEquals("Selection doesn't contain home furniture",
         this.home.getFurniture(), this.home.getSelectedItems());
 
     // 4. Select all while plan has focus
     this.homeController.focusedViewChanged(planController.getView());
     runAction(HomePane.ActionType.SELECT_ALL);
     // Check selection contains the two pieces, the wall and the compass
-    assertEquals("Selection doesn't contain home objects", 
+    assertEquals("Selection doesn't contain home objects",
         4, this.home.getSelectedItems().size());
-    
-    // 5. Select the first two pieces 
+
+    // 5. Select the first two pieces
     this.home.setSelectedItems(Arrays.asList(new Selectable [] {firstPiece, secondPiece}));
     float secondPieceX = secondPiece.getX();
     float secondPieceY = secondPiece.getY();
@@ -251,13 +252,13 @@ public class HomeControllerTest extends TestCase {
     // Check bottom of second piece equals bottom of first piece
     TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on top of first piece",
         getMinY(firstPiece), getMinY(secondPiece), 10E-4f);
-    
+
     // 7. Align on left
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT);
     // Check bottom of second piece equals bottom of first piece
     TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on left of first piece",
         getMinX(firstPiece), getMinX(secondPiece), 10E-4f);
-    
+
     // 8. Align on right
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT);
     // Check bottom of second piece equals bottom of first piece
@@ -288,7 +289,7 @@ public class HomeControllerTest extends TestCase {
     TestUtilities.assertEqualsWithinEpsilon("Second piece ordinate is incorrect",
         alignedPieceY, secondPiece.getY(), 10E-4f);
   }
-  
+
   /**
    * Tests furniture visible properties changes.
    */
@@ -302,17 +303,17 @@ public class HomeControllerTest extends TestCase {
     // Check displayed values in table
     assertFurnitureFirstRowEquals(this.furnitureTable, piece.getName(),
         piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.isVisible());
-    
+
     // 2. Make name property invisible
     runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME);
     // Check displayed values in table doesn't contain piece name
-    assertFurnitureFirstRowEquals(this.furnitureTable, 
+    assertFurnitureFirstRowEquals(this.furnitureTable,
         piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.isVisible());
 
     // 3. Make y property visible
     runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_Y);
     // Check displayed values in table contains piece ordinate after piece depth
-    assertFurnitureFirstRowEquals(this.furnitureTable, 
+    assertFurnitureFirstRowEquals(this.furnitureTable,
         piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getY(), piece.isVisible());
 
     // 4. Make name property visible again
@@ -320,7 +321,7 @@ public class HomeControllerTest extends TestCase {
     // Check displayed values in table contains piece name in first position
     assertFurnitureFirstRowEquals(this.furnitureTable, piece.getName(),
         piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getY(), piece.isVisible());
-    
+
     // 5. Change visible properties order and list
     this.furnitureController.setFurnitureVisibleProperties(
         Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
@@ -332,16 +333,16 @@ public class HomeControllerTest extends TestCase {
     // 6. Make visible property visible
     runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE);
     // Check displayed values in table contains piece visible property after movable property
-    assertFurnitureFirstRowEquals(this.furnitureTable, 
+    assertFurnitureFirstRowEquals(this.furnitureTable,
         piece.isMovable(), piece.isVisible(), piece.getName());
   }
-  
+
   /**
    * Tests furniture group / ungroup.
    */
   public void testFurnitureGroup() {
     assertGroupActionsEnabled(false, false);
-    
+
     // 1. Add the first two pieces of catalog first category to home
     FurnitureCategory firstCategory = this.preferences.getFurnitureCatalog().getCategories().get(0);
     List<CatalogPieceOfFurniture> catalogPieces = Arrays.asList(new CatalogPieceOfFurniture [] {
@@ -357,7 +358,7 @@ public class HomeControllerTest extends TestCase {
     HomePieceOfFurniture piece2 = pieces.get(1);
     piece2.move(100, 100);
     piece2.setElevation(100);
-    
+
     // 2. Group selected furniture
     runAction(HomePane.ActionType.GROUP_FURNITURE);
     // Check home contains one selected piece that replaced added pieces
@@ -375,10 +376,10 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Surrounding rectangle is incorrect", piecesRectangle, groupRectangle);
     // Compare elevation and height
     assertEquals("Wrong elevation", Math.min(piece1.getElevation(), piece2.getElevation()), group.getElevation());
-    assertEquals("Wrong height", 
-        Math.max(piece1.getElevation() + piece1.getHeight(), piece2.getElevation() + piece2.getHeight()) 
+    assertEquals("Wrong height",
+        Math.max(piece1.getElevation() + piece1.getHeight(), piece2.getElevation() + piece2.getHeight())
         - Math.min(piece1.getElevation(), piece2.getElevation()), group.getHeight());
-    
+
     // 3. Rotate group
     float angle = (float)(Math.PI / 2);
     group.setAngle(angle);
@@ -395,7 +396,7 @@ public class HomeControllerTest extends TestCase {
     piecesRectangle.add(getSurroundingRectangle(piece2));
     assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getWidth(), groupRectangle.getWidth());
     assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getHeight(), groupRectangle.getHeight());
-    
+
     // 4. Undo / Redo
     assertActionsEnabled(true, true, true, false);
     runAction(HomePane.ActionType.UNDO);
@@ -412,7 +413,7 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
     assertTrue("Home doesn't contain group", pieces.contains(group));
     assertGroupActionsEnabled(false, true);
-    
+
     // 5. Add one more piece to home
     catalogPieces = Arrays.asList(new CatalogPieceOfFurniture [] {firstCategory.getFurniture().get(0)});
     this.homeController.getFurnitureCatalogController().setSelectedFurniture(catalogPieces);
@@ -422,7 +423,7 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Home doesn't contain 2 pieces", 2, pieces.size());
     assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
     assertGroupActionsEnabled(false, false);
-    
+
     // 6. Group it with the other group
     HomePieceOfFurniture piece3 = pieces.get(1);
     this.home.setSelectedItems(Arrays.asList(new Selectable [] {group, piece3}));
@@ -435,7 +436,7 @@ public class HomeControllerTest extends TestCase {
     HomeFurnitureGroup group2 = (HomeFurnitureGroup)pieces.get(0);
     assertFalse("Home doesn't contain a different group", group == group2);
     assertGroupActionsEnabled(false, true);
-    
+
     // 7. Ungroup furniture
     runAction(HomePane.ActionType.UNGROUP_FURNITURE);
     assertGroupActionsEnabled(true, true);
@@ -451,7 +452,7 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Home doesn't contain 2 selected item", 2, this.home.getSelectedItems().size());
     assertFalse("Home contains group", pieces.contains(group));
   }
-    
+
   /**
    * Test damaged home file management.
    */
@@ -464,13 +465,13 @@ public class HomeControllerTest extends TestCase {
         public UserPreferences getUserPreferences() {
           return preferences;
         }
-        
+
         @Override
         public HomeRecorder getHomeRecorder() {
           return recorder;
         }
-      };    
-      
+      };
+
     class OpenDamagedHomeController extends HomeController {
       public OpenDamagedHomeController(final HomeView.OpenDamagedHomeAnswer answer) {
         super(new Home(), application, new SwingViewFactory() {
@@ -482,7 +483,7 @@ public class HomeControllerTest extends TestCase {
                   // Return the damaged file that is tested
                   return testFile;
                 }
-                
+
                 @Override
                 public OpenDamagedHomeAnswer confirmOpenDamagedHome(String homeName, Home damagedHome,
                                                                   List<Content> invalidContent) {
@@ -495,7 +496,7 @@ public class HomeControllerTest extends TestCase {
         });
       }
     }
-       
+
     final CyclicBarrier openLatch = new CyclicBarrier(2);
     application.addHomesListener(new CollectionListener<Home>() {
         public void collectionChanged(CollectionEvent<Home> ev)  {
@@ -508,7 +509,7 @@ public class HomeControllerTest extends TestCase {
           }
         }
       });
-    
+
     // 1. Try to open home without damaged items
     new OpenDamagedHomeController(HomeView.OpenDamagedHomeAnswer.REMOVE_DAMAGED_ITEMS).open();
     openLatch.await(5, TimeUnit.SECONDS);
@@ -517,7 +518,7 @@ public class HomeControllerTest extends TestCase {
     assertTrue("Home is not tagged as repaired", home.isRepaired());
     assertEquals("Incorrect furniture count", 4, home.getFurniture().size());
     application.deleteHome(home);
-    
+
     // 2. Try to open home with damaged items replaced by repaired items
     openLatch.reset();
     new OpenDamagedHomeController(HomeView.OpenDamagedHomeAnswer.REPLACE_DAMAGED_ITEMS).open();
@@ -528,98 +529,98 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Incorrect furniture count", 5, home.getFurniture().size());
     assertTrue(((URLContent)home.getFurniture().get(4).getModel()).getURL().toString().endsWith("repairedModel.obj"));
   }
-  
+
   /**
-   * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
-   * in <code>HomePane</code>. 
+   * Runs <code>actionPerformed</code> method matching <code>actionType</code>
+   * in <code>HomePane</code>.
    */
   private void runAction(HomePane.ActionType actionType) {
     getAction(actionType).actionPerformed(null);
   }
 
   /**
-   * Returns the action matching <code>actionType</code> in <code>HomePane</code>. 
+   * Returns the action matching <code>actionType</code> in <code>HomePane</code>.
    */
   private Action getAction(HomePane.ActionType actionType) {
     JComponent homeView = (JComponent)this.homeController.getView();
     return homeView.getActionMap().get(actionType);
   }
-  
+
   /**
-   * Asserts ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, 
-   * UNDO and REDO actions in <code>HomePane</code> 
-   * are enabled or disabled. 
+   * Asserts ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
+   * UNDO and REDO actions in <code>HomePane</code>
+   * are enabled or disabled.
    */
-  private void assertActionsEnabled(boolean addActionEnabled, 
-                                    boolean deleteActionEnabled, 
-                                    boolean undoActionEnabled, 
+  private void assertActionsEnabled(boolean addActionEnabled,
+                                    boolean deleteActionEnabled,
+                                    boolean undoActionEnabled,
                                     boolean redoActionEnabled) {
-    assertTrue("Add action invalid state", 
+    assertTrue("Add action invalid state",
         getAction(HomePane.ActionType.ADD_HOME_FURNITURE).isEnabled() == addActionEnabled);
-    assertTrue("Delete action invalid state", 
+    assertTrue("Delete action invalid state",
         getAction(HomePane.ActionType.DELETE_HOME_FURNITURE).isEnabled() == deleteActionEnabled);
-    assertTrue("Undo action invalid state", 
+    assertTrue("Undo action invalid state",
         getAction(HomePane.ActionType.UNDO).isEnabled() == undoActionEnabled);
-    assertTrue("Redo action invalid state", 
+    assertTrue("Redo action invalid state",
         getAction(HomePane.ActionType.REDO).isEnabled() == redoActionEnabled);
   }
-  
+
   /**
-   * Asserts GROUP_FURNITURE, UNGROUP_FURNITURE are enabled or disabled. 
+   * Asserts GROUP_FURNITURE, UNGROUP_FURNITURE are enabled or disabled.
    */
-  private void assertGroupActionsEnabled(boolean groupActionEnabled, 
+  private void assertGroupActionsEnabled(boolean groupActionEnabled,
                                          boolean ungroupActionEnabled) {
-    assertTrue("Group action invalid state", 
+    assertTrue("Group action invalid state",
         getAction(HomePane.ActionType.GROUP_FURNITURE).isEnabled() == groupActionEnabled);
-    assertTrue("Ungroup action invalid state", 
+    assertTrue("Ungroup action invalid state",
         getAction(HomePane.ActionType.UNGROUP_FURNITURE).isEnabled() == ungroupActionEnabled);
   }
-  
+
   /**
-   * Returns the minimum abcissa of the vertices of <code>piece</code>.  
+   * Returns the minimum abcissa of the vertices of <code>piece</code>.
    */
   private float getMinX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float minX = Float.POSITIVE_INFINITY;
     for (float [] point : points) {
       minX = Math.min(minX, point [0]);
-    } 
+    }
     return minX;
   }
 
   /**
-   * Returns the maximum abcissa of the vertices of <code>piece</code>.  
+   * Returns the maximum abcissa of the vertices of <code>piece</code>.
    */
   private float getMaxX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float maxX = Float.NEGATIVE_INFINITY;
     for (float [] point : points) {
       maxX = Math.max(maxX, point [0]);
-    } 
+    }
     return maxX;
   }
 
   /**
-   * Returns the minimum ordinate of the vertices of <code>piece</code>.  
+   * Returns the minimum ordinate of the vertices of <code>piece</code>.
    */
   private float getMinY(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float minY = Float.POSITIVE_INFINITY;
     for (float [] point : points) {
       minY = Math.min(minY, point [1]);
-    } 
+    }
     return minY;
   }
 
   /**
-   * Returns the maximum ordinate of the vertices of <code>piece</code>.  
+   * Returns the maximum ordinate of the vertices of <code>piece</code>.
    */
   private float getMaxY(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float maxY = Float.NEGATIVE_INFINITY;
     for (float [] point : points) {
       maxY = Math.max(maxY, point [1]);
-    } 
+    }
     return maxY;
   }
 
@@ -633,17 +634,17 @@ public class HomeControllerTest extends TestCase {
       Component cellRendererComponent = table.getCellRenderer(0, column).
           getTableCellRendererComponent(table, table.getValueAt(0, column), false, false, 0, column);
       if (values [column] instanceof Number) {
-        assertEquals("Wrong value at column " + column,  
-            this.preferences.getLengthUnit().getFormat().format(values [column]), 
+        assertEquals("Wrong value at column " + column,
+            this.preferences.getLengthUnit().getFormat().format(values [column]),
             ((JLabel)cellRendererComponent).getText());
       } else if (values [column] instanceof Boolean) {
-        assertEquals("Wrong value at column " + column, values [column], 
+        assertEquals("Wrong value at column " + column, values [column],
             ((JCheckBox)cellRendererComponent).isSelected());
       } else {
-        assertEquals("Wrong value at column " + column, values [column], 
+        assertEquals("Wrong value at column " + column, values [column],
             ((JLabel)((JComponent)cellRendererComponent).getComponent(1)).getText());
       }
-    }    
+    }
   }
 
   /**
@@ -657,7 +658,7 @@ public class HomeControllerTest extends TestCase {
     }
     return rectangle;
   }
-  
+
   public static void main(String [] args) {
     ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
@@ -666,7 +667,7 @@ public class HomeControllerTest extends TestCase {
   }
 
   private static class ControllerTest extends HomeController {
-    public ControllerTest(Home home, 
+    public ControllerTest(Home home,
                           UserPreferences preferences,
                           ViewFactory viewFactory) {
       super(home, preferences, viewFactory);
@@ -689,6 +690,6 @@ public class HomeControllerTest extends TestCase {
       frame.pack();
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       frame.setVisible(true);
-    } 
+    }
   }
 }
