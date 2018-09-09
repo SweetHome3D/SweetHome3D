@@ -1526,12 +1526,18 @@ public class HomeController implements Controller {
   /**
    * Adds items to home.
    */
-  private void addPastedItems(final List<? extends Selectable> items,
+  private void addPastedItems(List<? extends Selectable> items,
                               float dx, float dy, final boolean isDropInPlanView,
                               final String presentationNameKey) {
     if (items.size() > 1
         || (items.size() == 1
             && !(items.get(0) instanceof Compass))) {
+      // Remove Compass instance from copied items
+      List<Compass> compassList = Home.getSubList(items, Compass.class);
+      if (compassList.size() != 0) {
+        items = new ArrayList<Selectable>(items);
+        items.removeAll(compassList);
+      }
       // Always use selection mode after a drop or a paste operation
       getPlanController().setMode(PlanController.Mode.SELECTION);
       // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home

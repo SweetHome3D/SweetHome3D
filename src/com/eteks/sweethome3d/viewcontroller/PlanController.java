@@ -1129,7 +1129,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (arcExtent != null) {
         wall.setArcExtent(-arcExtent);
       }
-      reverseWallSideStyles(wall);
+      reverseWallSidesStyle(wall);
     } else if (item instanceof Room) {
       Room room = (Room)item;
       float [][] points = room.getPoints();
@@ -1541,14 +1541,14 @@ public class PlanController extends FurnitureController implements Controller {
         wall.setHeightAtEnd(height);
       }
 
-      reverseWallSideStyles(wall);
+      reverseWallSidesStyle(wall);
     }
   }
 
   /**
-   * Exchanges wall side styles.
+   * Exchanges the style of wall sides.
    */
-  private void reverseWallSideStyles(Wall wall) {
+  private void reverseWallSidesStyle(Wall wall) {
     Integer rightSideColor = wall.getRightSideColor();
     HomeTexture rightSideTexture = wall.getRightSideTexture();
     float leftSideShininess = wall.getLeftSideShininess();
