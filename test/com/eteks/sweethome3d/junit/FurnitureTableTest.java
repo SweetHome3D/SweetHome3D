@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -45,6 +46,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FurnitureTable;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureView;
@@ -138,7 +140,7 @@ public class FurnitureTableTest extends TestCase {
     // 2. Create a table that displays home furniture with its controller
     FurnitureController furnitureController =
         new FurnitureController(home, preferences, new SwingViewFactory());
-    FurnitureTable table = (FurnitureTable)furnitureController.getView();
+    FurnitureTable table = SwingTools.findChildren((JComponent)furnitureController.getView(), FurnitureTable.class).get(0);
 
     // 3. Sort furniture table in alphabetical order of furniture name
     furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
@@ -191,7 +193,7 @@ public class FurnitureTableTest extends TestCase {
     // 2. Create a table that displays home furniture with its controller
     FurnitureController furnitureController =
         new FurnitureController(home, preferences, new SwingViewFactory());
-    FurnitureTable table = (FurnitureTable)furnitureController.getView();
+    FurnitureTable table = SwingTools.findChildren((JComponent)furnitureController.getView(), FurnitureTable.class).get(0);
     assertEquals("Home furniture count and row count different", homeFurniture.size(), table.getRowCount());
     // Apply a filter on furniture that refuses pieces that are windows
     table.setFurnitureFilter(new FurnitureView.FurnitureFilter() {
