@@ -3416,9 +3416,97 @@ public class PlanController extends FurnitureController implements Controller {
 
         @Override
         public String getPresentationName() {
-          return preferences.getLocalizedString(PlanController.class, "undoModifyLevelName");
+          return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
         }
       });
+  }
+
+  /**
+   * Makes the selected level the only viewable one.
+   * @since 6.0
+   */
+  public void setSelectedLevelOnlyViewable() {
+    final Level [] viewableLevels = getLevels(true);
+    final Level selectedLevel = this.home.getSelectedLevel();
+    final boolean selectedLevelViewable = selectedLevel.isViewable();
+    if (viewableLevels.length != 1
+        || !selectedLevelViewable) {
+      setLevelsViewability(viewableLevels, false);
+      selectedLevel.setViewable(true);
+      undoSupport.postEdit(new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            setSelectedLevel(selectedLevel);
+            setLevelsViewability(viewableLevels, true);
+            selectedLevel.setViewable(selectedLevelViewable);
+          }
+
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            setSelectedLevel(selectedLevel);
+            setLevelsViewability(viewableLevels, false);
+            selectedLevel.setViewable(true);
+          }
+
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
+          }
+        });
+    }
+  }
+
+  /**
+   * Makes all levels viewable.
+   * @since 6.0
+   */
+  public void setAllLevelsViewable() {
+    final Level [] unviewableLevels = getLevels(false);
+    if (unviewableLevels.length > 0) {
+      final Level selectedLevel = this.home.getSelectedLevel();
+      setLevelsViewability(unviewableLevels, true);
+      undoSupport.postEdit(new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            setSelectedLevel(selectedLevel);
+            setLevelsViewability(unviewableLevels, false);
+          }
+
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            setSelectedLevel(selectedLevel);
+            setLevelsViewability(unviewableLevels, true);
+          }
+
+          @Override
+          public String getPresentationName() {
+            return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
+          }
+        });
+    }
+  }
+
+  /**
+   * Returns levels which are viewable or not according to parameter.
+   */
+  private Level [] getLevels(boolean viewable) {
+    List<Level> levels = new ArrayList<Level>();
+    for (Level level : this.home.getLevels()) {
+      if (level.isViewable() == viewable) {
+        levels.add(level);
+      }
+    }
+    return levels.toArray(new Level [levels.size()]);
+  }
+
+  private void setLevelsViewability(Level [] levels, boolean viewable) {
+    for (Level level : levels) {
+      level.setViewable(viewable);
+    }
   }
 
   public void modifySelectedLevel() {

@@ -316,6 +316,8 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_VIEWABLE, homeContainsOneSelectedLevel);
     homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_UNVIEWABLE, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.MAKE_ALL_LEVELS_VIEWABLE, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
     homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
@@ -1161,6 +1163,8 @@ public class HomeController implements Controller {
           getView().setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, levels.size() > 1);
           getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_VIEWABLE, homeContainsOneSelectedLevel);
           getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_UNVIEWABLE, homeContainsOneSelectedLevel);
+          getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, homeContainsOneSelectedLevel);
+          getView().setEnabled(HomeView.ActionType.MAKE_ALL_LEVELS_VIEWABLE, levels.size() > 1);
           getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
           getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
           getView().setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);

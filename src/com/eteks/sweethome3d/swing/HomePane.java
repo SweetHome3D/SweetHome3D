@@ -492,6 +492,8 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.ADD_LEVEL_AT_SAME_ELEVATION, preferences, planController, "addLevelAtSameElevation");
       createAction(ActionType.MAKE_LEVEL_VIEWABLE, preferences, planController, "toggleSelectedLevelViewability");
       createAction(ActionType.MAKE_LEVEL_UNVIEWABLE, preferences, planController, "toggleSelectedLevelViewability");
+      createAction(ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, preferences, planController, "setSelectedLevelOnlyViewable");
+      createAction(ActionType.MAKE_ALL_LEVELS_VIEWABLE, preferences, planController, "setAllLevelsViewable");
       createAction(ActionType.MODIFY_LEVEL, preferences, planController, "modifySelectedLevel");
       createAction(ActionType.DELETE_LEVEL, preferences, planController, "deleteSelectedLevel");
       createAction(ActionType.ZOOM_IN, preferences, controller, "zoomIn");
@@ -1149,6 +1151,8 @@ public class HomePane extends JRootPane implements HomeView {
     if (makeLevelUnviewableViewableMenuItem != null) {
       planMenu.add(makeLevelUnviewableViewableMenuItem);
     }
+    addActionToMenu(ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, planMenu);
+    addActionToMenu(ActionType.MAKE_ALL_LEVELS_VIEWABLE, planMenu);
     addActionToMenu(ActionType.MODIFY_LEVEL, planMenu);
     addActionToMenu(ActionType.DELETE_LEVEL, planMenu);
     planMenu.addSeparator();
@@ -2868,6 +2872,8 @@ public class HomePane extends JRootPane implements HomeView {
       if (makeLevelUnviewableViewableMenuItem != null) {
         planViewPopup.add(makeLevelUnviewableViewableMenuItem);
       }
+      addActionToPopupMenu(ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, planViewPopup);
+      addActionToPopupMenu(ActionType.MAKE_ALL_LEVELS_VIEWABLE, planViewPopup);
       addActionToPopupMenu(ActionType.MODIFY_LEVEL, planViewPopup);
       addActionToPopupMenu(ActionType.DELETE_LEVEL, planViewPopup);
       planViewPopup.addSeparator();

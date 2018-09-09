@@ -37,6 +37,9 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class ResourceAction extends AbstractAction {
+  public static final String RESOURCE_CLASS = "ResourceClass";
+  public static final String RESOURCE_PREFIX = "ResourcePrefix";
+
   public static final String VISIBLE = "Visible";
   public static final String POPUP   = "Popup";
   public static final String TOGGLE_BUTTON_MODEL = "ToggleButtonModel";
@@ -66,11 +69,14 @@ public class ResourceAction extends AbstractAction {
                         Class<?> resourceClass,
                         String actionPrefix,
                         boolean enabled) {
+    putValue(RESOURCE_CLASS, resourceClass);
+    putValue(RESOURCE_PREFIX, actionPrefix);
+
     readActionProperties(preferences, resourceClass, actionPrefix);
     setEnabled(enabled);
 
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
-        new LanguageChangeListener(this, resourceClass, actionPrefix));
+        new LanguageChangeListener(this));
   }
 
   /**
@@ -79,15 +85,9 @@ public class ResourceAction extends AbstractAction {
    */
   private static class LanguageChangeListener implements PropertyChangeListener {
     private final WeakReference<ResourceAction> resourceAction;
-    private final Class<?>                      resourceClass;
-    private final String                        actionPrefix;
 
-    public LanguageChangeListener(ResourceAction resourceAction,
-                                  Class<?> resourceClass,
-                                  String actionPrefix) {
+    public LanguageChangeListener(ResourceAction resourceAction) {
       this.resourceAction = new WeakReference<ResourceAction>(resourceAction);
-      this.resourceClass = resourceClass;
-      this.actionPrefix = actionPrefix;
     }
 
     public void propertyChange(PropertyChangeEvent ev) {
@@ -98,7 +98,7 @@ public class ResourceAction extends AbstractAction {
             UserPreferences.Property.LANGUAGE, this);
       } else {
         resourceAction.readActionProperties((UserPreferences)ev.getSource(),
-            this.resourceClass, this.actionPrefix);
+            (Class<?>)resourceAction.getValue(RESOURCE_CLASS), (String)resourceAction.getValue(RESOURCE_PREFIX));
       }
     }
   }

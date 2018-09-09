@@ -760,7 +760,8 @@ public class SwingTools {
           break;
         }
       }
-      if (allItemsInvisible) {
+      if (allItemsInvisible
+          && popupMenu.getComponentCount() > 0) {
         popupMenu.getComponent(0).setVisible(true);
       }
     }
