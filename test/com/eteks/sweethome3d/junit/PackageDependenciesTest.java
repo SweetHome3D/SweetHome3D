@@ -21,11 +21,11 @@ public class PackageDependenciesTest extends TestCase {
    */
   public void testPackageDependencies() throws IOException {
     PackageFilter packageFilter = new PackageFilter();
-    // Ignore Java packages 
+    // Ignore Java packages
     packageFilter.addPackage("java.*");
     // Ignore JUnit tests
     packageFilter.addPackage("com.eteks.sweethome3d.junit");
-    
+
     JDepend jdepend = new JDepend(packageFilter);
     jdepend.addDirectory("classes");
 
@@ -61,6 +61,7 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sun3dLoaders = constraint.addPackage("com.sun.j3d.loaders");
     JavaPackage sun3dLoadersLw3d = constraint.addPackage("com.sun.j3d.loaders.lw3d");
     JavaPackage sun3dUtilsGeometry = constraint.addPackage("com.sun.j3d.utils.geometry");
+    JavaPackage sun3dUtilsPicking = constraint.addPackage("com.sun.j3d.utils.picking");
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
     JavaPackage sun3dExpSwing = constraint.addPackage("com.sun.j3d.exp.swing");
@@ -92,6 +93,8 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage vectorGraphicsSvg = constraint.addPackage("org.freehep.graphicsio.svg");
     // Batik for SVG path parsing
     JavaPackage orgApacheBatikParser = constraint.addPackage("org.apache.batik.parser");
+    // eTeks Parser
+    JavaPackage eTeksParser = constraint.addPackage("com.eteks.parser");
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
     // Mac OS X specific interfaces
@@ -103,7 +106,7 @@ public class PackageDependenciesTest extends TestCase {
     // and Swing components and Java 3D use are isolated in sweetHome3DSwing
     sweetHome3DTools.dependsUpon(sweetHome3DModel);
     sweetHome3DTools.dependsUpon(eio);
-    
+
     sweetHome3DViewController.dependsUpon(sweetHome3DModel);
     sweetHome3DViewController.dependsUpon(sweetHome3DTools);
     sweetHome3DViewController.dependsUpon(swingEvent);
@@ -116,9 +119,9 @@ public class PackageDependenciesTest extends TestCase {
 
     sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
-    sweetHome3DPlugin.dependsUpon(sweetHome3DViewController);   
+    sweetHome3DPlugin.dependsUpon(sweetHome3DViewController);
     sweetHome3DPlugin.dependsUpon(swingUndo);
-    
+
     sweetHome3DJava3D.dependsUpon(sweetHome3DModel);
     sweetHome3DJava3D.dependsUpon(sweetHome3DTools);
     sweetHome3DJava3D.dependsUpon(sweetHome3DViewController);
@@ -143,12 +146,13 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(xmlSax);
     sweetHome3DJava3D.dependsUpon(xmlSaxHelpers);
     sweetHome3DJava3D.dependsUpon(orgApacheBatikParser);
-    
+
     sweetHome3DSwing.dependsUpon(sweetHome3DModel);
     sweetHome3DSwing.dependsUpon(sweetHome3DTools);
-    sweetHome3DSwing.dependsUpon(sweetHome3DPlugin);   
+    sweetHome3DSwing.dependsUpon(sweetHome3DPlugin);
     sweetHome3DSwing.dependsUpon(sweetHome3DViewController);
     sweetHome3DSwing.dependsUpon(sweetHome3DJava3D);
+    sweetHome3DSwing.dependsUpon(eTeksParser);
     sweetHome3DSwing.dependsUpon(swing);
     sweetHome3DSwing.dependsUpon(swingEvent);
     sweetHome3DSwing.dependsUpon(swingText);
@@ -165,6 +169,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(java3d);
     sweetHome3DSwing.dependsUpon(vecmath);
     sweetHome3DSwing.dependsUpon(sun3dUtilsGeometry);
+    sweetHome3DSwing.dependsUpon(sun3dUtilsPicking);
     sweetHome3DSwing.dependsUpon(sun3dUtilsUniverse);
     sweetHome3DSwing.dependsUpon(sun3dExpSwing);
     sweetHome3DSwing.dependsUpon(jmf);
@@ -178,7 +183,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(vectorGraphics);
     sweetHome3DSwing.dependsUpon(vectorGraphicsSvg);
     sweetHome3DSwing.dependsUpon(jnlp);
-    
+
     sweetHome3DIO.dependsUpon(sweetHome3DModel);
     sweetHome3DIO.dependsUpon(sweetHome3DTools);
     sweetHome3DIO.dependsUpon(xmlParsers);
@@ -201,7 +206,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DApplication.dependsUpon(sun3dExpSwing);
     sweetHome3DApplication.dependsUpon(eawt);
     sweetHome3DApplication.dependsUpon(jnlp);
-    
+
     sweetHome3DApplet.dependsUpon(sweetHome3DModel);
     sweetHome3DApplet.dependsUpon(sweetHome3DTools);
     sweetHome3DApplet.dependsUpon(sweetHome3DPlugin);
@@ -214,7 +219,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DApplet.dependsUpon(swingTable);
     sweetHome3DApplet.dependsUpon(java3d);
     sweetHome3DApplet.dependsUpon(jnlp);
-    
+
     jdepend.analyze();
 
     assertTrue("Dependency mismatch", jdepend.dependencyMatch(constraint));
