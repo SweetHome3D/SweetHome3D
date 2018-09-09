@@ -224,7 +224,7 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Scale is incorrect", scale, planController.getScale());
 
     // 3. Select all while table has focus
-    this.homeController.focusedViewChanged(this.furnitureTable);
+    this.homeController.focusedViewChanged(this.homeController.getFurnitureController().getView());
     runAction(HomePane.ActionType.SELECT_ALL);
     // Check selection contains the two pieces
     assertEquals("Selection doesn't contain home furniture",
