@@ -42,21 +42,22 @@ import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Color3f;
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
 
 /**
- * Root of a branch that matches a home object. 
+ * Root of a branch that matches a home object.
  */
 public abstract class Object3DBranch extends BranchGroup {
-  // The coloring attributes used for drawing outline 
-  protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
+  // The coloring attributes used for drawing outline
+  protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES =
       new ColoringAttributes(new Color3f(0.16f, 0.16f, 0.16f), ColoringAttributes.FASTEST);
-  protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
+  protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES =
       new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_BACK, 0);
-  protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
+  protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES =
       new LineAttributes(0.5f, LineAttributes.PATTERN_SOLID, true);
 
   protected static final Integer  DEFAULT_COLOR         = 0xFFFFFF;
@@ -66,23 +67,23 @@ public abstract class Object3DBranch extends BranchGroup {
   private static final Map<Long, Material>                materials = new HashMap<Long, Material>();
   private static final Map<TextureKey, TextureAttributes> textureAttributes = new HashMap<TextureKey, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>>   homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
-  
+
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
     DEFAULT_MATERIAL.setShininess(1);
     DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
   }
-  
+
   /**
    * Updates this branch from the home object.
    */
   public abstract void update();
 
   /**
-   * Returns a cloned instance of texture shared per <code>home</code> or 
+   * Returns a cloned instance of texture shared per <code>home</code> or
    * the texture itself if <code>home</code> is <code>null</code>.
-   * As sharing textures across universes might cause some problems, 
-   * it's safer to handle a copy of textures for a given home. 
+   * As sharing textures across universes might cause some problems,
+   * it's safer to handle a copy of textures for a given home.
    */
   protected Texture getHomeTextureClone(Texture texture, Home home) {
     if (home == null || texture == null) {
@@ -101,7 +102,7 @@ public abstract class Object3DBranch extends BranchGroup {
       return clonedTexture;
     }
   }
-  
+
   /**
    * Returns the shape matching the coordinates in <code>points</code> array.
    */
@@ -114,14 +115,14 @@ public abstract class Object3DBranch extends BranchGroup {
     path.closePath();
     return path;
   }
-  
+
   /**
    * Returns a shared material instance matching the given color.
    */
   protected Material getMaterial(Integer diffuseColor, Integer ambientColor, float shininess) {
     if (diffuseColor != null) {
       Long materialKey = new Long(diffuseColor + (ambientColor << 24) + ((char)(shininess * 128) << 48));
-      Material material = materials.get(materialKey); 
+      Material material = materials.get(materialKey);
       if (material == null) {
         Color3f ambientMaterialColor = new Color3f(((ambientColor >>> 16) & 0xFF) / 255f,
                                                     ((ambientColor >>> 8) & 0xFF) / 255f,
@@ -129,7 +130,7 @@ public abstract class Object3DBranch extends BranchGroup {
         Color3f diffuseMaterialColor = new Color3f(((diffuseColor >>> 16) & 0xFF) / 255f,
                                                     ((diffuseColor >>> 8) & 0xFF) / 255f,
                                                             (diffuseColor & 0xFF) / 255f);
-        material = new Material(ambientMaterialColor, new Color3f(), diffuseMaterialColor, 
+        material = new Material(ambientMaterialColor, new Color3f(), diffuseMaterialColor,
             new Color3f(shininess, shininess, shininess), Math.max(1, shininess * 128));
         material.setCapability(Material.ALLOW_COMPONENT_READ);
         // Store created materials in cache
@@ -140,16 +141,16 @@ public abstract class Object3DBranch extends BranchGroup {
       return getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess);
     }
   }
-  
+
   /**
    * Returns shared texture attributes matching transformation applied to the given texture.
    */
   protected TextureAttributes getTextureAttributes(HomeTexture texture) {
     return getTextureAttributes(texture, false);
   }
-  
+
   /**
-   * Returns shared texture attributes matching transformation applied to the given texture 
+   * Returns shared texture attributes matching transformation applied to the given texture
    * and scaled if required.
    */
   protected TextureAttributes getTextureAttributes(HomeTexture texture, boolean scaled) {
@@ -161,11 +162,13 @@ public abstract class Object3DBranch extends BranchGroup {
       textureWidth = 100;
       textureHeight = 100;
     }
+    float textureXOffset = texture.getXOffset();
+    float textureYOffset = texture.getYOffset();
     float textureAngle = texture.getAngle();
     float textureScale = 1 / texture.getScale();
     TextureKey key = scaled
-        ? new TextureKey(textureWidth, textureHeight, textureAngle, textureScale)
-        : new TextureKey(-1f, -1f, textureAngle, textureScale);
+        ? new TextureKey(textureWidth, textureHeight, textureXOffset, textureYOffset, textureAngle, textureScale)
+        : new TextureKey(-1f, -1f, textureXOffset, textureYOffset, textureAngle, textureScale);
     TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
@@ -173,13 +176,17 @@ public abstract class Object3DBranch extends BranchGroup {
       textureAttributes.setTextureMode(TextureAttributes.MODULATE);
       Transform3D rotation = new Transform3D();
       rotation.rotZ(textureAngle);
+      Transform3D translation = new Transform3D();
       Transform3D transform = new Transform3D();
       // Change scale if required
       if (scaled) {
+        translation.setTranslation(new Vector3f(-textureXOffset / textureScale * textureWidth, -textureYOffset / textureScale * textureHeight, 0));
         transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
       } else {
+        translation.setTranslation(new Vector3f(-textureXOffset / textureScale, -textureYOffset / textureScale, 0));
         transform.setScale(textureScale);
       }
+      rotation.mul(translation);
       transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
       textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
@@ -194,29 +201,37 @@ public abstract class Object3DBranch extends BranchGroup {
   private static class TextureKey {
     private final float width;
     private final float height;
+    private final float xOffset;
+    private final float yOffset;
     private final float angle;
     private final float scale;
-    
-    public TextureKey(float width, float height, float angle, float scale) {
+
+    public TextureKey(float width, float height, float xOffset, float yOffset, float angle, float scale) {
       this.width = width;
       this.height = height;
+      this.xOffset = xOffset;
+      this.yOffset = yOffset;
       this.angle = angle;
       this.scale = scale;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
       TextureKey key = (TextureKey)obj;
-      return this.width == key.width 
-          && this.height == key.height 
-          && this.angle == key.angle 
+      return this.width == key.width
+          && this.height == key.height
+          && this.xOffset == key.xOffset
+          && this.yOffset == key.yOffset
+          && this.angle == key.angle
           && this.scale == key.scale;
     }
-    
+
     @Override
     public int hashCode() {
-      return Float.floatToIntBits(this.width) * 31 
+      return Float.floatToIntBits(this.width) * 31
           + Float.floatToIntBits(this.height) * 31
+          + Float.floatToIntBits(this.xOffset) * 31
+          + Float.floatToIntBits(this.yOffset) * 31
           + Float.floatToIntBits(this.angle) * 31
           + Float.floatToIntBits(this.scale);
     }
@@ -225,20 +240,20 @@ public abstract class Object3DBranch extends BranchGroup {
   /**
    * Returns the list of polygons points matching the given <code>area</code>.
    */
-  protected List<float [][]> getAreaPoints(Area area, 
-                                           float flatness, 
+  protected List<float [][]> getAreaPoints(Area area,
+                                           float flatness,
                                            boolean reversed) {
     return getAreaPoints(area, null, null, flatness, reversed);
   }
-  
+
   /**
-   * Returns the list of polygons points matching the given <code>area</code> with detailed information in 
+   * Returns the list of polygons points matching the given <code>area</code> with detailed information in
    * <code>areaPoints</code> and <code>areaHoles</code>.
    */
-  protected List<float [][]> getAreaPoints(Area area, 
+  protected List<float [][]> getAreaPoints(Area area,
                                            List<float [][]> areaPoints,
                                            List<float [][]> areaHoles,
-                                           float flatness, 
+                                           float flatness,
                                            boolean reversed) {
     List<List<float []>> areaPointsLists = new LinkedList<List<float[]>>();
     List<List<float []>> areaHolesLists = new LinkedList<List<float[]>>();
@@ -250,14 +265,14 @@ public abstract class Object3DBranch extends BranchGroup {
         case PathIterator.SEG_MOVETO :
           currentPathPoints = new ArrayList<float[]>();
           currentPathPoints.add(point);
-          previousPoint = point;          
+          previousPoint = point;
           break;
-        case PathIterator.SEG_LINETO : 
-          if (point [0] != previousPoint [0] 
+        case PathIterator.SEG_LINETO :
+          if (point [0] != previousPoint [0]
               || point [1] != previousPoint [1]) {
             currentPathPoints.add(point);
           }
-          previousPoint = point;          
+          previousPoint = point;
           break;
         case PathIterator.SEG_CLOSE:
           float [] firstPoint = currentPathPoints.get(0);
@@ -266,7 +281,7 @@ public abstract class Object3DBranch extends BranchGroup {
             currentPathPoints.remove(currentPathPoints.size() - 1);
           }
           if (currentPathPoints.size() > 2) {
-            float [][] areaPartPoints = currentPathPoints.toArray(new float [currentPathPoints.size()][]); 
+            float [][] areaPartPoints = currentPathPoints.toArray(new float [currentPathPoints.size()][]);
             Room subRoom = new Room(areaPartPoints);
             if (subRoom.getArea() > 0) {
               boolean pathPointsClockwise = subRoom.isClockwise();
@@ -276,7 +291,7 @@ public abstract class Object3DBranch extends BranchGroup {
               } else {
                 areaPointsLists.add(currentPathPoints);
               }
-              
+
               if (areaPoints != null || areaHoles != null) {
                 // Store path points in returned lists
                 if (pathPointsClockwise ^ reversed) {
@@ -299,8 +314,8 @@ public abstract class Object3DBranch extends BranchGroup {
           break;
       }
     }
-    
-    List<float [][]> areaPointsWithoutHoles = new ArrayList<float[][]>(); 
+
+    List<float [][]> areaPointsWithoutHoles = new ArrayList<float[][]>();
     if (areaHolesLists.isEmpty() && areaPoints != null) {
       areaPointsWithoutHoles.addAll(areaPoints);
     } else if (areaPointsLists.isEmpty() && !areaHolesLists.isEmpty()) {
@@ -322,7 +337,7 @@ public abstract class Object3DBranch extends BranchGroup {
               Area subArea = subAreas.get(testedAreaPoints);
               if (subArea == null) {
                 subArea = new Area(getShape(testedAreaPoints.toArray(new float [testedAreaPoints.size()][])));
-                // Store computed area for future reuse 
+                // Store computed area for future reuse
                 subAreas.put(testedAreaPoints, subArea);
               }
               if (subArea.contains(testedArea.get(0) [0], testedArea.get(0) [1])) {
@@ -348,7 +363,7 @@ public abstract class Object3DBranch extends BranchGroup {
         Area subArea = subAreas.get(enclosingAreaPartPoints);
         if (subArea == null) {
           subArea = new Area(getShape(enclosingAreaPartPoints.toArray(new float [enclosingAreaPartPoints.size()][])));
-          // No need to store computed area because it won't be reused 
+          // No need to store computed area because it won't be reused
         }
         List<List<float []>> holesInArea = new ArrayList<List<float []>>();
         // Search the holes contained in the current area part
@@ -357,7 +372,7 @@ public abstract class Object3DBranch extends BranchGroup {
             holesInArea.add(holePoints);
           }
         }
-        
+
         while (!holesInArea.isEmpty()) {
           // Search the closest points in the enclosing area and the holes
           float minDistance = Float.MAX_VALUE;
@@ -388,12 +403,12 @@ public abstract class Object3DBranch extends BranchGroup {
           List<float []> lastPartPoints = closestHolePoints.subList(closestPointIndex, closestHolePoints.size());
           enclosingAreaPartPoints.addAll(areaClosestPointIndex, lastPartPoints);
           enclosingAreaPartPoints.addAll(areaClosestPointIndex + lastPartPoints.size(), closestHolePoints.subList(0, closestPointIndex));
-          
+
           holesInArea.remove(closestHolePointsIndex);
           areaHolesLists.remove(closestHolePoints);
         }
       }
-      
+
       for (List<float []> pathPoints : sortedAreaPoints) {
         if (reversed) {
           Collections.reverse(pathPoints);
@@ -401,7 +416,7 @@ public abstract class Object3DBranch extends BranchGroup {
         areaPointsWithoutHoles.add(pathPoints.toArray(new float [pathPoints.size()][]));
       }
     }
-    
+
     return areaPointsWithoutHoles;
   }
 }

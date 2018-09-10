@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.j3d;
 import java.awt.AlphaComposite;
 import java.awt.EventQueue;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
@@ -236,7 +237,8 @@ public class PhotoRenderer {
       BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(),
           skyImage.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
-      g2D.drawRenderedImage(skyImage, null);
+      g2D.drawRenderedImage(skyImage, AffineTransform.getTranslateInstance(skyImage.getWidth() * skyTexture.getXOffset(), 0));
+      g2D.drawRenderedImage(skyImage, AffineTransform.getTranslateInstance(skyImage.getWidth() * (skyTexture.getXOffset() - 1), 0));
       g2D.dispose();
       File imageFile = OperatingSystem.createTemporaryFile("ibl", ".png");
       ImageIO.write(imageBaseLightImage, "png", imageFile);

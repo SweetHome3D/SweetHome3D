@@ -3040,9 +3040,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 textureHeight = 100;
               }
               float textureScale = floorTexture.getScale();
-              g2D.setPaint(new TexturePaint(textureImage,
-                  new Rectangle2D.Float(0, 0, textureWidth * textureScale, textureHeight * textureScale)));
               textureAngle = floorTexture.getAngle();
+              double cosAngle = Math.cos(textureAngle);
+              double sinAngle = Math.sin(textureAngle);
+              g2D.setPaint(new TexturePaint(textureImage,
+                  new Rectangle2D.Double(
+                      floorTexture.getXOffset() * textureWidth * textureScale * cosAngle
+                      - floorTexture.getYOffset() * textureHeight * textureScale * sinAngle,
+                      - floorTexture.getXOffset() * textureWidth * textureScale * sinAngle
+                      - floorTexture.getYOffset() * textureHeight * textureScale * cosAngle,
+                      textureWidth * textureScale, textureHeight * textureScale)));
             }
           }
         }

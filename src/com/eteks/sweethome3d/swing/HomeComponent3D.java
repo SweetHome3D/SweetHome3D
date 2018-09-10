@@ -61,7 +61,6 @@ import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1752,10 +1751,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     final Appearance skyBackgroundAppearance = new Appearance();
     ColoringAttributes skyBackgroundColoringAttributes = new ColoringAttributes();
     skyBackgroundAppearance.setColoringAttributes(skyBackgroundColoringAttributes);
+    TextureAttributes skyBackgroundTextureAttributes = new TextureAttributes();
+    skyBackgroundAppearance.setTextureAttributes(skyBackgroundTextureAttributes);
     // Allow sky color and texture to change
     skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     skyBackgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
     skyBackgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+    skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
+    skyBackgroundTextureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_WRITE);
 
     Geometry topHalfSphereGeometry = createHalfSphereGeometry(true);
     final Shape3D topHalfSphere = new Shape3D(topHalfSphereGeometry, skyBackgroundAppearance);
@@ -1933,16 +1936,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     skyBackgroundAppearance.getColoringAttributes().setColor(skyColor);
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (skyTexture != null) {
+      final Transform3D transform = new Transform3D();
+      transform.setTranslation(new Vector3f(-skyTexture.getXOffset(), 0, 0));
       TextureManager textureManager = TextureManager.getInstance();
       if (waitForLoading) {
         // Don't share the background texture otherwise if might not be rendered correctly
         skyBackgroundAppearance.setTexture(textureManager.loadTexture(skyTexture.getImage()));
+        skyBackgroundAppearance.getTextureAttributes().setTextureTransform(transform);
       } else {
         textureManager.loadTexture(skyTexture.getImage(), waitForLoading,
             new TextureManager.TextureObserver() {
                 public void textureUpdated(Texture texture) {
                   // Use a copy of the texture in case it's used in an other universe
                   skyBackgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+                  skyBackgroundAppearance.getTextureAttributes().setTextureTransform(transform);
                 }
               });
       }

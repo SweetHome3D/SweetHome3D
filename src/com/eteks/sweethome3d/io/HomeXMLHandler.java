@@ -306,6 +306,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       name CDATA #REQUIRED
  *       width CDATA #REQUIRED
  *       height CDATA #REQUIRED
+ *       xOffset CDATA "0"
+ *       yOffset CDATA "0"
  *       angle CDATA "0"
  *       scale CDATA "1"
  *       creator CDATA #IMPLIED
@@ -1647,6 +1649,12 @@ public class HomeXMLHandler extends DefaultHandler {
                                parseFloat(attributes, "width"),
                                parseFloat(attributes, "height"),
                                attributes.get("creator")),
+        attributes.get("xOffset") != null
+            ? parseFloat(attributes, "xOffset")
+            : 0,
+        attributes.get("yOffset") != null
+            ? parseFloat(attributes, "yOffset")
+            : 0,
         attributes.get("angle") != null
             ? parseFloat(attributes, "angle")
             : 0,
