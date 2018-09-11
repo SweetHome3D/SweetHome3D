@@ -4403,7 +4403,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           g2D.setPaint(new Color(polyline.getColor()));
           float thickness = polyline.getThickness();
           g2D.setStroke(SwingTools.getStroke(thickness,
-              polyline.getCapStyle(), polyline.getJoinStyle(), polyline.getDashStyle()));
+              polyline.getCapStyle(), polyline.getJoinStyle(), polyline.getDashStyle(), polyline.getDashOffset()));
           Shape polylineShape = getPolylineShape(polyline);
           g2D.draw(polylineShape);
 

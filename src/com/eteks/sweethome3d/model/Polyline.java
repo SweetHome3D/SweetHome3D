@@ -33,25 +33,25 @@ import java.io.ObjectInputStream;
 import java.util.Arrays;
 
 /**
- * A polyline or a polygon in a home plan. 
+ * A polyline or a polygon in a home plan.
  * @author Emmanuel Puybaret
  * @since 5.0
  */
 public class Polyline extends HomeObject implements Selectable, Elevatable {
   private static final long serialVersionUID = 1L;
-  
+
   /**
-   * The properties of a polyline that may change. <code>PropertyChangeListener</code>s added 
+   * The properties of a polyline that may change. <code>PropertyChangeListener</code>s added
    * to a polyline will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, CLOSED_PATH, COLOR, LEVEL}
+  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL}
 
   public enum CapStyle {BUTT, SQUARE, ROUND}
-  
+
   public enum JoinStyle {BEVEL, MITER, ROUND, CURVED}
-  
+
   public enum ArrowStyle {NONE, DELTA, OPEN, DISC}
-  
+
   public enum DashStyle {SOLID, DOT, DASH, DASH_DOT, DASH_DOT_DOT}
 
   private float [][]           points;
@@ -62,14 +62,15 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   private String               joinStyleName;
   private transient DashStyle  dashStyle;
   private String               dashStyleName;
+  private float                dashOffset;
   private transient ArrowStyle startArrowStyle;
   private String               startArrowStyleName;
   private transient ArrowStyle endArrowStyle;
   private String               endArrowStyleName;
-  private boolean              closedPath; 
+  private boolean              closedPath;
   private int                  color;
   private Level                level;
-  
+
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape polylinePathCache;
   private transient Shape shapeCache;
@@ -80,19 +81,31 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public Polyline(float [][] points) {
     this(points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, ArrowStyle.NONE, ArrowStyle.NONE, false, 0xFF000000);
   }
-                  
+
   /**
    * Creates a polyline from the given coordinates.
    */
-  public Polyline(float [][] points, float thickness, 
-                  CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle, 
+  public Polyline(float [][] points, float thickness,
+                  CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
                   ArrowStyle startArrowStyle, ArrowStyle endArrowStyle,
                   boolean closedPath, int color) {
+    this(points, thickness, capStyle, joinStyle, dashStyle, 0f, startArrowStyle, endArrowStyle, closedPath, color);
+  }
+
+  /**
+   * Creates a polyline from the given coordinates.
+   * @since 6.0
+   */
+  public Polyline(float [][] points, float thickness,
+                  CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
+                  float dashOffset, ArrowStyle startArrowStyle,
+                  ArrowStyle endArrowStyle, boolean closedPath, int color) {
     this.points = deepCopy(points);
     this.thickness = thickness;
     this.capStyle = capStyle;
-    this.joinStyle = joinStyle; 
+    this.joinStyle = joinStyle;
     this.dashStyle = dashStyle;
+    this.dashOffset = dashOffset;
     this.startArrowStyle = startArrowStyle;
     this.endArrowStyle = endArrowStyle;
     this.closedPath = closedPath;
@@ -112,7 +125,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         this.capStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
     try {
       if (this.joinStyleName != null) {
@@ -120,7 +133,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         this.joinStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
     try {
       if (this.dashStyleName != null) {
@@ -128,7 +141,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         this.dashStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
     try {
       if (this.startArrowStyleName != null) {
@@ -136,7 +149,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         this.startArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
     try {
       if (this.endArrowStyleName != null) {
@@ -144,12 +157,12 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         this.endArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write enums as strings to be able to read enums later 
+    // Write enums as strings to be able to read enums later
     // even if they change in later versions
     this.capStyleName = this.capStyle.name();
     this.joinStyleName = this.joinStyle.name();
@@ -174,18 +187,18 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns the points of the polygon matching this polyline. 
+   * Returns the points of the polygon matching this polyline.
    * @return an array of the (x,y) coordinates of the polyline points.
    */
   public float [][] getPoints() {
-    return deepCopy(this.points);  
+    return deepCopy(this.points);
   }
 
   /**
    * Returns the number of points of the polygon matching this polyline.
    */
   public int getPointCount() {
-    return this.points.length;  
+    return this.points.length;
   }
 
   private float [][] deepCopy(float [][] points) {
@@ -197,7 +210,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the points of the polygon matching this polyline. Once this polyline 
+   * Sets the points of the polygon matching this polyline. Once this polyline
    * is updated, listeners added to this polyline will receive a change notification.
    */
   public void setPoints(float [][] points) {
@@ -223,37 +236,37 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public void addPoint(float x, float y) {
     addPoint(x, y, this.points.length);
   }
-  
+
   /**
    * Adds a point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code>
    */
   public void addPoint(float x, float y, int index) {
     if (index < 0 || index > this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    
+
     float [][] newPoints = new float [this.points.length + 1][];
     System.arraycopy(this.points, 0, newPoints, 0, index);
     newPoints [index] = new float [] {x, y};
     System.arraycopy(this.points, index, newPoints, index + 1, this.points.length - index);
-    
+
     float [][] oldPoints = this.points;
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
     this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
-  
+
   /**
    * Sets the point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code>
    */
   public void setPoint(float x, float y, int index) {
     if (index < 0 || index >= this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    if (this.points [index][0] != x 
+    if (this.points [index][0] != x
         || this.points [index][1] != y) {
       float [][] oldPoints = this.points;
       this.points = deepCopy(this.points);
@@ -264,29 +277,29 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
     }
   }
-  
+
   /**
    * Removes the point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code>
    */
   public void removePoint(int index) {
     if (index < 0 || index >= this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    
+
     float [][] newPoints = new float [this.points.length - 1][];
     System.arraycopy(this.points, 0, newPoints, 0, index);
     System.arraycopy(this.points, index + 1, newPoints, index, this.points.length - index - 1);
-    
+
     float [][] oldPoints = this.points;
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
     this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
-  
+
   /**
-   * Returns the thickness of this polyline.  
+   * Returns the thickness of this polyline.
    */
   public float getThickness() {
     return this.thickness;
@@ -303,14 +316,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.name(), oldThickness, thickness);
     }
   }
-  
+
   /**
    * Returns the cap style of this polyline.
    */
   public CapStyle getCapStyle() {
     return this.capStyle;
   }
-  
+
   /**
    * Sets the cap style of this polyline.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -322,14 +335,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.CAP_STYLE.name(), oldStyle, capStyle);
     }
   }
-  
+
   /**
    * Returns the join style of this polyline.
    */
   public JoinStyle getJoinStyle() {
     return this.joinStyle;
   }
-  
+
   /**
    * Sets the join style of this polyline.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -343,14 +356,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.JOIN_STYLE.name(), oldJoinStyle, joinStyle);
     }
   }
-  
+
   /**
    * Returns the dash style of this polyline.
    */
   public DashStyle getDashStyle() {
     return this.dashStyle;
   }
-  
+
   /**
    * Sets the dash style of this polyline.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -362,14 +375,35 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, dashStyle);
     }
   }
-  
+
+  /**
+   * Returns the offset from which the dash of this polyline should start.
+   * @return the offset in percentage of the dash pattern
+   */
+  public float getDashOffset() {
+    return this.dashOffset;
+  }
+
+  /**
+   * Sets the offset from which the dash of this polyline should start.
+   * Once this polyline is updated, listeners added to this polyline will receive a change notification.
+   * @param dashOffset the offset in percentage of the dash pattern
+   */
+  public void setDashOffset(float dashOffset) {
+    if (dashOffset != this.dashOffset) {
+      float oldDashOffset = this.dashOffset;
+      this.dashOffset = dashOffset;
+      this.propertyChangeSupport.firePropertyChange(Property.DASH_OFFSET.name(), oldDashOffset, dashOffset);
+    }
+  }
+
   /**
    * Returns the arrow style at the start of this polyline.
    */
   public ArrowStyle getStartArrowStyle() {
     return this.startArrowStyle;
   }
-  
+
   /**
    * Sets the arrow style at the start of this polyline.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -381,14 +415,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
     }
   }
-  
+
   /**
    * Returns the arrow style at the end of this polyline.
    */
   public ArrowStyle getEndArrowStyle() {
     return this.endArrowStyle;
   }
-  
+
   /**
    * Sets the arrow style at the end of this polyline.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -400,14 +434,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if the first and last points of this polyline should be joined to form a polygon.
    */
   public boolean isClosedPath() {
     return this.closedPath;
   }
-  
+
   /**
    * Sets whether the first and last points of this polyline should be joined.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
@@ -418,16 +452,16 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.CLOSED_PATH.name(), !closedPath, closedPath);
     }
   }
-  
+
   /**
-   * Returns the color of this polyline. 
+   * Returns the color of this polyline.
    */
   public int getColor() {
     return this.color;
   }
 
   /**
-   * Sets the color of this polyline. Once this polyline is updated, 
+   * Sets the color of this polyline. Once this polyline is updated,
    * listeners added to this polyline will receive a change notification.
    */
   public void setColor(int color) {
@@ -439,14 +473,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns the level which this dimension line belongs to. 
+   * Returns the level which this dimension line belongs to.
    */
   public Level getLevel() {
     return this.level;
   }
 
   /**
-   * Sets the level of this dimension line. Once this dimension line is updated, 
+   * Sets the level of this dimension line. Once this dimension line is updated,
    * listeners added to this dimension line will receive a change notification.
    */
   public void setLevel(Level level) {
@@ -458,7 +492,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns <code>true</code> if this dimension line is at the given <code>level</code> 
+   * Returns <code>true</code> if this dimension line is at the given <code>level</code>
    * or at a level with the same elevation and a smaller elevation index.
    */
   public boolean isAtLevel(Level level) {
@@ -468,7 +502,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
            && this.level.getElevationIndex() < level.getElevationIndex();
 
   }
-  
+
   /**
    * Returns an approximate length of this polyline.
    */
@@ -505,17 +539,17 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     rectangle.add(x1, y1);
     return getShape().intersects(rectangle);
   }
-  
+
   /**
-   * Returns <code>true</code> if this polyline contains 
+   * Returns <code>true</code> if this polyline contains
    * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
   public boolean containsPoint(float x, float y, float margin) {
     return containsShapeAtWithMargin(getShape(), x, y, margin);
   }
-  
+
   /**
-   * Returns the index of the point of this polyline equal to 
+   * Returns the index of the point of this polyline equal to
    * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    * @return the index of the first found point or -1.
    */
@@ -527,9 +561,9 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     }
     return -1;
   }
-  
+
   /**
-   * Returns <code>true</code> if <code>shape</code> contains 
+   * Returns <code>true</code> if <code>shape</code> contains
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
@@ -556,11 +590,11 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
           float [] vectorToBisectorPoint = new float [] {nextPoint [0] - previousPoint [0], nextPoint [1] - previousPoint [1]};
           float [] nextNextPoint     = this.points [(i + 2) % this.points.length];
           float [] vectorToBisectorNextPoint = new float [] {point[0] - nextNextPoint [0], point[1] - nextNextPoint [1]};
-          curve2D.setCurve(point[0], point[1], 
-              point [0] + (i != 0 || this.closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0), 
-              point [1] + (i != 0 || this.closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0), 
-              nextPoint [0] + (i != this.points.length - 2 || this.closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0), 
-              nextPoint [1] + (i != this.points.length - 2 || this.closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0), 
+          curve2D.setCurve(point[0], point[1],
+              point [0] + (i != 0 || this.closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0),
+              point [1] + (i != 0 || this.closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0),
+              nextPoint [0] + (i != this.points.length - 2 || this.closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0),
+              nextPoint [1] + (i != this.points.length - 2 || this.closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0),
               nextPoint [0], nextPoint [1]);
           polylinePath.append(curve2D, true);
         }
@@ -568,7 +602,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
         polylinePath.moveTo(this.points [0][0], this.points [0][1]);
         for (int i = 1; i < this.points.length; i++) {
           polylinePath.lineTo(this.points [i][0], this.points [i][1]);
-        }        
+        }
         if (this.closedPath) {
           polylinePath.closePath();
         }
@@ -602,7 +636,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       updatePoints(points);
     }
   }
-  
+
   /**
    * Returns a clone of this polyline.
    */

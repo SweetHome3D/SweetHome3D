@@ -384,6 +384,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       capStyle (BUTT | SQUARE | ROUND) "BUTT"
  *       joinStyle (BEVEL | MITER | ROUND | CURVED) "MITER"
  *       dashStyle (SOLID | DOT | DASH | DASH_DOT | DASH_DOT_DOT) "SOLID"
+ *       dashOffset CDATA "0"
  *       startArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
  *       endArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
  *       color CDATA #IMPLIED
@@ -1519,6 +1520,10 @@ public class HomeXMLHandler extends DefaultHandler {
       } catch (IllegalArgumentException ex) {
         // Ignore malformed enum constant
       }
+    }
+    Float dashOffset = parseOptionalFloat(attributes, "dashOffset");
+    if (dashOffset != null) {
+      polyline.setDashOffset(dashOffset);
     }
     String startArrowStyle = attributes.get("startArrowStyle");
     if (startArrowStyle != null) {

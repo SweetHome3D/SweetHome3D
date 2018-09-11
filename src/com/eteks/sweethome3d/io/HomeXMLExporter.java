@@ -634,6 +634,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           writer.writeAttribute("capStyle", polyline.getCapStyle().name());
           writer.writeAttribute("joinStyle", polyline.getJoinStyle().name());
           writer.writeAttribute("dashStyle", polyline.getDashStyle().name());
+          writer.writeFloatAttribute("dashOffset", polyline.getDashOffset(), 0f);
           writer.writeAttribute("startArrowStyle", polyline.getStartArrowStyle().name());
           writer.writeAttribute("endArrowStyle", polyline.getEndArrowStyle().name());
           writer.writeColorAttribute("color", polyline.getColor());

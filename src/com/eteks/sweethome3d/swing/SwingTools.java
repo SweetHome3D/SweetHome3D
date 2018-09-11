@@ -987,6 +987,17 @@ public class SwingTools {
                                  Polyline.CapStyle capStyle,
                                  Polyline.JoinStyle joinStyle,
                                  Polyline.DashStyle dashStyle) {
+    return getStroke(thickness, capStyle, joinStyle, dashStyle, 0);
+  }
+
+  /**
+   * Returns the line stroke matching the given line styles.
+   */
+  public static Stroke getStroke(float thickness,
+                                 Polyline.CapStyle capStyle,
+                                 Polyline.JoinStyle joinStyle,
+                                 Polyline.DashStyle dashStyle,
+                                 float dashOffset) {
     int strokeCapStyle;
     switch (capStyle) {
       case ROUND :
@@ -1033,7 +1044,15 @@ public class SwingTools {
         break;
     }
 
-    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, 0);
+    float dashPhase = 0;
+    if (strokeDashes != null) {
+      for (float dash : strokeDashes) {
+        dashPhase += dash;
+      }
+      dashPhase *= dashOffset;
+    }
+
+    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, dashPhase);
   }
 
   /**

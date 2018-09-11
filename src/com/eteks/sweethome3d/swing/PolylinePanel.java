@@ -1,5 +1,5 @@
 /*
- * PolylinePanel.java 
+ * PolylinePanel.java
  *
  * Copyright (c) 2009 Plan PHP All Rights Reserved.
  */
@@ -60,13 +60,15 @@ public class PolylinePanel extends JPanel implements DialogView {
   private JComboBox      joinStyleComboBox;
   private JLabel         dashStyleLabel;
   private JComboBox      dashStyleComboBox;
+  private JLabel         dashOffsetLabel;
+  private JSpinner       dashOffsetSpinner;
   private JLabel         colorLabel;
   private ColorButton    colorButton;
   private String         dialogTitle;
-  
+
   /**
    * Creates a preferences panel that layouts the editable properties
-   * of its <code>controller</code>. 
+   * of its <code>controller</code>.
    */
   public PolylinePanel(UserPreferences preferences,
                               PolylineController controller) {
@@ -76,16 +78,16 @@ public class PolylinePanel extends JPanel implements DialogView {
     setMnemonics(preferences);
     layoutComponents();
   }
-  
+
   /**
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences,
                                 final PolylineController controller) {
     // Create thickness label and spinner bound to controller THICKNESS property
-    this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+    this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PolylinePanel.class, "thicknessLabel.text", preferences.getLengthUnit().getName()));
-    final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
+    final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel =
         new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), 20f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
     thicknessSpinnerModel.setNullable(controller.getThickness() == null);
@@ -95,7 +97,7 @@ public class PolylinePanel extends JPanel implements DialogView {
           controller.setThickness(thicknessSpinnerModel.getLength());
         }
       });
-    controller.addPropertyChangeListener(PolylineController.Property.THICKNESS, 
+    controller.addPropertyChangeListener(PolylineController.Property.THICKNESS,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             thicknessSpinnerModel.setLength(controller.getThickness());
@@ -103,8 +105,8 @@ public class PolylinePanel extends JPanel implements DialogView {
         });
 
     // Create cap style label and combo box bound to controller CAP_STYLE property
-    this.arrowsStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        PolylinePanel.class, "arrowsStyleLabel.text"));    
+    this.arrowsStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+        PolylinePanel.class, "arrowsStyleLabel.text"));
     ArrowsStyle[] arrowsStyles = ArrowsStyle.getArrowsStyle();
     if (controller.getCapStyle() == null) {
       List<ArrowsStyle> arrowsStylesList = new ArrayList<ArrowsStyle>();
@@ -116,7 +118,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     this.arrowsStyleComboBox.setMaximumRowCount(arrowsStyles.length);
     this.arrowsStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(final JList list, 
+        public Component getListCellRendererComponent(final JList list,
             Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final ArrowsStyle arrowsStyle = (ArrowsStyle)value;
           final Component component = super.getListCellRendererComponent(
@@ -125,11 +127,11 @@ public class PolylinePanel extends JPanel implements DialogView {
               public int getIconWidth() {
                 return 64;
               }
-        
+
               public int getIconHeight() {
                 return 16;
               }
-        
+
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (arrowsStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
@@ -144,7 +146,7 @@ public class PolylinePanel extends JPanel implements DialogView {
                   switch (arrowsStyle.getStartArrowStyle()) {
                     case NONE :
                       break;
-                    case DISC : 
+                    case DISC :
                       g2D.fillOval(4, 4, 9, 9);
                       break;
                     case OPEN :
@@ -157,7 +159,7 @@ public class PolylinePanel extends JPanel implements DialogView {
                   switch (arrowsStyle.getEndArrowStyle()) {
                     case NONE :
                       break;
-                    case DISC : 
+                    case DISC :
                       g2D.fillOval(iconWidth - 12, 4, 9, 9);
                       break;
                     case OPEN :
@@ -198,15 +200,15 @@ public class PolylinePanel extends JPanel implements DialogView {
           arrowsStyleComboBox.setEnabled(controller.isArrowsStyleEditable());
         }
       };
-    controller.addPropertyChangeListener(PolylineController.Property.START_ARROW_STYLE, 
+    controller.addPropertyChangeListener(PolylineController.Property.START_ARROW_STYLE,
         arrowStyleChangeListener);
-    controller.addPropertyChangeListener(PolylineController.Property.END_ARROW_STYLE, 
+    controller.addPropertyChangeListener(PolylineController.Property.END_ARROW_STYLE,
         arrowStyleChangeListener);
     arrowStyleChangeListener.propertyChange(null);
-    
+
     // Create join style label and combo box bound to controller JOIN_STYLE property
-    this.joinStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        PolylinePanel.class, "joinStyleLabel.text"));    
+    this.joinStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+        PolylinePanel.class, "joinStyleLabel.text"));
     Polyline.JoinStyle [] joinStyles = Polyline.JoinStyle.values();
     if (controller.getJoinStyle() == null) {
       List<Polyline.JoinStyle> joinStylesList = new ArrayList<Polyline.JoinStyle>();
@@ -222,7 +224,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     final Shape curvedPath = new Arc2D.Float(-7, 6, 80, 40, 47, 86, Arc2D.OPEN);
     this.joinStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(final JList list, 
+        public Component getListCellRendererComponent(final JList list,
             Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Polyline.JoinStyle joinStyle = (Polyline.JoinStyle)value;
           final Component component = super.getListCellRendererComponent(
@@ -231,11 +233,11 @@ public class PolylinePanel extends JPanel implements DialogView {
               public int getIconWidth() {
                 return 64;
               }
-        
+
               public int getIconHeight() {
                 return 16;
               }
-        
+
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (joinStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
@@ -268,13 +270,13 @@ public class PolylinePanel extends JPanel implements DialogView {
           joinStyleComboBox.setSelectedItem(controller.getJoinStyle());
         }
       };
-    controller.addPropertyChangeListener(PolylineController.Property.JOIN_STYLE, 
+    controller.addPropertyChangeListener(PolylineController.Property.JOIN_STYLE,
         joinStyleChangeListener);
     joinStyleChangeListener.propertyChange(null);
-    
+
     // Create dash style label and combo box bound to controller DASH_STYLE property
-    this.dashStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        PolylinePanel.class, "dashStyleLabel.text"));    
+    this.dashStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+        PolylinePanel.class, "dashStyleLabel.text"));
     Polyline.DashStyle [] dashStyles = Polyline.DashStyle.values();
     if (controller.getDashStyle() == null) {
       List<Polyline.DashStyle> dashStylesList = new ArrayList<Polyline.DashStyle>();
@@ -285,7 +287,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     this.dashStyleComboBox = new JComboBox(new DefaultComboBoxModel(dashStyles));
     this.dashStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(final JList list, 
+        public Component getListCellRendererComponent(final JList list,
             Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Polyline.DashStyle dashStyle = (Polyline.DashStyle)value;
           final Component component = super.getListCellRendererComponent(
@@ -294,11 +296,11 @@ public class PolylinePanel extends JPanel implements DialogView {
               public int getIconWidth() {
                 return 64;
               }
-        
+
               public int getIconHeight() {
                 return 16;
               }
-        
+
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (dashStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
@@ -307,7 +309,8 @@ public class PolylinePanel extends JPanel implements DialogView {
                   }
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
-                  g2D.setStroke(SwingTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER, dashStyle));
+                  float dashOffset = controller.getDashOffset() != null ? controller.getDashOffset().floatValue() : 0;
+                  g2D.setStroke(SwingTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER, dashStyle, dashOffset));
                   g2D.drawLine(4, 8, getIconWidth() - 4, 8);
                 }
               }
@@ -321,27 +324,51 @@ public class PolylinePanel extends JPanel implements DialogView {
           controller.setDashStyle((Polyline.DashStyle)dashStyleComboBox.getSelectedItem());
         }
       });
-    controller.addPropertyChangeListener(PolylineController.Property.DASH_STYLE, 
+    controller.addPropertyChangeListener(PolylineController.Property.DASH_STYLE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             dashStyleComboBox.setSelectedItem(controller.getDashStyle());
+            dashOffsetSpinner.setEnabled(controller.getDashStyle() != Polyline.DashStyle.SOLID);
           }
         });
-    
+
+    // Create dash offset label and spinner bound to controller DASH_OFFSET property
+    this.dashOffsetLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, PolylinePanel.class, "dashOffsetLabel.text"));
+    final NullableSpinner.NullableSpinnerNumberModel dashOffsetSpinnerModel =
+        new NullableSpinner.NullableSpinnerNumberModel(0f, 0f, 100f, 5f);
+    this.dashOffsetSpinner = new NullableSpinner(dashOffsetSpinnerModel);
+    dashOffsetSpinnerModel.setNullable(controller.getDashOffset() == null);
+    dashOffsetSpinnerModel.setValue(controller.getDashOffset() != null ? controller.getDashOffset() * 100 : null);
+    dashOffsetSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setDashOffset(dashOffsetSpinnerModel.getValue() != null
+              ? ((Number)dashOffsetSpinnerModel.getValue()).floatValue() / 100
+              : null);
+        }
+      });
+    controller.addPropertyChangeListener(PolylineController.Property.DASH_OFFSET,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            dashOffsetSpinnerModel.setValue(controller.getDashOffset() != null ? controller.getDashOffset() * 100 : null);
+            dashStyleComboBox.repaint();
+          }
+        });
+    this.dashOffsetSpinner.setEnabled(controller.getDashStyle() != Polyline.DashStyle.SOLID);
+
     // Create color label and its button bound to COLOR controller property
-    this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+    this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PolylinePanel.class, "colorLabel.text"));
     this.colorButton = new ColorButton(preferences);
     this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
         PolylinePanel.class, "colorDialog.title"));
     this.colorButton.setColor(controller.getColor());
-    this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+    this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setColor(colorButton.getColor());
           }
         });
-    controller.addPropertyChangeListener(PolylineController.Property.COLOR, 
+    controller.addPropertyChangeListener(PolylineController.Property.COLOR,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             colorButton.setColor(controller.getColor());
@@ -351,7 +378,7 @@ public class PolylinePanel extends JPanel implements DialogView {
 
     this.dialogTitle = preferences.getLocalizedString(PolylinePanel.class, "polyline.title");
   }
-  
+
   /**
    * Sets components mnemonics and label / component associations.
    */
@@ -369,69 +396,79 @@ public class PolylinePanel extends JPanel implements DialogView {
       this.dashStyleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PolylinePanel.class, "dashStyleLabel.mnemonic")).getKeyCode());
       this.dashStyleLabel.setLabelFor(this.dashStyleComboBox);
+      this.dashOffsetLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PolylinePanel.class, "dashOffsetLabel.mnemonic")).getKeyCode());
+      this.dashOffsetLabel.setLabelFor(this.dashOffsetSpinner);
       this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PolylinePanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
     }
   }
-  
+
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
-    int labelAlignment = OperatingSystem.isMacOSX() 
+    int labelAlignment = OperatingSystem.isMacOSX()
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     Insets labelInsets = new Insets(0, 0, 5, 5);
     // First row
     add(this.thicknessLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
     add(this.thicknessSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Second row
     add(this.arrowsStyleLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        0, 1, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.arrowsStyleComboBox, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Third row
     add(this.joinStyleLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, labelAlignment, 
+        0, 2, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.joinStyleComboBox, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Fourth row
     add(this.dashStyleLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
+        0, 3, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.dashStyleComboBox, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    // Fifth row
+    add(this.dashOffsetLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.dashOffsetSpinner, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Last row
     add(this.colorLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
+        0, 5, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.colorButton, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, 0, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
   }
 
   /**
-   * Displays this panel in a dialog box. 
+   * Displays this panel in a dialog box.
    */
   public void displayView(View parentView) {
-    if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle, 
+    if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle,
           ((JSpinner.DefaultEditor)this.thicknessSpinner.getEditor()).getTextField()) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyPolylines();
     }
   }
-  
+
   /**
    * A tuple storing start and end arrow styles.
    * @author Emmanuel Puybaret
@@ -440,22 +477,22 @@ public class PolylinePanel extends JPanel implements DialogView {
     private static List<ArrowsStyle> arrowsStyle;
     private final Polyline.ArrowStyle startArrowStyle;
     private final Polyline.ArrowStyle endArrowStyle;
-    
+
     public ArrowsStyle(ArrowStyle startArrowStyle, ArrowStyle endArrowStyle) {
       this.startArrowStyle = startArrowStyle;
       this.endArrowStyle = endArrowStyle;
     }
-    
+
     public Polyline.ArrowStyle getStartArrowStyle() {
       return this.startArrowStyle;
     }
-    
+
     public Polyline.ArrowStyle getEndArrowStyle() {
       return this.endArrowStyle;
     }
-    
-    
-    
+
+
+
     @Override
     public int hashCode() {
       int hashCode = 0;

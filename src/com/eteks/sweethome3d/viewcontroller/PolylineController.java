@@ -41,10 +41,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class PolylineController implements Controller {
   /**
-   * The properties that may be edited by the view associated to this controller. 
+   * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, COLOR}
-  
+  public enum Property {THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, DASH_OFFSET, START_ARROW_STYLE, END_ARROW_STYLE, COLOR}
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
@@ -58,6 +58,7 @@ public class PolylineController implements Controller {
   private Polyline.JoinStyle  joinStyle;
   private boolean             joinStyleEditable;
   private Polyline.DashStyle  dashStyle;
+  private Float               dashOffset;
   private boolean             arrowsStyleEditable;
   private Polyline.ArrowStyle startArrowStyle;
   private Polyline.ArrowStyle endArrowStyle;
@@ -66,17 +67,17 @@ public class PolylineController implements Controller {
   /**
    * Creates the controller of polyline view with undo support.
    */
-  public PolylineController(final Home home, 
+  public PolylineController(final Home home,
                             UserPreferences preferences,
-                            ViewFactory viewFactory, 
-                            ContentManager contentManager, 
+                            ViewFactory viewFactory,
+                            ContentManager contentManager,
                             UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -86,7 +87,7 @@ public class PolylineController implements Controller {
   public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.polylineView == null) {
-      this.polylineView = this.viewFactory.createPolylineView(this.preferences, this); 
+      this.polylineView = this.viewFactory.createPolylineView(this.preferences, this);
     }
     return this.polylineView;
   }
@@ -124,6 +125,7 @@ public class PolylineController implements Controller {
       this.joinStyleEditable = false;
       setJoinStyle(null);
       setDashStyle(null);
+      setDashOffset(null);
       this.arrowsStyleEditable = false;
       setStartArrowStyle(null);
       setEndArrowStyle(null);
@@ -134,16 +136,14 @@ public class PolylineController implements Controller {
 
       // Search the common thickness among polylines
       Float thickness = firstPolyline.getThickness();
-      if (thickness != null) {
-        for (int i = 1; i < selectedPolylines.size(); i++) {
-          if (thickness != selectedPolylines.get(i).getThickness()) {
-            thickness = null;
-            break;
-          }
+      for (int i = 1; i < selectedPolylines.size(); i++) {
+        if (thickness != selectedPolylines.get(i).getThickness()) {
+          thickness = null;
+          break;
         }
       }
       setThickness(thickness);
-      
+
       this.capStyleEditable = false;
       for (int i = 0; i < selectedPolylines.size(); i++) {
         if (!selectedPolylines.get(i).isClosedPath()) {
@@ -165,8 +165,8 @@ public class PolylineController implements Controller {
         setCapStyle(capStyle);
       } else {
         setCapStyle(null);
-      }      
-      
+      }
+
       this.joinStyleEditable = false;
       for (int i = 0; i < selectedPolylines.size(); i++) {
         if (selectedPolylines.get(i).getPointCount() > 2) {
@@ -189,7 +189,7 @@ public class PolylineController implements Controller {
       } else {
         setJoinStyle(null);
       }
-      
+
       Polyline.DashStyle dashStyle = firstPolyline.getDashStyle();
       if (dashStyle != null) {
         for (int i = 1; i < selectedPolylines.size(); i++) {
@@ -200,6 +200,16 @@ public class PolylineController implements Controller {
         }
       }
       setDashStyle(dashStyle);
+
+      // Search the common dash offset among polylines
+      Float dashOffset = firstPolyline.getDashOffset();
+      for (int i = 1; i < selectedPolylines.size(); i++) {
+        if (dashOffset != selectedPolylines.get(i).getDashOffset()) {
+          dashOffset = null;
+          break;
+        }
+      }
+      setDashOffset(dashOffset);
 
       this.arrowsStyleEditable = this.capStyleEditable;
       if (this.arrowsStyleEditable) {
@@ -213,7 +223,7 @@ public class PolylineController implements Controller {
           }
         }
         setStartArrowStyle(startArrowStyle);
-  
+
         Polyline.ArrowStyle endArrowStyle = firstPolyline.getEndArrowStyle();
         if (endArrowStyle != null) {
           for (int i = 1; i < selectedPolylines.size(); i++) {
@@ -242,7 +252,7 @@ public class PolylineController implements Controller {
       setColor(color);
     }
   }
-  
+
   /**
    * Sets the edited thickness.
    */
@@ -260,7 +270,7 @@ public class PolylineController implements Controller {
   public Float getThickness() {
     return this.thickness;
   }
-  
+
   /**
    * Sets the edited capStyle.
    */
@@ -278,14 +288,14 @@ public class PolylineController implements Controller {
   public Polyline.CapStyle getCapStyle() {
     return this.capStyle;
   }
-  
+
   /**
    * Returns <code>true</code> if cap style is editable.
    */
   public boolean isCapStyleEditable() {
     return this.capStyleEditable;
   }
-  
+
   /**
    * Sets the edited joinStyle.
    */
@@ -303,16 +313,16 @@ public class PolylineController implements Controller {
   public Polyline.JoinStyle getJoinStyle() {
     return this.joinStyle;
   }
-  
+
   /**
    * Returns <code>true</code> if join style is editable.
    */
   public boolean isJoinStyleEditable() {
     return this.joinStyleEditable;
   }
-  
+
   /**
-   * Sets the edited dashStyle.
+   * Sets the edited dash style.
    */
   public void setDashStyle(Polyline.DashStyle dashStyle) {
     if (dashStyle != this.dashStyle) {
@@ -323,12 +333,30 @@ public class PolylineController implements Controller {
   }
 
   /**
-   * Returns the edited dashStyle.
+   * Returns the edited dash style.
    */
   public Polyline.DashStyle getDashStyle() {
     return this.dashStyle;
   }
-  
+
+  /**
+   * Sets the edited dash offset.
+   */
+  public void setDashOffset(Float dashOffset) {
+    if (dashOffset != this.dashOffset) {
+      Float oldDashOffset = this.dashOffset;
+      this.dashOffset = dashOffset;
+      this.propertyChangeSupport.firePropertyChange(Property.DASH_OFFSET.name(), oldDashOffset, dashOffset);
+    }
+  }
+
+  /**
+   * Returns the edited dash offset.
+   */
+  public Float getDashOffset() {
+    return this.dashOffset;
+  }
+
   /**
    * Sets the edited start arrow style.
    */
@@ -339,14 +367,14 @@ public class PolylineController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
     }
   }
-  
+
   /**
    * Returns the edited start arrow style.
    */
   public Polyline.ArrowStyle getStartArrowStyle() {
     return this.startArrowStyle;
   }
-  
+
   /**
    * Sets the edited end arrow style.
    */
@@ -357,21 +385,21 @@ public class PolylineController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
     }
   }
-  
+
   /**
    * Returns the edited end arrow style.
    */
   public Polyline.ArrowStyle getEndArrowStyle() {
     return this.endArrowStyle;
   }
-  
+
   /**
    * Returns <code>true</code> if arrows style is editable.
    */
   public boolean isArrowsStyleEditable() {
     return this.arrowsStyleEditable;
   }
-  
+
   /**
    * Sets the edited color.
    */
@@ -389,33 +417,34 @@ public class PolylineController implements Controller {
   public Integer getColor() {
     return this.color;
   }
-  
+
   /**
    * Controls the modification of selected polylines in edited home.
    */
   public void modifyPolylines() {
-    List<Selectable> oldSelection = this.home.getSelectedItems(); 
+    List<Selectable> oldSelection = this.home.getSelectedItems();
     List<Polyline> selectedPolylines = Home.getPolylinesSubList(oldSelection);
     if (!selectedPolylines.isEmpty()) {
-      Float thickness = getThickness(); 
+      Float thickness = getThickness();
       Polyline.CapStyle capStyle = getCapStyle();
       Polyline.JoinStyle joinStyle = getJoinStyle();
       Polyline.DashStyle dashStyle = getDashStyle();
-      Polyline.ArrowStyle startArrowStyle = getStartArrowStyle();  
+      Float dashOffset = getDashOffset();
+      Polyline.ArrowStyle startArrowStyle = getStartArrowStyle();
       Polyline.ArrowStyle endArrowStyle = getEndArrowStyle();
       Integer color = getColor();
-      
+
       // Create an array of modified polylines with their current properties values
-      ModifiedPolyline [] modifiedPolylines = new ModifiedPolyline [selectedPolylines.size()]; 
+      ModifiedPolyline [] modifiedPolylines = new ModifiedPolyline [selectedPolylines.size()];
       for (int i = 0; i < modifiedPolylines.length; i++) {
         modifiedPolylines [i] = new ModifiedPolyline(selectedPolylines.get(i));
       }
       // Apply modification
-      doModifyPolylines(modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, startArrowStyle, endArrowStyle, color);       
+      doModifyPolylines(modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, dashOffset, startArrowStyle, endArrowStyle, color);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new PolylinesModificationUndoableEdit(
             this.home, this.preferences, oldSelection,
-            modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, 
+            modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, dashOffset,
             startArrowStyle, endArrowStyle, color);
         this.undoSupport.postEdit(undoableEdit);
       }
@@ -435,19 +464,21 @@ public class PolylineController implements Controller {
     private Polyline.CapStyle         capStyle;
     private Polyline.JoinStyle        joinStyle;
     private Polyline.DashStyle        dashStyle;
-    private Polyline.ArrowStyle       startArrowStyle;  
+    private Float                     dashOffset;
+    private Polyline.ArrowStyle       startArrowStyle;
     private Polyline.ArrowStyle       endArrowStyle;
     private Integer                   color;
 
     private PolylinesModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
                                           List<Selectable> oldSelection,
-                                          ModifiedPolyline [] modifiedPolylines, 
-                                          Float thickness, 
-                                          Polyline.CapStyle capStyle, 
-                                          Polyline.JoinStyle joinStyle, 
-                                          Polyline.DashStyle dashStyle, 
-                                          Polyline.ArrowStyle startArrowStyle,  
+                                          ModifiedPolyline [] modifiedPolylines,
+                                          Float thickness,
+                                          Polyline.CapStyle capStyle,
+                                          Polyline.JoinStyle joinStyle,
+                                          Polyline.DashStyle dashStyle,
+                                          Float dashOffset,
+                                          Polyline.ArrowStyle startArrowStyle,
                                           Polyline.ArrowStyle endArrowStyle,
                                           Integer color) {
       this.home = home;
@@ -458,6 +489,7 @@ public class PolylineController implements Controller {
       this.capStyle = capStyle;
       this.joinStyle = joinStyle;
       this.dashStyle = dashStyle;
+      this.dashOffset = dashOffset;
       this.startArrowStyle = startArrowStyle;
       this.endArrowStyle = endArrowStyle;
       this.color = color;
@@ -466,16 +498,16 @@ public class PolylineController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      undoModifyPolylines(this.modifiedPolylines); 
-      this.home.setSelectedItems(this.oldSelection); 
+      undoModifyPolylines(this.modifiedPolylines);
+      this.home.setSelectedItems(this.oldSelection);
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModifyPolylines(this.modifiedPolylines, this.thickness, 
-          this.capStyle, this.joinStyle, this.dashStyle, this.startArrowStyle, this.endArrowStyle, this.color); 
-      this.home.setSelectedItems(this.oldSelection); 
+      doModifyPolylines(this.modifiedPolylines, this.thickness,
+          this.capStyle, this.joinStyle, this.dashStyle, this.dashOffset, this.startArrowStyle, this.endArrowStyle, this.color);
+      this.home.setSelectedItems(this.oldSelection);
     }
 
     @Override
@@ -487,9 +519,9 @@ public class PolylineController implements Controller {
   /**
    * Modifies polylines properties with the values in parameter.
    */
-  private static void doModifyPolylines(ModifiedPolyline [] modifiedPolylines, 
-                                        Float thickness, Polyline.CapStyle capStyle, 
-                                        Polyline.JoinStyle joinStyle, Polyline.DashStyle dashStyle, 
+  private static void doModifyPolylines(ModifiedPolyline [] modifiedPolylines,
+                                        Float thickness, Polyline.CapStyle capStyle,
+                                        Polyline.JoinStyle joinStyle, Polyline.DashStyle dashStyle, Float dashOffset,
                                         Polyline.ArrowStyle startArrowStyle, Polyline.ArrowStyle endArrowStyle,
                                         Integer color) {
     for (ModifiedPolyline modifiedPolyline : modifiedPolylines) {
@@ -505,6 +537,9 @@ public class PolylineController implements Controller {
       }
       if (dashStyle != null) {
         polyline.setDashStyle(dashStyle);
+      }
+      if (dashOffset != null) {
+        polyline.setDashOffset(polyline.getDashStyle() != Polyline.DashStyle.SOLID ? dashOffset : 0);
       }
       if (startArrowStyle != null) {
         polyline.setStartArrowStyle(startArrowStyle);
@@ -526,7 +561,7 @@ public class PolylineController implements Controller {
       modifiedPolyline.reset();
     }
   }
-  
+
   /**
    * Stores the current properties values of a modified polyline.
    */
@@ -536,6 +571,7 @@ public class PolylineController implements Controller {
     private final Polyline.CapStyle   capStyle;
     private final Polyline.JoinStyle  joinStyle;
     private final Polyline.DashStyle  dashStyle;
+    private final Float               dashOffset;
     private final Polyline.ArrowStyle startArrowStyle;
     private final Polyline.ArrowStyle endArrowStyle;
     private final int                 color;
@@ -546,6 +582,7 @@ public class PolylineController implements Controller {
       this.capStyle = polyline.getCapStyle();
       this.joinStyle = polyline.getJoinStyle();
       this.dashStyle = polyline.getDashStyle();
+      this.dashOffset = polyline.getDashOffset();
       this.startArrowStyle = polyline.getStartArrowStyle();
       this.endArrowStyle = polyline.getEndArrowStyle();
       this.color = polyline.getColor();
@@ -554,15 +591,16 @@ public class PolylineController implements Controller {
     public Polyline getPolyline() {
       return this.polyline;
     }
-    
+
     public void reset() {
       this.polyline.setThickness(this.thickness);
       this.polyline.setCapStyle(this.capStyle);
       this.polyline.setJoinStyle(this.joinStyle);
       this.polyline.setDashStyle(this.dashStyle);
+      this.polyline.setDashOffset(this.dashOffset);
       this.polyline.setStartArrowStyle(this.startArrowStyle);
       this.polyline.setEndArrowStyle(this.endArrowStyle);
       this.polyline.setColor(this.color);
-    }    
+    }
   }
 }
