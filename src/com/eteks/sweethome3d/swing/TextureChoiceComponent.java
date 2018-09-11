@@ -327,32 +327,34 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             Graphics2D g2D = (Graphics2D)g;
             Shape oldClip = g2D.getClip();
             AffineTransform oldTransform = g2D.getTransform();
-            Insets borderInsets = getBorder().getBorderInsets(this);
-            int componentWidth = getWidth() - borderInsets.right - borderInsets.left;
-            int componentHeight = getHeight() - borderInsets.bottom - borderInsets.top;
-            float imageWidth = getImage().getWidth() * getImageScale();
-            float imageHeight = getImage().getHeight() * getImageScale();
-            g2D.setClip(new Rectangle2D.Float(borderInsets.left, borderInsets.top, componentWidth, componentHeight));
-            g2D.rotate(Math.toRadians(((Number)angleSpinner.getValue()).doubleValue()), getWidth() / 2, getHeight() / 2);
-            // Clip again to ensure repeated image will be drawn in the rectangle (imageWidth, imageHeight)
-            g2D.clip(new Rectangle2D.Float(borderInsets.left + (componentWidth - imageWidth) / 2,
-                borderInsets.top + (componentHeight - imageHeight) / 2, imageWidth, imageHeight));
-            float xOffset = ((Number)xOffsetSpinner.getValue()).floatValue() / 100f;
-            float yOffset = ((Number)yOffsetSpinner.getValue()).floatValue() / 100f;
-            g2D.translate(xOffset * imageWidth, -yOffset * imageHeight);
-            super.paintComponent(g);
-            // If offsets are different from 0, draw the image again with offsets
-            if (xOffset != 0) {
-              g2D.translate(-imageWidth, 0);
+            if (getImage() != null) {
+              Insets borderInsets = getBorder().getBorderInsets(this);
+              int componentWidth = getWidth() - borderInsets.right - borderInsets.left;
+              int componentHeight = getHeight() - borderInsets.bottom - borderInsets.top;
+              float imageWidth = getImage().getWidth() * getImageScale();
+              float imageHeight = getImage().getHeight() * getImageScale();
+              g2D.setClip(new Rectangle2D.Float(borderInsets.left, borderInsets.top, componentWidth, componentHeight));
+              g2D.rotate(Math.toRadians(((Number)angleSpinner.getValue()).doubleValue()), getWidth() / 2, getHeight() / 2);
+              // Clip again to ensure repeated image will be drawn in the rectangle (imageWidth, imageHeight)
+              g2D.clip(new Rectangle2D.Float(borderInsets.left + (componentWidth - imageWidth) / 2,
+                  borderInsets.top + (componentHeight - imageHeight) / 2, imageWidth, imageHeight));
+              float xOffset = ((Number)xOffsetSpinner.getValue()).floatValue() / 100f;
+              float yOffset = ((Number)yOffsetSpinner.getValue()).floatValue() / 100f;
+              g2D.translate(xOffset * imageWidth, -yOffset * imageHeight);
               super.paintComponent(g);
-              g2D.translate(imageWidth, 0);
-            }
-            if (yOffset != 0) {
-              g2D.translate(0, imageHeight);
-              super.paintComponent(g);
+              // If offsets are different from 0, draw the image again with offsets
               if (xOffset != 0) {
                 g2D.translate(-imageWidth, 0);
                 super.paintComponent(g);
+                g2D.translate(imageWidth, 0);
+              }
+              if (yOffset != 0) {
+                g2D.translate(0, imageHeight);
+                super.paintComponent(g);
+                if (xOffset != 0) {
+                  g2D.translate(-imageWidth, 0);
+                  super.paintComponent(g);
+                }
               }
             }
             super.paintComponent(g);
