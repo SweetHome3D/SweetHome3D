@@ -493,7 +493,7 @@ public abstract class UserPreferences {
           }
         };
     } catch (IOException ex) {
-      return Collections.emptyIterator();
+      return Collections.<String>emptyList().iterator();
     }
   }
 
