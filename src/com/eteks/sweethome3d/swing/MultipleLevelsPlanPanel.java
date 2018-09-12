@@ -70,6 +70,8 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -407,7 +409,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   }
 
   @Override
-  public void setComponentPopupMenu(JPopupMenu popup) {
+  public void setComponentPopupMenu(final JPopupMenu popup) {
     JPopupMenu planComponentPopup = new JPopupMenu();
     JPopupMenu tabbedPanePopup = new JPopupMenu();
     // Split popup menu
@@ -444,12 +446,35 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         planComponentPopup.add(component);
       }
     }
+
+    // Listener that will dispatch events to the listeners added to the popup in parameter
+    PopupMenuListener popupMenuListener = new PopupMenuListener() {
+        public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+          for (PopupMenuListener l : popup.getPopupMenuListeners()) {
+            l.popupMenuWillBecomeVisible(ev);
+          }
+        }
+
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+          for (PopupMenuListener l : popup.getPopupMenuListeners()) {
+            l.popupMenuWillBecomeInvisible(ev);
+          }
+        }
+
+        public void popupMenuCanceled(PopupMenuEvent ev) {
+          for (PopupMenuListener l : popup.getPopupMenuListeners()) {
+            l.popupMenuCanceled(ev);
+          }
+        }
+      };
     if (tabbedPanePopup.getComponentCount() > 0) {
       this.multipleLevelsTabbedPane.setComponentPopupMenu(tabbedPanePopup);
       SwingTools.hideDisabledMenuItems(tabbedPanePopup);
+      tabbedPanePopup.addPopupMenuListener(popupMenuListener);
     }
     this.planComponent.setComponentPopupMenu(planComponentPopup);
     SwingTools.hideDisabledMenuItems(planComponentPopup);
+    planComponentPopup.addPopupMenuListener(popupMenuListener);
   }
 
   @Override
