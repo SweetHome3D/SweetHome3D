@@ -93,10 +93,6 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
-import org.apache.batik.parser.AWTPathProducer;
-import org.apache.batik.parser.ParseException;
-import org.apache.batik.parser.PathParser;
-
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeMaterial;
