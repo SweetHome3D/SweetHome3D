@@ -44,7 +44,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * The properties of a polyline that may change. <code>PropertyChangeListener</code>s added
    * to a polyline will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL}
+  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL, ELEVATION}
 
   public enum CapStyle {BUTT, SQUARE, ROUND}
 
@@ -69,7 +69,9 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   private String               endArrowStyleName;
   private boolean              closedPath;
   private int                  color;
+  private Float                elevation;
   private Level                level;
+
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape polylinePathCache;
@@ -379,6 +381,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   /**
    * Returns the offset from which the dash of this polyline should start.
    * @return the offset in percentage of the dash pattern
+   * @since 6.0
    */
   public float getDashOffset() {
     return this.dashOffset;
@@ -388,6 +391,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * Sets the offset from which the dash of this polyline should start.
    * Once this polyline is updated, listeners added to this polyline will receive a change notification.
    * @param dashOffset the offset in percentage of the dash pattern
+   * @since 6.0
    */
   public void setDashOffset(float dashOffset) {
     if (dashOffset != this.dashOffset) {
@@ -473,15 +477,52 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns the level which this dimension line belongs to.
+   * Returns the elevation of this polyline
+   * from the ground according to the elevation of its level.
+   * @since 6.0
+   */
+  public float getGroundElevation() {
+    float elevation = this.elevation != null ? this.elevation : 0;
+    if (this.level != null) {
+      return elevation + this.level.getElevation();
+    } else {
+      return elevation;
+    }
+  }
+
+  /**
+   * Returns the elevation of this polyline in 3D.
+   * @return an elevation or <code>null</code> if the polyline shouldn't be displayed in 3D.
+   * @since 6.0
+   */
+  public Float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Sets the elevation of this polyline in 3D. Once this polyline is updated,
+   * listeners added to this polyline will receive a change notification.
+   * @since 6.0
+   */
+  public void setElevation(Float elevation) {
+    if (elevation != this.elevation
+        && (elevation == null || !elevation.equals(this.elevation))) {
+      Float oldElevation = this.elevation;
+      this.elevation = elevation;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+  }
+
+  /**
+   * Returns the level which this polyline belongs to.
    */
   public Level getLevel() {
     return this.level;
   }
 
   /**
-   * Sets the level of this dimension line. Once this dimension line is updated,
-   * listeners added to this dimension line will receive a change notification.
+   * Sets the level of this polyline. Once this polyline is updated,
+   * listeners added to this polyline will receive a change notification.
    */
   public void setLevel(Level level) {
     if (level != this.level) {
@@ -492,7 +533,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns <code>true</code> if this dimension line is at the given <code>level</code>
+   * Returns <code>true</code> if this polyline is at the given <code>level</code>
    * or at a level with the same elevation and a smaller elevation index.
    */
   public boolean isAtLevel(Level level) {

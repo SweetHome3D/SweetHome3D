@@ -170,6 +170,7 @@ import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.Object3DBranch;
 import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
+import com.eteks.sweethome3d.j3d.ShapeTools;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
@@ -1810,7 +1811,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
     } else if (item instanceof Polyline) {
       Polyline polyline = (Polyline)item;
-      return getPolylineShape(polyline).getBounds2D();
+      return ShapeTools.getPolylineShape(polyline.getPoints(),
+          polyline.getJoinStyle() == Polyline.JoinStyle.CURVED, polyline.isClosedPath()).getBounds2D();
     } else if (item instanceof HomePieceOfFurniture) {
       if (item instanceof HomeDoorOrWindow) {
         HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
@@ -3061,7 +3063,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         AffineTransform rotation = textureAngle != 0
             ? AffineTransform.getRotateInstance(-textureAngle, 0, 0)
             : null;
-        Shape roomShape = getShape(room.getPoints(), true, rotation);
+        Shape roomShape = ShapeTools.getShape(room.getPoints(), true, rotation);
         fillShape(g2D, roomShape, paintMode);
         g2D.setComposite(oldComposite);
 
@@ -3243,7 +3245,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (isViewableAtSelectedLevel(room)) {
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(room.getPoints(), true, null));
+        g2D.draw(ShapeTools.getShape(room.getPoints(), true, null));
 
         if (indicatorPaint != null) {
           g2D.setPaint(indicatorPaint);
@@ -3264,7 +3266,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.setStroke(new BasicStroke(getStrokeWidth(Room.class, PaintMode.PAINT) / planScale));
     for (Room room : rooms) {
       if (isViewableAtSelectedLevel(room)) {
-        g2D.draw(getShape(room.getPoints(), true, null));
+        g2D.draw(ShapeTools.getShape(room.getPoints(), true, null));
       }
     }
 
@@ -3545,7 +3547,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Draw selection border
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
-        g2D.draw(getShape(wall.getPoints(), true, null));
+        g2D.draw(ShapeTools.getShape(wall.getPoints(), true, null));
 
         if (indicatorPaint != null) {
           // Draw start point of the wall
@@ -3778,7 +3780,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Area getItemsArea(Collection<? extends Selectable> items) {
     Area itemsArea = new Area();
     for (Selectable item : items) {
-      itemsArea.add(new Area(getShape(item.getPoints(), true, null)));
+      itemsArea.add(new Area(ShapeTools.getShape(item.getPoints(), true, null)));
     }
     return itemsArea;
   }
@@ -3827,7 +3829,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (paintMode != PaintMode.CLIPBOARD
                     || selectedPiece) {
             // In clipboard paint mode, paint piece only if it is selected
-            Shape pieceShape = getShape(piece.getPoints(), true, null);
+            Shape pieceShape = ShapeTools.getShape(piece.getPoints(), true, null);
             Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
               HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
@@ -3936,7 +3938,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (cutOutShape != null
         && !PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE.equals(cutOutShape)) {
       // In case of a complex cut out, compute location and width of the window hole at wall intersection
-      Shape shape = ModelManager.getInstance().getShape(cutOutShape);
+      Shape shape = ShapeTools.getShape(cutOutShape);
       Rectangle2D bounds = shape.getBounds2D();
       if (doorOrWindow.isModelMirrored()) {
         x += (float)(1 - bounds.getX() - bounds.getWidth()) * wallWidth;
@@ -3976,7 +3978,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (Wall wall : home.getWalls()) {
           if (wall.isAtLevel(doorOrWindow.getLevel())
               && doorOrWindow.isParallelToWall(wall)) {
-            Shape wallShape = getShape(wall.getPoints(), true, null);
+            Shape wallShape = ShapeTools.getShape(wall.getPoints(), true, null);
             Area wallArea = new Area(wallShape);
             wallArea.intersect(doorOrWindowWallPartArea);
             if (!wallArea.isEmpty()) {
@@ -4115,12 +4117,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (homePieceOfFurniture != piece) {
           Area groupArea = null;
           if (lastGroup != homePieceOfFurniture) {
-            Shape groupShape = getShape(homePieceOfFurniture.getPoints(), true, null);
+            Shape groupShape = ShapeTools.getShape(homePieceOfFurniture.getPoints(), true, null);
             groupArea = new Area(groupShape);
             // Enlarge group area
             groupArea.add(new Area(furnitureGroupsStroke.createStrokedShape(groupShape)));
           }
-          Area pieceArea = new Area(getShape(piece.getPoints(), true, null));
+          Area pieceArea = new Area(ShapeTools.getShape(piece.getPoints(), true, null));
           if (furnitureGroupsArea == null) {
             furnitureGroupsArea = groupArea;
             furnitureInGroupsArea = pieceArea;
@@ -4148,7 +4150,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
     for (HomePieceOfFurniture piece : furniture) {
       float [][] points = piece.getPoints();
-      Shape pieceShape = getShape(points, true, null);
+      Shape pieceShape = ShapeTools.getShape(points, true, null);
 
       // Draw selection border
       g2D.setPaint(selectionOutlinePaint);
@@ -4404,7 +4406,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float thickness = polyline.getThickness();
           g2D.setStroke(SwingTools.getStroke(thickness,
               polyline.getCapStyle(), polyline.getJoinStyle(), polyline.getDashStyle(), polyline.getDashOffset()));
-          Shape polylineShape = getPolylineShape(polyline);
+          Shape polylineShape = ShapeTools.getPolylineShape(polyline.getPoints(),
+              polyline.getJoinStyle() == Polyline.JoinStyle.CURVED, polyline.isClosedPath());
           g2D.draw(polylineShape);
 
           // Search angle at start and at end
@@ -4412,7 +4415,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float [] secondPoint = null;
           float [] beforeLastPoint = null;
           float [] lastPoint = null;
-          for (PathIterator it = polylineShape.getPathIterator(null, 0.1); !it.isDone(); it.next()) {
+          for (PathIterator it = polylineShape.getPathIterator(null, 0.5); !it.isDone(); it.next()) {
             float [] pathPoint = new float [2];
             if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
               if (firstPoint == null) {
@@ -4454,36 +4457,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       }
-    }
-  }
-
-  /**
-   * Returns the shape of a polyline.
-   */
-  private Shape getPolylineShape(Polyline polyline) {
-    float [][] points = polyline.getPoints();
-    boolean closedPath = polyline.isClosedPath();
-    if (polyline.getJoinStyle() == Polyline.JoinStyle.CURVED) {
-      GeneralPath polylineShape = new GeneralPath();
-      for (int i = 0, n = closedPath ? points.length : points.length - 1; i < n; i++) {
-        CubicCurve2D.Float curve2D = new CubicCurve2D.Float();
-        float [] previousPoint = points [i == 0 ?  points.length - 1  : i - 1];
-        float [] point         = points [i];
-        float [] nextPoint     = points [i == points.length - 1 ?  0  : i + 1];
-        float [] vectorToBisectorPoint = new float [] {nextPoint [0] - previousPoint [0], nextPoint [1] - previousPoint [1]};
-        float [] nextNextPoint     = points [(i + 2) % points.length];
-        float [] vectorToBisectorNextPoint = new float [] {point[0] - nextNextPoint [0], point[1] - nextNextPoint [1]};
-        curve2D.setCurve(point[0], point[1],
-            point [0] + (i != 0 || closedPath  ? vectorToBisectorPoint [0] / 3.625f  : 0),
-            point [1] + (i != 0 || closedPath  ? vectorToBisectorPoint [1] / 3.625f  : 0),
-            nextPoint [0] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [0] / 3.625f  : 0),
-            nextPoint [1] + (i != points.length - 2 || closedPath  ? vectorToBisectorNextPoint [1] / 3.625f  : 0),
-            nextPoint [0], nextPoint [1]);
-        polylineShape.append(curve2D, true);
-      }
-      return polylineShape;
-    } else {
-      return getShape(points, closedPath, null);
     }
   }
 
@@ -4711,7 +4684,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             g2D.setPaint(selectionOutlinePaint);
             g2D.setStroke(selectionOutlineStroke);
             float [][] textBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, labelAngle);
-            g2D.draw(getShape(textBounds, true, null));
+            g2D.draw(ShapeTools.getShape(textBounds, true, null));
             g2D.setPaint(foregroundColor);
             if (indicatorPaint != null
                 && selectedItems.size() == 1
@@ -5363,24 +5336,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(new BasicStroke(1 / planScale));
       g2D.draw(this.rectangleFeedback);
     }
-  }
-
-  /**
-   * Returns the shape matching the coordinates in <code>points</code> array.
-   */
-  private Shape getShape(float [][] points, boolean closedPath, AffineTransform transform) {
-    GeneralPath path = new GeneralPath();
-    path.moveTo(points [0][0], points [0][1]);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points [i][0], points [i][1]);
-    }
-    if (closedPath) {
-      path.closePath();
-    }
-    if (transform != null) {
-      path.transform(transform);
-    }
-    return path;
   }
 
   /**

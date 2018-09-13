@@ -43,7 +43,7 @@ public class PolylineController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, DASH_OFFSET, START_ARROW_STYLE, END_ARROW_STYLE, COLOR}
+  public enum Property {THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, DASH_OFFSET, START_ARROW_STYLE, END_ARROW_STYLE, COLOR, ELEVATION}
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -63,6 +63,8 @@ public class PolylineController implements Controller {
   private Polyline.ArrowStyle startArrowStyle;
   private Polyline.ArrowStyle endArrowStyle;
   private Integer             color;
+  private Float               elevation;
+  private Boolean             elevationEnabled;
 
   /**
    * Creates the controller of polyline view with undo support.
@@ -130,6 +132,7 @@ public class PolylineController implements Controller {
       setStartArrowStyle(null);
       setEndArrowStyle(null);
       setColor(null);
+      this.elevationEnabled = Boolean.FALSE;
     } else {
       // Search the common properties among selected polylines
       Polyline firstPolyline = selectedPolylines.get(0);
@@ -250,6 +253,26 @@ public class PolylineController implements Controller {
         }
       }
       setColor(color);
+
+      Float elevation = firstPolyline.getElevation();
+      for (int i = 1; i < selectedPolylines.size(); i++) {
+        Polyline polyline = selectedPolylines.get(i);
+        if (!(elevation == null && polyline.getElevation() == null
+              || elevation != null && elevation.equals(polyline.getElevation()))) {
+          elevation = null;
+          break;
+        }
+      }
+      setElevation(elevation);
+
+      Boolean elevationEnabled = firstPolyline.getElevation() != null;
+      for (int i = 1; i < selectedPolylines.size(); i++) {
+        if (!elevationEnabled.equals(selectedPolylines.get(i).getElevation() != null)) {
+          elevationEnabled = null;
+          break;
+        }
+      }
+      this.elevationEnabled = elevationEnabled;
     }
   }
 
@@ -419,6 +442,33 @@ public class PolylineController implements Controller {
   }
 
   /**
+   * Sets the edited elevation.
+   */
+  public void setElevation(Float elevation) {
+    if (elevation != this.elevation) {
+      Float oldElevation = this.elevation;
+      this.elevation = elevation;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+    this.elevationEnabled = elevation != null;
+  }
+
+  /**
+   * Returns the edited elevation.
+   */
+  public Float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Returns <code>Boolean.TRUE</code> if all edited polylines are viewed in 3D,
+   * or <code>Boolean.FALSE</code> if no polyline is viewed in 3D.
+   */
+  public Boolean isElevationEnabled() {
+    return this.elevationEnabled;
+  }
+
+  /**
    * Controls the modification of selected polylines in edited home.
    */
   public void modifyPolylines() {
@@ -433,6 +483,8 @@ public class PolylineController implements Controller {
       Polyline.ArrowStyle startArrowStyle = getStartArrowStyle();
       Polyline.ArrowStyle endArrowStyle = getEndArrowStyle();
       Integer color = getColor();
+      Float elevation = getElevation();
+      Boolean elevationEnabled = isElevationEnabled();
 
       // Create an array of modified polylines with their current properties values
       ModifiedPolyline [] modifiedPolylines = new ModifiedPolyline [selectedPolylines.size()];
@@ -440,12 +492,13 @@ public class PolylineController implements Controller {
         modifiedPolylines [i] = new ModifiedPolyline(selectedPolylines.get(i));
       }
       // Apply modification
-      doModifyPolylines(modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, dashOffset, startArrowStyle, endArrowStyle, color);
+      doModifyPolylines(modifiedPolylines, thickness,
+          capStyle, joinStyle, dashStyle, dashOffset, startArrowStyle, endArrowStyle, color, elevation, elevationEnabled);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new PolylinesModificationUndoableEdit(
             this.home, this.preferences, oldSelection,
             modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, dashOffset,
-            startArrowStyle, endArrowStyle, color);
+            startArrowStyle, endArrowStyle, color, elevation, elevationEnabled);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -468,6 +521,8 @@ public class PolylineController implements Controller {
     private Polyline.ArrowStyle       startArrowStyle;
     private Polyline.ArrowStyle       endArrowStyle;
     private Integer                   color;
+    private final Float               elevation;
+    private final Boolean             elevationEnabled;
 
     private PolylinesModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
@@ -480,7 +535,8 @@ public class PolylineController implements Controller {
                                           Float dashOffset,
                                           Polyline.ArrowStyle startArrowStyle,
                                           Polyline.ArrowStyle endArrowStyle,
-                                          Integer color) {
+                                          Integer color,
+                                          Float elevation, Boolean elevationEnabled) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
@@ -493,6 +549,8 @@ public class PolylineController implements Controller {
       this.startArrowStyle = startArrowStyle;
       this.endArrowStyle = endArrowStyle;
       this.color = color;
+      this.elevation = elevation;
+      this.elevationEnabled = elevationEnabled;
     }
 
     @Override
@@ -506,7 +564,8 @@ public class PolylineController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doModifyPolylines(this.modifiedPolylines, this.thickness,
-          this.capStyle, this.joinStyle, this.dashStyle, this.dashOffset, this.startArrowStyle, this.endArrowStyle, this.color);
+          this.capStyle, this.joinStyle, this.dashStyle, this.dashOffset, this.startArrowStyle, this.endArrowStyle, this.color,
+          this.elevation, this.elevationEnabled);
       this.home.setSelectedItems(this.oldSelection);
     }
 
@@ -523,7 +582,7 @@ public class PolylineController implements Controller {
                                         Float thickness, Polyline.CapStyle capStyle,
                                         Polyline.JoinStyle joinStyle, Polyline.DashStyle dashStyle, Float dashOffset,
                                         Polyline.ArrowStyle startArrowStyle, Polyline.ArrowStyle endArrowStyle,
-                                        Integer color) {
+                                        Integer color, Float elevation, Boolean elevationEnabled) {
     for (ModifiedPolyline modifiedPolyline : modifiedPolylines) {
       Polyline polyline = modifiedPolyline.getPolyline();
       if (thickness != null) {
@@ -550,6 +609,13 @@ public class PolylineController implements Controller {
       if (color != null) {
         polyline.setColor(color);
       }
+      if (elevationEnabled != null) {
+        if (Boolean.FALSE.equals(elevationEnabled)) {
+          polyline.setElevation(null);
+        } else if (elevation != null) {
+          polyline.setElevation(elevation);
+        }
+      }
     }
   }
 
@@ -575,6 +641,7 @@ public class PolylineController implements Controller {
     private final Polyline.ArrowStyle startArrowStyle;
     private final Polyline.ArrowStyle endArrowStyle;
     private final int                 color;
+    private final Float               elevation;
 
     public ModifiedPolyline(Polyline polyline) {
       this.polyline = polyline;
@@ -586,6 +653,7 @@ public class PolylineController implements Controller {
       this.startArrowStyle = polyline.getStartArrowStyle();
       this.endArrowStyle = polyline.getEndArrowStyle();
       this.color = polyline.getColor();
+      this.elevation = polyline.getElevation();
     }
 
     public Polyline getPolyline() {
@@ -601,6 +669,7 @@ public class PolylineController implements Controller {
       this.polyline.setStartArrowStyle(this.startArrowStyle);
       this.polyline.setEndArrowStyle(this.endArrowStyle);
       this.polyline.setColor(this.color);
+      this.polyline.setElevation(this.elevation);
     }
   }
 }

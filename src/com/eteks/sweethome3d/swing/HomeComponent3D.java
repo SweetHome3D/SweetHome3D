@@ -154,6 +154,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -210,6 +211,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   furnitureChangeListener;
   private CollectionListener<Room>                 roomListener;
   private PropertyChangeListener                   roomChangeListener;
+  private CollectionListener<Polyline>             polylineListener;
+  private PropertyChangeListener                   polylineChangeListener;
   private CollectionListener<Label>                labelListener;
   private PropertyChangeListener                   labelChangeListener;
   // Offscreen printed image cache
@@ -854,6 +857,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home.removeRoomsListener(this.roomListener);
     for (Room room : this.home.getRooms()) {
       room.removePropertyChangeListener(this.roomChangeListener);
+    }
+    this.home.removePolylinesListener(this.polylineListener);
+    for (Polyline polyline : this.home.getPolylines()) {
+      polyline.removePropertyChangeListener(this.polylineChangeListener);
     }
     this.home.removeLabelsListener(this.labelListener);
     for (Label label : this.home.getLabels()) {
@@ -2246,9 +2253,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                               boolean listenToHomeUpdates,
                               boolean waitForLoading) {
     Group homeRoot = createHomeRoot();
-    // Add walls, pieces, rooms and labels already available
+    // Add walls, pieces, rooms, polylines and labels already available
     for (Label label : this.home.getLabels()) {
       addObject(homeRoot, label, listenToHomeUpdates, waitForLoading);
+    }
+    for (Polyline polyline : this.home.getPolylines()) {
+      addObject(homeRoot, polyline, listenToHomeUpdates, waitForLoading);
     }
     for (Room room : this.home.getRooms()) {
       addObject(homeRoot, room, listenToHomeUpdates, waitForLoading);
@@ -2279,6 +2289,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addWallListener(homeRoot);
       addFurnitureListener(homeRoot);
       addRoomListener(homeRoot);
+      addPolylineListener(homeRoot);
       addLabelListener(homeRoot);
       // Add environment listeners
       addEnvironmentListeners();
@@ -2662,6 +2673,38 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     path.closePath();
     return path;
+  }
+
+  /**
+   * Adds a polyline listener to home polylines that updates the children of the given
+   * <code>group</code>, each time a polyline is added, updated or deleted.
+   */
+  private void addPolylineListener(final Group group) {
+    this.polylineChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Polyline polyline = (Polyline)ev.getSource();
+          updateObjects(Arrays.asList(new Polyline [] {polyline}));
+        }
+      };
+    for (Polyline polyline : this.home.getPolylines()) {
+      polyline.addPropertyChangeListener(this.polylineChangeListener);
+    }
+    this.polylineListener = new CollectionListener<Polyline>() {
+        public void collectionChanged(CollectionEvent<Polyline> ev) {
+          Polyline polyline = ev.getItem();
+          switch (ev.getType()) {
+            case ADD :
+              addObject(group, polyline, true, false);
+              polyline.addPropertyChangeListener(polylineChangeListener);
+              break;
+            case DELETE :
+              deleteObject(polyline);
+              polyline.removePropertyChangeListener(polylineChangeListener);
+              break;
+          }
+        }
+      };
+    this.home.addPolylinesListener(this.polylineListener);
   }
 
   /**

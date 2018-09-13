@@ -1760,6 +1760,7 @@ public class HomeController implements Controller {
       polylineController.setStartArrowStyle(clipboardPolyline.getStartArrowStyle());
       polylineController.setEndArrowStyle(clipboardPolyline.getEndArrowStyle());
       polylineController.setDashStyle(clipboardPolyline.getDashStyle());
+      polylineController.setDashOffset(clipboardPolyline.getDashOffset());
       polylineController.setColor(clipboardPolyline.getColor());
       polylineController.modifyPolylines();
     } else if (clipboardItem instanceof Label) {

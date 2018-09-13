@@ -52,19 +52,20 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class PolylinePanel extends JPanel implements DialogView {
   private final PolylineController controller;
-  private JLabel         thicknessLabel;
-  private JSpinner       thicknessSpinner;
-  private JLabel         arrowsStyleLabel;
-  private JComboBox      arrowsStyleComboBox;
-  private JLabel         joinStyleLabel;
-  private JComboBox      joinStyleComboBox;
-  private JLabel         dashStyleLabel;
-  private JComboBox      dashStyleComboBox;
-  private JLabel         dashOffsetLabel;
-  private JSpinner       dashOffsetSpinner;
-  private JLabel         colorLabel;
-  private ColorButton    colorButton;
-  private String         dialogTitle;
+  private JLabel           thicknessLabel;
+  private JSpinner         thicknessSpinner;
+  private JLabel           arrowsStyleLabel;
+  private JComboBox        arrowsStyleComboBox;
+  private JLabel           joinStyleLabel;
+  private JComboBox        joinStyleComboBox;
+  private JLabel           dashStyleLabel;
+  private JComboBox        dashStyleComboBox;
+  private JLabel           dashOffsetLabel;
+  private JSpinner         dashOffsetSpinner;
+  private JLabel           colorLabel;
+  private ColorButton      colorButton;
+  private NullableCheckBox visibleIn3DViewCheckBox;
+  private String           dialogTitle;
 
   /**
    * Creates a preferences panel that layouts the editable properties
@@ -375,6 +376,27 @@ public class PolylinePanel extends JPanel implements DialogView {
           }
         });
 
+    // Create components bound to ELEVATION controller property
+    this.visibleIn3DViewCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
+        PolylinePanel.class, "visibleIn3DViewCheckBox.text"));
+    if (controller.isElevationEnabled() != null) {
+      this.visibleIn3DViewCheckBox.setValue(controller.isElevationEnabled());
+    } else {
+      this.visibleIn3DViewCheckBox.setNullable(true);
+      this.visibleIn3DViewCheckBox.setValue(null);
+    }
+    this.visibleIn3DViewCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (visibleIn3DViewCheckBox.isNullable()) {
+            visibleIn3DViewCheckBox.setNullable(false);
+          }
+          if (Boolean.FALSE.equals(visibleIn3DViewCheckBox.getValue())) {
+            controller.setElevation(null);
+          } else {
+            controller.setElevation(0f);
+          }
+        }
+      });
 
     this.dialogTitle = preferences.getLocalizedString(PolylinePanel.class, "polyline.title");
   }
@@ -402,6 +424,8 @@ public class PolylinePanel extends JPanel implements DialogView {
       this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PolylinePanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
+      this.visibleIn3DViewCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PolylinePanel.class, "visibleIn3DViewCheckBox.mnemonic")).getKeyCode());
     }
   }
 
@@ -449,13 +473,17 @@ public class PolylinePanel extends JPanel implements DialogView {
     add(this.dashOffsetSpinner, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    // Last row
+    // Sixth row
     add(this.colorLabel, new GridBagConstraints(
         0, 5, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.colorButton, new GridBagConstraints(
         1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, 0, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, 5, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
+    // Last row
+    add(this.visibleIn3DViewCheckBox, new GridBagConstraints(
+        0, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**

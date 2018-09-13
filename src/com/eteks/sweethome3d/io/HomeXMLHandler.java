@@ -108,7 +108,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       photoAspectRatio (FREE_RATIO | VIEW_3D_RATIO | RATIO_4_3 | RATIO_3_2 | RATIO_16_9 | RATIO_2_1 | RATIO_24_10 | SQUARE_RATIO) "VIEW_3D_RATIO"
  *       photoQuality CDATA "0"
  *       videoWidth CDATA "320"
- *       videoAspectRatio (RATIO_4_3 | RATIO_16_9) "RATIO_4_3"
+ *       videoAspectRatio (RATIO_4_3 | RATIO_16_9 | RATIO_24_10) "RATIO_4_3"
  *       videoQuality CDATA "0"
  *       videoFrameRate CDATA "25">
  *
@@ -387,6 +387,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       dashOffset CDATA "0"
  *       startArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
  *       endArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
+ *       elevation CDATA #IMPLIED
  *       color CDATA #IMPLIED
  *       closedPath (false | true) "false">
  *
@@ -1540,6 +1541,10 @@ public class HomeXMLHandler extends DefaultHandler {
       } catch (IllegalArgumentException ex) {
         // Ignore malformed enum constant
       }
+    }
+    Float elevation = parseOptionalFloat(attributes, "elevation");
+    if (elevation != null) {
+      polyline.setElevation(elevation);
     }
     Integer color = parseOptionalColor(attributes, "color");
     if (color != null) {

@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -105,6 +104,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
 
+import com.eteks.sweethome3d.j3d.ShapeTools;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.TextureImage;
@@ -998,61 +998,7 @@ public class SwingTools {
                                  Polyline.JoinStyle joinStyle,
                                  Polyline.DashStyle dashStyle,
                                  float dashOffset) {
-    int strokeCapStyle;
-    switch (capStyle) {
-      case ROUND :
-        strokeCapStyle = BasicStroke.CAP_ROUND;
-        break;
-      case SQUARE :
-        strokeCapStyle = BasicStroke.CAP_SQUARE;
-        break;
-      default:
-        strokeCapStyle = BasicStroke.CAP_BUTT;
-        break;
-    }
-
-    int strokeJoinStyle;
-    switch (joinStyle) {
-      case ROUND :
-      case CURVED :
-        strokeJoinStyle = BasicStroke.JOIN_ROUND;
-        break;
-      case BEVEL :
-        strokeJoinStyle = BasicStroke.JOIN_BEVEL;
-        break;
-      default:
-        strokeJoinStyle = BasicStroke.JOIN_MITER;
-        break;
-    }
-
-    float [] strokeDashes;
-    switch (dashStyle) {
-      case DOT :
-        strokeDashes = new float [] {thickness, thickness};
-        break;
-      case DASH :
-        strokeDashes = new float [] {thickness * 4, thickness * 2};
-        break;
-      case DASH_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      case DASH_DOT_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      default :
-        strokeDashes = null;
-        break;
-    }
-
-    float dashPhase = 0;
-    if (strokeDashes != null) {
-      for (float dash : strokeDashes) {
-        dashPhase += dash;
-      }
-      dashPhase *= dashOffset;
-    }
-
-    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, dashPhase);
+    return ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle, dashOffset);
   }
 
   /**

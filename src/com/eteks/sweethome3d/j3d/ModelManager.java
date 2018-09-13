@@ -214,15 +214,12 @@ public class ModelManager {
   private ExecutorService           modelsLoader;
   // List of additional loader classes
   private Class<Loader> []          additionalLoaderClasses;
-  // SVG path Shapes
-  private final Map<String, Shape>  parsedShapes;
 
   private ModelManager() {
     // This class is a singleton
     this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
     this.transformedModelNodeBounds = new WeakHashMap<Content, Map<Transform3D, BoundingBox>>();
-    this.parsedShapes = new WeakHashMap<String, Shape>();
     // Load other optional Loader classes
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
@@ -2157,35 +2154,7 @@ public class ModelManager {
    * Returns the AWT shape matching the given <a href="http://www.w3.org/TR/SVG/paths.html">SVG path shape</a>.
    */
   public Shape getShape(String svgPathShape) {
-    Shape shape = this.parsedShapes.get(svgPathShape);
-    if (shape == null) {
-      try {
-        shape = SVGPathSupport.parsePathShape(svgPathShape);
-      } catch (LinkageError ex) {
-        // Fallback to default square shape if batik classes aren't in classpath
-        shape = new Rectangle2D.Float(0, 0, 1, 1);
-      }
-      this.parsedShapes.put(svgPathShape, shape);
-    }
-    return shape;
-  }
-
-  /**
-   * Separated static class to be able to exclude Batik library from classpath.
-   */
-  private static class SVGPathSupport {
-    public static Shape parsePathShape(String svgPathShape) {
-      try {
-        AWTPathProducer pathProducer = new AWTPathProducer();
-        PathParser pathParser = new PathParser();
-        pathParser.setPathHandler(pathProducer);
-        pathParser.parse(svgPathShape);
-        return pathProducer.getShape();
-      } catch (ParseException ex) {
-        // Fallback to default square shape if shape is incorrect
-        return new Rectangle2D.Float(0, 0, 1, 1);
-      }
-    }
+    return ShapeTools.getShape(svgPathShape);
   }
 
   /**

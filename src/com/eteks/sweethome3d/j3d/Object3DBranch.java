@@ -104,16 +104,10 @@ public abstract class Object3DBranch extends BranchGroup {
   }
 
   /**
-   * Returns the shape matching the coordinates in <code>points</code> array.
+   * Returns the closed shape matching the coordinates in <code>points</code> array.
    */
   protected Shape getShape(float [][] points) {
-    GeneralPath path = new GeneralPath();
-    path.moveTo(points [0][0], points [0][1]);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points [i][0], points [i][1]);
-    }
-    path.closePath();
-    return path;
+    return ShapeTools.getShape(points, true, null);
   }
 
   /**

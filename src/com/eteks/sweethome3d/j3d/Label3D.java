@@ -254,7 +254,7 @@ public class Label3D extends Object3DBranch {
         rotationY.rotY(-label.getAngle());
         rotationY.mul(pitchRotation);
         Transform3D transform = new Transform3D();
-        transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
+        transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation() + (pitch == 0f && label.getElevation() < 0.1f ? 0.1f : 0), label.getY()));
         transform.mul(rotationY);
         transformGroup.setTransform(transform);
         ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);

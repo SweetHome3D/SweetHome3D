@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.j3d;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Label;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
@@ -42,10 +43,12 @@ public class Object3DBranchFactory implements Object3DFactory {
       return new Wall3D((Wall)item, home, true, waitForLoading);
     } else if (item instanceof Room) {
       return new Room3D((Room)item, home, false, waitForLoading);
+    } else if (item instanceof Polyline) {
+      return new Polyline3D((Polyline)item, home);
     } else if (item instanceof Label) {
       return new Label3D((Label)item, home, waitForLoading);
     } else {
       return null;
-    }  
+    }
   }
 }
