@@ -135,7 +135,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
       this.planScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
     }
 
-    createTabs(home, preferences);
+    final boolean addLevelTabCreated = createTabs(home, preferences);
     final ChangeListener changeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           Component selectedComponent = multipleLevelsTabbedPane.getSelectedComponent();
@@ -152,7 +152,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         public void mouseClicked(MouseEvent ev) {
           int indexAtLocation = multipleLevelsTabbedPane.indexAtLocation(ev.getX(), ev.getY());
           if (ev.getClickCount() == 1) {
-            if (indexAtLocation == multipleLevelsTabbedPane.getTabCount() - 1) {
+            if (indexAtLocation == multipleLevelsTabbedPane.getTabCount() - 1 && addLevelTabCreated) {
               controller.addLevel();
             }
             final Level oldSelectedLevel = home.getSelectedLevel();
@@ -164,7 +164,7 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
                 }
               });
           } else if (indexAtLocation != -1) {
-            if (multipleLevelsTabbedPane.getSelectedIndex() == multipleLevelsTabbedPane.getTabCount() - 1) {
+            if (multipleLevelsTabbedPane.getSelectedIndex() == multipleLevelsTabbedPane.getTabCount() - 1 && addLevelTabCreated) {
               // May happen with a row of tabs is full
               multipleLevelsTabbedPane.setSelectedIndex(multipleLevelsTabbedPane.getTabCount() - 2);
             }
@@ -232,8 +232,10 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
         });
     }
 
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
-        new LanguageChangeListener(this));
+    if (addLevelTabCreated) {
+      preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
+          new LanguageChangeListener(this));
+    }
   }
 
   /**
@@ -325,22 +327,29 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   }
 
   /**
-   * Creates the tabs from <code>home</code> levels.
+   * Creates the tabs from <code>home</code> levels, and returns <code>true</code>
+   * if an additional tab able to add a new level was added.
    */
-  private void createTabs(Home home, UserPreferences preferences) {
+  private boolean createTabs(Home home, UserPreferences preferences) {
     List<Level> levels = home.getLevels();
     for (int i = 0; i < levels.size(); i++) {
       Level level = levels.get(i);
       this.multipleLevelsTabbedPane.addTab(level.getName(), new LevelLabel(level));
       updateTabComponent(home, i);
     }
-    String createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.SmallIcon");
+    String createNewLevelIcon = null;
+    try {
+      createNewLevelIcon = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.SmallIcon");
+    } catch (IllegalArgumentException ex) {
+      return false;
+    }
     String createNewLevelTooltip = preferences.getLocalizedString(MultipleLevelsPlanPanel.class, "ADD_LEVEL.ShortDescription");
     ImageIcon newLevelIcon = SwingTools.getScaledImageIcon(MultipleLevelsPlanPanel.class.getResource(createNewLevelIcon));
     this.multipleLevelsTabbedPane.addTab("", newLevelIcon, new JLabel(), createNewLevelTooltip);
     // Disable last tab to avoid user stops on it
     this.multipleLevelsTabbedPane.setEnabledAt(this.multipleLevelsTabbedPane.getTabCount() - 1, false);
     this.multipleLevelsTabbedPane.setDisabledIconAt(this.multipleLevelsTabbedPane.getTabCount() - 1, newLevelIcon);
+    return true;
   }
 
   /**
