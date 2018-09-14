@@ -33,7 +33,6 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.math.BigDecimal;
 import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -507,7 +506,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
           UserPreferencesPanel.class, "topViewRadioButton.text"),
           controller.isFurnitureViewedFromTop());
-      if (!no3D) {
+      if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE) 
+          && !no3D) {
         this.iconSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             UserPreferencesPanel.class, "iconSizeLabel.text"));
         Set<Integer> iconSizes = new TreeSet<Integer>(Arrays.asList(128, 256, 512 ,1024));
@@ -554,10 +554,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               new PropertyChangeListener() {
                 public void propertyChange(PropertyChangeEvent ev) {
                   topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
-                  iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
+                  if (iconSizeComboBox != null) {
+                    iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
+                  }
                 }
               });
-          this.iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
+          if (this.iconSizeComboBox != null) {
+            this.iconSizeComboBox.setEnabled(controller.isFurnitureViewedFromTop());
+          }
         } else {
           this.catalogIconRadioButton.setEnabled(false);
           this.topViewRadioButton.setEnabled(false);
