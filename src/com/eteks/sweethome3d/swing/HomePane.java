@@ -2084,10 +2084,13 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToToolBar(ActionType.PREFERENCES, toolBar);
     }
     toolBar.addSeparator();
-
+    
+    int previousCount = toolBar.getComponentCount();
     addActionToToolBar(ActionType.UNDO, toolBar);
     addActionToToolBar(ActionType.REDO, toolBar);
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    if (previousCount != toolBar.getComponentCount()) {
+      toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    }
     addActionToToolBar(ActionType.CUT, toolBar);
     addActionToToolBar(ActionType.COPY, toolBar);
     addActionToToolBar(ActionType.PASTE, toolBar);
@@ -2096,6 +2099,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.ADD_HOME_FURNITURE, toolBar);
     toolBar.addSeparator();
 
+    previousCount = toolBar.getComponentCount();
     addToggleActionToToolBar(ActionType.SELECT, toolBar);
     addToggleActionToToolBar(ActionType.PAN, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_WALLS, toolBar);
@@ -2103,13 +2107,18 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToToolBar(ActionType.CREATE_POLYLINES, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_LABELS, toolBar);
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    if (previousCount != toolBar.getComponentCount()) {
+      toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+      previousCount = toolBar.getComponentCount();
+    }
 
     addActionToToolBar(ActionType.INCREASE_TEXT_SIZE, toolBar);
     addActionToToolBar(ActionType.DECREASE_TEXT_SIZE, toolBar);
     addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, toolBar);
     addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, toolBar);
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    if (previousCount != toolBar.getComponentCount()) {
+      toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    }
 
     addActionToToolBar(ActionType.ZOOM_IN, toolBar);
     addActionToToolBar(ActionType.ZOOM_OUT, toolBar);
@@ -2137,7 +2146,7 @@ public class HomePane extends JRootPane implements HomeView {
       Component child = toolBar.getComponent(i);
       if (child instanceof JSeparator
           && (i == toolBar.getComponentCount() - 1
-              || toolBar.getComponent(i - 1) instanceof JSeparator)) {
+              || i > 0 && toolBar.getComponent(i - 1) instanceof JSeparator)) {
         toolBar.remove(i);
       }
     }
