@@ -1341,7 +1341,7 @@ public class HomePane extends JRootPane implements HomeView {
       Component child = component.getComponent(i);
       if (child instanceof JSeparator
           && (i == component.getComponentCount() - 1
-              || component.getComponent(i - 1) instanceof JSeparator)) {
+              || i > 0 && component.getComponent(i - 1) instanceof JSeparator)) {
         component.remove(i);
       } else if (child instanceof JMenu) {
         removeUselessSeparatorsAndEmptyMenus(((JMenu)child).getPopupMenu());
