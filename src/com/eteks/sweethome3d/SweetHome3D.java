@@ -515,8 +515,12 @@ public class SweetHome3D extends HomeApplication {
       classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
       ResourceBundle resource = ResourceBundle.getBundle(classPackage + "." + "package");
       String applicationName = resource.getString("SweetHome3D.applicationName");
-      System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
-      System.setProperty("apple.awt.application.name", applicationName);
+      if (System.getProperty("com.apple.mrj.application.apple.menu.about.name") == null) {
+        System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
+      }
+      if (System.getProperty("apple.awt.application.name") == null) {
+        System.setProperty("apple.awt.application.name", applicationName);
+      }
       if (System.getProperty("apple.laf.useScreenMenuBar") == null) {
         // Use Mac OS X screen menu bar for frames menu bar
         // except for bundles under macOS 10.13
