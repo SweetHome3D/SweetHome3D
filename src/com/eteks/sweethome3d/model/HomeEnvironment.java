@@ -38,38 +38,40 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {OBSERVER_CAMERA_ELEVATION_ADJUSTED, SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR, 
+  public enum Property {OBSERVER_CAMERA_ELEVATION_ADJUSTED, GROUND_COLOR, GROUND_TEXTURE, BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D,
+                        SKY_COLOR, SKY_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR,
                         WALLS_ALPHA, DRAWING_MODE, SUBPART_SIZE_UNDER_LIGHT, ALL_LEVELS_VISIBLE,
-                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY, 
+                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY,
                         VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
-   * The various modes used to draw home in 3D. 
+   * The various modes used to draw home in 3D.
    */
   public enum DrawingMode {
     FILL, OUTLINE, FILL_AND_OUTLINE
   }
-  
+
   private boolean                         observerCameraElevationAdjusted;
   private int                             groundColor;
   private HomeTexture                     groundTexture;
+  private boolean                         backgroundImageVisibleOnGround3D;
   private int                             skyColor;
   private HomeTexture                     skyTexture;
   private int                             lightColor;
   private int                             ceilingLightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
-  private float                           subpartSizeUnderLight;      
-  private boolean                         allLevelsVisible; 
+  private float                           subpartSizeUnderLight;
+  private boolean                         allLevelsVisible;
   private int                             photoWidth;
   private int                             photoHeight;
   private transient AspectRatio           photoAspectRatio;
-  // Aspect ratios are saved as a string to be able to keep backward compatibility 
+  // Aspect ratios are saved as a string to be able to keep backward compatibility
   // if new constants are added to AspectRatio enum in future versions
   private String                          photoAspectRatioName;
   private int                             photoQuality;
   private int                             videoWidth;
   private transient AspectRatio           videoAspectRatio;
-  // Aspect ratios are saved as a string to be able to keep backward compatibility 
+  // Aspect ratios are saved as a string to be able to keep backward compatibility
   // if new constants are added to AspectRatio enum in future versions
   private String                          videoAspectRatioName;
   private int                             videoQuality;
@@ -102,7 +104,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * Creates home environment from parameters.
    * @since 2.2
    */
-  public HomeEnvironment(int groundColor, HomeTexture groundTexture, 
+  public HomeEnvironment(int groundColor, HomeTexture groundTexture,
                          int skyColor, HomeTexture skyTexture,
                          int lightColor, float wallsAlpha) {
     this.observerCameraElevationAdjusted = true;
@@ -124,7 +126,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
-   * Initializes environment transient fields  
+   * Initializes environment transient fields
    * and reads attributes from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -139,31 +141,31 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.cameraPath = Collections.emptyList();
     in.defaultReadObject();
     try {
-      // Read aspect from a string 
+      // Read aspect from a string
       if (this.photoAspectRatioName != null) {
         this.photoAspectRatio = AspectRatio.valueOf(this.photoAspectRatioName);
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
     try {
-      // Read aspect from a string 
+      // Read aspect from a string
       if (this.videoAspectRatioName != null) {
         this.videoAspectRatio = AspectRatio.valueOf(this.videoAspectRatioName);
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write aspect ratios as strings to be able to read aspect ratio later 
+    // Write aspect ratios as strings to be able to read aspect ratio later
     // even if enum changed in later versions
     this.photoAspectRatioName = this.photoAspectRatio.name();
     this.videoAspectRatioName = this.videoAspectRatio.name();
     out.defaultWriteObject();
   }
-  
+
   /**
    * Adds the property change <code>listener</code> in parameter to this environment.
    */
@@ -179,27 +181,27 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
-   * Returns <code>true</code> if the observer elevation should be adjusted according 
+   * Returns <code>true</code> if the observer elevation should be adjusted according
    * to the elevation of the selected level.
    * @since 3.5
    */
   public boolean isObserverCameraElevationAdjusted() {
     return this.observerCameraElevationAdjusted;
   }
-  
+
   /**
-   * Sets whether the observer elevation should be adjusted according 
+   * Sets whether the observer elevation should be adjusted according
    * to the elevation of the selected level and fires a <code>PropertyChangeEvent</code>.
    * @since 3.5
    */
   public void setObserverCameraElevationAdjusted(boolean observerCameraElevationAdjusted) {
     if (this.observerCameraElevationAdjusted != observerCameraElevationAdjusted) {
       this.observerCameraElevationAdjusted = observerCameraElevationAdjusted;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED.name(),
           !observerCameraElevationAdjusted, observerCameraElevationAdjusted);
     }
   }
-  
+
   /**
    * Returns the ground color of this environment.
    */
@@ -239,12 +241,33 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
+   * Returns <code>true</code> if the background image should be displayed on the ground in 3D.
+   * @since 6.0
+   */
+  public boolean isBackgroundImageVisibleOnGround3D() {
+    return this.backgroundImageVisibleOnGround3D;
+  }
+
+  /**
+   * Sets whether the background image should be displayed on the ground in 3D and
+   * fires a <code>PropertyChangeEvent</code>.
+   * @since 6.0
+   */
+  public void setBackgroundImageVisibleOnGround3D(boolean backgroundImageVisibleOnGround3D) {
+    if (this.backgroundImageVisibleOnGround3D != backgroundImageVisibleOnGround3D) {
+      this.backgroundImageVisibleOnGround3D = backgroundImageVisibleOnGround3D;
+      this.propertyChangeSupport.firePropertyChange(Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D.name(),
+          !backgroundImageVisibleOnGround3D, backgroundImageVisibleOnGround3D);
+    }
+  }
+
+  /**
    * Returns the sky color of this environment.
    */
   public int getSkyColor() {
     return this.skyColor;
   }
-  
+
   /**
    * Sets the sky color of this environment and fires a <code>PropertyChangeEvent</code>.
    */
@@ -256,7 +279,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
           Property.SKY_COLOR.name(), oldSkyColor, skyColor);
     }
   }
-  
+
   /**
    * Returns the sky texture of this environment.
    */
@@ -356,7 +379,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   /**
    * Returns the size of subparts under home lights in this environment.
    * @return a size in centimeters or 0 if home lights don't illuminate home.
-   * @since 3.7 
+   * @since 3.7
    */
   public float getSubpartSizeUnderLight() {
     return this.subpartSizeUnderLight;
@@ -364,7 +387,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the size of subparts under home lights of this environment and fires a <code>PropertyChangeEvent</code>.
-   * @since 3.7 
+   * @since 3.7
    */
   public void setSubpartSizeUnderLight(float subpartSizeUnderLight) {
     if (subpartSizeUnderLight != this.subpartSizeUnderLight) {
@@ -381,7 +404,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   public boolean isAllLevelsVisible() {
     return this.allLevelsVisible;
   }
-  
+
   /**
    * Sets whether all levels should be visible or not and fires a <code>PropertyChangeEvent</code>.
    */
@@ -394,7 +417,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
-   * Returns the preferred photo width. 
+   * Returns the preferred photo width.
    * @since 2.0
    */
   public int getPhotoWidth() {
@@ -403,20 +426,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred photo width, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.0
    */
   public void setPhotoWidth(int photoWidth) {
     if (this.photoWidth != photoWidth) {
       int oldPhotoWidth = this.photoWidth;
       this.photoWidth = photoWidth;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_WIDTH.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_WIDTH.name(),
           oldPhotoWidth, photoWidth);
     }
   }
-  
+
   /**
-   * Returns the preferred photo height. 
+   * Returns the preferred photo height.
    * @since 2.0
    */
   public int getPhotoHeight() {
@@ -425,20 +448,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred photo height, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.0
    */
   public void setPhotoHeight(int photoHeight) {
     if (this.photoHeight != photoHeight) {
       int oldPhotoHeight = this.photoHeight;
       this.photoHeight = photoHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_HEIGHT.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_HEIGHT.name(),
           oldPhotoHeight, photoHeight);
     }
   }
-  
+
   /**
-   * Returns the preferred photo aspect ratio. 
+   * Returns the preferred photo aspect ratio.
    * @since 2.0
    */
   public AspectRatio getPhotoAspectRatio() {
@@ -447,20 +470,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred photo aspect ratio, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.0
    */
   public void setPhotoAspectRatio(AspectRatio photoAspectRatio) {
     if (this.photoAspectRatio != photoAspectRatio) {
       AspectRatio oldPhotoAspectRatio = this.photoAspectRatio;
       this.photoAspectRatio = photoAspectRatio;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(),
           oldPhotoAspectRatio, photoAspectRatio);
     }
   }
-  
+
   /**
-   * Returns the preferred photo quality. 
+   * Returns the preferred photo quality.
    * @since 2.0
    */
   public int getPhotoQuality() {
@@ -469,20 +492,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets preferred photo quality, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.0
    */
   public void setPhotoQuality(int photoQuality) {
     if (this.photoQuality != photoQuality) {
       int oldPhotoQuality = this.photoQuality;
       this.photoQuality = photoQuality;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(),
           oldPhotoQuality, photoQuality);
     }
   }
 
   /**
-   * Returns the preferred video width. 
+   * Returns the preferred video width.
    * @since 2.3
    */
   public int getVideoWidth() {
@@ -491,20 +514,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred video width, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.3
    */
   public void setVideoWidth(int videoWidth) {
     if (this.videoWidth != videoWidth) {
       int oldVideoWidth = this.videoWidth;
       this.videoWidth = videoWidth;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_WIDTH.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_WIDTH.name(),
           oldVideoWidth, videoWidth);
     }
   }
-  
+
   /**
-   * Returns the preferred video height. 
+   * Returns the preferred video height.
    * @since 2.3
    */
   public int getVideoHeight() {
@@ -512,7 +535,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   }
 
   /**
-   * Returns the preferred video aspect ratio. 
+   * Returns the preferred video aspect ratio.
    * @since 2.3
    */
   public AspectRatio getVideoAspectRatio() {
@@ -521,7 +544,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred video aspect ratio, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.3
    */
   public void setVideoAspectRatio(AspectRatio videoAspectRatio) {
@@ -531,13 +554,13 @@ public class HomeEnvironment implements Serializable, Cloneable {
       }
       AspectRatio oldVideoAspectRatio = this.videoAspectRatio;
       this.videoAspectRatio = videoAspectRatio;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_ASPECT_RATIO.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_ASPECT_RATIO.name(),
           oldVideoAspectRatio, videoAspectRatio);
     }
   }
-  
+
   /**
-   * Returns preferred video quality. 
+   * Returns preferred video quality.
    * @since 2.3
    */
   public int getVideoQuality() {
@@ -546,20 +569,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred video quality, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.3
    */
   public void setVideoQuality(int videoQuality) {
     if (this.videoQuality != videoQuality) {
       int oldVideoQuality = this.videoQuality;
       this.videoQuality = videoQuality;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_QUALITY.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_QUALITY.name(),
           oldVideoQuality, videoQuality);
     }
   }
-  
+
   /**
-   * Returns the preferred video frame rate. 
+   * Returns the preferred video frame rate.
    * @since 2.3
    */
   public int getVideoFrameRate() {
@@ -568,20 +591,20 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred video frame rate, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.3
    */
   public void setVideoFrameRate(int videoFrameRate) {
     if (this.videoFrameRate != videoFrameRate) {
       int oldVideoFrameRate = this.videoFrameRate;
       this.videoFrameRate = videoFrameRate;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_FRAME_RATE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_FRAME_RATE.name(),
           oldVideoFrameRate, videoFrameRate);
     }
   }
 
   /**
-   * Returns the preferred video camera path. 
+   * Returns the preferred video camera path.
    * @since 2.3
    */
   public List<Camera> getVideoCameraPath() {
@@ -590,7 +613,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
 
   /**
    * Sets the preferred video camera path, and notifies
-   * listeners of this change. 
+   * listeners of this change.
    * @since 2.3
    */
   public void setVideoCameraPath(List<Camera> cameraPath) {
@@ -620,7 +643,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
       clone.propertyChangeSupport = new PropertyChangeSupport(clone);
       return clone;
     } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
+      throw new IllegalStateException("Super class isn't cloneable");
     }
   }
 }

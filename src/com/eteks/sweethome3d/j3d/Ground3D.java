@@ -19,10 +19,14 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.Dimension;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,13 +34,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector4f;
 
+import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -44,6 +59,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
+import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 
@@ -52,10 +68,19 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * @author Emmanuel Puybaret
  */
 public class Ground3D extends Object3DBranch {
+  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
+
+  static {
+    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
+  }
+
   private final float originX;
   private final float originY;
   private final float width;
   private final float depth;
+
+  private Content   backgroundImageCache;
+  private Dimension backgroundImageDimensionCache;
 
   /**
    * Creates a 3D ground for the given <code>home</code>.
@@ -86,10 +111,31 @@ public class Ground3D extends Object3DBranch {
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     groundShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+    addChild(groundShape);
+
+    Appearance backgroundImageAppearance = new Appearance();
+    backgroundImageAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
+    backgroundImageAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
+    backgroundImageAppearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+        TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
+    backgroundImageAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    RenderingAttributes renderingAttributes = new RenderingAttributes();
+    renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+    backgroundImageAppearance.setRenderingAttributes(renderingAttributes);
+
+    TransformGroup transformGroup = new TransformGroup();
+    // Allow the change of the transformation that sets background image size and position
+    transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+    transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+
+    Box box = new Box(0.5f, 0f, 0.5f, backgroundImageAppearance);
+    Shape3D backgroundImageShape = box.getShape(Box.TOP);
+    backgroundImageShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+    box.removeChild(backgroundImageShape);
+    transformGroup.addChild(backgroundImageShape);
+    addChild(transformGroup);
 
     setCapability(ALLOW_CHILDREN_READ);
-
-    addChild(groundShape);
 
     update(waitTextureLoadingEnd);
   }
@@ -105,8 +151,72 @@ public class Ground3D extends Object3DBranch {
   /**
    * Updates the geometry and attributes of ground and sublevels.
    */
-  private void update(boolean waitTextureLoadingEnd) {
+  private void update(final boolean waitTextureLoadingEnd) {
     final Home home = (Home)getUserData();
+    // Update background image viewed on ground
+    final TransformGroup backgroundImageGroup = (TransformGroup)getChild(1);
+    Shape3D backgroundImageShape = (Shape3D)backgroundImageGroup.getChild(0);
+    final Appearance backgroundImageAppearance = backgroundImageShape.getAppearance();
+    RenderingAttributes backgroundImageRenderingAttributes = backgroundImageAppearance.getRenderingAttributes();
+    BackgroundImage backgroundImage = null;
+    if (home.getEnvironment().isBackgroundImageVisibleOnGround3D()) {
+      List<Level> levels = home.getLevels();
+      if (levels.size() > 0) {
+        for (int i = levels.size() - 1; i >= 0; i--) {
+          Level level = levels.get(i);
+          if (level.getElevation() == 0
+              && level.isViewableAndVisible()
+              && level.getBackgroundImage() != null
+              && level.getBackgroundImage().isVisible()) {
+            backgroundImage = level.getBackgroundImage();
+            break;
+          }
+        }
+      } else if (home.getBackgroundImage() != null
+                && home.getBackgroundImage().isVisible()) {
+        backgroundImage = home.getBackgroundImage();
+      }
+    }
+    if (backgroundImage != null) {
+      final BackgroundImage displayedBackgroundImage = backgroundImage;
+      TextureManager.getInstance().loadTexture(displayedBackgroundImage.getImage(), waitTextureLoadingEnd,
+          new TextureManager.TextureObserver() {
+              public void textureUpdated(Texture texture) {
+                try {
+                  if (!displayedBackgroundImage.getImage().equals(backgroundImageCache)) {
+                    InputStream contentStream = displayedBackgroundImage.getImage().openStream();
+                    BufferedImage image = ImageIO.read(contentStream);
+                    backgroundImageDimensionCache = new Dimension(image.getWidth(), image.getHeight());
+                    backgroundImageCache = displayedBackgroundImage.getImage();
+                  }
+                  // Update image location and size
+                  float backgroundImageScale = displayedBackgroundImage.getScale();
+                  float imageWidth = backgroundImageScale * backgroundImageDimensionCache.width;
+                  float imageHeight = backgroundImageScale * backgroundImageDimensionCache.height;
+                  Transform3D backgroundImageTransform = new Transform3D();
+                  backgroundImageTransform.setScale(new Vector3d(imageWidth, 1, imageHeight));
+                  backgroundImageTransform.setTranslation(new Vector3d(imageWidth / 2 - displayedBackgroundImage.getXOrigin(), 0f,
+                      imageHeight / 2 - displayedBackgroundImage.getYOrigin()));
+                  backgroundImageAppearance.setTexture(getHomeTextureClone(texture, home));
+                  backgroundImageGroup.setTransform(backgroundImageTransform);
+                  updateGround(waitTextureLoadingEnd,
+                      new Rectangle2D.Float(-displayedBackgroundImage.getXOrigin(), -displayedBackgroundImage.getYOrigin(), imageWidth, imageHeight));
+                } catch (IOException ex) {
+                  // Shouldn't happen since the image was successfully read to create texture
+                  ex.printStackTrace();
+                }
+              }
+            });
+      backgroundImageRenderingAttributes.setVisible(true);
+    } else {
+      backgroundImageRenderingAttributes.setVisible(false);
+      updateGround(waitTextureLoadingEnd, null);
+    }
+  }
+
+  private void updateGround(boolean waitTextureLoadingEnd, Rectangle2D backgroundImageRectangle) {
+    final Home home = (Home)getUserData();
+
     Shape3D groundShape = (Shape3D)getChild(0);
     int currentGeometriesCount = groundShape.numGeometries();
 
@@ -255,6 +365,9 @@ public class Ground3D extends Object3DBranch {
       addAreaGeometry(groundShape, groundTexture, outsideGroundArea, 0);
     }
     groundArea.subtract(areaRemovedFromGround);
+    if (backgroundImageRectangle != null) {
+      groundArea.subtract(new Area(backgroundImageRectangle));
+    }
     // Add level areas for ground level at index 0 because it's the highest level in the list
     undergroundAreas.add(0, new LevelAreas(new Level("Ground", 0, 0, 0), groundArea));
     float previousLevelElevation = 0;

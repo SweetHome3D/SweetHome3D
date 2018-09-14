@@ -62,7 +62,6 @@ import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
-import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -2407,7 +2406,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Paint image at specified scale with 0.7 alpha
         AffineTransform previousTransform = g2D.getTransform();
         g2D.translate(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
-        g2D.scale(backgroundImage.getScale(), backgroundImage.getScale());
+        float backgroundImageScale = backgroundImage.getScale();
+        g2D.scale(backgroundImageScale, backgroundImageScale);
         Composite oldComposite = null;
         if (!prepareBackgroundImageWithAlphaInMemory) {
           oldComposite = setTransparency(g2D, 0.7f);

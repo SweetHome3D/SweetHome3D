@@ -829,6 +829,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.backgroundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.backgroundChangeListener);
+    this.home.removePropertyChangeListener(Home.Property.BACKGROUND_IMAGE, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.backgroundLightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
@@ -2030,6 +2032,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
       homeEnvironment.addPropertyChangeListener(
           HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
+      homeEnvironment.addPropertyChangeListener(
+          HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.groundChangeListener);
+      this.home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, this.groundChangeListener);
     }
 
     return transformGroup;
@@ -2333,6 +2338,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
             updateObjects(homeObjects.keySet());
+            groundChangeListener.propertyChange(null);
+          } else if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());

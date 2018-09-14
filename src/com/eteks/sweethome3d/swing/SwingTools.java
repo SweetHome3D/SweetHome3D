@@ -962,11 +962,11 @@ public class SwingTools {
     InputStream in = null;
     try {
       in = image.openStream();
-      ImageInputStream iis = ImageIO.createImageInputStream(in);
-      Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+      ImageInputStream imageInputStream = ImageIO.createImageInputStream(in);
+      Iterator<ImageReader> it = ImageIO.getImageReaders(imageInputStream);
       if (it.hasNext()) {
         ImageReader reader = (ImageReader)it.next();
-        reader.setInput(iis);
+        reader.setInput(imageInputStream);
         int imageWidth = reader.getWidth(reader.getMinIndex());
         int imageHeight = reader.getHeight(reader.getMinIndex());
         reader.dispose();
@@ -991,7 +991,7 @@ public class SwingTools {
   }
 
   /**
-   * Returns the line stroke matching the given line styles.
+   * Returns the line stroke matching the given line styles and offset.
    */
   public static Stroke getStroke(float thickness,
                                  Polyline.CapStyle capStyle,

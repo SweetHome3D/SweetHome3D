@@ -40,14 +40,14 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class Home3DAttributesController implements Controller {
   /**
-   * The properties that may be edited by the view associated to this controller. 
+   * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {GROUND_COLOR, GROUND_PAINT, SKY_COLOR, SKY_PAINT, LIGHT_COLOR, WALLS_ALPHA, WALLS_TOP_COLOR}
+  public enum Property {GROUND_COLOR, GROUND_PAINT, BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, SKY_COLOR, SKY_PAINT, LIGHT_COLOR, WALLS_ALPHA, WALLS_TOP_COLOR}
   /**
    * The possible values for {@linkplain #getGroundPaint() ground paint type}.
    */
-  public enum EnvironmentPaint {COLORED, TEXTURED} 
-  
+  public enum EnvironmentPaint {COLORED, TEXTURED}
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
@@ -60,6 +60,7 @@ public class Home3DAttributesController implements Controller {
 
   private int               groundColor;
   private EnvironmentPaint  groundPaint;
+  private boolean           backgroundImageVisibleOnGround3D;
   private int               skyColor;
   private EnvironmentPaint  skyPaint;
   private int               lightColor;
@@ -70,16 +71,16 @@ public class Home3DAttributesController implements Controller {
    */
   public Home3DAttributesController(Home home,
                                     UserPreferences preferences,
-                                    ViewFactory viewFactory, 
+                                    ViewFactory viewFactory,
                                     ContentManager contentManager,
                                     UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
-    this.undoSupport = undoSupport;    
+    this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -88,9 +89,9 @@ public class Home3DAttributesController implements Controller {
    */
   public TextureChoiceController getGroundTextureController() {
     // Create sub controller lazily only once it's needed
-    if (this.groundTextureController == null) {      
+    if (this.groundTextureController == null) {
       this.groundTextureController = new TextureChoiceController(
-          this.preferences.getLocalizedString(Home3DAttributesController.class, "groundTextureTitle"), 
+          this.preferences.getLocalizedString(Home3DAttributesController.class, "groundTextureTitle"),
           this.preferences, this.viewFactory, this.contentManager);
       this.groundTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
@@ -109,7 +110,7 @@ public class Home3DAttributesController implements Controller {
     // Create sub controller lazily only once it's needed
     if (this.skyTextureController == null) {
       this.skyTextureController = new TextureChoiceController(
-          this.preferences.getLocalizedString(Home3DAttributesController.class, "skyTextureTitle"), 
+          this.preferences.getLocalizedString(Home3DAttributesController.class, "skyTextureTitle"),
           false,
           this.preferences, this.viewFactory, this.contentManager);
       this.skyTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
@@ -129,11 +130,11 @@ public class Home3DAttributesController implements Controller {
     // Create view lazily only once it's needed
     if (this.home3DAttributesView == null) {
       this.home3DAttributesView = this.viewFactory.createHome3DAttributesView(
-          this.preferences, this); 
+          this.preferences, this);
     }
     return this.home3DAttributesView;
   }
-  
+
   /**
    * Displays the view controlled by this controller.
    */
@@ -168,6 +169,7 @@ public class Home3DAttributesController implements Controller {
     } else {
       setGroundPaint(EnvironmentPaint.COLORED);
     }
+    setBackgroundImageVisibleOnGround3D(homeEnvironment.isBackgroundImageVisibleOnGround3D());
     setSkyColor(homeEnvironment.getSkyColor());
     HomeTexture skyTexture = homeEnvironment.getSkyTexture();
     getSkyTextureController().setTexture(skyTexture);
@@ -179,7 +181,7 @@ public class Home3DAttributesController implements Controller {
     setLightColor(homeEnvironment.getLightColor());
     setWallsAlpha(homeEnvironment.getWallsAlpha());
   }
-  
+
   /**
    * Sets the edited ground color.
    */
@@ -188,7 +190,7 @@ public class Home3DAttributesController implements Controller {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
       this.propertyChangeSupport.firePropertyChange(Property.GROUND_COLOR.name(), oldGroundColor, groundColor);
-      
+
       setGroundPaint(EnvironmentPaint.COLORED);
     }
   }
@@ -216,6 +218,26 @@ public class Home3DAttributesController implements Controller {
    */
   public EnvironmentPaint getGroundPaint() {
     return this.groundPaint;
+  }
+
+  /**
+   * Returns <code>true</code> if the background image should be displayed on the ground in 3D.
+   * @since 6.0
+   */
+  public boolean isBackgroundImageVisibleOnGround3D() {
+    return this.backgroundImageVisibleOnGround3D;
+  }
+
+  /**
+   * Sets whether the background image should be displayed on the ground in 3D.
+   * @since 6.0
+   */
+  public void setBackgroundImageVisibleOnGround3D(boolean backgroundImageVisibleOnGround3D) {
+    if (this.backgroundImageVisibleOnGround3D != backgroundImageVisibleOnGround3D) {
+      this.backgroundImageVisibleOnGround3D = backgroundImageVisibleOnGround3D;
+      this.propertyChangeSupport.firePropertyChange(Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D.name(),
+          !backgroundImageVisibleOnGround3D, backgroundImageVisibleOnGround3D);
+    }
   }
 
   /**
@@ -298,6 +320,7 @@ public class Home3DAttributesController implements Controller {
     HomeTexture groundTexture = getGroundPaint() == EnvironmentPaint.TEXTURED
         ? getGroundTextureController().getTexture()
         : null;
+    boolean backgroundImageVisibleOnGround3D = isBackgroundImageVisibleOnGround3D();
     int   skyColor = getSkyColor();
     HomeTexture skyTexture = getSkyPaint() == EnvironmentPaint.TEXTURED
         ? getSkyTextureController().getTexture()
@@ -307,21 +330,24 @@ public class Home3DAttributesController implements Controller {
 
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
     int   oldGroundColor = homeEnvironment.getGroundColor();
+    boolean oldBackgroundImageVisibleOnGround3D = homeEnvironment.isBackgroundImageVisibleOnGround3D();
     HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
     int   oldSkyColor = homeEnvironment.getSkyColor();
     HomeTexture oldSkyTexture = homeEnvironment.getSkyTexture();
     int   oldLightColor = homeEnvironment.getLightColor();
     float oldWallsAlpha = homeEnvironment.getWallsAlpha();
-    
+
     // Apply modification
-    doModify3DAttributes(home, groundColor, groundTexture, skyColor,
-        skyTexture, lightColor, wallsAlpha); 
+    doModify3DAttributes(home, groundColor, groundTexture, backgroundImageVisibleOnGround3D, skyColor,
+        skyTexture, lightColor, wallsAlpha);
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(
           this.home, this.preferences,
-          oldGroundColor, oldGroundTexture, oldSkyColor,
+          oldGroundColor, oldGroundTexture,
+          oldBackgroundImageVisibleOnGround3D, oldSkyColor,
           oldSkyTexture, oldLightColor, oldWallsAlpha,
-          groundColor, groundTexture, skyColor, 
+          groundColor, groundTexture,
+          backgroundImageVisibleOnGround3D, skyColor,
           skyTexture, lightColor, wallsAlpha);
       this.undoSupport.postEdit(undoableEdit);
     }
@@ -336,12 +362,14 @@ public class Home3DAttributesController implements Controller {
     private final UserPreferences preferences;
     private final int             oldGroundColor;
     private final HomeTexture     oldGroundTexture;
+    private final boolean         oldBackgroundImageVisibleOnGround3D;
     private final int             oldSkyColor;
     private final HomeTexture     oldSkyTexture;
     private final int             oldLightColor;
     private final float           oldWallsAlpha;
     private final int             groundColor;
     private final HomeTexture     groundTexture;
+    private final boolean         backgroundImageVisibleOnGround3D;
     private final int             skyColor;
     private final HomeTexture     skyTexture;
     private final int             lightColor;
@@ -351,12 +379,14 @@ public class Home3DAttributesController implements Controller {
                                                      UserPreferences preferences,
                                                      int oldGroundColor,
                                                      HomeTexture oldGroundTexture,
-                                                     int oldSkyColor, 
+                                                     boolean oldBackgroundImageVisibleOnGround3D,
+                                                     int oldSkyColor,
                                                      HomeTexture oldSkyTexture,
                                                      int oldLightColor,
                                                      float oldWallsAlpha,
                                                      int groundColor,
                                                      HomeTexture groundTexture,
+                                                     boolean backgroundImageVisibleOnGround3D,
                                                      int skyColor,
                                                      HomeTexture skyTexture,
                                                      int lightColor,
@@ -365,12 +395,14 @@ public class Home3DAttributesController implements Controller {
       this.preferences = preferences;
       this.oldGroundColor = oldGroundColor;
       this.oldGroundTexture = oldGroundTexture;
+      this.oldBackgroundImageVisibleOnGround3D = oldBackgroundImageVisibleOnGround3D;
       this.oldSkyColor = oldSkyColor;
       this.oldSkyTexture = oldSkyTexture;
       this.oldLightColor = oldLightColor;
       this.oldWallsAlpha = oldWallsAlpha;
       this.groundColor = groundColor;
       this.groundTexture = groundTexture;
+      this.backgroundImageVisibleOnGround3D = backgroundImageVisibleOnGround3D;
       this.skyColor = skyColor;
       this.skyTexture = skyTexture;
       this.lightColor = lightColor;
@@ -380,15 +412,15 @@ public class Home3DAttributesController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doModify3DAttributes(this.home, this.oldGroundColor, this.oldGroundTexture, this.oldSkyColor,
-          this.oldSkyTexture, this.oldLightColor, this.oldWallsAlpha); 
+      doModify3DAttributes(this.home, this.oldGroundColor, this.oldGroundTexture, this.oldBackgroundImageVisibleOnGround3D,
+          this.oldSkyColor, this.oldSkyTexture, this.oldLightColor, this.oldWallsAlpha);
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModify3DAttributes(this.home, this.groundColor, this.groundTexture, this.skyColor,
-          this.skyTexture, this.lightColor, this.wallsAlpha); 
+      doModify3DAttributes(this.home, this.groundColor, this.groundTexture, this.backgroundImageVisibleOnGround3D,
+          this.skyColor, this.skyTexture, this.lightColor, this.wallsAlpha);
     }
 
     @Override
@@ -402,14 +434,15 @@ public class Home3DAttributesController implements Controller {
    * Modifies the 3D attributes of the given <code>home</code>.
    */
   private static void doModify3DAttributes(Home home,
-                                           int groundColor, 
-                                           HomeTexture groundTexture, 
-                                           int skyColor, 
-                                           HomeTexture skyTexture, int lightColor, 
+                                           int groundColor, HomeTexture groundTexture,
+                                           boolean backgroundImageVisibleOnGround3D,
+                                           int skyColor, HomeTexture skyTexture,
+                                           int lightColor,
                                            float wallsAlpha) {
     HomeEnvironment homeEnvironment = home.getEnvironment();
     homeEnvironment.setGroundColor(groundColor);
     homeEnvironment.setGroundTexture(groundTexture);
+    homeEnvironment.setBackgroundImageVisibleOnGround3D(backgroundImageVisibleOnGround3D);
     homeEnvironment.setSkyColor(skyColor);
     homeEnvironment.setSkyTexture(skyTexture);
     homeEnvironment.setLightColor(lightColor);

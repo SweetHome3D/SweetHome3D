@@ -184,6 +184,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
         @Override
         protected void writeAttributes(XMLWriter writer, HomeEnvironment environment) throws IOException {
           writer.writeColorAttribute("groundColor", environment.getGroundColor());
+          writer.writeBooleanAttribute("backgroundImageVisibleOnGround3D", environment.isBackgroundImageVisibleOnGround3D(), false);
           writer.writeColorAttribute("skyColor", environment.getSkyColor());
           writer.writeColorAttribute("lightColor", environment.getLightColor());
           writer.writeFloatAttribute("wallsAlpha", environment.getWallsAlpha(), 0);

@@ -95,6 +95,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * &lt;!ELEMENT environment ((camera | observerCamera)*, texture?, texture?) >
  * &lt;!ATTLIST environment
  *       groundColor CDATA #IMPLIED
+ *       backgroundImageVisibleOnGround3D (false | true) "false"
  *       skyColor CDATA #IMPLIED
  *       lightColor CDATA #IMPLIED
  *       wallsAlpha CDATA "0"
@@ -872,6 +873,7 @@ public class HomeXMLHandler extends DefaultHandler {
       environment.setGroundColor(groundColor);
     }
     environment.setGroundTexture(this.textures.get("groundTexture"));
+    environment.setBackgroundImageVisibleOnGround3D("true".equals(attributes.get("backgroundImageVisibleOnGround3D")));
     Integer skyColor = parseOptionalColor(attributes, "skyColor");
     if (skyColor != null) {
       environment.setSkyColor(skyColor);
