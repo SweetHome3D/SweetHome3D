@@ -1898,7 +1898,8 @@ public class HomeController implements Controller {
               if (!(ex instanceof InterruptedRecorderException)) {
                 ex.printStackTrace();
                 if (ex instanceof RecorderException) {
-                  String message = preferences.getLocalizedString(HomeController.class, "openError", exampleName);
+                  String message = preferences.getLocalizedString(HomeController.class, 
+                      "openError", exampleName, ex);
                   getView().showError(message);
                 }
               }
@@ -2001,7 +2002,8 @@ public class HomeController implements Controller {
               } else {
                 ex.printStackTrace();
                 if (ex instanceof RecorderException) {
-                  String message = preferences.getLocalizedString(HomeController.class, "openError", homeName);
+                  String message = preferences.getLocalizedString(HomeController.class, 
+                      "openError", homeName, ex);
                   getView().showError(message);
                 }
               }
