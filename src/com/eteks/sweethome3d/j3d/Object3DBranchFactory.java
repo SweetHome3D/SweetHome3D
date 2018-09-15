@@ -33,16 +33,25 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
  * @author Emmanuel Puybaret
  */
 public class Object3DBranchFactory implements Object3DFactory {
+  private static boolean ignoreDrawingMode = true;
+
+  static {
+    try {
+      ignoreDrawingMode = Boolean.parseBoolean(System.getProperty("com.eteks.sweethome3d.j3d.ignoreDrawingMode", "true"));
+    } catch (SecurityException ex) {
+    }
+  }
+
   /**
    * Returns the 3D object matching a given <code>item</code>.
    */
   public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
     if (item instanceof HomePieceOfFurniture) {
-      return new HomePieceOfFurniture3D((HomePieceOfFurniture)item, home, true, waitForLoading);
+      return new HomePieceOfFurniture3D((HomePieceOfFurniture)item, home, ignoreDrawingMode, waitForLoading);
     } else if (item instanceof Wall) {
-      return new Wall3D((Wall)item, home, true, waitForLoading);
+      return new Wall3D((Wall)item, home, ignoreDrawingMode, waitForLoading);
     } else if (item instanceof Room) {
-      return new Room3D((Room)item, home, false, waitForLoading);
+      return new Room3D((Room)item, home, false, ignoreDrawingMode, waitForLoading);
     } else if (item instanceof Polyline) {
       return new Polyline3D((Polyline)item, home);
     } else if (item instanceof Label) {
