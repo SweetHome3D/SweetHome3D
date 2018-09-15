@@ -261,6 +261,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       }
       Vector<String> currencies = new Vector<String>(currencyMap.keySet());
       Collections.sort(currencies);
+      Currency defaultLocaleCurrency = Currency.getInstance(Locale.getDefault());
+      if (defaultLocaleCurrency != null) {
+        currencies.add(0, defaultLocaleCurrency.getCurrencyCode()); // Add also the currency of the current locale
+      }
       currencies.add(0, null);
       this.currencyComboBox = new JComboBox(currencies);
       final String noCurrencyText = preferences.getLocalizedString(UserPreferencesPanel.class, "currencyComboBox.noCurrency.text");
@@ -506,7 +510,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
           UserPreferencesPanel.class, "topViewRadioButton.text"),
           controller.isFurnitureViewedFromTop());
-      if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE) 
+      if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE)
           && !no3D) {
         this.iconSizeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             UserPreferencesPanel.class, "iconSizeLabel.text"));
@@ -1011,7 +1015,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.unitComboBox, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, OperatingSystem.isMacOSX() ? -20 : 0, 0));
       // Keep third row empty (used to contain unit radio buttons)
     }
     if (this.currencyLabel != null) {
@@ -1019,21 +1023,13 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       add(this.currencyLabel, new GridBagConstraints(
           0, 3, 1, 1, 0, 0, labelAlignment,
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      if (this.valueAddedTaxCheckBox == null) {
-        add(this.currencyComboBox, new GridBagConstraints(
-            1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-      } else {
-        JPanel currencyPanel = new JPanel(new GridBagLayout());
-        currencyPanel.add(this.currencyComboBox, new GridBagConstraints(
-            0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
-        currencyPanel.add(this.valueAddedTaxCheckBox, new GridBagConstraints(
-            1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-        add(currencyPanel, new GridBagConstraints(
-            1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, checkBoxInsets, 0, 0));
+      add(this.currencyComboBox, new GridBagConstraints(
+          1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+      if (this.valueAddedTaxCheckBox != null) {
+        add(this.valueAddedTaxCheckBox, new GridBagConstraints(
+            2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+            GridBagConstraints.NONE, new Insets(0, 5, smallScreen ? 3 : 5, 0), 0, 0));
       }
     }
     if (this.furnitureCatalogViewLabel != null) {
