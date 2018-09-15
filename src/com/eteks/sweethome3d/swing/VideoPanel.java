@@ -557,7 +557,8 @@ public class VideoPanel extends JPanel implements DialogView {
                                                       int index, boolean isSelected, boolean cellHasFocus) {
           VideoFormat videoFormat = (VideoFormat)value;
           String aspectRatio;
-          switch (getAspectRatio(videoFormat)) {
+          Dimension size = videoFormat.getSize();
+          switch (getAspectRatio(size.width, size.height)) {
             case RATIO_4_3 :
               aspectRatio = preferences.getLocalizedString(
                   PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4_3Ratio.text");
@@ -572,7 +573,7 @@ public class VideoPanel extends JPanel implements DialogView {
                   PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16_9Ratio.text");
               break;
           }
-          Dimension videoSize = videoFormat.getSize();
+          Dimension videoSize = size;
           String displayedValue = String.format(videoFormatComboBoxFormat, videoSize.width, videoSize.height,
               aspectRatio, (int)videoFormat.getFrameRate());
           return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
@@ -581,14 +582,16 @@ public class VideoPanel extends JPanel implements DialogView {
       });
     this.videoFormatComboBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setWidth(((VideoFormat)videoFormatComboBox.getSelectedItem()).getSize().width);
-          controller.setAspectRatio(getAspectRatio((VideoFormat)videoFormatComboBox.getSelectedItem()));
-          controller.setFrameRate((int)((VideoFormat)videoFormatComboBox.getSelectedItem()).getFrameRate());
+          VideoFormat videoFormat = (VideoFormat)videoFormatComboBox.getSelectedItem();
+          Dimension size = videoFormat.getSize();
+          controller.setWidth(videoFormat.getSize().width);
+          controller.setAspectRatio(getAspectRatio(size.width, size.height));
+          controller.setFrameRate((int)videoFormat.getFrameRate());
         }
       });
     PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          videoFormatComboBox.setSelectedItem(controller.getAspectRatio());
+          videoFormatComboBox.setSelectedItem(getVideoFormat(controller.getWidth(), controller.getAspectRatio(), controller.getFrameRate()));
         }
       };
     controller.addPropertyChangeListener(VideoController.Property.WIDTH, propertyChangeListener);
@@ -777,8 +780,18 @@ public class VideoPanel extends JPanel implements DialogView {
     setComponentTexts(preferences);
     updatePlaybackTimer();
 
-    this.videoFormatComboBox.setSelectedItem(new VideoFormat(VideoFormat.JPEG,
-        new Dimension(controller.getWidth(), controller.getHeight()), Format.NOT_SPECIFIED, Format.byteArray, controller.getFrameRate()));
+    this.videoFormatComboBox.setSelectedItem(getVideoFormat(controller.getWidth(), controller.getAspectRatio(), controller.getFrameRate()));
+  }
+
+  private VideoFormat getVideoFormat(int width, AspectRatio aspectRatio, int frameRate) {
+    for (VideoFormat videoFormat : VIDEO_FORMATS) {
+      if (videoFormat.getSize().width == width
+          && getAspectRatio(videoFormat.getSize().width, videoFormat.getSize().height) == aspectRatio
+          && videoFormat.getFrameRate() == frameRate) {
+        return videoFormat;
+      }
+    }
+    return VIDEO_FORMATS [0];
   }
 
   /**
@@ -1578,13 +1591,12 @@ public class VideoPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Returns the aspect ration of the given video format.
+   * Returns the video aspect ration of the given size.
    */
-  private AspectRatio getAspectRatio(VideoFormat videoFormat) {
-    Dimension videoSize = videoFormat.getSize();
-    return Math.abs((float)videoSize.width / videoSize.height - 4f / 3) < 0.001f
+  private AspectRatio getAspectRatio(int width, int height) {
+    return Math.abs((float)width / height - 4f / 3) < 0.001f
        ? AspectRatio.RATIO_4_3
-       : (Math.abs((float)videoSize.width / videoSize.height - 24f / 10) < 0.3f
+       : (Math.abs((float)width / height - 24f / 10) < 0.03f
              ? AspectRatio.RATIO_24_10
              : AspectRatio.RATIO_16_9);
   }
