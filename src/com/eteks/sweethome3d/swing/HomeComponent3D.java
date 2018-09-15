@@ -2762,6 +2762,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.drawingModeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
+          updateObjects(home.getRooms());
           updateObjects(getHomeObjects(HomePieceOfFurniture.class));
         }
       };
