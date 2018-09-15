@@ -725,7 +725,8 @@ public class Room3D extends Object3DBranch {
     Group roomFloorGroup = (Group)getChild(FLOOR_PART);
     boolean ignoreFloorTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
     updateFilledRoomPartAppearance(((Shape3D)roomFloorGroup.getChild(0)).getAppearance(),
-        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible(), ignoreFloorTransparency);
+        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(),
+        room.isFloorVisible(), ignoreFloorTransparency, roomFloorGroup.numChildren() == 1);
     if (roomFloorGroup.numChildren() > 1) {
       updateOutlineRoomPartAppearance(((Shape3D)roomFloorGroup.getChild(1)).getAppearance(), room.isFloorVisible());
     }
@@ -734,7 +735,8 @@ public class Room3D extends Object3DBranch {
     // Ignore ceiling transparency for rooms without level for backward compatibility
     boolean ignoreCeillingTransparency = room.getLevel() == null;
     updateFilledRoomPartAppearance(((Shape3D)roomCeilingGroup.getChild(0)).getAppearance(),
-        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(), room.isCeilingVisible(), ignoreCeillingTransparency);
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(),
+        room.isCeilingVisible(), ignoreCeillingTransparency, roomCeilingGroup.numChildren() == 1);
     if (roomCeilingGroup.numChildren() > 1) {
       updateOutlineRoomPartAppearance(((Shape3D)roomCeilingGroup.getChild(1)).getAppearance(), room.isCeilingVisible());
     }
@@ -749,7 +751,8 @@ public class Room3D extends Object3DBranch {
                                              Integer roomPartColor,
                                              float shininess,
                                              boolean visible,
-                                             boolean ignoreTransparency) {
+                                             boolean ignoreTransparency,
+                                             boolean ignoreDrawingMode) {
     if (roomPartTexture == null) {
       roomPartAppearance.setMaterial(getMaterial(roomPartColor, roomPartColor, shininess));
       roomPartAppearance.setTexture(null);
@@ -782,7 +785,8 @@ public class Room3D extends Object3DBranch {
     RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(visible
-        && (drawingMode == null
+        && (ignoreDrawingMode
+            || drawingMode == null
             || drawingMode == HomeEnvironment.DrawingMode.FILL
             || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
   }

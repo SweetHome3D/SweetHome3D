@@ -1289,6 +1289,7 @@ public class Wall3D extends Object3DBranch {
                                     (Group)getChild(5),  // Main group
                                     (Group)getChild(7)}; // Top group
     for (int i = 0; i < wallLeftSideGroups.length; i++) {
+      boolean ignoreDrawingMode = wallLeftSideGroups [i].numChildren() == 1;
       if (i == 1) {
         // Fill wall baseboards
         Baseboard leftSideBaseboard = wall.getLeftSideBaseboard();
@@ -1300,7 +1301,7 @@ public class Wall3D extends Object3DBranch {
             color = wall.getLeftSideColor();
           }
           updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(),
-              texture, waitTextureLoadingEnd, color, wall.getLeftSideShininess());
+              texture, waitTextureLoadingEnd, color, wall.getLeftSideShininess(), ignoreDrawingMode);
         }
         Baseboard rightSideBaseboard = wall.getRightSideBaseboard();
         if (rightSideBaseboard != null) {
@@ -1311,19 +1312,19 @@ public class Wall3D extends Object3DBranch {
             color = wall.getRightSideColor();
           }
           updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(),
-              texture, waitTextureLoadingEnd, color, wall.getRightSideShininess());
+              texture, waitTextureLoadingEnd, color, wall.getRightSideShininess(), ignoreDrawingMode);
         }
       } else if (i != 3 || wallsTopColor == null) {
         updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(),
-            wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
+            wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess(), ignoreDrawingMode);
         updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(),
-            wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
+            wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess(), ignoreDrawingMode);
       } else {
         // Fill wall top with a separate color
         updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(),
-            null, waitTextureLoadingEnd, wallsTopColor, 0);
+            null, waitTextureLoadingEnd, wallsTopColor, 0, ignoreDrawingMode);
         updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(),
-            null, waitTextureLoadingEnd, wallsTopColor, 0);
+            null, waitTextureLoadingEnd, wallsTopColor, 0, ignoreDrawingMode);
       }
       if (wallLeftSideGroups [i].numChildren() > 1) {
         updateOutlineWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(1)).getAppearance());
@@ -1339,7 +1340,8 @@ public class Wall3D extends Object3DBranch {
                                               final HomeTexture wallSideTexture,
                                               boolean waitTextureLoadingEnd,
                                               Integer wallSideColor,
-                                              float shininess) {
+                                              float shininess,
+                                              boolean ignoreDrawingMode) {
     if (wallSideTexture == null) {
       wallSideAppearance.setMaterial(getMaterial(wallSideColor, wallSideColor, shininess));
       wallSideAppearance.setTexture(null);
@@ -1366,7 +1368,8 @@ public class Wall3D extends Object3DBranch {
     // Update wall side visibility
     RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
-    renderingAttributes.setVisible(drawingMode == null
+    renderingAttributes.setVisible(ignoreDrawingMode
+        || drawingMode == null
         || drawingMode == HomeEnvironment.DrawingMode.FILL
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }
