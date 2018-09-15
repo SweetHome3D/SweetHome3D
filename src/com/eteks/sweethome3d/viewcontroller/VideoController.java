@@ -39,7 +39,7 @@ public class VideoController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {ASPECT_RATIO, FRAME_RATE, WIDTH, HEIGHT, QUALITY, CAMERA_PATH, TIME, CEILING_LIGHT_COLOR}
+  public enum Property {ASPECT_RATIO, FRAME_RATE, WIDTH, HEIGHT, QUALITY, SPEED, CAMERA_PATH, TIME, CEILING_LIGHT_COLOR}
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -53,6 +53,7 @@ public class VideoController implements Controller {
   private int                         width;
   private int                         height;
   private int                         quality;
+  private float                       speed;
   private List<Camera>                cameraPath;
   private long                        time;
   private int                         ceilingLightColor;
@@ -142,6 +143,7 @@ public class VideoController implements Controller {
     setHeight(homeEnvironment.getVideoHeight(), false);
     setAspectRatio(homeEnvironment.getVideoAspectRatio());
     setQuality(homeEnvironment.getVideoQuality());
+    setSpeed(homeEnvironment.getVideoSpeed());
     List<Camera> videoCameraPath = homeEnvironment.getVideoCameraPath();
     setCameraPath(videoCameraPath);
     setTime(videoCameraPath.isEmpty()
@@ -257,6 +259,27 @@ public class VideoController implements Controller {
    */
   public int getQuality() {
     return this.quality;
+  }
+
+  /**
+   * Sets the preferred speed of movements in the video in m/s.
+   * @since 6.0
+   */
+  public void setSpeed(float speed) {
+    if (this.speed != speed) {
+      float oldSpeed = this.speed;
+      this.speed = speed;
+      this.propertyChangeSupport.firePropertyChange(Property.SPEED.name(), oldSpeed, speed);
+      this.home.getEnvironment().setVideoSpeed(this.speed);
+    }
+  }
+
+  /**
+   * Returns the preferred speed of movements in the video in m/s.
+   * @since 6.0
+   */
+  public float getSpeed() {
+    return this.speed;
   }
 
   /**

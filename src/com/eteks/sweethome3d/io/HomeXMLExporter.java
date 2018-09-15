@@ -200,6 +200,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           writer.writeIntegerAttribute("videoWidth", environment.getVideoWidth());
           writer.writeAttribute("videoAspectRatio", environment.getVideoAspectRatio().name());
           writer.writeIntegerAttribute("videoQuality", environment.getVideoQuality());
+          writer.writeFloatAttribute("videoSpeed", environment.getVideoSpeed(), 2400f / 3600);
           writer.writeIntegerAttribute("videoFrameRate", environment.getVideoFrameRate());
         }
 

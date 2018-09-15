@@ -1143,7 +1143,7 @@ public class VideoPanel extends JPanel implements DialogView {
     final ActionMap actionMap = getActionMap();
     boolean playable = cameraPath.size() > 1;
     if (playable) {
-      Camera [] videoFramesPath = getVideoFramesPath(12);
+      Camera [] videoFramesPath = getVideoFramesPath(this.controller.getSpeed(), 12);
       // Find current camera location
       Camera homeCamera = home.getCamera();
       int index = videoFramesPath.length;
@@ -1284,9 +1284,8 @@ public class VideoPanel extends JPanel implements DialogView {
   /**
    * Returns the camera path that should be used to create each frame of an animation.
    */
-  private Camera [] getVideoFramesPath(int frameRate) {
+  private Camera [] getVideoFramesPath(final float speed, int frameRate) {
     List<Camera> videoFramesPath = new ArrayList<Camera>();
-    final float speed = 2400f / 3600; // 2.4 km/h
     final float moveDistancePerFrame = speed * 100f / frameRate;  // speed is in m/s
     final float moveAnglePerFrame = (float)(Math.PI / 120 * 30 * speed / frameRate);
     final float elapsedTimePerFrame = 345600 / frameRate * 25; // 250 frame/day at 25 frame/second
@@ -1392,7 +1391,8 @@ public class VideoPanel extends JPanel implements DialogView {
     int quality = this.controller.getQuality();
     int width = this.controller.getWidth();
     int height = this.controller.getHeight();
-    final Camera [] videoFramesPath = getVideoFramesPath(frameRate);
+    float speed = this.controller.getSpeed();
+    final Camera [] videoFramesPath = getVideoFramesPath(speed, frameRate);
     // Set initial camera location because its type may change rendering setting
     home.setCamera(videoFramesPath [0]);
     final BoundedRangeModel progressModel = this.progressBar.getModel();

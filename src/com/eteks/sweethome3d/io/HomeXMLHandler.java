@@ -111,6 +111,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       videoWidth CDATA "320"
  *       videoAspectRatio (RATIO_4_3 | RATIO_16_9 | RATIO_24_10) "RATIO_4_3"
  *       videoQuality CDATA "0"
+ *       videoSpeed CDATA #IMPLIED
  *       videoFrameRate CDATA "25">
  *
  * &lt;!ELEMENT backgroundImage EMPTY>
@@ -940,6 +941,10 @@ public class HomeXMLHandler extends DefaultHandler {
     Integer videoQuality = parseOptionalInteger(attributes, "videoQuality");
     if (videoQuality != null) {
       environment.setVideoQuality(videoQuality);
+    }
+    Float videoSpeed = parseOptionalFloat(attributes, "videoSpeed");
+    if (videoSpeed != null) {
+      environment.setVideoSpeed(videoSpeed);
     }
     Integer videoFrameRate = parseOptionalInteger(attributes, "videoFrameRate");
     if (videoFrameRate != null) {

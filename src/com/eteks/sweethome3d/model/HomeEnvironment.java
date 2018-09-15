@@ -42,7 +42,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
                         SKY_COLOR, SKY_TEXTURE, LIGHT_COLOR, CEILING_LIGHT_COLOR,
                         WALLS_ALPHA, DRAWING_MODE, SUBPART_SIZE_UNDER_LIGHT, ALL_LEVELS_VISIBLE,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY,
-                        VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
+                        VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_SPEED, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
    * The various modes used to draw home in 3D.
    */
@@ -75,6 +75,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
   // if new constants are added to AspectRatio enum in future versions
   private String                          videoAspectRatioName;
   private int                             videoQuality;
+  private float                           videoSpeed;
   private int                             videoFrameRate;
   private List<Camera>                    cameraPath;
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -121,6 +122,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
     this.videoWidth = 320;
     this.videoAspectRatio = AspectRatio.RATIO_4_3;
+    this.videoSpeed = 2400f / 3600; // 2.4 km/h
     this.videoFrameRate = 25;
     this.cameraPath = Collections.emptyList();
   }
@@ -137,6 +139,7 @@ public class HomeEnvironment implements Serializable, Cloneable {
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
     this.videoWidth = 320;
     this.videoAspectRatio = AspectRatio.RATIO_4_3;
+    this.videoSpeed = 2400f / 3600;
     this.videoFrameRate = 25;
     this.cameraPath = Collections.emptyList();
     in.defaultReadObject();
@@ -578,6 +581,27 @@ public class HomeEnvironment implements Serializable, Cloneable {
       this.videoQuality = videoQuality;
       this.propertyChangeSupport.firePropertyChange(Property.VIDEO_QUALITY.name(),
           oldVideoQuality, videoQuality);
+    }
+  }
+
+  /**
+   * Returns the preferred speed of movements in videos in m/s.
+   * @since 6.0
+   */
+  public float getVideoSpeed() {
+    return this.videoSpeed;
+  }
+
+  /**
+   * Sets the preferred speed of movements in videos in m/s.
+   * @since 6.0
+   */
+  public void setVideoSpeed(float videoSpeed) {
+    if (this.videoSpeed != videoSpeed) {
+      float oldVideoSpeed = this.videoSpeed;
+      this.videoSpeed = videoSpeed;
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_SPEED.name(),
+          oldVideoSpeed, videoSpeed);
     }
   }
 
