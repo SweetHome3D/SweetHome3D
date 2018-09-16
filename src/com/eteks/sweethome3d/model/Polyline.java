@@ -44,7 +44,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * The properties of a polyline that may change. <code>PropertyChangeListener</code>s added
    * to a polyline will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL, ELEVATION}
+  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL, ELEVATION, VISIBLE_IN_3D}
 
   public enum CapStyle {BUTT, SQUARE, ROUND}
 
@@ -482,7 +482,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * @since 6.0
    */
   public float getGroundElevation() {
-    float elevation = this.elevation != null ? this.elevation : 0;
+    float elevation = getElevation();
     if (this.level != null) {
       return elevation + this.level.getElevation();
     } else {
@@ -495,8 +495,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * @return an elevation or <code>null</code> if the polyline shouldn't be displayed in 3D.
    * @since 6.0
    */
-  public Float getElevation() {
-    return this.elevation;
+  public float getElevation() {
+    return this.elevation != null ? this.elevation : 0;
   }
 
   /**
@@ -504,12 +504,31 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * listeners added to this polyline will receive a change notification.
    * @since 6.0
    */
-  public void setElevation(Float elevation) {
-    if (elevation != this.elevation
-        && (elevation == null || !elevation.equals(this.elevation))) {
-      Float oldElevation = this.elevation;
+  public void setElevation(float elevation) {
+    if (this.elevation != null && elevation != this.elevation) {
+      float oldElevation = this.elevation;
       this.elevation = elevation;
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this polyline should be displayed in 3D.
+   * @since 6.0
+   */
+  public boolean isVisibleIn3D() {
+    return this.elevation != null;
+  }
+
+  /**
+   * Sets whether this polyline should be displayed in 3D and fires a <code>PropertyChangeEvent</code>.
+   * @since 6.0
+   */
+  public void setVisibleIn3D(boolean visibleIn3D) {
+    if (visibleIn3D ^ (this.elevation != null)) {
+      this.elevation = visibleIn3D ? Float.valueOf(0) : null;
+      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE_IN_3D.name(),
+          !visibleIn3D, visibleIn3D);
     }
   }
 

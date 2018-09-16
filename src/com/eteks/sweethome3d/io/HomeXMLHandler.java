@@ -1551,6 +1551,7 @@ public class HomeXMLHandler extends DefaultHandler {
     }
     Float elevation = parseOptionalFloat(attributes, "elevation");
     if (elevation != null) {
+      polyline.setVisibleIn3D(true);
       polyline.setElevation(elevation);
     }
     Integer color = parseOptionalColor(attributes, "color");

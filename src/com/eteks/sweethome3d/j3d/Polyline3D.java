@@ -77,8 +77,7 @@ public class Polyline3D extends Object3DBranch {
   @Override
   public void update() {
     Polyline polyline = (Polyline)getUserData();
-    Float elevation = polyline.getElevation();
-    if (elevation != null
+    if (polyline.isVisibleIn3D()
         && (polyline.getLevel() == null
             || polyline.getLevel().isViewableAndVisible())) {
       Stroke stroke = ShapeTools.getStroke(polyline.getThickness(), polyline.getCapStyle(),
@@ -188,7 +187,7 @@ public class Polyline3D extends Object3DBranch {
       TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
       // Apply elevation
       Transform3D transform = new Transform3D();
-      transform.setTranslation(new Vector3d(0, polyline.getGroundElevation() + (elevation < 0.05f ? 0.05f : 0), 0));
+      transform.setTranslation(new Vector3d(0, polyline.getGroundElevation() + (polyline.getElevation() < 0.05f ? 0.05f : 0), 0));
       transformGroup.setTransform(transform);
       ((Shape3D)transformGroup.getChild(0)).getAppearance().setMaterial(getMaterial(polyline.getColor(), polyline.getColor(), 0));
     } else {

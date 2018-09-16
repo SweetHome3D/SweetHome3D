@@ -256,18 +256,16 @@ public class PolylineController implements Controller {
 
       Float elevation = firstPolyline.getElevation();
       for (int i = 1; i < selectedPolylines.size(); i++) {
-        Polyline polyline = selectedPolylines.get(i);
-        if (!(elevation == null && polyline.getElevation() == null
-              || elevation != null && elevation.equals(polyline.getElevation()))) {
+        if (elevation != selectedPolylines.get(i).getElevation()) {
           elevation = null;
           break;
         }
       }
       setElevation(elevation);
 
-      Boolean elevationEnabled = firstPolyline.getElevation() != null;
+      Boolean elevationEnabled = firstPolyline.isVisibleIn3D();
       for (int i = 1; i < selectedPolylines.size(); i++) {
-        if (!elevationEnabled.equals(selectedPolylines.get(i).getElevation() != null)) {
+        if (!elevationEnabled.equals(selectedPolylines.get(i).isVisibleIn3D())) {
           elevationEnabled = null;
           break;
         }
@@ -611,8 +609,9 @@ public class PolylineController implements Controller {
       }
       if (elevationEnabled != null) {
         if (Boolean.FALSE.equals(elevationEnabled)) {
-          polyline.setElevation(null);
+          polyline.setVisibleIn3D(false);
         } else if (elevation != null) {
+          polyline.setVisibleIn3D(true);
           polyline.setElevation(elevation);
         }
       }
@@ -641,7 +640,8 @@ public class PolylineController implements Controller {
     private final Polyline.ArrowStyle startArrowStyle;
     private final Polyline.ArrowStyle endArrowStyle;
     private final int                 color;
-    private final Float               elevation;
+    private final boolean             visibleIn3D;
+    private final float               elevation;
 
     public ModifiedPolyline(Polyline polyline) {
       this.polyline = polyline;
@@ -653,6 +653,7 @@ public class PolylineController implements Controller {
       this.startArrowStyle = polyline.getStartArrowStyle();
       this.endArrowStyle = polyline.getEndArrowStyle();
       this.color = polyline.getColor();
+      this.visibleIn3D = polyline.isVisibleIn3D();
       this.elevation = polyline.getElevation();
     }
 
@@ -669,6 +670,7 @@ public class PolylineController implements Controller {
       this.polyline.setStartArrowStyle(this.startArrowStyle);
       this.polyline.setEndArrowStyle(this.endArrowStyle);
       this.polyline.setColor(this.color);
+      this.polyline.setVisibleIn3D(this.visibleIn3D);
       this.polyline.setElevation(this.elevation);
     }
   }

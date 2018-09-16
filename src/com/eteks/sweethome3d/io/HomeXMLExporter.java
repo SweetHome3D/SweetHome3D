@@ -639,7 +639,9 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           writer.writeFloatAttribute("dashOffset", polyline.getDashOffset(), 0f);
           writer.writeAttribute("startArrowStyle", polyline.getStartArrowStyle().name());
           writer.writeAttribute("endArrowStyle", polyline.getEndArrowStyle().name());
-          writer.writeFloatAttribute("elevation", polyline.getElevation());
+          if (polyline.isVisibleIn3D()) {
+            writer.writeFloatAttribute("elevation", polyline.getElevation());
+          }
           writer.writeColorAttribute("color", polyline.getColor());
           writer.writeBooleanAttribute("closedPath", polyline.isClosedPath(), false);
         }

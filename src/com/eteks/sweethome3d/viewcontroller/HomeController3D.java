@@ -636,7 +636,7 @@ public class HomeController3D implements Controller {
       for (Polyline polyline : selectionEmpty
                 ? home.getPolylines()
                 : Home.getPolylinesSubList(selectedItems)) {
-        if (polyline.getElevation() != null && isItemAtVisibleLevel(polyline)) {
+        if (polyline.isVisibleIn3D() && isItemAtVisibleLevel(polyline)) {
           float minZ;
           float maxZ;
           if (selectionEmpty) {
