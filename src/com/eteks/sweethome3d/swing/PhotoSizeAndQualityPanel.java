@@ -277,19 +277,19 @@ public class PhotoSizeAndQualityPanel extends JPanel {
         }
       };
     addAncestorListener(new AncestorListener() {
-      public void ancestorAdded(AncestorEvent ev) {
-        view3D.addComponentListener(view3DSizeListener);
-        ToolTipManager.sharedInstance().registerComponent(qualitySlider);
-      }
+        public void ancestorAdded(AncestorEvent ev) {
+          view3D.addComponentListener(view3DSizeListener);
+          ToolTipManager.sharedInstance().registerComponent(qualitySlider);
+        }
 
-      public void ancestorRemoved(AncestorEvent ev) {
-        ToolTipManager.sharedInstance().unregisterComponent(qualitySlider);
-        view3D.removeComponentListener(view3DSizeListener);
-      }
+        public void ancestorRemoved(AncestorEvent ev) {
+          ToolTipManager.sharedInstance().unregisterComponent(qualitySlider);
+          view3D.removeComponentListener(view3DSizeListener);
+        }
 
-      public void ancestorMoved(AncestorEvent ev) {
-      }
-    });
+        public void ancestorMoved(AncestorEvent ev) {
+        }
+      });
 
     setComponentTexts(preferences);
   }

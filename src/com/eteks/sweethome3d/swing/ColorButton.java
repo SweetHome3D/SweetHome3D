@@ -102,11 +102,11 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class ColorButton extends JButton {
   public static final String COLOR_PROPERTY = "color";
   public static final String COLOR_DIALOG_TITLE_PROPERTY = "colorDialogTitle";
-  
+
   // Share color chooser between ColorButton instances to keep recent colors
   private static JColorChooser colorChooser;
   private static Locale        colorChooserLocale;
-  
+
   private Integer color;
   private String  colorDialogTitle;
 
@@ -116,7 +116,7 @@ public class ColorButton extends JButton {
   public ColorButton() {
     this(null);
   }
-  
+
   /**
    * Creates a color button.
    */
@@ -150,18 +150,18 @@ public class ColorButton extends JButton {
       public void actionPerformed(ActionEvent ev) {
         if (colorChooser == null
             || !Locale.getDefault().equals(colorChooserLocale)) {
-          // Create color chooser instance each time default locale changed 
-          colorChooser = createColorChooser(preferences);          
+          // Create color chooser instance each time default locale changed
+          colorChooser = createColorChooser(preferences);
           colorChooserLocale = Locale.getDefault();
         }
-        
+
         // Update edited color in furniture color chooser
-        colorChooser.setColor(color != null 
+        colorChooser.setColor(color != null
             ? new Color(color)
             : getBackground());
-        JDialog colorDialog = JColorChooser.createDialog(getParent(), 
+        JDialog colorDialog = JColorChooser.createDialog(getParent(),
             colorDialogTitle, true, colorChooser,
-            new ActionListener () { 
+            new ActionListener () {
               public void actionPerformed(ActionEvent e) {
                 // Change button color when user click on ok button
                 Integer color = colorChooser.getColor().getRGB();
@@ -178,10 +178,10 @@ public class ColorButton extends JButton {
                     }
                   }
                   recentColors.add(0, color);
-                  preferences.setRecentColors(recentColors);     
+                  preferences.setRecentColors(recentColors);
                 }
               }
-            }, null);   
+            }, null);
         if (preferences != null) {
           AbstractColorChooserPanel colorChooserPanel = colorChooser.getChooserPanels() [0];
           if (colorChooserPanel instanceof PalettesColorChooserPanel) {
@@ -202,24 +202,24 @@ public class ColorButton extends JButton {
     final JColorChooser colorChooser;
     if (preferences != null) {
       // Replace preview title by recent
-      UIManager.put("ColorChooser.previewText", 
+      UIManager.put("ColorChooser.previewText",
           preferences.getLocalizedString(ColorButton.class, "recentPanel.title"));
       ColorSelectionModel colorSelectionModel = new DefaultColorSelectionModel();
-      final JPanel previewPanel = new RecentColorsPanel(colorSelectionModel, preferences);          
+      final JPanel previewPanel = new RecentColorsPanel(colorSelectionModel, preferences);
       final PalettesColorChooserPanel palettesPanel = new PalettesColorChooserPanel(preferences);
       palettesPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
       colorChooser = new JColorChooser(colorSelectionModel) {
           public void updateUI() {
             super.updateUI();
-            // Add customized color chooser panel in updateUI, because an outside call to setChooserPanels 
+            // Add customized color chooser panel in updateUI, because an outside call to setChooserPanels
             // might be ignored when the color chooser dialog is created
             List<AbstractColorChooserPanel> chooserPanels = new ArrayList<AbstractColorChooserPanel>(
                 Arrays.asList(getChooserPanels()));
             // Remove swatch chooser panel
             if (chooserPanels.get(0).getClass().getName().equals("javax.swing.colorchooser.DefaultSwatchChooserPanel")) {
               chooserPanels.remove(0);
-            } 
-            // Remove components used to manage transparency and displayed at the fourth or fifth row 
+            }
+            // Remove components used to manage transparency and displayed at the fourth or fifth row
             // of the first panel of ColorChooserPanel instances
             for (AbstractColorChooserPanel chooserPanel : chooserPanels) {
               if (chooserPanel.getClass().getName().equals("javax.swing.colorchooser.ColorChooserPanel")) {
@@ -252,7 +252,7 @@ public class ColorButton extends JButton {
     } else {
       colorChooser = new JColorChooser();
     }
-    
+
     // Add Esc key management
     colorChooser.getActionMap().put("close", new AbstractAction() {
         public void actionPerformed(ActionEvent ev) {
@@ -303,14 +303,14 @@ public class ColorButton extends JButton {
   }
 
   /**
-   * Returns the title of color dialog displayed when this button is pressed.  
+   * Returns the title of color dialog displayed when this button is pressed.
    */
   public String getColorDialogTitle() {
     return this.colorDialogTitle;
   }
 
   /**
-   * Sets the title of color dialog displayed when this button is pressed.  
+   * Sets the title of color dialog displayed when this button is pressed.
    */
   public void setColorDialogTitle(String colorDialogTitle) {
     if (colorDialogTitle != this.colorDialogTitle
@@ -334,28 +334,10 @@ public class ColorButton extends JButton {
     private PaletteComboBox       ralComboBox;
     private PaletteComboBox       creativeCommonsComboBox;
     private Color                 initialColor;
-      
+
     public PalettesColorChooserPanel(UserPreferences preferences) {
       setOpaque(false);
       this.preferences = preferences;
-      addAncestorListener(new AncestorListener() {
-          private int initialDelay;
-  
-          public void ancestorAdded(AncestorEvent event) {
-            // Set a shorter delay to display tool tips
-            ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-            this.initialDelay = toolTipManager.getInitialDelay();
-            toolTipManager.setInitialDelay(Math.min(this.initialDelay, 100));
-          }
-          
-          public void ancestorRemoved(AncestorEvent event) {
-            // Restore default delay
-            ToolTipManager.sharedInstance().setInitialDelay(this.initialDelay);
-          }
-          
-          public void ancestorMoved(AncestorEvent event) {
-          }
-        });
     }
 
     public void setInitialColor(Color referenceColor) {
@@ -364,7 +346,7 @@ public class ColorButton extends JButton {
         this.colorComponent.repaint();
       }
     }
-    
+
     @Override
     public void updateChooser() {
       Color selectedColor = getColorFromModel();
@@ -386,10 +368,9 @@ public class ColorButton extends JButton {
           OperatingSystem.isMacOSX()
               ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
               : ColorButton.class.getResource("resources/cursors/pipette16x16.png"),
-          ColorButton.class.getResource("resources/cursors/pipette32x32.png"), 
+          ColorButton.class.getResource("resources/cursors/pipette32x32.png"),
           0, 1, "Pipette", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
       this.grayColorChart.setCursor(pipetteCursor);
-      ToolTipManager.sharedInstance().registerComponent(this.grayColorChart);
       MouseInputAdapter grayColorCharMouseListener = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
@@ -398,7 +379,7 @@ public class ColorButton extends JButton {
               clickOnOk();
             }
           }
-         
+
           @Override
           public void mouseDragged(MouseEvent ev) {
             mousePressed(ev);
@@ -410,7 +391,6 @@ public class ColorButton extends JButton {
       this.colorChart = new ColorChart();
       this.colorChart.setBorder(BorderFactory.createLineBorder(Color.GRAY));
       this.colorChart.setCursor(pipetteCursor);
-      ToolTipManager.sharedInstance().registerComponent(this.colorChart);
       MouseInputAdapter colorChartMouseListener = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
@@ -419,7 +399,7 @@ public class ColorButton extends JButton {
               clickOnOk();
             }
           }
-          
+
           @Override
           public void mouseDragged(MouseEvent ev) {
             mousePressed(ev);
@@ -427,7 +407,7 @@ public class ColorButton extends JButton {
         };
       this.colorChart.addMouseListener(colorChartMouseListener);
       this.colorChart.addMouseMotionListener(colorChartMouseListener);
-      
+
       JLabel colorLabel = new JLabel(
           this.preferences.getLocalizedString(ColorButton.class, "colorLabel.text"));
       this.colorComponent = new JComponent() {
@@ -437,7 +417,7 @@ public class ColorButton extends JButton {
             int drawnWidth = getWidth() - insets.right - insets.left;
             int drawnHeight = getHeight() - insets.bottom - insets.top;
             g.setColor(Color.GRAY);
-            g.translate(insets.left, insets.top);            
+            g.translate(insets.left, insets.top);
             g.drawRect(0, 0, drawnWidth / 2 - 1, drawnHeight - 1);
             g.drawRect(drawnWidth / 2, 0, drawnWidth / 2 - 1, drawnHeight - 1);
             g.setColor(initialColor);
@@ -445,7 +425,7 @@ public class ColorButton extends JButton {
             g.setColor(getColorSelectionModel().getSelectedColor());
             g.fillRect(drawnWidth / 2 + 1, 1, drawnWidth / 2 - 2, drawnHeight - 2);
           }
-          
+
           @Override
           public Dimension getPreferredSize() {
             return new Dimension(60, 30);
@@ -460,7 +440,32 @@ public class ColorButton extends JButton {
           }
         });
       this.colorComponent.setCursor(pipetteCursor);
-      
+
+      // Add an ancestor listener to manage bindings with ToolTipManager
+      addAncestorListener(new AncestorListener() {
+          private int initialDelay;
+
+          public void ancestorAdded(AncestorEvent event) {
+            // Set a shorter delay to display tool tips
+            ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+            this.initialDelay = toolTipManager.getInitialDelay();
+            toolTipManager.setInitialDelay(Math.min(this.initialDelay, 100));
+            toolTipManager.registerComponent(grayColorChart);
+            toolTipManager.registerComponent(colorChart);
+          }
+
+          public void ancestorRemoved(AncestorEvent event) {
+            // Restore default delay
+            ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+            toolTipManager.setInitialDelay(this.initialDelay);
+            toolTipManager.unregisterComponent(grayColorChart);
+            toolTipManager.unregisterComponent(colorChart);
+          }
+
+          public void ancestorMoved(AncestorEvent event) {
+          }
+        });
+
       AbstractAction pipetteAction = new AbstractAction() {
           public void actionPerformed(ActionEvent ev) {
             // Grab desktop with a tiny undecorated dialog
@@ -486,14 +491,14 @@ public class ColorButton extends JButton {
                 awtUtilitiesClass.getMethod("setWindowOpacity", Window.class, float.class).invoke(null, pipetteWindow, 0.05f);
                 // Enlarge window to reduce mouse cursor change
                 pipetteWindow.setSize(10, 10);
-              } 
+              }
             } catch (Exception ex) {
               // For any exception, let's consider simply the method failed or doesn't exist
             }
             final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
-            pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2, 
+            pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2,
                 mouseLocation.y - pipetteWindow.getHeight() / 2);
-            mouseLocation.setLocation(-1, -1); // Reset location to help window update its cursor 
+            mouseLocation.setLocation(-1, -1); // Reset location to help window update its cursor
             pipetteWindow.setCursor(pipetteCursor);
             // Follow mouse moves with a timer because mouse listeners would miss some events
             final Timer timer = new Timer(10, new ActionListener() {
@@ -501,7 +506,7 @@ public class ColorButton extends JButton {
                   Point newMouseLocation = MouseInfo.getPointerInfo().getLocation();
                   if (!mouseLocation.equals(newMouseLocation)) {
                     mouseLocation.setLocation(newMouseLocation);
-                    pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2, 
+                    pipetteWindow.setLocation(mouseLocation.x - pipetteWindow.getWidth() / 2,
                         mouseLocation.y - pipetteWindow.getHeight() / 2);
                     pipetteWindow.setCursor(pipetteCursor);
                   }
@@ -521,7 +526,7 @@ public class ColorButton extends JButton {
                 public void windowLostFocus(WindowEvent ev) {
                   closeAction.actionPerformed(null);
                 }
-                
+
                 public void windowGainedFocus(WindowEvent ev) {
                 }
               });
@@ -536,7 +541,7 @@ public class ColorButton extends JButton {
                   }
                 }
               });
-            
+
             pipetteWindow.setVisible(true);
           }
 
@@ -547,7 +552,7 @@ public class ColorButton extends JButton {
             return new Color(pixel [0]);
           }
         };
-      pipetteAction.putValue(Action.SMALL_ICON, 
+      pipetteAction.putValue(Action.SMALL_ICON,
           new ImageIcon(OperatingSystem.isMacOSX()
               ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
               : ColorButton.class.getResource("resources/cursors/pipette16x16.png")));
@@ -563,11 +568,11 @@ public class ColorButton extends JButton {
             pos.setEndIndex(pos.getEndIndex() + 7);
             return toAppendTo;
           }
-  
+
           @Override
           public Object parseObject(String source, ParsePosition pos) {
             if (source.length() == 7 && source.charAt(0) == '#') {
-              try {                
+              try {
                 Color color = Color.decode(source);
                 pos.setIndex(pos.getIndex() + 7);
                 return color;
@@ -582,11 +587,11 @@ public class ColorButton extends JButton {
           public void removeUpdate(DocumentEvent ev) {
             changedUpdate(ev);
           }
-          
+
           public void insertUpdate(DocumentEvent ev) {
             changedUpdate(ev);
           }
-          
+
           public void changedUpdate(DocumentEvent ev) {
             try {
               rgbTextField.commitEdit();
@@ -595,7 +600,7 @@ public class ColorButton extends JButton {
             }
           }
         });
-      
+
       JLabel ralLabel = new JLabel(SwingTools.getLocalizedLabelText(this.preferences, ColorButton.class, "ralLabel.text"));
       this.ralComboBox = new PaletteComboBox(ColorCode.RAL_COLORS);
       ItemListener paletteChangeListener = new ItemListener() {
@@ -624,47 +629,47 @@ public class ColorButton extends JButton {
             this.preferences.getLocalizedString(ColorButton.class, "creativeCommonsLabel.mnemonic")).getKeyCode());
         creativeCommonsLabel.setLabelFor(this.creativeCommonsComboBox);
       }
-      
+
       // Layout components
       setLayout(new GridBagLayout());
       int labelAlignment = GridBagConstraints.LINE_START;
       add(this.grayColorChart, new GridBagConstraints(
-          0, 0, 1, 7, 0, 0, GridBagConstraints.CENTER, 
+          0, 0, 1, 7, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
       add(this.colorChart, new GridBagConstraints(
-          1, 0, 1, 7, 0, 0, GridBagConstraints.CENTER, 
-          GridBagConstraints.BOTH, new Insets(0, 0, 0, 10), 0, 0));           
+          1, 0, 1, 7, 0, 0, GridBagConstraints.CENTER,
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, 10), 0, 0));
       add(colorLabel, new GridBagConstraints(
-          2, 0, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 8, 5), 0, 0));           
+          2, 0, 1, 1, 0, 0, labelAlignment,
+          GridBagConstraints.NONE, new Insets(0, 0, 8, 5), 0, 0));
       add(this.colorComponent, new GridBagConstraints(
-          3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
       add(pipetteButton, new GridBagConstraints(
-          4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+          4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.NONE, new Insets(0, 5, 8, 0), 0, 0));
       add(rgbLabel, new GridBagConstraints(
-          2, 1, 3, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
+          2, 1, 3, 1, 0, 0, labelAlignment,
+          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
       add(this.rgbTextField, new GridBagConstraints(
-          2, 2, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, 
-          OperatingSystem.isMacOSX() 
-              ? new Insets(0, 1, 5, 1) 
-              : new Insets(0, 0, 5, 0), 0, 0));           
+          2, 2, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL,
+          OperatingSystem.isMacOSX()
+              ? new Insets(0, 1, 5, 1)
+              : new Insets(0, 0, 5, 0), 0, 0));
       add(ralLabel, new GridBagConstraints(
-          2, 3, 3, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
+          2, 3, 3, 1, 0, 0, labelAlignment,
+          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
       add(this.ralComboBox, new GridBagConstraints(
-          2, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));           
+          2, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
       add(creativeCommonsLabel, new GridBagConstraints(
-          2, 5, 3, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));           
+          2, 5, 3, 1, 0, 0, labelAlignment,
+          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
       add(this.creativeCommonsComboBox, new GridBagConstraints(
-          2, 6, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+          2, 6, 3, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-      
+
       getColorSelectionModel().addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             updateChooser();
@@ -685,7 +690,7 @@ public class ColorButton extends JButton {
         }
       }
     }
-    
+
     @Override
     public String getDisplayName() {
       return this.preferences.getLocalizedString(ColorButton.class, "chooserPanel.title");
@@ -701,13 +706,13 @@ public class ColorButton extends JButton {
       return null;
     }
   }
-  
+
   /**
    * A gray color chart.
    */
   private static final class GrayColorChart extends JComponent {
     @Override
-    protected void paintComponent(Graphics g) {          
+    protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
       g.translate(insets.left, 0);
       int drawnWidth = getWidth() - insets.right - insets.left;
@@ -721,17 +726,17 @@ public class ColorButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
       Insets insets = getInsets();
-      return new Dimension(Math.round(15 * SwingTools.getResolutionScale()) + insets.right + insets.left, 
+      return new Dimension(Math.round(15 * SwingTools.getResolutionScale()) + insets.right + insets.left,
           Math.round(128 * SwingTools.getResolutionScale()) + insets.bottom + insets.top);
     }
 
     public Color getColorAt(int y) {
       Insets insets = getInsets();
-      float scale = (float)(Math.min(Math.max(insets.top, y), getHeight() - insets.bottom - 1) - insets.top) 
+      float scale = (float)(Math.min(Math.max(insets.top, y), getHeight() - insets.bottom - 1) - insets.top)
           / (getHeight() - insets.bottom - insets.top - 1);
       return new Color(scale, scale, scale);
     }
-    
+
     @Override
     public String getToolTipText(MouseEvent ev) {
       String color = String.format("#%6X", getColorAt(ev.getY()).getRGB() & 0xFFFFFF).replace(' ', '0');
@@ -739,13 +744,13 @@ public class ColorButton extends JButton {
           + "<tr><td align='center'>" + color + "</td></tr>";
     }
   }
-  
+
   /**
    * A color chart.
    */
   private static final class ColorChart extends JComponent {
     @Override
-    protected void paintComponent(Graphics g) {          
+    protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
       for (int x = insets.left, n = getWidth() - insets.right; x < n; x++) {
         for (int y = insets.top, m = getHeight() - insets.bottom; y < m; y++) {
@@ -758,7 +763,7 @@ public class ColorButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
       Insets insets = getInsets();
-      return new Dimension(Math.round(256 * SwingTools.getResolutionScale()) + insets.right + insets.left, 
+      return new Dimension(Math.round(256 * SwingTools.getResolutionScale()) + insets.right + insets.left,
           Math.round(128 * SwingTools.getResolutionScale()) + insets.bottom + insets.top);
     }
 
@@ -804,20 +809,20 @@ public class ColorButton extends JButton {
             scrollPane.setPreferredSize(size);
             scrollPane.setMaximumSize(size);
           }
-          
+
           public void popupMenuCanceled(PopupMenuEvent e) {
           }
-          
+
           public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
           }
         };
       if (!OperatingSystem.isMacOSX()) {
         addPopupMenuListener(comboBoxPopupMenuListener);
-      } 
+      }
       final int iconHeight = Math.round(16 * SwingTools.getResolutionScale());
       setRenderer(new DefaultListCellRenderer() {
           @Override
-          public Component getListCellRendererComponent(final JList list, 
+          public Component getListCellRendererComponent(final JList list,
                     Object value, int index, boolean isSelected, boolean cellHasFocus) {
             final ColorCode color = (ColorCode)value;
             if (color == null) {
@@ -832,11 +837,11 @@ public class ColorButton extends JButton {
                   public int getIconWidth() {
                     return iconHeight * 2;
                   }
-            
+
                   public int getIconHeight() {
                     return iconHeight;
                   }
-            
+
                   public void paintIcon(Component c, Graphics g, int x, int y) {
                     g.setColor(new Color(color.getRGB()));
                     g.fillRect(x + 1, y + 1, getIconWidth() - 3, getIconHeight() - 2);
@@ -849,7 +854,7 @@ public class ColorButton extends JButton {
           }
         });
     }
-    
+
     /**
      * Returns the color code matching the one given in parameter or <code>null</code> if not found.
      */
@@ -865,7 +870,7 @@ public class ColorButton extends JButton {
       return null;
     }
   }
-  
+
   /**
    * Color code.
    */
@@ -877,7 +882,7 @@ public class ColorButton extends JButton {
       this.id = id;
       this.rgb = rgb;
     }
-    
+
     public String getId() {
       return this.id;
     }
@@ -885,7 +890,7 @@ public class ColorButton extends JButton {
     public int getRGB() {
       return this.rgb;
     }
-    
+
     // From http://www.ralcolor.com/
     public static final ColorCode RAL_COLORS [] = {
         new ColorCode("1000", 0xBEBD7F),
@@ -1097,15 +1102,15 @@ public class ColorButton extends JButton {
         new ColorCode("9017", 0x1E1E1E),
         new ColorCode("9018", 0xD7D7D7),
         new ColorCode("9022", 0x9C9C9C),
-        new ColorCode("9023", 0x828282)};   
-    
+        new ColorCode("9023", 0x828282)};
+
     // From http://wiki.creativecommons.org/Colors/
     public static final ColorCode CREATIVE_COMMONS_COLORS [] = {
-        new ColorCode("Magenta 1", 0xf7b2cc), 
+        new ColorCode("Magenta 1", 0xf7b2cc),
         new ColorCode("Magenta 2", 0xb62b6e),
-        new ColorCode("Magenta 3", 0x7b1b53), 
+        new ColorCode("Magenta 3", 0x7b1b53),
         new ColorCode("Magenta 4", 0x4f1035),
-        new ColorCode("Purple 1", 0xd6b4d6), 
+        new ColorCode("Purple 1", 0xd6b4d6),
         new ColorCode("Purple 2", 0x9628c6),
         new ColorCode("Purple 3", 0x662978),
         new ColorCode("Purple 4", 0x42194f),
@@ -1150,9 +1155,9 @@ public class ColorButton extends JButton {
    */
   private static class RecentColorsPanel extends JPanel {
     public static final int MAX_COLORS = OperatingSystem.isJavaVersionGreaterOrEqual("1.7") ? 25 : 20;
-    
+
     private Cursor pipetteCursor;
-    
+
     private RecentColorsPanel(final ColorSelectionModel colorSelectionModel,
                               final UserPreferences preferences) {
       super(new GridBagLayout());
@@ -1160,9 +1165,9 @@ public class ColorButton extends JButton {
           OperatingSystem.isMacOSX()
               ? ColorButton.class.getResource("resources/cursors/pipette16x16-macosx.png")
               : ColorButton.class.getResource("resources/cursors/pipette16x16.png"),
-          ColorButton.class.getResource("resources/cursors/pipette32x32.png"), 
+          ColorButton.class.getResource("resources/cursors/pipette32x32.png"),
           0, 1, "Pipette", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-      preferences.addPropertyChangeListener(UserPreferences.Property.RECENT_COLORS, 
+      preferences.addPropertyChangeListener(UserPreferences.Property.RECENT_COLORS,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               setRecentColors(colorSelectionModel, preferences);
@@ -1172,16 +1177,16 @@ public class ColorButton extends JButton {
       setOpaque(false);
     }
 
-    private void setRecentColors(final ColorSelectionModel colorSelectionModel, 
+    private void setRecentColors(final ColorSelectionModel colorSelectionModel,
                                  UserPreferences preferences) {
       removeAll();
       int i = 0;
       if (UIManager.getLookAndFeel().getID().equals("GTK")) {
         // Add a label to replace the border that is not active
         add(new JLabel(UIManager.getString("ColorChooser.previewText")), new GridBagConstraints(
-            i++, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+            i++, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-      }      
+      }
       List<Integer> recentColors = preferences.getRecentColors();
       final int colorComponentSize = Math.round(20 * SwingTools.getResolutionScale());
       for (int j = 0; j < recentColors.size() && j < MAX_COLORS; j++) {
@@ -1193,12 +1198,12 @@ public class ColorButton extends JButton {
               int drawnWidth = getWidth() - insets.right - insets.left;
               int drawnHeight = getHeight() - insets.bottom - insets.top;
               g.setColor(Color.GRAY);
-              g.translate(insets.left, insets.top);            
+              g.translate(insets.left, insets.top);
               g.drawRect(0, 0, drawnWidth - 1, drawnHeight - 1);
               g.setColor(new Color(color));
               g.fillRect(1, 1, drawnWidth - 2, drawnHeight - 2);
             }
-            
+
             @Override
             public Dimension getPreferredSize() {
               return new Dimension(colorComponentSize, colorComponentSize);
@@ -1222,12 +1227,12 @@ public class ColorButton extends JButton {
           });
         colorComponent.setCursor(this.pipetteCursor);
         add(colorComponent, new GridBagConstraints(
-            i++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+            i++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
       }
     }
 
-    public Insets getInsets() { 
+    public Insets getInsets() {
       if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         Insets insets = super.getInsets();
         if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
