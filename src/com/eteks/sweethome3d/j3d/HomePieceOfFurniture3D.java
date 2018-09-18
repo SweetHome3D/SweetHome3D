@@ -527,12 +527,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       modelBranch.addChild(createOutlineModelNode(normalization));
     }
 
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    if (piece.isDoorOrWindow()) {
+      setTransparentShapeNotPickable(this);
+    }
+
     TransformGroup transformGroup = (TransformGroup)getChild(0);
     // Remove previous nodes
     transformGroup.removeAllChildren();
     // Add model branch to live scene
     transformGroup.addChild(modelBranch);
-    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     if (piece.isHorizontallyRotated()) {
       // Update piece transformation to ensure its center is correctly placed
       updatePieceOfFurnitureTransform();
@@ -985,7 +989,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       // Change visibility
       renderingAttributes.setVisible(visible);
-      node.setPickable(visible);
+      if (node.getCapability(Node.ALLOW_PICKABLE_WRITE)) {
+        node.setPickable(visible);
+      }
     }
   }
 
@@ -1088,6 +1094,32 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // Change back face normal flip
       polygonAttributes.setBackFaceNormalFlip(
           backFaceNormalFlip ^ polygonAttributes.getCullFace() == PolygonAttributes.CULL_FRONT);
+    }
+  }
+
+  /**
+   * Cancels the pickability of the <code>Shape3D</code> children nodes of <code>node</code>
+   * when it uses a transparent appearance.
+   */
+  private void setTransparentShapeNotPickable(Node node) {
+    if (node instanceof Group) {
+      // Set back face normal flip of all children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        setTransparentShapeNotPickable((Node)enumeration.nextElement());
+      }
+    } else if (node instanceof Link) {
+      setTransparentShapeNotPickable(((Link)node).getSharedGroup());
+    } else if (node instanceof Shape3D) {
+      Appearance appearance = ((Shape3D)node).getAppearance();
+      if (appearance != null) {
+        TransparencyAttributes transparencyAttributes = appearance.getTransparencyAttributes();
+        if (transparencyAttributes != null
+            && transparencyAttributes.getTransparency() > 0) {
+          node.clearCapability(Node.ALLOW_PICKABLE_WRITE);
+          node.setPickable(false);
+        }
+      }
     }
   }
 
