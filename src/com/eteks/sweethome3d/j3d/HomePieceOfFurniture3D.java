@@ -606,6 +606,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     Appearance boxAppearance = new Appearance();
     boxAppearance.setMaterial(material);
     Box box = new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+    box.getShape(Box.FRONT).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    box.getShape(Box.BACK).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    box.getShape(Box.BOTTOM).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    box.getShape(Box.TOP).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    box.getShape(Box.LEFT).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    box.getShape(Box.RIGHT).setCapability(Node.ALLOW_PICKABLE_WRITE);
     box.setUserData(DEFAULT_BOX);
     return box;
   }
@@ -979,6 +985,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       // Change visibility
       renderingAttributes.setVisible(visible);
+      node.setPickable(visible);
     }
   }
 

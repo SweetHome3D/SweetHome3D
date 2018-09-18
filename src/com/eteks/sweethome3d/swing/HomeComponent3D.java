@@ -46,7 +46,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
@@ -164,6 +166,8 @@ import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.sun.j3d.exp.swing.JCanvas3D;
 import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.picking.PickCanvas;
+import com.sun.j3d.utils.picking.PickResult;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.Viewer;
 import com.sun.j3d.utils.universe.ViewingPlatform;
@@ -486,6 +490,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     add(canvasPanel);
     if (controller != null) {
       addMouseListeners(controller, this.component3D);
+      // Transfer mouse listeners added to this component
+      for (MouseListener l : getMouseListeners()) {
+        super.removeMouseListener(l);
+        addMouseListener(l);
+      }
+      for (MouseMotionListener l : getMouseMotionListeners()) {
+        super.removeMouseMotionListener(l);
+        addMouseMotionListener(l);
+      }
       if (preferences != null
           && (!OperatingSystem.isMacOSX()
               || OperatingSystem.isMacOSXLeopardOrSuperior())) {
@@ -1595,7 +1608,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     component3D.addMouseMotionListener(mouseListener);
     component3D.addMouseWheelListener(mouseWheelListener);
     // Add a mouse listener to this component to request focus in case user clicks in component border
-    this.addMouseListener(new MouseInputAdapter() {
+    super.addMouseListener(new MouseInputAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
           requestFocusInWindow();
@@ -1729,6 +1742,107 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_FAST_UP, new RotateCameraPitchAction(-(float)Math.PI / 24));
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 120));
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_FAST_DOWN, new RotateCameraPitchAction((float)Math.PI / 24));
+  }
+  
+  @Override
+  public void addMouseMotionListener(final MouseMotionListener l) {
+    if (this.component3D != null) {
+      this.component3D.addMouseMotionListener(new MouseMotionListener() {
+          public void mouseMoved(MouseEvent ev) {
+            l.mouseMoved(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+          
+          public void mouseDragged(MouseEvent ev) {
+            l.mouseDragged(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+        });
+    } else {
+      // Will move listener to component3D once created
+      addMouseMotionListener(l);
+    }
+  }
+
+  @Override
+  public void removeMouseMotionListener(final MouseMotionListener l) {
+    if (this.component3D != null) {
+      this.component3D.removeMouseMotionListener(l);
+    } else {
+      removeMouseMotionListener(l);
+    }
+  }
+
+  @Override
+  public void addMouseListener(final MouseListener l) {
+    if (this.component3D != null) {
+      this.component3D.addMouseListener(new MouseListener() {
+          public void mouseReleased(MouseEvent ev) {
+            l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+  
+          public void mousePressed(MouseEvent ev) {
+            l.mousePressed(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+  
+          public void mouseExited(MouseEvent ev) {
+            l.mouseExited(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+  
+          public void mouseEntered(MouseEvent ev) {
+            l.mouseEntered(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+  
+          public void mouseClicked(MouseEvent ev) {
+            l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+        });
+    } else {
+      // Will move listener to component3D once created
+      addMouseListener(l);
+    }
+  }
+
+  @Override
+  public void removeMouseListener(final MouseListener l) {
+    if (this.component3D != null) {
+      this.component3D.removeMouseListener(l);
+    } else {
+      removeMouseListener(l);
+    }
+  }
+
+  /**
+   * Returns the closest {@link Selectable} object at screen coordinates (x, y), 
+   * or <code>null</code> if not found.
+   */
+  public Selectable getClosestItemAt(int x, int y) {
+    if (this.component3D != null) {
+      Canvas3D canvas;
+      if (this.component3D instanceof JCanvas3D) {
+        canvas = ((JCanvas3D)this.component3D).getOffscreenCanvas3D();
+      } else {
+        canvas = (Canvas3D)this.component3D;
+      }
+      PickCanvas pickCanvas = new PickCanvas(canvas, this.onscreenUniverse.getLocale());
+      pickCanvas.setMode(PickCanvas.GEOMETRY);
+      Point canvasPoint = SwingUtilities.convertPoint(this, x, y, this.component3D);
+      pickCanvas.setShapeLocation(canvasPoint.x, canvasPoint.y);
+      PickResult result = pickCanvas.pickClosest();
+      if (result != null) {
+        Node pickedNode = result.getNode(PickResult.SHAPE3D);
+        while (!this.homeObjects.containsValue(pickedNode) 
+               && pickedNode.getParent() != null) {
+          pickedNode = pickedNode.getParent();
+        }
+        if (pickedNode != null) {
+          for (Map.Entry<Selectable, Object3DBranch> entry : this.homeObjects.entrySet()) {
+            if (entry.getValue() == pickedNode) {
+              return entry.getKey();
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**

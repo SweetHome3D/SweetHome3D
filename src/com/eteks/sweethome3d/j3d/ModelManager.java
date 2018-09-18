@@ -1315,7 +1315,7 @@ public class ModelManager {
 
   /**
    * Turns off light nodes of <code>node</code> children,
-   * and modulates textures if needed.
+   * modulates textures if needed and allows shapes to change their pickable property.
    */
   private void turnOffLightsShareAndModulateTextures(Node node,
                                                      Map<Texture, Texture> replacedTextures) {
@@ -1330,6 +1330,7 @@ public class ModelManager {
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
+      node.setCapability(Node.ALLOW_PICKABLE_WRITE);
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
         Texture texture = appearance.getTexture();
