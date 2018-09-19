@@ -389,6 +389,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           if (component3D != null) {
             removeAll();
+            for (MouseListener l : component3D.getMouseListeners()) {
+              component3D.removeMouseListener(l);
+            }
+            for (MouseMotionListener l : component3D.getMouseMotionListeners()) {
+              component3D.removeMouseMotionListener(l);
+            }
+            for (MouseWheelListener l : component3D.getMouseWheelListeners()) {
+              component3D.removeMouseWheelListener(l);
+            }
             component3D = null;
             navigationPanel = null;
           }
@@ -406,13 +415,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                  UserPreferences  preferences,
                                  HomeController3D controller) {
     if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
-      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
+      template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      // Request depth size equal to 24 if supported
+      int defaultDepthSize = template.getDepthSize();
+      template.setDepthSize(24);
+      if (!template.isGraphicsConfigSupported(
+          GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration())) {
+        template.setDepthSize(defaultDepthSize);
+      }
       try {
         // Instantiate JCanvas3DWithNavigationPanel inner class by reflection
         // to be able to run under Java 3D 1.3
         this.component3D = (Component)Class.forName(getClass().getName() + "$JCanvas3DWithNavigationPanel").
-            getConstructor(getClass(), GraphicsConfigTemplate3D.class).newInstance(this, gc);
+            getConstructor(getClass(), GraphicsConfigTemplate3D.class).newInstance(this, template);
         this.component3D.setSize(1, 1);
       } catch (ClassNotFoundException ex) {
         throw new UnsupportedOperationException("Java 3D 1.5 required to display an offscreen 3D view");
@@ -490,7 +506,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     add(canvasPanel);
     if (controller != null) {
       addMouseListeners(controller, this.component3D);
-      // Transfer mouse listeners added to this component
+      // Add mouse listeners again to ensure 3D component will receive events
       for (MouseListener l : getMouseListeners()) {
         super.removeMouseListener(l);
         addMouseListener(l);
@@ -1743,22 +1759,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 120));
     actionMap.put(ActionType.ROTATE_CAMERA_PITCH_FAST_DOWN, new RotateCameraPitchAction((float)Math.PI / 24));
   }
-  
+
   @Override
   public void addMouseMotionListener(final MouseMotionListener l) {
+    super.addMouseMotionListener(l);
     if (this.component3D != null) {
       this.component3D.addMouseMotionListener(new MouseMotionListener() {
           public void mouseMoved(MouseEvent ev) {
             l.mouseMoved(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
-          
+
           public void mouseDragged(MouseEvent ev) {
             l.mouseDragged(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
         });
-    } else {
-      // Will move listener to component3D once created
-      addMouseMotionListener(l);
     }
   }
 
@@ -1766,38 +1780,35 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public void removeMouseMotionListener(final MouseMotionListener l) {
     if (this.component3D != null) {
       this.component3D.removeMouseMotionListener(l);
-    } else {
-      removeMouseMotionListener(l);
     }
+    super.removeMouseMotionListener(l);
   }
 
   @Override
   public void addMouseListener(final MouseListener l) {
+    super.addMouseListener(l);
     if (this.component3D != null) {
       this.component3D.addMouseListener(new MouseListener() {
           public void mouseReleased(MouseEvent ev) {
             l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
-  
+
           public void mousePressed(MouseEvent ev) {
             l.mousePressed(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
-  
+
           public void mouseExited(MouseEvent ev) {
             l.mouseExited(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
-  
+
           public void mouseEntered(MouseEvent ev) {
             l.mouseEntered(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
-  
+
           public void mouseClicked(MouseEvent ev) {
             l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
         });
-    } else {
-      // Will move listener to component3D once created
-      addMouseListener(l);
     }
   }
 
@@ -1805,13 +1816,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public void removeMouseListener(final MouseListener l) {
     if (this.component3D != null) {
       this.component3D.removeMouseListener(l);
-    } else {
-      removeMouseListener(l);
     }
+    super.removeMouseListener(l);
   }
 
   /**
-   * Returns the closest {@link Selectable} object at screen coordinates (x, y), 
+   * Returns the closest {@link Selectable} object at screen coordinates (x, y),
    * or <code>null</code> if not found.
    */
   public Selectable getClosestItemAt(int x, int y) {
@@ -1829,7 +1839,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       PickResult result = pickCanvas.pickClosest();
       if (result != null) {
         Node pickedNode = result.getNode(PickResult.SHAPE3D);
-        while (!this.homeObjects.containsValue(pickedNode) 
+        while (!this.homeObjects.containsValue(pickedNode)
                && pickedNode.getParent() != null) {
           pickedNode = pickedNode.getParent();
         }
