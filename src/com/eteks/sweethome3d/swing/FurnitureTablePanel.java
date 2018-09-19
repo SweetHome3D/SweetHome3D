@@ -130,7 +130,7 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
         }
       });
 
-    UserPreferencesChangeListener preferencesListener = new UserPreferencesChangeListener(this);
+    UserPreferencesChangeListener preferencesListener = new UserPreferencesChangeListener(this, home);
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.VALUE_ADDED_TAX_ENABLED, preferencesListener);
@@ -157,9 +157,12 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
    */
   public static class UserPreferencesChangeListener implements PropertyChangeListener {
     private final WeakReference<FurnitureTablePanel> furnitureTablePanel;
+    private final WeakReference<Home>                home;
 
-    public UserPreferencesChangeListener(FurnitureTablePanel furnitureTotalPricePanel) {
+    public UserPreferencesChangeListener(FurnitureTablePanel furnitureTotalPricePanel,
+                                         Home home) {
       this.furnitureTablePanel = new WeakReference<FurnitureTablePanel>(furnitureTotalPricePanel);
+      this.home = new WeakReference<Home>(home);
     }
 
     public void propertyChange(PropertyChangeEvent ev) {
@@ -172,14 +175,15 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
       } else {
         switch (property) {
           case LANGUAGE :
+          case CURRENCY :
             furnitureTablePanel.totalPriceLabel.setText(preferences.getLocalizedString(
                 FurnitureTablePanel.class, "totalPriceLabel.text"));
             furnitureTablePanel.totalValueAddedTaxLabel.setText(
                 preferences.getLocalizedString(FurnitureTablePanel.class, "totalValueAddedTaxLabel.text"));
             furnitureTablePanel.totalPriceValueAddedTaxIncludedLabel.setText(
                 preferences.getLocalizedString(FurnitureTablePanel.class, "totalPriceValueAddedTaxIncludedLabel.text"));
+            furnitureTablePanel.updateTotals(this.home.get(), preferences);
             // No break
-          case CURRENCY :
           case VALUE_ADDED_TAX_ENABLED :
             furnitureTablePanel.updateTotalsVisibility(preferences);
             break;
@@ -263,6 +267,7 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
       this.totalValueAddedTaxTextField.setValue(null);
       this.totalPriceValueAddedTaxIncludedTextField.setValue(null);
     }
+    revalidate();
   }
 
   /**
@@ -301,8 +306,6 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
-    Insets labelInsets = new Insets(2, 0, 0, 5);
-    Insets componentInsets = new Insets(2, 0, 0, 10);
     add(this.totalPriceLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(2, 2, 0, 5), 0, 0));
@@ -311,16 +314,70 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
         GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
     add(this.totalValueAddedTaxLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(2, 10, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(2, 5, 0, 5), 0, 0));
     add(this.totalValueAddedTaxTextField, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
     add(this.totalPriceValueAddedTaxIncludedLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.NONE, new Insets(2, 5, 0, 5), 0, 0));
     add(this.totalPriceValueAddedTaxIncludedTextField, new GridBagConstraints(
         5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    GridBagLayout layout = (GridBagLayout)getLayout();
+    int [][] dimensions = layout.getLayoutDimensions();
+    if (dimensions.length > 1
+        && this.totalValueAddedTaxLabel.isVisible()) {
+      int [] widths = dimensions [0];
+      GridBagConstraints constraints = layout.getConstraints(this.totalValueAddedTaxLabel);
+      GridBagConstraints totalPriceLabelContraints = layout.getConstraints(this.totalPriceLabel);
+      if (constraints.gridy == totalPriceLabelContraints.gridy) {
+        // If the Total components are on the same row but not large enough to display their value
+        if (widths [5] < this.totalPriceValueAddedTaxIncludedTextField.getPreferredSize().width) {
+          // Place the Total components on 3 rows
+          constraints.gridx = totalPriceLabelContraints.gridx;
+          constraints.gridy = totalPriceLabelContraints.gridy + 1;
+          layout.setConstraints(this.totalValueAddedTaxLabel, constraints);
+          constraints = layout.getConstraints(this.totalValueAddedTaxTextField);
+          constraints.gridx = totalPriceLabelContraints.gridx + 1;
+          constraints.gridy = totalPriceLabelContraints.gridy + 1;
+          layout.setConstraints(this.totalValueAddedTaxTextField, constraints);
+          constraints = layout.getConstraints(this.totalPriceValueAddedTaxIncludedLabel);
+          constraints.gridx = totalPriceLabelContraints.gridx;
+          constraints.gridy = totalPriceLabelContraints.gridy + 2;
+          layout.setConstraints(this.totalPriceValueAddedTaxIncludedLabel, constraints);
+          constraints = layout.getConstraints(this.totalPriceValueAddedTaxIncludedTextField);
+          constraints.gridx = totalPriceLabelContraints.gridx + 1;
+          constraints.gridy = totalPriceLabelContraints.gridy + 2;
+          layout.setConstraints(this.totalPriceValueAddedTaxIncludedTextField, constraints);
+          super.doLayout();
+        }
+      } else {
+        // Try to place the Total components on 1 row
+        constraints.gridx = totalPriceLabelContraints.gridx + 2;
+        constraints.gridy = totalPriceLabelContraints.gridy;
+        layout.setConstraints(this.totalValueAddedTaxLabel, constraints);
+        constraints = layout.getConstraints(this.totalValueAddedTaxTextField);
+        constraints.gridx = totalPriceLabelContraints.gridx + 3;
+        constraints.gridy = totalPriceLabelContraints.gridy;
+        layout.setConstraints(this.totalValueAddedTaxTextField, constraints);
+        constraints = layout.getConstraints(this.totalPriceValueAddedTaxIncludedLabel);
+        constraints.gridx = totalPriceLabelContraints.gridx + 4;
+        constraints.gridy = totalPriceLabelContraints.gridy;
+        layout.setConstraints(this.totalPriceValueAddedTaxIncludedLabel, constraints);
+        constraints = layout.getConstraints(this.totalPriceValueAddedTaxIncludedTextField);
+        constraints.gridx = totalPriceLabelContraints.gridx + 5;
+        constraints.gridy = totalPriceLabelContraints.gridy;
+        layout.setConstraints(this.totalPriceValueAddedTaxIncludedTextField, constraints);
+        // Compute again layout to check if the Total components can fit on one row
+        doLayout();
+      }
+    }
   }
 
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
