@@ -25,6 +25,7 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
@@ -33,13 +34,18 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
  * @author Emmanuel Puybaret
  */
 public class Object3DBranchFactory implements Object3DFactory {
-  private static boolean ignoreDrawingMode = true;
+  private UserPreferences preferences;
 
-  static {
-    try {
-      ignoreDrawingMode = Boolean.parseBoolean(System.getProperty("com.eteks.sweethome3d.j3d.ignoreDrawingMode", "true"));
-    } catch (SecurityException ex) {
-    }
+  public Object3DBranchFactory() {
+    this(null);
+  }
+
+  public Object3DBranchFactory(UserPreferences preferences) {
+    this.preferences = preferences;
+  }
+
+  public boolean isDrawingModeEnabled() {
+    return this.preferences != null && this.preferences.isDrawingModeEnabled();
   }
 
   /**
@@ -47,11 +53,11 @@ public class Object3DBranchFactory implements Object3DFactory {
    */
   public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
     if (item instanceof HomePieceOfFurniture) {
-      return new HomePieceOfFurniture3D((HomePieceOfFurniture)item, home, ignoreDrawingMode, waitForLoading);
+      return new HomePieceOfFurniture3D((HomePieceOfFurniture)item, home, !isDrawingModeEnabled(), waitForLoading);
     } else if (item instanceof Wall) {
-      return new Wall3D((Wall)item, home, ignoreDrawingMode, waitForLoading);
+      return new Wall3D((Wall)item, home, !isDrawingModeEnabled(), waitForLoading);
     } else if (item instanceof Room) {
-      return new Room3D((Room)item, home, false, ignoreDrawingMode, waitForLoading);
+      return new Room3D((Room)item, home, false, !isDrawingModeEnabled(), waitForLoading);
     } else if (item instanceof Polyline) {
       return new Polyline3D((Polyline)item, home);
     } else if (item instanceof Label) {

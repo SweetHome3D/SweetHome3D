@@ -256,7 +256,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
                          boolean displayShadowOnFloor) {
-    this(home, preferences, new Object3DBranchFactory(), displayShadowOnFloor, null);
+    this(home, preferences, new Object3DBranchFactory(preferences), displayShadowOnFloor, null);
   }
 
   /**
@@ -266,7 +266,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
                          HomeController3D controller) {
-    this(home, preferences, new Object3DBranchFactory(), false, controller);
+    this(home, preferences, new Object3DBranchFactory(preferences), false, controller);
   }
 
   /**
@@ -299,7 +299,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.displayShadowOnFloor = displayShadowOnFloor;
     this.object3dFactory = object3dFactory != null
         ? object3dFactory
-        : new Object3DBranchFactory();
+        : new Object3DBranchFactory(preferences);
 
     if (controller != null) {
       createActions(controller);

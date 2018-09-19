@@ -1624,6 +1624,11 @@ public class PhotoRenderer {
    * Default factory for photo creation with no ceiling for rooms when top camera is used.
    */
   private static class PhotoObject3DFactory extends Object3DBranchFactory {
+    @Override
+    public boolean isDrawingModeEnabled() {
+      return false;
+    }
+
     public Object createObject3D(Home home, Selectable item, boolean waitForLoading) {
       if (item instanceof Room) {
         // Never display ceiling with top camera

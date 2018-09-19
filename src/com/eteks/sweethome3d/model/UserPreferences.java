@@ -109,6 +109,7 @@ public abstract class UserPreferences {
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
   private String           defaultFontName;
+  private boolean          drawingModeEnabled;
   private boolean          furnitureViewedFromTop;
   private int              furnitureModelIconSize = 128;
   private boolean          roomFloorColoredOrTextured;
@@ -141,6 +142,11 @@ public abstract class UserPreferences {
     this.recentColors = Collections.emptyList();
     this.recentTextures = Collections.emptyList();
     this.homeExamples = Collections.emptyList();
+
+    try {
+      this.drawingModeEnabled = Boolean.getBoolean("com.eteks.sweethome3d.j3d.drawingModeEnabled");
+    } catch (SecurityException ex) {
+    }
 
     this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();
@@ -716,6 +722,15 @@ public abstract class UserPreferences {
       this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.name(),
           !gridVisible, gridVisible);
     }
+  }
+
+  /**
+   * Returns <code>true</code> is {@link HomeEnvironment#getDrawingMode() drawing mode}
+   * should be taken into account.
+   * @since 6.0
+   */
+  public boolean isDrawingModeEnabled() {
+    return this.drawingModeEnabled;
   }
 
   /**

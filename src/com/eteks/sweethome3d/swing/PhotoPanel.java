@@ -90,6 +90,7 @@ import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Camera.Lens;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -101,7 +102,7 @@ import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
- * A panel to edit photo creation. 
+ * A panel to edit photo creation.
  * @author Emmanuel Puybaret
  */
 public class PhotoPanel extends JPanel implements DialogView {
@@ -111,15 +112,15 @@ public class PhotoPanel extends JPanel implements DialogView {
   private static final String PHOTO_DIALOG_Y_VISUAL_PROPERTY = "com.eteks.sweethome3d.swing.PhotoPanel.PhotoDialogY";
 
   private static final int MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING = 30000;
-  
+
   private static final String WAIT_CARD  = "wait";
   private static final String PHOTO_CARD = "photo";
-  
+
   private final Home               home;
   private final UserPreferences    preferences;
   private final Object3DFactory    object3dFactory;
   private final PhotoController    controller;
-  private ScaledImageComponent     photoComponent; 
+  private ScaledImageComponent     photoComponent;
   private JLabel                   animatedWaitLabel;
   private PhotoSizeAndQualityPanel sizeAndQualityPanel;
   private Component                advancedComponentsSeparator;
@@ -142,15 +143,15 @@ public class PhotoPanel extends JPanel implements DialogView {
 
   private static PhotoPanel        currentPhotoPanel; // Support only one photo panel opened at a time
 
-  public PhotoPanel(Home home, 
-                    UserPreferences preferences, 
+  public PhotoPanel(Home home,
+                    UserPreferences preferences,
                     PhotoController controller) {
     this(home, preferences, null, controller);
   }
-  
-  public PhotoPanel(Home home, 
+
+  public PhotoPanel(Home home,
                     UserPreferences preferences,
-                    Object3DFactory object3dFactory, 
+                    Object3DFactory object3dFactory,
                     PhotoController controller) {
     super(new GridBagLayout());
     this.home = home;
@@ -160,38 +161,38 @@ public class PhotoPanel extends JPanel implements DialogView {
     createActions(preferences);
     createComponents(home, preferences, controller);
     setMnemonics(preferences);
-    layoutComponents();    
+    layoutComponents();
 
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, new LanguageChangeListener(this));
   }
-  
+
   /**
    * Creates actions for variables.
    */
   private void createActions(UserPreferences preferences) {
     final ActionMap actions = getActionMap();
-    actions.put(ActionType.START_PHOTO_CREATION, 
+    actions.put(ActionType.START_PHOTO_CREATION,
         new ResourceAction(preferences, PhotoPanel.class, ActionType.START_PHOTO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             startPhotoCreation();
           }
         });
-    actions.put(ActionType.STOP_PHOTO_CREATION, 
+    actions.put(ActionType.STOP_PHOTO_CREATION,
         new ResourceAction(preferences, PhotoPanel.class, ActionType.STOP_PHOTO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             stopPhotoCreation(true);
           }
         });
-    actions.put(ActionType.SAVE_PHOTO, 
+    actions.put(ActionType.SAVE_PHOTO,
         new ResourceAction(preferences, PhotoPanel.class, ActionType.SAVE_PHOTO.name(), false) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             savePhoto();
           }
         });
-    actions.put(ActionType.CLOSE, 
+    actions.put(ActionType.CLOSE,
         new ResourceAction(preferences, PhotoPanel.class, ActionType.CLOSE.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
@@ -203,13 +204,13 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components.
    */
-  private void createComponents(final Home home, 
+  private void createComponents(final Home home,
                                 final UserPreferences preferences,
                                 final PhotoController controller) {
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(getToolkit().getScreenSize().width <= 1024 ? 320 : 400, 400));
-    // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
-    // to let the user drag and drop the created image (Windows support seems to fail) 
+    // Under Mac OS X, set a transfer handler and a mouse listener on photo component
+    // to let the user drag and drop the created image (Windows support seems to fail)
     if (OperatingSystem.isMacOSX()
         && !OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
       this.photoComponent.setTransferHandler(new VisualTransferHandler() {
@@ -217,30 +218,30 @@ public class PhotoPanel extends JPanel implements DialogView {
           public int getSourceActions(JComponent component) {
             return COPY_OR_MOVE;
           }
-          
+
           @Override
           protected Transferable createTransferable(JComponent component) {
             return new Transferable() {
                 public Object getTransferData(DataFlavor flavor) {
                   return photoComponent.getImage();
                 }
-    
+
                 public DataFlavor [] getTransferDataFlavors() {
                   return new DataFlavor [] {DataFlavor.imageFlavor};
                 }
-    
+
                 public boolean isDataFlavorSupported(DataFlavor flavor) {
                   return flavor.equals(DataFlavor.imageFlavor);
                 }
-              };            
+              };
           }
-          
+
           @Override
           public Icon getVisualRepresentation(Transferable transferable) {
             try {
               if (transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
                 // Create a 128x128 icon from the transfered image
-                BufferedImage transferedImage = 
+                BufferedImage transferedImage =
                     (BufferedImage)transferable.getTransferData(DataFlavor.imageFlavor);
                 float scale = Math.min(1, 128f / Math.max(transferedImage.getWidth(), transferedImage.getHeight()));
                 BufferedImage iconImage = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
@@ -249,14 +250,14 @@ public class PhotoPanel extends JPanel implements DialogView {
                 g2D.drawRenderedImage(transferedImage, null);
                 g2D.dispose();
                 return new ImageIcon(iconImage);
-              } 
+              }
             } catch (UnsupportedFlavorException ex) {
               // Use default representation
             } catch (IOException ex) {
               // Use default representation
             }
             return super.getVisualRepresentation(transferable);
-          }  
+          }
         });
       this.photoComponent.addMouseListener(new MouseAdapter() {
           @Override
@@ -274,7 +275,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     // Create size and quality panel
     this.sizeAndQualityPanel = new PhotoSizeAndQualityPanel(home, preferences, controller);
-    controller.addPropertyChangeListener(AbstractPhotoController.Property.QUALITY, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.QUALITY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             updateAdvancedComponents();
@@ -296,13 +297,13 @@ public class PhotoPanel extends JPanel implements DialogView {
     JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(this.dateSpinner, datePattern);
     this.dateSpinner.setEditor(dateEditor);
     SwingTools.addAutoSelectionOnFocusGain(dateEditor.getTextField());
-    
+
     this.timeLabel = new JLabel();
     final SpinnerDateModel timeSpinnerModel = new SpinnerDateModel();
     timeSpinnerModel.setValue(time);
     this.timeSpinner = new JSpinner(timeSpinnerModel);
     // From http://en.wikipedia.org/wiki/12-hour_clock#Use_by_country
-    String [] twelveHoursCountries = { 
+    String [] twelveHoursCountries = {
         "AU",  // Australia
         "BD",  // Bangladesh
         "CA",  // Canada (excluding Quebec, in French)
@@ -319,7 +320,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         "SA",  // Saudi Arabia
         "SV",  // El Salvador
         "US",  // United States
-        "VE"}; // Venezuela         
+        "VE"}; // Venezuela
     SimpleDateFormat timeInstance;
     if ("en".equals(Locale.getDefault().getLanguage())) {
       if (Arrays.binarySearch(twelveHoursCountries, Locale.getDefault().getCountry()) >= 0) {
@@ -380,13 +381,13 @@ public class PhotoPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(PhotoController.Property.TIME, dayNightListener);
     home.getCompass().addPropertyChangeListener(dayNightListener);
     dayNightListener.propertyChange(null);
-    
+
     // Create lens label and combo box
     this.lensLabel = new JLabel();
     this.lensComboBox = new JComboBox(Camera.Lens.values());
     this.lensComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, 
+        public Component getListCellRendererComponent(JList list, Object value,
                                                       int index, boolean isSelected, boolean cellHasFocus) {
           String displayedValue;
           switch ((Camera.Lens)value) {
@@ -409,10 +410,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         }
       });
     this.lensComboBox.setSelectedItem(controller.getLens());
-    controller.addPropertyChangeListener(PhotoController.Property.LENS, 
+    controller.addPropertyChangeListener(PhotoController.Property.LENS,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            lensComboBox.setSelectedItem(controller.getLens());            
+            lensComboBox.setSelectedItem(controller.getLens());
           }
         });
     this.lensComboBox.addItemListener(new ItemListener() {
@@ -423,14 +424,14 @@ public class PhotoPanel extends JPanel implements DialogView {
             controller.setAspectRatio(AspectRatio.RATIO_2_1);
           } else if (lens == Camera.Lens.FISHEYE) {
             controller.setAspectRatio(AspectRatio.SQUARE_RATIO);
-          }  
+          }
           updateRatioComponents();
         }
       });
 
     this.ceilingLightEnabledCheckBox = new JCheckBox();
     this.ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
-    controller.addPropertyChangeListener(AbstractPhotoController.Property.CEILING_LIGHT_COLOR, 
+    controller.addPropertyChangeListener(AbstractPhotoController.Property.CEILING_LIGHT_COLOR,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             ceilingLightEnabledCheckBox.setSelected(controller.getCeilingLightColor() > 0);
@@ -441,7 +442,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           controller.setCeilingLightColor(ceilingLightEnabledCheckBox.isSelected() ? 0xD0D0D0 : 0);
         }
       });
-    
+
     final JComponent view3D = (JComponent)controller.get3DView();
     controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
 
@@ -458,16 +459,16 @@ public class PhotoPanel extends JPanel implements DialogView {
    * Sets the texts of the components.
    */
   private void setComponentTexts(UserPreferences preferences) {
-    this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.dateLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "dateLabel.text"));
-    this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.timeLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "timeLabel.text"));
-    this.lensLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.lensLabel.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "lensLabel.text"));
-    this.ceilingLightEnabledCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+    this.ceilingLightEnabledCheckBox.setText(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "ceilingLightEnabledCheckBox.text"));
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
-    Window window = SwingUtilities.getWindowAncestor(this);  
+    Window window = SwingUtilities.getWindowAncestor(this);
     if (window != null) {
       ((JDialog)window).setTitle(this.dialogTitle);
     }
@@ -488,14 +489,14 @@ public class PhotoPanel extends JPanel implements DialogView {
       this.lensLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PhotoPanel.class, "lensLabel.mnemonic")).getKeyCode());
       this.lensLabel.setLabelFor(this.lensComboBox);
-      this.ceilingLightEnabledCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString( 
+      this.ceilingLightEnabledCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PhotoPanel.class, "ceilingLightEnabledCheckBox.mnemonic")).getKeyCode());
     }
   }
 
   /**
    * Preferences property listener bound to this panel with a weak reference to avoid
-   * strong link between user preferences and this panel.  
+   * strong link between user preferences and this panel.
    */
   public static class LanguageChangeListener implements PropertyChangeListener {
     private final WeakReference<PhotoPanel> photoPanel;
@@ -519,71 +520,71 @@ public class PhotoPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
     int labelAlignment = OperatingSystem.isMacOSX()
         ? JLabel.TRAILING
         : JLabel.LEADING;
-    // Add animatedWaitLabel and photoComponent to a card panel 
+    // Add animatedWaitLabel and photoComponent to a card panel
     this.photoCardLayout = new CardLayout();
     this.photoPanel = new JPanel(this.photoCardLayout);
     photoPanel.add(this.photoComponent, PHOTO_CARD);
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
     // First row
     add(this.photoPanel, new GridBagConstraints(
-        0, 0, 3, 1, 1, 1, GridBagConstraints.CENTER, 
+        0, 0, 3, 1, 1, 1, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
     add(new JLabel(), new GridBagConstraints(
-        0, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
+        0, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(new JLabel(), new GridBagConstraints(
-        2, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER, 
+        2, 1, 1, 8, 0.5f, 0, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(this.sizeAndQualityPanel, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
     add(this.advancedComponentsSeparator, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 2, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     // Forth row
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     this.dateLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.dateSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
     advancedPanel.add(this.timeLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     this.timeLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
-        4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     advancedPanel.add(this.lensLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     this.lensLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.lensComboBox, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
     advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
-        2, 2, 3, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));    
+        2, 2, 3, 1, 0, 0, GridBagConstraints.CENTER,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(advancedPanel, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
-  
+
   private void updateAdvancedComponents() {
     Component root = SwingUtilities.getRoot(this);
     if (root != null) {
@@ -595,10 +596,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         int componentsHeight = this.advancedComponentsSeparator.getPreferredSize().height + 6
             + this.dateSpinner.getPreferredSize().height + 5
             + this.lensComboBox.getPreferredSize().height;
-        root.setSize(root.getWidth(), 
+        root.setSize(root.getWidth(),
             root.getHeight() + (advancedComponentsVisible ? -componentsHeight : componentsHeight));
       }
-    }   
+    }
   }
 
   private void setAdvancedComponentsVisible(boolean visible) {
@@ -614,12 +615,12 @@ public class PhotoPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Updates photo height.  
+   * Updates photo height.
    */
   private void updateRatioComponents() {
     Lens lens = this.controller.getLens();
     boolean fixedProportions = this.lensComboBox.isVisible()
-        && (lens == Camera.Lens.FISHEYE 
+        && (lens == Camera.Lens.FISHEYE
             || lens == Camera.Lens.SPHERICAL);
     this.sizeAndQualityPanel.setProportionsChoiceEnabled(!fixedProportions);
   }
@@ -634,7 +635,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       if (currentPhotoPanel != null) {
         currentPhotoPanel.close();
       }
-      final JOptionPane optionPane = new JOptionPane(this, 
+      final JOptionPane optionPane = new JOptionPane(this,
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
           null, new Object [] {this.createButton, this.saveButton, this.closeButton}, this.createButton);
       if (parentView != null) {
@@ -642,13 +643,13 @@ public class PhotoPanel extends JPanel implements DialogView {
       }
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
-     
+
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);
       Point dialogLocation = null;
       if (homeRoot != null) {
         // Restore location if it exists
         Number x = this.home.getNumericProperty(PHOTO_DIALOG_X_VISUAL_PROPERTY);
-        Number y = this.home.getNumericProperty(PHOTO_DIALOG_Y_VISUAL_PROPERTY);      
+        Number y = this.home.getNumericProperty(PHOTO_DIALOG_Y_VISUAL_PROPERTY);
 
         int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
@@ -657,7 +658,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         // Check dialog isn't too high
         int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
         if (OperatingSystem.isLinux() && screenHeight == screenSize.height) {
-          // Let's consider that under Linux at least an horizontal bar exists 
+          // Let's consider that under Linux at least an horizontal bar exists
           screenHeight -= 30;
         }
         int screenBottomBorder = screenSize.height - screenInsets.bottom;
@@ -666,7 +667,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           dialog.setSize(dialogWidth, screenHeight);
         }
         int dialogHeight = dialog.getHeight();
-        if (x != null && y != null 
+        if (x != null && y != null
             && x.intValue() + dialogWidth <= screenRightBorder
             && y.intValue() + dialogHeight <= screenBottomBorder) {
           dialogLocation = new Point(x.intValue(), y.intValue());
@@ -674,7 +675,7 @@ public class PhotoPanel extends JPanel implements DialogView {
                    || dialogHeight == screenHeight) {
           // If there some space left at the right of the window,
           // move the dialog to the right of window
-          dialogLocation = new Point(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
+          dialogLocation = new Point(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth),
               Math.max(Math.min(homeRoot.getY(), screenSize.height - dialogHeight - screenInsets.bottom), screenInsets.top));
         }
       }
@@ -685,7 +686,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       } else {
         dialog.setLocationByPlatform(true);
       }
-      
+
       dialog.addWindowListener(new WindowAdapter() {
           public void windowClosed(WindowEvent ev) {
             stopPhotoCreation(false);
@@ -729,7 +730,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     getRootPane().setDefaultButton(this.createButton);
     this.createButton.setAction(getActionMap().get(ActionType.STOP_PHOTO_CREATION));
     this.photoCardLayout.show(this.photoPanel, WAIT_CARD);
-    
+
     // Compute photo in an other executor thread
     // Use a clone of home because the user can modify home during photo computation
     final Home home = this.home.clone();
@@ -745,7 +746,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
   /**
    * Computes the photo of the given home.
-   * Caution : this method must be thread safe because it's called from an executor. 
+   * Caution : this method must be thread safe because it's called from an executor.
    */
   private void computePhoto(Home home) {
     this.photoCreationStartTime = System.currentTimeMillis();
@@ -756,9 +757,9 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
-        PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory, 
-            quality == 2 
-                ? PhotoRenderer.Quality.LOW 
+        PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory,
+            quality == 2
+                ? PhotoRenderer.Quality.LOW
                 : PhotoRenderer.Quality.HIGH);
         int bestImageHeight;
         // Check correct ratio if lens is fisheye or spherical
@@ -767,7 +768,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           bestImageHeight = imageWidth;
         } else if (camera.getLens() == Camera.Lens.SPHERICAL) {
           bestImageHeight = imageWidth / 2;
-        } else {           
+        } else {
           bestImageHeight = imageHeight;
         }
         if (photoCreationExecutor != null) {
@@ -784,7 +785,11 @@ public class PhotoPanel extends JPanel implements DialogView {
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(
-            home, this.preferences, this.object3dFactory, quality == 1, null);
+            home, this.preferences, this.object3dFactory,
+            quality == 1
+            && (!this.preferences.isDrawingModeEnabled()
+                || home.getEnvironment().getDrawingMode() != HomeEnvironment.DrawingMode.OUTLINE),
+            null);
         image = homeComponent3D.getOffScreenImage(imageWidth, imageHeight);
       }
     } catch (OutOfMemoryError ex) {
@@ -795,7 +800,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       throw ex;
     } catch (IOException ex) {
       image = getErrorImage();
-    } finally {           
+    } finally {
       final BufferedImage photoImage = this.photoCreationExecutor != null
           ? image
           : null;
@@ -819,7 +824,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
     }
   }
-  
+
   /**
    * Returns the image used in case of an error.
    */
@@ -832,21 +837,21 @@ public class PhotoPanel extends JPanel implements DialogView {
     g2D.dispose();
     return errorImage;
   }
-  
+
   /**
    * Stops photo creation.
    */
   private void stopPhotoCreation(boolean confirmStop) {
     if (this.photoCreationExecutor != null
-        // Confirm the stop if a rendering has been running for more than 30 s 
+        // Confirm the stop if a rendering has been running for more than 30 s
         && (!confirmStop
             || System.currentTimeMillis() - this.photoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
-            || JOptionPane.showConfirmDialog(getRootPane(), 
+            || JOptionPane.showConfirmDialog(getRootPane(),
                   this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.message"),
-                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.title"), 
+                  this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.title"),
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
       if (this.photoCreationExecutor != null) { // Check a second time in case rendering stopped meanwhile
-        // Will interrupt executor thread      
+        // Will interrupt executor thread
         this.photoCreationExecutor.shutdownNow();
         this.photoCreationExecutor = null;
         this.createButton.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
@@ -859,7 +864,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void savePhoto() {
     String pngFile = this.controller.getContentManager().showSaveDialog(this,
-        this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoDialog.title"), 
+        this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoDialog.title"),
         ContentManager.ContentType.PNG, this.home.getName());
     try {
       if (pngFile != null) {
@@ -867,7 +872,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       }
     } catch (IOException ex) {
       String messageFormat = this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.message");
-      JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), String.format(messageFormat, ex.getMessage()), 
+      JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), String.format(messageFormat, ex.getMessage()),
           this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.title"), JOptionPane.ERROR_MESSAGE);
     }
   }
@@ -879,6 +884,6 @@ public class PhotoPanel extends JPanel implements DialogView {
     Window window = SwingUtilities.getWindowAncestor(this);
     if (window.isDisplayable()) {
       window.dispose();
-    }    
+    }
   }
 }
