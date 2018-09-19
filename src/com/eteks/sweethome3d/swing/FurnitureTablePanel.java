@@ -42,6 +42,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Properties;
 
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -66,7 +67,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureView;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTablePanel extends JPanel implements FurnitureView, Printable {
-  private FurnitureTable      furnitureTable;
+  private JComponent          furnitureTable;
   private JLabel              totalPriceLabel;
   private JFormattedTextField totalPriceTextField;
   private JLabel              totalValueAddedTaxLabel;
@@ -87,7 +88,7 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
   private void createComponents(final Home home,
                                 final UserPreferences preferences,
                                 FurnitureController controller) {
-    this.furnitureTable = createFurnitureTable(home, preferences, controller);
+    this.furnitureTable = (JComponent)createFurnitureTable(home, preferences, controller);
 
     this.totalPriceLabel = new JLabel(preferences.getLocalizedString(
         FurnitureTablePanel.class, "totalPriceLabel.text"));
@@ -138,7 +139,7 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
   /**
    * Creates and returns the main furniture table displayed by this component.
    */
-  protected FurnitureTable createFurnitureTable(Home home, UserPreferences preferences, FurnitureController controller) {
+  protected FurnitureView createFurnitureTable(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(home, preferences, controller);
   }
 
@@ -323,7 +324,11 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
   }
 
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
-    return this.furnitureTable.print(g, pageFormat, pageIndex);
+    if (this.furnitureTable instanceof Printable) {
+      return ((Printable)this.furnitureTable).print(g, pageFormat, pageIndex);
+    } else {
+      throw new IllegalStateException("Embeded furniture view not printable");
+    }
   }
 
   @Override
@@ -342,34 +347,34 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
    * Returns a copy of the furniture data for transfer purpose.
    */
   public Object createTransferData(DataType dataType) {
-    return this.furnitureTable.createTransferData(dataType);
+    return ((FurnitureView)this.furnitureTable).createTransferData(dataType);
   }
 
   /**
    * Returns <code>true</code> if the given format is CSV.
    */
   public boolean isFormatTypeSupported(FormatType formatType) {
-    return this.furnitureTable.isFormatTypeSupported(formatType);
+    return ((FurnitureView)this.furnitureTable).isFormatTypeSupported(formatType);
   }
 
   /**
    * Writes in the given stream the content of the table at CSV format if this is the requested format.
    */
   public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
-    this.furnitureTable.exportData(out, formatType, settings);
+    ((FurnitureView)this.furnitureTable).exportData(out, formatType, settings);
   }
 
   /**
    * Sets the filter applied to the furniture displayed by this component.
    */
   public void setFurnitureFilter(FurnitureView.FurnitureFilter filter) {
-    this.furnitureTable.setFurnitureFilter(filter);
+    ((FurnitureView)this.furnitureTable).setFurnitureFilter(filter);
   }
 
   /**
    * Returns the filter applied to the furniture displayed in this component.
    */
   public FurnitureView.FurnitureFilter getFurnitureFilter() {
-    return this.furnitureTable.getFurnitureFilter();
+    return ((FurnitureView)this.furnitureTable).getFurnitureFilter();
   }
 }

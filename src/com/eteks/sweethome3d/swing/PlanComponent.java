@@ -2077,16 +2077,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * to make it fill <code>pageFormat</code> imageable size.
    */
   public float getPrintPreferredScale(Graphics g, PageFormat pageFormat) {
+    return getPrintPreferredScale(LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72),
+        LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72));
+  }
+
+  /**
+   * Returns the preferred scale to ensure it can be fully printed on the given print zone.
+   */
+  public float getPrintPreferredScale(float preferredWidth, float preferredHeight) {
     List<Selectable> printedItems = getPaintedItems();
-    Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
+    Rectangle2D printedItemBounds = getItemsBounds(getGraphics(), printedItems);
     if (printedItemBounds != null) {
-      float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
-      float imageableHeightCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72);
       float extraMargin = getStrokeWidthExtraMargin(printedItems, PaintMode.PRINT);
       // Compute the largest integer scale possible
       int scaleInverse = (int)Math.ceil(Math.max(
-          (printedItemBounds.getWidth() + 2 * extraMargin) / imageableWidthCm,
-          (printedItemBounds.getHeight() + 2 * extraMargin) / imageableHeightCm));
+          (printedItemBounds.getWidth() + 2 * extraMargin) / preferredWidth,
+          (printedItemBounds.getHeight() + 2 * extraMargin) / preferredHeight));
       return 1f / scaleInverse;
     } else {
       return 0;
@@ -2912,9 +2918,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the color used to draw selection outlines.
    */
   protected Color getSelectionColor() {
+    return getDefaultSelectionColor(this);
+  }
+
+  /**
+   * Returns the default color used to draw selection outlines.
+   */
+  static Color getDefaultSelectionColor(JComponent planComponent) {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        Window window = SwingUtilities.getWindowAncestor(this);
+        Window window = SwingUtilities.getWindowAncestor(planComponent);
         if (window != null && !window.isActive()) {
           Color selectionColor = UIManager.getColor("List.selectionInactiveBackground");
           if (selectionColor != null) {

@@ -35,9 +35,9 @@ public interface PlanView extends TransferableView, ExportableView {
    * The cursor types available in plan view.
    */
   public enum CursorType {SELECTION, PANNING, DRAW, ROTATION, ELEVATION, HEIGHT, POWER, RESIZE, DUPLICATION, MOVE}
-  
+
   /**
-   * Sets rectangle selection feedback coordinates. 
+   * Sets rectangle selection feedback coordinates.
    */
   public abstract void setRectangleFeedback(float x0, float y0,
                                             float x1, float y1);
@@ -63,6 +63,14 @@ public interface PlanView extends TransferableView, ExportableView {
    * Sets the scale used to display the plan.
    */
   public abstract void setScale(float scale);
+
+  /**
+   * Returns the preferred scale to ensure it can be fully printed on the given print zone.
+   * @param preferredWidth  width of the zone in cm
+   * @param preferredHeight height of the zone in cm
+   * @since 6.0
+   */
+  public float getPrintPreferredScale(float preferredWidth, float preferredHeight);
 
   /**
    * Moves the view from (dx, dy) unit in the scrolling zone it belongs to.
@@ -96,19 +104,19 @@ public interface PlanView extends TransferableView, ExportableView {
 
   /**
    * Returns the coordinates of the bounding rectangle of the <code>text</code> displayed at
-   * the point (<code>x</code>,<code>y</code>).  
+   * the point (<code>x</code>,<code>y</code>).
    */
-  public abstract float [][] getTextBounds(String text, TextStyle style, 
+  public abstract float [][] getTextBounds(String text, TextStyle style,
                                            float x, float y, float angle);
 
   /**
-   * Sets the cursor of this component as rotation cursor. 
+   * Sets the cursor of this component as rotation cursor.
    */
   public abstract void setCursor(CursorType cursorType);
 
   /**
-   * Sets tool tip text displayed as feedback. 
-   * @param toolTipFeedback the text displayed in the tool tip 
+   * Sets tool tip text displayed as feedback.
+   * @param toolTipFeedback the text displayed in the tool tip
    *                    or <code>null</code> to make tool tip disappear.
    */
   public abstract void setToolTipFeedback(String toolTipFeedback,
@@ -117,18 +125,18 @@ public interface PlanView extends TransferableView, ExportableView {
   /**
    * Set properties edited in tool tip.
    */
-  public abstract void setToolTipEditedProperties(PlanController.EditableProperty [] toolTipEditedProperties, 
+  public abstract void setToolTipEditedProperties(PlanController.EditableProperty [] toolTipEditedProperties,
                                                   Object [] toolTipPropertyValues,
                                                   float x, float y);
-  
+
   /**
-   * Deletes tool tip text from screen. 
+   * Deletes tool tip text from screen.
    */
   public abstract void deleteToolTipFeedback();
 
   /**
-   * Sets whether the resize indicator of selected wall or piece of furniture 
-   * should be visible or not. 
+   * Sets whether the resize indicator of selected wall or piece of furniture
+   * should be visible or not.
    */
   public abstract void setResizeIndicatorVisible(boolean resizeIndicatorVisible);
 
@@ -137,20 +145,20 @@ public interface PlanView extends TransferableView, ExportableView {
    */
   public abstract void setAlignmentFeedback(Class<? extends Selectable> alignedObjectClass,
                                             Selectable alignedObject,
-                                            float x, 
-                                            float y, 
+                                            float x,
+                                            float y,
                                             boolean showPoint);
-  
+
 
   /**
    * Sets the points used to draw an angle in plan view.
    */
-  public abstract void setAngleFeedback(float xCenter, float yCenter, 
-                                        float x1, float y1, 
+  public abstract void setAngleFeedback(float xCenter, float yCenter,
+                                        float x1, float y1,
                                         float x2, float y2);
 
   /**
-   * Sets the feedback of dragged items drawn during a drag and drop operation, 
+   * Sets the feedback of dragged items drawn during a drag and drop operation,
    * initiated from outside of plan view.
    */
   public abstract void setDraggedItemsFeedback(List<Selectable> draggedItems);
@@ -185,7 +193,7 @@ public interface PlanView extends TransferableView, ExportableView {
    * Returns the size of the given piece of furniture in the horizontal plan.
    */
   public abstract float [] getPieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece);
-  
+
   /**
    * Returns <code>true</code> if the view is able to compute the size of horizontally rotated furniture.
    */

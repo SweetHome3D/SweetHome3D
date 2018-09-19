@@ -261,16 +261,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
         if (homePrint.getPlanScale() != null) {
           planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
         } else {
-          Float preferredScale = null;
-          // Should create an interface to test if the component has a preferred scale
-          if (planView instanceof PlanComponent) {
-            preferredScale = ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat);
-          } else if (planView instanceof MultipleLevelsPlanPanel) {
-            preferredScale = ((MultipleLevelsPlanPanel)planView).getPrintPreferredScale(g, pageFormat);
-          }
-          if (preferredScale != null) {
-            planScale = "1/" + Math.round(1 / preferredScale);
-          }
+          float preferredScale = planView.getPrintPreferredScale(LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72),
+              LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72));
+          planScale = "1/" + Math.round(1 / preferredScale);
         }
         if (page == 0) {
           this.printDate = new Date();
