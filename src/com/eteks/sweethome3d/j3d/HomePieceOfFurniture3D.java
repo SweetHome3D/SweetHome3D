@@ -529,7 +529,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     if (piece.isDoorOrWindow()) {
-      setTransparentShapeNotPickable(this);
+      setTransparentShapeNotPickable(modelNode);
     }
 
     TransformGroup transformGroup = (TransformGroup)getChild(0);
@@ -1103,7 +1103,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   private void setTransparentShapeNotPickable(Node node) {
     if (node instanceof Group) {
-      // Set back face normal flip of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements()) {
         setTransparentShapeNotPickable((Node)enumeration.nextElement());
