@@ -602,6 +602,17 @@ public class VideoPanel extends JPanel implements DialogView {
 
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
+    Dimension imageSize;
+    try {
+      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class, 
+            "resources/quality0.jpg"));
+    } catch (IOException ex) {
+      // Shouldn't happen since resource exists
+      imageSize = null;
+    }
+    float resolutionScale = SwingTools.getResolutionScale();
+    final int imageWidth = (int)(imageSize.width * resolutionScale);
+    final int imageHeight = (int)(imageSize.height * resolutionScale);
     this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
         @Override
         public String getToolTipText(MouseEvent ev) {
@@ -610,8 +621,8 @@ public class VideoPanel extends JPanel implements DialogView {
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' src='"
-                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
+                + "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='"
+                + new ResourceURLContent(VideoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
                 + "<td>" + preferences.getLocalizedString(VideoPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
                 + "</tr></table>";
           } else {
@@ -744,8 +755,8 @@ public class VideoPanel extends JPanel implements DialogView {
     timeSpinnerModel.addChangeListener(dateTimeChangeListener);
 
     this.dayNightLabel = new JLabel();
-    final ImageIcon dayIcon = SwingTools.getScaledImageIcon(PhotoPanel.class.getResource("resources/day.png"));
-    final ImageIcon nightIcon = SwingTools.getScaledImageIcon(PhotoPanel.class.getResource("resources/night.png"));
+    final ImageIcon dayIcon = SwingTools.getScaledImageIcon(VideoPanel.class.getResource("resources/day.png"));
+    final ImageIcon nightIcon = SwingTools.getScaledImageIcon(VideoPanel.class.getResource("resources/night.png"));
     PropertyChangeListener dayNightListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (home.getCompass().getSunElevation(

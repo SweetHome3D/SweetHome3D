@@ -3665,7 +3665,7 @@ public class HomePane extends JRootPane implements HomeView {
     homeExamplesList.setSelectedIndex(0);
     homeExamplesList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
     homeExamplesList.setVisibleRowCount(3);
-    final int iconWidth = 192;
+    final int iconWidth = (int)(192 * SwingTools.getResolutionScale());
     homeExamplesList.setFixedCellWidth(iconWidth + 8);
     homeExamplesList.setCellRenderer(new DefaultListCellRenderer() {
         @Override

@@ -514,7 +514,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
      * Icon displaying a texture.
      */
     private static class TextureIcon implements Icon {
-      static final int SIZE = 16;
+      static final int SIZE = (int)(16 * SwingTools.getResolutionScale());
 
       private TextureImage texture;
       private JComponent   component;

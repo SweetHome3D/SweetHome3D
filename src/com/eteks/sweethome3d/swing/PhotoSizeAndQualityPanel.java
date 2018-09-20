@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -34,6 +35,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
 
@@ -212,6 +214,17 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     this.qualityLabel = new JLabel();
     this.fastQualityLabel = new JLabel();
     this.bestQualityLabel = new JLabel();
+    Dimension imageSize;
+    try {
+      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class, 
+            "resources/quality0.jpg"));
+    } catch (IOException ex) {
+      // Shouldn't happen since resource exists
+      imageSize = null;
+    }
+    float resolutionScale = SwingTools.getResolutionScale();
+    final int imageWidth = (int)(imageSize.width * resolutionScale);
+    final int imageHeight = (int)(imageSize.height * resolutionScale);
     this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
         @Override
         public String getToolTipText(MouseEvent ev) {
@@ -220,7 +233,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' src='"
+                + "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='"
                 + new ResourceURLContent(PhotoSizeAndQualityPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
                 + "<td>" + preferences.getLocalizedString(PhotoSizeAndQualityPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
                 + "</tr></table>";

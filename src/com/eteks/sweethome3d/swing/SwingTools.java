@@ -102,6 +102,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.j3d.ShapeTools;
@@ -536,8 +537,10 @@ public class SwingTools {
     if (patternImages == null) {
       patternImages = new HashMap<TextureImage, BufferedImage>();
     }
+    float resolutionScale = getResolutionScale();
     BufferedImage image = new BufferedImage(
-        (int)pattern.getWidth(), (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
+        (int)(pattern.getWidth() * resolutionScale), 
+        (int)(pattern.getHeight() * resolutionScale), BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     imageGraphics.setColor(backgroundColor);
     imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
@@ -555,6 +558,7 @@ public class SwingTools {
     }
     // Draw the pattern image with foreground color
     final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
+    imageGraphics.scale(resolutionScale, resolutionScale);
     imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
         new FilteredImageSource(patternImage.getSource(),
         new RGBImageFilter() {
@@ -594,14 +598,20 @@ public class SwingTools {
   public static void showSplashScreenWindow(URL imageUrl) {
     try {
       final BufferedImage image = ImageIO.read(imageUrl);
+      // Try to find an image scale without getResolutionScale()
+      // because look and feel is probably not set
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      final float scale = (float)Math.min(2, Math.max(1,
+          Math.min(screenSize.getWidth() / 5 / image.getWidth(), screenSize.getHeight() / 5 / image.getHeight())));
       final Window splashScreenWindow = new Window(new Frame()) {
           @Override
           public void paint(Graphics g) {
+            ((Graphics2D)g).scale(scale, scale);
             g.drawImage(image, 0, 0, this);
           }
         };
 
-      splashScreenWindow.setSize(image.getWidth(), image.getHeight());
+      splashScreenWindow.setSize((int)(image.getWidth() * scale), (int)(image.getHeight() * scale));
       splashScreenWindow.setLocationRelativeTo(null);
       splashScreenWindow.setVisible(true);
 
@@ -1005,53 +1015,50 @@ public class SwingTools {
    * Updates Swing components default size according to resolution scale.
    */
   static void updateComponentDefaults() {
-    float resolutionScale = getResolutionScale();
-    if (resolutionScale != 1) {
-      Font buttonFont = updateComponentFontSize("Button.font", resolutionScale);
-      updateComponentFontSize("ToggleButton.font", resolutionScale);
-      updateComponentFontSize("RadioButton.font", resolutionScale);
-      updateComponentFontSize("CheckBox.font", resolutionScale);
-      updateComponentFontSize("ColorChooser.font", resolutionScale);
-      updateComponentFontSize("ComboBox.font", resolutionScale);
-      updateComponentFontSize("InternalFrame.titleFont", resolutionScale);
-      Font labelFont = updateComponentFontSize("Label.font", resolutionScale);
-      updateComponentFontSize("List.font", resolutionScale);
-      updateComponentFontSize("MenuBar.font", resolutionScale);
-      updateComponentFontSize("MenuItem.font", resolutionScale);
-      updateComponentFontSize("MenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("RadioButtonMenuItem.font", resolutionScale);
-      updateComponentFontSize("RadioButtonMenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("CheckBoxMenuItem.font", resolutionScale);
-      updateComponentFontSize("CheckBoxMenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("Menu.font", resolutionScale);
-      updateComponentFontSize("Menu.acceleratorFont", resolutionScale);
-      updateComponentFontSize("PopupMenu.font", resolutionScale);
-      updateComponentFontSize("OptionPane.font", resolutionScale);
-      updateComponentFontSize("Panel.font", resolutionScale);
-      updateComponentFontSize("ProgressBar.font", resolutionScale);
-      updateComponentFontSize("ScrollPane.font", resolutionScale);
-      updateComponentFontSize("Viewport.font", resolutionScale);
-      updateComponentFontSize("Slider.font", resolutionScale);
-      updateComponentFontSize("Spinner.font", resolutionScale);
-      updateComponentFontSize("Table.font", resolutionScale);
-      updateComponentFontSize("TabbedPane.font", resolutionScale);
-      updateComponentFontSize("TableHeader.font", resolutionScale);
-      updateComponentFontSize("TextField.font", resolutionScale);
-      updateComponentFontSize("FormattedTextField.font", resolutionScale);
-      updateComponentFontSize("PasswordField.font", resolutionScale);
-      updateComponentFontSize("TextArea.font", resolutionScale);
-      updateComponentFontSize("EditorPane.font", resolutionScale);
-      updateComponentFontSize("TitledBorder.font", resolutionScale);
-      updateComponentFontSize("ToolBar.font", resolutionScale);
-      updateComponentFontSize("ToolTip.font", resolutionScale);
-      updateComponentFontSize("Tree.font", resolutionScale);
+    float userResolutionScale = getUserResolutionScale();
+    if (userResolutionScale != 1) {
+      Font buttonFont = updateComponentFontSize("Button.font", userResolutionScale);
+      updateComponentFontSize("ToggleButton.font", userResolutionScale);
+      updateComponentFontSize("RadioButton.font", userResolutionScale);
+      updateComponentFontSize("CheckBox.font", userResolutionScale);
+      updateComponentFontSize("ColorChooser.font", userResolutionScale);
+      updateComponentFontSize("ComboBox.font", userResolutionScale);
+      updateComponentFontSize("InternalFrame.titleFont", userResolutionScale);
+      Font labelFont = updateComponentFontSize("Label.font", userResolutionScale);
+      updateComponentFontSize("List.font", userResolutionScale);
+      updateComponentFontSize("MenuBar.font", userResolutionScale);
+      updateComponentFontSize("MenuItem.font", userResolutionScale);
+      updateComponentFontSize("MenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.font", userResolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.font", userResolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("Menu.font", userResolutionScale);
+      updateComponentFontSize("Menu.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("PopupMenu.font", userResolutionScale);
+      updateComponentFontSize("OptionPane.font", userResolutionScale);
+      updateComponentFontSize("Panel.font", userResolutionScale);
+      updateComponentFontSize("ProgressBar.font", userResolutionScale);
+      updateComponentFontSize("ScrollPane.font", userResolutionScale);
+      updateComponentFontSize("Viewport.font", userResolutionScale);
+      updateComponentFontSize("Slider.font", userResolutionScale);
+      updateComponentFontSize("Spinner.font", userResolutionScale);
+      updateComponentFontSize("Table.font", userResolutionScale);
+      updateComponentFontSize("TabbedPane.font", userResolutionScale);
+      updateComponentFontSize("TableHeader.font", userResolutionScale);
+      updateComponentFontSize("TextField.font", userResolutionScale);
+      updateComponentFontSize("FormattedTextField.font", userResolutionScale);
+      updateComponentFontSize("PasswordField.font", userResolutionScale);
+      updateComponentFontSize("TextArea.font", userResolutionScale);
+      updateComponentFontSize("EditorPane.font", userResolutionScale);
+      updateComponentFontSize("TitledBorder.font", userResolutionScale);
+      updateComponentFontSize("ToolBar.font", userResolutionScale);
+      updateComponentFontSize("ToolTip.font", userResolutionScale);
+      updateComponentFontSize("Tree.font", userResolutionScale);
       UIManager.put("OptionPane.messageFont", labelFont);
       UIManager.put("OptionPane.buttonFont", buttonFont);
-      int dividerSize = UIManager.getInt("SplitPane.dividerSize");
-      if (dividerSize != 0) {
-        UIManager.put("SplitPane.dividerSize", Math.round(dividerSize * resolutionScale));
-      }
     }
+    updateComponentSize("SplitPane.dividerSize", getResolutionScale());
   }
 
   private static Font updateComponentFontSize(String fontKey, float resolutionScale) {
@@ -1063,14 +1070,68 @@ public class SwingTools {
     return font;
   }
 
+  private static int updateComponentSize(String sizeKey, float resolutionScale) {
+    int size = UIManager.getInt(sizeKey);
+    if (size != 0) {
+      size = Math.round(size * resolutionScale);
+      UIManager.put(sizeKey, size);
+    }
+    return size;
+  }
+
+  private static Integer defaultPanelFontSize;
+  
   /**
    * Returns a scale factor used to adapt user interface items to screen resolution.
    */
   public static float getResolutionScale() {
+    float defaultResolutionScale = 1;
+    try {
+      if (!OperatingSystem.isMacOSX()
+          && !OperatingSystem.isJavaVersionGreaterOrEqual("1.9")
+          && UIManager.getLookAndFeel().getClass().isAssignableFrom(Class.forName(UIManager.getSystemLookAndFeelClassName()))) {
+        if (defaultPanelFontSize == null) {
+          defaultPanelFontSize = new BasicLookAndFeel() {
+              public String getDescription() {
+                return null;
+              }
+
+              public String getID() {
+                return null;
+              }
+
+              public String getName() {
+                return null;
+              }
+
+              public boolean isNativeLookAndFeel() {
+                return false;
+              }
+
+              public boolean isSupportedLookAndFeel() {
+                return false;
+              }
+            }.getDefaults().getFont("Panel.font").getSize();
+        }
+        // Try to guess current resolution scale by comparing default font size with the one of the look and feel
+        defaultResolutionScale = (float)UIManager.getFont("Panel.font").getSize() / defaultPanelFontSize;
+      }
+    } catch (ClassNotFoundException ex) {
+      // Issue with LAF classes
+    }
+    return defaultResolutionScale * getUserResolutionScale();
+  }
+
+  /**
+   * Returns an additional user scale factor for the user interface items.
+   */
+  private static float getUserResolutionScale() {
     try {
       String resolutionScaleProperty = System.getProperty("com.eteks.sweethome3d.resolutionScale");
       if (resolutionScaleProperty != null) {
         return Float.parseFloat(resolutionScaleProperty.trim());
+      } else {
+        
       }
     } catch (AccessControlException ex) {
     } catch (NumberFormatException ex) {
