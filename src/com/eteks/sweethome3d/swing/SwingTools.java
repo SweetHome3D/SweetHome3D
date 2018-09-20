@@ -539,7 +539,7 @@ public class SwingTools {
     }
     float resolutionScale = getResolutionScale();
     BufferedImage image = new BufferedImage(
-        (int)(pattern.getWidth() * resolutionScale), 
+        (int)(pattern.getWidth() * resolutionScale),
         (int)(pattern.getHeight() * resolutionScale), BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     imageGraphics.setColor(backgroundColor);
@@ -599,10 +599,11 @@ public class SwingTools {
     try {
       final BufferedImage image = ImageIO.read(imageUrl);
       // Try to find an image scale without getResolutionScale()
-      // because look and feel is probably not set
+      // because look and feel is probably not set yet
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      final float scale = (float)Math.min(2, Math.max(1,
-          Math.min(screenSize.getWidth() / 5 / image.getWidth(), screenSize.getHeight() / 5 / image.getHeight())));
+      final float scale = OperatingSystem.isMacOSX()
+          ? 1f
+          : (float)Math.min(2, Math.max(1, Math.min(screenSize.getWidth() / 5 / image.getWidth(), screenSize.getHeight() / 5 / image.getHeight())));
       final Window splashScreenWindow = new Window(new Frame()) {
           @Override
           public void paint(Graphics g) {
@@ -1080,7 +1081,7 @@ public class SwingTools {
   }
 
   private static Integer defaultPanelFontSize;
-  
+
   /**
    * Returns a scale factor used to adapt user interface items to screen resolution.
    */
@@ -1131,7 +1132,7 @@ public class SwingTools {
       if (resolutionScaleProperty != null) {
         return Float.parseFloat(resolutionScaleProperty.trim());
       } else {
-        
+
       }
     } catch (AccessControlException ex) {
     } catch (NumberFormatException ex) {
