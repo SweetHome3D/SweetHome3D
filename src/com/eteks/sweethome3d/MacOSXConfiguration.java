@@ -815,7 +815,7 @@ class MacOSXConfiguration {
     private final SweetHome3D    homeApplication;
     private final HomeController defaultController;
 
-    private MacOSXApplicationListener(SweetHome3D homeApplication, HomeController defaultController, JFrame defaultFrame) {
+    public MacOSXApplicationListener(SweetHome3D homeApplication, HomeController defaultController, JFrame defaultFrame) {
       this.defaultFrame = defaultFrame;
       this.homeApplication = homeApplication;
       this.defaultController = defaultController;
