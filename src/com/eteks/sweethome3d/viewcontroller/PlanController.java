@@ -9395,7 +9395,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.deltaXToMiddlePoint = getXLastMousePress() - middleX;
       this.deltaYToMiddlePoint = getYLastMousePress() - middleY;
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
-      toggleMagnetism(wasMagnetismToggledLastMousePress());
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+          ^ wasMagnetismToggledLastMousePress();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, false),
