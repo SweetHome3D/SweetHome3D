@@ -735,12 +735,15 @@ public class WallPanel extends JPanel implements DialogView {
             String arcExtentSpinnerToolTip = preferences.getLocalizedString(WallPanel.class,
                 "arcExtentSpinner.tooltip", preferences.getLengthUnit().getFormatWithUnit().format(arcLength));
             arcExtentSpinner.setToolTipText(arcExtentSpinnerToolTip);
-            if (arcExtentSpinner.isShowing()) {
+            if (arcExtentSpinner.isShowing()
+                && SwingTools.isToolTipShowing()) {
               // Trigger a mouse move to tool tip manager to ensure tool tip is updated
               Point point = MouseInfo.getPointerInfo().getLocation();
               SwingUtilities.convertPointFromScreen(point, arcExtentSpinner);
               ToolTipManager.sharedInstance().mouseMoved(
-                  new MouseEvent(arcExtentSpinner, -1, System.currentTimeMillis(), 0, point.x, point.y, 1, false, 0));
+                  new MouseEvent(arcExtentSpinner, -1, System.currentTimeMillis(), 0,
+                      Math.max(0, Math.min(arcExtentSpinner.getWidth(), point.x)),
+                      Math.max(0, Math.min(arcExtentSpinner.getHeight(), point.y)), 1, false, 0));
             }
           } else {
             arcExtentSpinner.setToolTipText(null);

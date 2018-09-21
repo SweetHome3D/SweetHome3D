@@ -717,7 +717,7 @@ public class SwingTools {
   /**
    * Returns <code>true</code> if a tool tip is showing.
    */
-  private static boolean isToolTipShowing() {
+  public static boolean isToolTipShowing() {
     for (Frame frame : Frame.getFrames()) {
       if (isToolTipShowing(frame)) {
         return true;
