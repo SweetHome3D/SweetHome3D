@@ -560,7 +560,8 @@ public class ModelMaterialsComponent extends JButton implements View {
       add(this.previewLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
-      this.previewComponent.setPreferredSize(new Dimension(150, 150));
+      float resolutionScale = SwingTools.getResolutionScale();
+      this.previewComponent.setPreferredSize(new Dimension((int)(150 * resolutionScale), (int)(150 * resolutionScale)));
       add(this.previewComponent, new GridBagConstraints(
           0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
