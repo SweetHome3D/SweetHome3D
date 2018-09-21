@@ -729,9 +729,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             String reduceSize = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.reduceSize");
             String keepUnchanged = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.keepUnchanged");      
             String cancel = preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "reduceImageSize.cancel");      
-            result.set(JOptionPane.showOptionDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
+            result.set(SwingTools.showOptionDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
                   confirmMessage, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-                  null, new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
+                  new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
           }
         });
       if (result.get() == JOptionPane.CANCEL_OPTION) {

@@ -586,9 +586,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             String reduceSize = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.reduceSize");
             String keepUnchanged = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.keepUnchanged");      
             String cancel = preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "reduceImageSize.cancel");      
-            result.set(JOptionPane.showOptionDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
+            result.set(SwingTools.showOptionDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
                   confirmMessage, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-                  null, new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
+                  new Object [] {reduceSize, keepUnchanged, cancel}, keepUnchanged));
           }
         });
       if (result.get() == JOptionPane.CANCEL_OPTION) {

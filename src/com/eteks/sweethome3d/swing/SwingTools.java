@@ -526,6 +526,21 @@ public class SwingTools {
     dialog.dispose();
   }
 
+  /**
+   * Displays message in a dialog box, possibly adjusting font size if required.
+   */
+  public static int showOptionDialog(Component parentComponent,
+                                     String message, String title, 
+                                     int optionType, int messageType,
+                                     Object[] options, Object initialValue) {
+   if (SwingTools.getResolutionScale() > 1 
+       && message.indexOf("<font size=\"-2\">") != -1) {
+     message = message.replace("<font size=\"-2\">", "<font size=\"5\">");
+   }
+   return JOptionPane.showOptionDialog(parentComponent, message, title, optionType, 
+       messageType, null, options, initialValue);
+ }
+
   private static Map<TextureImage, BufferedImage> patternImages;
 
   /**

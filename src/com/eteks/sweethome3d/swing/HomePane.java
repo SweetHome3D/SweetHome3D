@@ -3758,9 +3758,9 @@ public class HomePane extends JRootPane implements HomeView {
     String replaceDamagedItems = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.replaceDamagedItems");
     String doNotOpenHome = this.preferences.getLocalizedString(HomePane.class, "openDamagedHome.doNotOpenHome");
 
-    switch (JOptionPane.showOptionDialog(this, message, title,
+    switch (SwingTools.showOptionDialog(this, message, title,
         JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-        null, new Object [] {removeDamagedItems, replaceDamagedItems, doNotOpenHome}, doNotOpenHome)) {
+        new Object [] {removeDamagedItems, replaceDamagedItems, doNotOpenHome}, doNotOpenHome)) {
       // Convert showOptionDialog answer to SaveAnswer enum constants
       case JOptionPane.YES_OPTION:
         return OpenDamagedHomeAnswer.REMOVE_DAMAGED_ITEMS;
@@ -3791,9 +3791,9 @@ public class HomePane extends JRootPane implements HomeView {
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.doNotReplace");
 
-    return JOptionPane.showOptionDialog(this,
+    return SwingTools.showOptionDialog(this,
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+        new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
   }
 
   /**
@@ -3817,9 +3817,9 @@ public class HomePane extends JRootPane implements HomeView {
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.doNotReplace");
 
-    return JOptionPane.showOptionDialog(this,
+    return SwingTools.showOptionDialog(this,
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+        new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
   }
 
   /**
@@ -3843,9 +3843,9 @@ public class HomePane extends JRootPane implements HomeView {
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.doNotReplace");
 
-    return JOptionPane.showOptionDialog(this,
+    return SwingTools.showOptionDialog(this,
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+        new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
   }
 
   /**
@@ -3860,9 +3860,9 @@ public class HomePane extends JRootPane implements HomeView {
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.doNotReplace");
 
-    return JOptionPane.showOptionDialog(this,
+    return SwingTools.showOptionDialog(this,
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+        new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
   }
 
   /**
@@ -3879,8 +3879,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void showError(String message) {
     String title = this.preferences.getLocalizedString(HomePane.class, "error.title");
-    JOptionPane.showMessageDialog(this, message, title,
-        JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
   }
 
   /**
@@ -3888,8 +3887,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void showMessage(String message) {
     String title = this.preferences.getLocalizedString(HomePane.class, "message.title");
-    JOptionPane.showMessageDialog(this, message, title,
-        JOptionPane.INFORMATION_MESSAGE);
+    JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**
@@ -3947,14 +3945,15 @@ public class HomePane extends JRootPane implements HomeView {
     } else {
       message = this.preferences.getLocalizedString(HomePane.class, "confirmSave.message", "");
     }
+    
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmSave.title");
     String save = this.preferences.getLocalizedString(HomePane.class, "confirmSave.save");
     String doNotSave = this.preferences.getLocalizedString(HomePane.class, "confirmSave.doNotSave");
     String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmSave.cancel");
 
-    switch (JOptionPane.showOptionDialog(this, message, title,
+    switch (SwingTools.showOptionDialog(this, message, title,
         JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {save, doNotSave, cancel}, save)) {
+        new Object [] {save, doNotSave, cancel}, save)) {
       // Convert showOptionDialog answer to SaveAnswer enum constants
       case JOptionPane.YES_OPTION:
         return SaveAnswer.SAVE;
@@ -3977,9 +3976,9 @@ public class HomePane extends JRootPane implements HomeView {
     String save = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.save");
     String doNotSave = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.doNotSave");
 
-    return JOptionPane.showOptionDialog(this, message, title,
+    return SwingTools.showOptionDialog(this, message, title,
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {save, doNotSave}, doNotSave) == JOptionPane.YES_OPTION;
+        new Object [] {save, doNotSave}, doNotSave) == JOptionPane.YES_OPTION;
   }
 
   /**
@@ -3993,9 +3992,9 @@ public class HomePane extends JRootPane implements HomeView {
     String quit = this.preferences.getLocalizedString(HomePane.class, "confirmExit.quit");
     String doNotQuit = this.preferences.getLocalizedString(HomePane.class, "confirmExit.doNotQuit");
 
-    return JOptionPane.showOptionDialog(this, message, title,
+    return SwingTools.showOptionDialog(this, message, title,
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {quit, doNotQuit}, doNotQuit) == JOptionPane.YES_OPTION;
+        new Object [] {quit, doNotQuit}, doNotQuit) == JOptionPane.YES_OPTION;
   }
 
   /**
@@ -4528,8 +4527,8 @@ public class HomePane extends JRootPane implements HomeView {
       String exportAll = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.exportAll");
       String exportSelection = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.exportSelection");
       String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmExportAllToOBJ.cancel");
-      int response = JOptionPane.showOptionDialog(this, message, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-              null, new Object [] {exportAll, exportSelection, cancel}, exportAll);
+      int response = SwingTools.showOptionDialog(this, message, title, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+          new Object [] {exportAll, exportSelection, cancel}, exportAll);
       if (response == JOptionPane.NO_OPTION) {
         this.exportAllToOBJ = false;
       } else if (response != JOptionPane.YES_OPTION) {
@@ -4731,9 +4730,9 @@ public class HomePane extends JRootPane implements HomeView {
     String delete = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.delete");
     String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.cancel");
 
-    return JOptionPane.showOptionDialog(this, message, title,
+    return SwingTools.showOptionDialog(this, message, title,
         JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
+        new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
 
   /**
@@ -4851,9 +4850,9 @@ public class HomePane extends JRootPane implements HomeView {
       String confirmMessage = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.message");
       String delete = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.delete");
       String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCameras.cancel");
-      if (JOptionPane.showOptionDialog(this, confirmMessage, title,
+      if (SwingTools.showOptionDialog(this, confirmMessage, title,
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-            null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION) {
+            new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION) {
         return selectedCameras;
       }
     }

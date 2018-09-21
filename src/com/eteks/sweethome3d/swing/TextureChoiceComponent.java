@@ -183,10 +183,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     String cancel = this.preferences.getLocalizedString(
         TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.cancel");
 
-    return JOptionPane.showOptionDialog(
+    return SwingTools.showOptionDialog(
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title,
         JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
+        new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
 
   /**

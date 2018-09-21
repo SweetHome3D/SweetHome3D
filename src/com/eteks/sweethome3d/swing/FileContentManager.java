@@ -907,9 +907,9 @@ public class FileContentManager implements ContentManager {
     String replace = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.overwrite");
     String cancel = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.cancel");
 
-    return JOptionPane.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView),
+    return SwingTools.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView),
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
+        new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
 
   /**
