@@ -535,7 +535,10 @@ public class SwingTools {
                                      Object[] options, Object initialValue) {
    if (SwingTools.getResolutionScale() > 1 
        && message.indexOf("<font size=\"-2\">") != -1) {
-     message = message.replace("<font size=\"-2\">", "<font size=\"5\">");
+     Font font = UIManager.getFont("OptionPane.font");
+     if (font != null) {
+       message = message.replace("<font size=\"-2\">", "<font size=\"" + Math.round(font.getSize() / 5f) + "\">");
+     }
    }
    return JOptionPane.showOptionDialog(parentComponent, message, title, optionType, 
        messageType, null, options, initialValue);
