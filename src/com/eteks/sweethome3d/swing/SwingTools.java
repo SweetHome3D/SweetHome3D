@@ -530,17 +530,17 @@ public class SwingTools {
    * Displays message in a dialog box, possibly adjusting font size if required.
    */
   public static int showOptionDialog(Component parentComponent,
-                                     String message, String title, 
+                                     String message, String title,
                                      int optionType, int messageType,
                                      Object[] options, Object initialValue) {
-   if (SwingTools.getResolutionScale() > 1 
+   if (SwingTools.getResolutionScale() > 1
        && message.indexOf("<font size=\"-2\">") != -1) {
      Font font = UIManager.getFont("OptionPane.font");
      if (font != null) {
        message = message.replace("<font size=\"-2\">", "<font size=\"" + Math.round(font.getSize() / 5f) + "\">");
      }
    }
-   return JOptionPane.showOptionDialog(parentComponent, message, title, optionType, 
+   return JOptionPane.showOptionDialog(parentComponent, message, title, optionType,
        messageType, null, options, initialValue);
  }
 
@@ -1027,10 +1027,48 @@ public class SwingTools {
     return ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle, dashOffset);
   }
 
+
+  private static Float defaultResolutionScale;
+
   /**
    * Updates Swing components default size according to resolution scale.
    */
   static void updateComponentDefaults() {
+    if (defaultResolutionScale == null) {
+      try {
+        defaultResolutionScale = 1f;
+        if ((OperatingSystem.isLinux()
+              || OperatingSystem.isWindows() && !OperatingSystem.isJavaVersionGreaterOrEqual("1.9"))
+            && UIManager.getLookAndFeel().getClass().isAssignableFrom(Class.forName(UIManager.getSystemLookAndFeelClassName()))) {
+          int defaultPanelFontSize = new BasicLookAndFeel() {
+              public String getDescription() {
+                return null;
+              }
+
+              public String getID() {
+                return null;
+              }
+
+              public String getName() {
+                return null;
+              }
+
+              public boolean isNativeLookAndFeel() {
+                return false;
+              }
+
+              public boolean isSupportedLookAndFeel() {
+                return false;
+              }
+            }.getDefaults().getFont("Panel.font").getSize();
+          // Try to guess current resolution scale by comparing default font size with the one of the look and feel
+          defaultResolutionScale = (float)UIManager.getFont("Panel.font").getSize() / defaultPanelFontSize;
+        }
+      } catch (ClassNotFoundException ex) {
+        // Issue with LAF classes
+      }
+    }
+
     float userResolutionScale = getUserResolutionScale();
     if (userResolutionScale != 1) {
       Font buttonFont = updateComponentFontSize("Button.font", userResolutionScale);
@@ -1095,46 +1133,13 @@ public class SwingTools {
     return size;
   }
 
-  private static Integer defaultPanelFontSize;
-
   /**
    * Returns a scale factor used to adapt user interface items to screen resolution.
    */
   public static float getResolutionScale() {
-    float defaultResolutionScale = 1;
-    try {
-      if (!OperatingSystem.isMacOSX()
-          && !OperatingSystem.isJavaVersionGreaterOrEqual("1.9")
-          && UIManager.getLookAndFeel().getClass().isAssignableFrom(Class.forName(UIManager.getSystemLookAndFeelClassName()))) {
-        if (defaultPanelFontSize == null) {
-          defaultPanelFontSize = new BasicLookAndFeel() {
-              public String getDescription() {
-                return null;
-              }
-
-              public String getID() {
-                return null;
-              }
-
-              public String getName() {
-                return null;
-              }
-
-              public boolean isNativeLookAndFeel() {
-                return false;
-              }
-
-              public boolean isSupportedLookAndFeel() {
-                return false;
-              }
-            }.getDefaults().getFont("Panel.font").getSize();
-        }
-        // Try to guess current resolution scale by comparing default font size with the one of the look and feel
-        defaultResolutionScale = (float)UIManager.getFont("Panel.font").getSize() / defaultPanelFontSize;
-      }
-    } catch (ClassNotFoundException ex) {
-      // Issue with LAF classes
-    }
+    float defaultResolutionScale = SwingTools.defaultResolutionScale != null
+        ? SwingTools.defaultResolutionScale
+        : 1f;
     return defaultResolutionScale * getUserResolutionScale();
   }
 
