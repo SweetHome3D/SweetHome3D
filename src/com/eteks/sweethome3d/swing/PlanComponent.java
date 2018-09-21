@@ -3514,7 +3514,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     float wallPaintScale = paintMode == PaintMode.PRINT
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
-        : planScale;
+        : planScale / this.resolutionScale;
     Composite oldComposite = null;
     if (paintMode == PaintMode.PAINT
         && this.backgroundPainted

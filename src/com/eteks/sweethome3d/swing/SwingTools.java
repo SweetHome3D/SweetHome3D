@@ -537,10 +537,8 @@ public class SwingTools {
     if (patternImages == null) {
       patternImages = new HashMap<TextureImage, BufferedImage>();
     }
-    float resolutionScale = getResolutionScale();
-    BufferedImage image = new BufferedImage(
-        (int)(pattern.getWidth() * resolutionScale),
-        (int)(pattern.getHeight() * resolutionScale), BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = new BufferedImage((int)pattern.getWidth(),
+        (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     imageGraphics.setColor(backgroundColor);
     imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
@@ -558,7 +556,6 @@ public class SwingTools {
     }
     // Draw the pattern image with foreground color
     final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
-    imageGraphics.scale(resolutionScale, resolutionScale);
     imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
         new FilteredImageSource(patternImage.getSource(),
         new RGBImageFilter() {

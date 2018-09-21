@@ -790,6 +790,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    * Returns a renderer for patterns combo box.
    */
   private DefaultListCellRenderer getPatternRenderer() {
+    final float resolutionScale = SwingTools.getResolutionScale();
     return new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list,
@@ -801,18 +802,20 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               wallPattern, list.getBackground(), list.getForeground());
           setIcon(new Icon() {
               public int getIconWidth() {
-                return patternImage.getWidth() * 4 + 1;
+                return (int)(patternImage.getWidth() * 4 * resolutionScale + 1);
               }
 
               public int getIconHeight() {
-                return patternImage.getHeight() + 2;
+                return (int)(patternImage.getHeight() * resolutionScale + 2);
               }
 
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 Graphics2D g2D = (Graphics2D)g;
+                g2D.scale(resolutionScale, resolutionScale);
                 for (int i = 0; i < 4; i++) {
                   g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
                 }
+                g2D.scale(1 / resolutionScale, 1 / resolutionScale);
                 g2D.setColor(list.getForeground());
                 g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
               }

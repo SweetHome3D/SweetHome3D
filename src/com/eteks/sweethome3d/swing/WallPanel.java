@@ -468,6 +468,7 @@ public class WallPanel extends JPanel implements DialogView {
       patterns.add(0, null);
     }
     this.patternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
+    final float resolutionScale = SwingTools.getResolutionScale();
     this.patternComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list,
@@ -480,18 +481,20 @@ public class WallPanel extends JPanel implements DialogView {
                 pattern, list.getBackground(), list.getForeground());
             setIcon(new Icon() {
                 public int getIconWidth() {
-                  return patternImage.getWidth() * 4 + 1;
+                  return (int)(patternImage.getWidth() * 4 * resolutionScale + 1);
                 }
-
+  
                 public int getIconHeight() {
-                  return patternImage.getHeight() + 2;
+                  return (int)(patternImage.getHeight() * resolutionScale + 2);
                 }
 
                 public void paintIcon(Component c, Graphics g, int x, int y) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   for (int i = 0; i < 4; i++) {
                     g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
                   }
+                  g2D.scale(1 / resolutionScale, 1 / resolutionScale);
                   g2D.setColor(list.getForeground());
                   g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
                 }
