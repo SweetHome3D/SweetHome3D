@@ -99,13 +99,15 @@ Source: "build\jre8\x64\*"; DestDir: "{app}\jre8"; Flags: ignoreversion recurses
 Source: "build\lib\x64\*.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Check: Is64BitInstalled and IsJava3D152Installed
 Source: "build\lib\java3d-1.6\x64\*.dll"; DestDir: "{app}\lib\java3d-1.6"; Flags: ignoreversion; Check: Is64BitInstalled and not IsJava3D152Installed
 ; Install program for not 64 bit and Java 3D 1.5.2
-Source: "build\SweetHome3D-java3d-1.5.2-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and IsJava3D152Installed
+Source: "build\SweetHome3D-java3d-1.5.2-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and IsJava3D152Installed and not IsARM64
 ; Install program for not 64 bit and not Java 3D 1.5.2
 Source: "build\SweetHome3D-x86.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and not IsJava3D152Installed
 ; Install program for 64 bit and Java 3D 1.5.2
 Source: "build\SweetHome3D-java3d-1.5.2-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstalled and IsJava3D152Installed
 ; Install program for 64 bit and not Java 3D 1.5.2
 Source: "build\SweetHome3D-x64.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: Is64BitInstalled and not IsJava3D152Installed
+; Install program for ARM 64 bit 
+Source: "build\SweetHome3D-java3d-1.5.2-x86-d3d.exe"; DestDir: "{app}"; DestName: "SweetHome3D.exe"; Flags: ignoreversion; Check: not Is64BitInstalled and IsJava3D152Installed and IsARM64
 
 [Icons]
 Name: "{group}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Comment: "{cm:SweetHome3DComment}"
@@ -185,9 +187,10 @@ var
 begin
   (* Uses by default Java 3D 1.5.2 under Windows 7 included or under 64 bit systems when 32 bit is selected *)
   GetWindowsVersionEx(windowsVersion);
-  Result := (windowsVersion.major < 6) or 
-      ((windowsVersion.major = 6) and (windowsVersion.major < 2)) or
-      (Is64BitInstallMode and (not architecture64Bit));
+  Result := (windowsVersion.major < 6) 
+        or ((windowsVersion.major = 6) and (windowsVersion.major < 2))
+        or (Is64BitInstallMode and (not architecture64Bit))
+        or IsARM64;
   (* Search required Java 3D version in j3d.version custom param *)
   for i := 1 to ParamCount do
     if Pos('/j3d.version=', ParamStr(i)) = 1 then
@@ -260,7 +263,7 @@ begin
     begin 
       (* Install in 32 bit under Windows 10 by default *)
       GetWindowsVersionEx(windowsVersion);
-      architecture64Bit := windowsVersion.major < 10;
+      architecture64Bit := (windowsVersion.major < 10) and not IsARM64;
       (* Search if required architecture in /os.arch custom param isn't 64 *)
       for i := 1 to ParamCount do
         if Pos('/os.arch=', ParamStr(i)) = 1 then
@@ -280,7 +283,7 @@ begin
   architecturePanel.BevelOuter := bvNone;
   architecturePanel.Width := 400;
   architecturePanel.Height := WizardForm.YesRadio.Height;
-  architecturePanel.Visible := Is64BitInstallMode;
+  architecturePanel.Visible := Is64BitInstallMode and not IsARM64;
   architecturePanel.Parent := page;
 
   architectureLabel := TLabel.Create(page);
@@ -304,4 +307,3 @@ begin
   x64RadioButton.OnClick := @UpdateArchitecture64Bit; 
   x64RadioButton.Parent := architecturePanel;
 end;
-

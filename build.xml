@@ -719,6 +719,9 @@
       <arg value="${basedir}\install\windows\installerLaunch4j-java3d-1.5.2-x86.xml"/>
     </exec>
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
+      <arg value="${basedir}\install\windows\installerLaunch4j-java3d-1.5.2-x86-d3d.xml"/>
+    </exec>
+    <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerLaunch4j-java3d-1.5.2-x64.xml"/>
     </exec>
     <exec executable="C:\Program Files (x86)\Launch4j\launch4jc.exe" failonerror="yes">
