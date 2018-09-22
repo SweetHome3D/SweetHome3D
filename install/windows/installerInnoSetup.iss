@@ -12,6 +12,7 @@
 ; + file COPYING.TXT
 
 [Setup]
+DisableWelcomePage=no
 AppName=Sweet Home 3D
 AppVersion=6.0
 AppCopyright=Copyright (c) 2007-2018 eTeks
@@ -28,6 +29,7 @@ OutputBaseFilename=SweetHome3D-6.0-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
+ExtraDiskSpaceRequired=107000000
 VersionInfoVersion=6.0.0.0
 VersionInfoTextVersion=6.0
 VersionInfoDescription=Sweet Home 3D Setup
@@ -42,6 +44,7 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "dutch"; MessagesFile: "compiler:Languages\Dutch.isl"
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "czech"; MessagesFile: "compiler:Languages\Czech.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
@@ -124,6 +127,15 @@ Type: files; Name: "{app}\lib\SweetHome3D.jar"
 Type: filesandordirs; Name: "{app}\jre8\launch4j-tmp"
 
 [CustomMessages]
+ArchitectureLabel=Architecture:
+french.ArchitectureLabel=Architecture :
+spanish.ArchitectureLabel=Arquitectura:
+italian.ArchitectureLabel=Architettura:
+dutch.ArchitectureLabel=Architectuur:
+german.ArchitectureLabel=Architektur:
+portuguese.ArchitectureLabel=Arquitetura:
+brazilianportuguese.ArchitectureLabel=Arquitetura:
+
 SweetHome3DComment=Arrange the furniture of your house
 french.SweetHome3DComment=Aménagez les meubles de votre logement
 portuguese.SweetHome3DComment=Organiza as mobilias da sua casa
@@ -163,16 +175,19 @@ Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\DefaultIcon"; ValueType: string;
 Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""
 
 [Code]
+var architecture64Bit : boolean;
+
 function IsJava3D152Installed: Boolean;
 var
   windowsVersion : TWindowsVersion;
   requiredJava3DVersion : String;
   i : Integer;
 begin
-  (* Uses by default Java 3D 1.5.2 under Windows 7 included *)
+  (* Uses by default Java 3D 1.5.2 under Windows 7 included or under 64 bit systems when 32 bit is selected *)
   GetWindowsVersionEx(windowsVersion);
   Result := (windowsVersion.major < 6) or 
-      (windowsVersion.major = 6) and (windowsVersion.major < 2);
+      ((windowsVersion.major = 6) and (windowsVersion.major < 2)) or
+      (Is64BitInstallMode and (not architecture64Bit));
   (* Search required Java 3D version in j3d.version custom param *)
   for i := 1 to ParamCount do
     if Pos('/j3d.version=', ParamStr(i)) = 1 then
@@ -184,19 +199,109 @@ begin
 end; 
 
 function Is64BitInstalled: Boolean;
+begin
+  Result := architecture64Bit;
+end; 
+
+(* Updates installation dir according to selected architecture *)
+procedure UpdateInstallationDir();
+var 
+  subDir : String;
+begin
+  subDir := '';
+  if (Pos(ExpandConstant('{pf32}'), WizardForm.DirEdit.Text + '\') = 1) then
+    begin 
+      subDir := Copy(WizardForm.DirEdit.Text, Length(ExpandConstant('{pf32}')) + 1, 
+          Length(WizardForm.DirEdit.Text) - Length(ExpandConstant('{pf32}')));
+    end
+  else if (Pos(ExpandConstant('{pf64}'), WizardForm.DirEdit.Text + '\') = 1) then
+    subDir := Copy(WizardForm.DirEdit.Text, Length(ExpandConstant('{pf64}')) + 1, 
+        Length(WizardForm.DirEdit.Text) - Length(ExpandConstant('{pf64}')));
+  
+  if (Length(subDir) <> 0) then
+    begin
+      if architecture64Bit then
+        begin
+          WizardForm.DirEdit.Text := ExpandConstant('{pf64}') + subDir;
+        end
+      else 
+        begin
+          WizardForm.DirEdit.Text := ExpandConstant('{pf32}') + subDir;
+        end
+    end;
+end;
+
+procedure UpdateArchitecture32Bit(sender: TObject);
+begin
+  architecture64Bit := not TRadioButton(sender).Checked;
+  UpdateInstallationDir();
+end;
+
+procedure UpdateArchitecture64Bit(sender: TObject);
+begin
+  architecture64Bit := TRadioButton(sender).Checked;
+  UpdateInstallationDir();
+end;
+
+(* Run at wizard launch *)
+procedure InitializeWizard;
 var
   windowsVersion : TWindowsVersion;
   requiredArchitecture : String;
   i : Integer;
+  page: TNewNotebookPage;
+  architecturePanel : TPanel;
+  architectureLabel : TLabel;
+  x86RadioButton : TRadioButton;
+  x64RadioButton : TRadioButton;
 begin
-  Result := Is64BitInstallMode;
-  if Result then 
-    (* Search if required architecture in os.arch custom param isn't 64 *)
-    for i := 1 to ParamCount do
-      if Pos('/os.arch=', ParamStr(i)) = 1 then
-        begin
-          requiredArchitecture := Copy(ParamStr(i), Length('/os.arch=') + 1, Length(ParamStr(i)));
-          Result := Pos('64', requiredArchitecture) > 0;      
-          break;
-        end;
-end; 
+  architecture64Bit := Is64BitInstallMode;
+  if architecture64Bit then 
+    begin 
+      (* Install in 32 bit under Windows 10 by default *)
+      GetWindowsVersionEx(windowsVersion);
+      architecture64Bit := windowsVersion.major < 10;
+      (* Search if required architecture in /os.arch custom param isn't 64 *)
+      for i := 1 to ParamCount do
+        if Pos('/os.arch=', ParamStr(i)) = 1 then
+          begin
+            requiredArchitecture := Copy(ParamStr(i), Length('/os.arch=') + 1, Length(ParamStr(i)));
+            architecture64Bit := Pos('64', requiredArchitecture) > 0;      
+            break;
+          end; 
+      UpdateInstallationDir();
+    end;
+  
+  (* Update installation dir selection page with architecture 32/64 bit radio buttons *)
+  page := WizardForm.SelectDirPage;
+
+  architecturePanel := TPanel.create(page);  
+  architecturePanel.Top := WizardForm.DirEdit.Top + WizardForm.DirEdit.Height + 30;
+  architecturePanel.BevelOuter := bvNone;
+  architecturePanel.Width := 400;
+  architecturePanel.Height := WizardForm.YesRadio.Height;
+  architecturePanel.Visible := Is64BitInstallMode;
+  architecturePanel.Parent := page;
+
+  architectureLabel := TLabel.Create(page);
+  architectureLabel.Caption := CustomMessage('ArchitectureLabel');
+  architectureLabel.AutoSize := True;
+  architectureLabel.Parent := architecturePanel;
+
+  x86RadioButton := TRadioButton.Create(page);
+  x86RadioButton.Caption := '32 bit';
+  x86RadioButton.Left := architectureLabel.Width + 10;
+  x86RadioButton.Height := architecturePanel.Height;
+  x86RadioButton.Checked := not architecture64Bit;
+  x86RadioButton.OnClick := @UpdateArchitecture32Bit; 
+  x86RadioButton.Parent := architecturePanel;
+
+  x64RadioButton := TRadioButton.Create(page);
+  x64RadioButton.Caption := '64 bit';
+  x64RadioButton.Left := x86RadioButton.Left + 100;
+  x64RadioButton.Height := architecturePanel.Height;
+  x64RadioButton.Checked := architecture64Bit;
+  x64RadioButton.OnClick := @UpdateArchitecture64Bit; 
+  x64RadioButton.Parent := architecturePanel;
+end;
+
