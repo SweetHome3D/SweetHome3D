@@ -154,6 +154,7 @@ class MacOSXConfiguration {
     }
 
     final JFrame defaultFrame = frame;
+    boolean applicationListenerSupported = false;
     try {
       // Add a listener to Mac OS X application that will call
       // controller methods of the active frame
@@ -162,7 +163,15 @@ class MacOSXConfiguration {
           MacOSXApplicationListener.class.getConstructor(SweetHome3D.class, HomeController.class, JFrame.class).newInstance(homeApplication, defaultController, defaultFrame));
       macosxApplication.setEnabledAboutMenu(true);
       macosxApplication.setEnabledPreferencesMenu(true);
-    } catch (ReflectiveOperationException ex) {
+      applicationListenerSupported = true;
+    } catch (NoSuchMethodException ex) {
+    } catch (IllegalAccessException ex) {
+    } catch (InvocationTargetException ex) {
+    } catch (ClassNotFoundException ex) {
+    } catch (InstantiationException ex) {
+    }
+
+    if (!applicationListenerSupported) {
       // Probably running under Java 9 where previous methods were removed
       if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
         // Use the new handlers of Java 9 once compiling with Java 9 library is enabled
